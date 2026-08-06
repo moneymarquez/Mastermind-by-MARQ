@@ -1,10 +1,27 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useSobriety } from '../../data/useSobriety';
+import type { SobrietyCheckin } from '../../data/types';
+import { askClaude, AiError } from '../../lib/ai';
 
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
+}
+
+async function reflectOnSobriety(streak: number, checkins: SobrietyCheckin[]): Promise<string> {
+  const recent = checkins.slice(0, 10).map((c) => {
+    const flags = [c.drank && 'drank', c.weed && 'weed', c.nicotine && 'nicotine'].filter(Boolean).join(', ');
+    return `${c.checkin_date}: ${flags || 'clean'}${c.note ? ` — "${c.note}"` : ''}`;
+  }).join('\n');
+  return askClaude({
+    system:
+      "You are Nova, a supportive but honest presence inside Cristopher's sobriety tracker. Look at his current " +
+      'streak and recent check-in history, then give a short, genuine reflection — acknowledge what\'s actually ' +
+      'happening (progress or setbacks), no generic platitudes. Plain text, 2-4 sentences.',
+    messages: [{ role: 'user', content: `Current streak: ${streak} days.\n\nRecent check-ins:\n${recent}` }],
+    maxTokens: 300,
+  });
 }
 
 const toggleStyle = (active: boolean): CSSProperties => ({
@@ -16,8 +33,24 @@ const toggleStyle = (active: boolean): CSSProperties => ({
 });
 
 export default function SobrietyScreen({ homeHeadStyle, homeSubStyle }: Props) {
-  const { checkins, todayCheckin, streak, loading, saveToday } = useSobriety();
+  const { checkins, todayCheckin, streak, loading, saveToday, saveInsight } = useSobriety();
   const [note, setNote] = useState(todayCheckin?.note ?? '');
+  const [thinking, setThinking] = useState(false);
+  const [aiError, setAiError] = useState('');
+
+  const getInsight = async () => {
+    if (!todayCheckin) return;
+    setThinking(true);
+    setAiError('');
+    try {
+      const text = await reflectOnSobriety(streak, checkins);
+      await saveInsight(todayCheckin.id, text);
+    } catch (err) {
+      setAiError(err instanceof AiError ? err.message : 'Could not get a reflection — try again.');
+    } finally {
+      setThinking(false);
+    }
+  };
 
   const drank = todayCheckin?.drank ?? false;
   const weed = todayCheckin?.weed ?? false;
@@ -54,6 +87,23 @@ export default function SobrietyScreen({ homeHeadStyle, homeSubStyle }: Props) {
           placeholder="Note (optional)"
           style={{ width: '100%', marginTop: 12, background: '#1a1c21', border: '1px solid #2b2f36', borderRadius: 8, padding: '9px 12px', color: '#F5F6F7', fontSize: 13, outline: 'none' }}
         />
+
+        <div
+          style={{
+            display: 'inline-flex', alignItems: 'center', marginTop: 14, padding: '9px 16px', borderRadius: 999,
+            background: thinking || !todayCheckin ? '#22262B' : '#F5F6F7', color: thinking || !todayCheckin ? '#8A8F98' : '#0A0B0D',
+            fontSize: 12.5, fontWeight: 600, cursor: thinking || !todayCheckin ? 'default' : 'pointer',
+          }}
+          onClick={() => !thinking && todayCheckin && getInsight()}
+        >
+          {thinking ? 'Thinking…' : "✨ Nova's take"}
+        </div>
+        {aiError && <div style={{ fontSize: 12, color: '#c47a7a', marginTop: 8 }}>{aiError}</div>}
+        {todayCheckin?.ai_insight && (
+          <div style={{ marginTop: 12, background: '#101114', border: '1px solid #22262B', borderRadius: 10, padding: '12px 14px' }}>
+            <div style={{ fontSize: 12.5, color: '#C7CAD1', lineHeight: 1.6 }}>{todayCheckin.ai_insight}</div>
+          </div>
+        )}
       </div>
 
       <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', border: '1px solid #22262B', borderRadius: 14, overflow: 'hidden', maxWidth: 480 }}>

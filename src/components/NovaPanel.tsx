@@ -7,6 +7,7 @@ interface Props {
   pos: Point;
   messages: NovaMessage[];
   input: string;
+  thinking: boolean;
   onClose: (e: React.SyntheticEvent) => void;
   onDragPointerDown: (e: PointerEvent) => void;
   onDragPointerMove: (e: PointerEvent) => void;
@@ -17,7 +18,7 @@ interface Props {
 }
 
 export default function NovaPanel({
-  isMobile, pos, messages, input, onClose, onDragPointerDown, onDragPointerMove, onDragPointerUp, onInputChange, onKeyDown, onSend,
+  isMobile, pos, messages, input, thinking, onClose, onDragPointerDown, onDragPointerMove, onDragPointerUp, onInputChange, onKeyDown, onSend,
 }: Props) {
   return (
     <div
@@ -56,6 +57,11 @@ export default function NovaPanel({
             {msg.text}
           </div>
         ))}
+        {thinking && (
+          <div style={{ alignSelf: 'flex-start', background: '#1a1c21', color: '#8A8F98', padding: '9px 13px', borderRadius: 14, fontSize: 13 }}>
+            …
+          </div>
+        )}
       </div>
       <div style={{ display: 'flex', gap: 8, padding: 12, borderTop: '1px solid #1c1e23' }}>
         <input

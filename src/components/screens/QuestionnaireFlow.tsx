@@ -26,7 +26,7 @@ interface Props<T extends Row> {
   saveAnswer: (id: string, key: string, value: string) => Promise<void>;
   complete: (id: string, text: string) => Promise<void>;
   remove: (id: string) => Promise<void>;
-  generate: (answers: Record<string, string>) => string;
+  generate: (answers: Record<string, string>) => Promise<string>;
   getText: (row: T) => string | null;
   itemLabel: (row: T) => string;
   newLabel: string;
@@ -51,6 +51,8 @@ export default function QuestionnaireFlow<T extends Row>({
 }: Props<T>) {
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState('');
 
   useEffect(() => {
     setStep(0);
@@ -144,24 +146,39 @@ export default function QuestionnaireFlow<T extends Row>({
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+      <div style={{ display: 'flex', gap: 10, marginTop: 18, alignItems: 'center' }}>
         {step > 0 && (
-          <div style={ghostBtn} onClick={async () => { await saveAnswer(active.id, q.key, draft); setStep(step - 1); }}>Back</div>
+          <div
+            style={{ ...ghostBtn, pointerEvents: generating ? 'none' : 'auto', opacity: generating ? 0.5 : 1 }}
+            onClick={async () => { await saveAnswer(active.id, q.key, draft); setStep(step - 1); }}
+          >
+            Back
+          </div>
         )}
         <div
-          style={primaryBtn}
+          style={{ ...primaryBtn, pointerEvents: generating ? 'none' : 'auto', opacity: generating ? 0.6 : 1 }}
           onClick={async () => {
             await saveAnswer(active.id, q.key, draft);
             if (isLast) {
+              setGenerating(true);
+              setGenError('');
               const merged = { ...active.answers, [q.key]: draft };
-              await complete(active.id, generate(merged));
+              try {
+                const text = await generate(merged);
+                await complete(active.id, text);
+              } catch {
+                setGenError("Nova couldn't generate this — try again in a moment.");
+              } finally {
+                setGenerating(false);
+              }
             } else {
               setStep(step + 1);
             }
           }}
         >
-          {isLast ? 'Generate' : 'Next'}
+          {isLast ? (generating ? 'Generating…' : 'Generate') : 'Next'}
         </div>
+        {genError && <span style={{ fontSize: 12.5, color: '#c47a7a' }}>{genError}</span>}
       </div>
     </div>
   );

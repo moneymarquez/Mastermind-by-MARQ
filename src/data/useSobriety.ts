@@ -46,5 +46,10 @@ export function useSobriety() {
     await load();
   };
 
-  return { checkins, todayCheckin, streak, loading, saveToday };
+  const saveInsight = async (id: string, insight: string) => {
+    await supabase.from('sobriety_checkins').update({ ai_insight: insight }).eq('id', id);
+    await load();
+  };
+
+  return { checkins, todayCheckin, streak, loading, saveToday, saveInsight };
 }

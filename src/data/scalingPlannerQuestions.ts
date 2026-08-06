@@ -1,3 +1,5 @@
+import { askClaude } from '../lib/ai';
+
 export interface Question {
   key: string;
   prompt: string;
@@ -25,40 +27,17 @@ export const SCALING_PLANNER_QUESTIONS: Question[] = [
   { key: 'nextStep', prompt: "What's the very next action you could take this week?" },
 ];
 
-/** Deterministic template synthesis — a stand-in for real Nova-generated
- *  synthesis until the LLM layer exists (see ScalingPlannerScreen). */
-export function generatePlanText(answers: Record<string, string>): string {
-  const a = (k: string) => answers[k]?.trim() || '—';
-  return `# ${a('name') !== '—' ? a('name') : 'Untitled Business'} — Scaling Plan
-
-## Overview
-${a('oneLiner')}
-
-## Why It Matters
-${a('why')}
-
-## Target Customer & Problem
-Customer: ${a('customer')}
-Problem being solved: ${a('problem')}
-
-## Brand Direction
-${a('brand')}
-
-## Growth Strategy
-Ambition: ${a('ambition')}
-Revenue model: ${a('revenue')}
-
-## Resources & Timeline
-Resources available: ${a('resources')}
-Target timeline: ${a('timeline')}
-
-## Biggest Risk
-${a('risk')}
-
-## Definition of Success (12 months)
-${a('success')}
-
-## Immediate Next Step
-${a('nextStep')}
-`;
+/** Real Nova synthesis — sends the questionnaire answers to Claude and gets
+ *  back a genuine business plan, not a template fill-in. */
+export async function generatePlanText(answers: Record<string, string>): Promise<string> {
+  const qa = SCALING_PLANNER_QUESTIONS.map((q) => `${q.prompt}\n${answers[q.key]?.trim() || '(no answer)'}`).join('\n\n');
+  return askClaude({
+    system:
+      "You are Nova, Cristopher's business-scaling strategist inside Mastermind by MARQ. He just answered a " +
+      "guided questionnaire about a business idea — turn his answers into a real, useful scaling plan document. " +
+      'Use markdown headers (##), be specific and actionable, call out weak spots in his answers rather than just ' +
+      "restating them, and end with a concrete immediate next step. Don't pad with generic business-plan filler.",
+    messages: [{ role: 'user', content: qa }],
+    maxTokens: 1800,
+  });
 }

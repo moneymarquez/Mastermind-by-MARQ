@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Goal, GoalStep } from './types';
+import type { Goal, GoalCheckin, GoalStep } from './types';
 
-type GoalRow = Omit<Goal, 'steps'> & { goal_steps: GoalStep[] };
+type GoalRow = Omit<Goal, 'steps' | 'checkins'> & { goal_steps: GoalStep[]; goal_checkins: GoalCheckin[] };
 
 export function useGoals() {
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -11,13 +11,14 @@ export function useGoals() {
   const load = useCallback(async () => {
     const { data } = await supabase
       .from('goals')
-      .select('*, goal_steps(*)')
+      .select('*, goal_steps(*), goal_checkins(*)')
       .order('created_at', { ascending: false });
     const rows = (data ?? []) as unknown as GoalRow[];
     setGoals(
       rows.map((g) => ({
         ...g,
         steps: [...(g.goal_steps ?? [])].sort((a, b) => a.sort_order - b.sort_order),
+        checkins: [...(g.goal_checkins ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at)),
       }))
     );
     setLoading(false);
@@ -64,5 +65,15 @@ export function useGoals() {
     await load();
   };
 
-  return { goals, loading, addGoal, updateGoal, deleteGoal, addStep, toggleStep, removeStep };
+  const saveCritique = async (goalId: string, critique: string) => {
+    await supabase.from('goals').update({ ai_critique: critique, ai_critique_at: new Date().toISOString() }).eq('id', goalId);
+    await load();
+  };
+
+  const addCheckin = async (goalId: string, checkinText: string) => {
+    await supabase.from('goal_checkins').insert({ goal_id: goalId, checkin_text: checkinText });
+    await load();
+  };
+
+  return { goals, loading, addGoal, updateGoal, deleteGoal, addStep, toggleStep, removeStep, saveCritique, addCheckin };
 }

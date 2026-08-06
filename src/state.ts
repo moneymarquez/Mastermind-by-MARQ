@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { NAV_DATA, INITIAL_STICKY_IDEAS, PLACEHOLDER_NOTES } from './data';
 import type { Device, NovaMessage, Point, Screen, StickyIdea } from './types';
+import { askClaude, AiError } from './lib/ai';
 
 export interface AppState {
   direction: 1 | 2 | 3;
@@ -17,6 +18,7 @@ export interface AppState {
   novaDisconnected: boolean;
   novaMessages: NovaMessage[];
   novaInput: string;
+  novaThinking: boolean;
   dialCount: number;
   dialGoal: number;
   newIdeaText: string;
@@ -39,6 +41,7 @@ const initialState: AppState = {
   novaDisconnected: false,
   novaMessages: [{ from: 'nova', text: "Hey Cristopher — what do you need?" }],
   novaInput: '',
+  novaThinking: false,
   dialCount: 12,
   dialGoal: 40,
   newIdeaText: '',
@@ -150,23 +153,36 @@ export function useMastermindState() {
   const onNovaKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') sendNova();
   };
-  const sendNova = () => {
+  const sendNova = async () => {
     const text = state.novaInput.trim();
-    if (!text) return;
+    if (!text || state.novaThinking) return;
     const lower = text.toLowerCase();
-    let reply = "Noted — I'll keep that in mind.";
-    let after: (() => void) | null = null;
-    if (lower.includes('dial')) {
-      reply = 'Got it — opening Dialing for you.';
-      after = () => patch({ screen: 'dialing' });
-    } else if (lower.includes('not feeling') || lower.includes('tired') || lower.includes('stressed') || lower.includes('lunch')) {
-      reply = "Thanks for telling me — I've logged a check-in. Go easy on yourself today.";
-    }
-    patch((s) => ({
-      novaMessages: [...s.novaMessages, { from: 'user', text }, { from: 'nova', text: reply }],
-      novaInput: '',
+
+    const history = state.novaMessages.map((m) => ({
+      role: (m.from === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
+      content: m.text,
     }));
-    if (after) setTimeout(after, 500);
+    const firstUserIdx = history.findIndex((m) => m.role === 'user');
+    const trimmedHistory = firstUserIdx === -1 ? [] : history.slice(firstUserIdx);
+
+    patch((s) => ({ novaMessages: [...s.novaMessages, { from: 'user', text }], novaInput: '', novaThinking: true }));
+
+    let reply: string;
+    try {
+      reply = await askClaude({
+        system:
+          "You are Nova, Cristopher's personal AI inside Mastermind by MARQ — his personal operating system app " +
+          '(sobriety, fitness, macros, goals, mental health, and his business-scaling tools). Be direct, warm, and ' +
+          "concise — a few sentences, not an essay. You're a companion embedded in his day, not a generic chatbot.",
+        messages: [...trimmedHistory, { role: 'user', content: text }],
+        maxTokens: 500,
+      });
+    } catch (err) {
+      reply = err instanceof AiError ? err.message : 'Something went wrong reaching Nova — try again in a bit.';
+    }
+
+    patch((s) => ({ novaMessages: [...s.novaMessages, { from: 'nova', text: reply }], novaThinking: false }));
+    if (lower.includes('dial')) patch({ screen: 'dialing' });
   };
 
   const logCall = () => patch((s) => ({ dialCount: Math.min(s.dialGoal, s.dialCount + 1) }));

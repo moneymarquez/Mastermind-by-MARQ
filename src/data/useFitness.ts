@@ -1,19 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import type { FitnessWorkout } from './types';
+import type { FitnessPlan, FitnessPlanKind, FitnessWorkout } from './types';
 
 export function useFitness() {
   const [workouts, setWorkouts] = useState<FitnessWorkout[]>([]);
+  const [plans, setPlans] = useState<FitnessPlan[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const { data } = await supabase
-      .from('fitness_workouts')
-      .select('*')
-      .order('workout_date', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(50);
-    setWorkouts(data ?? []);
+    const [workoutsRes, plansRes] = await Promise.all([
+      supabase.from('fitness_workouts').select('*').order('workout_date', { ascending: false }).order('created_at', { ascending: false }).limit(50),
+      supabase.from('fitness_plans').select('*').order('created_at', { ascending: false }).limit(20),
+    ]);
+    setWorkouts(workoutsRes.data ?? []);
+    setPlans(plansRes.data ?? []);
     setLoading(false);
   }, []);
 
@@ -37,5 +37,10 @@ export function useFitness() {
     return workouts.filter((w) => new Date(`${w.workout_date}T00:00:00`) >= weekAgo).length;
   })();
 
-  return { workouts, loading, addWorkout, removeWorkout, weekCount };
+  const savePlan = async (kind: FitnessPlanKind, planText: string) => {
+    await supabase.from('fitness_plans').insert({ kind, plan_text: planText });
+    await load();
+  };
+
+  return { workouts, plans, loading, addWorkout, removeWorkout, weekCount, savePlan };
 }

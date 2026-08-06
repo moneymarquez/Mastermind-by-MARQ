@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import type { BrandLabBrief } from './types';
+import type { BrandLabBrief, BrandLabCopy } from './types';
 
 export function useBrandLab() {
   const [briefs, setBriefs] = useState<BrandLabBrief[]>([]);
@@ -22,8 +22,9 @@ export function useBrandLab() {
     reference_url_2: string | null;
     reference_url_3: string | null;
   }) => {
-    await supabase.from('brand_lab_briefs').insert(b);
+    const { data } = await supabase.from('brand_lab_briefs').insert(b).select().single();
     await load();
+    return data as BrandLabBrief | null;
   };
 
   const removeBrief = async (id: string) => {
@@ -31,5 +32,10 @@ export function useBrandLab() {
     await load();
   };
 
-  return { briefs, loading, addBrief, removeBrief };
+  const saveAiCopy = async (id: string, copy: BrandLabCopy) => {
+    await supabase.from('brand_lab_briefs').update({ ai_copy: copy }).eq('id', id);
+    await load();
+  };
+
+  return { briefs, loading, addBrief, removeBrief, saveAiCopy };
 }

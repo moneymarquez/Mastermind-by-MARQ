@@ -17,7 +17,7 @@ const primaryBtn: CSSProperties = {
 };
 
 export default function IdeaMakerScreen({ homeHeadStyle, homeSubStyle }: Props) {
-  const { sessions, messages, activeSessionId, setActiveSessionId, loading, startSession, sendMessage } = useIdeaMaker();
+  const { sessions, messages, activeSessionId, setActiveSessionId, loading, thinking, startSession, sendMessage } = useIdeaMaker();
   const [ideaInput, setIdeaInput] = useState('');
   const [chatInput, setChatInput] = useState('');
 
@@ -27,7 +27,7 @@ export default function IdeaMakerScreen({ homeHeadStyle, homeSubStyle }: Props) 
         <div style={homeHeadStyle}>Idea Maker</div>
         <div style={homeSubStyle}>Drop a raw idea — Nova takes a first pass, then digs in with you.</div>
         <div style={{ fontSize: 12, color: '#565b64', marginTop: 14, maxWidth: 560, lineHeight: 1.5 }}>
-          Nova's replies here are templated heuristics, not real reasoning yet — the back-and-forth structure is real, the "thinking" is a placeholder until the LLM layer is connected.
+          Real Nova, pressure-testing your idea back and forth — not a script.
         </div>
 
         <div style={{ display: 'flex', gap: 10, marginTop: 24, maxWidth: 640 }}>
@@ -93,6 +93,11 @@ export default function IdeaMakerScreen({ homeHeadStyle, homeSubStyle }: Props) 
             {m.text}
           </div>
         ))}
+        {thinking && (
+          <div style={{ alignSelf: 'flex-start', background: '#14161A', border: '1px solid #22262B', color: '#8A8F98', padding: '12px 16px', borderRadius: 14, fontSize: 13.5 }}>
+            …
+          </div>
+        )}
       </div>
       <div style={{ display: 'flex', gap: 10, maxWidth: 640 }}>
         <input
@@ -101,16 +106,16 @@ export default function IdeaMakerScreen({ homeHeadStyle, homeSubStyle }: Props) 
           value={chatInput}
           onChange={(e) => setChatInput(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && chatInput.trim()) {
+            if (e.key === 'Enter' && chatInput.trim() && !thinking) {
               sendMessage(chatInput.trim());
               setChatInput('');
             }
           }}
         />
         <div
-          style={primaryBtn}
+          style={{ ...primaryBtn, opacity: thinking ? 0.6 : 1, pointerEvents: thinking ? 'none' : 'auto' }}
           onClick={() => {
-            if (!chatInput.trim()) return;
+            if (!chatInput.trim() || thinking) return;
             sendMessage(chatInput.trim());
             setChatInput('');
           }}

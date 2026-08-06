@@ -1,11 +1,39 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useMacros } from '../../data/useMacros';
 import type { MealType } from '../../data/types';
+import { askClaude, extractJson, AiError } from '../../lib/ai';
+import { fileToBase64 } from '../../lib/image';
 
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
+}
+
+interface MealEstimate {
+  meal_type: MealType;
+  description: string;
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  confidence: 'low' | 'medium' | 'high';
+}
+
+async function estimateMealFromPhoto(image: { mediaType: string; data: string }): Promise<MealEstimate> {
+  const text = await askClaude({
+    system:
+      "You are Nova, a nutrition-estimation assistant inside Cristopher's personal tracker. " +
+      'Look at the photo of a meal and estimate its nutrition. Be a reasonable, experienced-eye estimator — ' +
+      "you won't be exact, so favor sensible round numbers over false precision. " +
+      'Respond with ONLY a JSON object, no prose, matching exactly: ' +
+      '{"meal_type": "breakfast"|"lunch"|"dinner"|"snack", "description": string (short, e.g. "Grilled chicken, rice, broccoli"), ' +
+      '"calories": number, "protein_g": number, "carbs_g": number, "fat_g": number, "confidence": "low"|"medium"|"high"}',
+    messages: [{ role: 'user', content: 'Estimate the nutrition in this meal photo.' }],
+    image,
+    maxTokens: 400,
+  });
+  return extractJson<MealEstimate>(text);
 }
 
 const inputStyle: CSSProperties = {
@@ -29,6 +57,34 @@ export default function MacrosScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const [ffRestaurant, setFfRestaurant] = useState('');
   const [ffItem, setFfItem] = useState('');
   const [ffCalories, setFfCalories] = useState('');
+  const [analyzing, setAnalyzing] = useState(false);
+  const [aiError, setAiError] = useState('');
+  const [aiConfidence, setAiConfidence] = useState<MealEstimate['confidence'] | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const onPhotoSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setAnalyzing(true);
+    setAiError('');
+    setAiConfidence(null);
+    try {
+      const image = await fileToBase64(file);
+      const estimate = await estimateMealFromPhoto(image);
+      setMealType(estimate.meal_type);
+      setCalories(String(Math.round(estimate.calories)));
+      setProtein(String(Math.round(estimate.protein_g)));
+      setCarbs(String(Math.round(estimate.carbs_g)));
+      setFat(String(Math.round(estimate.fat_g)));
+      setNote(estimate.description);
+      setAiConfidence(estimate.confidence);
+    } catch (err) {
+      setAiError(err instanceof AiError ? err.message : 'Could not analyze that photo — try again or enter values manually.');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
   const submitMeal = async () => {
     await addMeal({
@@ -42,6 +98,7 @@ export default function MacrosScreen({ homeHeadStyle, homeSubStyle }: Props) {
       note: note.trim() || null,
     });
     setRestaurant(''); setCalories(''); setProtein(''); setCarbs(''); setFat(''); setNote('');
+    setAiConfidence(null);
   };
 
   const submitFastFood = async () => {
@@ -74,7 +131,27 @@ export default function MacrosScreen({ homeHeadStyle, homeSubStyle }: Props) {
         ))}
       </div>
 
-      <div style={{ display: 'flex', gap: 10, marginTop: 24, flexWrap: 'wrap', maxWidth: 720, alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 24 }}>
+        <input ref={photoInputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={onPhotoSelected} />
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 999,
+            background: analyzing ? '#22262B' : '#F5F6F7', color: analyzing ? '#8A8F98' : '#0A0B0D',
+            fontSize: 13, fontWeight: 600, cursor: analyzing ? 'default' : 'pointer',
+          }}
+          onClick={() => !analyzing && photoInputRef.current?.click()}
+        >
+          {analyzing ? 'Analyzing photo…' : '📷 Snap a meal — AI counts it'}
+        </div>
+        {aiConfidence && (
+          <span style={{ fontSize: 12, color: '#8A8F98' }}>
+            AI estimate ({aiConfidence} confidence) — review below before logging.
+          </span>
+        )}
+      </div>
+      {aiError && <div style={{ fontSize: 12.5, color: '#c47a7a', marginTop: 8 }}>{aiError}</div>}
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap', maxWidth: 720, alignItems: 'center' }}>
         <select style={inputStyle} value={mealType} onChange={(e) => setMealType(e.target.value as MealType)}>
           {MEAL_TYPES.map((t) => <option key={t} value={t}>{t[0].toUpperCase() + t.slice(1)}</option>)}
         </select>

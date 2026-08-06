@@ -131,6 +131,7 @@ export default function Stage({ state, actions, onSignOut }: Props) {
           pos={state.novaPos || { x: vm.cx, y: vm.cy + 80 }}
           messages={state.novaMessages}
           input={state.novaInput}
+          thinking={state.novaThinking}
           onClose={actions.closeNova}
           onDragPointerDown={actions.onNovaPointerDown}
           onDragPointerMove={actions.onNovaPointerMove}

@@ -2,10 +2,23 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useMentalHealth } from '../../data/useMentalHealth';
 import type { Mood } from '../../data/types';
+import { askClaude } from '../../lib/ai';
 
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
+}
+
+async function reflectOnCheckin(mood: Mood, note: string): Promise<string> {
+  return askClaude({
+    system:
+      "You are Nova, a warm, grounded presence inside Cristopher's mental health check-in tracker. He just logged " +
+      "how he's feeling. Respond with a short, genuine reflection — not therapy, not a script, just something a " +
+      "thoughtful friend who knows him would say. If the mood is rough or bad, take it seriously and offer one " +
+      'small, concrete thing that might help right now. Plain text, 2-3 sentences.',
+    messages: [{ role: 'user', content: `Mood: ${mood}${note ? `\nNote: ${note}` : ''}` }],
+    maxTokens: 250,
+  });
 }
 
 const MOODS: { key: Mood; label: string }[] = [
@@ -27,15 +40,29 @@ function timeAgo(iso: string): string {
 }
 
 export default function MentalHealthScreen({ homeHeadStyle, homeSubStyle }: Props) {
-  const { checkins, loading, addCheckin } = useMentalHealth();
+  const { checkins, loading, addCheckin, saveInsight } = useMentalHealth();
   const [mood, setMood] = useState<Mood | null>(null);
   const [note, setNote] = useState('');
+  const [thinking, setThinking] = useState(false);
 
   const submit = async () => {
     if (!mood) return;
-    await addCheckin(mood, note);
+    const savedMood = mood;
+    const savedNote = note;
+    const inserted = await addCheckin(savedMood, savedNote);
     setMood(null);
     setNote('');
+    if (inserted) {
+      setThinking(true);
+      try {
+        const insight = await reflectOnCheckin(savedMood, savedNote);
+        await saveInsight(inserted.id, insight);
+      } catch {
+        // Silent — the check-in itself already saved; the reflection is a bonus.
+      } finally {
+        setThinking(false);
+      }
+    }
   };
 
   return (
@@ -77,6 +104,7 @@ export default function MentalHealthScreen({ homeHeadStyle, homeSubStyle }: Prop
         >
           Log check-in
         </div>
+        {thinking && <div style={{ fontSize: 12, color: '#565b64', marginTop: 10 }}>Nova is reflecting on that…</div>}
       </div>
 
       <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', border: '1px solid #22262B', borderRadius: 14, overflow: 'hidden', maxWidth: 520 }}>
@@ -87,6 +115,11 @@ export default function MentalHealthScreen({ homeHeadStyle, homeSubStyle }: Prop
               <span style={{ fontSize: 12, color: '#565b64' }}>{timeAgo(c.created_at)}</span>
             </div>
             {c.note && <div style={{ fontSize: 12.5, color: '#8A8F98', marginTop: 4 }}>{c.note}</div>}
+            {c.ai_insight && (
+              <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #1c1e23' }}>
+                <div style={{ fontSize: 12.5, color: '#C7CAD1', lineHeight: 1.6 }}>{c.ai_insight}</div>
+              </div>
+            )}
           </div>
         ))}
         {!loading && checkins.length === 0 && (

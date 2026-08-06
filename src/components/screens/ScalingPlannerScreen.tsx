@@ -19,7 +19,7 @@ export default function ScalingPlannerScreen({ homeHeadStyle, homeSubStyle }: Pr
       homeSubStyle={homeSubStyle}
       title="Scaling Planner"
       subtitle="The business fundamentals — pairs with Brand Lab for the visual side."
-      flagNote="Nova-assisted answering/refinement and true AI synthesis aren't live yet — this generates a structured plan from your answers directly. Swap in once the Nova reasoning layer is connected."
+      flagNote="Nova reads your answers and writes a real plan — not a template fill-in. Guided answer refinement mid-questionnaire isn't live yet, just the final synthesis."
       questions={SCALING_PLANNER_QUESTIONS}
       rows={rows}
       loading={loading}

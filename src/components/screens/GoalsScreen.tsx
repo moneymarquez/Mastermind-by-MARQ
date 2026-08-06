@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useGoals } from '../../data/useGoals';
 import type { Goal } from '../../data/types';
+import { askClaude, AiError } from '../../lib/ai';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -13,17 +14,85 @@ const inputStyle: CSSProperties = {
   color: '#F5F6F7', fontSize: 13.5, outline: 'none',
 };
 
-function GoalCard({ goal, onAddStep, onToggleStep, onRemoveStep, onSaveProgress, onDelete }: {
+function goalContext(goal: Goal): string {
+  const stepsText = goal.steps.length
+    ? goal.steps.map((s) => `- [${s.done ? 'x' : ' '}] ${s.description}`).join('\n')
+    : '(no steps added yet)';
+  return [
+    `Title: ${goal.title}`,
+    goal.why ? `Why it matters: ${goal.why}` : null,
+    goal.category ? `Category: ${goal.category}` : null,
+    goal.target_cost != null ? `Target: $${goal.target_cost.toLocaleString()} (saved so far: $${goal.current_saved.toLocaleString()})` : null,
+    goal.deadline ? `Deadline: ${goal.deadline}` : null,
+    `Steps:\n${stepsText}`,
+  ].filter(Boolean).join('\n');
+}
+
+async function critiqueGoal(goal: Goal): Promise<string> {
+  return askClaude({
+    system:
+      "You are Nova, Cristopher's direct, honest accountability coach inside his personal tracker. " +
+      "Critique the goal below — call out anything vague, unrealistic, or missing a real plan. Then give " +
+      'concrete, specific next steps that would actually move him toward it (not generic advice). Plain text, ' +
+      'no markdown headers, a few short paragraphs, direct tone.',
+    messages: [{ role: 'user', content: goalContext(goal) }],
+    maxTokens: 700,
+  });
+}
+
+async function checkinOnGoal(goal: Goal): Promise<string> {
+  const recentCheckins = goal.checkins.slice(0, 3).map((c) => `- ${c.checkin_text}`).join('\n') || '(no prior check-ins)';
+  return askClaude({
+    system:
+      "You are Nova, checking in on Cristopher's progress toward this goal. Look at where things stand and the " +
+      'recent check-in history, then give a short, honest read on his progress and ONE specific thing to do next. ' +
+      'Plain text, 2-4 sentences, direct — not generic cheerleading.',
+    messages: [{ role: 'user', content: `${goalContext(goal)}\n\nRecent check-ins:\n${recentCheckins}` }],
+    maxTokens: 300,
+  });
+}
+
+function GoalCard({ goal, onAddStep, onToggleStep, onRemoveStep, onSaveProgress, onDelete, onSaveCritique, onAddCheckin }: {
   goal: Goal;
   onAddStep: (goalId: string, description: string) => void;
   onToggleStep: (stepId: string, done: boolean) => void;
   onRemoveStep: (stepId: string) => void;
   onSaveProgress: (goalId: string, value: number) => void;
   onDelete: (goalId: string) => void;
+  onSaveCritique: (goalId: string, critique: string) => Promise<void>;
+  onAddCheckin: (goalId: string, text: string) => Promise<void>;
 }) {
   const [stepText, setStepText] = useState('');
   const [savedInput, setSavedInput] = useState(String(goal.current_saved));
+  const [busy, setBusy] = useState<'critique' | 'checkin' | null>(null);
+  const [aiError, setAiError] = useState('');
   const pct = goal.target_cost ? Math.min(100, (goal.current_saved / goal.target_cost) * 100) : 0;
+
+  const runCritique = async () => {
+    setBusy('critique');
+    setAiError('');
+    try {
+      const text = await critiqueGoal(goal);
+      await onSaveCritique(goal.id, text);
+    } catch (err) {
+      setAiError(err instanceof AiError ? err.message : 'Could not generate a critique — try again.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const runCheckin = async () => {
+    setBusy('checkin');
+    setAiError('');
+    try {
+      const text = await checkinOnGoal(goal);
+      await onAddCheckin(goal.id, text);
+    } catch (err) {
+      setAiError(err instanceof AiError ? err.message : 'Could not run a check-in — try again.');
+    } finally {
+      setBusy(null);
+    }
+  };
 
   return (
     <div style={{ background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: 22 }}>
@@ -84,12 +153,46 @@ function GoalCard({ goal, onAddStep, onToggleStep, onRemoveStep, onSaveProgress,
           }}
         />
       </div>
+
+      <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>
+        <div
+          style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, background: busy ? '#22262B' : '#F5F6F7', color: busy ? '#8A8F98' : '#0A0B0D', fontSize: 12.5, fontWeight: 600, cursor: busy ? 'default' : 'pointer' }}
+          onClick={() => !busy && runCritique()}
+        >
+          {busy === 'critique' ? 'Thinking…' : '✨ AI critique'}
+        </div>
+        <div
+          style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, border: '1px solid #22262B', color: busy ? '#565b64' : '#8A8F98', fontSize: 12.5, cursor: busy ? 'default' : 'pointer' }}
+          onClick={() => !busy && runCheckin()}
+        >
+          {busy === 'checkin' ? 'Checking in…' : '✨ AI check-in'}
+        </div>
+      </div>
+      {aiError && <div style={{ fontSize: 12, color: '#c47a7a', marginTop: 8 }}>{aiError}</div>}
+
+      {goal.ai_critique && (
+        <div style={{ marginTop: 14, background: '#101114', border: '1px solid #22262B', borderRadius: 10, padding: '12px 14px' }}>
+          <div style={{ fontSize: 11, color: '#8A8F98', marginBottom: 6 }}>Nova's critique</div>
+          <div style={{ fontSize: 12.5, color: '#C7CAD1', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{goal.ai_critique}</div>
+        </div>
+      )}
+
+      {goal.checkins.length > 0 && (
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {goal.checkins.slice(0, 3).map((c) => (
+            <div key={c.id} style={{ background: '#101114', border: '1px solid #1c1e23', borderRadius: 10, padding: '10px 14px' }}>
+              <div style={{ fontSize: 10.5, color: '#565b64', marginBottom: 4 }}>{new Date(c.created_at).toLocaleDateString()} check-in</div>
+              <div style={{ fontSize: 12.5, color: '#C7CAD1', lineHeight: 1.6 }}>{c.checkin_text}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
-  const { goals, loading, addGoal, updateGoal, deleteGoal, addStep, toggleStep, removeStep } = useGoals();
+  const { goals, loading, addGoal, updateGoal, deleteGoal, addStep, toggleStep, removeStep, saveCritique, addCheckin } = useGoals();
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
   const [why, setWhy] = useState('');
@@ -152,6 +255,8 @@ export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
             onRemoveStep={removeStep}
             onSaveProgress={(id, v) => updateGoal(id, { current_saved: v })}
             onDelete={deleteGoal}
+            onSaveCritique={saveCritique}
+            onAddCheckin={addCheckin}
           />
         ))}
       </div>

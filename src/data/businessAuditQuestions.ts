@@ -1,4 +1,5 @@
 import type { Question } from './scalingPlannerQuestions';
+import { askClaude } from '../lib/ai';
 
 // Sourced from Cristopher's "Scaling 101" curriculum (8 phases / 30 topics:
 // Foundation, Funnel Mastery, Traffic & Acquisition, Retention & LTV, Data &
@@ -156,27 +157,28 @@ export const BUSINESS_AUDIT_QUESTIONS: Question[] = [
   },
 ];
 
-/** Deterministic template synthesis grouped by curriculum phase, with a thin-
- *  answer gap check — a stand-in for a real scored audit until the Nova LLM
- *  layer exists (see BusinessAuditsScreen). */
-export function generateAuditSummary(answers: Record<string, string>): string {
-  let out = '# Business Audit Summary\n\nStructured around the Scaling 101 curriculum — Foundation, Funnel, Traffic, Retention, Data, Systems, Advanced Scaling.\n';
-
+/** Real Nova-scored audit — sends the answers, grouped by curriculum phase,
+ *  to Claude and gets back genuine diagnosis instead of a template echo. */
+export async function generateAuditSummary(answers: Record<string, string>): Promise<string> {
   let currentPhase = '';
+  let qa = '';
   for (const q of BUSINESS_AUDIT_QUESTIONS) {
     if (q.phase !== currentPhase) {
       currentPhase = q.phase ?? '';
-      out += `\n## ${currentPhase}\n`;
+      qa += `\n### ${currentPhase}\n`;
     }
-    const answer = answers[q.key]?.trim() || '— not answered —';
-    out += `\n${q.prompt}\n${answer}\n`;
+    qa += `\n[${q.priority}] ${q.prompt}\nAnswer: ${answers[q.key]?.trim() || '(not answered)'}\n`;
   }
 
-  const gaps = BUSINESS_AUDIT_QUESTIONS.filter((q) => (answers[q.key]?.trim().length ?? 0) < 8);
-  out += '\n## Where the gaps are\n';
-  out += gaps.length
-    ? gaps.map((g) => `- [${g.priority}] ${g.prompt}\n  ${g.insight}`).join('\n')
-    : 'No thin answers — every question got a real answer. Good sign.';
-
-  return out;
+  return askClaude({
+    system:
+      "You are Nova, running a business audit for Cristopher inside Mastermind by MARQ, grounded in his Scaling " +
+      '101 curriculum (Foundation, Funnel Mastery, Traffic & Acquisition, Retention & LTV, Data & Analytics, ' +
+      'Systems & Operations, Advanced Scaling). He just answered 16 diagnostic questions grouped by phase below, ' +
+      'each tagged with its priority. Score his business honestly — group your response by phase with markdown ' +
+      'headers (##), call out real gaps and risks (especially unanswered or thin CRITICAL items), and close with a ' +
+      "ranked list of the 3 things he should fix first. Be direct, not diplomatic filler.",
+    messages: [{ role: 'user', content: qa }],
+    maxTokens: 2000,
+  });
 }
