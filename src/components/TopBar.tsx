@@ -23,7 +23,6 @@ const tabStyle = (active: boolean): CSSProperties => ({
 
 const SCREEN_TABS: { id: Screen; label: string }[] = [
   { id: 'home', label: 'Home' },
-  { id: 'crm-list', label: 'Leads' },
   { id: 'dialing', label: 'Dialing' },
 ];
 

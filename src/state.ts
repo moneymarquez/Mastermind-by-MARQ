@@ -1,16 +1,13 @@
 import { useRef, useState } from 'react';
-import { NAV_DATA, INITIAL_LEADS, INITIAL_STICKY_IDEAS } from './data';
-import type { Device, EditingLead, Lead, NovaMessage, Point, Screen, StickyIdea } from './types';
+import { NAV_DATA, INITIAL_STICKY_IDEAS, PLACEHOLDER_NOTES } from './data';
+import type { Device, NovaMessage, Point, Screen, StickyIdea } from './types';
 
 export interface AppState {
   direction: 1 | 2 | 3;
   device: Device;
   screen: Screen;
   placeholderLabel: string;
-  selectedLeadId: number | null;
-  leadFilter: string;
-  showLeadModal: boolean;
-  editingLead: EditingLead | null;
+  placeholderNote: string;
   settingsExpanded: boolean;
   navDrawerOpen: boolean;
   circlePos: Point;
@@ -25,7 +22,6 @@ export interface AppState {
   newIdeaText: string;
   newIdeaEst: string;
   stickyIdeas: StickyIdea[];
-  leads: Lead[];
 }
 
 const initialState: AppState = {
@@ -33,10 +29,7 @@ const initialState: AppState = {
   device: 'desktop',
   screen: 'home',
   placeholderLabel: '',
-  selectedLeadId: null,
-  leadFilter: 'All',
-  showLeadModal: false,
-  editingLead: null,
+  placeholderNote: '',
   settingsExpanded: false,
   navDrawerOpen: false,
   circlePos: { x: 320, y: 280 },
@@ -51,7 +44,6 @@ const initialState: AppState = {
   newIdeaText: '',
   newIdeaEst: '',
   stickyIdeas: INITIAL_STICKY_IDEAS,
-  leads: INITIAL_LEADS,
 };
 
 export function useMastermindState() {
@@ -71,56 +63,25 @@ export function useMastermindState() {
   const setDirection = (d: 1 | 2 | 3) => patch({ direction: d });
   const setDevice = (d: Device) => patch({ device: d });
   const goScreen = (id: Screen) => patch({ screen: id });
-  const setFilter = (f: string) => patch({ leadFilter: f });
 
   const toggleDrawer = () => patch((s) => ({ navDrawerOpen: !s.navDrawerOpen }));
   const closeDrawer = () => patch({ navDrawerOpen: false });
+
+  const directScreens: Screen[] = ['home', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'scaling-planner', 'audits', 'brand-lab', 'idea-maker'];
 
   const navigateTo = (id: string) => {
     if (id === 'settings') {
       patch((s) => ({ settingsExpanded: !s.settingsExpanded }));
       return;
     }
-    const directScreens = ['home', 'crm-list', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental'];
-    if (directScreens.includes(id)) {
+    if ((directScreens as string[]).includes(id)) {
       patch({ screen: id as Screen, navDrawerOpen: false });
       return;
     }
     let label = id;
     NAV_DATA.forEach((g) => g.items.forEach((it) => { if (it.id === id) label = it.label; }));
-    patch({ screen: 'placeholder', placeholderLabel: label, navDrawerOpen: false });
-  };
-
-  const selectLead = (id: number) => patch({ screen: 'crm-detail', selectedLeadId: id });
-  const backToList = () => patch({ screen: 'crm-list', selectedLeadId: null });
-  const openAddModal = () =>
-    patch({
-      showLeadModal: true,
-      editingLead: { id: null, name: '', company: '', phone: '', status: 'New', source: 'Website', value: '' },
-    });
-  const openEditModal = () => {
-    setState((s) => {
-      const lead = s.leads.find((l) => l.id === s.selectedLeadId);
-      if (!lead) return s;
-      return { ...s, showLeadModal: true, editingLead: { ...lead } };
-    });
-  };
-  const closeModal = () => patch({ showLeadModal: false, editingLead: null });
-  const stopProp = (e: React.SyntheticEvent) => e.stopPropagation();
-  const editField = (field: keyof EditingLead, val: string) =>
-    patch((s) => ({ editingLead: s.editingLead ? { ...s.editingLead, [field]: val } : s.editingLead }));
-  const saveLead = () => {
-    setState((s) => {
-      if (!s.editingLead) return s;
-      let leads = s.leads.slice();
-      const val: Lead = { ...(s.editingLead as any), value: Number(s.editingLead.value) || 0 };
-      if (val.id) leads = leads.map((l) => (l.id === val.id ? val : l));
-      else {
-        const newId = Math.max(0, ...leads.map((l) => l.id)) + 1;
-        leads.push({ ...val, id: newId });
-      }
-      return { ...s, leads, showLeadModal: false, editingLead: null };
-    });
+    const note = PLACEHOLDER_NOTES[id] ?? 'This section is coming soon.';
+    patch({ screen: 'placeholder', placeholderLabel: label, placeholderNote: note, navDrawerOpen: false });
   };
 
   const onCirclePointerDown = (e: React.PointerEvent) => {
@@ -230,18 +191,9 @@ export function useMastermindState() {
       setDirection,
       setDevice,
       goScreen,
-      setFilter,
       toggleDrawer,
       closeDrawer,
       navigateTo,
-      selectLead,
-      backToList,
-      openAddModal,
-      openEditModal,
-      closeModal,
-      stopProp,
-      editField,
-      saveLead,
       onCirclePointerDown,
       onCirclePointerMove,
       onCirclePointerUp,

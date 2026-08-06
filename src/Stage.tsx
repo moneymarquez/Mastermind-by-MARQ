@@ -4,10 +4,7 @@ import NavDrawer from './components/NavDrawer';
 import NovaTrigger from './components/NovaTrigger';
 import NovaPanel from './components/NovaPanel';
 import RemindersBox from './components/RemindersBox';
-import LeadModal from './components/LeadModal';
 import HomeScreen from './components/screens/HomeScreen';
-import CrmListScreen from './components/screens/CrmListScreen';
-import CrmDetailScreen from './components/screens/CrmDetailScreen';
 import DialingScreen from './components/screens/DialingScreen';
 import StickySpotScreen from './components/screens/StickySpotScreen';
 import SobrietyScreen from './components/screens/SobrietyScreen';
@@ -15,11 +12,18 @@ import FitnessScreen from './components/screens/FitnessScreen';
 import MacrosScreen from './components/screens/MacrosScreen';
 import GoalsScreen from './components/screens/GoalsScreen';
 import MentalHealthScreen from './components/screens/MentalHealthScreen';
+import ScalingPlannerScreen from './components/screens/ScalingPlannerScreen';
+import BusinessAuditsScreen from './components/screens/BusinessAuditsScreen';
+import IdeaMakerScreen from './components/screens/IdeaMakerScreen';
+import BrandLabScreen from './components/screens/BrandLabScreen';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
 import { buildViewModel } from './viewModel';
 import type { AppState, MastermindActions } from './state';
 
-const BUILT_SCREENS = ['home', 'crm-list', 'crm-detail', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental'];
+const BUILT_SCREENS = [
+  'home', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
+  'scaling-planner', 'audits', 'brand-lab', 'idea-maker',
+];
 
 interface Props {
   state: AppState;
@@ -64,31 +68,6 @@ export default function Stage({ state, actions, onSignOut }: Props) {
           <HomeScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} statGridStyle={vm.statGridStyle} statCards={vm.statCards} />
         )}
 
-        {state.screen === 'crm-list' && (
-          <CrmListScreen
-            isMobile={isMobile}
-            homeHeadStyle={vm.homeHeadStyle}
-            homeSubStyle={vm.homeSubStyle}
-            filterChips={vm.filterChips}
-            leadFilter={state.leadFilter}
-            onFilter={actions.setFilter}
-            filteredLeads={vm.filteredLeads}
-            onSelectLead={actions.selectLead}
-            onOpenAddModal={actions.openAddModal}
-          />
-        )}
-
-        {state.screen === 'crm-detail' && (
-          <CrmDetailScreen
-            isMobile={isMobile}
-            homeHeadStyle={vm.homeHeadStyle}
-            homeSubStyle={vm.homeSubStyle}
-            selectedLead={vm.selectedLead}
-            onBack={actions.backToList}
-            onEdit={actions.openEditModal}
-          />
-        )}
-
         {state.screen === 'dialing' && (
           <DialingScreen dialCount={state.dialCount} dialGoal={state.dialGoal} onLogCall={actions.logCall} />
         )}
@@ -125,8 +104,24 @@ export default function Stage({ state, actions, onSignOut }: Props) {
           <MentalHealthScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
+        {state.screen === 'scaling-planner' && (
+          <ScalingPlannerScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'audits' && (
+          <BusinessAuditsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'brand-lab' && (
+          <BrandLabScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'idea-maker' && (
+          <IdeaMakerScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
         {(state.screen === 'placeholder' || !BUILT_SCREENS.includes(state.screen)) && (
-          <PlaceholderScreen isMobile={isMobile} label={state.placeholderLabel} />
+          <PlaceholderScreen isMobile={isMobile} label={state.placeholderLabel} note={state.placeholderNote} />
         )}
       </div>
 
@@ -147,16 +142,6 @@ export default function Stage({ state, actions, onSignOut }: Props) {
       )}
 
       <RemindersBox isMobile={isMobile} />
-
-      {state.showLeadModal && state.editingLead && (
-        <LeadModal
-          editingLead={state.editingLead}
-          onClose={actions.closeModal}
-          onStopProp={actions.stopProp}
-          onField={actions.editField}
-          onSave={actions.saveLead}
-        />
-      )}
     </div>
   );
 }

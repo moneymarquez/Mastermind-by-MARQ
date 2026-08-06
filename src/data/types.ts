@@ -75,3 +75,46 @@ export interface Goal {
   created_at: string;
   steps: GoalStep[];
 }
+
+export type QuestionnaireStatus = 'in_progress' | 'complete';
+
+export interface ScalingPlan {
+  id: string;
+  status: QuestionnaireStatus;
+  answers: Record<string, string>;
+  plan_text: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BusinessAudit {
+  id: string;
+  status: QuestionnaireStatus;
+  answers: Record<string, string>;
+  summary_text: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IdeaSession {
+  id: string;
+  idea_text: string;
+  created_at: string;
+}
+
+export interface IdeaMessage {
+  id: string;
+  session_id: string;
+  from_role: 'user' | 'nova';
+  text: string;
+  created_at: string;
+}
+
+export interface BrandLabBrief {
+  id: string;
+  direction: string;
+  reference_url_1: string | null;
+  reference_url_2: string | null;
+  reference_url_3: string | null;
+  created_at: string;
+}
