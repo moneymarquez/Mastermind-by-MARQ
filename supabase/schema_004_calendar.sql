@@ -1,9 +1,27 @@
 -- Mastermind by MARQ — Phase 4 schema (Schedule + Event Adder + Contacts)
--- Run once, after schema.sql, schema_002_scaling.sql, and schema_003_ai.sql, in the Supabase SQL editor.
+-- Run once in the Supabase SQL editor, after schema.sql / schema_002_scaling.sql / schema_003_ai.sql.
+--
+-- If you already created `contacts`/`events` by hand without `user_id`/RLS
+-- (and with `meta` instead of `details`), the block below drops and
+-- recreates them from scratch — safe specifically because those tables are
+-- brand new and hold no real data yet. If you haven't created them at all,
+-- this block is a no-op and the `create table if not exists` below handles
+-- it normally.
+do $$
+begin
+  if to_regclass('public.events') is not null then
+    execute 'drop table events cascade';
+  end if;
+  if to_regclass('public.contacts') is not null then
+    execute 'drop table contacts cascade';
+  end if;
+end $$;
 
 -- ── Contacts ────────────────────────────────────────────────────────────
 -- Shared by the DIALING and SCALEZ event tabs. Deduped client-side on
--- phone OR email before insert (see src/data/useContacts.ts).
+-- phone OR email before insert (see src/data/useContacts.ts) — a native
+-- Postgres upsert can't express "match on phone OR email" as a single
+-- conflict target, so the app queries first and updates-or-inserts.
 create table if not exists contacts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
