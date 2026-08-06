@@ -1,6 +1,5 @@
 import type { Config, Context } from '@netlify/functions';
 import Anthropic from '@anthropic-ai/sdk';
-import { createClient } from '@supabase/supabase-js';
 
 const MODEL = 'claude-opus-5';
 
@@ -40,9 +39,14 @@ export default async (req: Request, _context: Context) => {
     return new Response(JSON.stringify({ error: 'Server misconfigured: missing ANTHROPIC_API_KEY' }), { status: 500 });
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
-  const { data: userData, error: userError } = await supabase.auth.getUser(token);
-  if (userError || !userData?.user) {
+  // Validate the JWT via Supabase's Auth REST endpoint directly, rather than constructing a
+  // full @supabase/supabase-js client here — that client initializes a Realtime (WebSocket)
+  // client as a side effect of createClient(), which crashes on Netlify's function runtime
+  // ("Node.js detected but native WebSocket not found") even though we never use Realtime.
+  const authRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    headers: { Authorization: `Bearer ${token}`, apikey: supabaseAnonKey },
+  });
+  if (!authRes.ok) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
 
