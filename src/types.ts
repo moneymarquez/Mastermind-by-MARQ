@@ -4,6 +4,11 @@ export type Screen =
   | 'crm-detail'
   | 'dialing'
   | 'sticky-spot'
+  | 'sobriety'
+  | 'fitness'
+  | 'macros'
+  | 'goals'
+  | 'mental'
   | 'placeholder';
 
 export type Device = 'desktop' | 'mobile';

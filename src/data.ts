@@ -50,7 +50,7 @@ export const NAV_DATA: NavGroup[] = [
         label: 'Settings',
         icon: 'ph-gear-six',
         collapsible: true,
-        sub: ['Account', 'Prompt & Voice', 'Notifications'],
+        sub: ['Account', 'Prompt & Voice', 'Notifications', 'Sign Out'],
       },
       { id: 'codelab', label: 'Code Lab', icon: 'ph-terminal-window' },
     ],

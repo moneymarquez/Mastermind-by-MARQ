@@ -10,17 +10,25 @@ import CrmListScreen from './components/screens/CrmListScreen';
 import CrmDetailScreen from './components/screens/CrmDetailScreen';
 import DialingScreen from './components/screens/DialingScreen';
 import StickySpotScreen from './components/screens/StickySpotScreen';
+import SobrietyScreen from './components/screens/SobrietyScreen';
+import FitnessScreen from './components/screens/FitnessScreen';
+import MacrosScreen from './components/screens/MacrosScreen';
+import GoalsScreen from './components/screens/GoalsScreen';
+import MentalHealthScreen from './components/screens/MentalHealthScreen';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
 import { buildViewModel } from './viewModel';
 import type { AppState, MastermindActions } from './state';
 
+const BUILT_SCREENS = ['home', 'crm-list', 'crm-detail', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental'];
+
 interface Props {
   state: AppState;
   actions: MastermindActions;
+  onSignOut: () => void;
 }
 
-export default function Stage({ state, actions }: Props) {
-  const vm = buildViewModel(state, actions.navigateTo);
+export default function Stage({ state, actions, onSignOut }: Props) {
+  const vm = buildViewModel(state, actions.navigateTo, onSignOut);
   const { isMobile } = vm;
 
   const stageStyle: CSSProperties = {
@@ -97,8 +105,27 @@ export default function Stage({ state, actions }: Props) {
           />
         )}
 
-        {(state.screen === 'placeholder' ||
-          !['home', 'crm-list', 'crm-detail', 'dialing', 'sticky-spot'].includes(state.screen)) && (
+        {state.screen === 'sobriety' && (
+          <SobrietyScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'fitness' && (
+          <FitnessScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'macros' && (
+          <MacrosScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'goals' && (
+          <GoalsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'mental' && (
+          <MentalHealthScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {(state.screen === 'placeholder' || !BUILT_SCREENS.includes(state.screen)) && (
           <PlaceholderScreen isMobile={isMobile} label={state.placeholderLabel} />
         )}
       </div>

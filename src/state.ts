@@ -81,8 +81,9 @@ export function useMastermindState() {
       patch((s) => ({ settingsExpanded: !s.settingsExpanded }));
       return;
     }
-    if (id === 'home' || id === 'crm-list' || id === 'dialing' || id === 'sticky-spot') {
-      patch({ screen: id, navDrawerOpen: false });
+    const directScreens = ['home', 'crm-list', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental'];
+    if (directScreens.includes(id)) {
+      patch({ screen: id as Screen, navDrawerOpen: false });
       return;
     }
     let label = id;

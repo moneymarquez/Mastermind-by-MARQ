@@ -11,7 +11,12 @@ export interface NavRow {
   onClick?: () => void;
 }
 
-export function buildNavRows(screen: string, settingsExpanded: boolean, navigateTo: (id: string) => void): NavRow[] {
+export function buildNavRows(
+  screen: string,
+  settingsExpanded: boolean,
+  navigateTo: (id: string) => void,
+  onSignOut: () => void
+): NavRow[] {
   const rows: NavRow[] = [];
   NAV_DATA.forEach((g) => {
     if (g.group) {
@@ -31,7 +36,7 @@ export function buildNavRows(screen: string, settingsExpanded: boolean, navigate
       });
       if (it.collapsible && it.id === 'settings' && settingsExpanded) {
         (it.sub || []).forEach((label) => {
-          rows.push({ kind: 'sub', key: `sub-${label}`, label });
+          rows.push({ kind: 'sub', key: `sub-${label}`, label, onClick: label === 'Sign Out' ? onSignOut : undefined });
         });
       }
     });

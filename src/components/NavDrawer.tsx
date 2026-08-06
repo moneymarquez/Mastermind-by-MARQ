@@ -45,7 +45,11 @@ export default function NavDrawer({ open, rows, onToggle, onClose }: Props) {
               }
               if (row.kind === 'sub') {
                 return (
-                  <div key={row.key} style={{ display: 'block', padding: '7px 10px 7px 38px' }}>
+                  <div
+                    key={row.key}
+                    style={{ display: 'block', padding: '7px 10px 7px 38px', cursor: row.onClick ? 'pointer' : 'default' }}
+                    onClick={row.onClick}
+                  >
                     <span style={{ fontSize: 12.5, color: '#8A8F98' }}>{row.label}</span>
                   </div>
                 );

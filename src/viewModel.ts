@@ -5,14 +5,14 @@ import { buildNavRows } from './navRows';
 import type { AppState } from './state';
 import type { Lead } from './types';
 
-export function buildViewModel(state: AppState, navigateTo: (id: string) => void) {
+export function buildViewModel(state: AppState, navigateTo: (id: string) => void, onSignOut: () => void) {
   const s = state;
   const dir = s.direction;
   const isMobile = s.device === 'mobile';
   const geo = computeGeometry(s, isMobile);
   const { circleSize, stageWidth, stageHeight, cx, cy } = geo;
 
-  const navRows = buildNavRows(s.screen, s.settingsExpanded, navigateTo);
+  const navRows = buildNavRows(s.screen, s.settingsExpanded, navigateTo, onSignOut);
 
   const contentStyle: CSSProperties = {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
