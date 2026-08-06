@@ -16,13 +16,15 @@ import ScalingPlannerScreen from './components/screens/ScalingPlannerScreen';
 import BusinessAuditsScreen from './components/screens/BusinessAuditsScreen';
 import IdeaMakerScreen from './components/screens/IdeaMakerScreen';
 import BrandLabScreen from './components/screens/BrandLabScreen';
+import ScheduleScreen from './components/screens/ScheduleScreen';
+import ContactsScreen from './components/screens/ContactsScreen';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
 import { buildViewModel } from './viewModel';
 import type { AppState, MastermindActions } from './state';
 
 const BUILT_SCREENS = [
   'home', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
-  'scaling-planner', 'audits', 'brand-lab', 'idea-maker',
+  'scaling-planner', 'audits', 'brand-lab', 'idea-maker', 'schedule', 'contacts',
 ];
 
 interface Props {
@@ -118,6 +120,14 @@ export default function Stage({ state, actions, onSignOut }: Props) {
 
         {state.screen === 'idea-maker' && (
           <IdeaMakerScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'schedule' && (
+          <ScheduleScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'contacts' && (
+          <ContactsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {(state.screen === 'placeholder' || !BUILT_SCREENS.includes(state.screen)) && (

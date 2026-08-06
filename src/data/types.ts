@@ -143,6 +143,65 @@ export interface BrandLabCopy {
   editorial: BrandLabCopyVariant;
 }
 
+export type ContactSource = 'dialing' | 'scalez' | 'manual';
+
+export interface Contact {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  business_name: string | null;
+  source: ContactSource;
+  status: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type EventType = 'holiday' | 'dialing' | 'scalez';
+
+export const DIALING_STATUSES = ['new', 'contacted', 'appointment set', 'no-show', 'closed', 'dead'] as const;
+export type DialingStatus = (typeof DIALING_STATUSES)[number];
+
+export const SCALEZ_STAGES = ['audit scheduled', 'audit complete', 'proposal sent', 'negotiating', 'closed-won', 'closed-lost'] as const;
+export type ScalezStage = (typeof SCALEZ_STAGES)[number];
+
+export const LEAD_SOURCES = ['cold call', 'referral', 'inbound', 'other'] as const;
+export type LeadSource = (typeof LEAD_SOURCES)[number];
+
+export interface DialingDetails {
+  first_name: string;
+  last_name: string;
+  phone: string;
+  email: string;
+  business_name: string;
+  lead_source: LeadSource;
+  follow_up_date: string | null;
+}
+
+export interface ScalezDetails {
+  business_name: string;
+  contact_name: string;
+  phone: string;
+  email: string;
+  pain_points: string;
+  budget_range: string;
+}
+
+export interface CalendarEvent {
+  id: string;
+  type: EventType;
+  event_date: string;
+  start_time: string;
+  end_time: string;
+  notes: string | null;
+  status: string | null;
+  linked_contact_id: string | null;
+  details: Partial<DialingDetails> | Partial<ScalezDetails> | Record<string, never>;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface BrandLabBrief {
   id: string;
   direction: string;

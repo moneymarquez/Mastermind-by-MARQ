@@ -2,6 +2,8 @@ import type { CSSProperties } from 'react';
 import Icon from '../../Icon';
 import { useSobriety } from '../../data/useSobriety';
 import { useMacros } from '../../data/useMacros';
+import { useEvents } from '../../data/useEvents';
+import { dateStr, formatTimeLabel } from '../../data/time';
 
 interface StatCard {
   icon: string;
@@ -20,6 +22,18 @@ interface Props {
 export default function HomeScreen({ homeHeadStyle, homeSubStyle, statGridStyle, statCards }: Props) {
   const { streak, loading: sobrietyLoading } = useSobriety();
   const { totals, loading: macrosLoading } = useMacros();
+  const { events, loading: eventsLoading } = useEvents();
+
+  const today = dateStr(new Date());
+  const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+  const next = events
+    .filter((e) => e.event_date > today || (e.event_date === today && e.start_time >= `${String(Math.floor(nowMinutes / 60)).padStart(2, '0')}:${String(nowMinutes % 60).padStart(2, '0')}`))
+    .sort((a, b) => (a.event_date === b.event_date ? a.start_time.localeCompare(b.start_time) : a.event_date.localeCompare(b.event_date)))[0];
+  const nextLabel = !next
+    ? 'Nothing yet'
+    : next.event_date === today
+    ? formatTimeLabel(next.start_time)
+    : new Date(`${next.event_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
   const cards = statCards.map((card) => {
     if (card.caption === 'Sobriety streak') {
@@ -27,6 +41,9 @@ export default function HomeScreen({ homeHeadStyle, homeSubStyle, statGridStyle,
     }
     if (card.caption === "Today's macros") {
       return { ...card, value: macrosLoading ? '—' : `${totals.calories} kcal` };
+    }
+    if (card.caption === 'Next on schedule') {
+      return { ...card, value: eventsLoading ? '—' : nextLabel };
     }
     return card;
   });

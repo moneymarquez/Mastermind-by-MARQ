@@ -11,6 +11,8 @@ export type Screen =
   | 'audits'
   | 'brand-lab'
   | 'idea-maker'
+  | 'schedule'
+  | 'contacts'
   | 'placeholder';
 
 export type Device = 'desktop' | 'mobile';

@@ -10,7 +10,8 @@ export const NAV_DATA: NavGroup[] = [
       { id: 'sobriety', label: 'Sobriety', icon: 'ph-heart' },
       { id: 'goals', label: 'Goals', icon: 'ph-target' },
       { id: 'mental', label: 'Mental Health', icon: 'ph-brain' },
-      { id: 'calendar', label: 'Schedule', icon: 'ph-calendar-blank' },
+      { id: 'schedule', label: 'Schedule', icon: 'ph-calendar-blank' },
+      { id: 'contacts', label: 'Contacts', icon: 'ph-address-book' },
     ],
   },
   {
