@@ -10,7 +10,7 @@ export function buildViewModel(state: AppState, navigateTo: (id: string) => void
   const dir = s.direction;
   const isMobile = s.device === 'mobile';
   const geo = computeGeometry(s, isMobile);
-  const { circleSize, stageWidth, stageHeight, groupBloomItems, itemBloomItems, boxLeft, boxTop, boxW, boxH, cx, cy } = geo;
+  const { circleSize, stageWidth, stageHeight, cx, cy } = geo;
 
   const navRows = buildNavRows(s.screen, s.settingsExpanded, navigateTo);
 
@@ -77,12 +77,6 @@ export function buildViewModel(state: AppState, navigateTo: (id: string) => void
     } as CSSProperties,
   };
 
-  const dirCaptions: Record<number, string> = {
-    1: 'Direction 1 — compact core: smaller circle, tighter bloom.',
-    2: 'Direction 2 — bold core: larger circle, widest bloom spread.',
-    3: 'Direction 3 — balanced core: medium circle and bloom.',
-  };
-
   return {
     isMobile, dir, geo,
     navRows,
@@ -90,15 +84,7 @@ export function buildViewModel(state: AppState, navigateTo: (id: string) => void
     homeHeadStyle, homeSubStyle,
     statCards, statGridStyle,
     filterChips, filteredLeads, selectedLead,
-    dirCaptions,
     stageWidth, stageHeight, circleSize,
-    bloomArea: {
-      left: cx + circleSize / 2 + boxLeft,
-      top: cy + circleSize / 2 + boxTop,
-      width: boxW,
-      height: boxH,
-    },
-    groupBloomItems, itemBloomItems,
     cx, cy,
   };
 }

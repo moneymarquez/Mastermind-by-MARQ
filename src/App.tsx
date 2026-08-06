@@ -3,9 +3,9 @@ import Stage from './Stage';
 import { useMastermindState } from './state';
 
 const DIR_CAPTIONS: Record<number, string> = {
-  1: 'Direction 1 — compact core: smaller circle, tighter bloom.',
-  2: 'Direction 2 — bold core: larger circle, widest bloom spread.',
-  3: 'Direction 3 — balanced core: medium circle and bloom.',
+  1: 'Direction 1 — compact core: smaller circle.',
+  2: 'Direction 2 — bold core: larger circle.',
+  3: 'Direction 3 — balanced core: medium circle.',
 };
 
 export default function App() {

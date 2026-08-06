@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import Logo from './components/Logo';
 import NavDrawer from './components/NavDrawer';
-import RadialMenu from './components/RadialMenu';
+import NovaTrigger from './components/NovaTrigger';
 import NovaPanel from './components/NovaPanel';
 import RemindersBox from './components/RemindersBox';
 import LeadModal from './components/LeadModal';
@@ -40,22 +40,15 @@ export default function Stage({ state, actions }: Props) {
         onClose={actions.closeDrawer}
       />
 
-      <RadialMenu
+      <NovaTrigger
         cx={vm.cx}
         cy={vm.cy}
         circleSize={vm.circleSize}
         dragging={state.dragging}
-        radialOpen={state.hoverZone}
-        radialLevel2={state.radialLevel2 && !!state.activeGroup}
-        bloomArea={vm.bloomArea}
-        groupBloomItems={vm.groupBloomItems}
-        itemBloomItems={vm.itemBloomItems}
+        novaOpen={state.novaOpen}
         onPointerDown={actions.onCirclePointerDown}
         onPointerMove={actions.onCirclePointerMove}
         onPointerUp={actions.onCirclePointerUp}
-        onGroupEnter={actions.onGroupEnter}
-        onItemClick={actions.navigateTo}
-        onRadialLeave={actions.onRadialLeave}
       />
 
       <div style={vm.contentStyle}>

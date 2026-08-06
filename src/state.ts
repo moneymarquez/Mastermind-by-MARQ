@@ -13,9 +13,6 @@ export interface AppState {
   editingLead: EditingLead | null;
   settingsExpanded: boolean;
   navDrawerOpen: boolean;
-  hoverZone: boolean;
-  radialLevel2: boolean;
-  activeGroup: string | null;
   circlePos: Point;
   dragging: boolean;
   novaOpen: boolean;
@@ -42,9 +39,6 @@ const initialState: AppState = {
   editingLead: null,
   settingsExpanded: false,
   navDrawerOpen: false,
-  hoverZone: false,
-  radialLevel2: false,
-  activeGroup: null,
   circlePos: { x: 320, y: 280 },
   dragging: false,
   novaOpen: false,
@@ -60,11 +54,6 @@ const initialState: AppState = {
   leads: INITIAL_LEADS,
 };
 
-export function polar(angleDeg: number, radius: number): Point {
-  const rad = (angleDeg * Math.PI) / 180;
-  return { x: Math.round(Math.cos(rad) * radius), y: Math.round(Math.sin(rad) * radius) };
-}
-
 export function useMastermindState() {
   const [state, setState] = useState<AppState>(initialState);
   const patch = (update: Partial<AppState> | ((s: AppState) => Partial<AppState>)) =>
@@ -79,9 +68,9 @@ export function useMastermindState() {
   const novaRAF = useRef<number | null>(null);
   const pendingNovaPos = useRef<Point | null>(null);
 
-  const setDirection = (d: 1 | 2 | 3) => patch({ direction: d, hoverZone: false, radialLevel2: false });
-  const setDevice = (d: Device) => patch({ device: d, hoverZone: false, radialLevel2: false });
-  const goScreen = (id: Screen) => patch({ screen: id, hoverZone: false, radialLevel2: false });
+  const setDirection = (d: 1 | 2 | 3) => patch({ direction: d });
+  const setDevice = (d: Device) => patch({ device: d });
+  const goScreen = (id: Screen) => patch({ screen: id });
   const setFilter = (f: string) => patch({ leadFilter: f });
 
   const toggleDrawer = () => patch((s) => ({ navDrawerOpen: !s.navDrawerOpen }));
@@ -158,31 +147,18 @@ export function useMastermindState() {
   const onCirclePointerUp = () => {
     patch({ dragging: false });
     if (!moved.current) {
-      patch((s) => {
-        if (s.novaDisconnected) {
-          const opening = !s.hoverZone;
-          return { hoverZone: opening, activeGroup: opening ? s.activeGroup : null, radialLevel2: opening ? s.radialLevel2 : false };
-        }
-        if (s.novaOpen) return { novaOpen: false, novaPos: null, hoverZone: true };
-        if (s.hoverZone)
-          return {
-            hoverZone: false,
-            activeGroup: null,
-            radialLevel2: false,
-            novaOpen: true,
-            novaPos: { x: s.circlePos.x, y: s.circlePos.y + 80 },
-          };
-        return { hoverZone: true };
-      });
+      patch((s) =>
+        s.novaOpen
+          ? { novaOpen: false, novaPos: null, novaDisconnected: false }
+          : { novaOpen: true, novaPos: s.novaPos ?? { x: s.circlePos.x, y: s.circlePos.y + 80 } }
+      );
     }
     dragStart.current = null;
   };
-  const onRadialLeave = () => patch({ radialLevel2: false, activeGroup: null });
-  const onGroupEnter = (groupName: string) => patch({ activeGroup: groupName, radialLevel2: true });
 
   const closeNova = (e?: React.SyntheticEvent) => {
     if (e) e.stopPropagation();
-    patch({ novaOpen: false, novaPos: null, novaDisconnected: false, hoverZone: true });
+    patch({ novaOpen: false, novaPos: null, novaDisconnected: false });
   };
   const onNovaPointerDown = (e: React.PointerEvent) => {
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
@@ -268,8 +244,6 @@ export function useMastermindState() {
       onCirclePointerDown,
       onCirclePointerMove,
       onCirclePointerUp,
-      onRadialLeave,
-      onGroupEnter,
       closeNova,
       onNovaPointerDown,
       onNovaPointerMove,

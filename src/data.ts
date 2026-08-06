@@ -81,19 +81,3 @@ export const INITIAL_STICKY_IDEAS: StickyIdea[] = [
   { id: 3, text: 'Same-day detail job, 3 solar leads', est: '$600' },
 ];
 
-export const BLOOM_OVERRIDE: Record<string, string[]> = {
-  Scaling: ['scaling-planner', 'brand', 'brand-lab', 'idea-maker', 'crm-list', 'calendar'],
-};
-
-export type Spoke =
-  | { type: 'group'; name: string }
-  | { type: 'item'; id: string; label: string };
-
-export const SPOKES: Spoke[] = [
-  { type: 'group', name: 'Personal' },
-  { type: 'item', id: 'fitness', label: 'Fitness' },
-  { type: 'group', name: 'Scaling' },
-  { type: 'group', name: 'Side Hustles' },
-  { type: 'item', id: 'sticky-spot', label: 'Sticky Spot' },
-  { type: 'group', name: 'System' },
-];
