@@ -81,6 +81,7 @@ export default async (req: Request, _context: Context) => {
       model: MODEL,
       max_tokens: body.maxTokens ?? 1200,
       thinking: { type: 'disabled' },
+      output_config: { effort: 'low' },
       system: body.system,
       messages: anthropicMessages,
     });
@@ -93,7 +94,9 @@ export default async (req: Request, _context: Context) => {
 
     return new Response(JSON.stringify({ text }), { status: 200, headers: { 'content-type': 'application/json' } });
   } catch (err) {
-    const message = err instanceof Anthropic.APIError ? err.message : 'AI request failed';
+    // Logged for the Netlify Functions log tab — the client only gets a trimmed message.
+    console.error('Claude request failed:', err);
+    const message = err instanceof Anthropic.APIError ? `${err.status ?? ''} ${err.message}`.trim() : 'AI request failed';
     return new Response(JSON.stringify({ error: message }), { status: 502 });
   }
 };
