@@ -125,8 +125,24 @@ export default function QuestionnaireFlow<T extends Row>({
         <div style={{ height: '100%', width: `${((step + 1) / questions.length) * 100}%`, background: '#F5F6F7' }} />
       </div>
 
+      {q.phase && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: '#565b64', textTransform: 'uppercase' }}>{q.phase}</span>
+          {q.priority && (
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', color: '#8A8F98', border: '1px solid #22262B', borderRadius: 999, padding: '2px 8px' }}>
+              {q.priority}
+            </span>
+          )}
+        </div>
+      )}
       <div style={{ fontSize: 20, fontWeight: 600, color: '#F5F6F7', marginBottom: 14, maxWidth: 560 }}>{q.prompt}</div>
       <textarea style={{ ...textareaStyle, maxWidth: 560 }} value={draft} onChange={(e) => setDraft(e.target.value)} autoFocus />
+      {q.insight && (
+        <div style={{ marginTop: 14, maxWidth: 560, background: '#14161A', border: '1px solid #22262B', borderRadius: 8, padding: '10px 14px' }}>
+          <div style={{ fontSize: 11, color: '#8A8F98', fontStyle: 'italic', lineHeight: 1.5 }}>{q.insight}</div>
+          {q.study && <div style={{ fontSize: 10.5, color: '#565b64', marginTop: 6 }}>Study: {q.study}</div>}
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
         {step > 0 && (

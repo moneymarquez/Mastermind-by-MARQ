@@ -18,8 +18,8 @@ export default function BusinessAuditsScreen({ homeHeadStyle, homeSubStyle }: Pr
       homeHeadStyle={homeHeadStyle}
       homeSubStyle={homeSubStyle}
       title="Business Audits"
-      subtitle="Surfaces bottlenecks from a structured set of questions."
-      flagNote="This question set is a generic placeholder — once the Scaling 101 material is linked, it gets replaced with an audit built on that framework. The summary below is templated from your answers, not scored yet."
+      subtitle="16 questions across the Scaling 101 curriculum — Foundation through Advanced Scaling."
+      flagNote="Grounded in your Scaling 101 material — one question per critical/high-priority topic that's actually diagnosable, not a fill-in-the-blank of all 30 topics. The summary groups your answers by phase and flags any thin ones; it's templated, not a real Nova-scored audit yet."
       questions={BUSINESS_AUDIT_QUESTIONS}
       rows={rows}
       loading={loading}

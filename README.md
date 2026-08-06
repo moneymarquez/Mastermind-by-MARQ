@@ -40,7 +40,7 @@ After that one-time link, add the same two environment variables from `.env.loca
 - Draggable circle (top-left) that toggles the Nova chat panel open/closed
 - Hamburger drawer nav grouped Personal / Scaling / Side Hustles / System, with a collapsible Settings section (includes Sign Out)
 - **Personal**: Home (stat cards), Dialing, Macros & Meals, Sobriety, Goals, Mental Health, Fitness, Schedule — all but Dialing/Schedule are backed by real Supabase tables (Schedule is still a placeholder)
-- **Scaling**: LeadFlow (integration placeholder — routes into your existing LeadFlow app once connected, not a rebuilt CRM), Scaling Planner (guided questionnaire → generated plan doc), Business Audits (guided questionnaire → generated summary, generic question set pending the Scaling 101 material), Brand Lab (input brief → 3 starter template directions rendered in-app), Idea Maker (conversational idea exploration), Invoicing and Website/App Builder (placeholders), Call Recordings (placeholder)
+- **Scaling**: LeadFlow (integration placeholder — routes into your existing LeadFlow app once connected, not a rebuilt CRM), Scaling Planner (guided questionnaire → generated plan doc), Business Audits (16 questions grounded in the Scaling 101 curriculum, one per diagnosable CRITICAL/HIGH topic across its 7 phases → generated, phase-grouped summary with thin-answer gaps flagged), Brand Lab (input brief → 3 starter template directions rendered in-app), Idea Maker (conversational idea exploration), Invoicing and Website/App Builder (placeholders), Call Recordings (placeholder)
 - Sticky Spot — editable fast-cash idea list
 - Responsive desktop/mobile stage sizing
 
@@ -53,6 +53,7 @@ After that one-time link, add the same two environment variables from `.env.loca
 - `src/viewModel.ts` — derived render data (styles, stat cards, etc.)
 - `src/data.ts` — nav structure, placeholder copy, seed data
 - `src/data/` — Supabase-backed data hooks, one per module
+- `src/data/scaling101Curriculum.ts` — the full Scaling 101 source material (8 phases, 29 topics); `businessAuditQuestions.ts` derives its 16 audit questions from this
 - `src/auth/` — login screen + auth hook
 - `src/components/` — presentational components
 - `src/components/screens/` — per-screen views

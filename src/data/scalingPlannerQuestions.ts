@@ -1,6 +1,12 @@
 export interface Question {
   key: string;
   prompt: string;
+  /** Optional curriculum grounding (used by Business Audits) — the
+   *  Scaling Planner's questions don't set these. */
+  phase?: string;
+  priority?: 'CRITICAL' | 'HIGH' | 'MEDIUM';
+  insight?: string;
+  study?: string;
 }
 
 export const SCALING_PLANNER_QUESTIONS: Question[] = [
