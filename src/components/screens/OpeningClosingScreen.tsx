@@ -4,6 +4,9 @@ import { buildSchedule, taskStatus } from '../../data/shiftChecklist';
 import type { TaskStatus } from '../../data/shiftChecklist';
 import { useShiftChecklist } from '../../data/useShiftChecklist';
 import { isNotificationSupported, notify, requestNotificationPermission } from '../../lib/notifications';
+import { isStandalone } from '../../lib/pwa';
+
+const HOME_SCREEN_PROMPT_KEY = 'mastermind-home-screen-prompt-dismissed';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -25,7 +28,15 @@ export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Pr
   const { completedIds, loading, toggleTask } = useShiftChecklist();
   const [tick, setTick] = useState(0);
   const [permission, setPermission] = useState<NotificationPermission>(() => (isNotificationSupported() ? Notification.permission : 'denied'));
+  const [showHomeScreenPrompt, setShowHomeScreenPrompt] = useState(
+    () => !isStandalone() && localStorage.getItem(HOME_SCREEN_PROMPT_KEY) !== '1'
+  );
   const firedRef = useRef<Set<string>>(new Set());
+
+  const dismissHomeScreenPrompt = () => {
+    localStorage.setItem(HOME_SCREEN_PROMPT_KEY, '1');
+    setShowHomeScreenPrompt(false);
+  };
 
   // Re-check every 60s — this is what re-detects the current time and
   // re-evaluates task status/notifications without any user input.
@@ -90,9 +101,16 @@ export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Pr
         {permission === 'granted' && <div style={{ fontSize: 12, color: '#565b64' }}>Alerts on</div>}
       </div>
 
+      {showHomeScreenPrompt && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: '#14161A', border: '1px solid #22262B', borderRadius: 12, padding: '12px 16px', marginTop: 16, maxWidth: 560 }}>
+          <span style={{ fontSize: 12.5, color: '#C7CAD1' }}>Add this to your home screen to get task reminders.</span>
+          <span style={{ fontSize: 16, color: '#565b64', cursor: 'pointer', flexShrink: 0 }} onClick={dismissHomeScreenPrompt}>×</span>
+        </div>
+      )}
+
       <div style={{ fontSize: 11.5, color: '#565b64', marginTop: 12, maxWidth: 560, lineHeight: 1.5 }}>
         Auto-detected from your device's clock — no need to enter today's date. Re-checks every minute; the current task is highlighted.
-        Notifications only fire while this tab is open (no background push yet — that needs a service worker).
+        Notifications only fire while this tab/app is open (no background push yet — that needs a service worker, which this app now has, plus a backend to trigger it).
       </div>
 
       <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', border: '1px solid #22262B', borderRadius: 14, overflow: 'hidden', maxWidth: 640 }}>
