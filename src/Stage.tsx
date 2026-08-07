@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import Logo from './components/Logo';
 import NavDrawer from './components/NavDrawer';
@@ -37,6 +38,25 @@ interface Props {
 export default function Stage({ state, actions, onSignOut }: Props) {
   const vm = buildViewModel(state, actions.navigateTo, onSignOut);
   const { isMobile } = vm;
+
+  // Measures RemindersBox (which is position:absolute inside this same
+  // position:relative Stage, so offsetLeft/offsetHeight are already in the
+  // right coordinate space) so Nova can stack directly above it on mobile —
+  // same left edge, bottom offset = Reminders' height + spacing — instead
+  // of the two competing for horizontal room side by side.
+  const remindersRef = useRef<HTMLDivElement>(null);
+  const [remindersBox, setRemindersBox] = useState({ left: 20, height: 0 });
+  useEffect(() => {
+    const el = remindersRef.current;
+    if (!el) return;
+    const measure = () => setRemindersBox({ left: el.offsetLeft, height: el.offsetHeight });
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isMobile]);
+  const novaStackLeft = isMobile ? remindersBox.left : null;
+  const novaStackBottomOffset = isMobile ? remindersBox.height + 16 : 0;
 
   const stageStyle: CSSProperties = {
     width: vm.stageWidth, height: vm.stageHeight, background: '#0A0B0D', position: 'relative',
@@ -143,21 +163,19 @@ export default function Stage({ state, actions, onSignOut }: Props) {
       {state.novaOpen && (
         <NovaPanel
           isMobile={isMobile}
-          pos={state.novaPos || { x: vm.cx, y: vm.cy + 80 }}
+          stackBottomOffset={novaStackBottomOffset}
+          stackLeft={novaStackLeft}
           messages={state.novaMessages}
           input={state.novaInput}
           thinking={state.novaThinking}
           onClose={actions.closeNova}
-          onDragPointerDown={actions.onNovaPointerDown}
-          onDragPointerMove={actions.onNovaPointerMove}
-          onDragPointerUp={actions.onNovaPointerUp}
           onInputChange={actions.onNovaInputChange}
           onKeyDown={actions.onNovaKeyDown}
           onSend={actions.sendNova}
         />
       )}
 
-      <RemindersBox isMobile={isMobile} />
+      <RemindersBox ref={remindersRef} isMobile={isMobile} />
     </div>
   );
 }

@@ -14,8 +14,6 @@ export interface AppState {
   circlePos: Point;
   dragging: boolean;
   novaOpen: boolean;
-  novaPos: Point | null;
-  novaDisconnected: boolean;
   novaMessages: NovaMessage[];
   novaInput: string;
   novaThinking: boolean;
@@ -35,8 +33,6 @@ const initialState: AppState = {
   circlePos: { x: 320, y: 280 },
   dragging: false,
   novaOpen: false,
-  novaPos: null,
-  novaDisconnected: false,
   novaMessages: [{ from: 'nova', text: "Hey Cristopher — what do you need?" }],
   novaInput: '',
   novaThinking: false,
@@ -54,10 +50,6 @@ export function useMastermindState() {
   const moved = useRef(false);
   const circleRAF = useRef<number | null>(null);
   const pendingCirclePos = useRef<Point | null>(null);
-
-  const novaDragStart = useRef<{ x: number; y: number; pos: Point } | null>(null);
-  const novaRAF = useRef<number | null>(null);
-  const pendingNovaPos = useRef<Point | null>(null);
 
   const setDirection = (d: 1 | 2 | 3) => patch({ direction: d });
   const setDevice = (d: Device) => patch({ device: d });
@@ -108,41 +100,14 @@ export function useMastermindState() {
   const onCirclePointerUp = () => {
     patch({ dragging: false });
     if (!moved.current) {
-      patch((s) =>
-        s.novaOpen
-          ? { novaOpen: false, novaPos: null, novaDisconnected: false }
-          : { novaOpen: true, novaPos: s.novaPos ?? { x: s.circlePos.x, y: s.circlePos.y + 80 } }
-      );
+      patch((s) => ({ novaOpen: !s.novaOpen }));
     }
     dragStart.current = null;
   };
 
   const closeNova = (e?: React.SyntheticEvent) => {
     if (e) e.stopPropagation();
-    patch({ novaOpen: false, novaPos: null, novaDisconnected: false });
-  };
-  const onNovaPointerDown = (e: React.PointerEvent) => {
-    (e.currentTarget as Element).setPointerCapture(e.pointerId);
-    novaDragStart.current = { x: e.clientX, y: e.clientY, pos: { ...(state.novaPos as Point) } };
-  };
-  const onNovaPointerMove = (e: React.PointerEvent) => {
-    if (!novaDragStart.current) return;
-    const dx = e.clientX - novaDragStart.current.x;
-    const dy = e.clientY - novaDragStart.current.y;
-    if (Math.abs(dx) + Math.abs(dy) > 4 && !state.novaDisconnected) patch({ novaDisconnected: true });
-    pendingNovaPos.current = {
-      x: Math.max(4, novaDragStart.current.pos.x + dx),
-      y: Math.max(4, novaDragStart.current.pos.y + dy),
-    };
-    if (!novaRAF.current) {
-      novaRAF.current = requestAnimationFrame(() => {
-        novaRAF.current = null;
-        if (pendingNovaPos.current) patch({ novaPos: pendingNovaPos.current });
-      });
-    }
-  };
-  const onNovaPointerUp = () => {
-    novaDragStart.current = null;
+    patch({ novaOpen: false });
   };
 
   const onNovaInputChange = (e: React.ChangeEvent<HTMLInputElement>) => patch({ novaInput: e.target.value });
@@ -208,9 +173,6 @@ export function useMastermindState() {
       onCirclePointerMove,
       onCirclePointerUp,
       closeNova,
-      onNovaPointerDown,
-      onNovaPointerMove,
-      onNovaPointerUp,
       onNovaInputChange,
       onNovaKeyDown,
       sendNova,

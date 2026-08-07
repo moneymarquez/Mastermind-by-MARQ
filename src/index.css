@@ -31,6 +31,18 @@ input, select {
   font-family: inherit;
 }
 
+/* Prevent accidental text-selection highlighting while tapping/dragging on
+   mobile, but keep it working normally inside anything actually meant for
+   typing/selecting/copying text. */
+* {
+  user-select: none;
+  -webkit-user-select: none;
+}
+input, textarea, [contenteditable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 /* Nav drawer top-level items — the app's only "accent" is white-on-black,
    so the hover glow uses that rather than introducing a new color. */
 .nav-row {

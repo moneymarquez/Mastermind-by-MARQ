@@ -1,45 +1,51 @@
-import type { ChangeEvent, KeyboardEvent, PointerEvent } from 'react';
-import type { NovaMessage, Point } from '../types';
+import type { ChangeEvent, KeyboardEvent } from 'react';
+import type { NovaMessage } from '../types';
 import Icon from '../Icon';
+
+const SPACING = 20;
 
 interface Props {
   isMobile: boolean;
-  pos: Point;
+  /** Extra bottom offset (px) to stack above RemindersBox on mobile when
+   *  they'd otherwise collide side by side. 0 on desktop, where they sit in
+   *  opposite corners with room to spare. */
+  stackBottomOffset: number;
+  /** On mobile, Nova aligns to RemindersBox's actual left edge instead of
+   *  the default corner spacing, per the "same left edge" stacking spec.
+   *  null on desktop, where Nova keeps its own bottom-left corner. */
+  stackLeft: number | null;
   messages: NovaMessage[];
   input: string;
   thinking: boolean;
   onClose: (e: React.SyntheticEvent) => void;
-  onDragPointerDown: (e: PointerEvent) => void;
-  onDragPointerMove: (e: PointerEvent) => void;
-  onDragPointerUp: () => void;
   onInputChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
   onSend: () => void;
 }
 
 export default function NovaPanel({
-  isMobile, pos, messages, input, thinking, onClose, onDragPointerDown, onDragPointerMove, onDragPointerUp, onInputChange, onKeyDown, onSend,
+  isMobile, stackBottomOffset, stackLeft, messages, input, thinking, onClose, onInputChange, onKeyDown, onSend,
 }: Props) {
   return (
     <div
       style={{
-        position: 'absolute', left: pos.x, top: pos.y,
+        // Fixed to Stage's bottom-left corner — no longer anchored to the
+        // draggable trigger circle's position. `env(safe-area-inset-*)` keeps
+        // it clear of notches/home indicators when running as an installed PWA.
+        position: 'absolute',
+        left: stackLeft != null ? stackLeft : `calc(${SPACING}px + env(safe-area-inset-left))`,
+        bottom: `calc(${SPACING + stackBottomOffset}px + env(safe-area-inset-bottom))`,
         width: isMobile ? 270 : 320, height: isMobile ? 330 : 400,
         background: '#101114', border: '1px solid #22262B', borderRadius: 16, display: 'flex', flexDirection: 'column',
         boxShadow: '0 20px 50px rgba(0,0,0,0.5)', animation: 'bubbleFade 0.18s ease', zIndex: 45, overflow: 'hidden',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', padding: '14px 16px', borderBottom: '1px solid #1c1e23', fontSize: 13.5, fontWeight: 600, color: '#F5F6F7' }}>
-        <div
-          style={{ display: 'flex', alignItems: 'center', flex: 1, cursor: 'grab', touchAction: 'none' }}
-          onPointerDown={onDragPointerDown}
-          onPointerMove={onDragPointerMove}
-          onPointerUp={onDragPointerUp}
-        >
+        <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
           <Icon name="sparkle" style={{ marginRight: 8 }} color="#F5F6F7" />
           Nova
         </div>
-        <span style={{ marginLeft: 'auto', cursor: 'pointer', padding: 4, zIndex: 2, position: 'relative' }} onClick={onClose}>
+        <span style={{ marginLeft: 'auto', cursor: 'pointer', padding: 4 }} onClick={onClose}>
           <Icon name="x" color="#565b64" />
         </span>
       </div>

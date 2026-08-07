@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import Icon from '../Icon';
 
 interface Props {
@@ -6,9 +7,10 @@ interface Props {
 
 const REMINDERS = ['Call Priya back re: contract', 'Renew LLC filing — due Fri'];
 
-export default function RemindersBox({ isMobile }: Props) {
+const RemindersBox = forwardRef<HTMLDivElement, Props>(function RemindersBox({ isMobile }, ref) {
   return (
     <div
+      ref={ref}
       style={{
         position: 'absolute', right: 20, bottom: 20, width: isMobile ? 180 : 210,
         background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: '14px 16px', zIndex: 20,
@@ -25,4 +27,6 @@ export default function RemindersBox({ isMobile }: Props) {
       ))}
     </div>
   );
-}
+});
+
+export default RemindersBox;
