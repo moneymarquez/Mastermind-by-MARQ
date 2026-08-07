@@ -12,6 +12,7 @@ export const NAV_DATA: NavGroup[] = [
       { id: 'mental', label: 'Mental Health', icon: 'ph-brain' },
       { id: 'schedule', label: 'Schedule', icon: 'ph-calendar-blank' },
       { id: 'contacts', label: 'Contacts', icon: 'ph-address-book' },
+      { id: 'opening-closing', label: 'Opening/Closing', icon: 'ph-clock' },
     ],
   },
   {

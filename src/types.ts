@@ -13,6 +13,7 @@ export type Screen =
   | 'idea-maker'
   | 'schedule'
   | 'contacts'
+  | 'opening-closing'
   | 'placeholder';
 
 export type Device = 'desktop' | 'mobile';

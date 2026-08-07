@@ -5,7 +5,7 @@ import {
   ClipboardText, Receipt, Palette, Flask, Lightbulb, Microphone, Code, CalendarBlank,
   ChartLineUp, VideoCamera, Lightning, GearSix, TerminalWindow, Sparkle, List, Plus,
   CaretRight, ArrowLeft, PencilSimple, CircleDashed, X, ArrowUp, Bell, CaretDown, Flame,
-  AddressBook,
+  AddressBook, Clock,
 } from '@phosphor-icons/react';
 
 const ICONS: Record<string, PhosphorIcon> = {
@@ -44,6 +44,7 @@ const ICONS: Record<string, PhosphorIcon> = {
   'caret-down': CaretDown,
   flame: Flame,
   'address-book': AddressBook,
+  clock: Clock,
 };
 
 interface Props {
