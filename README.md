@@ -155,3 +155,4 @@ milestones — goes through the path above.
 - `src/components/` — presentational components
 - `src/components/screens/` — per-screen views
 - `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql`)
+
