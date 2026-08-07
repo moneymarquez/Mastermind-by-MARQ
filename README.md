@@ -16,7 +16,7 @@ Then open the printed local URL (typically http://localhost:5173).
 This app needs a Supabase project to run against.
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, and `supabase/schema_005_shift_checklist.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
+2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, and `supabase/schema_006_push.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
 3. **Create your login account** — Authentication → Users → Add user → enter email + password, check **Auto Confirm User**. There's no public sign-up flow; this is the one account the login screen expects.
 4. Copy `.env.example` to `.env.local` and fill in your project's URL and anon key (Project Settings → API).
 
@@ -55,8 +55,8 @@ After that one-time link, add the same three environment variables from `.env.lo
 - Hamburger drawer nav grouped Personal / Scaling / Side Hustles / System, with a collapsible Settings section (includes Sign Out)
 - **Personal**: Home (stat cards), Dialing, Macros & Meals (photo-based AI calorie/macro logging), Sobriety (AI reflection on your streak/history), Goals (AI critique + AI check-ins), Mental Health (AI reflection per check-in), Fitness (AI-generated workout/diet plans), Schedule (month calendar → click a day to zoom into a 24-hour drag-to-create timeline), Contacts (shared by Dialing/Scalez events, deduped automatically) — all backed by real Supabase tables now
 - **Event Adder** (opened from Schedule): one modal, 3 tabs — HOLIDAY (multi-day shift scheduling, auto-computed hours), DIALING (lead appointments, feeds Contacts), SCALEZ (business-audit/scaling client appointments, feeds Contacts) — all three write to one `events` table and render on the same color-coded calendar. DIALING/SCALEZ dedupe against Contacts by phone or email before creating a new record.
-- **Installable PWA**: has a web app manifest + service worker (`public/manifest.json`, `sw-src/sw.ts`), so "Add to Home Screen" on iOS/Android installs it standalone with the app's own icon and no Safari/Chrome UI. The service worker precaches the app shell for offline load and has push/notificationclick handlers ready to go — see the Notifications section below for what that does and doesn't cover today.
-- **Opening/Closing**: a self-running shift checklist — reads the device clock on load and every 60s after, no date entry needed. Store hours (`src/data/shiftChecklist.ts` → `STORE_HOURS`) and the opening/closing task lists are plain editable config, not hardcoded logic. Opening tasks start 60 min before open; closing tasks are backed off from close time so the last one lands exactly at close; a few randomized "stay busy" nudges fill the gap between them; a final till-count/clock-out task anchors to close time. Current task is highlighted, checked-off state persists per day. Browser notifications (opt-in) fire as each task's time is crossed, plus three shift-progress alerts on shifts over 6 hours (halfway, 2 hours left, final task) — see "Installing as a PWA" below for what this does and doesn't cover.
+- **Installable PWA**: has a web app manifest + service worker (`public/manifest.json`, `sw-src/sw.ts`), so "Add to Home Screen" on iOS/Android installs it standalone with the app's own icon and no Safari/Chrome UI. The service worker precaches the app shell for offline load and handles incoming push notifications.
+- **Opening/Closing**: a self-running shift checklist — reads the device clock on load and every 60s after, no date entry needed. Store hours (`src/data/shiftChecklist.ts` → `STORE_HOURS`) and the opening/closing task lists are plain editable config, not hardcoded logic. Opening tasks start 60 min before open; closing tasks are backed off from close time so the last one lands exactly at close; a few randomized "stay busy" nudges fill the gap between them; a final till-count/clock-out task anchors to close time. Current task is highlighted, checked-off state persists per day. Notifications (opt-in via "Enable task alerts") fire as each task's time is crossed, plus three shift-progress alerts on shifts over 6 hours (halfway, 2 hours left, final task) — both while the app is open (instant, client-side) and while fully closed (real web push, checked server-side every 5 minutes) — see "Web Push" setup below.
 - **Scaling**: LeadFlow (integration placeholder — routes into your existing LeadFlow app once connected, not a rebuilt CRM), Scaling Planner (guided questionnaire → real Claude-generated plan doc), Business Audits (16 questions grounded in the Scaling 101 curriculum, one per diagnosable CRITICAL/HIGH topic across its 7 phases → real Claude-scored, phase-grouped summary), Brand Lab (input brief → 3 template directions with real Claude-written headline copy per direction), Idea Maker (real back-and-forth conversation with Claude, not scripted replies), Invoicing and Website/App Builder (placeholders), Call Recordings (placeholder)
 - Sticky Spot — editable fast-cash idea list
 - Responsive desktop/mobile stage sizing
@@ -74,24 +74,42 @@ but the three layouts themselves are fixed templates, not AI-generated markup �
 Once deployed, opening the site in Safari (iOS) or Chrome (Android) and using **Add to Home Screen** installs it
 standalone — its own icon, no browser chrome, launches like a native app.
 
-**What that does and doesn't unlock, notification-wise:**
+**iOS specifically**: Safari only allows web push at all when installed to the home screen (standalone) — which is
+exactly what the in-app "Add this to your home screen to get task reminders" banner (Opening/Closing, dismissible)
+is nudging toward. Install first, then enable alerts.
 
-- Opening/Closing's task reminders work today whenever the app/tab is **open**, installed or not — that's the
-  existing 60-second polling in `OpeningClosingScreen.tsx`, unrelated to the service worker.
-- The service worker (`sw-src/sw.ts`) adds offline app-shell loading, and has `push`/`notificationclick` handlers
-  ready — but nothing calls them yet, because there's no backend actually *sending* a push. A `push` event only
-  fires when a server holding a VAPID key tells the browser's push service to wake this app's service worker.
-  Wiring that up (a `web-push`-style backend + subscribing the device + storing the subscription) is a real
-  backend addition, not a settings toggle — not built here.
-- **iOS specifically**: Safari only allows web push at all when installed to the home screen (standalone) — which
-  is exactly what the in-app "Add this to your home screen to get task reminders" banner (Opening/Closing, dismissible)
-  is nudging toward, in preparation for when that backend exists. The Notification Triggers API (schedule a
-  notification for a future time with the page closed, no push needed) never shipped in any real browser, iOS
-  included — `src/lib/pwa.ts` feature-detects it so this codebase would pick it up automatically if that ever
-  changes, but don't expect it to.
-- **Bottom line today**: reminders are reliable while you have the app open; true closed-app scheduled
-  notifications need either that backend push service or a native app wrapper — a known upgrade path, not
-  something silently half-working.
+## One-time backend setup (Web Push — real closed-app notifications)
+
+Opening/Closing's reminders now fire as real push notifications even with the app fully closed, not just while a
+tab is open — checked server-side every 5 minutes by a Netlify Scheduled Function
+(`netlify/functions/send-shift-reminders.ts`) that calls the browser's push service directly. Nothing here needs a
+paid plan; it's the standard free web-push protocol.
+
+1. **Run `supabase/schema_006_push.sql`** (after `schema_005_shift_checklist.sql`) — adds the `push_subscriptions`
+   table and a `notified_task_ids` tracking column.
+2. **Get your Supabase service role key** — Project Settings → API → **service_role** secret (NOT the anon key;
+   this one bypasses row-level security, since the scheduled function has no per-user login session to authenticate
+   as — it's a trusted system cron, not a user request). Add it to Netlify as `SUPABASE_SERVICE_ROLE_KEY`. Treat it
+   like a master password: it's never sent to the browser, only read inside this one server-side function.
+3. **VAPID keys** — a self-generated keypair identifying this app to the push services (Apple/Google/Mozilla), not
+   an account you sign up for anywhere. Generate once with `npx web-push generate-vapid-keys`, or reuse the pair
+   already generated for this project (ask Claude — they were generated during this build and shared in chat, not
+   committed to the repo). Add three env vars in Netlify:
+   - `VITE_VAPID_PUBLIC_KEY` — the public key (safe to expose; also read client-side to subscribe the browser)
+   - `VAPID_PRIVATE_KEY` — the private key (server-only secret, never exposed)
+   - `VAPID_SUBJECT` — `mailto:your@email.com`, required by the push spec so push services can contact you if
+     something's misbehaving
+4. **Set your store's timezone** — add `STORE_TIMEZONE` in Netlify env vars as an IANA name (e.g.
+   `America/Chicago`, `America/New_York`). This matters: the scheduled function runs on Netlify's own clock (UTC),
+   not your device's — without the right timezone, reminders fire at the wrong wall-clock time. The in-app
+   foreground polling doesn't have this problem since it already uses your device's local time correctly.
+5. Redeploy (Trigger deploy) so the new env vars take effect, then open Opening/Closing and click **Enable task
+   alerts** — this both requests notification permission and registers this device for push.
+
+**What still doesn't work**: the Notification Triggers API (schedule one exact future notification client-side, no
+server involved) — it never shipped in any real browser including iOS, feature-detected in `src/lib/pwa.ts` in
+case that ever changes. Everything else — reminders while open, reminders while closed, the 3 long-shift
+milestones — goes through the path above.
 
 ## Structure
 
@@ -108,6 +126,9 @@ standalone — its own icon, no browser chrome, launches like a native app.
 - `sw-src/sw.ts` — service worker source (install/activate/precache/push/notificationclick), bundled by `vite-plugin-pwa` (injectManifest) into `dist/sw.js` with a build-hash-aware precache list. Lives outside `src/` because it needs the `webworker` TS lib, which conflicts with the app's DOM-lib tsconfig — same reasoning as `netlify/functions/` living outside `src/`.
 - `public/manifest.json`, `public/icons/` — PWA manifest + home-screen icons
 - `src/lib/pwa.ts` — standalone-mode detection + Notification Triggers feature-detect
+- `src/lib/push.ts` — subscribes/unsubscribes this device for web push
+- `netlify/functions/push-subscription.ts` — stores/removes a device's push subscription (JWT-gated)
+- `netlify/functions/send-shift-reminders.ts` — Scheduled Function (every 5 min) that sends real push notifications for due Opening/Closing tasks, using the Supabase service role key + VAPID keys
 - `src/components/` — presentational components
 - `src/components/screens/` — per-screen views
-- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql`)
+- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql`)

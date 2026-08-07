@@ -5,6 +5,7 @@ import type { TaskStatus } from '../../data/shiftChecklist';
 import { useShiftChecklist } from '../../data/useShiftChecklist';
 import { isNotificationSupported, notify, requestNotificationPermission } from '../../lib/notifications';
 import { isStandalone } from '../../lib/pwa';
+import { subscribeToPush } from '../../lib/push';
 
 const HOME_SCREEN_PROMPT_KEY = 'mastermind-home-screen-prompt-dismissed';
 
@@ -78,7 +79,16 @@ export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Pr
   const enableAlerts = async () => {
     const result = await requestNotificationPermission();
     setPermission(result);
+    if (result === 'granted') subscribeToPush();
   };
+
+  // Already granted from a previous visit — make sure the push subscription
+  // still exists server-side (e.g. first run after this feature shipped, or
+  // browser storage got cleared). Cheap no-op if already subscribed.
+  useEffect(() => {
+    if (permission === 'granted') subscribeToPush();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const weekdayName = now.toLocaleDateString(undefined, { weekday: 'long' });
   const hoursLabel = `${clockLabel(schedule.openTime)} – ${clockLabel(schedule.closeTime)}`;
@@ -109,8 +119,9 @@ export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Pr
       )}
 
       <div style={{ fontSize: 11.5, color: '#565b64', marginTop: 12, maxWidth: 560, lineHeight: 1.5 }}>
-        Auto-detected from your device's clock — no need to enter today's date. Re-checks every minute; the current task is highlighted.
-        Notifications only fire while this tab/app is open (no background push yet — that needs a service worker, which this app now has, plus a backend to trigger it).
+        Auto-detected from your device's clock — no need to enter today's date. Re-checks every minute while open; the current task is highlighted.
+        With alerts enabled, a reminder also fires as a real push notification even with the app fully closed
+        (checked server-side every 5 minutes) — on iOS this requires installing to your home screen first.
       </div>
 
       <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', border: '1px solid #22262B', borderRadius: 14, overflow: 'hidden', maxWidth: 640 }}>
