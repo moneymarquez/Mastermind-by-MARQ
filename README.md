@@ -16,7 +16,7 @@ Then open the printed local URL (typically http://localhost:5173).
 This app needs a Supabase project to run against.
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, and `supabase/schema_007_cold_calling.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
+2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, and `supabase/schema_008_notifications.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
 3. **Create your login account** — Authentication → Users → Add user → enter email + password, check **Auto Confirm User**. There's no public sign-up flow; this is the one account the login screen expects.
 4. Copy `.env.example` to `.env.local` and fill in your project's URL and anon key (Project Settings → API).
 
@@ -60,6 +60,7 @@ After that one-time link, add the same three environment variables from `.env.lo
 - **Event Adder** (opened from Schedule): one modal, 3 tabs — HOLIDAY (multi-day shift scheduling, auto-computed hours), DIALING (lead appointments, feeds Contacts), SCALEZ (business-audit/scaling client appointments, feeds Contacts) — all three write to one `events` table and render on the same color-coded calendar. DIALING/SCALEZ dedupe against Contacts by phone or email before creating a new record.
 - **Installable PWA**: has a web app manifest + service worker (`public/manifest.json`, `sw-src/sw.ts`), so "Add to Home Screen" on iOS/Android installs it standalone with the app's own icon and no Safari/Chrome UI. The service worker precaches the app shell for offline load and handles incoming push notifications.
 - **Opening/Closing**: reads the device clock on load and every 60s after, no date entry needed. Store hours (`src/data/shiftChecklist.ts` → `STORE_HOURS`) and the opening/closing task lists are plain editable config, not hardcoded logic. Opening tasks start 60 min before open; closing tasks are backed off from close time so the last one lands exactly at close; a few randomized "stay busy" nudges fill the gap between them; a final till-count/clock-out task anchors to close time. Current task is highlighted, checked-off state persists per day. Notifications (opt-in via "Enable task alerts") fire as each task's time is crossed, plus three shift-progress alerts on shifts over 6 hours (halfway, 2 hours left, final task) — both while the app is open (instant, client-side) and while fully closed (real web push, checked server-side every 5 minutes) — see "Web Push" setup below.
+- **Notifications (Settings → Notifications)**: per-category on/off toggles (Shifts, Events, Meals, Opening/Closing tasks) plus editable meal reminder times, all real push via the same backend — Shifts (evening-before + 60-min-before, pulled from Schedule's HOLIDAY events and labeled Opening/Closing/Shift by proximity to store open/close time), Events (24h + 1h before Dialing/Scaling appointments and any dated Reminder, or a single morning-of alert for undated/all-day reminders), Meals (breakfast/lunch/dinner nudges that skip themselves if that meal's already logged). The home screen's Reminders panel is now real data (add/complete/delete from the Notifications settings screen) instead of two hardcoded strings.
 - **Scaling**: LeadFlow (integration placeholder — routes into your existing LeadFlow app once connected, not a rebuilt CRM), Website/App Builder (placeholder), Scaling Planner (guided questionnaire → real Claude-generated plan doc), Business Audits (16 questions grounded in the Scaling 101 curriculum, one per diagnosable CRITICAL/HIGH topic across its 7 phases → real Claude-scored, phase-grouped summary), Brand Lab (input brief → 3 template directions with real Claude-written headline copy per direction), Idea Maker (real back-and-forth conversation with Claude, not scripted replies), Invoicing (placeholder, listed last)
 - Sticky Spot — editable fast-cash idea list
 - Responsive desktop/mobile stage sizing
@@ -106,8 +107,12 @@ paid plan; it's the standard free web-push protocol.
    `America/Chicago`, `America/New_York`). This matters: the scheduled function runs on Netlify's own clock (UTC),
    not your device's — without the right timezone, reminders fire at the wrong wall-clock time. The in-app
    foreground polling doesn't have this problem since it already uses your device's local time correctly.
-5. Redeploy (Trigger deploy) so the new env vars take effect, then open Opening/Closing and click **Enable task
-   alerts** — this both requests notification permission and registers this device for push.
+5. Redeploy (Trigger deploy) so the new env vars take effect, then open Opening/Closing (or Settings → Notifications)
+   and click **Enable task alerts** / **Enable alerts** — either one requests notification permission and registers
+   this device for push; it's the same underlying subscription either way, not two separate systems.
+6. Run `supabase/schema_008_notifications.sql` (after `schema_007_cold_calling.sql`) to unlock the expanded scope —
+   Shift/Event/Meal reminders, sent by a second Scheduled Function, `netlify/functions/send-reminders.ts` (every 15
+   min, same VAPID/service-role env vars as above, no new ones needed).
 
 **What still doesn't work**: the Notification Triggers API (schedule one exact future notification client-side, no
 server involved) — it never shipped in any real browser including iOS, feature-detected in `src/lib/pwa.ts` in
@@ -132,8 +137,10 @@ milestones — goes through the path above.
 - `src/lib/push.ts` — subscribes/unsubscribes this device for web push
 - `netlify/functions/push-subscription.ts` — stores/removes a device's push subscription (JWT-gated)
 - `netlify/functions/send-shift-reminders.ts` — Scheduled Function (every 5 min) that sends real push notifications for due Opening/Closing tasks, using the Supabase service role key + VAPID keys
+- `netlify/functions/send-reminders.ts` — Scheduled Function (every 15 min) for the expanded scope: Shift/Event/Meal reminders, gated per-category by `notification_settings` and deduped via the generic `notification_log` table
+- `src/data/useReminders.ts`, `src/data/useNotificationSettings.ts` — the Reminders panel's real data and the per-category notification toggles/meal times
 - `src/data/useCallOutcomes.ts` — Dialing's daily queue/counter/history logic (given the caller's already-loaded Dialing contacts)
 - `src/data/usePitch.ts` — the persisted Current Pitch script (one row per user)
 - `src/components/` — presentational components
 - `src/components/screens/` — per-screen views
-- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql`)
+- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql`)

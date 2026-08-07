@@ -58,7 +58,7 @@ export function useMastermindState() {
   const toggleDrawer = () => patch((s) => ({ navDrawerOpen: !s.navDrawerOpen }));
   const closeDrawer = () => patch({ navDrawerOpen: false });
 
-  const directScreens: Screen[] = ['home', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'scaling-planner', 'audits', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing'];
+  const directScreens: Screen[] = ['home', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'scaling-planner', 'audits', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing', 'notification-settings'];
 
   const navigateTo = (id: string) => {
     if (id === 'settings') {

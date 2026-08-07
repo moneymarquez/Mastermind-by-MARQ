@@ -270,6 +270,25 @@ export interface CalendarEvent {
   updated_at: string;
 }
 
+export interface Reminder {
+  id: string;
+  title: string;
+  due_date: string;
+  due_time: string | null;
+  done: boolean;
+  created_at: string;
+}
+
+export interface NotificationSettings {
+  shifts_enabled: boolean;
+  events_enabled: boolean;
+  meals_enabled: boolean;
+  opening_closing_enabled: boolean;
+  breakfast_time: string;
+  lunch_time: string;
+  dinner_time: string;
+}
+
 export interface BrandLabBrief {
   id: string;
   direction: string;

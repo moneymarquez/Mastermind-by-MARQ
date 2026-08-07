@@ -11,6 +11,10 @@ export interface NavRow {
   onClick?: () => void;
 }
 
+const SUB_SCREEN_BY_LABEL: Record<string, string> = {
+  Notifications: 'notification-settings',
+};
+
 export function buildNavRows(
   screen: string,
   settingsExpanded: boolean,
@@ -36,7 +40,13 @@ export function buildNavRows(
       });
       if (it.collapsible && it.id === 'settings' && settingsExpanded) {
         (it.sub || []).forEach((label) => {
-          rows.push({ kind: 'sub', key: `sub-${label}`, label, onClick: label === 'Sign Out' ? onSignOut : undefined });
+          const targetScreen = SUB_SCREEN_BY_LABEL[label];
+          rows.push({
+            kind: 'sub',
+            key: `sub-${label}`,
+            label,
+            onClick: label === 'Sign Out' ? onSignOut : targetScreen ? () => navigateTo(targetScreen) : undefined,
+          });
         });
       }
     });

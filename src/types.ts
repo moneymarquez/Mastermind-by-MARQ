@@ -14,6 +14,7 @@ export type Screen =
   | 'schedule'
   | 'contacts'
   | 'opening-closing'
+  | 'notification-settings'
   | 'placeholder';
 
 export type Device = 'desktop' | 'mobile';

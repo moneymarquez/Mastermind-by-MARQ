@@ -46,6 +46,10 @@ interface ChecklistStateRow {
   notified_task_ids: string[] | null;
 }
 
+interface SettingsRow {
+  opening_closing_enabled: boolean;
+}
+
 // Runs every 5 minutes (Netlify Scheduled Function). Checks whether any
 // Opening/Closing task or milestone just came due for any subscribed user,
 // and sends a real push notification — this is what makes reminders fire
@@ -91,6 +95,14 @@ export default async () => {
   const userIds = [...new Set(subs.map((s) => s.user_id))];
 
   for (const userId of userIds) {
+    const settingsRes = await fetch(
+      `${supabaseUrl}/rest/v1/notification_settings?user_id=eq.${userId}&select=opening_closing_enabled`,
+      { headers }
+    );
+    const settingsRows = (await settingsRes.json()) as SettingsRow[];
+    // No settings row yet defaults to enabled (matches useNotificationSettings' client-side default).
+    if (settingsRows[0]?.opening_closing_enabled === false) continue;
+
     const stateRes = await fetch(
       `${supabaseUrl}/rest/v1/shift_checklist_state?user_id=eq.${userId}&checklist_date=eq.${today}&select=completed_task_ids,notified_task_ids`,
       { headers }
