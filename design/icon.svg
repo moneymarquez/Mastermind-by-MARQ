@@ -1,0 +1,34 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#141414"/>
+      <stop offset="45%" stop-color="#050505"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.16"/>
+      <stop offset="35%" stop-color="#ffffff" stop-opacity="0.04"/>
+      <stop offset="60%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="sheen" cx="30%" cy="20%" r="75%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="textShine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="55%" stop-color="#f2f2f2"/>
+      <stop offset="100%" stop-color="#d6d6d6"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)" stroke="#1f1f1f" stroke-width="2"/>
+  <rect width="512" height="512" rx="112" fill="url(#sheen)"/>
+  <rect width="512" height="512" rx="112" fill="url(#shine)"/>
+  <path d="M 112 2 H 400 A 110 110 0 0 1 510 112 V 130 A 400 400 0 0 0 112 2 Z"
+        fill="#ffffff" opacity="0.06"/>
+  <text x="256" y="290" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+        font-size="245" font-weight="900" fill="url(#textShine)"
+        text-anchor="middle" letter-spacing="-13">M</text>
+  <text x="256" y="382" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+        font-size="25" font-weight="700" fill="#666666"
+        text-anchor="middle" letter-spacing="8">BY MARQ</text>
+</svg>

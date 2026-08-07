@@ -1,9 +1,17 @@
-// Browser Notification API only fires reliably while this tab/PWA is open
-// and in memory — there's no service worker registered here, so nothing
-// fires once the app is fully closed or the device is asleep. Wiring up
-// push notifications that work while closed needs a service worker +
-// push subscription + a server to trigger it, which is a real backend
-// addition, not a tweak to this file — flagged here as a future upgrade.
+// This module only covers the *foreground* path: an in-page Notification
+// fired directly from JS, which only works while this tab/PWA is open and
+// in memory. For notifications while the app is closed, see src/lib/push.ts
+// (subscribes the device) + sw-src/sw.ts's 'push' handler + the Netlify
+// Scheduled Functions that actually send them (netlify/functions/
+// send-shift-reminders.ts, send-reminders.ts) — that real backend path
+// already exists, this file doesn't need to grow to cover it.
+//
+// KNOWN LIMITATION (iOS): Safari does not support the Push API for web
+// apps at all unless installed to the home screen (see src/lib/pwa.ts's
+// isStandalone()) — and even then, delivery is only reliable while the
+// app is open or was recently backgrounded, not fully closed for a long
+// stretch. There's no client-side fix for this; it's an OS/Safari
+// platform restriction, not a bug here.
 
 export function isNotificationSupported(): boolean {
   return typeof window !== 'undefined' && 'Notification' in window;

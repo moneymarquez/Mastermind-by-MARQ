@@ -22,13 +22,16 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-// Server push isn't wired up yet — that needs a backend push service
-// (web-push + VAPID keys, or similar) to actually send anything here.
-// This listener exists so that once that backend exists, push notifications
-// work immediately with no further service-worker changes. Until then,
-// scheduled reminders come from the foreground polling in
-// src/components/screens/OpeningClosingScreen.tsx (see the notes in
-// src/lib/notifications.ts on that limitation).
+// The backend that calls this — netlify/functions/send-shift-reminders.ts
+// and send-reminders.ts, Scheduled Functions using web-push + VAPID keys —
+// already exists; this is the foundation Opening/Closing, Shift, Event, and
+// Meal notifications all hook into for real closed-app delivery.
+//
+// KNOWN LIMITATION (iOS): Safari only allows the Push API for web apps
+// installed to the home screen (standalone), and even then delivery is
+// only reliable while the app is open or recently backgrounded — not
+// fully closed for an extended period. That's a Safari/OS platform rule;
+// there's no service-worker-side fix for it.
 self.addEventListener('push', (event) => {
   let data: { title?: string; body?: string } = {};
   try {

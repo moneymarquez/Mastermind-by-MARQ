@@ -76,11 +76,21 @@ but the three layouts themselves are fixed templates, not AI-generated markup �
 ## Installing as a PWA
 
 Once deployed, opening the site in Safari (iOS) or Chrome (Android) and using **Add to Home Screen** installs it
-standalone — its own icon, no browser chrome, launches like a native app.
+standalone — its own icon (the gradient "M" mark), branded splash screen on launch, no browser chrome, launches
+like a native app.
 
 **iOS specifically**: Safari only allows web push at all when installed to the home screen (standalone) — which is
 exactly what the in-app "Add this to your home screen to get task reminders" banner (Opening/Closing, dismissible)
 is nudging toward. Install first, then enable alerts.
+
+**Icon and splash screens** (`public/icons/`, `public/splash/`) are rendered from real sources in `design/`
+(`icon.svg`, `splash-template.html`) via Playwright at each exact target resolution — not upscaled from one small
+master image — so the gradients and text stay crisp at every size. Considered `@vite-pwa/assets-generator` (the
+plugin's own asset pipeline) instead, since that's the more typical Vite-native path; stuck with the Playwright
+approach because it was already proven working in this sandbox from the icon work earlier, and pulling in a new
+native-image-processing (sharp) dependency chain for a one-time asset-generation step wasn't worth the added risk.
+To regenerate after changing the design, edit `design/icon.svg` and/or `design/splash-template.html`, then run
+`node design/generate-pwa-assets.mjs` (see that file's header comment for the Playwright setup it expects).
 
 ## One-time backend setup (Web Push — real closed-app notifications)
 
@@ -132,7 +142,8 @@ milestones — goes through the path above.
 - `src/lib/image.ts` — file → base64 helper for photo uploads
 - `netlify/functions/claude.ts` — the server-side Claude proxy: validates the caller's Supabase session, then calls the Anthropic API with the server-only `ANTHROPIC_API_KEY`
 - `sw-src/sw.ts` — service worker source (install/activate/precache/push/notificationclick), bundled by `vite-plugin-pwa` (injectManifest) into `dist/sw.js` with a build-hash-aware precache list. Lives outside `src/` because it needs the `webworker` TS lib, which conflicts with the app's DOM-lib tsconfig — same reasoning as `netlify/functions/` living outside `src/`.
-- `public/manifest.json`, `public/icons/` — PWA manifest + home-screen icons
+- `public/manifest.json`, `public/icons/`, `public/splash/` — PWA manifest, home-screen icons, iOS launch splash screens
+- `design/` — source SVG/HTML the icon and splash PNGs are rendered from, plus the Playwright render script (`generate-pwa-assets.mjs`) to regenerate them after a design change
 - `src/lib/pwa.ts` — standalone-mode detection + Notification Triggers feature-detect
 - `src/lib/push.ts` — subscribes/unsubscribes this device for web push
 - `netlify/functions/push-subscription.ts` — stores/removes a device's push subscription (JWT-gated)
