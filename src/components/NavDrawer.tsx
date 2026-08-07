@@ -55,7 +55,7 @@ export default function NavDrawer({ open, rows, onToggle, onClose }: Props) {
                 );
               }
               return (
-                <div key={row.key} style={{ cursor: 'pointer' }} onClick={row.onClick}>
+                <div key={row.key} className="nav-row" style={{ cursor: 'pointer', borderRadius: 999 }} onClick={row.onClick}>
                   <div
                     style={{
                       display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px',

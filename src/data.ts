@@ -5,13 +5,11 @@ export const NAV_DATA: NavGroup[] = [
     group: 'Personal',
     items: [
       { id: 'home', label: 'Overview', icon: 'ph-house' },
-      { id: 'dialing', label: 'Dialing', icon: 'ph-phone-call' },
       { id: 'macros', label: 'Macros & Meals', icon: 'ph-fork-knife' },
       { id: 'sobriety', label: 'Sobriety', icon: 'ph-heart' },
       { id: 'goals', label: 'Goals', icon: 'ph-target' },
       { id: 'mental', label: 'Mental Health', icon: 'ph-brain' },
       { id: 'schedule', label: 'Schedule', icon: 'ph-calendar-blank' },
-      { id: 'contacts', label: 'Contacts', icon: 'ph-address-book' },
       { id: 'opening-closing', label: 'Opening/Closing', icon: 'ph-clock' },
     ],
   },
@@ -20,16 +18,23 @@ export const NAV_DATA: NavGroup[] = [
     items: [{ id: 'fitness', label: 'Fitness', icon: 'ph-barbell' }],
   },
   {
+    group: 'Cold Calling',
+    items: [
+      { id: 'dialing', label: 'Dialing', icon: 'ph-phone-call' },
+      { id: 'contacts', label: 'Contacts', icon: 'ph-address-book' },
+      { id: 'call-recordings', label: 'Call Recordings', icon: 'ph-microphone' },
+    ],
+  },
+  {
     group: 'Scaling',
     items: [
       { id: 'leadflow', label: 'LeadFlow', icon: 'ph-users-three' },
+      { id: 'website', label: 'Website/App Builder', icon: 'ph-code' },
       { id: 'scaling-planner', label: 'Scaling Planner', icon: 'ph-rocket-launch' },
       { id: 'audits', label: 'Business Audits', icon: 'ph-clipboard-text' },
-      { id: 'invoicing', label: 'Invoicing', icon: 'ph-receipt' },
       { id: 'brand-lab', label: 'Brand Lab', icon: 'ph-flask' },
       { id: 'idea-maker', label: 'Idea Maker', icon: 'ph-lightbulb' },
-      { id: 'call-recordings', label: 'Call Recordings', icon: 'ph-microphone' },
-      { id: 'website', label: 'Website/App Builder', icon: 'ph-code' },
+      { id: 'invoicing', label: 'Invoicing', icon: 'ph-receipt' },
     ],
   },
   {
@@ -65,6 +70,7 @@ export const PLACEHOLDER_NOTES: Record<string, string> = {
   leadflow: "LeadFlow integration pending — this will route into your existing LeadFlow app once it's connected, not a rebuilt CRM.",
   website: 'Terminal integration — planned. The goal is an embedded terminal here to build and preview sites/apps live, not a separate external tool.',
   invoicing: 'Deferred for now — nav entry and route are reserved.',
+  'call-recordings': 'Deferred for now — nav entry and route are reserved. Capture/storage/playback approach still needs to be decided before this gets built.',
 };
 
 export const INITIAL_STICKY_IDEAS: StickyIdea[] = [

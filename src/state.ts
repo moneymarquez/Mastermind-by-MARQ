@@ -19,8 +19,6 @@ export interface AppState {
   novaMessages: NovaMessage[];
   novaInput: string;
   novaThinking: boolean;
-  dialCount: number;
-  dialGoal: number;
   newIdeaText: string;
   newIdeaEst: string;
   stickyIdeas: StickyIdea[];
@@ -42,8 +40,6 @@ const initialState: AppState = {
   novaMessages: [{ from: 'nova', text: "Hey Cristopher — what do you need?" }],
   novaInput: '',
   novaThinking: false,
-  dialCount: 12,
-  dialGoal: 40,
   newIdeaText: '',
   newIdeaEst: '',
   stickyIdeas: INITIAL_STICKY_IDEAS,
@@ -185,8 +181,6 @@ export function useMastermindState() {
     if (lower.includes('dial')) patch({ screen: 'dialing' });
   };
 
-  const logCall = () => patch((s) => ({ dialCount: Math.min(s.dialGoal, s.dialCount + 1) }));
-
   const onNewIdeaText = (e: React.ChangeEvent<HTMLInputElement>) => patch({ newIdeaText: e.target.value });
   const onNewIdeaEst = (e: React.ChangeEvent<HTMLInputElement>) => patch({ newIdeaEst: e.target.value });
   const addStickyIdea = () => {
@@ -220,7 +214,6 @@ export function useMastermindState() {
       onNovaInputChange,
       onNovaKeyDown,
       sendNova,
-      logCall,
       onNewIdeaText,
       onNewIdeaEst,
       addStickyIdea,

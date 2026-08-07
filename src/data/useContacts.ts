@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Contact, ContactSource } from './types';
+import type { Contact, ContactSource, DialingContactDetails, ScalingContactDetails } from './types';
 
 export interface ContactInput {
   name: string;
@@ -10,6 +10,7 @@ export interface ContactInput {
   source: ContactSource;
   status: string | null;
   notes: string | null;
+  details?: Partial<DialingContactDetails> | Partial<ScalingContactDetails>;
 }
 
 export function useContacts() {
@@ -45,6 +46,7 @@ export function useContacts() {
           business_name: input.business_name?.trim() || existing.business_name,
           status: input.status ?? existing.status,
           notes: input.notes?.trim() || existing.notes,
+          details: input.details ? { ...existing.details, ...input.details } : existing.details,
           updated_at: new Date().toISOString(),
         };
         const { data } = await supabase.from('contacts').update(patch).eq('id', existing.id).select().single();
@@ -62,6 +64,7 @@ export function useContacts() {
           source: input.source,
           status: input.status,
           notes: input.notes?.trim() || null,
+          details: input.details ?? {},
         })
         .select()
         .single();

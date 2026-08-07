@@ -22,7 +22,7 @@ export function buildViewModel(state: AppState, navigateTo: (id: string) => void
   const homeSubStyle: CSSProperties = { fontSize: 14, color: '#8A8F98', marginTop: 6 };
 
   const statDefs = [
-    { icon: 'ph-phone-call', value: `${s.dialCount} / ${s.dialGoal}`, caption: "Today's call goal" },
+    { icon: 'ph-phone-call', value: '0 / 100', caption: "Today's call goal" },
     { icon: 'ph-heart', value: '128 days', caption: 'Sobriety streak' },
     { icon: 'ph-fork-knife', value: '1,840 kcal', caption: "Today's macros" },
     { icon: 'ph-calendar-blank', value: '2:30 PM', caption: 'Next on schedule' },

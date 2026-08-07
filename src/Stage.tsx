@@ -72,7 +72,7 @@ export default function Stage({ state, actions, onSignOut }: Props) {
         )}
 
         {state.screen === 'dialing' && (
-          <DialingScreen dialCount={state.dialCount} dialGoal={state.dialGoal} onLogCall={actions.logCall} />
+          <DialingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {state.screen === 'sticky-spot' && (

@@ -145,6 +145,37 @@ export interface BrandLabCopy {
 
 export type ContactSource = 'dialing' | 'scalez' | 'manual';
 
+export const CREDIT_SCORE_RANGES = ['550-599', '600-649', '650-699', '700-749', '750+'] as const;
+export type CreditScoreRange = (typeof CREDIT_SCORE_RANGES)[number];
+
+export type YesNo = 'yes' | 'no';
+export type YesNoUnsure = 'yes' | 'no' | 'unsure';
+
+/** Contact-record extras for source: 'dialing' (residential solar/energy
+ *  qualification fields) — stored in Contact.details. */
+export interface DialingContactDetails {
+  appointment_at: string | null; // ISO datetime
+  address: string;
+  homeowner: YesNo | null;
+  electric_utility: string;
+  avg_monthly_bill: number | null;
+  credit_score_range: CreditScoreRange | null;
+  roof_type_age: string;
+  shading_issues: YesNoUnsure | null;
+  hoa: YesNo | null;
+}
+
+/** Contact-record extras for source: 'scalez' — stored in Contact.details.
+ *  (business_name and notes reuse the Contact's own top-level columns.) */
+export interface ScalingContactDetails {
+  appointment_at: string | null;
+  industry: string;
+  has_website: YesNo | null;
+  marketing_spend: number | null;
+  decision_maker_confirmed: YesNo | null;
+  pain_points: string;
+}
+
 export interface Contact {
   id: string;
   name: string;
@@ -154,7 +185,44 @@ export interface Contact {
   source: ContactSource;
   status: string | null;
   notes: string | null;
+  details: Partial<DialingContactDetails> | Partial<ScalingContactDetails> | Record<string, never>;
   created_at: string;
+  updated_at: string;
+}
+
+export const CALL_OUTCOMES = [
+  'not_interested', 'no_answer', 'voicemail', 'call_back_later',
+  'appointment_set', 'not_qualified', 'dnc_remove',
+] as const;
+export type CallOutcomeType = (typeof CALL_OUTCOMES)[number];
+
+export const CALL_OUTCOME_LABEL: Record<CallOutcomeType, string> = {
+  not_interested: 'Not Interested',
+  no_answer: 'No Answer',
+  voicemail: 'Voicemail',
+  call_back_later: 'Call Back Later',
+  appointment_set: 'Appointment Set',
+  not_qualified: 'Not Qualified',
+  dnc_remove: 'Remove/DNC',
+};
+
+// Outcomes that permanently drop a contact out of the daily rotation —
+// everything else (including call_back_later, which is date-gated instead)
+// can resurface in a future day's queue.
+export const FINAL_OUTCOMES: CallOutcomeType[] = ['not_qualified', 'dnc_remove'];
+
+export interface CallOutcome {
+  id: string;
+  contact_id: string;
+  outcome: CallOutcomeType;
+  call_date: string;
+  callback_date: string | null;
+  logged_at: string;
+}
+
+export interface DialingPitch {
+  id: string;
+  pitch_text: string;
   updated_at: string;
 }
 

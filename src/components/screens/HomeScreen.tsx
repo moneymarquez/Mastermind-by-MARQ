@@ -3,6 +3,8 @@ import Icon from '../../Icon';
 import { useSobriety } from '../../data/useSobriety';
 import { useMacros } from '../../data/useMacros';
 import { useEvents } from '../../data/useEvents';
+import { useContacts } from '../../data/useContacts';
+import { useCallOutcomes, DAILY_CALL_GOAL } from '../../data/useCallOutcomes';
 import { dateStr, formatTimeLabel } from '../../data/time';
 
 interface StatCard {
@@ -23,6 +25,9 @@ export default function HomeScreen({ homeHeadStyle, homeSubStyle, statGridStyle,
   const { streak, loading: sobrietyLoading } = useSobriety();
   const { totals, loading: macrosLoading } = useMacros();
   const { events, loading: eventsLoading } = useEvents();
+  const { contacts, loading: contactsLoading } = useContacts();
+  const dialingContacts = contacts.filter((c) => c.source === 'dialing');
+  const { todayCount, loading: outcomesLoading } = useCallOutcomes(dialingContacts);
 
   const today = dateStr(new Date());
   const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
@@ -36,6 +41,9 @@ export default function HomeScreen({ homeHeadStyle, homeSubStyle, statGridStyle,
     : new Date(`${next.event_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
   const cards = statCards.map((card) => {
+    if (card.caption === "Today's call goal") {
+      return { ...card, value: contactsLoading || outcomesLoading ? '—' : `${todayCount} / ${DAILY_CALL_GOAL}` };
+    }
     if (card.caption === 'Sobriety streak') {
       return { ...card, value: sobrietyLoading ? '—' : `${streak} day${streak === 1 ? '' : 's'}` };
     }

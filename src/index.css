@@ -30,3 +30,17 @@ body {
 input, select {
   font-family: inherit;
 }
+
+/* Nav drawer top-level items — the app's only "accent" is white-on-black,
+   so the hover glow uses that rather than introducing a new color. */
+.nav-row {
+  transition: box-shadow 180ms ease, transform 180ms ease, filter 180ms ease;
+}
+.nav-row:hover {
+  box-shadow: 0 0 0 1px rgba(245, 246, 247, 0.14), 0 0 20px rgba(245, 246, 247, 0.18);
+  transform: scale(1.015);
+  filter: brightness(1.1);
+}
+.nav-row:active {
+  transform: scale(0.99);
+}
