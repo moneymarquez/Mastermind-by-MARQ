@@ -5,6 +5,8 @@ import NavDrawer from './components/NavDrawer';
 import NovaTrigger from './components/NovaTrigger';
 import NovaPanel from './components/NovaPanel';
 import RemindersBox from './components/RemindersBox';
+import BenderButton from './components/BenderButton';
+import { useBender } from './data/useBender';
 import HomeScreen from './components/screens/HomeScreen';
 import DialingScreen from './components/screens/DialingScreen';
 import StickySpotScreen from './components/screens/StickySpotScreen';
@@ -40,6 +42,7 @@ interface Props {
 export default function Stage({ state, actions, onSignOut }: Props) {
   const vm = buildViewModel(state, actions.navigateTo, onSignOut);
   const { isMobile } = vm;
+  const bender = useBender();
 
   // Measures RemindersBox (which is position:absolute inside this same
   // position:relative Stage, so offsetLeft/offsetHeight are already in the
@@ -77,6 +80,8 @@ export default function Stage({ state, actions, onSignOut }: Props) {
         onClose={actions.closeDrawer}
       />
 
+      <BenderButton isMobile={isMobile} activeBender={bender.activeBender} onStart={bender.startBender} onEnd={bender.endBender} />
+
       <NovaTrigger
         cx={vm.cx}
         cy={vm.cy}
@@ -110,7 +115,7 @@ export default function Stage({ state, actions, onSignOut }: Props) {
         )}
 
         {state.screen === 'sobriety' && (
-          <SobrietyScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          <SobrietyScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} bender={bender} />
         )}
 
         {state.screen === 'fitness' && (
@@ -118,7 +123,7 @@ export default function Stage({ state, actions, onSignOut }: Props) {
         )}
 
         {state.screen === 'macros' && (
-          <MacrosScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          <MacrosScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} activeBender={bender.activeBender} />
         )}
 
         {state.screen === 'goals' && (
@@ -126,7 +131,7 @@ export default function Stage({ state, actions, onSignOut }: Props) {
         )}
 
         {state.screen === 'mental' && (
-          <MentalHealthScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          <MentalHealthScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} activeBender={bender.activeBender} />
         )}
 
         {state.screen === 'scaling-planner' && (

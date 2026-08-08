@@ -10,6 +10,24 @@ export interface SobrietyCheckin {
   created_at: string;
 }
 
+export interface BenderSession {
+  id: string;
+  started_at: string;
+  expected_days: number | null;
+  description: string | null;
+  traveling: boolean;
+  ended_at: string | null;
+  created_at: string;
+}
+
+export interface JournalEntry {
+  id: string;
+  entry_date: string;
+  entry_text: string;
+  source_bender_id: string | null;
+  created_at: string;
+}
+
 export interface FitnessWorkout {
   id: string;
   workout_date: string;

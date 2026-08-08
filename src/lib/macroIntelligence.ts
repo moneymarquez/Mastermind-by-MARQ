@@ -1,5 +1,5 @@
 import { askClaude, extractJson } from './ai';
-import type { Meal, NutritionTarget, SavedMeal, SymptomLog } from '../data/types';
+import type { BenderSession, Meal, NutritionTarget, SavedMeal, SymptomLog } from '../data/types';
 
 function mealsSummary(meals: Meal[]): string {
   if (meals.length === 0) return '(no meals logged in this window)';
@@ -47,7 +47,7 @@ export async function generateWeeklyInsights(meals: Meal[], symptoms: SymptomLog
   return extractJson<WeeklyInsights>(text);
 }
 
-export async function suggestNextMeal(todayMeals: Meal[], target: NutritionTarget | null, savedMeals: SavedMeal[]): Promise<string> {
+export async function suggestNextMeal(todayMeals: Meal[], target: NutritionTarget | null, savedMeals: SavedMeal[], activeBender: BenderSession | null = null): Promise<string> {
   const eaten = todayMeals.reduce(
     (acc, m) => ({
       calories: acc.calories + (m.calories ?? 0),
@@ -62,11 +62,21 @@ export async function suggestNextMeal(todayMeals: Meal[], target: NutritionTarge
     : 'No explicit daily target is set — use general sensible nutrition judgment.';
   const favorites = savedMeals.slice(0, 12).map((s) => `${s.name} (${s.calories ?? '?'} cal, ${s.protein_g ?? '?'}p/${s.carbs_g ?? '?'}c/${s.fat_g ?? '?'}f)`).join(', ') || '(none saved yet)';
 
+  // A bender in progress overrides the normal fat-loss/macro-target framing
+  // with recovery-minded suggestions — keeping him as close to functional
+  // as realistic instead of pushing toward a deficit while his body's under
+  // extra strain.
+  const benderNote = activeBender
+    ? '\n\nIMPORTANT: a bender is currently active. Deprioritize hitting exact macro numbers — suggest something ' +
+      'recovery-minded instead: hydration, electrolytes, easy-to-digest food. Say so plainly.'
+    : '';
+
   return askClaude({
     system:
       "You are Nova, Cristopher's nutrition assistant. Given what he's already eaten today and his remaining targets, " +
       'suggest ONE specific next meal or snack that helps close the gap — prefer his saved favorites/fast-food go-tos when one fits well, ' +
-      'otherwise suggest something concrete (not vague like "eat something healthy"). 2-3 sentences, direct, no filler.',
+      'otherwise suggest something concrete (not vague like "eat something healthy"). 2-3 sentences, direct, no filler.' +
+      benderNote,
     messages: [
       {
         role: 'user',

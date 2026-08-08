@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import { generateGroceryList, generateWeeklyInsights, suggestNextMeal } from '../lib/macroIntelligence';
 import { AiError } from '../lib/ai';
 import { todayStr } from '../data/date';
-import type { GroceryList, MacroInsight, Meal, NutritionTarget, SavedMeal, SymptomLog } from '../data/types';
+import type { BenderSession, GroceryList, MacroInsight, Meal, NutritionTarget, SavedMeal, SymptomLog } from '../data/types';
 import Icon from '../Icon';
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
   nutritionTarget: NutritionTarget | null;
   latestInsight: MacroInsight | null;
   latestGroceryList: GroceryList | null;
+  activeBender?: BenderSession | null;
   addSymptomLog: (s: { symptom: string; severity: number | null; note: string | null }) => Promise<void>;
   setNutritionTarget: (t: { goal_id: string | null; daily_calories: number; daily_protein_g: number; daily_carbs_g: number; daily_fat_g: number; rationale: string | null }) => Promise<void>;
   saveMacroInsight: (i: { window_start: string; window_end: string; nutrient_gaps: string | null; timing_pattern: string | null; symptom_correlations: string | null }) => Promise<void>;
@@ -37,7 +38,7 @@ function daysAgo(n: number): string {
 }
 
 export default function NovaInsightsPanel({
-  todayMeals, meals, symptomLogs, savedMeals, nutritionTarget, latestInsight, latestGroceryList,
+  todayMeals, meals, symptomLogs, savedMeals, nutritionTarget, latestInsight, latestGroceryList, activeBender = null,
   addSymptomLog, setNutritionTarget, saveMacroInsight, saveGroceryList,
 }: Props) {
   const [symptom, setSymptom] = useState('');
@@ -93,7 +94,7 @@ export default function NovaInsightsPanel({
     setSuggestError('');
     setSuggestion('');
     try {
-      const text = await suggestNextMeal(todayMeals, nutritionTarget, savedMeals);
+      const text = await suggestNextMeal(todayMeals, nutritionTarget, savedMeals, activeBender);
       setSuggestion(text);
     } catch (err) {
       setSuggestError(err instanceof AiError ? err.message : 'Could not get a suggestion — try again.');
@@ -168,6 +169,7 @@ export default function NovaInsightsPanel({
           <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7' }}>What should I eat next?</div>
           <div style={buttonStyle(suggesting)} onClick={() => !suggesting && runSuggestion()}>{suggesting ? 'Thinking…' : 'Ask Nova'}</div>
         </div>
+        {activeBender && <div style={{ fontSize: 11.5, color: '#e0a35c', marginTop: 8 }}>Bender active — suggestions will lean recovery-minded (hydration, electrolytes, easy food).</div>}
         {suggestion && <div style={{ fontSize: 13, color: '#C7CAD1', marginTop: 10, lineHeight: 1.5 }}>{suggestion}</div>}
         {suggestError && <div style={{ fontSize: 12.5, color: '#c47a7a', marginTop: 8 }}>{suggestError}</div>}
       </div>

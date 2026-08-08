@@ -1,21 +1,26 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useMentalHealth } from '../../data/useMentalHealth';
-import type { Mood } from '../../data/types';
+import type { BenderSession, Mood } from '../../data/types';
 import { askClaude } from '../../lib/ai';
 
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
+  activeBender: BenderSession | null;
 }
 
-async function reflectOnCheckin(mood: Mood, note: string): Promise<string> {
+async function reflectOnCheckin(mood: Mood, note: string, activeBender: BenderSession | null): Promise<string> {
+  const benderContext = activeBender
+    ? `\n\nContext: a bender has been active since ${new Date(activeBender.started_at).toLocaleDateString()}${activeBender.description ? ` (${activeBender.description})` : ''}. Read his mood/energy in that context — don't treat lower energy or a rough mood as unusual or alarming right now, and don't bring up the bender itself unprompted unless it's clearly relevant to what he wrote.`
+    : '';
   return askClaude({
     system:
       "You are Nova, a warm, grounded presence inside Cristopher's mental health check-in tracker. He just logged " +
       "how he's feeling. Respond with a short, genuine reflection — not therapy, not a script, just something a " +
       "thoughtful friend who knows him would say. If the mood is rough or bad, take it seriously and offer one " +
-      'small, concrete thing that might help right now. Plain text, 2-3 sentences.',
+      'small, concrete thing that might help right now. Plain text, 2-3 sentences.' +
+      benderContext,
     messages: [{ role: 'user', content: `Mood: ${mood}${note ? `\nNote: ${note}` : ''}` }],
     maxTokens: 250,
   });
@@ -39,7 +44,7 @@ function timeAgo(iso: string): string {
   return `${Math.round(hrs / 24)}d ago`;
 }
 
-export default function MentalHealthScreen({ homeHeadStyle, homeSubStyle }: Props) {
+export default function MentalHealthScreen({ homeHeadStyle, homeSubStyle, activeBender }: Props) {
   const { checkins, loading, addCheckin, saveInsight } = useMentalHealth();
   const [mood, setMood] = useState<Mood | null>(null);
   const [note, setNote] = useState('');
@@ -55,7 +60,7 @@ export default function MentalHealthScreen({ homeHeadStyle, homeSubStyle }: Prop
     if (inserted) {
       setThinking(true);
       try {
-        const insight = await reflectOnCheckin(savedMood, savedNote);
+        const insight = await reflectOnCheckin(savedMood, savedNote, activeBender);
         await saveInsight(inserted.id, insight);
       } catch {
         // Silent — the check-in itself already saved; the reflection is a bonus.

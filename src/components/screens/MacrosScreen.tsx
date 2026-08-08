@@ -9,10 +9,12 @@ import { lookupBarcode, BarcodeLookupError } from '../../lib/barcode';
 import BarcodeScanner from '../BarcodeScanner';
 import NovaInsightsPanel from '../NovaInsightsPanel';
 import Icon from '../../Icon';
+import type { BenderSession } from '../../data/types';
 
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
+  activeBender?: BenderSession | null;
 }
 
 interface MealEstimate {
@@ -75,7 +77,7 @@ const GOAL_TAG_LABELS: Record<string, string> = {
   'low-carb': 'Low carb',
 };
 
-export default function MacrosScreen({ homeHeadStyle, homeSubStyle }: Props) {
+export default function MacrosScreen({ homeHeadStyle, homeSubStyle, activeBender = null }: Props) {
   const {
     meals, todayMeals, totals, todayWaterOz, fastFood, savedMeals, symptomLogs,
     nutritionTarget, latestInsight, latestGroceryList, loading,
@@ -449,6 +451,7 @@ export default function MacrosScreen({ homeHeadStyle, homeSubStyle }: Props) {
         nutritionTarget={nutritionTarget}
         latestInsight={latestInsight}
         latestGroceryList={latestGroceryList}
+        activeBender={activeBender}
         addSymptomLog={addSymptomLog}
         setNutritionTarget={setNutritionTarget}
         saveMacroInsight={saveMacroInsight}

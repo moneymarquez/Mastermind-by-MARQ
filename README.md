@@ -16,7 +16,7 @@ Then open the printed local URL (typically http://localhost:5173).
 This app needs a Supabase project to run against.
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, and `supabase/schema_010_macros_intelligence.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
+2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, and `supabase/schema_011_sobriety_v2.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
 3. **Create your login account** — Authentication → Users → Add user → enter email + password, check **Auto Confirm User**. There's no public sign-up flow; this is the one account the login screen expects.
 4. Copy `.env.example` to `.env.local` and fill in your project's URL and anon key (Project Settings → API).
 
@@ -179,6 +179,29 @@ All of this lives in `src/lib/macroIntelligence.ts` (the three Claude calls) and
 Still to come: the Goals rebuild (reverse-engineering, conflict checking, path selection, adaptive check-ins,
 real-data pull-through) and the overnight Daily Plan Engine (8am push with a pre-generated, confirmable day plan).
 
+## Sobriety v2: Bender Mode, journal, pattern check-ins
+
+Run `supabase/schema_011_sobriety_v2.sql` (after schema_010) to unlock this. Philosophy note baked into every prompt
+in `src/lib/sobrietyIntelligence.ts`: this is a harm-reduction tool, not an abstinence/recovery app — Nova never
+moralizes or treats "days clean" as the goal.
+
+- **Bender Mode** — a pill button in the top-right corner of every screen (`src/components/BenderButton.tsx`,
+  rendered once in `Stage.tsx` via `src/data/useBender.ts`), not buried in the Sobriety tab. Starting one captures
+  context (expected days, what's going on, traveling) rather than being a silent toggle, and stays active — spanning
+  multiple days — until manually ended. Both the start and end auto-log to the journal.
+- **Journal** — a lightweight running record at the bottom of the Sobriety screen; bender events log themselves,
+  plus a freeform add-entry field for anything else worth keeping. This is what the pattern tracker below can
+  eventually correlate against.
+- **Pattern check-ins** — "Check my patterns" on the Sobriety screen runs a Claude call over the trailing ~3 weeks:
+  a creeping pattern gets a gentle nudge (not a lecture); a stable pattern gets Nova asking what function it's
+  serving (productivity, unwinding, social, stress relief) instead of just being left alone.
+- **Dependency vs. moderate use** — an on-demand factual explainer (button next to the pattern check), non-alarmist,
+  meant for self-assessment, not diagnosis.
+- **Cross-section sync** — while a bender is active: Macros' "What should I eat next?" (`src/lib/macroIntelligence.ts`)
+  shifts to recovery-minded suggestions (hydration, electrolytes, easy food) instead of hitting exact macros, and
+  Mental Health's check-in reflection (`src/components/screens/MentalHealthScreen.tsx`) reads mood/energy in that
+  context instead of treating a rough day as unusual.
+
 ## Structure
 
 - `src/state.ts` — app state + action handlers (drag, nav, Nova, sticky spot)
@@ -204,5 +227,5 @@ real-data pull-through) and the overnight Daily Plan Engine (8am push with a pre
 - `src/data/usePitch.ts` — the persisted Current Pitch script (one row per user)
 - `src/components/` — presentational components
 - `src/components/screens/` — per-screen views
-- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql`)
+- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql`)
 
