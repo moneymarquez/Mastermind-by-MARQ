@@ -5,7 +5,6 @@ import NavDrawer from './components/NavDrawer';
 import NovaTrigger from './components/NovaTrigger';
 import NovaPanel from './components/NovaPanel';
 import RemindersBox from './components/RemindersBox';
-import BenderButton from './components/BenderButton';
 import { useBender } from './data/useBender';
 import HomeScreen from './components/screens/HomeScreen';
 import DialingScreen from './components/screens/DialingScreen';
@@ -79,8 +78,6 @@ export default function Stage({ state, actions, onSignOut }: Props) {
         onToggle={actions.toggleDrawer}
         onClose={actions.closeDrawer}
       />
-
-      <BenderButton isMobile={isMobile} activeBender={bender.activeBender} onStart={bender.startBender} onEnd={bender.endBender} />
 
       <NovaTrigger
         cx={vm.cx}

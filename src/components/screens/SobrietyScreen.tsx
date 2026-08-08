@@ -5,6 +5,7 @@ import type { useBender } from '../../data/useBender';
 import { askClaude, AiError } from '../../lib/ai';
 import { checkSobrietyPattern, explainDependencyVsModerateUse } from '../../lib/sobrietyIntelligence';
 import type { SobrietyCheckin } from '../../data/types';
+import BenderButton from '../BenderButton';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -103,8 +104,13 @@ export default function SobrietyScreen({ homeHeadStyle, homeSubStyle, bender }: 
 
   return (
     <div>
-      <div style={homeHeadStyle}>Sobriety</div>
-      <div style={homeSubStyle}>Drinking, weed, and nicotine — logged daily. Harm reduction, not abstinence.</div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <div>
+          <div style={homeHeadStyle}>Sobriety</div>
+          <div style={homeSubStyle}>Drinking, weed, and nicotine — logged daily. Harm reduction, not abstinence.</div>
+        </div>
+        <BenderButton activeBender={bender.activeBender} onStart={bender.startBender} onEnd={bender.endBender} />
+      </div>
 
       <div style={cardStyle}>
         <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 40, fontWeight: 600, color: '#F5F6F7' }}>
@@ -118,7 +124,7 @@ export default function SobrietyScreen({ homeHeadStyle, homeSubStyle, bender }: 
         )}
         {bender.activeBender && (
           <div style={{ marginTop: 14, padding: '8px 12px', borderRadius: 8, border: '1px solid #B7690C', color: '#e0a35c', fontSize: 12.5 }}>
-            Bender mode is active — use the button in the top corner to check context or end it.
+            Bender mode is active — tap the button above to check context or end it.
           </div>
         )}
 

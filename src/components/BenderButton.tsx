@@ -4,17 +4,16 @@ import type { BenderSession } from '../data/types';
 import Icon from '../Icon';
 
 interface Props {
-  isMobile: boolean;
   activeBender: BenderSession | null;
   onStart: (b: { expected_days: number | null; description: string | null; traveling: boolean }) => Promise<void>;
   onEnd: () => Promise<void>;
 }
 
-// Available everywhere (rendered once in Stage.tsx, not the Sobriety
-// screen) — top-right corner, opposite Nova's bottom-left trigger, so the
-// two never collide. Captures context on start (not a silent toggle) so
-// the journal/pattern tracker has something real to work with later.
-export default function BenderButton({ isMobile, activeBender, onStart, onEnd }: Props) {
+// Lives solely on the Sobriety screen (not global) — an inline pill in the
+// page flow there, rather than pinned to a fixed corner across every
+// screen. Captures context on start (not a silent toggle) so the
+// journal/pattern tracker has something real to work with later.
+export default function BenderButton({ activeBender, onStart, onEnd }: Props) {
   const [open, setOpen] = useState(false);
   const [days, setDays] = useState('');
   const [description, setDescription] = useState('');
@@ -33,10 +32,9 @@ export default function BenderButton({ isMobile, activeBender, onStart, onEnd }:
   };
 
   const pillStyle: CSSProperties = {
-    position: 'absolute', top: isMobile ? 16 : 20, right: isMobile ? 16 : 20, zIndex: 46,
-    display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 999,
+    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 999,
     fontSize: 11.5, fontWeight: 600, cursor: 'pointer',
-    background: activeBender ? '#3a2412' : 'rgba(20,22,26,0.85)',
+    background: activeBender ? '#3a2412' : '#14161A',
     border: `1px solid ${activeBender ? '#B7690C' : '#22262B'}`,
     color: activeBender ? '#e0a35c' : '#8A8F98',
   };

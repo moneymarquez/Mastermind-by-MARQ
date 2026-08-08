@@ -185,8 +185,9 @@ Run `supabase/schema_011_sobriety_v2.sql` (after schema_010) to unlock this. Phi
 in `src/lib/sobrietyIntelligence.ts`: this is a harm-reduction tool, not an abstinence/recovery app — Nova never
 moralizes or treats "days clean" as the goal.
 
-- **Bender Mode** — a pill button in the top-right corner of every screen (`src/components/BenderButton.tsx`,
-  rendered once in `Stage.tsx` via `src/data/useBender.ts`), not buried in the Sobriety tab. Starting one captures
+- **Bender Mode** — a pill button on the Sobriety screen (`src/components/BenderButton.tsx`; the underlying state
+  lives in `src/data/useBender.ts`, called once in `Stage.tsx` so Macros/Mental Health can still read it for
+  cross-section awareness even though the button itself only shows on Sobriety). Starting one captures
   context (expected days, what's going on, traveling) rather than being a silent toggle, and stays active — spanning
   multiple days — until manually ended. Both the start and end auto-log to the journal.
 - **Journal** — a lightweight running record at the bottom of the Sobriety screen; bender events log themselves,
