@@ -7,6 +7,7 @@ import NovaPanel from './components/NovaPanel';
 import RemindersBox from './components/RemindersBox';
 import { useBender } from './data/useBender';
 import HomeScreen from './components/screens/HomeScreen';
+import DailyPlanScreen from './components/screens/DailyPlanScreen';
 import DialingScreen from './components/screens/DialingScreen';
 import StickySpotScreen from './components/screens/StickySpotScreen';
 import SobrietyScreen from './components/screens/SobrietyScreen';
@@ -27,7 +28,7 @@ import { buildViewModel } from './viewModel';
 import type { AppState, MastermindActions } from './state';
 
 const BUILT_SCREENS = [
-  'home', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
+  'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
   'scaling-planner', 'audits', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings',
 ];
@@ -93,6 +94,10 @@ export default function Stage({ state, actions, onSignOut }: Props) {
       <div style={vm.contentStyle}>
         {state.screen === 'home' && (
           <HomeScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} statGridStyle={vm.statGridStyle} statCards={vm.statCards} />
+        )}
+
+        {state.screen === 'daily-plan' && (
+          <DailyPlanScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {state.screen === 'dialing' && (

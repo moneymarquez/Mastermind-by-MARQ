@@ -171,6 +171,29 @@ export interface SymptomLog {
   created_at: string;
 }
 
+export type DailyPlanBlockType = 'fixed' | 'goal' | 'fitness' | 'macros' | 'ai_suggested';
+
+export interface DailyPlanBlock {
+  time: string;
+  title: string;
+  detail: string;
+  type: DailyPlanBlockType;
+  source: string | null;
+}
+
+export type DailyPlanStatus = 'draft' | 'confirmed' | 'skipped';
+
+export interface DailyPlan {
+  id: string;
+  plan_date: string;
+  status: DailyPlanStatus;
+  blocks: DailyPlanBlock[];
+  generated_at: string;
+  notified_at: string | null;
+  nudged_at: string | null;
+  confirmed_at: string | null;
+}
+
 export interface MacroInsight {
   id: string;
   window_start: string;

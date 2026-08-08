@@ -16,7 +16,7 @@ Then open the printed local URL (typically http://localhost:5173).
 This app needs a Supabase project to run against.
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, `supabase/schema_012_holiday_calendar.sql`, `supabase/schema_013_fitness_v2.sql`, `supabase/schema_014_fitness_notifications.sql`, `supabase/schema_015_mental_health_profile.sql`, and `supabase/schema_016_goals_v2.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
+2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, `supabase/schema_012_holiday_calendar.sql`, `supabase/schema_013_fitness_v2.sql`, `supabase/schema_014_fitness_notifications.sql`, `supabase/schema_015_mental_health_profile.sql`, `supabase/schema_016_goals_v2.sql`, and `supabase/schema_017_daily_plan.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
 3. **Create your login account** — Authentication → Users → Add user → enter email + password, check **Auto Confirm User**. There's no public sign-up flow; this is the one account the login screen expects.
 4. Copy `.env.example` to `.env.local` and fill in your project's URL and anon key (Project Settings → API).
 
@@ -281,7 +281,30 @@ Run `supabase/schema_016_goals_v2.sql` (after schema_015) to unlock the rebuilt 
 
 Not built (explicitly out of scope for now): a true recurring-reminder engine, and multi-turn dynamic clarifying
 questions (the intake is a fixed short form, not an open conversation) — both would be substantial separate features.
-The Daily Plan Engine (8am pre-generated day plan) is the one piece of the original Macros/Goals spec still to come.
+
+## Daily Plan Engine
+
+Run `supabase/schema_017_daily_plan.sql` (after schema_016). No new env vars needed — `netlify/functions/generate-daily-plan.ts`
+reuses the same `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, and VAPID keys every other Scheduled Function
+already has configured.
+
+- **Generated overnight, not on open** — the new Scheduled Function (`*/15 * * * *`, same cadence as
+  `send-reminders.ts`) checks a 2:00am-local window; if tomorrow's plan doesn't exist yet, it calls Claude directly
+  (server-side, not through the client `/api/claude` proxy — there's no user JWT in a cron) with tomorrow's fixed
+  calendar events, active goals' committed-path actions, and any active Fitness/Macros plan, and stores the result
+  as a `draft` plan. By the time the 8am notification fires, the full day is already built — no "generating…" state.
+- **Time allocation scales with urgency** — the prompt explicitly weights goals with a short runway/big target
+  toward more of the day's open hours than long-runway goals.
+- **Nova can propose net-new items** — if a goal looks unreachable through its stated methods on its stated
+  timeline, Nova can add a block Cristopher never asked for (e.g. "start dropshipping"). Every such block is tagged
+  `ai_suggested` and shown with a distinct badge in the review UI — never inserted as if already agreed to.
+- **8am push + follow-up nudge** — the same function also sends "today's plan is ready" at 8am-local (once), and a
+  follow-up nudge at 11am-local if it's still unconfirmed.
+- **Review & confirm** — the new "Daily Plan" nav item (`src/components/screens/DailyPlanScreen.tsx`) shows the
+  drafted day, lets you remove individual blocks, then Confirm or Skip. This is where a push notification tap should
+  land you.
+
+This closes out the original Macros & Meals + Goals spec in full.
 
 ## Structure
 
@@ -308,5 +331,5 @@ The Daily Plan Engine (8am pre-generated day plan) is the one piece of the origi
 - `src/data/usePitch.ts` — the persisted Current Pitch script (one row per user)
 - `src/components/` — presentational components
 - `src/components/screens/` — per-screen views
-- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql` → `schema_015_mental_health_profile.sql` → `schema_016_goals_v2.sql`)
+- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql` → `schema_015_mental_health_profile.sql` → `schema_016_goals_v2.sql` → `schema_017_daily_plan.sql`)
 

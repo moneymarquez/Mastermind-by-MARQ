@@ -5,6 +5,7 @@ export const NAV_DATA: NavGroup[] = [
     group: 'Personal',
     items: [
       { id: 'home', label: 'Overview', icon: 'ph-house' },
+      { id: 'daily-plan', label: 'Daily Plan', icon: 'ph-clipboard-text' },
       { id: 'macros', label: 'Macros & Meals', icon: 'ph-fork-knife' },
       { id: 'sobriety', label: 'Sobriety', icon: 'ph-heart' },
       { id: 'goals', label: 'Goals', icon: 'ph-target' },
