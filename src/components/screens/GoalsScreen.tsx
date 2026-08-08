@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useGoals } from '../../data/useGoals';
-import type { Goal } from '../../data/types';
+import { useContacts } from '../../data/useContacts';
+import { useCallOutcomes } from '../../data/useCallOutcomes';
+import type { Goal, GoalPath } from '../../data/types';
 import { askClaude, AiError } from '../../lib/ai';
+import { generateGoalPlan, recalculateGoalPace } from '../../lib/goalLockIn';
+import type { GoalIntake } from '../../lib/goalLockIn';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -40,20 +44,94 @@ async function critiqueGoal(goal: Goal): Promise<string> {
   });
 }
 
-async function checkinOnGoal(goal: Goal): Promise<string> {
-  const recentCheckins = goal.checkins.slice(0, 3).map((c) => `- ${c.checkin_text}`).join('\n') || '(no prior check-ins)';
-  return askClaude({
-    system:
-      "You are Nova, checking in on Cristopher's progress toward this goal. Look at where things stand and the " +
-      'recent check-in history, then give a short, honest read on his progress and ONE specific thing to do next. ' +
-      'Plain text, 2-4 sentences, direct — not generic cheerleading.',
-    messages: [{ role: 'user', content: `${goalContext(goal)}\n\nRecent check-ins:\n${recentCheckins}` }],
-    maxTokens: 300,
-  });
+// ── Lock-in intake (collects the numbers Nova needs to reverse-engineer) ──
+function LockInIntake({ goal, otherGoals, onLocked }: { goal: Goal; otherGoals: Goal[]; onLocked: (plan: Awaited<ReturnType<typeof generateGoalPlan>>) => Promise<void> }) {
+  const [targetDescription, setTargetDescription] = useState('');
+  const [deadline, setDeadline] = useState('');
+  const [constraints, setConstraints] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState('');
+
+  const run = async () => {
+    setGenerating(true);
+    setError('');
+    try {
+      const intake: GoalIntake = { title: goal.title, why: goal.why ?? '', category: goal.category ?? '', targetDescription, deadline, constraints };
+      const plan = await generateGoalPlan(intake, otherGoals.filter((g) => g.id !== goal.id));
+      await onLocked(plan);
+    } catch (err) {
+      setError(err instanceof AiError ? err.message : 'Could not generate a plan — try again.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: 14, background: '#101114', border: '1px dashed #22262B', borderRadius: 10, padding: 16 }}>
+      <div style={{ fontSize: 12.5, color: '#8A8F98', marginBottom: 10 }}>Lock this in — turn it into hard numbers and real paths.</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <input style={inputStyle} placeholder="What's the target? (cost, count, weight, etc.)" value={targetDescription} onChange={(e) => setTargetDescription(e.target.value)} />
+        <input style={inputStyle} placeholder="Deadline (e.g. 3 months, Dec 1)" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+        <input style={inputStyle} placeholder="Any constraints? (optional)" value={constraints} onChange={(e) => setConstraints(e.target.value)} />
+      </div>
+      {error && <div style={{ fontSize: 12, color: '#c47a7a', marginTop: 8 }}>{error}</div>}
+      <div
+        style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 999, background: generating ? '#22262B' : '#F5F6F7', color: generating ? '#8A8F98' : '#0A0B0D', fontSize: 12.5, fontWeight: 600, cursor: generating ? 'default' : 'pointer' }}
+        onClick={() => !generating && run()}
+      >
+        {generating ? 'Reverse-engineering…' : 'Lock it in'}
+      </div>
+    </div>
+  );
 }
 
-function GoalCard({ goal, onAddStep, onToggleStep, onRemoveStep, onSaveProgress, onDelete, onSaveCritique, onAddCheckin }: {
+// ── Path picker (shown once paths exist but nothing is committed yet) ────
+function PathPicker({ goal, onChoose }: { goal: Goal; onChoose: (path: GoalPath) => Promise<void> }) {
+  const [choosing, setChoosing] = useState<string | null>(null);
+
+  return (
+    <div style={{ marginTop: 14 }}>
+      {goal.conflict_notes && (
+        <div style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid #B7690C', color: '#e0a35c', fontSize: 12.5, marginBottom: 12, lineHeight: 1.5 }}>
+          ⚠ {goal.conflict_notes}
+        </div>
+      )}
+      <div style={{ fontSize: 12, color: '#8A8F98' }}>
+        Target: {goal.target_metric_value} {goal.target_metric} · check-in {goal.check_in_cadence}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
+        {goal.paths.map((p) => (
+          <div key={p.id} style={{ background: '#101114', border: `1px solid ${p.is_recommended ? '#F5F6F7' : '#22262B'}`, borderRadius: 10, padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7' }}>{p.title}</span>
+              {p.is_recommended && <span style={{ fontSize: 9.5, fontWeight: 700, color: '#0A0B0D', background: '#F5F6F7', borderRadius: 999, padding: '2px 7px' }}>RECOMMENDED</span>}
+            </div>
+            <div style={{ fontSize: 12, color: '#8A8F98', marginTop: 6, lineHeight: 1.5 }}>{p.description}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
+              {p.actions.map((a, i) => (
+                <div key={i} style={{ fontSize: 11.5, color: '#565b64' }}>• {a.description} — {a.frequency}</div>
+              ))}
+            </div>
+            <div
+              style={{ marginTop: 10, display: 'inline-flex', padding: '7px 14px', borderRadius: 999, background: choosing ? '#22262B' : '#F5F6F7', color: choosing ? '#8A8F98' : '#0A0B0D', fontSize: 12, fontWeight: 600, cursor: choosing ? 'default' : 'pointer' }}
+              onClick={async () => { if (choosing) return; setChoosing(p.id); await onChoose(p); setChoosing(null); }}
+            >
+              {choosing === p.id ? 'Committing…' : 'Choose this path'}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GoalCard({
+  goal, otherGoals, todayDialCount,
+  onAddStep, onToggleStep, onRemoveStep, onSaveProgress, onDelete, onSaveCritique, onAddCheckin, onSaveGoalPlan, onCommitPath,
+}: {
   goal: Goal;
+  otherGoals: Goal[];
+  todayDialCount: number;
   onAddStep: (goalId: string, description: string) => void;
   onToggleStep: (stepId: string, done: boolean) => void;
   onRemoveStep: (stepId: string) => void;
@@ -61,12 +139,15 @@ function GoalCard({ goal, onAddStep, onToggleStep, onRemoveStep, onSaveProgress,
   onDelete: (goalId: string) => void;
   onSaveCritique: (goalId: string, critique: string) => Promise<void>;
   onAddCheckin: (goalId: string, text: string) => Promise<void>;
+  onSaveGoalPlan: (goalId: string, plan: Awaited<ReturnType<typeof generateGoalPlan>>) => Promise<void>;
+  onCommitPath: (goal: Goal, path: GoalPath) => Promise<void>;
 }) {
   const [stepText, setStepText] = useState('');
   const [savedInput, setSavedInput] = useState(String(goal.current_saved));
-  const [busy, setBusy] = useState<'critique' | 'checkin' | null>(null);
+  const [busy, setBusy] = useState<'critique' | 'checkin' | 'revise' | null>(null);
   const [aiError, setAiError] = useState('');
-  const pct = goal.target_cost ? Math.min(100, (goal.current_saved / goal.target_cost) * 100) : 0;
+  const [revising, setRevising] = useState(false);
+  const pct = goal.target_cost ? Math.min(100, (goal.current_saved / goal.target_cost) * 100) : goal.progress_pct;
 
   const runCritique = async () => {
     setBusy('critique');
@@ -85,7 +166,8 @@ function GoalCard({ goal, onAddStep, onToggleStep, onRemoveStep, onSaveProgress,
     setBusy('checkin');
     setAiError('');
     try {
-      const text = await checkinOnGoal(goal);
+      const recent = goal.checkins.slice(0, 3).map((c) => `- ${c.checkin_text}`);
+      const text = await recalculateGoalPace(goal, recent);
       await onAddCheckin(goal.id, text);
     } catch (err) {
       setAiError(err instanceof AiError ? err.message : 'Could not run a check-in — try again.');
@@ -93,6 +175,28 @@ function GoalCard({ goal, onAddStep, onToggleStep, onRemoveStep, onSaveProgress,
       setBusy(null);
     }
   };
+
+  const runRevise = async () => {
+    setBusy('revise');
+    setAiError('');
+    try {
+      const intake: GoalIntake = {
+        title: goal.title, why: goal.why ?? '', category: goal.category ?? '',
+        targetDescription: `${goal.target_metric_value ?? ''} ${goal.target_metric ?? ''} (previous path: ${goal.committed_path?.title ?? 'none'} — this needs revising after a setback)`,
+        deadline: goal.deadline ?? '', constraints: '',
+      };
+      const plan = await generateGoalPlan(intake, otherGoals.filter((g) => g.id !== goal.id));
+      await onSaveGoalPlan(goal.id, plan);
+      setRevising(false);
+    } catch (err) {
+      setAiError(err instanceof AiError ? err.message : 'Could not revise the plan — try again.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const locked = !!goal.committed_path;
+  const hasPaths = goal.paths.length > 0;
 
   return (
     <div style={{ background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: 22 }}>
@@ -104,24 +208,26 @@ function GoalCard({ goal, onAddStep, onToggleStep, onRemoveStep, onSaveProgress,
         <span style={{ fontSize: 12, color: '#565b64', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => onDelete(goal.id)}>Delete</span>
       </div>
 
-      {goal.target_cost != null && (
+      {(goal.target_cost != null || locked) && (
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16, fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: '#F5F6F7' }}>
-            <span>${goal.current_saved.toLocaleString()}</span>
-            <span style={{ color: '#565b64' }}>${goal.target_cost.toLocaleString()}</span>
+            <span>{goal.target_cost != null ? `$${goal.current_saved.toLocaleString()}` : `${Math.round(pct)}%`}</span>
+            {goal.target_cost != null && <span style={{ color: '#565b64' }}>${goal.target_cost.toLocaleString()}</span>}
           </div>
           <div style={{ height: 8, background: '#22262B', borderRadius: 999, marginTop: 6, overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${pct}%`, background: '#F5F6F7', borderRadius: 999 }} />
           </div>
-          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-            <input style={{ ...inputStyle, width: 120 }} value={savedInput} onChange={(e) => setSavedInput(e.target.value)} />
-            <div
-              style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, border: '1px solid #22262B', color: '#8A8F98', fontSize: 12.5, cursor: 'pointer' }}
-              onClick={() => onSaveProgress(goal.id, Number(savedInput) || 0)}
-            >
-              Update saved
+          {goal.target_cost != null && (
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              <input style={{ ...inputStyle, width: 120 }} value={savedInput} onChange={(e) => setSavedInput(e.target.value)} />
+              <div
+                style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, border: '1px solid #22262B', color: '#8A8F98', fontSize: 12.5, cursor: 'pointer' }}
+                onClick={() => onSaveProgress(goal.id, Number(savedInput) || 0)}
+              >
+                Update saved
+              </div>
             </div>
-          </div>
+          )}
         </>
       )}
 
@@ -131,28 +237,50 @@ function GoalCard({ goal, onAddStep, onToggleStep, onRemoveStep, onSaveProgress,
         </a>
       )}
 
-      <div style={{ fontSize: 12, color: '#8A8F98', marginTop: 16, marginBottom: 8 }}>Steps</div>
-      {goal.steps.map((s) => (
-        <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
-          <input type="checkbox" checked={s.done} onChange={(e) => onToggleStep(s.id, e.target.checked)} />
-          <span style={{ fontSize: 13, color: s.done ? '#565b64' : '#C7CAD1', textDecoration: s.done ? 'line-through' : 'none', flex: 1 }}>{s.description}</span>
-          <span style={{ fontSize: 12, color: '#565b64', cursor: 'pointer' }} onClick={() => onRemoveStep(s.id)}>×</span>
+      {!locked && !hasPaths && <LockInIntake goal={goal} otherGoals={otherGoals} onLocked={(plan) => onSaveGoalPlan(goal.id, plan)} />}
+      {!locked && hasPaths && <PathPicker goal={goal} onChoose={(p) => onCommitPath(goal, p)} />}
+
+      {locked && goal.conflict_notes && (
+        <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 8, border: '1px solid #B7690C', color: '#e0a35c', fontSize: 12.5, lineHeight: 1.5 }}>
+          ⚠ {goal.conflict_notes}
         </div>
-      ))}
-      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-        <input
-          style={{ ...inputStyle, flex: 1 }}
-          placeholder="Add a step"
-          value={stepText}
-          onChange={(e) => setStepText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && stepText.trim()) {
-              onAddStep(goal.id, stepText.trim());
-              setStepText('');
-            }
-          }}
-        />
-      </div>
+      )}
+
+      {locked && (
+        <>
+          <div style={{ fontSize: 12, color: '#8A8F98', marginTop: 16, marginBottom: 8 }}>
+            Steps — {goal.committed_path!.title} · check-in {goal.check_in_cadence}
+          </div>
+          {goal.steps.map((s) =>
+            s.auto_tracked_source === 'dialing_calls' ? (
+              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
+                <span style={{ fontSize: 13, color: '#C7CAD1', flex: 1 }}>{s.description}</span>
+                <span style={{ fontSize: 11.5, color: '#4CAF7D', fontFamily: "'JetBrains Mono', monospace" }}>{todayDialCount} today (live)</span>
+              </div>
+            ) : (
+              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
+                <input type="checkbox" checked={s.done} onChange={(e) => onToggleStep(s.id, e.target.checked)} />
+                <span style={{ fontSize: 13, color: s.done ? '#565b64' : '#C7CAD1', textDecoration: s.done ? 'line-through' : 'none', flex: 1 }}>{s.description}{s.frequency ? ` (${s.frequency})` : ''}</span>
+                <span style={{ fontSize: 12, color: '#565b64', cursor: 'pointer' }} onClick={() => onRemoveStep(s.id)}>×</span>
+              </div>
+            )
+          )}
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <input
+              style={{ ...inputStyle, flex: 1 }}
+              placeholder="Add a step"
+              value={stepText}
+              onChange={(e) => setStepText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && stepText.trim()) {
+                  onAddStep(goal.id, stepText.trim());
+                  setStepText('');
+                }
+              }}
+            />
+          </div>
+        </>
+      )}
 
       <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>
         <div
@@ -161,12 +289,30 @@ function GoalCard({ goal, onAddStep, onToggleStep, onRemoveStep, onSaveProgress,
         >
           {busy === 'critique' ? 'Thinking…' : '✨ AI critique'}
         </div>
-        <div
-          style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, border: '1px solid #22262B', color: busy ? '#565b64' : '#8A8F98', fontSize: 12.5, cursor: busy ? 'default' : 'pointer' }}
-          onClick={() => !busy && runCheckin()}
-        >
-          {busy === 'checkin' ? 'Checking in…' : '✨ AI check-in'}
-        </div>
+        {locked && (
+          <div
+            style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, border: '1px solid #22262B', color: busy ? '#565b64' : '#8A8F98', fontSize: 12.5, cursor: busy ? 'default' : 'pointer' }}
+            onClick={() => !busy && runCheckin()}
+          >
+            {busy === 'checkin' ? 'Checking in…' : '✨ Check in now'}
+          </div>
+        )}
+        {locked && !revising && (
+          <div
+            style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, color: '#565b64', fontSize: 12.5, cursor: 'pointer' }}
+            onClick={() => setRevising(true)}
+          >
+            Revise path
+          </div>
+        )}
+        {locked && revising && (
+          <div
+            style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, background: busy ? '#22262B' : '#F5F6F7', color: busy ? '#8A8F98' : '#0A0B0D', fontSize: 12.5, fontWeight: 600, cursor: busy ? 'default' : 'pointer' }}
+            onClick={() => !busy && runRevise()}
+          >
+            {busy === 'revise' ? 'Revising…' : 'Confirm revise (generates new paths)'}
+          </div>
+        )}
       </div>
       {aiError && <div style={{ fontSize: 12, color: '#c47a7a', marginTop: 8 }}>{aiError}</div>}
 
@@ -192,7 +338,11 @@ function GoalCard({ goal, onAddStep, onToggleStep, onRemoveStep, onSaveProgress,
 }
 
 export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
-  const { goals, loading, addGoal, updateGoal, deleteGoal, addStep, toggleStep, removeStep, saveCritique, addCheckin } = useGoals();
+  const { goals, loading, addGoal, updateGoal, deleteGoal, addStep, toggleStep, removeStep, saveCritique, addCheckin, saveGoalPlan, commitPath } = useGoals();
+  const { contacts } = useContacts();
+  const dialingContacts = contacts.filter((c) => c.source === 'dialing');
+  const { todayCount } = useCallOutcomes(dialingContacts);
+
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
   const [why, setWhy] = useState('');
@@ -219,7 +369,7 @@ export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={homeHeadStyle}>Goals</div>
-          <div style={homeSubStyle}>What you're working toward, and the steps to get there.</div>
+          <div style={homeSubStyle}>Living contracts — reverse-engineered into numbers and real paths.</div>
         </div>
         <div
           style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999, border: '1px solid #F5F6F7', color: '#F5F6F7', fontSize: 13, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}
@@ -234,7 +384,7 @@ export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
           <input style={inputStyle} placeholder="What's the goal?" value={title} onChange={(e) => setTitle(e.target.value)} />
           <input style={inputStyle} placeholder="Why does it matter?" value={why} onChange={(e) => setWhy(e.target.value)} />
           <input style={inputStyle} placeholder="Category (e.g. savings, business)" value={category} onChange={(e) => setCategory(e.target.value)} />
-          <input style={inputStyle} placeholder="Target cost ($, optional)" value={targetCost} onChange={(e) => setTargetCost(e.target.value)} />
+          <input style={inputStyle} placeholder="Target cost ($, optional — for savings-style goals)" value={targetCost} onChange={(e) => setTargetCost(e.target.value)} />
           <input style={inputStyle} placeholder="Reference URL (optional)" value={url} onChange={(e) => setUrl(e.target.value)} />
           <div
             style={{ alignSelf: 'flex-start', padding: '9px 16px', borderRadius: 999, background: '#F5F6F7', color: '#0A0B0D', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
@@ -242,6 +392,7 @@ export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
           >
             Save goal
           </div>
+          <div style={{ fontSize: 11.5, color: '#565b64' }}>You'll lock it into hard numbers and pick a path right after saving.</div>
         </div>
       )}
 
@@ -250,6 +401,8 @@ export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
           <GoalCard
             key={g.id}
             goal={g}
+            otherGoals={goals}
+            todayDialCount={todayCount}
             onAddStep={addStep}
             onToggleStep={toggleStep}
             onRemoveStep={removeStep}
@@ -257,6 +410,8 @@ export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
             onDelete={deleteGoal}
             onSaveCritique={saveCritique}
             onAddCheckin={addCheckin}
+            onSaveGoalPlan={saveGoalPlan}
+            onCommitPath={commitPath}
           />
         ))}
       </div>

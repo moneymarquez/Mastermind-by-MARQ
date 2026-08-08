@@ -218,6 +218,8 @@ export interface GoalStep {
   description: string;
   done: boolean;
   sort_order: number;
+  frequency: string | null;
+  auto_tracked_source: 'dialing_calls' | null;
 }
 
 export interface GoalCheckin {
@@ -225,6 +227,31 @@ export interface GoalCheckin {
   goal_id: string;
   checkin_text: string;
   created_at: string;
+}
+
+export interface GoalAction {
+  description: string;
+  frequency: string;
+  auto_tracked_source?: 'dialing_calls';
+}
+
+export interface GoalPath {
+  id: string;
+  goal_id: string;
+  path_index: number;
+  title: string;
+  description: string;
+  actions: GoalAction[];
+  is_recommended: boolean;
+  created_at: string;
+}
+
+export type CheckInCadence = 'daily' | 'weekly' | 'monthly';
+
+export interface CommittedPath {
+  title: string;
+  description: string;
+  actions: GoalAction[];
 }
 
 export interface Goal {
@@ -239,8 +266,16 @@ export interface Goal {
   created_at: string;
   ai_critique: string | null;
   ai_critique_at: string | null;
+  target_metric: string | null;
+  target_metric_value: number | null;
+  committed_path: CommittedPath | null;
+  check_in_cadence: CheckInCadence | null;
+  progress_pct: number;
+  conflict_notes: string | null;
+  last_recalculated_at: string | null;
   steps: GoalStep[];
   checkins: GoalCheckin[];
+  paths: GoalPath[];
 }
 
 export type QuestionnaireStatus = 'in_progress' | 'complete';
@@ -434,6 +469,7 @@ export interface Reminder {
   due_time: string | null;
   done: boolean;
   created_at: string;
+  goal_id: string | null;
 }
 
 export interface NotificationSettings {

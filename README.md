@@ -16,7 +16,7 @@ Then open the printed local URL (typically http://localhost:5173).
 This app needs a Supabase project to run against.
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, `supabase/schema_012_holiday_calendar.sql`, `supabase/schema_013_fitness_v2.sql`, `supabase/schema_014_fitness_notifications.sql`, and `supabase/schema_015_mental_health_profile.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
+2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, `supabase/schema_012_holiday_calendar.sql`, `supabase/schema_013_fitness_v2.sql`, `supabase/schema_014_fitness_notifications.sql`, `supabase/schema_015_mental_health_profile.sql`, and `supabase/schema_016_goals_v2.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
 3. **Create your login account** — Authentication → Users → Add user → enter email + password, check **Auto Confirm User**. There's no public sign-up flow; this is the one account the login screen expects.
 4. Copy `.env.example` to `.env.local` and fill in your project's URL and anon key (Project Settings → API).
 
@@ -260,6 +260,29 @@ next to Check-in.
 This closes out the Sobriety/Schedule/Fitness/Mental Health spec (Bender Mode, Holiday Calendar, the Fitness
 rebuild, and this profile).
 
+## Goals rebuild: living contracts
+
+Run `supabase/schema_016_goals_v2.sql` (after schema_015) to unlock the rebuilt Goals screen.
+
+- **Reverse-engineering** — after saving a goal, a short intake (target/deadline/constraints) feeds one Claude call
+  (`src/lib/goalLockIn.ts`) that turns it into hard numbers, checks it against your other active goals for real
+  conflicts (named plainly, not silently blocked — you decide), and generates 2-3 real paths with one clearly
+  recommended, each a full daily/weekly action list.
+- **Commit flow** — choosing a path becomes your default daily action list immediately: it writes `goal_steps` from
+  the path's actions and seeds a starter reminder per action, linked back to the goal (`reminders.goal_id`).
+  Recurring reminders aren't modeled (the reminders table is one-shot, not recurrence-aware) — this seeds today's,
+  and the check-in cadence below carries the rest.
+- **Real-data pull-through** — if a path's action is literally cold-calling, Nova tags it `dialing_calls` and its
+  step shows your actual live dial count from the Dialing section instead of a manual checkbox.
+- **Adaptive check-ins** — cadence (daily/weekly/monthly) is set from the goal's timeline. "Check in now" does real
+  pace math against the deadline — behind, on pace, or ahead — not generic cheerleading.
+- **Revise on setback** — "Revise path" re-runs generation and replaces the path options immediately, no manual
+  redo.
+
+Not built (explicitly out of scope for now): a true recurring-reminder engine, and multi-turn dynamic clarifying
+questions (the intake is a fixed short form, not an open conversation) — both would be substantial separate features.
+The Daily Plan Engine (8am pre-generated day plan) is the one piece of the original Macros/Goals spec still to come.
+
 ## Structure
 
 - `src/state.ts` — app state + action handlers (drag, nav, Nova, sticky spot)
@@ -285,5 +308,5 @@ rebuild, and this profile).
 - `src/data/usePitch.ts` — the persisted Current Pitch script (one row per user)
 - `src/components/` — presentational components
 - `src/components/screens/` — per-screen views
-- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql` → `schema_015_mental_health_profile.sql`)
+- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql` → `schema_015_mental_health_profile.sql` → `schema_016_goals_v2.sql`)
 
