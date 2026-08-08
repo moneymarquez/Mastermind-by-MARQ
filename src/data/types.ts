@@ -109,6 +109,22 @@ export interface SymptomLog {
   created_at: string;
 }
 
+export interface MacroInsight {
+  id: string;
+  window_start: string;
+  window_end: string;
+  nutrient_gaps: string | null;
+  timing_pattern: string | null;
+  symptom_correlations: string | null;
+  created_at: string;
+}
+
+export interface GroceryList {
+  id: string;
+  list_text: string;
+  created_at: string;
+}
+
 export interface NutritionTarget {
   id: string;
   goal_id: string | null;

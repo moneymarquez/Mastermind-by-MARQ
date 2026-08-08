@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { todayStr } from './date';
-import type { FastFoodOption, LogMethod, Meal, MealCorrection, MealType, SavedMeal, SymptomLog, WaterLog } from './types';
+import type { FastFoodOption, GroceryList, LogMethod, MacroInsight, Meal, MealCorrection, MealType, NutritionTarget, SavedMeal, SymptomLog, WaterLog } from './types';
 
 export function useMacros() {
   const [meals, setMeals] = useState<Meal[]>([]);
@@ -9,21 +9,30 @@ export function useMacros() {
   const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
   const [waterLogs, setWaterLogs] = useState<WaterLog[]>([]);
   const [symptomLogs, setSymptomLogs] = useState<SymptomLog[]>([]);
+  const [nutritionTarget, setNutritionTargetState] = useState<NutritionTarget | null>(null);
+  const [latestInsight, setLatestInsight] = useState<MacroInsight | null>(null);
+  const [latestGroceryList, setLatestGroceryList] = useState<GroceryList | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const [mealsRes, ffRes, savedRes, waterRes, symptomRes] = await Promise.all([
+    const [mealsRes, ffRes, savedRes, waterRes, symptomRes, targetRes, insightRes, groceryRes] = await Promise.all([
       supabase.from('meals').select('*').order('meal_date', { ascending: false }).order('created_at', { ascending: false }).limit(100),
       supabase.from('fast_food_options').select('*').order('restaurant_name'),
       supabase.from('saved_meals').select('*').order('use_count', { ascending: false }),
       supabase.from('water_logs').select('*').order('log_date', { ascending: false }).limit(60),
       supabase.from('symptom_logs').select('*').order('log_date', { ascending: false }).limit(60),
+      supabase.from('nutrition_targets').select('*').eq('active', true).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+      supabase.from('macro_insights').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle(),
+      supabase.from('grocery_lists').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle(),
     ]);
     setMeals(mealsRes.data ?? []);
     setFastFood(ffRes.data ?? []);
     setSavedMeals(savedRes.data ?? []);
     setWaterLogs(waterRes.data ?? []);
     setSymptomLogs(symptomRes.data ?? []);
+    setNutritionTargetState(targetRes.data ?? null);
+    setLatestInsight(insightRes.data ?? null);
+    setLatestGroceryList(groceryRes.data ?? null);
     setLoading(false);
   }, []);
 
@@ -162,11 +171,42 @@ export function useMacros() {
     await load();
   };
 
+  // Only one target is "active" at a time — deactivate the current one (if
+  // any) before inserting the replacement, rather than a DB constraint,
+  // since this is a single-user table where a stray double-active row is
+  // harmless and easy to reason about from the app layer.
+  const setNutritionTarget = async (t: {
+    goal_id: string | null;
+    daily_calories: number;
+    daily_protein_g: number;
+    daily_carbs_g: number;
+    daily_fat_g: number;
+    rationale: string | null;
+  }) => {
+    if (nutritionTarget) {
+      await supabase.from('nutrition_targets').update({ active: false, end_date: today }).eq('id', nutritionTarget.id);
+    }
+    await supabase.from('nutrition_targets').insert(t);
+    await load();
+  };
+
+  const saveMacroInsight = async (i: { window_start: string; window_end: string; nutrient_gaps: string | null; timing_pattern: string | null; symptom_correlations: string | null }) => {
+    await supabase.from('macro_insights').insert(i);
+    await load();
+  };
+
+  const saveGroceryList = async (listText: string) => {
+    await supabase.from('grocery_lists').insert({ list_text: listText });
+    await load();
+  };
+
   return {
     meals, todayMeals, totals, todayWaterOz, fastFood, savedMeals, waterLogs, symptomLogs, loading,
+    nutritionTarget, latestInsight, latestGroceryList,
     addMeal, removeMeal, addFastFoodOption, removeFastFoodOption,
     saveMealAsFavorite, logFromSavedMeal, removeSavedMeal,
     addMealCorrection, fetchRecentCorrections,
     addWaterLog, addSymptomLog,
+    setNutritionTarget, saveMacroInsight, saveGroceryList,
   };
 }

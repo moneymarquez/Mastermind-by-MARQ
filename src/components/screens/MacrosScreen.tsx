@@ -7,6 +7,7 @@ import { askClaude, extractJson, AiError } from '../../lib/ai';
 import { fileToBase64 } from '../../lib/image';
 import { lookupBarcode, BarcodeLookupError } from '../../lib/barcode';
 import BarcodeScanner from '../BarcodeScanner';
+import NovaInsightsPanel from '../NovaInsightsPanel';
 import Icon from '../../Icon';
 
 interface Props {
@@ -76,10 +77,12 @@ const GOAL_TAG_LABELS: Record<string, string> = {
 
 export default function MacrosScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const {
-    todayMeals, totals, todayWaterOz, fastFood, savedMeals, loading,
+    meals, todayMeals, totals, todayWaterOz, fastFood, savedMeals, symptomLogs,
+    nutritionTarget, latestInsight, latestGroceryList, loading,
     addMeal, removeMeal, addFastFoodOption, removeFastFoodOption,
     saveMealAsFavorite, logFromSavedMeal, removeSavedMeal,
-    addMealCorrection, fetchRecentCorrections, addWaterLog,
+    addMealCorrection, fetchRecentCorrections, addWaterLog, addSymptomLog,
+    setNutritionTarget, saveMacroInsight, saveGroceryList,
   } = useMacros();
 
   const [mealType, setMealType] = useState<MealType>('lunch');
@@ -437,6 +440,20 @@ export default function MacrosScreen({ homeHeadStyle, homeSubStyle }: Props) {
           </div>
         </div>
       )}
+
+      <NovaInsightsPanel
+        todayMeals={todayMeals}
+        meals={meals}
+        symptomLogs={symptomLogs}
+        savedMeals={savedMeals}
+        nutritionTarget={nutritionTarget}
+        latestInsight={latestInsight}
+        latestGroceryList={latestGroceryList}
+        addSymptomLog={addSymptomLog}
+        setNutritionTarget={setNutritionTarget}
+        saveMacroInsight={saveMacroInsight}
+        saveGroceryList={saveGroceryList}
+      />
     </div>
   );
 }

@@ -16,7 +16,7 @@ Then open the printed local URL (typically http://localhost:5173).
 This app needs a Supabase project to run against.
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, and `supabase/schema_009_macros_v2.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
+2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, and `supabase/schema_010_macros_intelligence.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
 3. **Create your login account** — Authentication → Users → Add user → enter email + password, check **Auto Confirm User**. There's no public sign-up flow; this is the one account the login screen expects.
 4. Copy `.env.example` to `.env.local` and fill in your project's URL and anon key (Project Settings → API).
 
@@ -157,9 +157,27 @@ Run `supabase/schema_009_macros_v2.sql` to unlock:
   seed — SQL Editor sessions aren't authenticated as a user, so `auth.uid()`-defaulted rows can't be seeded that way.
 - **Hydration** — a running daily water total with a quick +8oz log, next to the calorie/macro totals.
 
-Still to come (later phases of the same spec): nutrient gap alerts, meal-timing pattern detection, the
-symptom-to-macro correlation tracker, the meal suggestion engine, grocery list generation, the Goals rebuild
-(reverse-engineering, conflict checking, path selection, adaptive check-ins), and the overnight Daily Plan Engine.
+## Macros & Meals intelligence layer (Phase 2)
+
+Run `supabase/schema_010_macros_intelligence.sql` (after schema_009) to unlock the "Nova — intelligence layer"
+section at the bottom of Macros & Meals:
+
+- **Daily macro target** — set calories/protein/carbs/fat directly (standalone for now; once the Goals rebuild
+  lands, a goal can set this instead of it being manual).
+- **"What should I eat next?"** — one Claude call using today's logged totals + remaining target + saved favorites.
+- **Weekly analysis** — a single combined Claude call (not three separate ones) covers nutrient gaps, meal-timing
+  patterns (e.g. skipping meals then bingeing at night), and symptom-to-macro correlations, cross-referencing
+  `symptom_logs` against the meals from the prior 1-2 days. Cached in `macro_insights` so reopening the screen
+  doesn't re-run it — click "Analyze this week" again for a fresh read.
+- **Symptom logging** — symptom, severity (1-5), optional note; this is what feeds the correlation analysis above.
+- **Weekly grocery list** — budget-conscious, built around the active target + saved go-to meals, cached in
+  `grocery_lists`.
+
+All of this lives in `src/lib/macroIntelligence.ts` (the three Claude calls) and `src/components/NovaInsightsPanel.tsx`
+(the UI) — same `askClaude`/Netlify-proxy path as every other AI feature, no new backend.
+
+Still to come: the Goals rebuild (reverse-engineering, conflict checking, path selection, adaptive check-ins,
+real-data pull-through) and the overnight Daily Plan Engine (8am push with a pre-generated, confirmable day plan).
 
 ## Structure
 
@@ -186,5 +204,5 @@ symptom-to-macro correlation tracker, the meal suggestion engine, grocery list g
 - `src/data/usePitch.ts` — the persisted Current Pitch script (one row per user)
 - `src/components/` — presentational components
 - `src/components/screens/` — per-screen views
-- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql`)
+- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql`)
 
