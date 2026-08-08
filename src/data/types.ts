@@ -31,6 +31,8 @@ export interface FitnessPlan {
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
+export type LogMethod = 'manual' | 'photo' | 'barcode' | 'saved';
+
 export interface Meal {
   id: string;
   meal_date: string;
@@ -42,6 +44,9 @@ export interface Meal {
   carbs_g: number | null;
   fat_g: number | null;
   note: string | null;
+  saved_meal_id: string | null;
+  log_method: LogMethod;
+  barcode: string | null;
   created_at: string;
 }
 
@@ -54,6 +59,69 @@ export interface FastFoodOption {
   carbs_g: number | null;
   fat_g: number | null;
   notes: string | null;
+  goal_tags: string[];
+}
+
+export interface SavedMeal {
+  id: string;
+  name: string;
+  meal_type: MealType;
+  source: 'home' | 'restaurant';
+  restaurant_name: string | null;
+  calories: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+  note: string | null;
+  use_count: number;
+  last_used_at: string | null;
+  created_at: string;
+}
+
+export interface MealCorrection {
+  id: string;
+  ai_description: string;
+  ai_calories: number | null;
+  ai_protein_g: number | null;
+  ai_carbs_g: number | null;
+  ai_fat_g: number | null;
+  corrected_description: string;
+  corrected_calories: number | null;
+  corrected_protein_g: number | null;
+  corrected_carbs_g: number | null;
+  corrected_fat_g: number | null;
+  created_at: string;
+}
+
+export interface WaterLog {
+  id: string;
+  log_date: string;
+  amount_oz: number;
+  created_at: string;
+}
+
+export interface SymptomLog {
+  id: string;
+  log_date: string;
+  symptom: string;
+  severity: number | null;
+  note: string | null;
+  created_at: string;
+}
+
+export interface NutritionTarget {
+  id: string;
+  goal_id: string | null;
+  active: boolean;
+  daily_calories: number;
+  daily_protein_g: number;
+  daily_carbs_g: number;
+  daily_fat_g: number;
+  start_date: string;
+  end_date: string | null;
+  rationale: string | null;
+  created_at: string;
+  recalculated_at: string;
 }
 
 export type Mood = 'great' | 'good' | 'okay' | 'rough' | 'bad';

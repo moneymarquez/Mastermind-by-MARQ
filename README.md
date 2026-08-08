@@ -16,7 +16,7 @@ Then open the printed local URL (typically http://localhost:5173).
 This app needs a Supabase project to run against.
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, and `supabase/schema_008_notifications.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
+2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, and `supabase/schema_009_macros_v2.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
 3. **Create your login account** — Authentication → Users → Add user → enter email + password, check **Auto Confirm User**. There's no public sign-up flow; this is the one account the login screen expects.
 4. Copy `.env.example` to `.env.local` and fill in your project's URL and anon key (Project Settings → API).
 
@@ -137,6 +137,30 @@ server involved) — it never shipped in any real browser including iOS, feature
 case that ever changes. Everything else — reminders while open, reminders while closed, the 3 long-shift
 milestones — goes through the path above.
 
+## Macros & Meals v2 (Phase 1 of the Macros/Goals + Nova spec)
+
+Run `supabase/schema_009_macros_v2.sql` to unlock:
+
+- **Barcode scanning** — `src/lib/barcode.ts` hits [Open Food Facts](https://world.openfoodfacts.org)'s free, keyless
+  public API (chosen over USDA FoodData Central specifically to need zero setup/API key). `src/components/BarcodeScanner.tsx`
+  uses the native `BarcodeDetector` API for live camera scanning where supported (Chrome/Android, Safari 17+), and
+  falls back to manual UPC entry everywhere else.
+- **Saved meals / favorites** — log something once, then tap it from the favorites strip instead of re-photographing
+  or re-typing repeat meals.
+- **Correction learning loop** — editing an AI photo estimate before logging it saves the correction (`meal_corrections`
+  table); the next few photo estimates include recent corrections as few-shot examples in the prompt, so the same
+  usual order gets logged right automatically over time. This is prompt-based, not a retrained model — cheap and
+  effective for one person's repeat meals.
+- **Starter fast-food library** — "Load starter list" in the fast-food reference section bulk-inserts ~20 chains'
+  most macro-friendly go-to orders (`src/data/fastFoodSeed.ts`), each tagged by goal fit (high protein/low cal, best
+  value, low carb) and filterable. This is a client-side insert through the signed-in Supabase client, not a SQL
+  seed — SQL Editor sessions aren't authenticated as a user, so `auth.uid()`-defaulted rows can't be seeded that way.
+- **Hydration** — a running daily water total with a quick +8oz log, next to the calorie/macro totals.
+
+Still to come (later phases of the same spec): nutrient gap alerts, meal-timing pattern detection, the
+symptom-to-macro correlation tracker, the meal suggestion engine, grocery list generation, the Goals rebuild
+(reverse-engineering, conflict checking, path selection, adaptive check-ins), and the overnight Daily Plan Engine.
+
 ## Structure
 
 - `src/state.ts` — app state + action handlers (drag, nav, Nova, sticky spot)
@@ -162,5 +186,5 @@ milestones — goes through the path above.
 - `src/data/usePitch.ts` — the persisted Current Pitch script (one row per user)
 - `src/components/` — presentational components
 - `src/components/screens/` — per-screen views
-- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql`)
+- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql`)
 
