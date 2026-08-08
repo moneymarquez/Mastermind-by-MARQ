@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useMentalHealth } from '../../data/useMentalHealth';
+import { useMentalHealthProfile } from '../../data/useMentalHealthProfile';
+import { MENTAL_HEALTH_PROFILE } from '../../data/mentalHealthQuestions';
 import type { BenderSession, Mood } from '../../data/types';
 import { askClaude } from '../../lib/ai';
+import MentalHealthProfileView from './MentalHealthProfileView';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -10,7 +13,22 @@ interface Props {
   activeBender: BenderSession | null;
 }
 
-async function reflectOnCheckin(mood: Mood, note: string, activeBender: BenderSession | null): Promise<string> {
+// Condenses the profile into Q&A lines for the prompt — only answered
+// questions, so an in-progress profile still contributes what's there
+// instead of waiting for all ~50 to be filled.
+function profileContext(answers: Record<string, string>): string {
+  const lines: string[] = [];
+  for (const cat of MENTAL_HEALTH_PROFILE) {
+    for (const q of cat.questions) {
+      const a = answers[q.key];
+      if (a?.trim()) lines.push(`${q.prompt} — ${a.trim()}`);
+    }
+  }
+  if (lines.length === 0) return '';
+  return `\n\nWhat you know about him from his profile (use this to make your response land accurately, not generically — don't quote it back verbatim):\n${lines.join('\n')}`;
+}
+
+async function reflectOnCheckin(mood: Mood, note: string, activeBender: BenderSession | null, profileAnswers: Record<string, string>): Promise<string> {
   const benderContext = activeBender
     ? `\n\nContext: a bender has been active since ${new Date(activeBender.started_at).toLocaleDateString()}${activeBender.description ? ` (${activeBender.description})` : ''}. Read his mood/energy in that context — don't treat lower energy or a rough mood as unusual or alarming right now, and don't bring up the bender itself unprompted unless it's clearly relevant to what he wrote.`
     : '';
@@ -20,7 +38,8 @@ async function reflectOnCheckin(mood: Mood, note: string, activeBender: BenderSe
       "how he's feeling. Respond with a short, genuine reflection — not therapy, not a script, just something a " +
       "thoughtful friend who knows him would say. If the mood is rough or bad, take it seriously and offer one " +
       'small, concrete thing that might help right now. Plain text, 2-3 sentences.' +
-      benderContext,
+      benderContext +
+      profileContext(profileAnswers),
     messages: [{ role: 'user', content: `Mood: ${mood}${note ? `\nNote: ${note}` : ''}` }],
     maxTokens: 250,
   });
@@ -46,6 +65,8 @@ function timeAgo(iso: string): string {
 
 export default function MentalHealthScreen({ homeHeadStyle, homeSubStyle, activeBender }: Props) {
   const { checkins, loading, addCheckin, saveInsight } = useMentalHealth();
+  const profile = useMentalHealthProfile();
+  const [tab, setTab] = useState<'checkin' | 'profile'>('checkin');
   const [mood, setMood] = useState<Mood | null>(null);
   const [note, setNote] = useState('');
   const [thinking, setThinking] = useState(false);
@@ -60,7 +81,7 @@ export default function MentalHealthScreen({ homeHeadStyle, homeSubStyle, active
     if (inserted) {
       setThinking(true);
       try {
-        const insight = await reflectOnCheckin(savedMood, savedNote, activeBender);
+        const insight = await reflectOnCheckin(savedMood, savedNote, activeBender, profile.answers);
         await saveInsight(inserted.id, insight);
       } catch {
         // Silent — the check-in itself already saved; the reflection is a bonus.
@@ -75,6 +96,25 @@ export default function MentalHealthScreen({ homeHeadStyle, homeSubStyle, active
       <div style={homeHeadStyle}>Mental Health</div>
       <div style={homeSubStyle}>Check in whenever — it's just for you.</div>
 
+      <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+        <div
+          style={{ padding: '9px 18px', borderRadius: 999, cursor: 'pointer', fontSize: 13, fontWeight: 600, border: `1px solid ${tab === 'checkin' ? '#F5F6F7' : '#22262B'}`, color: tab === 'checkin' ? '#F5F6F7' : '#565b64' }}
+          onClick={() => setTab('checkin')}
+        >
+          Check-in
+        </div>
+        <div
+          style={{ padding: '9px 18px', borderRadius: 999, cursor: 'pointer', fontSize: 13, fontWeight: 600, border: `1px solid ${tab === 'profile' ? '#F5F6F7' : '#22262B'}`, color: tab === 'profile' ? '#F5F6F7' : '#565b64' }}
+          onClick={() => setTab('profile')}
+        >
+          Profile {!profile.loading && `(${profile.answeredCount})`}
+        </div>
+      </div>
+
+      {tab === 'profile' && <MentalHealthProfileView profile={profile} />}
+
+      {tab === 'checkin' && (
+      <>
       <div style={{ background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: 24, marginTop: 24, maxWidth: 520 }}>
         <div style={{ fontSize: 12.5, color: '#8A8F98', marginBottom: 10 }}>How are you feeling right now?</div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -131,6 +171,8 @@ export default function MentalHealthScreen({ homeHeadStyle, homeSubStyle, active
           <div style={{ padding: '18px', fontSize: 13, color: '#565b64', background: '#101114' }}>No check-ins yet.</div>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }

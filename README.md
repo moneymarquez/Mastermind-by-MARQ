@@ -16,7 +16,7 @@ Then open the printed local URL (typically http://localhost:5173).
 This app needs a Supabase project to run against.
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, `supabase/schema_012_holiday_calendar.sql`, `supabase/schema_013_fitness_v2.sql`, and `supabase/schema_014_fitness_notifications.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
+2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, `supabase/schema_012_holiday_calendar.sql`, `supabase/schema_013_fitness_v2.sql`, `supabase/schema_014_fitness_notifications.sql`, and `supabase/schema_015_mental_health_profile.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
 3. **Create your login account** — Authentication → Users → Add user → enter email + password, check **Auto Confirm User**. There's no public sign-up flow; this is the one account the login screen expects.
 4. Copy `.env.example` to `.env.local` and fill in your project's URL and anon key (Project Settings → API).
 
@@ -244,6 +244,22 @@ generic AI plan buttons, kept as-is).
 Not built (explicitly out of scope for now): OCR/photo-based custom plan input, and resuming a live session across
 an app restart.
 
+## Mental Health deep profile
+
+Run `supabase/schema_015_mental_health_profile.sql` (after schema_014) to unlock the "Profile" tab on Mental Health,
+next to Check-in.
+
+- **~50 questions** (`src/data/mentalHealthQuestions.ts`), grouped into 10 categories — personality, stress
+  patterns, what drains/recharges you, communication style, history, triggers, coping mechanisms, goals,
+  relationships, work stress. Filled in by category (not one giant form), progress-tracked, editable anytime — a
+  50-question intake is realistically answered across more than one sitting, not required to be all-or-nothing.
+- **Shared context, not a one-time intake** — answered questions are folded into the Mental Health check-in
+  reflection prompt (`profileContext()` in `src/components/screens/MentalHealthScreen.tsx`) so responses land
+  accurately instead of generically, and grow more accurate as more of the profile gets filled in.
+
+This closes out the Sobriety/Schedule/Fitness/Mental Health spec (Bender Mode, Holiday Calendar, the Fitness
+rebuild, and this profile).
+
 ## Structure
 
 - `src/state.ts` — app state + action handlers (drag, nav, Nova, sticky spot)
@@ -269,5 +285,5 @@ an app restart.
 - `src/data/usePitch.ts` — the persisted Current Pitch script (one row per user)
 - `src/components/` — presentational components
 - `src/components/screens/` — per-screen views
-- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql`)
+- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql` → `schema_015_mental_health_profile.sql`)
 
