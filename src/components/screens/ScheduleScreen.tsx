@@ -5,6 +5,7 @@ import { useContacts } from '../../data/useContacts';
 import type { CalendarEvent, EventType } from '../../data/types';
 import { dateStr, formatDateLabel, formatTimeLabel, minutesToTime, snapMinutes, timeToMinutes } from '../../data/time';
 import EventAdderModal from './EventAdderModal';
+import HolidayCalendarView from './HolidayCalendarView';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -41,6 +42,7 @@ export default function ScheduleScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const { events, addEvent, addHolidayEvents, updateEvent, deleteEvent } = useEvents();
   const { search: searchContacts, upsertContact } = useContacts();
 
+  const [calendar, setCalendar] = useState<'main' | 'holiday'>('main');
   const [mode, setMode] = useState<'month' | 'day'>('month');
   const [monthAnchor, setMonthAnchor] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(() => dateStr(new Date()));
@@ -130,14 +132,35 @@ export default function ScheduleScreen({ homeHeadStyle, homeSubStyle }: Props) {
           <div style={homeHeadStyle}>Schedule</div>
           <div style={homeSubStyle}>HOLIDAY shifts, DIALING and SCALEZ appointments — all in one calendar.</div>
         </div>
+        {calendar === 'main' && (
+          <div
+            style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999, border: '1px solid #F5F6F7', color: '#F5F6F7', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
+            onClick={() => setModalConfig({ initialType: 'holiday', initialDate: mode === 'day' ? selectedDate : dateStr(new Date()), initialStart: '09:00', initialEnd: '09:30', editingEvent: null })}
+          >
+            + Add event
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
         <div
-          style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999, border: '1px solid #F5F6F7', color: '#F5F6F7', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
-          onClick={() => setModalConfig({ initialType: 'holiday', initialDate: mode === 'day' ? selectedDate : dateStr(new Date()), initialStart: '09:00', initialEnd: '09:30', editingEvent: null })}
+          style={{ padding: '7px 16px', borderRadius: 999, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, border: `1px solid ${calendar === 'main' ? '#F5F6F7' : '#22262B'}`, color: calendar === 'main' ? '#F5F6F7' : '#565b64' }}
+          onClick={() => setCalendar('main')}
         >
-          + Add event
+          Main Calendar
+        </div>
+        <div
+          style={{ padding: '7px 16px', borderRadius: 999, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, border: `1px solid ${calendar === 'holiday' ? '#F5F6F7' : '#22262B'}`, color: calendar === 'holiday' ? '#F5F6F7' : '#565b64' }}
+          onClick={() => setCalendar('holiday')}
+        >
+          Holiday Calendar (team)
         </div>
       </div>
 
+      {calendar === 'holiday' && <HolidayCalendarView />}
+
+      {calendar === 'main' && (
+      <>
       <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
         {(['holiday', 'dialing', 'scalez'] as EventType[]).map((t) => (
           <div key={t} style={filterChipStyle(t)} onClick={() => toggleFilter(t)}>
@@ -259,6 +282,8 @@ export default function ScheduleScreen({ homeHeadStyle, homeSubStyle }: Props) {
           editingEvent={modalConfig.editingEvent}
           onClose={() => setModalConfig(null)}
         />
+      )}
+      </>
       )}
     </div>
   );

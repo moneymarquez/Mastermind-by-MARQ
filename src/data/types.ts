@@ -358,6 +358,17 @@ export interface ScalezDetails {
   budget_range: string;
 }
 
+export interface HolidayShift {
+  id: string;
+  person_name: string;
+  shift_date: string;
+  start_time: string;
+  end_time: string;
+  is_self: boolean;
+  source: 'manual' | 'photo';
+  created_at: string;
+}
+
 export interface CalendarEvent {
   id: string;
   type: EventType;
