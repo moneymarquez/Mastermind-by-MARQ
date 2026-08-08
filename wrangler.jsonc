@@ -1,0 +1,14 @@
+{
+  // Cloudflare Workers config (unified "Workers with static assets" model).
+  // Committed rather than left to Cloudflare's dashboard auto-detection so
+  // the deploy always uses worker/index.ts (static assets + /api/* proxy to
+  // Netlify) instead of a static-assets-only fallback.
+  "name": "mastermind-by-marq",
+  "compatibility_date": "2026-08-08",
+  "main": "worker/index.ts",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  }
+}

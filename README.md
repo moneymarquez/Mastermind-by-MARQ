@@ -48,6 +48,14 @@ npm run build
 
 After that one-time link, add the same three environment variables from `.env.local` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `ANTHROPIC_API_KEY`) in Netlify's Project configuration → Environment variables. The two `VITE_*` ones are needed at build time since Vite inlines `import.meta.env.*` values; `ANTHROPIC_API_KEY` is read at runtime by the Netlify Function and never touches the client bundle. Once all three are set, every push to `main` triggers an automatic build and deploy with no further action needed — changing an env var alone requires a manual "Trigger deploy" since it doesn't push a new commit.
 
+## Also deployed to Cloudflare Workers (mirror, static site + API proxy)
+
+The site is also connected to Cloudflare Workers (git-integrated, auto-builds on push to `main`) as a second host — mainly to sidestep Netlify's free-tier build-minute cap. `wrangler.jsonc` + `worker/index.ts` define the deploy: Cloudflare serves the built `dist/` as static assets, and `worker/index.ts` reverse-proxies any `/api/*` request server-side to the Netlify Functions above (`https://mastermindbymarq.netlify.app/api/...`), which stay the single real backend. That avoids two problems at once: browser CORS (the proxy call is server-to-server, not subject to it) and having to port `send-shift-reminders.ts`/`send-reminders.ts` to Workers, where the `web-push` package's Node `crypto`/`https-proxy-agent` dependencies don't reliably run even with `nodejs_compat` on.
+
+Required in Cloudflare's dashboard, under **Settings → Build → Variables and secrets → Build environment variable** (build-time, not the runtime "Variables and Secrets" screen — that one rejects vars on a Workers-with-static-assets project): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. No `ANTHROPIC_API_KEY` or Supabase service-role key needed here — the AI proxy and push endpoints still run on Netlify; this deploy only serves the frontend and forwards to them.
+
+If Netlify's Functions URL ever changes (custom domain, site rename), update `NETLIFY_ORIGIN` in `worker/index.ts`.
+
 ## What's here
 
 - Email/password login gate (Supabase Auth) in front of the whole app
