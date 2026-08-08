@@ -1,11 +1,12 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NAV_DATA, INITIAL_STICKY_IDEAS, PLACEHOLDER_NOTES } from './data';
-import type { Device, NovaMessage, Point, Screen, StickyIdea } from './types';
+import type { NovaMessage, Point, Screen, StickyIdea } from './types';
 import { askClaude, AiError } from './lib/ai';
 
+const MOBILE_BREAKPOINT = 768;
+
 export interface AppState {
-  direction: 1 | 2 | 3;
-  device: Device;
+  isMobile: boolean;
   screen: Screen;
   placeholderLabel: string;
   placeholderNote: string;
@@ -23,8 +24,7 @@ export interface AppState {
 }
 
 const initialState: AppState = {
-  direction: 1,
-  device: 'desktop',
+  isMobile: typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT,
   screen: 'home',
   placeholderLabel: '',
   placeholderNote: '',
@@ -51,8 +51,15 @@ export function useMastermindState() {
   const circleRAF = useRef<number | null>(null);
   const pendingCirclePos = useRef<Point | null>(null);
 
-  const setDirection = (d: 1 | 2 | 3) => patch({ direction: d });
-  const setDevice = (d: Device) => patch({ device: d });
+  // Real responsive detection — this used to be a manual toggle in the
+  // now-removed prototype TopBar; the app should just look right on
+  // whatever screen it's actually running on.
+  useEffect(() => {
+    const onResize = () => patch({ isMobile: window.innerWidth < MOBILE_BREAKPOINT });
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   const goScreen = (id: Screen) => patch({ screen: id });
 
   const toggleDrawer = () => patch((s) => ({ navDrawerOpen: !s.navDrawerOpen }));
@@ -163,8 +170,6 @@ export function useMastermindState() {
   return {
     state,
     actions: {
-      setDirection,
-      setDevice,
       goScreen,
       toggleDrawer,
       closeDrawer,

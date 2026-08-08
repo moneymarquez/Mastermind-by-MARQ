@@ -1,8 +1,11 @@
 import type { AppState } from './state';
 
+// Compact-core sizing (was "Direction 1" in the design tool's A/B variants
+// — the one actually shipped) is now the only option, not a switchable one.
+const CIRCLE_SCALE = 0.85;
+
 export function computeGeometry(state: AppState, isMobile: boolean) {
-  const circleScale = state.direction === 1 ? 0.85 : state.direction === 2 ? 1.2 : 1;
-  const circleSize = Math.round((isMobile ? 48 : 56) * circleScale);
+  const circleSize = Math.round((isMobile ? 48 : 56) * CIRCLE_SCALE);
   const stageWidth = isMobile ? 390 : 1440;
   const stageHeight = isMobile ? 844 : 900;
 
@@ -11,7 +14,6 @@ export function computeGeometry(state: AppState, isMobile: boolean) {
   const cy = Math.min(Math.max(state.circlePos.y, margin), stageHeight - margin);
 
   return {
-    circleScale,
     circleSize,
     stageWidth,
     stageHeight,

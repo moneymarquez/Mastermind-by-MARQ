@@ -18,8 +18,6 @@ export type Screen =
   | 'notification-settings'
   | 'placeholder';
 
-export type Device = 'desktop' | 'mobile';
-
 export interface StickyIdea {
   id: number;
   text: string;

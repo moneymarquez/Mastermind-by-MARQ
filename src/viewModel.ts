@@ -5,8 +5,7 @@ import type { AppState } from './state';
 
 export function buildViewModel(state: AppState, navigateTo: (id: string) => void, onSignOut: () => void) {
   const s = state;
-  const dir = s.direction;
-  const isMobile = s.device === 'mobile';
+  const isMobile = s.isMobile;
   const geo = computeGeometry(s, isMobile);
   const { circleSize, stageWidth, stageHeight, cx, cy } = geo;
 
@@ -47,7 +46,7 @@ export function buildViewModel(state: AppState, navigateTo: (id: string) => void
   };
 
   return {
-    isMobile, dir, geo,
+    isMobile, geo,
     navRows,
     contentStyle,
     homeHeadStyle, homeSubStyle,
