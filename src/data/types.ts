@@ -40,6 +40,50 @@ export interface FitnessWorkout {
 
 export type FitnessPlanKind = 'workout' | 'diet';
 
+export type WorkoutCategory = 'running' | 'bro_split' | 'back_biceps' | 'chest_triceps' | 'legs' | 'core';
+
+export interface Exercise {
+  name: string;
+  sets: number;
+  reps: string;
+}
+
+export interface WorkoutLibraryItem {
+  id: string;
+  category: WorkoutCategory;
+  name: string;
+  day_label: string | null;
+  exercises: Exercise[];
+  created_at: string;
+}
+
+export interface FitnessRoute {
+  label: string;
+  intensity: 'aggressive' | 'moderate';
+  summary: string;
+  meal_plan: string;
+  workout_plan: string;
+  schedule_notes: string;
+  sleep_target_hours: number;
+  water_target_oz: number;
+  workout_time: string;
+  daily_calories: number;
+  daily_protein_g: number;
+  daily_carbs_g: number;
+  daily_fat_g: number;
+}
+
+export interface CustomFitnessPlan {
+  id: string;
+  questionnaire_answers: Record<string, string>;
+  route_a: FitnessRoute;
+  route_b: FitnessRoute;
+  chosen_route: 'a' | 'b' | null;
+  active: boolean;
+  confirmed_at: string | null;
+  created_at: string;
+}
+
 export interface FitnessPlan {
   id: string;
   kind: FitnessPlanKind;
@@ -396,6 +440,7 @@ export interface NotificationSettings {
   shifts_enabled: boolean;
   events_enabled: boolean;
   meals_enabled: boolean;
+  workouts_enabled: boolean;
   opening_closing_enabled: boolean;
   breakfast_time: string;
   lunch_time: string;

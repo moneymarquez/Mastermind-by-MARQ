@@ -6,6 +6,7 @@ const DEFAULTS: NotificationSettings = {
   shifts_enabled: true,
   events_enabled: true,
   meals_enabled: true,
+  workouts_enabled: true,
   opening_closing_enabled: true,
   breakfast_time: '08:00',
   lunch_time: '12:30',
@@ -19,7 +20,7 @@ export function useNotificationSettings() {
   const load = useCallback(async () => {
     const { data } = await supabase
       .from('notification_settings')
-      .select('shifts_enabled, events_enabled, meals_enabled, opening_closing_enabled, breakfast_time, lunch_time, dinner_time')
+      .select('shifts_enabled, events_enabled, meals_enabled, workouts_enabled, opening_closing_enabled, breakfast_time, lunch_time, dinner_time')
       .maybeSingle();
     if (data) setSettings(data as NotificationSettings);
     setLoading(false);

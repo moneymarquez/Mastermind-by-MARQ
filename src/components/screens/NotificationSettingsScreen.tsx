@@ -94,6 +94,7 @@ export default function NotificationSettingsScreen({ homeHeadStyle, homeSubStyle
             <ToggleRow label="Shifts" sub="Evening-before + 60 min before a scheduled shift" checked={settings.shifts_enabled} onChange={toggle('shifts_enabled')} />
             <ToggleRow label="Events" sub="24 hours + 1 hour before appointments and reminders" checked={settings.events_enabled} onChange={toggle('events_enabled')} />
             <ToggleRow label="Meals" sub="Log-your-meal nudges, skipped if already logged" checked={settings.meals_enabled} onChange={toggle('meals_enabled')} />
+            <ToggleRow label="Workouts" sub="60 min before + at your active Lock In plan's daily workout time" checked={settings.workouts_enabled} onChange={toggle('workouts_enabled')} />
             <ToggleRow label="Opening/Closing tasks" sub="Task-by-task reminders during your shift" checked={settings.opening_closing_enabled} onChange={toggle('opening_closing_enabled')} />
           </>
         )}

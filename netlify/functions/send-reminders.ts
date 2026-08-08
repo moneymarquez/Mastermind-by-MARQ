@@ -67,8 +67,10 @@ interface PushSubRow { id: string; user_id: string; endpoint: string; p256dh: st
 interface EventRow { id: string; user_id: string; type: string; event_date: string; start_time: string; end_time: string; details: Record<string, unknown> }
 interface ReminderRow { id: string; user_id: string; title: string; due_date: string; due_time: string | null }
 interface MealRow { user_id: string; meal_type: string }
+interface FitnessRouteRow { workout_time?: string }
+interface CustomPlanRow { user_id: string; chosen_route: 'a' | 'b' | null; route_a: FitnessRouteRow; route_b: FitnessRouteRow }
 interface SettingsRow {
-  user_id: string; shifts_enabled: boolean; events_enabled: boolean; meals_enabled: boolean;
+  user_id: string; shifts_enabled: boolean; events_enabled: boolean; meals_enabled: boolean; workouts_enabled: boolean;
   breakfast_time: string; lunch_time: string; dinner_time: string;
 }
 interface Candidate { key: string; at: Date; title: string; body: string }
@@ -97,23 +99,26 @@ export default async () => {
   const tomorrow = dateOnly(addDays(now, 1));
   const dayAfter = dateOnly(addDays(now, 2));
 
-  const [eventsRes, remindersRes, mealsRes, settingsRes] = await Promise.all([
+  const [eventsRes, remindersRes, mealsRes, settingsRes, fitnessPlansRes] = await Promise.all([
     fetch(`${supabaseUrl}/rest/v1/events?event_date=gte.${today}&event_date=lte.${dayAfter}&select=*`, { headers }),
     fetch(`${supabaseUrl}/rest/v1/reminders?done=eq.false&due_date=gte.${today}&due_date=lte.${dayAfter}&select=*`, { headers }),
     fetch(`${supabaseUrl}/rest/v1/meals?meal_date=eq.${today}&select=user_id,meal_type`, { headers }),
     fetch(`${supabaseUrl}/rest/v1/notification_settings?select=*`, { headers }),
+    fetch(`${supabaseUrl}/rest/v1/custom_fitness_plans?active=eq.true&select=user_id,chosen_route,route_a,route_b`, { headers }),
   ]);
   const events = (await eventsRes.json()) as EventRow[];
   const reminders = (await remindersRes.json()) as ReminderRow[];
   const meals = (await mealsRes.json()) as MealRow[];
   const settingsRows = (await settingsRes.json()) as SettingsRow[];
   const settingsByUser = new Map(settingsRows.map((s) => [s.user_id, s]));
+  const fitnessPlans = (await fitnessPlansRes.json()) as CustomPlanRow[];
+  const fitnessPlanByUser = new Map(fitnessPlans.map((p) => [p.user_id, p]));
 
   const userIds = [...new Set(subs.map((s) => s.user_id))];
 
   for (const userId of userIds) {
-    const settings: Pick<SettingsRow, 'shifts_enabled' | 'events_enabled' | 'meals_enabled' | 'breakfast_time' | 'lunch_time' | 'dinner_time'> =
-      settingsByUser.get(userId) ?? { shifts_enabled: true, events_enabled: true, meals_enabled: true, breakfast_time: '08:00', lunch_time: '12:30', dinner_time: '18:30' };
+    const settings: Pick<SettingsRow, 'shifts_enabled' | 'events_enabled' | 'meals_enabled' | 'workouts_enabled' | 'breakfast_time' | 'lunch_time' | 'dinner_time'> =
+      settingsByUser.get(userId) ?? { shifts_enabled: true, events_enabled: true, meals_enabled: true, workouts_enabled: true, breakfast_time: '08:00', lunch_time: '12:30', dinner_time: '18:30' };
     const candidates: Candidate[] = [];
 
     if (settings.shifts_enabled) {
@@ -168,6 +173,16 @@ export default async () => {
       for (const m of mealDefs) {
         if (loggedTypes.has(m.type)) continue;
         candidates.push({ key: `meal-${m.type}-${today}`, at: atTime(today, m.time), title: 'Mastermind', body: `Log your ${m.type}` });
+      }
+    }
+
+    if (settings.workouts_enabled) {
+      const plan = fitnessPlanByUser.get(userId);
+      const route = plan?.chosen_route === 'a' ? plan.route_a : plan?.chosen_route === 'b' ? plan.route_b : null;
+      if (route?.workout_time) {
+        const start = atTime(today, route.workout_time);
+        candidates.push({ key: `workout-60min-${today}`, at: new Date(start.getTime() - 3600000), title: 'Workout in 1 hour', body: `Scheduled for ${clockLabel(start)}` });
+        candidates.push({ key: `workout-start-${today}`, at: start, title: 'Workout time', body: 'Time to train — open Fitness to get started.' });
       }
     }
 

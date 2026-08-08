@@ -16,7 +16,7 @@ Then open the printed local URL (typically http://localhost:5173).
 This app needs a Supabase project to run against.
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, and `supabase/schema_012_holiday_calendar.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
+2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, `supabase/schema_012_holiday_calendar.sql`, `supabase/schema_013_fitness_v2.sql`, and `supabase/schema_014_fitness_notifications.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
 3. **Create your login account** — Authentication → Users → Add user → enter email + password, check **Auto Confirm User**. There's no public sign-up flow; this is the one account the login screen expects.
 4. Copy `.env.example` to `.env.local` and fill in your project's URL and anon key (Project Settings → API).
 
@@ -217,6 +217,33 @@ Schedule screen — genuinely separate from the Main Calendar above it (a new `h
   reads consistently across the calendar. Tap a day for the full list with remove.
 - **Manual add** — a plain add-a-shift form for anything not worth a photo.
 
+## Fitness v2: workout library, Lock In custom plans, live workout mode
+
+Run `supabase/schema_013_fitness_v2.sql` then `supabase/schema_014_fitness_notifications.sql` (after schema_012) to
+unlock the rebuilt Fitness screen — now three tabs: Library, Lock In, and Log & History (the original manual-log +
+generic AI plan buttons, kept as-is).
+
+- **Library** — the full pre-built workout set (`src/data/workoutLibrarySeed.ts`, loaded via a one-time "Load workout
+  library" button — same client-side-seed reasoning as the Macros fast-food list): 12 running/walking sessions, a
+  5-day Bro Split, and 5 workouts each for Back & Biceps, Chest & Triceps, Legs, and Core (28 strength workouts, 40
+  total). Independent of any goal — always there to browse and start.
+- **Live workout mode** (`src/components/WorkoutSession.tsx`) — tapping "Start workout" switches to a full-screen
+  session that steps through the workout's exercises in order with a 60-second rest timer between sets, then logs
+  the completed session to `fitness_workouts` on finish. Session state isn't persisted — closing mid-workout loses
+  it, the same tradeoff as not building a full resumable-session table for what's meant to be one continuous gym
+  visit.
+- **Lock In** (`src/lib/fitnessLockIn.ts`, `src/components/screens/LockInView.tsx`) — a 10-question guided flow
+  (current stats, target, timeline, equipment, constraints) feeding one Claude call that writes a real explanation of
+  what the goal requires, then two complete routes: a fastest/aggressive path and a still-quick/moderate path, never
+  a slow option. Each route ships a full meal plan, workout plan, daily schedule, sleep target, water target, daily
+  macro targets, and a daily workout time. Confirming a route sets Macros' daily target automatically (no separate
+  step) and becomes your active plan.
+- **Workout reminders** — `workouts_enabled` in Notification Settings; the same `send-reminders.ts` Scheduled
+  Function now also fires 60-min-before and at-start pushes for your active Lock In plan's daily workout time.
+
+Not built (explicitly out of scope for now): OCR/photo-based custom plan input, and resuming a live session across
+an app restart.
+
 ## Structure
 
 - `src/state.ts` — app state + action handlers (drag, nav, Nova, sticky spot)
@@ -242,5 +269,5 @@ Schedule screen — genuinely separate from the Main Calendar above it (a new `h
 - `src/data/usePitch.ts` — the persisted Current Pitch script (one row per user)
 - `src/components/` — presentational components
 - `src/components/screens/` — per-screen views
-- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql`)
+- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql`)
 
