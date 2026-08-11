@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
-import type { CalendarEvent, Contact, DialingDetails, EventType, ScalezDetails } from '../../data/types';
+import type { CalendarEvent, Contact, DialingDetails, EventType, ScalezDetails, StreamingDetails } from '../../data/types';
 import { DIALING_STATUSES, LEAD_SOURCES, SCALEZ_STAGES } from '../../data/types';
 import type { ContactInput } from '../../data/useContacts';
 import type { EventInput } from '../../data/useEvents';
 import { DAY_LABELS, dateStr, hoursBetween, minutesToTime, timeToMinutes, weekStartOf } from '../../data/time';
+import { EVENT_TYPE_COLOR } from '../../data/eventDisplay';
 
 interface Props {
   searchContacts: (q: string) => Contact[];
@@ -49,8 +50,7 @@ const dangerBtn: CSSProperties = {
   border: '1px solid #3a2222', color: '#c47a7a', fontSize: 13, cursor: 'pointer',
 };
 
-const TYPE_COLOR: Record<EventType, string> = { holiday: '#8A8F98', dialing: '#5B8DEF', scalez: '#4CAF7D' };
-const TYPE_LABEL: Record<EventType, string> = { holiday: 'HOLIDAY', dialing: 'DIALING', scalez: 'SCALEZ' };
+const TYPE_LABEL: Record<EventType, string> = { holiday: 'HOLIDAY', dialing: 'DIALING', scalez: 'SCALEZ', streaming: 'STREAMING' };
 
 function ContactSearch({ searchContacts, onPick }: { searchContacts: (q: string) => Contact[]; onPick: (c: Contact) => void }) {
   const [q, setQ] = useState('');
@@ -119,6 +119,14 @@ export default function EventAdderModal({
   const [sStage, setSStage] = useState(editingEvent?.status ?? SCALEZ_STAGES[0]);
   const [sNotes, setSNotes] = useState(editingEvent?.notes ?? '');
 
+  // ── STREAMING ────────────────────────────────────────────────────────
+  const streamingDetails = (editingEvent?.type === 'streaming' ? editingEvent.details : {}) as Partial<StreamingDetails>;
+  const [stTitle, setStTitle] = useState(streamingDetails.title ?? '');
+  const [stDate, setStDate] = useState(editingEvent?.event_date ?? initialDate);
+  const [stStart, setStStart] = useState(editingEvent?.start_time.slice(0, 5) ?? initialStart);
+  const [stEnd, setStEnd] = useState(editingEvent?.end_time.slice(0, 5) ?? initialEnd);
+  const [stNotes, setStNotes] = useState(editingEvent?.notes ?? '');
+
   const toggleDay = (idx: number) => {
     setHolidayDays((prev) => {
       const next = new Set(prev);
@@ -180,6 +188,17 @@ export default function EventAdderModal({
     else await addEvent(input);
   };
 
+  const saveStreaming = async () => {
+    if (!stTitle.trim()) { setError('A title is required.'); return; }
+    const input: EventInput = {
+      type: 'streaming', event_date: stDate, start_time: stStart, end_time: stEnd,
+      notes: stNotes.trim() || null, status: null, linked_contact_id: null,
+      details: { title: stTitle.trim() },
+    };
+    if (isEditing && editingEvent) await updateEvent(editingEvent.id, input);
+    else await addEvent(input);
+  };
+
   // DIALING/SCALEZ appointments default to a 30-min block unless the drag
   // selection on the day view set a longer one.
   function appointmentEndMinutes(start: string): number {
@@ -194,7 +213,8 @@ export default function EventAdderModal({
     try {
       if (type === 'holiday') await saveHoliday();
       else if (type === 'dialing') await saveDialing();
-      else await saveScalez();
+      else if (type === 'scalez') await saveScalez();
+      else await saveStreaming();
       onClose();
     } catch {
       setError('Could not save — try again.');
@@ -218,14 +238,14 @@ export default function EventAdderModal({
     <div style={overlayStyle} onClick={onClose}>
       <div style={panelStyle} onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', borderBottom: '1px solid #1c1e23' }}>
-          {(['holiday', 'dialing', 'scalez'] as EventType[]).map((t) => (
+          {(['holiday', 'dialing', 'scalez', 'streaming'] as EventType[]).map((t) => (
             <div
               key={t}
               onClick={() => !isEditing && setType(t)}
               style={{
                 flex: 1, textAlign: 'center', padding: '16px 8px', fontSize: 12.5, fontWeight: 700, letterSpacing: '0.06em',
-                cursor: isEditing ? 'default' : 'pointer', color: type === t ? TYPE_COLOR[t] : '#565b64',
-                borderBottom: `2px solid ${type === t ? TYPE_COLOR[t] : 'transparent'}`,
+                cursor: isEditing ? 'default' : 'pointer', color: type === t ? EVENT_TYPE_COLOR[t] : '#565b64',
+                borderBottom: `2px solid ${type === t ? EVENT_TYPE_COLOR[t] : 'transparent'}`,
                 opacity: isEditing && type !== t ? 0.35 : 1,
               }}
             >
@@ -404,6 +424,33 @@ export default function EventAdderModal({
               <div style={fieldWrap}>
                 <label style={labelStyle}>Notes</label>
                 <textarea style={{ ...inputStyle, minHeight: 70, resize: 'vertical' }} value={sNotes} onChange={(e) => setSNotes(e.target.value)} />
+              </div>
+            </div>
+          )}
+
+          {type === 'streaming' && (
+            <div>
+              <div style={fieldWrap}>
+                <label style={labelStyle}>Title</label>
+                <input style={inputStyle} placeholder="e.g. Late Night Horror Run" value={stTitle} onChange={(e) => setStTitle(e.target.value)} />
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ ...fieldWrap, flex: 1 }}>
+                  <label style={labelStyle}>Date</label>
+                  <input type="date" style={inputStyle} value={stDate} onChange={(e) => setStDate(e.target.value)} />
+                </div>
+                <div style={{ ...fieldWrap, flex: 1 }}>
+                  <label style={labelStyle}>Start time</label>
+                  <input type="time" style={inputStyle} value={stStart} onChange={(e) => setStStart(e.target.value)} />
+                </div>
+                <div style={{ ...fieldWrap, flex: 1 }}>
+                  <label style={labelStyle}>End time</label>
+                  <input type="time" style={inputStyle} value={stEnd} onChange={(e) => setStEnd(e.target.value)} />
+                </div>
+              </div>
+              <div style={fieldWrap}>
+                <label style={labelStyle}>Notes (optional)</label>
+                <textarea style={{ ...inputStyle, minHeight: 70, resize: 'vertical' }} value={stNotes} onChange={(e) => setStNotes(e.target.value)} />
               </div>
             </div>
           )}

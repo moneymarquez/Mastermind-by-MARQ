@@ -430,7 +430,7 @@ export interface DialingPitch {
   updated_at: string;
 }
 
-export type EventType = 'holiday' | 'dialing' | 'scalez';
+export type EventType = 'holiday' | 'dialing' | 'scalez' | 'streaming';
 
 export const DIALING_STATUSES = ['new', 'contacted', 'appointment set', 'no-show', 'closed', 'dead'] as const;
 export type DialingStatus = (typeof DIALING_STATUSES)[number];
@@ -460,6 +460,27 @@ export interface ScalezDetails {
   budget_range: string;
 }
 
+export interface StreamingDetails {
+  title: string;
+}
+
+export const STREAM_FORMATS = ['solo', 'duo'] as const;
+export type StreamFormat = (typeof STREAM_FORMATS)[number];
+
+export const STREAM_STATUSES = ['idea', 'planned', 'recorded', 'posted'] as const;
+export type StreamStatus = (typeof STREAM_STATUSES)[number];
+
+export interface StreamingIdea {
+  id: string;
+  title: string;
+  format: StreamFormat;
+  vibe: string | null;
+  description: string | null;
+  status: StreamStatus;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface HolidayShift {
   id: string;
   person_name: string;
@@ -480,7 +501,7 @@ export interface CalendarEvent {
   notes: string | null;
   status: string | null;
   linked_contact_id: string | null;
-  details: Partial<DialingDetails> | Partial<ScalezDetails> | Record<string, never>;
+  details: Partial<DialingDetails> | Partial<ScalezDetails> | Partial<StreamingDetails> | Record<string, never>;
   created_at: string;
   updated_at: string;
 }

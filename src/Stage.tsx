@@ -23,6 +23,7 @@ import ScheduleScreen from './components/screens/ScheduleScreen';
 import ContactsScreen from './components/screens/ContactsScreen';
 import OpeningClosingScreen from './components/screens/OpeningClosingScreen';
 import NotificationSettingsScreen from './components/screens/NotificationSettingsScreen';
+import StreamingScreen from './components/screens/StreamingScreen';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
 import { buildViewModel } from './viewModel';
 import type { AppState, MastermindActions } from './state';
@@ -30,7 +31,7 @@ import type { AppState, MastermindActions } from './state';
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
   'scaling-planner', 'audits', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
-  'notification-settings',
+  'notification-settings', 'streaming',
 ];
 
 interface Props {
@@ -166,6 +167,10 @@ export default function Stage({ state, actions, onSignOut }: Props) {
 
         {state.screen === 'notification-settings' && (
           <NotificationSettingsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'streaming' && (
+          <StreamingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {(state.screen === 'placeholder' || !BUILT_SCREENS.includes(state.screen)) && (

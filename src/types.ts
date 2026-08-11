@@ -16,6 +16,7 @@ export type Screen =
   | 'contacts'
   | 'opening-closing'
   | 'notification-settings'
+  | 'streaming'
   | 'placeholder';
 
 export interface StickyIdea {

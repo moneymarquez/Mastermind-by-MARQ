@@ -16,7 +16,7 @@ Then open the printed local URL (typically http://localhost:5173).
 This app needs a Supabase project to run against.
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, `supabase/schema_012_holiday_calendar.sql`, `supabase/schema_013_fitness_v2.sql`, `supabase/schema_014_fitness_notifications.sql`, `supabase/schema_015_mental_health_profile.sql`, `supabase/schema_016_goals_v2.sql`, and `supabase/schema_017_daily_plan.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
+2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, `supabase/schema_012_holiday_calendar.sql`, `supabase/schema_013_fitness_v2.sql`, `supabase/schema_014_fitness_notifications.sql`, `supabase/schema_015_mental_health_profile.sql`, `supabase/schema_016_goals_v2.sql`, `supabase/schema_017_daily_plan.sql`, and `supabase/schema_018_streaming.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
 3. **Create your login account** — Authentication → Users → Add user → enter email + password, check **Auto Confirm User**. There's no public sign-up flow; this is the one account the login screen expects.
 4. Copy `.env.example` to `.env.local` and fill in your project's URL and anon key (Project Settings → API).
 
@@ -306,6 +306,30 @@ already has configured.
 
 This closes out the original Macros & Meals + Goals spec in full.
 
+## Streaming (Side Hustles)
+
+Run `supabase/schema_018_streaming.sql` (after schema_017) to unlock the new **Streaming** page under Side Hustles.
+
+- **A third calendar type** — `events.type` now includes `'streaming'` alongside `holiday`/`dialing`/`scalez`, colored gold
+  (`#C9A24B`, `EVENT_TYPE_COLOR` in `src/data/eventDisplay.ts`) so it never collides with the existing colors. It's a
+  real filter chip on the master Schedule page like the others, and events created from either page are the same
+  underlying `events` rows — no duplicate creation path.
+- **Shared calendar component** — the month-grid + day-zoom drag-to-create timeline that used to live only inside
+  `ScheduleScreen.tsx` is now `src/components/CalendarView.tsx`, taking pre-filtered events + a default type. Both
+  the master Schedule page and the Streaming page's embedded calendar use the exact same component — "reuse, don't
+  reinvent," per spec. A small imperative handle (`openAddModal()`) lets each page keep its own "+" button placement
+  ("+ Add event" vs. "+ New Stream") while sharing the same modal/state machinery underneath.
+- **Ideas Bank** — a living backlog (`streaming_ideas` table, separate from calendar events — an idea isn't a
+  scheduled stream), seeded with 20 starter concepts via a one-time "Load starter ideas" button (client-side insert,
+  same reasoning as the Macros fast-food list / Fitness workout library: SQL Editor sessions aren't authenticated as
+  a user). Each idea has a format (Solo/Duo) and vibe tag, a description, and a status you move through
+  Idea → Planned → Recorded → Posted. Full add/edit/delete.
+- Not linked yet, deliberately: an idea's status can reach "Planned" without pointing at a specific calendar event.
+  Both tables have stable ids, so wiring that link up later doesn't require anything reserved now.
+
+Also fixed in this pass: the "Daily Plan" nav item was never actually wired into `directScreens` in `state.ts` back
+when it was built, so clicking it silently showed the generic "coming soon" placeholder instead of the real screen.
+
 ## Structure
 
 - `src/state.ts` — app state + action handlers (drag, nav, Nova, sticky spot)
@@ -331,6 +355,6 @@ This closes out the original Macros & Meals + Goals spec in full.
 - `src/data/usePitch.ts` — the persisted Current Pitch script (one row per user)
 - `src/components/` — presentational components
 - `src/components/screens/` — per-screen views
-- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql` → `schema_015_mental_health_profile.sql` → `schema_016_goals_v2.sql` → `schema_017_daily_plan.sql`)
+- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql` → `schema_015_mental_health_profile.sql` → `schema_016_goals_v2.sql` → `schema_017_daily_plan.sql` → `schema_018_streaming.sql`)
 
 
