@@ -5,10 +5,26 @@
   // Netlify) instead of a static-assets-only fallback.
   "name": "mastermind-by-marq",
   "compatibility_date": "2026-08-08",
+  // Needed for @anthropic-ai/sdk (the Stocks bot's 4:15pm Nova summary) to
+  // run in the Workers runtime.
+  "compatibility_flags": ["nodejs_compat"],
   "main": "worker/index.ts",
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
+  },
+  // Stocks bot engine (worker/handlers/stocks-bot.ts) — same cadence as it
+  // ran on Netlify; the handler itself gates real work to market hours and
+  // the 4:15pm ET summary window.
+  "triggers": {
+    "crons": ["*/15 * * * *"]
   }
+  // Required environment variables/secrets — set these in the Cloudflare
+  // dashboard (Workers & Pages → mastermind-by-marq → Settings →
+  // Variables and Secrets), NOT here, so nothing sensitive is committed:
+  //   VITE_SUPABASE_URL          (plain variable)
+  //   VITE_SUPABASE_ANON_KEY     (plain variable — already public in the built frontend)
+  //   SUPABASE_SERVICE_ROLE_KEY  (secret)
+  //   ANTHROPIC_API_KEY          (secret — optional; Nova commentary is skipped without it)
 }
