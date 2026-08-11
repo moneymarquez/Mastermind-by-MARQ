@@ -17,6 +17,7 @@ export type Screen =
   | 'opening-closing'
   | 'notification-settings'
   | 'streaming'
+  | 'stocks'
   | 'placeholder';
 
 export interface StickyIdea {

@@ -16,7 +16,7 @@ Then open the printed local URL (typically http://localhost:5173).
 This app needs a Supabase project to run against.
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, `supabase/schema_012_holiday_calendar.sql`, `supabase/schema_013_fitness_v2.sql`, `supabase/schema_014_fitness_notifications.sql`, `supabase/schema_015_mental_health_profile.sql`, `supabase/schema_016_goals_v2.sql`, `supabase/schema_017_daily_plan.sql`, and `supabase/schema_018_streaming.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
+2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, `supabase/schema_012_holiday_calendar.sql`, `supabase/schema_013_fitness_v2.sql`, `supabase/schema_014_fitness_notifications.sql`, `supabase/schema_015_mental_health_profile.sql`, `supabase/schema_016_goals_v2.sql`, `supabase/schema_017_daily_plan.sql`, `supabase/schema_018_streaming.sql`, and `supabase/schema_019_stocks_bot.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
 3. **Create your login account** — Authentication → Users → Add user → enter email + password, check **Auto Confirm User**. There's no public sign-up flow; this is the one account the login screen expects.
 4. Copy `.env.example` to `.env.local` and fill in your project's URL and anon key (Project Settings → API).
 
@@ -330,6 +330,47 @@ Run `supabase/schema_018_streaming.sql` (after schema_017) to unlock the new **S
 Also fixed in this pass: the "Daily Plan" nav item was never actually wired into `directScreens` in `state.ts` back
 when it was built, so clicking it silently showed the generic "coming soon" placeholder instead of the real screen.
 
+## Stocks: paper-trading bot (Alpaca)
+
+Run `supabase/schema_019_stocks_bot.sql` (after schema_018) to unlock the new **Stocks** page under Side Hustles.
+
+Paper trading only — no real money moves. A scheduled backend job (`netlify/functions/stocks-bot.ts`, same
+`*/15 * * * *` cron pattern as the Daily Plan Engine) scans a watchlist every 15 minutes during market hours
+(9:30am-4pm ET, Mon-Fri) and trades on Alpaca's free paper API, so it runs even when the app is closed. Live trading
+is explicitly out of scope for this build — `bot_config.mode` exists as a future switch, but there is no live-order
+code path at all yet.
+
+- **Setup** — create a free account at [alpaca.markets](https://alpaca.markets), choose Paper Trading, generate a
+  Paper API Key ID + Secret, and paste both into Stocks → Watchlist & Settings → Broker keys. The Stocks page has a
+  built-in collapsible "How to run this bot" checklist walking through this same flow (state saved to
+  `localStorage`, since it's a one-time onboarding aid, not data worth a schema column).
+- **Keys never reach the client** — `bot_broker_keys` is the one table in this app with *zero* RLS policies after
+  RLS is enabled, so the anon/authenticated keys the browser holds get flat-out denied; only the service-role key
+  (used server-side, which bypasses RLS on Supabase) can read or write it. The client posts keys to
+  `save-broker-keys.ts` and only ever gets a masked confirmation back from `broker-keys-status.ts` — the secret is
+  never echoed down. `stocks-account.ts` is the one client-facing read of live Alpaca state (equity, positions,
+  watchlist news), also proxied server-side for the same reason.
+- **Strategy (v1, intentionally simple/inspectable)** — EMA 20/EMA 50 crossover on 1-hour candles for trend, a
+  momentum filter (break above the prior 10-bar high on above-average volume) to confirm entries, and a correlation
+  guard that blocks new entries once SPY and QQQ are both already held long. Every evaluation is logged to
+  `bot_signals` — including blocked ones with a reason — so the Today panel shows not just what the bot did, but
+  what it chose not to do and why.
+- **Risk rules are hard-coded in the engine**, not stored/editable in the database: max 5% of account per position,
+  max 3 open positions, a 2% stop loss placed as a broker-side bracket order (fires even if a cron tick is missed),
+  and a 3% daily-loss halt that blocks new entries for the rest of that trading day (`bot_config.halted_date`). The
+  Settings panel displays these read-only, per spec — tightening them means editing the constants at the top of
+  `stocks-bot.ts`, not a slider in the UI.
+- **Reconciliation** — each run compares live Alpaca positions against open `bot_trades` rows; anything closed
+  broker-side since the last tick (a stop loss firing, a trend-exit sell filling) gets its actual fill price pulled
+  from Alpaca's closed-orders endpoint and written back as `pnl`, so the trade log stays accurate even between cron
+  ticks.
+- **4:15pm ET daily summary** — once market's closed, realized P&L/win-rate for the day gets written to
+  `bot_daily_summary` (including an equity snapshot, for the Performance panel's equity curve), and Nova writes a
+  short, grounded end-of-day note from it via the Anthropic API. If `ANTHROPIC_API_KEY` isn't funded yet, the numbers
+  still save — the UI just shows "Nova commentary — pending API key" instead of a note.
+- **News** — Alpaca's own News API (`/v1beta1/news`), scoped to the watchlist, so the Market news panel doesn't need
+  a second API key.
+
 ## Structure
 
 - `src/state.ts` — app state + action handlers (drag, nav, Nova, sticky spot)
@@ -353,8 +394,13 @@ when it was built, so clicking it silently showed the generic "coming soon" plac
 - `src/data/useReminders.ts`, `src/data/useNotificationSettings.ts` — the Reminders panel's real data and the per-category notification toggles/meal times
 - `src/data/useCallOutcomes.ts` — Dialing's daily queue/counter/history logic (given the caller's already-loaded Dialing contacts)
 - `src/data/usePitch.ts` — the persisted Current Pitch script (one row per user)
+- `netlify/functions/lib/alpaca.ts` — shared Alpaca paper-trading REST helpers (account/positions/bars/orders/news), imported by `stocks-account.ts` and `stocks-bot.ts`
+- `netlify/functions/save-broker-keys.ts`, `netlify/functions/broker-keys-status.ts` — write/read Alpaca keys server-side only; the client never sees the secret
+- `netlify/functions/stocks-account.ts` — client-facing read of live Alpaca equity/positions/news
+- `netlify/functions/stocks-bot.ts` — Scheduled Function (every 15 min), the trading engine + 4:15pm ET daily summary
+- `src/data/useStocksBot.ts` — Stocks page's data hook (config, signals, trades, daily summaries, live account, broker keys)
 - `src/components/` — presentational components
 - `src/components/screens/` — per-screen views
-- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql` → `schema_015_mental_health_profile.sql` → `schema_016_goals_v2.sql` → `schema_017_daily_plan.sql` → `schema_018_streaming.sql`)
+- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql` → `schema_015_mental_health_profile.sql` → `schema_016_goals_v2.sql` → `schema_017_daily_plan.sql` → `schema_018_streaming.sql` → `schema_019_stocks_bot.sql`)
 
 

@@ -536,3 +536,76 @@ export interface BrandLabBrief {
   ai_copy: BrandLabCopy | null;
   created_at: string;
 }
+
+// ── Stocks bot ────────────────────────────────────────────────────────────
+
+export interface BotConfig {
+  id: string;
+  watchlist: string[];
+  enabled: boolean;
+  mode: 'paper' | 'live';
+  halted_date: string | null;
+  halted_reason: string | null;
+  last_run_at: string | null;
+}
+
+export type BotSignalType = 'entry' | 'exit' | 'blocked';
+
+export interface BotSignal {
+  id: string;
+  ticker: string;
+  signal_type: BotSignalType;
+  reason: string;
+  acted_on: boolean;
+  created_at: string;
+}
+
+export interface BotTrade {
+  id: string;
+  ticker: string;
+  side: 'buy' | 'sell';
+  qty: number;
+  entry_price: number | null;
+  exit_price: number | null;
+  stop_loss_price: number | null;
+  status: 'open' | 'closed';
+  pnl: number | null;
+  alpaca_order_id: string | null;
+  opened_at: string;
+  closed_at: string | null;
+}
+
+export interface BotDailySummary {
+  id: string;
+  summary_date: string;
+  equity: number | null;
+  net_pnl: number;
+  win_rate: number | null;
+  trades_count: number;
+  open_positions_snapshot: AlpacaPositionSnapshot[];
+  nova_commentary: string | null;
+}
+
+export interface AlpacaPositionSnapshot {
+  symbol: string;
+  qty: number;
+  avg_entry_price: number;
+  current_price: number;
+  unrealized_pl: number;
+  unrealized_plpc: number;
+}
+
+export interface StocksAccountStatus {
+  connected: boolean;
+  equity: number;
+  cash: number;
+  dailyPl: number;
+  dailyPlPct: number;
+  positions: AlpacaPositionSnapshot[];
+  news: { headline: string; source: string; url: string; symbols: string[]; createdAt: string }[];
+}
+
+export interface BrokerKeyStatus {
+  connected: boolean;
+  apiKeyIdMasked: string | null;
+}
