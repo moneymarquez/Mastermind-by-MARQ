@@ -16,7 +16,7 @@ Then open the printed local URL (typically http://localhost:5173).
 This app needs a Supabase project to run against.
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, `supabase/schema_012_holiday_calendar.sql`, `supabase/schema_013_fitness_v2.sql`, `supabase/schema_014_fitness_notifications.sql`, `supabase/schema_015_mental_health_profile.sql`, `supabase/schema_016_goals_v2.sql`, `supabase/schema_017_daily_plan.sql`, `supabase/schema_018_streaming.sql`, and `supabase/schema_019_stocks_bot.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe, but running the same file twice back-to-back with new `create policy` statements will error — each file is meant to be run once, in order.
+2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, `supabase/schema_012_holiday_calendar.sql`, `supabase/schema_013_fitness_v2.sql`, `supabase/schema_014_fitness_notifications.sql`, `supabase/schema_015_mental_health_profile.sql`, `supabase/schema_016_goals_v2.sql`, `supabase/schema_017_daily_plan.sql`, `supabase/schema_018_streaming.sql`, `supabase/schema_019_stocks_bot.sql`, and `supabase/schema_020_settings_recordings.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe. From `schema_019` onward, `create policy` statements are also preceded by `drop policy if exists`, so those files are safe to re-run in full even after a partial failure — files before `schema_019` predate that fix and will error on a second full run's `create policy` lines (harmless — it means everything in that file already applied).
 3. **Create your login account** — Authentication → Users → Add user → enter email + password, check **Auto Confirm User**. There's no public sign-up flow; this is the one account the login screen expects.
 4. Copy `.env.example` to `.env.local` and fill in your project's URL and anon key (Project Settings → API).
 
@@ -376,6 +376,41 @@ code path at all yet.
 - **News** — Alpaca's own News API (`/v1beta1/news`), scoped to the watchlist, so the Market news panel doesn't need
   a second API key.
 
+## Settings, Overview, Call Recordings, Website Builder roadmap
+
+Run `supabase/schema_020_settings_recordings.sql` (after schema_019) for this batch.
+
+- **Settings → Account and Settings → Prompt & Voice were dead links** — clicking them did nothing, not even a
+  placeholder message, because `SUB_SCREEN_BY_LABEL` in `src/navRows.ts` only mapped `Notifications` to a real
+  screen. Both now route to real screens (`AccountSettingsScreen.tsx`, `PromptVoiceSettingsScreen.tsx`).
+  - **Account**: email + editable display name (`supabase.auth.updateUser({ data: { full_name } })`), a change-password
+    flow, sign out, and delete account — the delete flow has a real confirm step but stops at "email support to have
+    it removed" rather than actually deleting anything, since there's no admin-API deletion path wired up yet.
+  - **Prompt & Voice**: a tone preference (Direct / Encouraging / Neutral) stored in the new `nova_preferences` table
+    and read into Nova's system prompt on every request (`TONE_INSTRUCTIONS` in `src/state.ts`) — this changes how
+    Nova actually writes, not just a cosmetic setting. Voice input/output shows an honest "coming soon" note.
+- **Overview (Home) redesign** — leads with real data instead of feeling sterile: the stat row gained "Workouts this
+  week" (reusing Fitness's existing week-count logic) and "Leads in pipeline" (Scaling contacts), plus a new "Today's
+  schedule" list of the day's actual calendar events (not just "what's next"). Nova moved out of the hero spot into a
+  small persistent "Ask Nova" card at the bottom of Home — clicking it opens the same Nova panel as the floating
+  trigger (`actions.openNova` in `src/state.ts`), it's just a second, smaller entry point into it.
+- **Call Recordings real page** — recordings upload to a private Supabase Storage bucket (`call-recordings`, RLS'd
+  to `<user_id>/...` folders) via `src/data/useCallRecordings.ts`, optionally linked to a Dialing/Scaling contact.
+  Detail view plays the file back (signed URL, 1hr expiry) and has an editable notes field. AI breakdown is
+  deliberately NOT built — a visible "AI call breakdown — pending Anthropic key" flag sits where it'll go, and the
+  `call_recordings.ai_analysis` column already exists so wiring in real Nova summaries later is additive, not a
+  schema change.
+- **Website / App Builder roadmap page** — replaced the placeholder with a real in-app page laying out the actual
+  plan (embedded terminal → live preview → one-click Cloudflare deploy → domain attach), flagged "In planning" —
+  no terminal/SSH backend work here, that's real infrastructure and a separate build.
+- **"In progress" badges** — Brand Lab and Scaling Planner both now show a small gold pill next to their titles
+  (`QuestionnaireFlow`'s new optional `badge` prop, plus one inline in `BrandLabScreen.tsx`) so it's visually clear
+  they're not final, without changing any behavior.
+
+**Not done in this pass**: the Invoicing rebuild (9 "Made by Marq" client document types reproduced exactly from a
+source file) is blocked — the source HTML/PDF this needs was never actually available in the build environment, and
+per explicit instruction this gets reproduced exactly, not approximated, so it's waiting on that file.
+
 ## Structure
 
 - `src/state.ts` — app state + action handlers (drag, nav, Nova, sticky spot)
@@ -402,8 +437,11 @@ code path at all yet.
 - `netlify/functions/lib/alpaca.ts`, `netlify/functions/save-broker-keys.ts`, `netlify/functions/broker-keys-status.ts`, `netlify/functions/stocks-account.ts`, `netlify/functions/stocks-bot.ts` — the Stocks bot's original Netlify implementation. **Not what's actually live** — see `worker/handlers/` below; kept because it's still correct code and Netlify may resume deploys later, but the Cloudflare Worker versions are the ones Cloudflare Worker actually routes to.
 - `worker/handlers/broker-keys.ts`, `worker/handlers/stocks-account.ts`, `worker/handlers/stocks-bot.ts`, `worker/lib/alpaca.ts`, `worker/lib/auth.ts` — the Stocks bot ported to run natively on Cloudflare Workers (fetch routes + a `scheduled()` Cron Trigger), since these four endpoints have no `web-push` dependency and don't need to wait on Netlify. See the Cloudflare Workers section above for why.
 - `src/data/useStocksBot.ts` — Stocks page's data hook (config, signals, trades, daily summaries, live account, broker keys)
+- `src/data/useNovaPreferences.ts`, `src/components/screens/AccountSettingsScreen.tsx`, `src/components/screens/PromptVoiceSettingsScreen.tsx` — the two previously-dead Settings sub-links, now real
+- `src/data/useCallRecordings.ts`, `src/components/screens/CallRecordingsScreen.tsx` — recording upload/playback/notes, AI breakdown flagged pending
+- `src/components/screens/WebsiteBuilderRoadmapScreen.tsx` — the Website/App Builder placeholder's replacement (a real 4-phase roadmap page, no backend behind it yet)
 - `src/components/` — presentational components
 - `src/components/screens/` — per-screen views
-- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql` → `schema_015_mental_health_profile.sql` → `schema_016_goals_v2.sql` → `schema_017_daily_plan.sql` → `schema_018_streaming.sql` → `schema_019_stocks_bot.sql`)
+- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql` → `schema_015_mental_health_profile.sql` → `schema_016_goals_v2.sql` → `schema_017_daily_plan.sql` → `schema_018_streaming.sql` → `schema_019_stocks_bot.sql` → `schema_020_settings_recordings.sql`)
 
 

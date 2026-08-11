@@ -2,6 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { NAV_DATA, INITIAL_STICKY_IDEAS, PLACEHOLDER_NOTES } from './data';
 import type { NovaMessage, Point, Screen, StickyIdea } from './types';
 import { askClaude, AiError } from './lib/ai';
+import { useNovaPreferences } from './data/useNovaPreferences';
+
+const TONE_INSTRUCTIONS: Record<string, string> = {
+  direct: 'Be blunt and to the point — skip the cushioning, say the real thing.',
+  encouraging: 'Be warm and encouraging — lead with what\'s working, soften hard truths without dodging them.',
+  neutral: 'Be plain and matter-of-fact — no extra flourish, no forced positivity.',
+};
 
 const MOBILE_BREAKPOINT = 768;
 
@@ -47,6 +54,7 @@ const initialState: AppState = {
 
 export function useMastermindState() {
   const [state, setState] = useState<AppState>(initialState);
+  const { tone } = useNovaPreferences();
   const patch = (update: Partial<AppState> | ((s: AppState) => Partial<AppState>)) =>
     setState((s) => ({ ...s, ...(typeof update === 'function' ? update(s) : update) }));
 
@@ -76,7 +84,7 @@ export function useMastermindState() {
   const toggleDrawer = () => patch((s) => ({ navDrawerOpen: !s.navDrawerOpen }));
   const closeDrawer = () => patch({ navDrawerOpen: false });
 
-  const directScreens: Screen[] = ['home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'scaling-planner', 'audits', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing', 'notification-settings', 'streaming', 'stocks'];
+  const directScreens: Screen[] = ['home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'scaling-planner', 'audits', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing', 'notification-settings', 'streaming', 'stocks', 'account-settings', 'prompt-voice-settings', 'call-recordings', 'website'];
 
   const navigateTo = (id: string) => {
     if (id === 'settings') {
@@ -127,6 +135,7 @@ export function useMastermindState() {
     if (e) e.stopPropagation();
     patch({ novaOpen: false });
   };
+  const openNova = () => patch({ novaOpen: true });
 
   const onNovaInputChange = (e: React.ChangeEvent<HTMLInputElement>) => patch({ novaInput: e.target.value });
   const onNovaKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -151,8 +160,9 @@ export function useMastermindState() {
       reply = await askClaude({
         system:
           "You are Nova, Cristopher's personal AI inside Mastermind by MARQ — his personal operating system app " +
-          '(sobriety, fitness, macros, goals, mental health, and his business-scaling tools). Be direct, warm, and ' +
-          "concise — a few sentences, not an essay. You're a companion embedded in his day, not a generic chatbot.",
+          '(sobriety, fitness, macros, goals, mental health, and his business-scaling tools). Concise — a few ' +
+          "sentences, not an essay. You're a companion embedded in his day, not a generic chatbot. " +
+          (TONE_INSTRUCTIONS[tone] ?? TONE_INSTRUCTIONS.direct),
         messages: [...trimmedHistory, { role: 'user', content: text }],
         maxTokens: 500,
       });
@@ -189,6 +199,7 @@ export function useMastermindState() {
       onCirclePointerMove,
       onCirclePointerUp,
       closeNova,
+      openNova,
       onNovaInputChange,
       onNovaKeyDown,
       sendNova,

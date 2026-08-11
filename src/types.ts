@@ -18,6 +18,10 @@ export type Screen =
   | 'notification-settings'
   | 'streaming'
   | 'stocks'
+  | 'account-settings'
+  | 'prompt-voice-settings'
+  | 'call-recordings'
+  | 'website'
   | 'placeholder';
 
 export interface StickyIdea {

@@ -28,7 +28,9 @@ export function buildViewModel(state: AppState, navigateTo: (id: string) => void
   const statDefs = [
     { icon: 'ph-phone-call', value: '0 / 100', caption: "Today's call goal" },
     { icon: 'ph-heart', value: '128 days', caption: 'Sobriety streak' },
+    { icon: 'ph-barbell', value: '0', caption: 'Workouts this week' },
     { icon: 'ph-fork-knife', value: '1,840 kcal', caption: "Today's macros" },
+    { icon: 'ph-users-three', value: '0', caption: 'Leads in pipeline' },
     { icon: 'ph-calendar-blank', value: '2:30 PM', caption: 'Next on schedule' },
   ];
   const statCards = statDefs.map((d) => ({

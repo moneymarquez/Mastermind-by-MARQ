@@ -16,6 +16,7 @@ interface Props<T extends Row> {
   title: string;
   subtitle: string;
   flagNote: string;
+  badge?: string;
   questions: Question[];
   rows: T[];
   loading: boolean;
@@ -46,7 +47,7 @@ const ghostBtn: CSSProperties = {
 };
 
 export default function QuestionnaireFlow<T extends Row>({
-  homeHeadStyle, homeSubStyle, title, subtitle, flagNote, questions, rows, loading,
+  homeHeadStyle, homeSubStyle, title, subtitle, flagNote, badge, questions, rows, loading,
   active, activeId, setActiveId, start, saveAnswer, complete, remove, generate, getText, itemLabel, newLabel,
 }: Props<T>) {
   const [step, setStep] = useState(0);
@@ -69,7 +70,14 @@ export default function QuestionnaireFlow<T extends Row>({
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <div style={homeHeadStyle}>{title}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <div style={homeHeadStyle}>{title}</div>
+              {badge && (
+                <div style={{ padding: '3px 10px', borderRadius: 999, background: '#C9A24B22', border: '1px solid #C9A24B55', color: '#C9A24B', fontSize: 10.5, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>
+                  {badge}
+                </div>
+              )}
+            </div>
             <div style={homeSubStyle}>{subtitle}</div>
           </div>
           <div style={primaryBtn} onClick={start}>+ {newLabel}</div>

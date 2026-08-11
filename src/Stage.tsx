@@ -25,6 +25,10 @@ import OpeningClosingScreen from './components/screens/OpeningClosingScreen';
 import NotificationSettingsScreen from './components/screens/NotificationSettingsScreen';
 import StreamingScreen from './components/screens/StreamingScreen';
 import StocksScreen from './components/screens/StocksScreen';
+import AccountSettingsScreen from './components/screens/AccountSettingsScreen';
+import PromptVoiceSettingsScreen from './components/screens/PromptVoiceSettingsScreen';
+import CallRecordingsScreen from './components/screens/CallRecordingsScreen';
+import WebsiteBuilderRoadmapScreen from './components/screens/WebsiteBuilderRoadmapScreen';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
 import { buildViewModel } from './viewModel';
 import type { AppState, MastermindActions } from './state';
@@ -32,7 +36,8 @@ import type { AppState, MastermindActions } from './state';
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
   'scaling-planner', 'audits', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
-  'notification-settings', 'streaming', 'stocks',
+  'notification-settings', 'streaming', 'stocks', 'account-settings', 'prompt-voice-settings',
+  'call-recordings', 'website',
 ];
 
 interface Props {
@@ -95,7 +100,7 @@ export default function Stage({ state, actions, onSignOut }: Props) {
 
       <div style={vm.contentStyle}>
         {state.screen === 'home' && (
-          <HomeScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} statGridStyle={vm.statGridStyle} statCards={vm.statCards} />
+          <HomeScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} statGridStyle={vm.statGridStyle} statCards={vm.statCards} onOpenNova={actions.openNova} />
         )}
 
         {state.screen === 'daily-plan' && (
@@ -176,6 +181,22 @@ export default function Stage({ state, actions, onSignOut }: Props) {
 
         {state.screen === 'stocks' && (
           <StocksScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'account-settings' && (
+          <AccountSettingsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onSignOut={onSignOut} />
+        )}
+
+        {state.screen === 'prompt-voice-settings' && (
+          <PromptVoiceSettingsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'call-recordings' && (
+          <CallRecordingsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'website' && (
+          <WebsiteBuilderRoadmapScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {(state.screen === 'placeholder' || !BUILT_SCREENS.includes(state.screen)) && (

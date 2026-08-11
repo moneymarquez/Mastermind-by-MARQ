@@ -116,7 +116,12 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <div style={homeHeadStyle}>Brand Lab</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <div style={homeHeadStyle}>Brand Lab</div>
+            <div style={{ padding: '3px 10px', borderRadius: 999, background: '#C9A24B22', border: '1px solid #C9A24B55', color: '#C9A24B', fontSize: 10.5, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>
+              In progress
+            </div>
+          </div>
           <div style={homeSubStyle}>The visual/output half — pairs with Scaling Planner.</div>
         </div>
         <div style={primaryBtn} onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : '+ New brief'}</div>

@@ -13,6 +13,8 @@ export interface NavRow {
 
 const SUB_SCREEN_BY_LABEL: Record<string, string> = {
   Notifications: 'notification-settings',
+  Account: 'account-settings',
+  'Prompt & Voice': 'prompt-voice-settings',
 };
 
 export function buildNavRows(
