@@ -1,5 +1,9 @@
 -- Mastermind by MARQ — Phase 19 schema (Stocks: paper-trading bot on Alpaca).
 -- Run once, after schema_018_streaming.sql, in the Supabase SQL editor.
+-- Safe to re-run in full if a prior run failed partway (e.g. the paste's
+-- transaction rolled back on an error further down): every `create policy`
+-- below is preceded by `drop policy if exists` since Postgres has no
+-- `create policy if not exists`.
 
 -- Broker credentials. Deliberately has NO policies after RLS is enabled —
 -- anon/authenticated keys get zero access (default deny), only the
@@ -34,6 +38,7 @@ create table if not exists bot_config (
   updated_at timestamptz not null default now()
 );
 alter table bot_config enable row level security;
+drop policy if exists "own rows" on bot_config;
 create policy "own rows" on bot_config for all
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
@@ -49,6 +54,7 @@ create table if not exists bot_signals (
   created_at timestamptz not null default now()
 );
 alter table bot_signals enable row level security;
+drop policy if exists "own rows" on bot_signals;
 create policy "own rows" on bot_signals for all
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create index if not exists bot_signals_user_created_idx on bot_signals(user_id, created_at desc);
@@ -72,6 +78,7 @@ create table if not exists bot_trades (
   closed_at timestamptz
 );
 alter table bot_trades enable row level security;
+drop policy if exists "own rows" on bot_trades;
 create policy "own rows" on bot_trades for all
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create index if not exists bot_trades_user_status_idx on bot_trades(user_id, status);
@@ -93,5 +100,6 @@ create table if not exists bot_daily_summary (
   unique (user_id, summary_date)
 );
 alter table bot_daily_summary enable row level security;
+drop policy if exists "own rows" on bot_daily_summary;
 create policy "own rows" on bot_daily_summary for all
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
