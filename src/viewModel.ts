@@ -11,10 +11,15 @@ export function buildViewModel(state: AppState, navigateTo: (id: string) => void
 
   const navRows = buildNavRows(s.screen, s.settingsExpanded, navigateTo, onSignOut);
 
+  // Top padding clears the logo/hamburger row (which itself sits below
+  // env(safe-area-inset-top)) with real breathing room underneath, rather
+  // than the two nearly touching.
   const contentStyle: CSSProperties = {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     overflowY: 'auto',
-    padding: isMobile ? `${circleSize + 36}px 20px 140px` : `100px 40px 60px ${circleSize + 64}px`,
+    padding: isMobile
+      ? `calc(${circleSize + 64}px + env(safe-area-inset-top)) 20px 140px`
+      : `calc(120px + env(safe-area-inset-top)) 40px 60px ${circleSize + 64}px`,
   };
 
   const homeHeadStyle: CSSProperties = { fontSize: isMobile ? 24 : 32, fontWeight: 600, color: '#F5F6F7', letterSpacing: '-0.01em' };

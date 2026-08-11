@@ -16,7 +16,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0A0B0D', display: 'flex', justifyContent: 'center' }}>
+    <div style={{ background: '#0A0B0D' }}>
       <Stage state={state} actions={actions} onSignOut={signOut} />
     </div>
   );

@@ -14,7 +14,7 @@ export default function NavDrawer({ open, rows, onToggle, onClose }: Props) {
       <div
         data-testid="hamburger"
         style={{
-          position: 'absolute', top: 20, right: 20, width: 42, height: 42, borderRadius: '50%',
+          position: 'absolute', top: 'calc(24px + env(safe-area-inset-top))', right: 20, width: 42, height: 42, borderRadius: '50%',
           background: '#14161A', border: '1px solid #22262B', display: 'flex', alignItems: 'center',
           justifyContent: 'center', cursor: 'pointer', zIndex: 41,
         }}
@@ -28,7 +28,7 @@ export default function NavDrawer({ open, rows, onToggle, onClose }: Props) {
           <div style={{ position: 'absolute', inset: 0, zIndex: 38 }} onClick={onClose} />
           <div
             style={{
-              position: 'absolute', top: 70, right: 20, width: 250, maxHeight: '75%', overflowY: 'auto',
+              position: 'absolute', top: 'calc(74px + env(safe-area-inset-top))', right: 20, width: 250, maxHeight: '75%', overflowY: 'auto',
               background: '#101114', border: '1px solid #22262B', borderRadius: 16, padding: '12px 14px',
               boxShadow: '0 20px 50px rgba(0,0,0,0.5)', animation: 'drawerIn 0.16s ease', zIndex: 39,
             }}

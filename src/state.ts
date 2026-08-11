@@ -7,6 +7,8 @@ const MOBILE_BREAKPOINT = 768;
 
 export interface AppState {
   isMobile: boolean;
+  viewportWidth: number;
+  viewportHeight: number;
   screen: Screen;
   placeholderLabel: string;
   placeholderNote: string;
@@ -25,6 +27,8 @@ export interface AppState {
 
 const initialState: AppState = {
   isMobile: typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT,
+  viewportWidth: typeof window !== 'undefined' ? window.innerWidth : 1440,
+  viewportHeight: typeof window !== 'undefined' ? window.innerHeight : 900,
   screen: 'home',
   placeholderLabel: '',
   placeholderNote: '',
@@ -53,9 +57,16 @@ export function useMastermindState() {
 
   // Real responsive detection — this used to be a manual toggle in the
   // now-removed prototype TopBar; the app should just look right on
-  // whatever screen it's actually running on.
+  // whatever screen it's actually running on. Stage now fills the actual
+  // viewport (no fixed-size device-mockup box), so its dimensions need to
+  // track the real window size, not a hardcoded 390x844/1440x900.
   useEffect(() => {
-    const onResize = () => patch({ isMobile: window.innerWidth < MOBILE_BREAKPOINT });
+    const onResize = () =>
+      patch({
+        isMobile: window.innerWidth < MOBILE_BREAKPOINT,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+      });
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);

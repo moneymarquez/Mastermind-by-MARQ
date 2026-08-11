@@ -6,8 +6,8 @@ const CIRCLE_SCALE = 0.85;
 
 export function computeGeometry(state: AppState, isMobile: boolean) {
   const circleSize = Math.round((isMobile ? 48 : 56) * CIRCLE_SCALE);
-  const stageWidth = isMobile ? 390 : 1440;
-  const stageHeight = isMobile ? 844 : 900;
+  const stageWidth = state.viewportWidth;
+  const stageHeight = state.viewportHeight;
 
   const margin = circleSize / 2 + 16;
   const cx = Math.min(Math.max(state.circlePos.x, margin), stageWidth - margin);

@@ -63,10 +63,10 @@ export default function Stage({ state, actions, onSignOut }: Props) {
   const novaStackLeft = isMobile ? remindersBox.left : null;
   const novaStackBottomOffset = isMobile ? remindersBox.height + 16 : 0;
 
+  // Fills the real viewport edge-to-edge — no more fixed-size device-mockup
+  // box (border/rounded corners/shadow) floating on a page background.
   const stageStyle: CSSProperties = {
-    width: vm.stageWidth, height: vm.stageHeight, background: '#0A0B0D', position: 'relative',
-    overflow: 'hidden', borderRadius: isMobile ? 40 : 4, border: isMobile ? '8px solid #1a1a1a' : '1px solid #22262B',
-    boxShadow: '0 30px 80px rgba(0,0,0,0.35)',
+    width: vm.stageWidth, height: vm.stageHeight, background: '#0A0B0D', position: 'relative', overflow: 'hidden',
   };
 
   return (
