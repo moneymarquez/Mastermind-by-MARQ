@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLeadflowIndustryPool, useLeadflowLeads } from '../../../data/useLeadflow';
 import type { LeadflowLead } from '../../../data/useLeadflow';
-import { GREEN as G, US_STATES } from './shared';
+import { GREEN as G, US_STATES, NICHES } from './shared';
 import NotConnectedBanner from './NotConnectedBanner';
 
 const MINDSET = [
@@ -31,8 +31,6 @@ const DRILLS = [
   { title: "Objection: 'Send me an email'", response: "I can do that — what's the best email? And just so I know what to send, is the main thing you're missing more walk-ins, more calls, or just showing up on Google?" },
   { title: "Objection: 'How much does it cost?'", response: "Depends on what you need — we've got options starting under $200/month. But before I quote anything, can I ask what's your biggest thing right now — website, Google listing, or getting more calls?" },
 ];
-
-const NICHES = ['restaurant', 'salon', 'barbershop', 'gym', 'plumber', 'electrician', 'HVAC contractor', 'solar', 'real estate'];
 
 export default function LeadFlowWarRoom() {
   const [configured, setConfigured] = useState(false);

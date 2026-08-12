@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLeadflowLeads } from '../../../data/useLeadflow';
 import type { LeadflowLead } from '../../../data/useLeadflow';
-import { GREEN, TAG_COLORS, US_STATES } from './shared';
+import { GREEN, TAG_COLORS, US_STATES, NICHES } from './shared';
 import NotConnectedBanner from './NotConnectedBanner';
 
 const TAGS = ['Hot', 'Warm', 'Not Ready'];
@@ -14,7 +14,7 @@ export default function LeadFlowFinder() {
   const [page, setPage] = useState(0);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ business_name: '', phone: '', industry: 'restaurant', website_status: 'no_website', tag: 'Warm', state: '' });
+  const [form, setForm] = useState({ business_name: '', phone: '', industry: NICHES[0], website_status: 'no_website', tag: 'Warm', state: '', pooled: false });
   const [pool, setPool] = useState<LeadflowLead[]>([]);
   const [poolMode, setPoolMode] = useState(false);
   const [poolIndex, setPoolIndex] = useState(0);
@@ -32,7 +32,11 @@ export default function LeadFlowFinder() {
 
   const doAddLead = async () => {
     const created = await addLead(form);
-    if (created) setShowAdd(false);
+    if (created) {
+      setShowAdd(false);
+      setForm({ business_name: '', phone: '', industry: NICHES[0], website_status: 'no_website', tag: 'Warm', state: '', pooled: false });
+      if (form.pooled) setPool((prev) => [...prev, created]);
+    }
   };
 
   const updateTag = async (id: number, newTag: string) => {
@@ -154,6 +158,9 @@ export default function LeadFlowFinder() {
             <h3 style={{ marginBottom: '1rem' }}>Add Lead</h3>
             <input placeholder="Business name" value={form.business_name} onChange={(e) => setForm({ ...form, business_name: e.target.value })} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #e5e7eb', marginBottom: 10, boxSizing: 'border-box' }} />
             <input placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #e5e7eb', marginBottom: 10, boxSizing: 'border-box' }} />
+            <select value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #e5e7eb', marginBottom: 10 }}>
+              {NICHES.map((n) => <option key={n} value={n}>{n.charAt(0).toUpperCase() + n.slice(1)}</option>)}
+            </select>
             <select value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #e5e7eb', marginBottom: 10 }}>
               <option value="">Select State</option>
               {US_STATES.map((s) => <option key={s}>{s}</option>)}
@@ -161,6 +168,10 @@ export default function LeadFlowFinder() {
             <select value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #e5e7eb', marginBottom: 10 }}>
               {TAGS.map((t) => <option key={t}>{t}</option>)}
             </select>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#374151', marginBottom: 14, cursor: 'pointer' }}>
+              <input type="checkbox" checked={form.pooled} onChange={(e) => setForm({ ...form, pooled: e.target.checked })} />
+              Add straight to Lead Pool (Call Pool)
+            </label>
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={doAddLead} style={{ flex: 1, background: GREEN, color: '#fff', border: 'none', borderRadius: 8, padding: 10, cursor: 'pointer', fontWeight: 600 }}>Save</button>
               <button onClick={() => setShowAdd(false)} style={{ flex: 1, background: '#f3f4f6', border: 'none', borderRadius: 8, padding: 10, cursor: 'pointer' }}>Cancel</button>

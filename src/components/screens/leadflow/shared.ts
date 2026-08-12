@@ -16,3 +16,8 @@ export const US_STATES = [
 ];
 
 export const card: CSSProperties = { background: '#fff', borderRadius: 16, border: '1px solid #f3f4f6', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' };
+
+// War Room's queue builder filters leads by an exact industry match, so a
+// lead added through the Add Lead form needs its industry picked from this
+// same list (or typed to match it) to actually be eligible for a queue.
+export const NICHES = ['restaurant', 'salon', 'barbershop', 'gym', 'plumber', 'electrician', 'HVAC contractor', 'solar', 'real estate'];
