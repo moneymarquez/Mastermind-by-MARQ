@@ -3,7 +3,8 @@ import type { CSSProperties } from 'react';
 import { useClientDocuments } from '../../data/useClientDocuments';
 import type { ClientDocument } from '../../data/useClientDocuments';
 import { useBusinessProfile } from '../../data/useBusinessProfile';
-import { DOC_TYPE_LABELS } from '../../data/documentSchemas';
+import { useContacts } from '../../data/useContacts';
+import { DOC_TYPE_LABELS, QUICK_START_FIELDS } from '../../data/documentSchemas';
 import type { DocType } from '../../data/documentSchemas';
 import DocumentEditForm from './DocumentEditForm';
 import DocumentPreview from './DocumentPreview';
@@ -33,6 +34,7 @@ const chip = (active: boolean): CSSProperties => ({
   border: `1px solid ${active ? '#F5F6F7' : '#22262B'}`, color: active ? '#F5F6F7' : '#565b64',
   background: active ? '#F5F6F71a' : 'transparent',
 });
+const fieldLabel: CSSProperties = { fontSize: 11.5, color: '#8A8F98', marginBottom: 5 };
 
 function BusinessProfilePanel() {
   const { profile, save } = useBusinessProfile();
@@ -68,12 +70,120 @@ function BusinessProfilePanel() {
   );
 }
 
-function DocumentDetail({ doc, onBack }: { doc: ClientDocument; onBack: () => void }) {
+function NewDocumentPanel({ onCreated }: { onCreated: (id: string) => void }) {
+  const { create } = useClientDocuments();
+  const { contacts } = useContacts();
+  const [docType, setDocType] = useState<DocType>('invoice');
+  const [mode, setMode] = useState<'contact' | 'manual'>('manual');
+  const [contactId, setContactId] = useState('');
+  const [manual, setManual] = useState({ clientName: '', clientCompany: '', clientEmail: '', projectName: '' });
+  const [creating, setCreating] = useState(false);
+
+  const mapping = QUICK_START_FIELDS[docType];
+  const selectedContact = contacts.find((c) => c.id === contactId);
+
+  const create1 = async () => {
+    setCreating(true);
+    const initialData: Record<string, unknown> = {};
+    let label = DOC_TYPE_LABELS[docType];
+
+    if (mapping) {
+      const name = mode === 'contact' ? selectedContact?.name ?? '' : manual.clientName;
+      const company = mode === 'contact' ? selectedContact?.business_name ?? '' : manual.clientCompany;
+      const email = mode === 'contact' ? selectedContact?.email ?? '' : manual.clientEmail;
+      const projectName = manual.projectName;
+
+      if (mapping.clientNameKey && name) initialData[mapping.clientNameKey] = name;
+      if (mapping.clientCompanyKey && company) initialData[mapping.clientCompanyKey] = company;
+      if (mapping.clientEmailKey && email) initialData[mapping.clientEmailKey] = email;
+      if (mapping.projectNameKey && projectName) initialData[mapping.projectNameKey] = projectName;
+
+      if (name) label = `${name} — ${DOC_TYPE_LABELS[docType]}`;
+      else if (projectName) label = `${projectName} — ${DOC_TYPE_LABELS[docType]}`;
+    }
+
+    const doc = await create(docType, label, mode === 'contact' ? contactId || null : null, initialData);
+    setCreating(false);
+    setContactId('');
+    setManual({ clientName: '', clientCompany: '', clientEmail: '', projectName: '' });
+    if (doc) onCreated(doc.id);
+  };
+
+  return (
+    <div style={{ ...cardStyle, marginBottom: 20 }}>
+      <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7', marginBottom: 4 }}>New document</div>
+      <div style={{ fontSize: 11.5, color: '#565b64', marginBottom: 14 }}>Pick a type, then link a contact or type the client info in — it's created already filled in, not blank.</div>
+
+      <div style={fieldLabel}>Document type</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+        {ALL_TYPES.map((t) => <div key={t} style={chip(docType === t)} onClick={() => setDocType(t)}>{DOC_TYPE_LABELS[t]}</div>)}
+      </div>
+
+      {mapping && (
+        <>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+            <div style={chip(mode === 'contact')} onClick={() => setMode('contact')}>Link a contact</div>
+            <div style={chip(mode === 'manual')} onClick={() => setMode('manual')}>Enter manually</div>
+          </div>
+
+          {mode === 'contact' ? (
+            <div style={{ maxWidth: 420 }}>
+              <div style={fieldLabel}>Contact</div>
+              <select style={inputStyle} value={contactId} onChange={(e) => setContactId(e.target.value)}>
+                <option value="">Select a contact…</option>
+                {contacts.map((c) => <option key={c.id} value={c.id}>{c.name}{c.business_name ? ` — ${c.business_name}` : ''}</option>)}
+              </select>
+              {mapping.projectNameKey && (
+                <div style={{ marginTop: 10 }}>
+                  <div style={fieldLabel}>{mapping.projectNameLabel}</div>
+                  <input style={inputStyle} value={manual.projectName} onChange={(e) => setManual({ ...manual, projectName: e.target.value })} />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 420 }}>
+              {mapping.clientNameKey && (
+                <div>
+                  <div style={fieldLabel}>Client name</div>
+                  <input style={inputStyle} value={manual.clientName} onChange={(e) => setManual({ ...manual, clientName: e.target.value })} />
+                </div>
+              )}
+              {mapping.clientCompanyKey && (
+                <div>
+                  <div style={fieldLabel}>Client company</div>
+                  <input style={inputStyle} value={manual.clientCompany} onChange={(e) => setManual({ ...manual, clientCompany: e.target.value })} />
+                </div>
+              )}
+              {mapping.clientEmailKey && (
+                <div>
+                  <div style={fieldLabel}>Client email</div>
+                  <input style={inputStyle} value={manual.clientEmail} onChange={(e) => setManual({ ...manual, clientEmail: e.target.value })} />
+                </div>
+              )}
+              {mapping.projectNameKey && (
+                <div>
+                  <div style={fieldLabel}>{mapping.projectNameLabel}</div>
+                  <input style={inputStyle} value={manual.projectName} onChange={(e) => setManual({ ...manual, projectName: e.target.value })} />
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      <div style={{ ...primaryBtn, marginTop: 18, opacity: creating ? 0.6 : 1 }} onClick={() => !creating && create1()}>
+        {creating ? 'Creating…' : 'Create document'}
+      </div>
+    </div>
+  );
+}
+
+function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack: () => void; startTab: 'edit' | 'preview' }) {
   const { update, duplicate, remove } = useClientDocuments();
   const { profile } = useBusinessProfile();
   const [label, setLabel] = useState(doc.label);
   const [draftData, setDraftData] = useState(doc.data);
-  const [tab, setTab] = useState<'edit' | 'preview'>('edit');
+  const [tab, setTab] = useState<'edit' | 'preview'>(startTab);
   const [saved, setSaved] = useState(true);
 
   const onDataChange = (next: Record<string, unknown>) => {
@@ -102,8 +212,8 @@ function DocumentDetail({ doc, onBack }: { doc: ClientDocument; onBack: () => vo
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
-        <div style={chip(tab === 'edit')} onClick={() => setTab('edit')}>Edit</div>
         <div style={chip(tab === 'preview')} onClick={() => setTab('preview')}>Preview</div>
+        <div style={chip(tab === 'edit')} onClick={() => setTab('edit')}>Edit</div>
       </div>
 
       {tab === 'edit' && <DocumentEditForm docType={doc.doc_type} data={draftData} onChange={onDataChange} />}
@@ -117,43 +227,27 @@ function DocumentDetail({ doc, onBack }: { doc: ClientDocument; onBack: () => vo
 }
 
 export default function InvoicingScreen({ homeHeadStyle, homeSubStyle }: Props) {
-  const { documents, loading, create } = useClientDocuments();
+  const { documents, loading } = useClientDocuments();
+  const { contacts } = useContacts();
   const [filter, setFilter] = useState<DocType | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [showTypePicker, setShowTypePicker] = useState(false);
+  const [openedFromCreate, setOpenedFromCreate] = useState(false);
 
   const selected = documents.find((d) => d.id === selectedId) ?? null;
   const filtered = filter ? documents.filter((d) => d.doc_type === filter) : documents;
-
-  const startNew = async (docType: DocType) => {
-    const doc = await create(docType);
-    setShowTypePicker(false);
-    if (doc) setSelectedId(doc.id);
-  };
+  const contactName = (id: string | null) => (id ? contacts.find((c) => c.id === id)?.name ?? null : null);
 
   if (selected) {
-    return <DocumentDetail doc={selected} onBack={() => setSelectedId(null)} />;
+    return <DocumentDetail doc={selected} onBack={() => setSelectedId(null)} startTab={openedFromCreate ? 'edit' : 'preview'} />;
   }
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <div style={homeHeadStyle}>Invoicing</div>
-          <div style={homeSubStyle}>The real Made by Marq client document set — create, edit, and preview.</div>
-        </div>
-        <div style={primaryBtn} onClick={() => setShowTypePicker((v) => !v)}>{showTypePicker ? 'Cancel' : '+ New document'}</div>
-      </div>
-
-      {showTypePicker && (
-        <div style={{ ...cardStyle, marginTop: 16, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {ALL_TYPES.map((t) => (
-            <div key={t} style={ghostBtn} onClick={() => startNew(t)}>{DOC_TYPE_LABELS[t]}</div>
-          ))}
-        </div>
-      )}
+      <div style={homeHeadStyle}>Invoicing</div>
+      <div style={homeSubStyle}>The real Made by Marq client document set — create, edit, and preview.</div>
 
       <div style={{ marginTop: 20 }}>
+        <NewDocumentPanel onCreated={(id) => { setOpenedFromCreate(true); setSelectedId(id); }} />
         <BusinessProfilePanel />
       </div>
 
@@ -163,18 +257,24 @@ export default function InvoicingScreen({ homeHeadStyle, homeSubStyle }: Props) 
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid #22262B', borderRadius: 14, overflow: 'hidden' }}>
-        {filtered.map((doc) => (
-          <div
-            key={doc.id}
-            onClick={() => setSelectedId(doc.id)}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid #1c1e23', background: '#101114', cursor: 'pointer' }}
-          >
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7' }}>{doc.label}</div>
-              <div style={{ fontSize: 12, color: '#8A8F98', marginTop: 2 }}>{DOC_TYPE_LABELS[doc.doc_type]} · {new Date(doc.updated_at).toLocaleDateString()}</div>
+        {filtered.map((doc) => {
+          const dataClientName = typeof doc.data.client_name === 'string' && doc.data.client_name ? doc.data.client_name : null;
+          const subtitle = dataClientName ?? contactName(doc.contact_id);
+          return (
+            <div
+              key={doc.id}
+              onClick={() => { setOpenedFromCreate(false); setSelectedId(doc.id); }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid #1c1e23', background: '#101114', cursor: 'pointer' }}
+            >
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7' }}>{doc.label}</div>
+                <div style={{ fontSize: 12, color: '#8A8F98', marginTop: 2 }}>
+                  {DOC_TYPE_LABELS[doc.doc_type]}{subtitle ? ` · ${subtitle}` : ''} · {new Date(doc.updated_at).toLocaleDateString()}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {!loading && filtered.length === 0 && (
           <div style={{ padding: 18, fontSize: 13, color: '#565b64', background: '#101114' }}>No documents yet — start one above.</div>
         )}

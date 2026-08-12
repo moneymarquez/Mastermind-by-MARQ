@@ -440,9 +440,17 @@ deliberately not the app's own dark theme (these are printable client-facing doc
 - **Packages** is the one type with a fixed nested structure (3 pricing tiers, each with its own feature list)
   instead of a flat table — special-cased in both the schema (`hasTiers`) and the edit form/preview rather than
   forced through the generic table-field shape.
-- One document instance = one record: create, edit, duplicate, delete, filter by type. Preview toggles between the
-  edit form and the exact styled render. **Out of scope, flagged in the UI**: "Send to client" (PDF export/email) —
-  create/edit/preview is the full scope for this pass, per spec.
+- One document instance = one record: create, edit, duplicate, delete, filter by type. **Out of scope, flagged in
+  the UI**: "Send to client" (PDF export/email) — create/edit/preview is the full scope for this pass, per spec.
+- **New document panel lives at the top of the tab**, always visible, not a toggle buried behind a button — pick a
+  type, then either **link an existing contact** (auto-fills client name/company/email from `useContacts`) or
+  **enter the info manually**; either way the document is created already populated with those fields (mapped per
+  type via `QUICK_START_FIELDS` in `documentSchemas.ts` — types differ on which of client name/company/email/project
+  name they actually have, e.g. Delivery Guide has no client field at all, so the panel only shows what applies).
+- **Opening a document from the list goes straight to Preview** — the plain, exact-styled render — not the edit
+  form; Edit is still one tap away. A document just created from the panel above opens to Edit instead, since it's
+  about to need its remaining fields filled in. List rows also show the client name (or linked contact's name) as
+  a subtitle, not just the type and date, so the list itself is scannable without opening anything.
 
 ## Structure
 

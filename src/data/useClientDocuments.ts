@@ -27,10 +27,20 @@ export function useClientDocuments() {
     load();
   }, [load]);
 
-  const create = async (docType: DocType, label?: string, contactId?: string | null): Promise<ClientDocument | null> => {
+  const create = async (
+    docType: DocType,
+    label?: string,
+    contactId?: string | null,
+    initialData?: Record<string, unknown>,
+  ): Promise<ClientDocument | null> => {
     const { data, error } = await supabase
       .from('client_documents')
-      .insert({ doc_type: docType, label: label?.trim() || `New ${DOC_TYPE_LABELS[docType]}`, contact_id: contactId ?? null, data: defaultDataFor(docType) })
+      .insert({
+        doc_type: docType,
+        label: label?.trim() || `New ${DOC_TYPE_LABELS[docType]}`,
+        contact_id: contactId ?? null,
+        data: { ...defaultDataFor(docType), ...(initialData ?? {}) },
+      })
       .select('*')
       .single();
     if (error) return null;

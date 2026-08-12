@@ -214,6 +214,29 @@ const WELCOME_DEFAULT_STEPS = [
   { title: 'Final Delivery', description: '' },
 ];
 
+// Which "important" fields exist for a given type, and what schema key each
+// maps to — drives the New Document panel's quick-start (link a contact or
+// type the key info in) so a document gets created already populated
+// instead of blank. Not every type has all four (Feedback/Packages have
+// none; Delivery Guide has no client fields).
+export interface QuickStartMapping {
+  clientNameKey?: string;
+  clientCompanyKey?: string;
+  clientEmailKey?: string;
+  projectNameKey?: string;
+  projectNameLabel?: string;
+}
+
+export const QUICK_START_FIELDS: Partial<Record<DocType, QuickStartMapping>> = {
+  client_agreement: { clientNameKey: 'client_name', clientCompanyKey: 'client_company', clientEmailKey: 'client_email' },
+  welcome: { clientNameKey: 'client_name', projectNameKey: 'project_name', projectNameLabel: 'Project name' },
+  invoice: { clientNameKey: 'client_name', clientCompanyKey: 'client_company', clientEmailKey: 'client_email' },
+  project_brief: { clientNameKey: 'client_name', projectNameKey: 'project_title', projectNameLabel: 'Project title' },
+  delivery_guide: { projectNameKey: 'project_name', projectNameLabel: 'Project name' },
+  monthly_report: { clientNameKey: 'client_name' },
+  thank_you: { clientNameKey: 'client_name', projectNameKey: 'project_name', projectNameLabel: 'Project name' },
+};
+
 export function defaultDataFor(docType: DocType): Record<string, unknown> {
   const schema = DOCUMENT_SCHEMAS[docType];
   const data: Record<string, unknown> = {};
