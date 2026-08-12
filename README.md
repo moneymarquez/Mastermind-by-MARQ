@@ -54,10 +54,11 @@ The site is also connected to Cloudflare Workers (git-integrated, auto-builds on
 
 - **`claude.ts`, `push-subscription.ts`** (and anything else not listed below) still reverse-proxy server-side to the Netlify Functions above (`https://mastermindbymarq.netlify.app/api/...`), which stay their real backend. That avoids browser CORS (the proxy call is server-to-server, not subject to it) and having to port `send-shift-reminders.ts`/`send-reminders.ts`/`generate-daily-plan.ts` to Workers, where the `web-push` package's Node `crypto`/`https-proxy-agent` dependencies don't reliably run even with `nodejs_compat` on.
 - **The Stocks bot's four endpoints** (`save-broker-keys`, `broker-keys-status`, `stocks-account`, and the trading engine itself) run **natively in this Worker** — `worker/handlers/*.ts`, ported from their `netlify/functions/*.ts` originals — rather than proxying to Netlify. They have no `web-push` dependency, so the Workers-runtime limitation above doesn't apply to them. This split exists because Netlify's production deploys got paused mid-build (team billing/operational-credits limit) right as the Stocks bot was built, so anything depending on a fresh Netlify deploy was stuck; moving these four here removed that dependency entirely rather than waiting on a billing fix. The trading engine runs as a Cron Trigger (`triggers.crons` in `wrangler.jsonc`, `*/15 * * * *`) via the Worker's `scheduled()` export, instead of a Netlify Scheduled Function.
+- **LeadFlow's five endpoints** (`worker/handlers/leadflow.ts`) run natively here too, same reasoning — no `web-push` dependency, no need to touch Netlify at all.
 
 Required in Cloudflare's dashboard, under **Settings → Build → Variables and secrets → Build environment variable** (build-time — needed for the Vite build itself): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
 
-Also required under the **runtime** "Variables and Secrets" screen (Workers & Pages → this project → Settings → Variables and Secrets): `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as plain variables, `SUPABASE_SERVICE_ROLE_KEY` and `ANTHROPIC_API_KEY` as secrets. Only the Stocks bot's four Worker-native endpoints read these at runtime — `ANTHROPIC_API_KEY` is optional there too (Nova's daily commentary is skipped, not required, without it, same as everywhere else in the app). The earlier note that this screen rejected vars applied to the pure-static-assets version of this Worker (nothing at runtime read them); now that `worker/index.ts` has a real `scheduled()` export and code paths that read `env.*`, that constraint may no longer apply — if the screen still won't take them, setting them as `wrangler secret put <NAME>` from an authenticated machine is the fallback.
+Also required under the **runtime** "Variables and Secrets" screen (Workers & Pages → this project → Settings → Variables and Secrets): `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as plain variables, `SUPABASE_SERVICE_ROLE_KEY`, `LEADFLOW_SUPABASE_SERVICE_ROLE_KEY`, and `ANTHROPIC_API_KEY` as secrets. `SUPABASE_SERVICE_ROLE_KEY` is Mastermind's own project's service-role key (used by the Stocks bot's four endpoints); `LEADFLOW_SUPABASE_SERVICE_ROLE_KEY` is a **separate** key from LeadFlow's own, different Supabase project (`buuntdpgiwvarvtyncfx.supabase.co` → Project Settings → API → service_role) — without it, every LeadFlow screen shows "LeadFlow isn't connected yet" instead of live data. `ANTHROPIC_API_KEY` is optional (Nova's Stocks commentary and LeadFlow's AI Sales Report are both skipped, not required, without it). The earlier note that this screen rejected vars applied to the pure-static-assets version of this Worker (nothing at runtime read them); now that `worker/index.ts` has a real `scheduled()` export and code paths that read `env.*`, that constraint may no longer apply — if the screen still won't take them, setting them as `wrangler secret put <NAME>` from an authenticated machine is the fallback.
 
 If Netlify's Functions URL ever changes (custom domain, site rename), update `NETLIFY_ORIGIN` in `worker/index.ts`.
 
@@ -74,7 +75,7 @@ If Netlify's Functions URL ever changes (custom domain, site rename), update `NE
 - **Installable PWA**: has a web app manifest + service worker (`public/manifest.json`, `sw-src/sw.ts`), so "Add to Home Screen" on iOS/Android installs it standalone with the app's own icon and no Safari/Chrome UI. The service worker precaches the app shell for offline load and handles incoming push notifications.
 - **Opening/Closing**: reads the device clock on load and every 60s after, no date entry needed. Store hours (`src/data/shiftChecklist.ts` → `STORE_HOURS`) and the opening/closing task lists are plain editable config, not hardcoded logic. Opening tasks start 60 min before open; closing tasks are backed off from close time so the last one lands exactly at close; a few randomized "stay busy" nudges fill the gap between them; a final till-count/clock-out task anchors to close time. Current task is highlighted, checked-off state persists per day. Notifications (opt-in via "Enable task alerts") fire as each task's time is crossed, plus three shift-progress alerts on shifts over 6 hours (halfway, 2 hours left, final task) — both while the app is open (instant, client-side) and while fully closed (real web push, checked server-side every 5 minutes) — see "Web Push" setup below.
 - **Notifications (Settings → Notifications)**: per-category on/off toggles (Shifts, Events, Meals, Opening/Closing tasks) plus editable meal reminder times, all real push via the same backend — Shifts (evening-before + 60-min-before, pulled from Schedule's HOLIDAY events and labeled Opening/Closing/Shift by proximity to store open/close time), Events (24h + 1h before Dialing/Scaling appointments and any dated Reminder, or a single morning-of alert for undated/all-day reminders), Meals (breakfast/lunch/dinner nudges that skip themselves if that meal's already logged). The home screen's Reminders panel is now real data (add/complete/delete from the Notifications settings screen) instead of two hardcoded strings.
-- **Scaling**: LeadFlow (integration placeholder — routes into your existing LeadFlow app once connected, not a rebuilt CRM), Website/App Builder (placeholder), Scaling Planner (guided questionnaire → real Claude-generated plan doc), Business Audits (16 questions grounded in the Scaling 101 curriculum, one per diagnosable CRITICAL/HIGH topic across its 7 phases → real Claude-scored, phase-grouped summary), Brand Lab (input brief → 3 template directions with real Claude-written headline copy per direction), Idea Maker (real back-and-forth conversation with Claude, not scripted replies), Invoicing (placeholder, listed last)
+- **Scaling**: LeadFlow (Cristopher's own CRM, ported in full with live data — Dashboard/War Room/Lead Pool/Lead Finder/Pitch Playbook/AI Sales Report/History/Messages, see below), Website/App Builder (placeholder), Scaling Planner (guided questionnaire → real Claude-generated plan doc), Business Audits (16 questions grounded in the Scaling 101 curriculum, one per diagnosable CRITICAL/HIGH topic across its 7 phases → real Claude-scored, phase-grouped summary), Brand Lab (input brief → 3 template directions with real Claude-written headline copy per direction), Idea Maker (real back-and-forth conversation with Claude, not scripted replies), Invoicing (real 9-document Made by Marq client document system, see below)
 - Sticky Spot — editable fast-cash idea list
 - Responsive desktop/mobile stage sizing
 - Nova's persistent chat bubble is a real Claude conversation, with app context in its system prompt
@@ -451,6 +452,43 @@ deliberately not the app's own dark theme (these are printable client-facing doc
   form; Edit is still one tap away. A document just created from the panel above opens to Edit instead, since it's
   about to need its remaining fields filled in. List rows also show the client name (or linked contact's name) as
   a subtitle, not just the type and date, so the list itself is scannable without opening anything.
+
+## LeadFlow: the real CRM, ported in
+
+LeadFlow is Cristopher's own separately-built cold-outreach CRM (`github.com/moneymarquez/leadflow`, plain
+npm/Vite/React, its own Supabase project) — this pulls its actual 8-page UI into Mastermind under Scaling, live-wired
+to that same LeadFlow Supabase database, keeping LeadFlow's own light theme/green accent rather than restyling it to
+Mastermind's dark shell (it's genuinely a different app living inside this one, not a reskin).
+
+- **Own Supabase project, own service-role key** — LeadFlow's `leads`/`history`/`messages` tables live in a second,
+  separate Supabase project (not Mastermind's own DB) with RLS enabled and no anon-readable policy, verified directly
+  (the anon key the original app shipped with gets a flat 403 — the deployed LeadFlow site can't actually read its
+  own data as built). Every read/write here goes through a **new** Cloudflare Worker secret,
+  `LEADFLOW_SUPABASE_SERVICE_ROLE_KEY`, server-side only — same pattern as the Stocks bot's Alpaca keys. Until that
+  secret is set, every LeadFlow screen shows an honest "LeadFlow isn't connected yet" banner instead of silently
+  failing or showing fake data.
+- **Worker-native routes** (`worker/handlers/leadflow.ts`), same reasoning as the Stocks bot: no `web-push`
+  dependency, no reason to round-trip through Netlify. `/api/leadflow/leads` (list/filter/paginate/create),
+  `/api/leadflow/leads/:id` (tag/pool updates), `/api/leadflow/history`, `/api/leadflow/messages`, and
+  `/api/leadflow/ai-report`, all gated behind Mastermind's own `requireUser` auth check first.
+- **AI Sales Report was rebuilt, not just proxied** — the original called a bare HTTP IP address
+  (`http://35.188.172.166:3000/api/ai-report`, no TLS, no auth, an old model id) directly from the browser. It's now
+  a server-side Anthropic call using Mastermind's own `ANTHROPIC_API_KEY` and lightweight count/recent-rows queries
+  instead of dumping the entire leads table into the prompt (the original's `select('*')` would have shipped 58k+
+  rows to the model on every click).
+- **Dashboard and War Room don't pull the full 58k-row table client-side** — the original app fetched every lead into
+  the browser to compute chart data and build the day's call queue, which doesn't scale past a few thousand rows.
+  Dashboard's industry chart now reflects the most recently loaded page of leads (not a full historical breakdown);
+  War Room fetches up to 300 leads in the chosen industry from the server, then filters by state and shuffles
+  client-side. Counts (total/hot/warm/cold) still come from cheap `HEAD` + `Content-Range` queries, so those numbers
+  are exact regardless of page size.
+- **Pitch Playbook ported near-verbatim** — it's pure static sales-script content (mindset + 7 industry playbooks),
+  no backend calls in the original, so `LeadFlowPlaybook.tsx` is a straight port of the copy and layout.
+- All 8 pages live under one internal tab bar in `LeadFlowScreen.tsx` (Dashboard, War Room, Lead Pool, Lead Finder,
+  Pitch Playbook, AI Sales Report, History, Messages) rather than LeadFlow's own separate sidebar/router — Mastermind
+  already has its own nav drawer, so this reuses that and skips porting LeadFlow's login-gate/router entirely.
+  LeadFlow's external marketing/landing page was not ported — Mastermind already has its own auth gate, and that page
+  was outbound sales copy for LeadFlow-as-a-product, not CRM functionality.
 
 ## Structure
 

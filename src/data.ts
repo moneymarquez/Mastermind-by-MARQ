@@ -68,9 +68,7 @@ export const NAV_DATA: NavGroup[] = [
 // Custom subtitles for sections that are still placeholders — falls back to
 // "This section is coming soon." (see navigateTo in state.ts) when a screen
 // isn't listed here.
-export const PLACEHOLDER_NOTES: Record<string, string> = {
-  leadflow: "LeadFlow integration pending — this will route into your existing LeadFlow app once it's connected, not a rebuilt CRM.",
-};
+export const PLACEHOLDER_NOTES: Record<string, string> = {};
 
 export const INITIAL_STICKY_IDEAS: StickyIdea[] = [
   { id: 1, text: 'Sell a website build', est: '$1,000' },

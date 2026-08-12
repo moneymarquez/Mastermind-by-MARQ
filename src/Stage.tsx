@@ -25,6 +25,7 @@ import OpeningClosingScreen from './components/screens/OpeningClosingScreen';
 import NotificationSettingsScreen from './components/screens/NotificationSettingsScreen';
 import StreamingScreen from './components/screens/StreamingScreen';
 import StocksScreen from './components/screens/StocksScreen';
+import LeadFlowScreen from './components/screens/LeadFlowScreen';
 import AccountSettingsScreen from './components/screens/AccountSettingsScreen';
 import PromptVoiceSettingsScreen from './components/screens/PromptVoiceSettingsScreen';
 import CallRecordingsScreen from './components/screens/CallRecordingsScreen';
@@ -37,7 +38,7 @@ import type { AppState, MastermindActions } from './state';
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
   'scaling-planner', 'audits', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
-  'notification-settings', 'streaming', 'stocks', 'account-settings', 'prompt-voice-settings',
+  'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings',
   'call-recordings', 'website', 'invoicing',
 ];
 
@@ -182,6 +183,10 @@ export default function Stage({ state, actions, onSignOut }: Props) {
 
         {state.screen === 'stocks' && (
           <StocksScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'leadflow' && (
+          <LeadFlowScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {state.screen === 'account-settings' && (

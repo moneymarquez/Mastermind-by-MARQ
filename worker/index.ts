@@ -16,14 +16,19 @@
 // stay on Netlify unchanged — they use the `web-push` package (Node crypto
 // + https-proxy-agent under the hood), which doesn't reliably run in the
 // Workers runtime even with nodejs_compat.
+//
+// The LeadFlow endpoints below are the same story as Stocks: no web-push
+// dependency, no reason to route through Netlify at all, native here.
 import { saveBrokerKeys, brokerKeysStatus } from './handlers/broker-keys';
 import { stocksAccount } from './handlers/stocks-account';
 import { runStocksBot } from './handlers/stocks-bot';
 import type { StocksEnv } from './handlers/broker-keys';
+import { leadflowLeads, leadflowLeadUpdate, leadflowHistory, leadflowMessages, leadflowAiReport } from './handlers/leadflow';
+import type { LeadflowEnv } from './handlers/leadflow';
 
 const NETLIFY_ORIGIN = 'https://mastermindbymarq.netlify.app';
 
-interface Env extends StocksEnv {
+interface Env extends StocksEnv, LeadflowEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
@@ -34,6 +39,13 @@ export default {
     if (url.pathname === '/api/save-broker-keys') return saveBrokerKeys(request, env);
     if (url.pathname === '/api/broker-keys-status') return brokerKeysStatus(request, env);
     if (url.pathname === '/api/stocks-account') return stocksAccount(request, env);
+
+    if (url.pathname === '/api/leadflow/leads') return leadflowLeads(request, env);
+    const leadMatch = url.pathname.match(/^\/api\/leadflow\/leads\/([^/]+)$/);
+    if (leadMatch) return leadflowLeadUpdate(request, env, leadMatch[1]);
+    if (url.pathname === '/api/leadflow/history') return leadflowHistory(request, env);
+    if (url.pathname === '/api/leadflow/messages') return leadflowMessages(request, env);
+    if (url.pathname === '/api/leadflow/ai-report') return leadflowAiReport(request, env);
 
     if (url.pathname.startsWith('/api/')) {
       const target = new URL(url.pathname + url.search, NETLIFY_ORIGIN);

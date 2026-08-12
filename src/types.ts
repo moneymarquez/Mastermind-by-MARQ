@@ -18,6 +18,7 @@ export type Screen =
   | 'notification-settings'
   | 'streaming'
   | 'stocks'
+  | 'leadflow'
   | 'account-settings'
   | 'prompt-voice-settings'
   | 'call-recordings'
