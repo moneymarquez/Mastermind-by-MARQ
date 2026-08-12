@@ -92,9 +92,22 @@ export default async () => {
     ...schedule.milestones.map((m) => ({ id: m.id, at: m.at, title: 'Mastermind', body: m.message })),
   ];
 
+  // Store hours span every day of the week, but that doesn't mean any given
+  // user is actually working today — buildSchedule() has no concept of
+  // that. Only send Opening/Closing task alerts to users who have a real
+  // holiday-type shift on today's date, same source of truth as the
+  // Schedule calendar's client-side gate in OpeningClosingScreen.tsx.
+  const todaysShiftsRes = await fetch(
+    `${supabaseUrl}/rest/v1/events?type=eq.holiday&event_date=eq.${today}&select=user_id`,
+    { headers }
+  );
+  const usersWorkingToday = new Set(((await todaysShiftsRes.json()) as { user_id: string }[]).map((r) => r.user_id));
+
   const userIds = [...new Set(subs.map((s) => s.user_id))];
 
   for (const userId of userIds) {
+    if (!usersWorkingToday.has(userId)) continue;
+
     const settingsRes = await fetch(
       `${supabaseUrl}/rest/v1/notification_settings?user_id=eq.${userId}&select=opening_closing_enabled`,
       { headers }

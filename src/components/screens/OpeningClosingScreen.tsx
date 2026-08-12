@@ -3,6 +3,8 @@ import type { CSSProperties } from 'react';
 import { buildSchedule, taskStatus } from '../../data/shiftChecklist';
 import type { TaskStatus } from '../../data/shiftChecklist';
 import { useShiftChecklist } from '../../data/useShiftChecklist';
+import { useEvents } from '../../data/useEvents';
+import { dateStr } from '../../data/time';
 import { isNotificationSupported, notify, requestNotificationPermission } from '../../lib/notifications';
 import { isStandalone } from '../../lib/pwa';
 import { subscribeToPush } from '../../lib/push';
@@ -27,6 +29,7 @@ const STATUS_COLOR: Record<TaskStatus, string> = {
 
 export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const { completedIds, loading, toggleTask } = useShiftChecklist();
+  const { events, loading: eventsLoading } = useEvents();
   const [tick, setTick] = useState(0);
   const [permission, setPermission] = useState<NotificationPermission>(() => (isNotificationSupported() ? Notification.permission : 'denied'));
   const [showHomeScreenPrompt, setShowHomeScreenPrompt] = useState(
@@ -49,7 +52,16 @@ export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Pr
   const now = useMemo(() => new Date(), [tick]);
   const schedule = useMemo(() => buildSchedule(now), [now]);
 
+  // Store hours cover every day of the week, but that doesn't mean you're
+  // actually working today — buildSchedule() has no idea. Gate the whole
+  // checklist (and its notifications) on an actual holiday-type shift for
+  // today, same source of truth as the Schedule calendar, so this only ever
+  // shows up on days you're really scheduled to work.
+  const todayStr = dateStr(now);
+  const hasShiftToday = events.some((e) => e.type === 'holiday' && e.event_date === todayStr);
+
   useEffect(() => {
+    if (!hasShiftToday) return;
     const done = new Set(completedIds);
     // Fire a notification once per task/milestone as its time is crossed —
     // but only if we crossed it recently (within 5 min). Without that guard,
@@ -74,7 +86,7 @@ export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Pr
     // Deliberately keyed on tick, not schedule/completedIds — this should
     // only re-scan once per minute, not on every completion toggle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tick]);
+  }, [tick, hasShiftToday]);
 
   const enableAlerts = async () => {
     const result = await requestNotificationPermission();
@@ -98,7 +110,9 @@ export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Pr
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={homeHeadStyle}>Opening/Closing</div>
-          <div style={homeSubStyle}>{weekdayName} · store hours {hoursLabel}</div>
+          <div style={homeSubStyle}>
+            {weekdayName} · {hasShiftToday ? `store hours ${hoursLabel}` : "you're not scheduled to work today"}
+          </div>
         </div>
         {isNotificationSupported() && permission !== 'granted' && (
           <div
@@ -124,6 +138,17 @@ export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Pr
         (checked server-side every 5 minutes) — on iOS this requires installing to your home screen first.
       </div>
 
+      {!eventsLoading && !hasShiftToday && (
+        <div style={{ marginTop: 20, padding: 24, border: '1px solid #22262B', borderRadius: 14, maxWidth: 640, background: '#101114' }}>
+          <div style={{ fontSize: 13.5, color: '#C7CAD1', fontWeight: 500 }}>No shift today</div>
+          <div style={{ fontSize: 12, color: '#565b64', marginTop: 4, lineHeight: 1.5 }}>
+            The checklist and its task alerts only show up on days you actually have a shift scheduled — add one under
+            Schedule → Holiday Calendar and it'll appear here.
+          </div>
+        </div>
+      )}
+
+      {hasShiftToday && (
       <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', border: '1px solid #22262B', borderRadius: 14, overflow: 'hidden', maxWidth: 640 }}>
         {schedule.tasks.map((task) => {
           const done = completedIds.includes(task.id);
@@ -172,6 +197,7 @@ export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Pr
           <div style={{ padding: 18, fontSize: 13, color: '#565b64', background: '#101114' }}>Nothing scheduled today.</div>
         )}
       </div>
+      )}
     </div>
   );
 }
