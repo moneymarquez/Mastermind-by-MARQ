@@ -16,7 +16,7 @@ Then open the printed local URL (typically http://localhost:5173).
 This app needs a Supabase project to run against.
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, `supabase/schema_012_holiday_calendar.sql`, `supabase/schema_013_fitness_v2.sql`, `supabase/schema_014_fitness_notifications.sql`, `supabase/schema_015_mental_health_profile.sql`, `supabase/schema_016_goals_v2.sql`, `supabase/schema_017_daily_plan.sql`, `supabase/schema_018_streaming.sql`, `supabase/schema_019_stocks_bot.sql`, and `supabase/schema_020_settings_recordings.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe. From `schema_019` onward, `create policy` statements are also preceded by `drop policy if exists`, so those files are safe to re-run in full even after a partial failure — files before `schema_019` predate that fix and will error on a second full run's `create policy` lines (harmless — it means everything in that file already applied).
+2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, `supabase/schema_012_holiday_calendar.sql`, `supabase/schema_013_fitness_v2.sql`, `supabase/schema_014_fitness_notifications.sql`, `supabase/schema_015_mental_health_profile.sql`, `supabase/schema_016_goals_v2.sql`, `supabase/schema_017_daily_plan.sql`, `supabase/schema_018_streaming.sql`, `supabase/schema_019_stocks_bot.sql`, `supabase/schema_020_settings_recordings.sql`, and `supabase/schema_021_invoicing.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe. From `schema_019` onward, `create policy` statements are also preceded by `drop policy if exists`, so those files are safe to re-run in full even after a partial failure — files before `schema_019` predate that fix and will error on a second full run's `create policy` lines (harmless — it means everything in that file already applied).
 3. **Create your login account** — Authentication → Users → Add user → enter email + password, check **Auto Confirm User**. There's no public sign-up flow; this is the one account the login screen expects.
 4. Copy `.env.example` to `.env.local` and fill in your project's URL and anon key (Project Settings → API).
 
@@ -412,9 +412,37 @@ Run `supabase/schema_020_settings_recordings.sql` (after schema_019) for this ba
   (`QuestionnaireFlow`'s new optional `badge` prop, plus one inline in `BrandLabScreen.tsx`) so it's visually clear
   they're not final, without changing any behavior.
 
-**Not done in this pass**: the Invoicing rebuild (9 "Made by Marq" client document types reproduced exactly from a
-source file) is blocked — the source HTML/PDF this needs was never actually available in the build environment, and
-per explicit instruction this gets reproduced exactly, not approximated, so it's waiting on that file.
+## Invoicing: the real Made by Marq client document system
+
+Run `supabase/schema_021_invoicing.sql` (after schema_020) to unlock the new **Invoicing** page under Scaling.
+
+All 9 document types from the user's own reference (screenshots of the actual designed system, since the source
+HTML/PDF file itself was never available in the build environment) — Client Agreement, Welcome, Invoice, Project
+Brief, Delivery Guide, Monthly Report, Thank You, Feedback, Packages — reproduced with the same white background,
+black hairlines, `#111111`/`#8C8C8C`/`#ECECEC` color roles, and section/table/label structure as the reference,
+deliberately not the app's own dark theme (these are printable client-facing documents, not app UI).
+
+- **One flexible schema, not nine rigid ones** — `client_documents.data` is a single jsonb column shaped per
+  `src/data/documentSchemas.ts`'s per-type field definitions, rather than 9 tables with mostly-null columns for
+  whichever type a row isn't. Every `[BRACKETED]` placeholder from the reference is a real field in that schema;
+  variable-length tables (deliverables, invoice line items, files, content published) are array fields with
+  add/remove-row support in the edit form.
+- **`DOCUMENT_SCHEMAS` drives the edit form generically** (`DocumentEditForm.tsx` — text/date/textarea fields plus
+  repeatable table rows, grouped under cosmetic section headings), but **`DocumentPreview.tsx` is hand-written per
+  type**, not generic — the visual layout (which fields sit in a 2-column vs. 3-column grid, where a section is a
+  table vs. a blockquote vs. a numbered list) is genuinely bespoke per document in the reference, and forcing that
+  through one generic renderer would have meant approximating it, which was explicitly ruled out.
+- **Invoice computes its own totals** — subtotal/tax/total derive live from the line items' qty × rate and the
+  tax %, rather than being separate manually-typed fields that could drift from the table.
+- **Business profile is set once**, not re-typed per document — `business_profile` (address/email/phone/website)
+  feeds every document's header/footer; `business_name` itself is hard-coded "Made by Marq" in the renderer, same
+  as the reference.
+- **Packages** is the one type with a fixed nested structure (3 pricing tiers, each with its own feature list)
+  instead of a flat table — special-cased in both the schema (`hasTiers`) and the edit form/preview rather than
+  forced through the generic table-field shape.
+- One document instance = one record: create, edit, duplicate, delete, filter by type. Preview toggles between the
+  edit form and the exact styled render. **Out of scope, flagged in the UI**: "Send to client" (PDF export/email) —
+  create/edit/preview is the full scope for this pass, per spec.
 
 ## Structure
 
@@ -445,8 +473,13 @@ per explicit instruction this gets reproduced exactly, not approximated, so it's
 - `src/data/useNovaPreferences.ts`, `src/components/screens/AccountSettingsScreen.tsx`, `src/components/screens/PromptVoiceSettingsScreen.tsx` — the two previously-dead Settings sub-links, now real
 - `src/data/useCallRecordings.ts`, `src/components/screens/CallRecordingsScreen.tsx` — recording upload/playback/notes, AI breakdown flagged pending
 - `src/components/screens/WebsiteBuilderRoadmapScreen.tsx` — the Website/App Builder placeholder's replacement (a real 4-phase roadmap page, no backend behind it yet)
+- `src/data/documentSchemas.ts` — per-doc-type field/table definitions for all 9 Invoicing document types, plus default data for new instances
+- `src/data/useBusinessProfile.ts`, `src/data/useClientDocuments.ts` — Invoicing's data hooks (business profile singleton; document CRUD + duplicate)
+- `src/components/screens/DocumentPreview.tsx` — hand-written per-type render of each document matching the reference exactly (white bg, black hairlines, `#111111`/`#8C8C8C`/`#ECECEC`)
+- `src/components/screens/DocumentEditForm.tsx` — generic schema-driven edit form (fields + repeatable table rows) shared across all 9 types
+- `src/components/screens/InvoicingScreen.tsx` — list/filter, create, edit ⇄ preview, duplicate, business profile panel
 - `src/components/` — presentational components
 - `src/components/screens/` — per-screen views
-- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql` → `schema_015_mental_health_profile.sql` → `schema_016_goals_v2.sql` → `schema_017_daily_plan.sql` → `schema_018_streaming.sql` → `schema_019_stocks_bot.sql` → `schema_020_settings_recordings.sql`)
+- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql` → `schema_015_mental_health_profile.sql` → `schema_016_goals_v2.sql` → `schema_017_daily_plan.sql` → `schema_018_streaming.sql` → `schema_019_stocks_bot.sql` → `schema_020_settings_recordings.sql` → `schema_021_invoicing.sql`)
 
 

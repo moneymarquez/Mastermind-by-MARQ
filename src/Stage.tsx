@@ -29,6 +29,7 @@ import AccountSettingsScreen from './components/screens/AccountSettingsScreen';
 import PromptVoiceSettingsScreen from './components/screens/PromptVoiceSettingsScreen';
 import CallRecordingsScreen from './components/screens/CallRecordingsScreen';
 import WebsiteBuilderRoadmapScreen from './components/screens/WebsiteBuilderRoadmapScreen';
+import InvoicingScreen from './components/screens/InvoicingScreen';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
 import { buildViewModel } from './viewModel';
 import type { AppState, MastermindActions } from './state';
@@ -37,7 +38,7 @@ const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
   'scaling-planner', 'audits', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'streaming', 'stocks', 'account-settings', 'prompt-voice-settings',
-  'call-recordings', 'website',
+  'call-recordings', 'website', 'invoicing',
 ];
 
 interface Props {
@@ -197,6 +198,10 @@ export default function Stage({ state, actions, onSignOut }: Props) {
 
         {state.screen === 'website' && (
           <WebsiteBuilderRoadmapScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'invoicing' && (
+          <InvoicingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {(state.screen === 'placeholder' || !BUILT_SCREENS.includes(state.screen)) && (

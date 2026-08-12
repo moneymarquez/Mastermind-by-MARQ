@@ -70,7 +70,6 @@ export const NAV_DATA: NavGroup[] = [
 // isn't listed here.
 export const PLACEHOLDER_NOTES: Record<string, string> = {
   leadflow: "LeadFlow integration pending — this will route into your existing LeadFlow app once it's connected, not a rebuilt CRM.",
-  invoicing: 'Deferred for now — nav entry and route are reserved.',
 };
 
 export const INITIAL_STICKY_IDEAS: StickyIdea[] = [

@@ -22,6 +22,7 @@ export type Screen =
   | 'prompt-voice-settings'
   | 'call-recordings'
   | 'website'
+  | 'invoicing'
   | 'placeholder';
 
 export interface StickyIdea {
