@@ -13,12 +13,17 @@ const DEFAULTS: BusinessProfile = { business_address: '', business_email: '', bu
 export function useBusinessProfile() {
   const [profile, setProfile] = useState<BusinessProfile>(DEFAULTS);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const load = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error: err } = await supabase
       .from('business_profile')
       .select('business_address, business_email, business_phone, website')
       .maybeSingle();
+    if (err) {
+      console.error('load business_profile failed', err);
+      setError(err.message);
+    }
     if (data) setProfile(data as BusinessProfile);
     setLoading(false);
   }, []);
@@ -27,11 +32,18 @@ export function useBusinessProfile() {
     load();
   }, [load]);
 
-  const save = async (patch: Partial<BusinessProfile>) => {
+  const save = async (patch: Partial<BusinessProfile>): Promise<boolean> => {
+    setError('');
     const next = { ...profile, ...patch };
     setProfile(next);
-    await supabase.from('business_profile').upsert({ ...next, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    const { error: err } = await supabase.from('business_profile').upsert({ ...next, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    if (err) {
+      console.error('save business_profile failed', err);
+      setError(err.message);
+      return false;
+    }
+    return true;
   };
 
-  return { profile, loading, save };
+  return { profile, loading, error, save };
 }

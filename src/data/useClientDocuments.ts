@@ -16,9 +16,14 @@ export interface ClientDocument {
 export function useClientDocuments() {
   const [documents, setDocuments] = useState<ClientDocument[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const load = useCallback(async () => {
-    const { data } = await supabase.from('client_documents').select('*').order('updated_at', { ascending: false });
+    const { data, error: err } = await supabase.from('client_documents').select('*').order('updated_at', { ascending: false });
+    if (err) {
+      console.error('load client_documents failed', err);
+      setError(err.message);
+    }
     setDocuments((data ?? []) as ClientDocument[]);
     setLoading(false);
   }, []);
@@ -33,7 +38,8 @@ export function useClientDocuments() {
     contactId?: string | null,
     initialData?: Record<string, unknown>,
   ): Promise<ClientDocument | null> => {
-    const { data, error } = await supabase
+    setError('');
+    const { data, error: err } = await supabase
       .from('client_documents')
       .insert({
         doc_type: docType,
@@ -43,31 +49,54 @@ export function useClientDocuments() {
       })
       .select('*')
       .single();
-    if (error) return null;
+    if (err) {
+      console.error('create client_documents failed', err);
+      setError(err.message);
+      return null;
+    }
     await load();
     return data as ClientDocument;
   };
 
-  const update = async (id: string, patch: Partial<Pick<ClientDocument, 'label' | 'data' | 'contact_id'>>) => {
-    await supabase.from('client_documents').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id);
+  const update = async (id: string, patch: Partial<Pick<ClientDocument, 'label' | 'data' | 'contact_id'>>): Promise<boolean> => {
+    setError('');
+    const { error: err } = await supabase.from('client_documents').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id);
+    if (err) {
+      console.error('update client_documents failed', err);
+      setError(err.message);
+      return false;
+    }
     await load();
+    return true;
   };
 
   const duplicate = async (doc: ClientDocument): Promise<ClientDocument | null> => {
-    const { data, error } = await supabase
+    setError('');
+    const { data, error: err } = await supabase
       .from('client_documents')
       .insert({ doc_type: doc.doc_type, label: `${doc.label} (copy)`, contact_id: doc.contact_id, data: doc.data })
       .select('*')
       .single();
-    if (error) return null;
+    if (err) {
+      console.error('duplicate client_documents failed', err);
+      setError(err.message);
+      return null;
+    }
     await load();
     return data as ClientDocument;
   };
 
-  const remove = async (id: string) => {
-    await supabase.from('client_documents').delete().eq('id', id);
+  const remove = async (id: string): Promise<boolean> => {
+    setError('');
+    const { error: err } = await supabase.from('client_documents').delete().eq('id', id);
+    if (err) {
+      console.error('remove client_documents failed', err);
+      setError(err.message);
+      return false;
+    }
     await load();
+    return true;
   };
 
-  return { documents, loading, create, update, duplicate, remove };
+  return { documents, loading, error, create, update, duplicate, remove };
 }

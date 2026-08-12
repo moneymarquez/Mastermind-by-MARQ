@@ -37,14 +37,22 @@ const chip = (active: boolean): CSSProperties => ({
 const fieldLabel: CSSProperties = { fontSize: 11.5, color: '#8A8F98', marginBottom: 5 };
 
 function BusinessProfilePanel() {
-  const { profile, save } = useBusinessProfile();
+  const { profile, save, error } = useBusinessProfile();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(profile);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const openPanel = () => {
     setDraft(profile);
     setOpen(true);
+  };
+
+  const doSave = async () => {
+    setSaving(true);
+    const ok = await save(draft);
+    setSaving(false);
+    setSaved(ok);
   };
 
   return (
@@ -60,9 +68,10 @@ function BusinessProfilePanel() {
           <input style={inputStyle} placeholder="Business email" value={draft.business_email} onChange={(e) => { setDraft({ ...draft, business_email: e.target.value }); setSaved(false); }} />
           <input style={inputStyle} placeholder="Business phone" value={draft.business_phone} onChange={(e) => { setDraft({ ...draft, business_phone: e.target.value }); setSaved(false); }} />
           <input style={inputStyle} placeholder="Website" value={draft.website} onChange={(e) => { setDraft({ ...draft, website: e.target.value }); setSaved(false); }} />
+          {error && <div style={{ fontSize: 11.5, color: '#c47a7a' }}>Couldn't save: {error}</div>}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={primaryBtn} onClick={() => { save(draft); setSaved(true); }}>Save</div>
-            {saved && <span style={{ fontSize: 11.5, color: '#4CAF7D' }}>Saved.</span>}
+            <div style={{ ...primaryBtn, opacity: saving ? 0.6 : 1 }} onClick={() => !saving && doSave()}>{saving ? 'Saving…' : 'Save'}</div>
+            {saved && !error && <span style={{ fontSize: 11.5, color: '#4CAF7D' }}>Saved.</span>}
           </div>
         </div>
       )}
@@ -71,7 +80,7 @@ function BusinessProfilePanel() {
 }
 
 function NewDocumentPanel({ onCreated }: { onCreated: (id: string) => void }) {
-  const { create } = useClientDocuments();
+  const { create, error } = useClientDocuments();
   const { contacts } = useContacts();
   const [docType, setDocType] = useState<DocType>('invoice');
   const [mode, setMode] = useState<'contact' | 'manual'>('manual');
@@ -104,9 +113,11 @@ function NewDocumentPanel({ onCreated }: { onCreated: (id: string) => void }) {
 
     const doc = await create(docType, label, mode === 'contact' ? contactId || null : null, initialData);
     setCreating(false);
-    setContactId('');
-    setManual({ clientName: '', clientCompany: '', clientEmail: '', projectName: '' });
-    if (doc) onCreated(doc.id);
+    if (doc) {
+      setContactId('');
+      setManual({ clientName: '', clientCompany: '', clientEmail: '', projectName: '' });
+      onCreated(doc.id);
+    }
   };
 
   return (
@@ -171,7 +182,8 @@ function NewDocumentPanel({ onCreated }: { onCreated: (id: string) => void }) {
         </>
       )}
 
-      <div style={{ ...primaryBtn, marginTop: 18, opacity: creating ? 0.6 : 1 }} onClick={() => !creating && create1()}>
+      {error && <div style={{ fontSize: 12, color: '#c47a7a', marginTop: 12 }}>Couldn't create it: {error}</div>}
+      <div style={{ ...primaryBtn, marginTop: 12, opacity: creating ? 0.6 : 1 }} onClick={() => !creating && create1()}>
         {creating ? 'Creating…' : 'Create document'}
       </div>
     </div>
@@ -179,12 +191,13 @@ function NewDocumentPanel({ onCreated }: { onCreated: (id: string) => void }) {
 }
 
 function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack: () => void; startTab: 'edit' | 'preview' }) {
-  const { update, duplicate, remove } = useClientDocuments();
+  const { update, duplicate, remove, error } = useClientDocuments();
   const { profile } = useBusinessProfile();
   const [label, setLabel] = useState(doc.label);
   const [draftData, setDraftData] = useState(doc.data);
   const [tab, setTab] = useState<'edit' | 'preview'>(startTab);
   const [saved, setSaved] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const onDataChange = (next: Record<string, unknown>) => {
     setDraftData(next);
@@ -192,20 +205,23 @@ function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack
   };
 
   const save = async () => {
-    await update(doc.id, { label: label.trim() || doc.label, data: draftData });
-    setSaved(true);
+    setSaving(true);
+    const ok = await update(doc.id, { label: label.trim() || doc.label, data: draftData });
+    setSaving(false);
+    setSaved(ok);
   };
 
   return (
     <div>
       <div style={{ fontSize: 13, color: '#565b64', cursor: 'pointer', marginBottom: 14 }} onClick={onBack}>&larr; All documents</div>
 
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
         <input style={{ ...inputStyle, fontSize: 15, fontWeight: 600, flex: 1, minWidth: 200 }} value={label} onChange={(e) => { setLabel(e.target.value); setSaved(false); }} />
-        <div style={{ ...primaryBtn, opacity: saved ? 0.5 : 1 }} onClick={save}>{saved ? 'Saved' : 'Save changes'}</div>
+        <div style={{ ...primaryBtn, opacity: saving ? 0.6 : saved ? 0.5 : 1 }} onClick={() => !saving && save()}>{saving ? 'Saving…' : saved ? 'Saved' : 'Save changes'}</div>
         <div style={ghostBtn} onClick={() => duplicate(doc)}>Duplicate</div>
-        <div style={{ ...ghostBtn, color: '#c47a7a' }} onClick={() => remove(doc.id).then(onBack)}>Delete</div>
+        <div style={{ ...ghostBtn, color: '#c47a7a' }} onClick={() => remove(doc.id).then((ok) => ok && onBack())}>Delete</div>
       </div>
+      {error && <div style={{ fontSize: 12, color: '#c47a7a', marginBottom: 10 }}>Couldn't save: {error}</div>}
 
       <div style={{ display: 'inline-flex', padding: '9px 16px', borderRadius: 999, border: '1px solid #C9A24B55', background: '#C9A24B15', color: '#C9A24B', fontSize: 12, fontWeight: 600, marginBottom: 16 }}>
         Send to client — coming soon
