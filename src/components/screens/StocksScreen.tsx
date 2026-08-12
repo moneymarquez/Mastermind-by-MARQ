@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useStocksBot } from '../../data/useStocksBot';
 import type { BotSignal, BotTrade } from '../../data/types';
+import { useNovaPreferences } from '../../data/useNovaPreferences';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -217,6 +218,7 @@ function SignalRow({ signal }: { signal: BotSignal }) {
 }
 
 function PerformancePanel({ trades, dailySummaries }: ReturnType<typeof useStocksBot>) {
+  const { assistantName } = useNovaPreferences();
   const closed = trades.filter((t) => t.status === 'closed' && t.pnl != null);
   const wins = closed.filter((t) => (t.pnl ?? 0) > 0);
   const losses = closed.filter((t) => (t.pnl ?? 0) < 0);
@@ -269,12 +271,12 @@ function PerformancePanel({ trades, dailySummaries }: ReturnType<typeof useStock
 
       {dailySummaries[0]?.nova_commentary ? (
         <div style={{ ...cardStyle, marginTop: 16, borderColor: `${GOLD}44` }}>
-          <div style={{ fontSize: 12, color: GOLD, fontWeight: 600, marginBottom: 6 }}>Nova · {dailySummaries[0].summary_date}</div>
+          <div style={{ fontSize: 12, color: GOLD, fontWeight: 600, marginBottom: 6 }}>{assistantName} · {dailySummaries[0].summary_date}</div>
           <div style={{ fontSize: 13.5, color: '#c8cad0', lineHeight: 1.6 }}>{dailySummaries[0].nova_commentary}</div>
         </div>
       ) : dailySummaries[0] ? (
         <div style={{ ...cardStyle, marginTop: 16 }}>
-          <div style={{ fontSize: 12.5, color: '#565b64' }}>Nova commentary — pending API key.</div>
+          <div style={{ fontSize: 12.5, color: '#565b64' }}>{assistantName} commentary — pending API key.</div>
         </div>
       ) : null}
     </div>

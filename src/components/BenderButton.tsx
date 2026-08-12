@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { BenderSession } from '../data/types';
 import Icon from '../Icon';
+import { useNovaPreferences } from '../data/useNovaPreferences';
 
 interface Props {
   activeBender: BenderSession | null;
@@ -14,6 +15,7 @@ interface Props {
 // screen. Captures context on start (not a silent toggle) so the
 // journal/pattern tracker has something real to work with later.
 export default function BenderButton({ activeBender, onStart, onEnd }: Props) {
+  const { assistantName } = useNovaPreferences();
   const [open, setOpen] = useState(false);
   const [days, setDays] = useState('');
   const [description, setDescription] = useState('');
@@ -78,7 +80,7 @@ export default function BenderButton({ activeBender, onStart, onEnd }: Props) {
             ) : (
               <>
                 <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7' }}>Starting a bender</div>
-                <div style={{ fontSize: 12, color: '#8A8F98', marginTop: 6 }}>Quick context — helps Nova tell "cutting loose" from something worth a closer look.</div>
+                <div style={{ fontSize: 12, color: '#8A8F98', marginTop: 6 }}>Quick context — helps {assistantName} tell "cutting loose" from something worth a closer look.</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
                   <input
                     type="number" min={1} placeholder="Expected days"

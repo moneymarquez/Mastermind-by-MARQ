@@ -1,6 +1,7 @@
 import type { ChangeEvent, KeyboardEvent } from 'react';
 import type { NovaMessage } from '../types';
 import Icon from '../Icon';
+import { isSpeechRecognitionSupported } from '../lib/speech';
 
 const SPACING = 20;
 
@@ -14,18 +15,23 @@ interface Props {
    *  the default corner spacing, per the "same left edge" stacking spec.
    *  null on desktop, where Nova keeps its own bottom-left corner. */
   stackLeft: number | null;
+  assistantName: string;
   messages: NovaMessage[];
   input: string;
   thinking: boolean;
+  listening: boolean;
   onClose: (e: React.SyntheticEvent) => void;
   onInputChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
   onSend: () => void;
+  onMicClick: () => void;
 }
 
 export default function NovaPanel({
-  isMobile, stackBottomOffset, stackLeft, messages, input, thinking, onClose, onInputChange, onKeyDown, onSend,
+  isMobile, stackBottomOffset, stackLeft, assistantName, messages, input, thinking, listening,
+  onClose, onInputChange, onKeyDown, onSend, onMicClick,
 }: Props) {
+  const micSupported = isSpeechRecognitionSupported();
   return (
     <div
       style={{
@@ -43,7 +49,7 @@ export default function NovaPanel({
       <div style={{ display: 'flex', alignItems: 'center', padding: '14px 16px', borderBottom: '1px solid #1c1e23', fontSize: 13.5, fontWeight: 600, color: '#F5F6F7' }}>
         <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
           <Icon name="sparkle" style={{ marginRight: 8 }} color="#F5F6F7" />
-          Nova
+          {assistantName}
         </div>
         <span style={{ marginLeft: 'auto', cursor: 'pointer', padding: 4 }} onClick={onClose}>
           <Icon name="x" color="#565b64" />
@@ -72,11 +78,26 @@ export default function NovaPanel({
       <div style={{ display: 'flex', gap: 8, padding: 12, borderTop: '1px solid #1c1e23' }}>
         <input
           style={{ flex: 1, background: '#1a1c21', border: '1px solid #2b2f36', borderRadius: 999, padding: '9px 14px', color: '#F5F6F7', fontSize: 13, outline: 'none' }}
-          placeholder="Talk to Nova..."
+          placeholder={listening ? 'Listening…' : `Talk to ${assistantName}...`}
           value={input}
           onChange={onInputChange}
           onKeyDown={onKeyDown}
         />
+        {micSupported && (
+          <div
+            title={listening ? 'Stop listening' : 'Speak instead of typing'}
+            style={{
+              width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', flexShrink: 0,
+              background: listening ? '#c47a7a' : 'transparent',
+              border: listening ? 'none' : '1px solid #2b2f36',
+              animation: listening ? 'micPulse 1.2s ease-in-out infinite' : 'none',
+            }}
+            onClick={onMicClick}
+          >
+            <Icon name="microphone" color={listening ? '#F5F6F7' : '#8A8F98'} size={16} />
+          </div>
+        )}
         <div
           style={{ width: 34, height: 34, borderRadius: '50%', background: '#F5F6F7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0A0B0D', cursor: 'pointer', flexShrink: 0 }}
           onClick={onSend}

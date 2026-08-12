@@ -490,6 +490,38 @@ Mastermind's dark shell (it's genuinely a different app living inside this one, 
   LeadFlow's external marketing/landing page was not ported — Mastermind already has its own auth gate, and that page
   was outbound sales copy for LeadFlow-as-a-product, not CRM functionality.
 
+## Mobile cold-load fix, Nova's default position, voice input, and a renameable assistant
+
+Run `supabase/schema_022_assistant_name.sql` (after schema_021) to unlock the assistant-name field.
+
+- **Mobile "loads in broken, then snaps into place" bug** — the app's initial viewport measurements
+  (`isMobile`/`viewportWidth`/`viewportHeight` in `src/state.ts`) were taken from `window.innerWidth`/`innerHeight`,
+  which can briefly report a taller/different size than what's actually visible on mobile browsers before their own
+  chrome (address bar, etc.) has settled — that stale size is what produced the overlapping header and
+  ungridded/full-width stat cards on cold load. Now prefers `window.visualViewport` (which reflects the actually-
+  rendered viewport at all times) wherever it's available, and listens to `visualViewport`'s own `resize`/`scroll`
+  events in addition to `window`'s `resize`/`orientationchange` — those fire more reliably than `window`'s alone when
+  mobile browser chrome shows/hides.
+- **Nova's trigger circle now starts right under the hamburger menu** on load (`defaultCirclePos()` in
+  `src/state.ts`, computed from the nav toggle's actual position/size in `NavDrawer.tsx` rather than a fixed
+  desktop-oriented coordinate) instead of wherever `{x: 320, y: 280}` happened to land depending on screen size.
+  It's still fully draggable after that — this only changes where it starts each fresh load, since its position
+  isn't persisted between sessions.
+- **Voice input** — tap the mic icon next to the message box in the chat panel to talk instead of type
+  (`src/lib/speech.ts`, wrapping the browser's SpeechRecognition API — Chrome/Edge/Safari; unsupported in Firefox,
+  where the mic icon just doesn't render, feature-detected via `isSpeechRecognitionSupported()`). Live transcript
+  fills the input as you speak; when you stop talking, it sends automatically. No new backend — this runs entirely
+  in the browser, same privacy footprint as typing.
+- **Renameable assistant** (Settings → Prompt & Voice → Name) — `nova_preferences.assistant_name` (default `Nova`),
+  read via `useNovaPreferences()` and threaded into the chat panel's header/placeholder, the Home screen's "Ask ___"
+  card, and the main chat's system prompt (so it introduces itself under the new name too, not just a cosmetic label
+  swap). Also updated on the handful of other screens with their own directly user-visible "Nova" mentions (Sobriety,
+  Goals, Macros' insights panel, Stocks performance commentary, Call Recordings, Idea Maker). **Not yet swept**: the
+  internal system-prompt text inside several other AI features (Fitness, Mental Health, Business Audits, Scaling
+  Planner, Brand Lab, and the standalone prompt-builders in `src/lib/*.ts`/`src/data/*.ts`) still says "Nova"
+  literally — that's invisible to the user (the model doesn't repeat its own system prompt back), so a full sweep
+  was left for a follow-up pass rather than risking every AI feature's prompt in one large edit.
+
 ## Structure
 
 - `src/state.ts` — app state + action handlers (drag, nav, Nova, sticky spot)

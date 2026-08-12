@@ -3,6 +3,8 @@ import { NAV_DATA, INITIAL_STICKY_IDEAS, PLACEHOLDER_NOTES } from './data';
 import type { NovaMessage, Point, Screen, StickyIdea } from './types';
 import { askClaude, AiError } from './lib/ai';
 import { useNovaPreferences } from './data/useNovaPreferences';
+import { startListening } from './lib/speech';
+import type { SpeechRecognizerHandle } from './lib/speech';
 
 const TONE_INSTRUCTIONS: Record<string, string> = {
   direct: 'Be blunt and to the point — skip the cushioning, say the real thing.',
@@ -11,6 +13,36 @@ const TONE_INSTRUCTIONS: Record<string, string> = {
 };
 
 const MOBILE_BREAKPOINT = 768;
+
+// The hamburger nav toggle (NavDrawer.tsx) sits at top:24, right:20, 42x42 —
+// duplicated here (not imported, to avoid a component->state dependency)
+// just to compute where Nova's trigger circle should start so it opens
+// right underneath it, per spec, rather than at an arbitrary fixed point.
+const NAV_TOGGLE_TOP = 24;
+const NAV_TOGGLE_RIGHT = 20;
+const NAV_TOGGLE_SIZE = 42;
+const CIRCLE_SCALE = 0.85; // mirrors geometry.ts's CIRCLE_SCALE
+
+// window.innerWidth/innerHeight can briefly report a taller/wider value
+// than what's actually visible on mobile — before the browser's own chrome
+// (address bar, etc.) has settled — which is what produced the "loads in
+// overlapping, then snaps into place a moment later" bug on mobile. window.
+// visualViewport reflects the actually-rendered viewport at all times, so
+// prefer it wherever it's available (all modern mobile browsers).
+function currentViewport(): { width: number; height: number } {
+  if (typeof window === 'undefined') return { width: 1440, height: 900 };
+  const vv = window.visualViewport;
+  return { width: vv?.width ?? window.innerWidth, height: vv?.height ?? window.innerHeight };
+}
+
+function defaultCirclePos(viewportWidth: number, isMobile: boolean): Point {
+  const circleSize = Math.round((isMobile ? 48 : 56) * CIRCLE_SCALE);
+  const hamburgerCenterX = viewportWidth - NAV_TOGGLE_RIGHT - NAV_TOGGLE_SIZE / 2;
+  return {
+    x: hamburgerCenterX - circleSize / 2,
+    y: NAV_TOGGLE_TOP + NAV_TOGGLE_SIZE + 10,
+  };
+}
 
 export interface AppState {
   isMobile: boolean;
@@ -27,26 +59,31 @@ export interface AppState {
   novaMessages: NovaMessage[];
   novaInput: string;
   novaThinking: boolean;
+  novaListening: boolean;
   newIdeaText: string;
   newIdeaEst: string;
   stickyIdeas: StickyIdea[];
 }
 
+const initialViewport = currentViewport();
+const initialIsMobile = initialViewport.width < MOBILE_BREAKPOINT;
+
 const initialState: AppState = {
-  isMobile: typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT,
-  viewportWidth: typeof window !== 'undefined' ? window.innerWidth : 1440,
-  viewportHeight: typeof window !== 'undefined' ? window.innerHeight : 900,
+  isMobile: initialIsMobile,
+  viewportWidth: initialViewport.width,
+  viewportHeight: initialViewport.height,
   screen: 'home',
   placeholderLabel: '',
   placeholderNote: '',
   settingsExpanded: false,
   navDrawerOpen: false,
-  circlePos: { x: 320, y: 280 },
+  circlePos: defaultCirclePos(initialViewport.width, initialIsMobile),
   dragging: false,
   novaOpen: false,
   novaMessages: [{ from: 'nova', text: "Hey Cristopher — what do you need?" }],
   novaInput: '',
   novaThinking: false,
+  novaListening: false,
   newIdeaText: '',
   newIdeaEst: '',
   stickyIdeas: INITIAL_STICKY_IDEAS,
@@ -54,7 +91,7 @@ const initialState: AppState = {
 
 export function useMastermindState() {
   const [state, setState] = useState<AppState>(initialState);
-  const { tone } = useNovaPreferences();
+  const { tone, assistantName } = useNovaPreferences();
   const patch = (update: Partial<AppState> | ((s: AppState) => Partial<AppState>)) =>
     setState((s) => ({ ...s, ...(typeof update === 'function' ? update(s) : update) }));
 
@@ -62,6 +99,7 @@ export function useMastermindState() {
   const moved = useRef(false);
   const circleRAF = useRef<number | null>(null);
   const pendingCirclePos = useRef<Point | null>(null);
+  const recognizerRef = useRef<SpeechRecognizerHandle | null>(null);
 
   // Real responsive detection — this used to be a manual toggle in the
   // now-removed prototype TopBar; the app should just look right on
@@ -69,14 +107,24 @@ export function useMastermindState() {
   // viewport (no fixed-size device-mockup box), so its dimensions need to
   // track the real window size, not a hardcoded 390x844/1440x900.
   useEffect(() => {
-    const onResize = () =>
-      patch({
-        isMobile: window.innerWidth < MOBILE_BREAKPOINT,
-        viewportWidth: window.innerWidth,
-        viewportHeight: window.innerHeight,
-      });
+    const onResize = () => {
+      const { width, height } = currentViewport();
+      patch({ isMobile: width < MOBILE_BREAKPOINT, viewportWidth: width, viewportHeight: height });
+    };
+    // visualViewport's own resize/scroll events fire when mobile browser
+    // chrome (address bar, keyboard) shows/hides — window's resize event
+    // alone can miss or lag behind those, which is what let the stale
+    // pre-settle size stick around long enough to be visible on cold load.
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    window.visualViewport?.addEventListener('resize', onResize);
+    window.visualViewport?.addEventListener('scroll', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+      window.visualViewport?.removeEventListener('resize', onResize);
+      window.visualViewport?.removeEventListener('scroll', onResize);
+    };
   }, []);
 
   const goScreen = (id: Screen) => patch({ screen: id });
@@ -141,8 +189,8 @@ export function useMastermindState() {
   const onNovaKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') sendNova();
   };
-  const sendNova = async () => {
-    const text = state.novaInput.trim();
+  const sendNova = async (overrideText?: string) => {
+    const text = (overrideText ?? state.novaInput).trim();
     if (!text || state.novaThinking) return;
     const lower = text.toLowerCase();
 
@@ -159,19 +207,49 @@ export function useMastermindState() {
     try {
       reply = await askClaude({
         system:
-          "You are Nova, Cristopher's personal AI inside Mastermind by MARQ — his personal operating system app " +
-          '(sobriety, fitness, macros, goals, mental health, and his business-scaling tools). Concise — a few ' +
-          "sentences, not an essay. You're a companion embedded in his day, not a generic chatbot. " +
+          `You are ${assistantName}, Cristopher's personal AI inside Mastermind by MARQ — his personal operating ` +
+          'system app (sobriety, fitness, macros, goals, mental health, and his business-scaling tools). Concise — ' +
+          "a few sentences, not an essay. You're a companion embedded in his day, not a generic chatbot. " +
           (TONE_INSTRUCTIONS[tone] ?? TONE_INSTRUCTIONS.direct),
         messages: [...trimmedHistory, { role: 'user', content: text }],
         maxTokens: 500,
       });
     } catch (err) {
-      reply = err instanceof AiError ? err.message : 'Something went wrong reaching Nova — try again in a bit.';
+      reply = err instanceof AiError ? err.message : `Something went wrong reaching ${assistantName} — try again in a bit.`;
     }
 
     patch((s) => ({ novaMessages: [...s.novaMessages, { from: 'nova', text: reply }], novaThinking: false }));
     if (lower.includes('dial')) patch({ screen: 'dialing' });
+  };
+
+  // Voice input: tap to talk instead of type. startListening's callbacks are
+  // captured fresh in this closure each time the mic is tapped, so `latest`
+  // always reflects this specific listening session's transcript — no
+  // reliance on `state` (which would be stale by the time onEnd fires).
+  const startVoiceInput = () => {
+    if (recognizerRef.current || state.novaThinking) return;
+    let latest = '';
+    const handle = startListening({
+      onTranscript: (text) => {
+        latest = text;
+        patch({ novaInput: text });
+      },
+      onEnd: () => {
+        recognizerRef.current = null;
+        patch({ novaListening: false });
+        if (latest.trim()) sendNova(latest);
+      },
+      onError: () => {
+        recognizerRef.current = null;
+        patch({ novaListening: false });
+      },
+    });
+    if (!handle) return;
+    recognizerRef.current = handle;
+    patch({ novaListening: true, novaOpen: true });
+  };
+  const stopVoiceInput = () => {
+    recognizerRef.current?.stop();
   };
 
   const onNewIdeaText = (e: React.ChangeEvent<HTMLInputElement>) => patch({ newIdeaText: e.target.value });
@@ -190,6 +268,7 @@ export function useMastermindState() {
 
   return {
     state,
+    assistantName,
     actions: {
       goScreen,
       toggleDrawer,
@@ -203,6 +282,8 @@ export function useMastermindState() {
       onNovaInputChange,
       onNovaKeyDown,
       sendNova,
+      startVoiceInput,
+      stopVoiceInput,
       onNewIdeaText,
       onNewIdeaEst,
       addStickyIdea,

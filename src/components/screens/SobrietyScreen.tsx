@@ -6,6 +6,7 @@ import { askClaude, AiError } from '../../lib/ai';
 import { checkSobrietyPattern, explainDependencyVsModerateUse } from '../../lib/sobrietyIntelligence';
 import type { SobrietyCheckin } from '../../data/types';
 import BenderButton from '../BenderButton';
+import { useNovaPreferences } from '../../data/useNovaPreferences';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -40,6 +41,7 @@ const cardStyle: CSSProperties = { background: '#14161A', border: '1px solid #22
 const linkStyle: CSSProperties = { fontSize: 12, color: '#8A8F98', cursor: 'pointer' };
 
 export default function SobrietyScreen({ homeHeadStyle, homeSubStyle, bender }: Props) {
+  const { assistantName } = useNovaPreferences();
   const { checkins, todayCheckin, streak, loading, saveToday, saveInsight } = useSobriety();
   const [note, setNote] = useState(todayCheckin?.note ?? '');
   const [thinking, setThinking] = useState(false);
@@ -152,7 +154,7 @@ export default function SobrietyScreen({ homeHeadStyle, homeSubStyle, bender }: 
             }}
             onClick={() => !thinking && todayCheckin && getInsight()}
           >
-            {thinking ? 'Thinking…' : "✨ Nova's take"}
+            {thinking ? 'Thinking…' : `✨ ${assistantName}'s take`}
           </div>
           <span style={linkStyle} onClick={() => !patternThinking && runPatternCheck()}>
             {patternThinking ? 'Checking…' : 'Check my patterns'}

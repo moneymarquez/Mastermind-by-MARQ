@@ -7,6 +7,7 @@ import type { Goal, GoalPath } from '../../data/types';
 import { askClaude, AiError } from '../../lib/ai';
 import { generateGoalPlan, recalculateGoalPace } from '../../lib/goalLockIn';
 import type { GoalIntake } from '../../lib/goalLockIn';
+import { useNovaPreferences } from '../../data/useNovaPreferences';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -142,6 +143,7 @@ function GoalCard({
   onSaveGoalPlan: (goalId: string, plan: Awaited<ReturnType<typeof generateGoalPlan>>) => Promise<void>;
   onCommitPath: (goal: Goal, path: GoalPath) => Promise<void>;
 }) {
+  const { assistantName } = useNovaPreferences();
   const [stepText, setStepText] = useState('');
   const [savedInput, setSavedInput] = useState(String(goal.current_saved));
   const [busy, setBusy] = useState<'critique' | 'checkin' | 'revise' | null>(null);
@@ -318,7 +320,7 @@ function GoalCard({
 
       {goal.ai_critique && (
         <div style={{ marginTop: 14, background: '#101114', border: '1px solid #22262B', borderRadius: 10, padding: '12px 14px' }}>
-          <div style={{ fontSize: 11, color: '#8A8F98', marginBottom: 6 }}>Nova's critique</div>
+          <div style={{ fontSize: 11, color: '#8A8F98', marginBottom: 6 }}>{assistantName}'s critique</div>
           <div style={{ fontSize: 12.5, color: '#C7CAD1', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{goal.ai_critique}</div>
         </div>
       )}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useIdeaMaker } from '../../data/useIdeaMaker';
+import { useNovaPreferences } from '../../data/useNovaPreferences';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -18,6 +19,7 @@ const primaryBtn: CSSProperties = {
 
 export default function IdeaMakerScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const { sessions, messages, activeSessionId, setActiveSessionId, loading, thinking, startSession, sendMessage } = useIdeaMaker();
+  const { assistantName } = useNovaPreferences();
   const [ideaInput, setIdeaInput] = useState('');
   const [chatInput, setChatInput] = useState('');
 
@@ -25,9 +27,9 @@ export default function IdeaMakerScreen({ homeHeadStyle, homeSubStyle }: Props) 
     return (
       <div>
         <div style={homeHeadStyle}>Idea Maker</div>
-        <div style={homeSubStyle}>Drop a raw idea — Nova takes a first pass, then digs in with you.</div>
+        <div style={homeSubStyle}>Drop a raw idea — {assistantName} takes a first pass, then digs in with you.</div>
         <div style={{ fontSize: 12, color: '#565b64', marginTop: 14, maxWidth: 560, lineHeight: 1.5 }}>
-          Real Nova, pressure-testing your idea back and forth — not a script.
+          Real {assistantName}, pressure-testing your idea back and forth — not a script.
         </div>
 
         <div style={{ display: 'flex', gap: 10, marginTop: 24, maxWidth: 640 }}>
@@ -102,7 +104,7 @@ export default function IdeaMakerScreen({ homeHeadStyle, homeSubStyle }: Props) 
       <div style={{ display: 'flex', gap: 10, maxWidth: 640 }}>
         <input
           style={inputStyle}
-          placeholder="Reply to Nova..."
+          placeholder={`Reply to ${assistantName}...`}
           value={chatInput}
           onChange={(e) => setChatInput(e.target.value)}
           onKeyDown={(e) => {

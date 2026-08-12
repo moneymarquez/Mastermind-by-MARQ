@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { generateGroceryList, generateWeeklyInsights, suggestNextMeal } from '../lib/macroIntelligence';
 import { AiError } from '../lib/ai';
 import { todayStr } from '../data/date';
+import { useNovaPreferences } from '../data/useNovaPreferences';
 import type { BenderSession, GroceryList, MacroInsight, Meal, NutritionTarget, SavedMeal, SymptomLog } from '../data/types';
 import Icon from '../Icon';
 
@@ -41,6 +42,7 @@ export default function NovaInsightsPanel({
   todayMeals, meals, symptomLogs, savedMeals, nutritionTarget, latestInsight, latestGroceryList, activeBender = null,
   addSymptomLog, setNutritionTarget, saveMacroInsight, saveGroceryList,
 }: Props) {
+  const { assistantName } = useNovaPreferences();
   const [symptom, setSymptom] = useState('');
   const [severity, setSeverity] = useState(3);
   const [symptomNote, setSymptomNote] = useState('');
@@ -133,7 +135,7 @@ export default function NovaInsightsPanel({
   return (
     <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <Icon name="sparkle" size={15} color="#F5F6F7" /> Nova — intelligence layer
+        <Icon name="sparkle" size={15} color="#F5F6F7" /> {assistantName} — intelligence layer
       </div>
 
       {/* Daily target */}
@@ -167,7 +169,7 @@ export default function NovaInsightsPanel({
       <div style={cardStyle}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7' }}>What should I eat next?</div>
-          <div style={buttonStyle(suggesting)} onClick={() => !suggesting && runSuggestion()}>{suggesting ? 'Thinking…' : 'Ask Nova'}</div>
+          <div style={buttonStyle(suggesting)} onClick={() => !suggesting && runSuggestion()}>{suggesting ? 'Thinking…' : `Ask ${assistantName}`}</div>
         </div>
         {activeBender && <div style={{ fontSize: 11.5, color: '#e0a35c', marginTop: 8 }}>Bender active — suggestions will lean recovery-minded (hydration, electrolytes, easy food).</div>}
         {suggestion && <div style={{ fontSize: 13, color: '#C7CAD1', marginTop: 10, lineHeight: 1.5 }}>{suggestion}</div>}

@@ -4,7 +4,7 @@ import { useAuth } from './auth/useAuth';
 import LoginScreen from './auth/LoginScreen';
 
 export default function App() {
-  const { state, actions } = useMastermindState();
+  const { state, actions, assistantName } = useMastermindState();
   const { session, loading, signIn, signOut } = useAuth();
 
   if (loading) {
@@ -17,7 +17,7 @@ export default function App() {
 
   return (
     <div style={{ background: '#0A0B0D' }}>
-      <Stage state={state} actions={actions} onSignOut={signOut} />
+      <Stage state={state} actions={actions} assistantName={assistantName} onSignOut={signOut} />
     </div>
   );
 }

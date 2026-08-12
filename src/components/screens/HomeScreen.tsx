@@ -21,9 +21,10 @@ interface Props {
   statGridStyle: CSSProperties;
   statCards: StatCard[];
   onOpenNova: () => void;
+  assistantName: string;
 }
 
-export default function HomeScreen({ homeHeadStyle, homeSubStyle, statGridStyle, statCards, onOpenNova }: Props) {
+export default function HomeScreen({ homeHeadStyle, homeSubStyle, statGridStyle, statCards, onOpenNova, assistantName }: Props) {
   const { streak, loading: sobrietyLoading } = useSobriety();
   const { totals, loading: macrosLoading } = useMacros();
   const { events, loading: eventsLoading } = useEvents();
@@ -105,7 +106,7 @@ export default function HomeScreen({ homeHeadStyle, homeSubStyle, statGridStyle,
       >
         <Icon name="sparkle" size={16} color="#C9A24B" />
         <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7' }}>Ask Nova</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7' }}>Ask {assistantName}</div>
           <div style={{ fontSize: 11.5, color: '#8A8F98', marginTop: 1 }}>Anything about today, or anywhere else in the app.</div>
         </div>
       </div>

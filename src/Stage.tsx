@@ -45,10 +45,11 @@ const BUILT_SCREENS = [
 interface Props {
   state: AppState;
   actions: MastermindActions;
+  assistantName: string;
   onSignOut: () => void;
 }
 
-export default function Stage({ state, actions, onSignOut }: Props) {
+export default function Stage({ state, actions, assistantName, onSignOut }: Props) {
   const vm = buildViewModel(state, actions.navigateTo, onSignOut);
   const { isMobile } = vm;
   const bender = useBender();
@@ -102,7 +103,7 @@ export default function Stage({ state, actions, onSignOut }: Props) {
 
       <div style={vm.contentStyle}>
         {state.screen === 'home' && (
-          <HomeScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} statGridStyle={vm.statGridStyle} statCards={vm.statCards} onOpenNova={actions.openNova} />
+          <HomeScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} statGridStyle={vm.statGridStyle} statCards={vm.statCards} onOpenNova={actions.openNova} assistantName={assistantName} />
         )}
 
         {state.screen === 'daily-plan' && (
@@ -219,13 +220,16 @@ export default function Stage({ state, actions, onSignOut }: Props) {
           isMobile={isMobile}
           stackBottomOffset={novaStackBottomOffset}
           stackLeft={novaStackLeft}
+          assistantName={assistantName}
           messages={state.novaMessages}
           input={state.novaInput}
           thinking={state.novaThinking}
+          listening={state.novaListening}
           onClose={actions.closeNova}
           onInputChange={actions.onNovaInputChange}
           onKeyDown={actions.onNovaKeyDown}
           onSend={actions.sendNova}
+          onMicClick={state.novaListening ? actions.stopVoiceInput : actions.startVoiceInput}
         />
       )}
 

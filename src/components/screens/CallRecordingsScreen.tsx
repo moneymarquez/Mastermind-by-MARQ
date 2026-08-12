@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { useCallRecordings } from '../../data/useCallRecordings';
 import type { CallRecording } from '../../data/useCallRecordings';
 import { useContacts } from '../../data/useContacts';
+import { useNovaPreferences } from '../../data/useNovaPreferences';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -21,6 +22,7 @@ const primaryBtn: CSSProperties = {
 
 function DetailView({ recording, contactName, onBack }: { recording: CallRecording; contactName: string | null; onBack: () => void }) {
   const { getPlaybackUrl, updateNotes, remove } = useCallRecordings();
+  const { assistantName } = useNovaPreferences();
   const [url, setUrl] = useState<string | null>(null);
   const [notes, setNotes] = useState(recording.notes ?? '');
   const [saved, setSaved] = useState(false);
@@ -57,7 +59,7 @@ function DetailView({ recording, contactName, onBack }: { recording: CallRecordi
         <div style={{ marginTop: 20, padding: '12px 14px', borderRadius: 10, background: '#1a1c21', border: '1px solid #2b2f36' }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: '#C9A24B' }}>AI call breakdown — pending Anthropic key</div>
           <div style={{ fontSize: 11.5, color: '#565b64', marginTop: 4 }}>
-            {recording.ai_analysis ?? 'Nova will summarize this call automatically once the API key is funded — nothing to set up here when that happens.'}
+            {recording.ai_analysis ?? `${assistantName} will summarize this call automatically once the API key is funded — nothing to set up here when that happens.`}
           </div>
         </div>
 
