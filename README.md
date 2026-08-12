@@ -105,11 +105,10 @@ asset-generation step wasn't worth the added risk. Splash screens regenerate fro
 `node design/generate-pwa-assets.mjs` (see that file's header comment for the Playwright setup it expects).
 
 The home-screen app icon (`public/icons/icon-192.png`, `icon-512.png`, `apple-touch-icon.png`) is the real "MARQ"
-wordmark (`design/marq-wordmark.png`, white on black), not the earlier placeholder gradient M-mark. Since the source
-art has real black margin baked into the file, `design/generate-app-icon.mjs` finds the wordmark's actual pixel
-bounding box, crops to it with an 8%-per-side margin, and centers that crop on a black square per output size — a
-naive full-image resize would leave the letters looking small and lost in the icon. Re-run that script (same
-Playwright setup) after swapping in new source art.
+wordmark (`design/marq-wordmark.png`, white on black), not the earlier placeholder gradient M-mark — a plain resize
+of that source file to each target size, framing kept exactly as designed. (A first pass tried auto-cropping to the
+wordmark's pixel bounding box to make the letters bigger in-frame; the original framing turned out to be the
+preferred look, so that crop step was dropped.)
 
 ## One-time backend setup (Web Push — real closed-app notifications)
 
@@ -431,7 +430,7 @@ per explicit instruction this gets reproduced exactly, not approximated, so it's
 - `netlify/functions/claude.ts` — the server-side Claude proxy: validates the caller's Supabase session, then calls the Anthropic API with the server-only `ANTHROPIC_API_KEY`
 - `sw-src/sw.ts` — service worker source (install/activate/precache/push/notificationclick), bundled by `vite-plugin-pwa` (injectManifest) into `dist/sw.js` with a build-hash-aware precache list. Lives outside `src/` because it needs the `webworker` TS lib, which conflicts with the app's DOM-lib tsconfig — same reasoning as `netlify/functions/` living outside `src/`.
 - `public/manifest.json`, `public/icons/`, `public/splash/` — PWA manifest, home-screen icons, iOS launch splash screens
-- `design/` — source art the icon and splash PNGs are rendered from (`marq-wordmark.png`, `icon.svg`, `splash-template.html`), plus the Playwright render scripts (`generate-app-icon.mjs`, `generate-pwa-assets.mjs`) to regenerate them after a design change
+- `design/` — source art the icon and splash PNGs are rendered from (`marq-wordmark.png`, `icon.svg`, `splash-template.html`), plus the Playwright render script (`generate-pwa-assets.mjs`) for the splash screens
 - `src/lib/pwa.ts` — standalone-mode detection + Notification Triggers feature-detect
 - `src/lib/push.ts` — subscribes/unsubscribes this device for web push
 - `netlify/functions/push-subscription.ts` — stores/removes a device's push subscription (JWT-gated)
