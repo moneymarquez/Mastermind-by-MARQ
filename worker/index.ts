@@ -25,10 +25,12 @@ import { runStocksBot } from './handlers/stocks-bot';
 import type { StocksEnv } from './handlers/broker-keys';
 import { leadflowLeads, leadflowLeadUpdate, leadflowHistory, leadflowMessages, leadflowAiReport } from './handlers/leadflow';
 import type { LeadflowEnv } from './handlers/leadflow';
+import { createSubscriptionIntent, stripeWebhook } from './handlers/billing';
+import type { BillingEnv } from './handlers/billing';
 
 const NETLIFY_ORIGIN = 'https://mastermindbymarq.netlify.app';
 
-interface Env extends StocksEnv, LeadflowEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
@@ -46,6 +48,9 @@ export default {
     if (url.pathname === '/api/leadflow/history') return leadflowHistory(request, env);
     if (url.pathname === '/api/leadflow/messages') return leadflowMessages(request, env);
     if (url.pathname === '/api/leadflow/ai-report') return leadflowAiReport(request, env);
+
+    if (url.pathname === '/api/billing/create-subscription') return createSubscriptionIntent(request, env);
+    if (url.pathname === '/api/billing/webhook') return stripeWebhook(request, env);
 
     if (url.pathname.startsWith('/api/')) {
       const target = new URL(url.pathname + url.search, NETLIFY_ORIGIN);

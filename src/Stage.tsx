@@ -31,6 +31,7 @@ import PromptVoiceSettingsScreen from './components/screens/PromptVoiceSettingsS
 import CallRecordingsScreen from './components/screens/CallRecordingsScreen';
 import WebsiteBuilderRoadmapScreen from './components/screens/WebsiteBuilderRoadmapScreen';
 import InvoicingScreen from './components/screens/InvoicingScreen';
+import ManageModulesScreen from './components/screens/ManageModulesScreen';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
 import { buildViewModel } from './viewModel';
 import type { AppState, MastermindActions } from './state';
@@ -39,18 +40,19 @@ const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
   'scaling-planner', 'audits', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings',
-  'call-recordings', 'website', 'invoicing',
+  'call-recordings', 'website', 'invoicing', 'manage-modules',
 ];
 
 interface Props {
   state: AppState;
   actions: MastermindActions;
   assistantName: string;
+  canAccess: (moduleKey: string) => boolean;
   onSignOut: () => void;
 }
 
-export default function Stage({ state, actions, assistantName, onSignOut }: Props) {
-  const vm = buildViewModel(state, actions.navigateTo, onSignOut);
+export default function Stage({ state, actions, assistantName, canAccess, onSignOut }: Props) {
+  const vm = buildViewModel(state, actions.navigateTo, onSignOut, canAccess);
   const { isMobile } = vm;
   const bender = useBender();
 
@@ -208,6 +210,10 @@ export default function Stage({ state, actions, assistantName, onSignOut }: Prop
 
         {state.screen === 'invoicing' && (
           <InvoicingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'manage-modules' && (
+          <ManageModulesScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {(state.screen === 'placeholder' || !BUILT_SCREENS.includes(state.screen)) && (

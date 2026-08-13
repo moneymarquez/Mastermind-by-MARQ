@@ -1,4 +1,15 @@
 import type { NavGroup, StickyIdea } from './types';
+import { MODULE_REGISTRY } from './modules.config';
+
+// Reverse lookup: NAV_DATA item id -> the module key that gates it.
+// Derived from each module's `routes` so 'dialing' and 'contacts' both map
+// to the single 'dialing' module (Contacts is Dialing's supporting data,
+// not a separately-toggleable thing). Items with no entry here (home,
+// settings, codelab) are system-level and never gated.
+const NAV_ITEM_TO_MODULE: Record<string, string> = { content: 'content' };
+for (const m of MODULE_REGISTRY) {
+  for (const route of m.routes) NAV_ITEM_TO_MODULE[route] = m.key;
+}
 
 export const NAV_DATA: NavGroup[] = [
   {
@@ -58,7 +69,7 @@ export const NAV_DATA: NavGroup[] = [
         label: 'Settings',
         icon: 'ph-gear-six',
         collapsible: true,
-        sub: ['Account', 'Prompt & Voice', 'Notifications', 'Sign Out'],
+        sub: ['Account', 'Prompt & Voice', 'Notifications', 'Manage modules', 'Sign Out'],
       },
       { id: 'codelab', label: 'Code Lab', icon: 'ph-terminal-window' },
     ],
@@ -69,6 +80,23 @@ export const NAV_DATA: NavGroup[] = [
 // "This section is coming soon." (see navigateTo in state.ts) when a screen
 // isn't listed here.
 export const PLACEHOLDER_NOTES: Record<string, string> = {};
+
+// Filters NAV_DATA down to what a given account can actually see.
+// `canAccess` should always return true for the owner account (see
+// useModuleAccess.ts) — this function has no owner-awareness of its own,
+// it just applies whatever predicate it's given. Items with no entry in
+// NAV_ITEM_TO_MODULE (home, settings, codelab) are system-level and always
+// pass through untouched. A group whose items are entirely filtered out is
+// dropped too, so a fully-disabled category doesn't leave a bare header.
+export function buildNavData(canAccess: (moduleKey: string) => boolean): NavGroup[] {
+  return NAV_DATA.map((g) => ({
+    ...g,
+    items: g.items.filter((it) => {
+      const moduleKey = NAV_ITEM_TO_MODULE[it.id];
+      return !moduleKey || canAccess(moduleKey);
+    }),
+  })).filter((g) => g.items.length > 0);
+}
 
 export const INITIAL_STICKY_IDEAS: StickyIdea[] = [
   { id: 1, text: 'Sell a website build', est: '$1,000' },

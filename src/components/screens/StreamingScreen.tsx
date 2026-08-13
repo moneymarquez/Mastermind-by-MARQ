@@ -9,6 +9,7 @@ import type { StreamFormat, StreamStatus, StreamingIdea } from '../../data/types
 import { EVENT_TYPE_COLOR } from '../../data/eventDisplay';
 import CalendarView from '../CalendarView';
 import type { CalendarViewHandle } from '../CalendarView';
+import { useModuleAccess } from '../../data/useModuleAccess';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -82,6 +83,11 @@ function IdeaCard({ idea, onUpdate, onDelete }: { idea: StreamingIdea; onUpdate:
 
 export default function StreamingScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const { ideas, loading, addIdea, updateIdea, removeIdea, loadSeed } = useStreamingIdeas();
+  // Load starter ideas seeds Cristopher's own personal streaming ideas
+  // (specific to his content/business) — only the owner account should
+  // ever be offered that button. Other accounts get a plain empty state
+  // with just "+ Add idea", per the personal-content gating requirement.
+  const { isOwner } = useModuleAccess();
   const { events, addEvent, addHolidayEvents, updateEvent, deleteEvent } = useEvents();
   const { search: searchContacts, upsertContact } = useContacts();
   const calendarRef = useRef<CalendarViewHandle>(null);
@@ -119,7 +125,7 @@ export default function StreamingScreen({ homeHeadStyle, homeSubStyle }: Props) 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 28, flexWrap: 'wrap', gap: 12 }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7' }}>Ideas Bank</div>
         <div style={{ display: 'flex', gap: 8 }}>
-          {ideas.length === 0 && (
+          {ideas.length === 0 && isOwner && (
             <div
               style={{ padding: '8px 16px', borderRadius: 999, border: '1px solid #22262B', color: seeding ? '#565b64' : '#8A8F98', fontSize: 12.5, cursor: seeding ? 'default' : 'pointer' }}
               onClick={() => !seeding && loadStarterIdeas()}

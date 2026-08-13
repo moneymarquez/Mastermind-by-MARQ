@@ -1,0 +1,57 @@
+import { useState } from 'react';
+import ModulePicker from './ModulePicker';
+import { MODULE_KEYS } from '../modules.config';
+
+interface Props {
+  onComplete: (selectedKeys: string[]) => Promise<void>;
+}
+
+export default function OnboardingScreen({ onComplete }: Props) {
+  const [selected, setSelected] = useState<Set<string>>(new Set(MODULE_KEYS));
+  const [saving, setSaving] = useState(false);
+
+  const toggle = (key: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const submit = async () => {
+    setSaving(true);
+    await onComplete([...selected]);
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#0A0B0D', padding: '48px 24px 120px', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: 760 }}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: '#F5F6F7', letterSpacing: '-0.01em', marginBottom: 2 }}>Masterminds by MARQ</div>
+        <div style={{ fontSize: 26, fontWeight: 700, color: '#F5F6F7', marginTop: 24, marginBottom: 6 }}>What do you want turned on?</div>
+        <div style={{ fontSize: 13.5, color: '#8A8F98', marginBottom: 32, maxWidth: 520, lineHeight: 1.6 }}>
+          Pick whatever's relevant to you — you can change this anytime from Settings → Manage modules. Everything's
+          selected by default; deselect anything you don't want cluttering your nav.
+        </div>
+
+        <ModulePicker selected={selected} onToggle={toggle} />
+
+        <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, background: 'linear-gradient(180deg, transparent, #0A0B0D 40%)', padding: '32px 24px 24px', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ width: '100%', maxWidth: 760, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontSize: 12, color: '#565b64' }}>{selected.size} of {MODULE_KEYS.length} selected</div>
+            <button
+              onClick={submit}
+              disabled={saving}
+              style={{
+                padding: '12px 28px', borderRadius: 999, border: 'none', background: '#F5F6F7', color: '#0A0B0D',
+                fontSize: 13.5, fontWeight: 600, cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.6 : 1,
+              }}
+            >
+              {saving ? 'Saving…' : 'Continue'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

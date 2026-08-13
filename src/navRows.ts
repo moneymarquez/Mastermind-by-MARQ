@@ -1,4 +1,4 @@
-import { NAV_DATA } from './data';
+import { buildNavData } from './data';
 
 export interface NavRow {
   kind: 'header' | 'item' | 'sub';
@@ -15,16 +15,18 @@ const SUB_SCREEN_BY_LABEL: Record<string, string> = {
   Notifications: 'notification-settings',
   Account: 'account-settings',
   'Prompt & Voice': 'prompt-voice-settings',
+  'Manage modules': 'manage-modules',
 };
 
 export function buildNavRows(
   screen: string,
   settingsExpanded: boolean,
   navigateTo: (id: string) => void,
-  onSignOut: () => void
+  onSignOut: () => void,
+  canAccess: (moduleKey: string) => boolean
 ): NavRow[] {
   const rows: NavRow[] = [];
-  NAV_DATA.forEach((g) => {
+  buildNavData(canAccess).forEach((g) => {
     if (g.group) {
       rows.push({ kind: 'header', key: `header-${g.group}`, label: g.group });
     }

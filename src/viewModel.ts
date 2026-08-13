@@ -3,13 +3,18 @@ import { computeGeometry } from './geometry';
 import { buildNavRows } from './navRows';
 import type { AppState } from './state';
 
-export function buildViewModel(state: AppState, navigateTo: (id: string) => void, onSignOut: () => void) {
+export function buildViewModel(
+  state: AppState,
+  navigateTo: (id: string) => void,
+  onSignOut: () => void,
+  canAccess: (moduleKey: string) => boolean
+) {
   const s = state;
   const isMobile = s.isMobile;
   const geo = computeGeometry(s, isMobile);
   const { circleSize, stageWidth, stageHeight, cx, cy } = geo;
 
-  const navRows = buildNavRows(s.screen, s.settingsExpanded, navigateTo, onSignOut);
+  const navRows = buildNavRows(s.screen, s.settingsExpanded, navigateTo, onSignOut, canAccess);
 
   // Top padding clears the logo/hamburger row (which itself sits below
   // env(safe-area-inset-top)) with real breathing room underneath, rather

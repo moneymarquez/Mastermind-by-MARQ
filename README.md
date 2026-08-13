@@ -522,6 +522,68 @@ Run `supabase/schema_022_assistant_name.sql` (after schema_021) to unlock the as
   literally — that's invisible to the user (the model doesn't repeat its own system prompt back), so a full sweep
   was left for a follow-up pass rather than risking every AI feature's prompt in one large edit.
 
+## Module registry, onboarding, content gating, and Stripe billing
+
+Run `supabase/schema_023_module_registry_billing.sql` (after schema_022) — **do this before deploying the code in
+this section**, or the app will show the onboarding screen to Cristopher's own account, since the `is_owner()`
+function it depends on won't exist yet.
+
+This is the highest-risk change made to this app so far — it's a real gate in front of the whole thing — so it was
+built under explicit safety constraints, laid out here plainly rather than folded into the feature description:
+
+- **The owner bypass is evaluated first, unconditionally, before any onboarding/billing logic runs.** `schema_023`
+  bootstraps a new `app_owner` table to the very first account ever created in this Supabase project (this app has
+  never had public signup — every account so far is Cristopher's own) — a real, literal `user_id`-based flag, set
+  once at migration time, not a live heuristic evaluated on every request. `is_owner()` is a `SECURITY DEFINER`
+  Postgres function so any account can check whether *its own* id is the owner without being able to read
+  `app_owner`'s contents directly (which would leak the owner's id to other future accounts). `AuthedGate.tsx` checks
+  `moduleAccess.isOwner` before anything else — if true, onboarding and the billing gate are skipped entirely and
+  `canAccess()` returns true unconditionally for every module, so the owner's nav renders byte-for-byte identical to
+  before this feature existed.
+- **Every schema change here is additive** — two new tables (`user_modules`, `subscriptions`) plus the tiny
+  `app_owner` bootstrap table. Nothing in this migration alters, updates, or deletes a row in any pre-existing table.
+- **What could not be verified**: there's no way in this build environment to actually log in as Cristopher's real
+  account (no credentials available here) or drive a real browser through the fresh-signup flow, so the "log in and
+  confirm nothing's hidden/blank" and "test with a fresh account" verification steps could not be performed live.
+  What *was* verified: a full `npm run build` (tsc + vite) passes clean, the Worker bundles cleanly with the new
+  billing routes, and a careful code-level trace of `AuthedGate.tsx` confirms the owner-bypass short-circuit is
+  unconditional and evaluated first. **Please verify both scenarios yourself** (your own account shows everything
+  unchanged; a fresh test account gets onboarding → billing gate) before treating this as fully shipped.
+
+What's actually built:
+
+- **Module registry** (`src/modules.config.ts`) — every selectable section (21 modules across Personal, Cold
+  Calling, Scaling, and Side Hustles), each with a label, description, icon, the nav routes it gates, and whether it
+  needs the Anthropic key funded. Settings, Nova, Home, and Code Lab are system-level and never gated.
+- **Dynamic nav** (`src/data.ts`'s `buildNavData()`, threaded through `navRows.ts` → `viewModel.ts` → `Stage.tsx`) —
+  filters the existing nav structure down to whatever the signed-in account has enabled, dropping any category
+  header left with zero visible items. The owner's predicate always returns true, so this is a no-op for that
+  account.
+- **Onboarding** (`src/onboarding/`) — shown automatically the first time a non-owner account has zero
+  `user_modules` rows (that's the "hasn't onboarded" signal, no separate flag needed). Multi-select module picker,
+  everything on by default, writes `user_modules` rows on "Continue." Re-visitable anytime from Settings → Manage
+  modules (`ManageModulesScreen.tsx`, same picker component).
+- **Stripe billing, embedded** (`worker/handlers/billing.ts` + `src/billing/BillingGateScreen.tsx`) — $10/month via
+  Stripe's Payment Element, mounted directly in the app (never a hosted Checkout redirect). Talks to Stripe's REST
+  API via raw `fetch` rather than the `stripe` npm SDK, matching every other Worker handler in this codebase and
+  avoiding any Node-SDK bundling risk in the Workers runtime. Needs, as Cloudflare Worker secrets:
+  `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID` (the $10/mo Price you create in your own Stripe dashboard — this build
+  doesn't create it for you), and `STRIPE_WEBHOOK_SECRET` (from a webhook endpoint you point at
+  `https://<your-domain>/api/billing/webhook`, subscribed to `customer.subscription.updated`,
+  `customer.subscription.deleted`, and `invoice.payment_failed`); client-side needs `VITE_STRIPE_PUBLISHABLE_KEY`.
+  Without those set, `BillingGateScreen` shows an honest "billing isn't configured yet" message instead of crashing
+  — same graceful-degradation pattern as `ANTHROPIC_API_KEY` everywhere else in this app. Webhook signature
+  verification is done by hand via Web Crypto (`crypto.subtle`), not the Stripe SDK's helper, for the same
+  Workers-runtime reason.
+- **Personal-content gating** — audited every piece of hardcoded/seedable personal content in the app. Contacts and
+  the Dialing pitch script both already start genuinely empty per-account (no default text, no seed rows anywhere in
+  the schema) — nothing to change there. The one real gap was Streaming's "Load starter ideas (20)" button, which
+  seeds Cristopher's own specific streaming ideas (mentions of ABMARQ, his girlfriend, his own gaming/business
+  interests) — that button is now owner-only (`StreamingScreen.tsx` checks `useModuleAccess().isOwner`); other
+  accounts just get the plain empty state with "+ Add idea." Sticky Spot's 3 default ideas were left as-is — they're
+  already generic dollar-amount examples, not personal, matching the spec's own allowance for "small clearly-generic
+  examples."
+
 ## Structure
 
 - `src/state.ts` — app state + action handlers (drag, nav, Nova, sticky spot)

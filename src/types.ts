@@ -24,6 +24,7 @@ export type Screen =
   | 'call-recordings'
   | 'website'
   | 'invoicing'
+  | 'manage-modules'
   | 'placeholder';
 
 export interface StickyIdea {
