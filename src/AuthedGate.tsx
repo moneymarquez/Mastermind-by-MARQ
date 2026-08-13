@@ -9,6 +9,16 @@ interface Props {
   onSignOut: () => void;
 }
 
+// KILL SWITCH — the owner-detection this gate depends on (email match +
+// DB-side is_owner()) failed to resolve true for the real account in
+// production, stranding it behind onboarding with no way in. Rather than
+// keep patching that live while the account is locked out, gating is
+// disabled outright here: every signed-in account goes straight to Stage
+// with full, unrestricted access, exactly like before this feature
+// existed. Flip back to true only after the owner-detection bug is found
+// and confirmed fixed outside of a live, high-stakes situation.
+const GATING_ENABLED = false;
+
 // Only ever mounted once App.tsx has confirmed a real session exists — that
 // mount timing IS the fix for the two data hooks below not re-fetching
 // after login (they each fetch once on mount; mounting this component
@@ -26,31 +36,33 @@ export default function AuthedGate({ onSignOut }: Props) {
   const moduleAccess = useModuleAccess();
   const subscription = useSubscription();
 
-  if (moduleAccess.loading) {
-    return <div style={{ minHeight: '100vh', background: '#0A0B0D' }} />;
-  }
-
-  if (!moduleAccess.isOwner) {
-    if (!moduleAccess.hasOnboarded) {
-      return (
-        <OnboardingScreen
-          onComplete={async (keys) => {
-            await moduleAccess.saveModuleSelections(keys);
-          }}
-        />
-      );
-    }
-    if (subscription.loading) {
+  if (GATING_ENABLED) {
+    if (moduleAccess.loading) {
       return <div style={{ minHeight: '100vh', background: '#0A0B0D' }} />;
     }
-    if (!subscription.isActive) {
-      return <BillingGateScreen onSubscribed={subscription.refresh} onSignOut={onSignOut} />;
+
+    if (!moduleAccess.isOwner) {
+      if (!moduleAccess.hasOnboarded) {
+        return (
+          <OnboardingScreen
+            onComplete={async (keys) => {
+              await moduleAccess.saveModuleSelections(keys);
+            }}
+          />
+        );
+      }
+      if (subscription.loading) {
+        return <div style={{ minHeight: '100vh', background: '#0A0B0D' }} />;
+      }
+      if (!subscription.isActive) {
+        return <BillingGateScreen onSubscribed={subscription.refresh} onSignOut={onSignOut} />;
+      }
     }
   }
 
   return (
     <div style={{ background: '#0A0B0D' }}>
-      <Stage state={state} actions={actions} assistantName={assistantName} canAccess={moduleAccess.canAccess} onSignOut={onSignOut} />
+      <Stage state={state} actions={actions} assistantName={assistantName} canAccess={() => true} onSignOut={onSignOut} />
     </div>
   );
 }
