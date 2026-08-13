@@ -2,6 +2,18 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { MODULE_KEYS } from '../modules.config';
 
+// Belt-and-suspenders owner check that doesn't depend on schema_023 having
+// been run at all. The DB-side is_owner() (see schema_023) is the real,
+// durable mechanism — but it strictly requires that migration to exist
+// first, and a migration-ordering mistake (deploy before running it) or
+// any transient RPC failure means the DB check silently resolves to "not
+// owner," which — before this fix — fell straight through to the most
+// restrictive state (onboarding) for the one account this app has ever
+// run as. That's exactly backwards: a broken/unmigrated owner check should
+// never be able to strand the owner. This email match is the fallback that
+// makes that failure mode impossible regardless of migration state.
+const OWNER_EMAIL = 'madebymarquez@icloud.com';
+
 export interface ModuleAccess {
   loading: boolean;
   /** True only for the single account app_owner bootstrapped to on first
@@ -30,11 +42,32 @@ export function useModuleAccess(): ModuleAccess {
 
   const load = useCallback(async () => {
     setLoading(true);
-    // First and only question that matters before anything else: is this
-    // the owner? is_owner() is SECURITY DEFINER and only ever answers for
-    // auth.uid() itself, so this can't be used to probe other accounts.
-    const { data: ownerResult } = await supabase.rpc('is_owner');
-    if (ownerResult === true) {
+
+    // Email check first — works even if schema_023 hasn't been run yet or
+    // the RPC call below fails for any reason. This is the check that
+    // makes "the owner account is stranded" structurally impossible.
+    const { data: authData } = await supabase.auth.getUser();
+    if (authData.user?.email === OWNER_EMAIL) {
+      setIsOwner(true);
+      setHasOnboarded(true);
+      setEnabledKeys(new Set(MODULE_KEYS));
+      setLoading(false);
+      return;
+    }
+
+    // DB-side check second — is_owner() is SECURITY DEFINER and only ever
+    // answers for auth.uid() itself, so this can't be used to probe other
+    // accounts. Wrapped so a missing function (migration not run) or any
+    // other RPC error doesn't throw — it just falls through to "not owner"
+    // the same as a real, non-owner account would.
+    let ownerResult = false;
+    try {
+      const { data, error } = await supabase.rpc('is_owner');
+      ownerResult = data === true && !error;
+    } catch {
+      ownerResult = false;
+    }
+    if (ownerResult) {
       setIsOwner(true);
       setHasOnboarded(true);
       setEnabledKeys(new Set(MODULE_KEYS));

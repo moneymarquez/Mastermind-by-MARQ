@@ -524,22 +524,34 @@ Run `supabase/schema_022_assistant_name.sql` (after schema_021) to unlock the as
 
 ## Module registry, onboarding, content gating, and Stripe billing
 
-Run `supabase/schema_023_module_registry_billing.sql` (after schema_022) — **do this before deploying the code in
-this section**, or the app will show the onboarding screen to Cristopher's own account, since the `is_owner()`
-function it depends on won't exist yet.
+Run `supabase/schema_023_module_registry_billing.sql` (after schema_022) — needed for `user_modules`/`subscriptions`
+to work at all, and for the DB-side half of the owner check below.
 
 This is the highest-risk change made to this app so far — it's a real gate in front of the whole thing — so it was
-built under explicit safety constraints, laid out here plainly rather than folded into the feature description:
+built under explicit safety constraints, laid out here plainly rather than folded into the feature description.
 
-- **The owner bypass is evaluated first, unconditionally, before any onboarding/billing logic runs.** `schema_023`
-  bootstraps a new `app_owner` table to the very first account ever created in this Supabase project (this app has
-  never had public signup — every account so far is Cristopher's own) — a real, literal `user_id`-based flag, set
-  once at migration time, not a live heuristic evaluated on every request. `is_owner()` is a `SECURITY DEFINER`
-  Postgres function so any account can check whether *its own* id is the owner without being able to read
-  `app_owner`'s contents directly (which would leak the owner's id to other future accounts). `AuthedGate.tsx` checks
-  `moduleAccess.isOwner` before anything else — if true, onboarding and the billing gate are skipped entirely and
-  `canAccess()` returns true unconditionally for every module, so the owner's nav renders byte-for-byte identical to
-  before this feature existed.
+**Post-ship incident**: the first version of this shipped with the owner check depending *only* on the DB-side
+mechanism below. Since that requires `schema_023` to already be running before the code that calls it deploys,
+Cristopher's own account got shown the onboarding screen on first load — the exact "stranded owner" failure this
+whole feature was supposed to make impossible, caused by a migration-ordering gap, not a bug in the bypass logic
+itself. Fixed by adding a second, independent check that doesn't depend on any migration having run:
+
+- **Two independent owner checks, either one is sufficient, evaluated before anything else in `useModuleAccess.ts`**:
+  1. **Email match** (checked first) — `supabase.auth.getUser().email === 'madebymarquez@icloud.com'` (Cristopher's
+     known account email). Works immediately regardless of migration state, RPC errors, or RLS — this is what makes
+     "the owner account gets stranded" structurally impossible from here on, independent of anything else in this
+     section.
+  2. **DB-side `is_owner()`** — `schema_023` bootstraps a new `app_owner` table to the very first account ever
+     created in this Supabase project (this app has never had public signup — every account so far is Cristopher's
+     own) — a real, literal `user_id`-based flag, set once at migration time, not a live heuristic evaluated on
+     every request. `is_owner()` is a `SECURITY DEFINER` Postgres function so any account can check whether *its
+     own* id is the owner without being able to read `app_owner`'s contents directly. Wrapped in a try/catch so a
+     missing function (migration not run) or any other RPC error falls through cleanly to "not owner" instead of
+     throwing — this is the server-side source of truth for anything that can't check email client-side (the
+     billing webhook, for instance).
+  - If either check passes, `AuthedGate.tsx` skips onboarding and the billing gate entirely and `canAccess()`
+    returns true unconditionally for every module, so the owner's nav renders byte-for-byte identical to before
+    this feature existed.
 - **Every schema change here is additive** — two new tables (`user_modules`, `subscriptions`) plus the tiny
   `app_owner` bootstrap table. Nothing in this migration alters, updates, or deletes a row in any pre-existing table.
 - **What could not be verified**: there's no way in this build environment to actually log in as Cristopher's real
