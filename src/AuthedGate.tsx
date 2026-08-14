@@ -2,22 +2,15 @@ import Stage from './Stage';
 import { useMastermindState } from './state';
 import { useModuleAccess } from './data/useModuleAccess';
 import { useSubscription } from './data/useSubscription';
+import { isOwnerIdentity } from './auth/ownerIdentity';
 import OnboardingScreen from './onboarding/OnboardingScreen';
 import BillingGateScreen from './billing/BillingGateScreen';
 
 interface Props {
+  userId: string;
+  userEmail: string | null | undefined;
   onSignOut: () => void;
 }
-
-// KILL SWITCH — the owner-detection this gate depends on (email match +
-// DB-side is_owner()) failed to resolve true for the real account in
-// production, stranding it behind onboarding with no way in. Rather than
-// keep patching that live while the account is locked out, gating is
-// disabled outright here: every signed-in account goes straight to Stage
-// with full, unrestricted access, exactly like before this feature
-// existed. Flip back to true only after the owner-detection bug is found
-// and confirmed fixed outside of a live, high-stakes situation.
-const GATING_ENABLED = false;
 
 // Only ever mounted once App.tsx has confirmed a real session exists — that
 // mount timing IS the fix for the two data hooks below not re-fetching
@@ -25,44 +18,55 @@ const GATING_ENABLED = false;
 // exactly when a session first exists means that "once" always happens
 // post-auth, never before).
 //
-// Gating order matters and is deliberate: isOwner is checked before
-// hasOnboarded, which is checked before the subscription's isActive — the
-// owner account (schema_023's app_owner bootstrap, the account this app
-// has always run as) short-circuits straight to Stage regardless of what
-// user_modules/subscriptions says for it, per the explicit requirement
-// that it must never see onboarding or a billing gate.
-export default function AuthedGate({ onSignOut }: Props) {
+// isOwner is computed synchronously, first, before either data hook's
+// result is looked at — it is derived directly from props that were
+// already resolved by App.tsx's useAuth() before this component mounted,
+// not from a network call made here. That's the deliberate fix for the
+// live incident where the owner's account got stuck behind onboarding:
+// the old check called supabase.auth.getUser() + an is_owner() RPC on
+// mount, and when either raced or failed, it silently resolved to "not
+// owner." Nothing here can do that — there's no request in flight for it
+// to race or fail. The owner branch below never even reads
+// moduleAccess.loading or subscription.loading; it can't get stuck behind
+// either.
+export default function AuthedGate({ userId, userEmail, onSignOut }: Props) {
   const { state, actions, assistantName } = useMastermindState();
-  const moduleAccess = useModuleAccess();
-  const subscription = useSubscription();
+  const isOwner = isOwnerIdentity({ id: userId, email: userEmail });
+  const moduleAccess = useModuleAccess(userId, isOwner);
+  const subscription = useSubscription(isOwner);
 
-  if (GATING_ENABLED) {
+  if (!isOwner) {
     if (moduleAccess.loading) {
       return <div style={{ minHeight: '100vh', background: '#0A0B0D' }} />;
     }
-
-    if (!moduleAccess.isOwner) {
-      if (!moduleAccess.hasOnboarded) {
-        return (
-          <OnboardingScreen
-            onComplete={async (keys) => {
-              await moduleAccess.saveModuleSelections(keys);
-            }}
-          />
-        );
-      }
-      if (subscription.loading) {
-        return <div style={{ minHeight: '100vh', background: '#0A0B0D' }} />;
-      }
-      if (!subscription.isActive) {
-        return <BillingGateScreen onSubscribed={subscription.refresh} onSignOut={onSignOut} />;
-      }
+    if (!moduleAccess.hasOnboarded) {
+      return (
+        <OnboardingScreen
+          onComplete={async (keys) => {
+            await moduleAccess.saveModuleSelections(keys);
+          }}
+        />
+      );
+    }
+    if (subscription.loading) {
+      return <div style={{ minHeight: '100vh', background: '#0A0B0D' }} />;
+    }
+    if (!subscription.isActive) {
+      return <BillingGateScreen onSubscribed={subscription.refresh} onSignOut={onSignOut} />;
     }
   }
 
   return (
     <div style={{ background: '#0A0B0D' }}>
-      <Stage state={state} actions={actions} assistantName={assistantName} canAccess={() => true} onSignOut={onSignOut} />
+      <Stage
+        state={state}
+        actions={actions}
+        assistantName={assistantName}
+        canAccess={isOwner ? () => true : moduleAccess.canAccess}
+        onSignOut={onSignOut}
+        currentUserId={userId}
+        isOwner={isOwner}
+      />
     </div>
   );
 }

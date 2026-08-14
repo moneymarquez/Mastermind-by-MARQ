@@ -49,9 +49,11 @@ interface Props {
   assistantName: string;
   canAccess: (moduleKey: string) => boolean;
   onSignOut: () => void;
+  currentUserId: string;
+  isOwner: boolean;
 }
 
-export default function Stage({ state, actions, assistantName, canAccess, onSignOut }: Props) {
+export default function Stage({ state, actions, assistantName, canAccess, onSignOut, currentUserId, isOwner }: Props) {
   const vm = buildViewModel(state, actions.navigateTo, onSignOut, canAccess);
   const { isMobile } = vm;
   const bender = useBender();
@@ -188,7 +190,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'streaming' && (
-          <StreamingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          <StreamingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} isOwner={isOwner} />
         )}
 
         {state.screen === 'stocks' && (
@@ -220,7 +222,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'manage-modules' && (
-          <ManageModulesScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          <ManageModulesScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} currentUserId={currentUserId} isOwner={isOwner} />
         )}
 
         {(state.screen === 'placeholder' || !BUILT_SCREENS.includes(state.screen)) && (

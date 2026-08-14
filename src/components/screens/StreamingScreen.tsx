@@ -9,11 +9,11 @@ import type { StreamFormat, StreamStatus, StreamingIdea } from '../../data/types
 import { EVENT_TYPE_COLOR } from '../../data/eventDisplay';
 import CalendarView from '../CalendarView';
 import type { CalendarViewHandle } from '../CalendarView';
-import { useModuleAccess } from '../../data/useModuleAccess';
 
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
+  isOwner: boolean;
 }
 
 const inputStyle: CSSProperties = {
@@ -81,13 +81,12 @@ function IdeaCard({ idea, onUpdate, onDelete }: { idea: StreamingIdea; onUpdate:
   );
 }
 
-export default function StreamingScreen({ homeHeadStyle, homeSubStyle }: Props) {
+export default function StreamingScreen({ homeHeadStyle, homeSubStyle, isOwner }: Props) {
   const { ideas, loading, addIdea, updateIdea, removeIdea, loadSeed } = useStreamingIdeas();
   // Load starter ideas seeds Cristopher's own personal streaming ideas
   // (specific to his content/business) — only the owner account should
   // ever be offered that button. Other accounts get a plain empty state
   // with just "+ Add idea", per the personal-content gating requirement.
-  const { isOwner } = useModuleAccess();
   const { events, addEvent, addHolidayEvents, updateEvent, deleteEvent } = useEvents();
   const { search: searchContacts, upsertContact } = useContacts();
   const calendarRef = useRef<CalendarViewHandle>(null);

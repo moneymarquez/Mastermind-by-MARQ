@@ -6,10 +6,12 @@ import { useModuleAccess } from '../../data/useModuleAccess';
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
+  currentUserId: string;
+  isOwner: boolean;
 }
 
-export default function ManageModulesScreen({ homeHeadStyle, homeSubStyle }: Props) {
-  const { loading, isOwner, enabledKeys, saveModuleSelections } = useModuleAccess();
+export default function ManageModulesScreen({ homeHeadStyle, homeSubStyle, currentUserId, isOwner }: Props) {
+  const { loading, enabledKeys, saveModuleSelections } = useModuleAccess(currentUserId, isOwner);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
