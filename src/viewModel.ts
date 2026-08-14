@@ -18,13 +18,17 @@ export function buildViewModel(
 
   // Top padding clears the logo/hamburger row (which itself sits below
   // env(safe-area-inset-top)) with real breathing room underneath, rather
-  // than the two nearly touching.
+  // than the two nearly touching. Desktop's logo (two stacked lines, ~24px
+  // top offset) bottoms out well under 100px even at its largest — 152px
+  // keeps a deliberately generous gap above every page's own title so the
+  // two can never visually collide, on any page, at any standard desktop
+  // width.
   const contentStyle: CSSProperties = {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     overflowY: 'auto',
     padding: isMobile
       ? `calc(${circleSize + 64}px + env(safe-area-inset-top)) 20px 140px`
-      : `calc(120px + env(safe-area-inset-top)) 40px 60px ${circleSize + 64}px`,
+      : `calc(152px + env(safe-area-inset-top)) 40px 60px ${circleSize + 64}px`,
   };
 
   const homeHeadStyle: CSSProperties = { fontSize: isMobile ? 24 : 32, fontWeight: 600, color: '#F5F6F7', letterSpacing: '-0.01em' };

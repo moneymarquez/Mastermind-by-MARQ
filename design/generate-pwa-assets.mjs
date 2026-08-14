@@ -1,17 +1,17 @@
-// Regenerates public/icons/*.png and public/splash/*.png from
-// design/icon.svg and design/splash-template.html.
+// Regenerates public/splash/*.png from design/splash-template.html.
+//
+// App icons (public/icons/*.png + the favicon) are NOT generated here —
+// that used to render design/icon.svg (a plain-text "M" mark), but the
+// icon actually shipped is the hand-drawn "MARQ" wordmark, generated from
+// design/marq-wordmark.png by design/generate-icon.py. icon.svg is stale
+// leftover from an earlier design iteration; don't use it as a source of
+// truth for icons.
 //
 // Requires Playwright (`npm install -D playwright` — not a runtime
 // dependency of the app, so it's not in package.json; install it
 // temporarily to run this, or use whatever Chromium/Playwright setup
 // is available in your environment) and a Chromium executable. Run
 // with: node design/generate-pwa-assets.mjs [path/to/chromium]
-//
-// Why Playwright instead of @vite-pwa/assets-generator: both are valid;
-// this renders the real SVG/HTML at each exact target resolution instead
-// of upscaling from one master image, and avoids adding a native
-// image-processing (sharp) dependency chain for what's a one-time asset
-// generation step, not something that runs on every build.
 
 import { chromium } from 'playwright';
 import path from 'path';
@@ -20,12 +20,6 @@ import { fileURLToPath } from 'url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, '..');
 const executablePath = process.argv[2]; // optional override
-
-const ICON_SIZES = [
-  { size: 192, out: 'icon-192.png' },
-  { size: 512, out: 'icon-512.png' },
-  { size: 180, out: 'apple-touch-icon.png' },
-];
 
 const SPLASH_SIZES = [
   { w: 1170, h: 2532 },
@@ -36,21 +30,6 @@ const SPLASH_SIZES = [
 ];
 
 const browser = await chromium.launch(executablePath ? { executablePath } : {});
-
-// Icons: load the raw SVG, resize its width/height attrs per target size.
-const iconPage = `file://${path.join(here, 'icon.svg')}`;
-for (const { size, out } of ICON_SIZES) {
-  const page = await browser.newPage({ viewport: { width: size, height: size }, deviceScaleFactor: 1 });
-  await page.goto(iconPage);
-  await page.evaluate((s) => {
-    const svg = document.querySelector('svg');
-    svg.setAttribute('width', String(s));
-    svg.setAttribute('height', String(s));
-  }, size);
-  await page.screenshot({ path: path.join(repoRoot, 'public', 'icons', out) });
-  console.log('wrote public/icons/' + out);
-  await page.close();
-}
 
 // Splash screens: the HTML template uses vw-relative sizing, so it scales
 // proportionally just from the viewport dimensions matching each target.

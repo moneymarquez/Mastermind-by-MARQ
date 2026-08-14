@@ -1,4 +1,4 @@
-import type { ChangeEvent, KeyboardEvent } from 'react';
+import type { ChangeEvent, CSSProperties, KeyboardEvent } from 'react';
 import type { NovaMessage } from '../types';
 import Icon from '../Icon';
 import { isSpeechRecognitionSupported } from '../lib/speech';
@@ -32,20 +32,44 @@ export default function NovaPanel({
   onClose, onInputChange, onKeyDown, onSend, onMicClick,
 }: Props) {
   const micSupported = isSpeechRecognitionSupported();
-  return (
-    <div
-      style={{
+
+  // Mobile gets a real bottom sheet, fixed to the true viewport edges (not
+  // absolute within Stage, which is what let it float over stat cards at
+  // whatever scroll position the page happened to be at) and full-width
+  // (not anchored to RemindersBox's narrow left edge, which is what pushed
+  // a 270px-wide panel past the right edge of the screen). Desktop keeps
+  // its original corner-stacked absolute positioning untouched.
+  const panelStyle: CSSProperties = isMobile
+    ? {
+        position: 'fixed',
+        left: 0, right: 0, bottom: 0, width: '100%',
+        height: 'min(72vh, 480px)',
+        borderRadius: '20px 20px 0 0',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        background: '#101114', border: '1px solid #22262B', borderTop: '1px solid #22262B', display: 'flex', flexDirection: 'column',
+        boxShadow: '0 -12px 40px rgba(0,0,0,0.55)', animation: 'sheetSlideUp 0.2s ease', zIndex: 60, overflow: 'hidden',
+      }
+    : {
         // Fixed to Stage's bottom-left corner — no longer anchored to the
         // draggable trigger circle's position. `env(safe-area-inset-*)` keeps
         // it clear of notches/home indicators when running as an installed PWA.
         position: 'absolute',
         left: stackLeft != null ? stackLeft : `calc(${SPACING}px + env(safe-area-inset-left))`,
         bottom: `calc(${SPACING + stackBottomOffset}px + env(safe-area-inset-bottom))`,
-        width: isMobile ? 270 : 320, height: isMobile ? 330 : 400,
+        width: 320, height: 400,
         background: '#101114', border: '1px solid #22262B', borderRadius: 16, display: 'flex', flexDirection: 'column',
         boxShadow: '0 20px 50px rgba(0,0,0,0.5)', animation: 'bubbleFade 0.18s ease', zIndex: 45, overflow: 'hidden',
-      }}
-    >
+      };
+
+  return (
+    <>
+      {isMobile && (
+        <div
+          onClick={onClose}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 59, animation: 'bubbleFade 0.18s ease' }}
+        />
+      )}
+      <div style={panelStyle}>
       <div style={{ display: 'flex', alignItems: 'center', padding: '14px 16px', borderBottom: '1px solid #1c1e23', fontSize: 13.5, fontWeight: 600, color: '#F5F6F7' }}>
         <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
           <Icon name="sparkle" style={{ marginRight: 8 }} color="#F5F6F7" />
@@ -105,6 +129,7 @@ export default function NovaPanel({
           <Icon name="arrow-up" color="#0A0B0D" />
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

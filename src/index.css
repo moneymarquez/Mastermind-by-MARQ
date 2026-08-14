@@ -22,6 +22,11 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes sheetSlideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes drawerIn {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }

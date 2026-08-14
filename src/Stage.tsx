@@ -92,16 +92,23 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         onClose={actions.closeDrawer}
       />
 
-      <NovaTrigger
-        cx={vm.cx}
-        cy={vm.cy}
-        circleSize={vm.circleSize}
-        dragging={state.dragging}
-        novaOpen={state.novaOpen}
-        onPointerDown={actions.onCirclePointerDown}
-        onPointerMove={actions.onCirclePointerMove}
-        onPointerUp={actions.onCirclePointerUp}
-      />
+      {/* Hidden on mobile while Nova's open — the bottom sheet has its own
+          close button, and leaving this visible put a floating "X" wherever
+          circlePos happened to sit (e.g. under the hamburger) with no visual
+          connection to the sheet at the bottom of the screen. Desktop keeps
+          it, since desktop's panel is anchored near the trigger itself. */}
+      {!(isMobile && state.novaOpen) && (
+        <NovaTrigger
+          cx={vm.cx}
+          cy={vm.cy}
+          circleSize={vm.circleSize}
+          dragging={state.dragging}
+          novaOpen={state.novaOpen}
+          onPointerDown={actions.onCirclePointerDown}
+          onPointerMove={actions.onCirclePointerMove}
+          onPointerUp={actions.onCirclePointerUp}
+        />
+      )}
 
       <div style={vm.contentStyle}>
         {state.screen === 'home' && (
