@@ -15,6 +15,7 @@ import FitnessScreen from './components/screens/FitnessScreen';
 import MacrosScreen from './components/screens/MacrosScreen';
 import GoalsScreen from './components/screens/GoalsScreen';
 import MentalHealthScreen from './components/screens/MentalHealthScreen';
+import ScalingStartScreen from './components/screens/ScalingStartScreen';
 import ScalingPlannerScreen from './components/screens/ScalingPlannerScreen';
 import BusinessAuditsScreen from './components/screens/BusinessAuditsScreen';
 import IdeaMakerScreen from './components/screens/IdeaMakerScreen';
@@ -46,7 +47,7 @@ import type { AppState, MastermindActions } from './state';
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
-  'scaling-planner', 'audits', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
+  'scaling-start', 'scaling-planner', 'audits', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings',
   'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules',
 ];
@@ -178,6 +179,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'mental' && (
           <MentalHealthScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} activeBender={bender.activeBender} />
+        )}
+
+        {state.screen === 'scaling-start' && (
+          <ScalingStartScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onNavigate={actions.navigateTo} />
         )}
 
         {state.screen === 'scaling-planner' && (

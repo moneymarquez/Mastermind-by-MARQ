@@ -43,6 +43,7 @@ export const NAV_DATA: NavGroup[] = [
   {
     group: 'Scaling',
     items: [
+      { id: 'scaling-start', label: 'Start', icon: 'ph-lightning' },
       { id: 'leadflow', label: 'LeadFlow', icon: 'ph-users-three' },
       { id: 'website', label: 'Website/App Builder', icon: 'ph-code' },
       { id: 'scaling-planner', label: 'Scaling Planner', icon: 'ph-rocket-launch' },
