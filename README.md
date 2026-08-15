@@ -530,37 +530,42 @@ to work at all, and for the DB-side half of the owner check below.
 This is the highest-risk change made to this app so far — it's a real gate in front of the whole thing — so it was
 built under explicit safety constraints, laid out here plainly rather than folded into the feature description.
 
-**Post-ship incident**: the first version of this shipped with the owner check depending *only* on the DB-side
-mechanism below. Since that requires `schema_023` to already be running before the code that calls it deploys,
-Cristopher's own account got shown the onboarding screen on first load — the exact "stranded owner" failure this
-whole feature was supposed to make impossible, caused by a migration-ordering gap, not a bug in the bypass logic
-itself. Fixed by adding a second, independent check that doesn't depend on any migration having run:
+**Post-ship incidents (two, both fixed)**:
 
-- **Two independent owner checks, either one is sufficient, evaluated before anything else in `useModuleAccess.ts`**:
-  1. **Email match** (checked first) — `supabase.auth.getUser().email === 'madebymarquez@icloud.com'` (Cristopher's
-     known account email). Works immediately regardless of migration state, RPC errors, or RLS — this is what makes
-     "the owner account gets stranded" structurally impossible from here on, independent of anything else in this
-     section.
-  2. **DB-side `is_owner()`** — `schema_023` bootstraps a new `app_owner` table to the very first account ever
-     created in this Supabase project (this app has never had public signup — every account so far is Cristopher's
-     own) — a real, literal `user_id`-based flag, set once at migration time, not a live heuristic evaluated on
-     every request. `is_owner()` is a `SECURITY DEFINER` Postgres function so any account can check whether *its
-     own* id is the owner without being able to read `app_owner`'s contents directly. Wrapped in a try/catch so a
-     missing function (migration not run) or any other RPC error falls through cleanly to "not owner" instead of
-     throwing — this is the server-side source of truth for anything that can't check email client-side (the
-     billing webhook, for instance).
+1. The first version shipped with the owner check depending *only* on a DB-side `is_owner()` RPC in
+   `useModuleAccess.ts`. Since that requires `schema_023` to already be running before the code that calls it
+   deploys, Cristopher's own account got shown the onboarding screen on first load. Fixed by moving the owner check
+   entirely out of that hook and into `src/auth/ownerIdentity.ts` — a synchronous, zero-network function called as
+   the literal first line of `AuthedGate.tsx`, using `userId`/`userEmail` already resolved by `App.tsx`'s
+   `useAuth()` before `AuthedGate` ever mounts. There's no request in flight for this check to race or fail behind.
+2. That rebuild still stranded the owner a second time — the `OWNER_EMAIL` fallback baked into
+   `src/auth/ownerIdentity.ts` (and mirrored in `worker/lib/auth.ts` for the LeadFlow owner gate) was set to
+   `madebymarquez@icloud.com`, which is **not** this account's real Supabase Auth email
+   (`marquez.cristopher@icloud.com`) — so the one check actually being relied on never matched, structurally
+   correct logic or not. Fixed by hardcoding `OWNER_USER_ID` to the account's real `auth.users.id`
+   (`a4b89df9-7122-424a-afb5-fc4871e0963b`, confirmed directly in Supabase Studio → Authentication → Users — also
+   the very first account ever created, matching `schema_023`'s `app_owner` bootstrap) as the primary check, and
+   correcting `OWNER_EMAIL` to the real address as a redundant fallback. **Lesson for future changes to this file**:
+   never assume an email address for the owner account without confirming it against Supabase Studio directly —
+   a wrong-but-plausible-looking email is a silent failure, not a build error.
+
+- **Two independent owner checks, either one is sufficient, evaluated first in `AuthedGate.tsx` via
+  `isOwnerIdentity()`**:
+  1. **`OWNER_USER_ID` match** (checked first) — the account's real, confirmed `auth.users.id`, hardcoded in
+     `src/auth/ownerIdentity.ts`. Zero network, zero heuristic.
+  2. **`OWNER_EMAIL` match** (fallback) — `marquez.cristopher@icloud.com`, compared case-insensitively and trimmed.
   - If either check passes, `AuthedGate.tsx` skips onboarding and the billing gate entirely and `canAccess()`
     returns true unconditionally for every module, so the owner's nav renders byte-for-byte identical to before
     this feature existed.
+  - `schema_023`'s DB-side `is_owner()`/`app_owner` still exist and are still correct, but are no longer load-bearing
+    for the client-side gate — they're a secondary, server-side source of truth for contexts with no session object
+    to read from (the billing webhook).
 - **Every schema change here is additive** — two new tables (`user_modules`, `subscriptions`) plus the tiny
   `app_owner` bootstrap table. Nothing in this migration alters, updates, or deletes a row in any pre-existing table.
-- **What could not be verified**: there's no way in this build environment to actually log in as Cristopher's real
-  account (no credentials available here) or drive a real browser through the fresh-signup flow, so the "log in and
-  confirm nothing's hidden/blank" and "test with a fresh account" verification steps could not be performed live.
-  What *was* verified: a full `npm run build` (tsc + vite) passes clean, the Worker bundles cleanly with the new
-  billing routes, and a careful code-level trace of `AuthedGate.tsx` confirms the owner-bypass short-circuit is
-  unconditional and evaluated first. **Please verify both scenarios yourself** (your own account shows everything
-  unchanged; a fresh test account gets onboarding → billing gate) before treating this as fully shipped.
+- **What could not be verified from this build environment**: there's no way here to actually log in as Cristopher's
+  real account (no credentials available) or drive a real browser through the fresh-signup flow — verification of
+  both scenarios (owner sees the real dashboard; a fresh account gets onboarding → billing gate) has to happen on
+  the live deployed app, by Cristopher, not from here.
 
 What's actually built:
 

@@ -11,14 +11,20 @@
 // screen once, live. There is no request in flight here for any of that
 // to happen to.
 //
-// OWNER_USER_ID is the durable, non-heuristic identity check requested
-// for this gate — the account's real auth.users.id, hardcoded. It's left
-// null until that id is supplied (Supabase Studio → Authentication →
-// Users → copy the id for madebymarquez@icloud.com); OWNER_EMAIL alone is
-// still a real, fixed identity check (not a heuristic) and is sufficient
-// on its own until then. Either match is enough.
-export const OWNER_USER_ID: string | null = null;
-export const OWNER_EMAIL = 'madebymarquez@icloud.com';
+// OWNER_USER_ID is the durable, non-heuristic identity check this gate
+// requires — the account's real auth.users.id, hardcoded, confirmed
+// directly from Supabase Studio → Authentication → Users (first account
+// ever created, matching schema_023's app_owner bootstrap). This is now
+// the primary check.
+//
+// OWNER_EMAIL was wrong for a while — it was set to madebymarquez@icloud.com,
+// which doesn't match this account's real Supabase Auth email at all. That
+// mismatch is what caused the owner to be shown onboarding: this file's
+// email fallback was the ONLY thing checked before OWNER_USER_ID was
+// filled in, and it never matched. Fixed to the real address below; kept
+// only as a redundant fallback now that the ID is the primary check.
+export const OWNER_USER_ID: string | null = 'a4b89df9-7122-424a-afb5-fc4871e0963b';
+export const OWNER_EMAIL = 'marquez.cristopher@icloud.com';
 
 export interface IdentityLike {
   id?: string | null;

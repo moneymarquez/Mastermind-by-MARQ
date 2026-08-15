@@ -22,14 +22,20 @@ export async function requireUser(request: Request, supabaseUrl: string, supabas
   return (await authRes.json()) as AuthedUser;
 }
 
-// Mirrors src/auth/ownerIdentity.ts's email check — the Worker has no
-// session object to read from (every request is stateless), so this is
-// the server-side equivalent: a fixed, synchronous, non-heuristic identity
-// check with no dependency on is_owner() or schema_023 having been run.
-const OWNER_EMAIL = 'madebymarquez@icloud.com';
+// Mirrors src/auth/ownerIdentity.ts — the Worker has no session object to
+// read from (every request is stateless), so this is the server-side
+// equivalent: a fixed, synchronous, non-heuristic identity check with no
+// dependency on is_owner() or schema_023 having been run. OWNER_USER_ID
+// is the primary check, confirmed directly from Supabase Studio; the
+// email was wrong for a while (madebymarquez@icloud.com doesn't match
+// this account's real address) and is now fixed and kept only as a
+// redundant fallback.
+const OWNER_USER_ID = 'a4b89df9-7122-424a-afb5-fc4871e0963b';
+const OWNER_EMAIL = 'marquez.cristopher@icloud.com';
 
 export function isOwnerUser(user: AuthedUser): boolean {
-  return !!user.email && user.email.toLowerCase() === OWNER_EMAIL.toLowerCase();
+  if (user.id === OWNER_USER_ID) return true;
+  return !!user.email && user.email.trim().toLowerCase() === OWNER_EMAIL.toLowerCase();
 }
 
 // Server-side gate for owner-only routes (currently: the LeadFlow proxy —
