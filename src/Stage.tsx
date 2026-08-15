@@ -32,16 +32,18 @@ import CallRecordingsScreen from './components/screens/CallRecordingsScreen';
 import WebsiteBuilderRoadmapScreen from './components/screens/WebsiteBuilderRoadmapScreen';
 import InvoicingScreen from './components/screens/InvoicingScreen';
 import BudgetingScreen from './components/screens/BudgetingScreen';
+import MarketingScreen from './components/screens/MarketingScreen';
 import ManageModulesScreen from './components/screens/ManageModulesScreen';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
 import { buildViewModel } from './viewModel';
+import { moduleKeyForRoute } from './modules.config';
 import type { AppState, MastermindActions } from './state';
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
   'scaling-planner', 'audits', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings',
-  'call-recordings', 'website', 'invoicing', 'budgeting', 'manage-modules',
+  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'manage-modules',
 ];
 
 interface Props {
@@ -58,6 +60,17 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   const vm = buildViewModel(state, actions.navigateTo, onSignOut, canAccess);
   const { isMobile } = vm;
   const bender = useBender();
+
+  // Second, screen-level access check — buildNavData only ever filters
+  // which rows the nav *drawer* shows; it doesn't stop state.screen from
+  // being set to something un-navigated-to (nothing currently prevents
+  // that). Without this, a gated screen's UI shell (though never its
+  // actual data — every table backing these screens has its own RLS) was
+  // still reachable. moduleKeyForRoute returns undefined for system-level
+  // screens (home, settings, codelab, manage-modules, placeholder), which
+  // always pass through unblocked.
+  const routeModuleKey = moduleKeyForRoute(state.screen);
+  const screenBlocked = routeModuleKey ? !canAccess(routeModuleKey) : false;
 
   // Measures RemindersBox (which is position:absolute inside this same
   // position:relative Stage, so offsetLeft/offsetHeight are already in the
@@ -114,6 +127,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
       )}
 
       <div style={vm.contentStyle}>
+        {screenBlocked ? (
+          <PlaceholderScreen isMobile={isMobile} label="Not available" note="This section isn't available on your account." />
+        ) : (
+          <>
         {state.screen === 'home' && (
           <HomeScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} statGridStyle={vm.statGridStyle} statCards={vm.statCards} onOpenNova={actions.openNova} assistantName={assistantName} />
         )}
@@ -226,12 +243,18 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <BudgetingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
+        {state.screen === 'marketing' && (
+          <MarketingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
         {state.screen === 'manage-modules' && (
           <ManageModulesScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} currentUserId={currentUserId} isOwner={isOwner} />
         )}
 
         {(state.screen === 'placeholder' || !BUILT_SCREENS.includes(state.screen)) && (
           <PlaceholderScreen isMobile={isMobile} label={state.placeholderLabel} note={state.placeholderNote} />
+        )}
+          </>
         )}
       </div>
 

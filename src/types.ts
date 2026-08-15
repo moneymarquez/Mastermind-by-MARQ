@@ -25,6 +25,7 @@ export type Screen =
   | 'website'
   | 'invoicing'
   | 'budgeting'
+  | 'marketing'
   | 'manage-modules'
   | 'placeholder';
 

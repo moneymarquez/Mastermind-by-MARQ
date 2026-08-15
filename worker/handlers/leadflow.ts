@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { requireUser } from '../lib/auth';
+import { requireOwner } from '../lib/auth';
 
 // LeadFlow's own Supabase project (github.com/moneymarquez/leadflow) — a
 // second project, separate from Mastermind's. Its `leads`/`history`/
@@ -30,8 +30,13 @@ function notConfigured(): Response {
   );
 }
 
+// requireOwner, not requireUser — LeadFlow is Scaling-category and Scaling
+// is owner-only end to end. This is the actual enforcement for it: unlike
+// every other Scaling module, LeadFlow's data lives in a wholly separate
+// Supabase project with no RLS tie to Mastermind's own auth, so nothing
+// but this check stands between a signed-in non-owner and the proxy.
 async function requireLeadflowAuth(request: Request, env: LeadflowEnv): Promise<Response | null> {
-  const user = await requireUser(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+  const user = await requireOwner(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
   if (user instanceof Response) return user;
   if (!env.LEADFLOW_SUPABASE_SERVICE_ROLE_KEY) return notConfigured();
   return null;

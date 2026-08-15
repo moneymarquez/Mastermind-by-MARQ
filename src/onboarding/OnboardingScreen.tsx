@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import ModulePicker from './ModulePicker';
-import { MODULE_KEYS } from '../modules.config';
+import { SELECTABLE_MODULE_KEYS } from '../modules.config';
 
 interface Props {
   onComplete: (selectedKeys: string[]) => Promise<void>;
 }
 
 export default function OnboardingScreen({ onComplete }: Props) {
-  const [selected, setSelected] = useState<Set<string>>(new Set(MODULE_KEYS));
+  const [selected, setSelected] = useState<Set<string>>(new Set(SELECTABLE_MODULE_KEYS));
   const [saving, setSaving] = useState(false);
 
   const toggle = (key: string) => {
@@ -38,7 +38,7 @@ export default function OnboardingScreen({ onComplete }: Props) {
 
         <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, background: 'linear-gradient(180deg, transparent, #0A0B0D 40%)', padding: '32px 24px 24px', display: 'flex', justifyContent: 'center' }}>
           <div style={{ width: '100%', maxWidth: 760, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontSize: 12, color: '#565b64' }}>{selected.size} of {MODULE_KEYS.length} selected</div>
+            <div style={{ fontSize: 12, color: '#565b64' }}>{selected.size} of {SELECTABLE_MODULE_KEYS.length} selected</div>
             <button
               onClick={submit}
               disabled={saving}

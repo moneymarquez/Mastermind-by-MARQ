@@ -48,6 +48,7 @@ export const NAV_DATA: NavGroup[] = [
       { id: 'brand-lab', label: 'Brand Lab', icon: 'ph-flask' },
       { id: 'idea-maker', label: 'Idea Maker', icon: 'ph-lightbulb' },
       { id: 'invoicing', label: 'Invoicing', icon: 'ph-receipt' },
+      { id: 'marketing', label: 'Marketing', icon: 'ph-megaphone' },
     ],
   },
   {

@@ -16,6 +16,15 @@ export interface ModuleDef {
    *  features are inert until ANTHROPIC_API_KEY is funded — matches the
    *  graceful-degradation pattern already used throughout the app. */
   requiresAI: boolean;
+  /** Owner-only: never selectable during onboarding, never addable via
+   *  Manage modules, and canAccess() returns false for it regardless of
+   *  what's in user_modules — see useModuleAccess.ts. Shown as a locked
+   *  preview tile in the onboarding picker (ModulePicker.tsx) rather than
+   *  omitted outright, per the "can appear in the demo preview, just can't
+   *  be selected" requirement. The whole Scaling category is currently
+   *  owner-only, not just Marketing — see the CRITICAL ACCESS RESTRICTION
+   *  note in supabase/schema_025_marketing_scaling_owner_only.sql. */
+  ownerOnly?: boolean;
 }
 
 // Every selectable section in the app, used by both the onboarding module
@@ -34,13 +43,17 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { key: 'fitness', label: 'Fitness', category: null, description: 'AI-generated workout/diet plans, full workout library, live workout mode.', icon: 'ph-barbell', routes: ['fitness'], requiresAI: true },
   { key: 'dialing', label: 'Dialing/Contacts', category: 'Cold Calling', description: 'Cold-calling queue, outcome tracking, and your Dialing/Scaling contacts.', icon: 'ph-phone-call', routes: ['dialing', 'contacts'], requiresAI: false },
   { key: 'call-recordings', label: 'Call Recordings', category: 'Cold Calling', description: 'Upload and organize call recordings, linked to contacts.', icon: 'ph-microphone', routes: ['call-recordings'], requiresAI: false },
-  { key: 'leadflow', label: 'LeadFlow', category: 'Scaling', description: 'Your LeadFlow CRM — Dashboard, War Room, Lead Pool, Lead Finder, and more.', icon: 'ph-users-three', routes: ['leadflow'], requiresAI: true },
-  { key: 'website', label: 'Website/App Builder', category: 'Scaling', description: "Website/App Builder roadmap — what's coming.", icon: 'ph-code', routes: ['website'], requiresAI: false },
-  { key: 'scaling-planner', label: 'Scaling Planner', category: 'Scaling', description: 'Guided questionnaire, real AI-generated business scaling plan.', icon: 'ph-rocket-launch', routes: ['scaling-planner'], requiresAI: true },
-  { key: 'audits', label: 'Business Audits', category: 'Scaling', description: 'AI-scored business audit grounded in the Scaling 101 curriculum.', icon: 'ph-clipboard-text', routes: ['audits'], requiresAI: true },
-  { key: 'brand-lab', label: 'Brand Lab', category: 'Scaling', description: 'AI-generated visual brand design directions.', icon: 'ph-flask', routes: ['brand-lab'], requiresAI: true },
-  { key: 'idea-maker', label: 'Idea Maker', category: 'Scaling', description: 'Real back-and-forth AI conversation to pressure-test a business idea.', icon: 'ph-lightbulb', routes: ['idea-maker'], requiresAI: true },
-  { key: 'invoicing', label: 'Invoicing', category: 'Scaling', description: 'The Made by Marq 9-document client invoicing system.', icon: 'ph-receipt', routes: ['invoicing'], requiresAI: false },
+  // The entire Scaling category is owner-only, not just Marketing —
+  // ownerOnly: true on every entry below is deliberate, per the explicit
+  // "entire Scaling section is owner-only" requirement, not an oversight.
+  { key: 'leadflow', label: 'LeadFlow', category: 'Scaling', description: 'Your LeadFlow CRM — Dashboard, War Room, Lead Pool, Lead Finder, and more.', icon: 'ph-users-three', routes: ['leadflow'], requiresAI: true, ownerOnly: true },
+  { key: 'website', label: 'Website/App Builder', category: 'Scaling', description: "Website/App Builder roadmap — what's coming.", icon: 'ph-code', routes: ['website'], requiresAI: false, ownerOnly: true },
+  { key: 'scaling-planner', label: 'Scaling Planner', category: 'Scaling', description: 'Guided questionnaire, real AI-generated business scaling plan.', icon: 'ph-rocket-launch', routes: ['scaling-planner'], requiresAI: true, ownerOnly: true },
+  { key: 'audits', label: 'Business Audits', category: 'Scaling', description: 'AI-scored business audit grounded in the Scaling 101 curriculum.', icon: 'ph-clipboard-text', routes: ['audits'], requiresAI: true, ownerOnly: true },
+  { key: 'brand-lab', label: 'Brand Lab', category: 'Scaling', description: 'AI-generated visual brand design directions.', icon: 'ph-flask', routes: ['brand-lab'], requiresAI: true, ownerOnly: true },
+  { key: 'idea-maker', label: 'Idea Maker', category: 'Scaling', description: 'Real back-and-forth AI conversation to pressure-test a business idea.', icon: 'ph-lightbulb', routes: ['idea-maker'], requiresAI: true, ownerOnly: true },
+  { key: 'invoicing', label: 'Invoicing', category: 'Scaling', description: 'The Made by Marq 9-document client invoicing system.', icon: 'ph-receipt', routes: ['invoicing'], requiresAI: false, ownerOnly: true },
+  { key: 'marketing', label: 'Marketing', category: 'Scaling', description: 'Asset storage, campaign tracking, and content pipeline.', icon: 'ph-megaphone', routes: ['marketing'], requiresAI: true, ownerOnly: true },
   { key: 'stocks', label: 'Stocks', category: 'Side Hustles', description: 'Paper-trading bot on Alpaca with AI daily commentary.', icon: 'ph-chart-line-up', routes: ['stocks'], requiresAI: true },
   { key: 'content', label: 'Content Creation', category: 'Side Hustles', description: 'Content planning (placeholder for now).', icon: 'ph-video-camera', routes: [], requiresAI: false },
   { key: 'streaming', label: 'Streaming', category: 'Side Hustles', description: 'Streaming idea bank and calendar.', icon: 'ph-video-camera', routes: ['streaming'], requiresAI: false },
@@ -48,3 +61,24 @@ export const MODULE_REGISTRY: ModuleDef[] = [
 ];
 
 export const MODULE_KEYS = MODULE_REGISTRY.map((m) => m.key);
+
+const ROUTE_TO_MODULE: Record<string, string> = {};
+for (const m of MODULE_REGISTRY) {
+  for (const route of m.routes) ROUTE_TO_MODULE[route] = m.key;
+}
+
+/** The module key gating a given screen, if any — system-level screens
+ *  (home, settings, codelab, manage-modules, placeholder) have none. Used
+ *  by Stage.tsx as a second, screen-level access check: buildNavData only
+ *  ever filters the nav *drawer*, not what state.screen is allowed to be,
+ *  so without this a screen was reachable by anything that set
+ *  state.screen directly, bypassing the nav filter entirely. */
+export function moduleKeyForRoute(route: string): string | undefined {
+  return ROUTE_TO_MODULE[route];
+}
+
+/** Keys a non-owner account can actually pick during onboarding or add
+ *  later via Manage modules. Excludes ownerOnly modules entirely — those
+ *  are shown as locked preview tiles instead (see ModulePicker.tsx), never
+ *  toggled on for a non-owner account. */
+export const SELECTABLE_MODULE_KEYS = MODULE_REGISTRY.filter((m) => !m.ownerOnly).map((m) => m.key);

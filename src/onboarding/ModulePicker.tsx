@@ -37,6 +37,26 @@ export default function ModulePicker({ selected, onToggle }: Props) {
             )}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10 }}>
               {items.map((m) => {
+                // Owner-only modules (the whole Scaling category right now)
+                // render as a locked preview — visible so onboarding still
+                // shows what the platform can do, but not clickable and
+                // never added to `selected`, so they can't end up selected
+                // for a non-owner account no matter what.
+                if (m.ownerOnly) {
+                  return (
+                    <div key={m.key} style={{ ...cardStyle(false), cursor: 'default', opacity: 0.55 }}>
+                      <Icon name="lock" size={16} color="#565b64" style={{ marginTop: 1, flexShrink: 0 }} />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Icon name={m.icon} size={14} color="#565b64" />
+                          <div style={{ fontSize: 13.5, fontWeight: 600, color: '#8A8F98' }}>{m.label}</div>
+                        </div>
+                        <div style={{ fontSize: 11.5, color: '#565b64', marginTop: 4, lineHeight: 1.5 }}>{m.description}</div>
+                        <div style={{ fontSize: 10, color: '#565b64', marginTop: 4 }}>Owner-managed — not available on this account.</div>
+                      </div>
+                    </div>
+                  );
+                }
                 const active = selected.has(m.key);
                 return (
                   <div key={m.key} style={cardStyle(active)} onClick={() => onToggle(m.key)}>

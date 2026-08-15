@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { MODULE_KEYS } from '../modules.config';
+import { MODULE_KEYS, MODULE_REGISTRY } from '../modules.config';
+
+// The authoritative enforcement point for "owner-only modules are never
+// accessible to a non-owner" — independent of what onboarding/Manage
+// modules ever let a non-owner select, and independent of what
+// user_modules happens to contain for them. Even if a stray row somehow
+// existed there, canAccess() below still refuses it for these keys.
+const OWNER_ONLY_KEYS = new Set(MODULE_REGISTRY.filter((m) => m.ownerOnly).map((m) => m.key));
 
 export interface ModuleAccess {
   loading: boolean;
@@ -50,11 +57,18 @@ export function useModuleAccess(userId: string, isOwner: boolean): ModuleAccess 
     load();
   }, [load]);
 
-  const canAccess = (moduleKey: string) => isOwner || enabledKeys.has(moduleKey);
+  const canAccess = (moduleKey: string) => {
+    if (OWNER_ONLY_KEYS.has(moduleKey)) return isOwner;
+    return isOwner || enabledKeys.has(moduleKey);
+  };
 
   const saveModuleSelections = async (keys: string[]) => {
     if (!userId) return;
-    const rows = keys.map((module_key) => ({ user_id: userId, module_key, enabled: true }));
+    // Belt-and-suspenders: even if a caller somehow passed an owner-only
+    // key through (the picker itself never lets a non-owner select one),
+    // it's dropped here before it ever reaches the database.
+    const filtered = isOwner ? keys : keys.filter((k) => !OWNER_ONLY_KEYS.has(k));
+    const rows = filtered.map((module_key) => ({ user_id: userId, module_key, enabled: true }));
     await supabase.from('user_modules').upsert(rows, { onConflict: 'user_id,module_key' });
     await load();
   };
