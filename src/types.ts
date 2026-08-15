@@ -29,6 +29,7 @@ export type Screen =
   | 'decisions'
   | 'weekly-review'
   | 'cashflow'
+  | 'patterns'
   | 'manage-modules'
   | 'placeholder';
 
