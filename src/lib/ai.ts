@@ -34,6 +34,37 @@ export async function askClaude(opts: AskClaudeOptions): Promise<string> {
   return body.text as string;
 }
 
+// Nova's own endpoint — same shape as askClaude, but hits a Worker-native
+// route (worker/handlers/nova-chat.ts) that gives Claude tool access to
+// every module's data via a generic query/write pair, scoped to the
+// caller's own Supabase RLS via their JWT. Plain chat (no data access)
+// still goes through askClaude/api/claude; anything that should be able
+// to read or act on the user's real data goes through this instead.
+export async function askNova(opts: AskClaudeOptions): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new AiError('Not signed in.');
+
+  let res: Response;
+  try {
+    res = await fetch('/api/nova-chat', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify(opts),
+    });
+  } catch {
+    throw new AiError('Could not reach Nova right now — try again in a bit.');
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new AiError(body.error || `Nova request failed (${res.status})`);
+  }
+
+  const body = await res.json();
+  return body.text as string;
+}
+
 // Strips a ```json ... ``` fence or any leading/trailing prose so JSON-mode prompts
 // can be parsed even when the model wraps the object in commentary.
 export function extractJson<T>(text: string): T {

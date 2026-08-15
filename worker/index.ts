@@ -27,10 +27,12 @@ import { leadflowLeads, leadflowLeadUpdate, leadflowHistory, leadflowMessages, l
 import type { LeadflowEnv } from './handlers/leadflow';
 import { createSubscriptionIntent, stripeWebhook } from './handlers/billing';
 import type { BillingEnv } from './handlers/billing';
+import { novaChat } from './handlers/nova-chat';
+import type { NovaChatEnv } from './handlers/nova-chat';
 
 const NETLIFY_ORIGIN = 'https://mastermindbymarq.netlify.app';
 
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
@@ -51,6 +53,8 @@ export default {
 
     if (url.pathname === '/api/billing/create-subscription') return createSubscriptionIntent(request, env);
     if (url.pathname === '/api/billing/webhook') return stripeWebhook(request, env);
+
+    if (url.pathname === '/api/nova-chat') return novaChat(request, env);
 
     if (url.pathname.startsWith('/api/')) {
       const target = new URL(url.pathname + url.search, NETLIFY_ORIGIN);

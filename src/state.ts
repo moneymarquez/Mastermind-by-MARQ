@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { NAV_DATA, INITIAL_STICKY_IDEAS, PLACEHOLDER_NOTES } from './data';
 import type { NovaMessage, Point, Screen, StickyIdea } from './types';
-import { askClaude, AiError } from './lib/ai';
+import { askNova, AiError } from './lib/ai';
+import { supabase } from './lib/supabase';
 import { useNovaPreferences } from './data/useNovaPreferences';
 import { startListening } from './lib/speech';
 import type { SpeechRecognizerHandle } from './lib/speech';
@@ -203,16 +204,37 @@ export function useMastermindState() {
 
     patch((s) => ({ novaMessages: [...s.novaMessages, { from: 'user', text }], novaInput: '', novaThinking: true }));
 
+    // Context awareness + long-term memory: what screen this is being
+    // asked from, and whatever durable facts Nova has written about this
+    // person via write_data on nova_memory in past conversations (see
+    // worker/handlers/nova-chat.ts) — both folded into the system prompt
+    // so Nova isn't starting cold every message.
+    const [memoryRes, nudgesRes] = await Promise.all([
+      supabase.from('nova_memory').select('fact').order('created_at', { ascending: false }).limit(20),
+      supabase.from('nudges').select('message').is('dismissed_at', null).order('created_at', { ascending: false }).limit(5),
+    ]);
+    const memoryFacts = (memoryRes.data ?? []).map((r) => r.fact);
+    const activeNudges = (nudgesRes.data ?? []).map((r) => r.message);
+
     let reply: string;
     try {
-      reply = await askClaude({
+      reply = await askNova({
         system:
-          `You are ${assistantName}, Cristopher's personal AI inside Mastermind by MARQ — his personal operating ` +
-          'system app (sobriety, fitness, macros, goals, mental health, and his business-scaling tools). Concise — ' +
-          "a few sentences, not an essay. You're a companion embedded in his day, not a generic chatbot. " +
-          (TONE_INSTRUCTIONS[tone] ?? TONE_INSTRUCTIONS.direct),
+          `You are ${assistantName}, Cristopher's personal AI inside Mastermind by MARQ — the connective tissue across ` +
+          'every module (sobriety, fitness, macros, goals, decisions, budgeting, cash flow, mental health, dialing/CRM, ' +
+          'and his business-scaling tools), not a sidebar chatbot. Concise — a few sentences, not an essay, unless the ' +
+          "question genuinely needs more. You have real read/write access to his data via tools — use query_data to " +
+          "look something up before answering rather than guessing, and use write_data to actually create/update/complete " +
+          "records when he asks for that conversationally (log an expense, add a contact, set a goal, log a decision, " +
+          "mark something done). When you learn a durable fact about how he operates, preferences, or patterns worth " +
+          "remembering long-term, write it to nova_memory (fact: string) via write_data — not every message, just things " +
+          "actually worth carrying forward. " +
+          `He is currently on the "${state.screen}" screen — factor that in if relevant. ` +
+          (memoryFacts.length ? `\n\nWhat you've learned about him so far:\n${memoryFacts.map((f) => `- ${f}`).join('\n')}` : '') +
+          (activeNudges.length ? `\n\nActive nudges he hasn't dismissed (mention proactively if relevant to what he's asking):\n${activeNudges.map((n) => `- ${n}`).join('\n')}` : '') +
+          '\n\n' + (TONE_INSTRUCTIONS[tone] ?? TONE_INSTRUCTIONS.direct),
         messages: [...trimmedHistory, { role: 'user', content: text }],
-        maxTokens: 500,
+        maxTokens: 700,
       });
     } catch (err) {
       reply = err instanceof AiError ? err.message : `Something went wrong reaching ${assistantName} — try again in a bit.`;
