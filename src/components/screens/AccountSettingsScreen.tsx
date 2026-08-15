@@ -7,6 +7,7 @@ interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
   onSignOut: () => void;
+  onStartTour: () => void;
 }
 
 const cardStyle: CSSProperties = { background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: 20, maxWidth: 480 };
@@ -27,7 +28,7 @@ const dangerBtn: CSSProperties = {
   border: '1px solid #c47a7a55', color: '#c47a7a', fontSize: 13, cursor: 'pointer', alignSelf: 'flex-start',
 };
 
-export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onSignOut }: Props) {
+export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onSignOut, onStartTour }: Props) {
   const [user, setUser] = useState<User | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [savingName, setSavingName] = useState(false);
@@ -85,6 +86,14 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
       <div style={homeSubStyle}>Your login, name, and account-level actions.</div>
 
       <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={cardStyle}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7', marginBottom: 12 }}>Product tour</div>
+          <div style={{ fontSize: 12.5, color: '#8A8F98', marginBottom: 12, lineHeight: 1.5 }}>
+            A guided walkthrough of the app — handy for getting reoriented, or for showing someone else around live.
+          </div>
+          <div style={ghostBtn} onClick={onStartTour}>Take the product tour</div>
+        </div>
+
         <div style={cardStyle}>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7', marginBottom: 12 }}>Profile</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

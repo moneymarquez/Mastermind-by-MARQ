@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import Logo from './components/Logo';
 import NavDrawer from './components/NavDrawer';
@@ -41,6 +41,7 @@ import PatternDetectionScreen from './components/screens/PatternDetectionScreen'
 import VoiceCaptureScreen from './components/screens/VoiceCaptureScreen';
 import ManageModulesScreen from './components/screens/ManageModulesScreen';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
+import ProductTour, { filterTourSteps } from './components/ProductTour';
 import { buildViewModel } from './viewModel';
 import { moduleKeyForRoute } from './modules.config';
 import type { AppState, MastermindActions } from './state';
@@ -78,6 +79,24 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   const routeModuleKey = moduleKeyForRoute(state.screen);
   const screenBlocked = routeModuleKey ? !canAccess(routeModuleKey) : false;
 
+  // Product tour — on-demand only (help icon or Settings), never
+  // auto-started. Steps are filtered by the same canAccess used for
+  // screen-level gating above, so a non-owner account (or one that never
+  // selected a given module) just skips that stop instead of landing on a
+  // "not available" screen mid-tour.
+  const [tourActive, setTourActive] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
+  const tourSteps = useMemo(() => filterTourSteps(canAccess), [canAccess]);
+  const startTour = () => { setTourStep(0); setTourActive(true); };
+  const stopTour = () => setTourActive(false);
+
+  useEffect(() => {
+    if (!tourActive) return;
+    const step = tourSteps[tourStep];
+    if (step?.screen && step.screen !== state.screen) actions.goScreen(step.screen);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tourActive, tourStep]);
+
   // Measures RemindersBox (which is position:absolute inside this same
   // position:relative Stage, so offsetLeft/offsetHeight are already in the
   // right coordinate space) so Nova can stack directly above it on mobile —
@@ -114,6 +133,20 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         onClose={actions.closeDrawer}
       />
 
+      {!tourActive && (
+        <div
+          title="Take the product tour"
+          onClick={startTour}
+          style={{
+            position: 'absolute', top: 'calc(24px + env(safe-area-inset-top))', right: 72, width: 42, height: 42, borderRadius: '50%',
+            background: '#14161A', border: '1px solid #22262B', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', cursor: 'pointer', zIndex: 41, fontSize: 15, fontWeight: 700, color: '#8A8F98',
+          }}
+        >
+          ?
+        </div>
+      )}
+
       {/* Hidden on mobile while Nova's open — the bottom sheet has its own
           close button, and leaving this visible put a floating "X" wherever
           circlePos happened to sit (e.g. under the hamburger) with no visual
@@ -132,7 +165,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         />
       )}
 
-      <div style={vm.contentStyle}>
+      <div id="tour-content-panel" style={vm.contentStyle}>
         {screenBlocked ? (
           <PlaceholderScreen isMobile={isMobile} label="Not available" note="This section isn't available on your account." />
         ) : (
@@ -230,7 +263,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'account-settings' && (
-          <AccountSettingsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onSignOut={onSignOut} />
+          <AccountSettingsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onSignOut={onSignOut} onStartTour={startTour} />
         )}
 
         {state.screen === 'prompt-voice-settings' && (
@@ -307,6 +340,15 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
       )}
 
       <RemindersBox ref={remindersRef} isMobile={isMobile} />
+
+      <ProductTour
+        active={tourActive}
+        steps={tourSteps}
+        stepIndex={tourStep}
+        onNext={() => (tourStep >= tourSteps.length - 1 ? stopTour() : setTourStep((i) => i + 1))}
+        onBack={() => setTourStep((i) => Math.max(0, i - 1))}
+        onSkip={stopTour}
+      />
     </div>
   );
 }

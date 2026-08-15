@@ -1,0 +1,152 @@
+import { useLayoutEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
+import type { Screen } from '../types';
+import { moduleKeyForRoute } from '../modules.config';
+import Icon from '../Icon';
+
+export interface TourStep {
+  id: string;
+  title: string;
+  body: string;
+  screen?: Screen;
+  target: 'content' | 'nova';
+}
+
+// The 10 stops called out in the product-tour spec. Steps gated by module
+// access (canAccess) are filtered out per-account in Stage.tsx before this
+// list is used, so a non-owner account (or one that never selected e.g.
+// Fitness) simply skips those steps rather than showing a spotlight around
+// a screen it can't actually open.
+export const TOUR_STEPS: TourStep[] = [
+  { id: 'overview', title: 'Overview', body: "This is home base — a live snapshot across everything you're tracking, updated in real time as the day moves.", screen: 'home', target: 'content' },
+  { id: 'daily-plan', title: 'Daily Plan', body: 'Every morning this builds a real plan from your schedule, goals, and what actually needs attention — not a generic checklist.', screen: 'daily-plan', target: 'content' },
+  { id: 'macros', title: 'Macros & Meals', body: 'Log meals by photo or barcode, track macros against real targets, and get flagged the moment a pattern shows up.', screen: 'macros', target: 'content' },
+  { id: 'fitness', title: 'Fitness', body: 'A full workout library plus a custom plan generated from a short questionnaire, with live workout mode built in.', screen: 'fitness', target: 'content' },
+  { id: 'budgeting', title: 'Budgeting', body: 'Real categories, subscriptions tracked automatically, and cash-flow forecasting instead of a static spreadsheet.', screen: 'budgeting', target: 'content' },
+  { id: 'scaling-start', title: 'Scaling — Start', body: 'The guided entry point for a new client project — Idea Maker, Brand Lab, Website Builder, and Scaling Planner, chained together with a persistent trail.', screen: 'scaling-start', target: 'content' },
+  { id: 'brand-lab', title: 'Brand Lab', body: 'A visual design-direction generator — distinct concepts to react to and refine. Not a site builder.', screen: 'brand-lab', target: 'content' },
+  { id: 'website', title: 'Website & App Builder', body: "Where a project's live build happens. Currently in active development — its roadmap is shown here.", screen: 'website', target: 'content' },
+  { id: 'invoicing', title: 'Invoicing', body: 'A real nine-document client system — agreements, invoices, briefs, and more — generated and tracked in one place.', screen: 'invoicing', target: 'content' },
+  { id: 'nova', title: 'Nova', body: "This is Nova — full read/write access across every module, and the thing that actually ties this whole system together.", target: 'nova' },
+];
+
+export function filterTourSteps(canAccess: (moduleKey: string) => boolean): TourStep[] {
+  return TOUR_STEPS.filter((s) => {
+    if (!s.screen) return true;
+    const key = moduleKeyForRoute(s.screen);
+    return !key || canAccess(key);
+  });
+}
+
+interface Props {
+  active: boolean;
+  steps: TourStep[];
+  stepIndex: number;
+  onNext: () => void;
+  onBack: () => void;
+  onSkip: () => void;
+}
+
+const SELECTOR_BY_TARGET: Record<TourStep['target'], string> = {
+  content: '#tour-content-panel',
+  nova: '[data-tour-target="nova-trigger"]',
+};
+
+export default function ProductTour({ active, steps, stepIndex, onNext, onBack, onSkip }: Props) {
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const step = steps[stepIndex];
+
+  useLayoutEffect(() => {
+    if (!active || !step) return;
+    setRect(null);
+    let frame = 0;
+    let tries = 0;
+    const measure = () => {
+      const el = document.querySelector(SELECTOR_BY_TARGET[step.target]);
+      if (el) {
+        setRect(el.getBoundingClientRect());
+      } else if (tries < 20) {
+        tries += 1;
+        frame = requestAnimationFrame(measure);
+      }
+    };
+    frame = requestAnimationFrame(measure);
+    const onResize = () => {
+      const el = document.querySelector(SELECTOR_BY_TARGET[step.target]);
+      if (el) setRect(el.getBoundingClientRect());
+    };
+    window.addEventListener('resize', onResize);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [active, step, stepIndex]);
+
+  if (!active || !step) return null;
+
+  const pad = 8;
+  const holeStyle: CSSProperties = rect
+    ? {
+        position: 'fixed',
+        top: rect.top - pad,
+        left: rect.left - pad,
+        width: rect.width + pad * 2,
+        height: rect.height + pad * 2,
+        borderRadius: 16,
+        boxShadow: '0 0 0 9999px rgba(6,7,9,0.8)',
+        border: '1px solid #F5F6F755',
+        pointerEvents: 'none',
+        transition: 'top 0.2s ease, left 0.2s ease, width 0.2s ease, height 0.2s ease',
+        zIndex: 90,
+      }
+    : {
+        position: 'fixed', inset: 0, background: 'rgba(6,7,9,0.8)', pointerEvents: 'none', zIndex: 90,
+      };
+
+  return (
+    <>
+      <div style={holeStyle} />
+      <div
+        style={{
+          position: 'fixed', top: 'calc(88px + env(safe-area-inset-top))', left: '50%', transform: 'translateX(-50%)',
+          width: 340, maxWidth: 'calc(100vw - 32px)', background: '#14161A', border: '1px solid #22262B',
+          borderRadius: 14, padding: '18px 20px', zIndex: 92, boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {steps.map((s, i) => (
+              <div key={s.id} style={{ width: 14, height: 3, borderRadius: 999, background: i <= stepIndex ? '#F5F6F7' : '#2b2f36' }} />
+            ))}
+          </div>
+          <div style={{ cursor: 'pointer' }} onClick={onSkip} title="Skip tour">
+            <Icon name="x" size={15} color="#565b64" />
+          </div>
+        </div>
+
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#F5F6F7', marginBottom: 6 }}>{step.title}</div>
+        <div style={{ fontSize: 12.5, color: '#8A8F98', lineHeight: 1.55, marginBottom: 16 }}>{step.body}</div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 11, color: '#565b64' }}>{stepIndex + 1} / {steps.length}</span>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {stepIndex > 0 && (
+              <button
+                onClick={onBack}
+                style={{ padding: '7px 13px', borderRadius: 999, border: '1px solid #2b2f36', background: 'transparent', color: '#C7CAD1', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+              >
+                Back
+              </button>
+            )}
+            <button
+              onClick={onNext}
+              style={{ padding: '7px 15px', borderRadius: 999, border: 'none', background: '#F5F6F7', color: '#0A0B0D', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+            >
+              {stepIndex === steps.length - 1 ? 'Finish' : 'Next'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

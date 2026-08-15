@@ -17,6 +17,7 @@ export default function NovaTrigger({ cx, cy, circleSize, dragging, novaOpen, on
   return (
     <div
       data-testid="radial-circle"
+      data-tour-target="nova-trigger"
       style={{
         position: 'absolute', left: cx, top: cy, width: circleSize, height: circleSize,
         borderRadius: '50%', background: '#F5F6F7', display: 'flex', alignItems: 'center', justifyContent: 'center',
