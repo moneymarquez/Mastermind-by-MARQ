@@ -16,8 +16,8 @@ Then open the printed local URL (typically http://localhost:5173).
 This app needs a Supabase project to run against.
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, `supabase/schema_012_holiday_calendar.sql`, `supabase/schema_013_fitness_v2.sql`, `supabase/schema_014_fitness_notifications.sql`, `supabase/schema_015_mental_health_profile.sql`, `supabase/schema_016_goals_v2.sql`, `supabase/schema_017_daily_plan.sql`, `supabase/schema_018_streaming.sql`, `supabase/schema_019_stocks_bot.sql`, `supabase/schema_020_settings_recordings.sql`, and `supabase/schema_021_invoicing.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe. From `schema_019` onward, `create policy` statements are also preceded by `drop policy if exists`, so those files are safe to re-run in full even after a partial failure — files before `schema_019` predate that fix and will error on a second full run's `create policy` lines (harmless — it means everything in that file already applied).
-3. **Create your login account** — Authentication → Users → Add user → enter email + password, check **Auto Confirm User**. There's no public sign-up flow; this is the one account the login screen expects.
+2. **Run the schema** — Project → SQL Editor → New query → paste the contents of `supabase/schema.sql` → Run. Then do the same with `supabase/schema_002_scaling.sql`, `supabase/schema_003_ai.sql`, `supabase/schema_004_calendar.sql`, `supabase/schema_005_shift_checklist.sql`, `supabase/schema_006_push.sql`, `supabase/schema_007_cold_calling.sql`, `supabase/schema_008_notifications.sql`, `supabase/schema_009_macros_v2.sql`, `supabase/schema_010_macros_intelligence.sql`, `supabase/schema_011_sobriety_v2.sql`, `supabase/schema_012_holiday_calendar.sql`, `supabase/schema_013_fitness_v2.sql`, `supabase/schema_014_fitness_notifications.sql`, `supabase/schema_015_mental_health_profile.sql`, `supabase/schema_016_goals_v2.sql`, `supabase/schema_017_daily_plan.sql`, `supabase/schema_018_streaming.sql`, `supabase/schema_019_stocks_bot.sql`, `supabase/schema_020_settings_recordings.sql`, `supabase/schema_021_invoicing.sql`, `supabase/schema_022_assistant_name.sql`, `supabase/schema_023_module_registry_billing.sql`, `supabase/schema_024_budgeting.sql`, `supabase/schema_025_marketing_scaling_owner_only.sql` (read its header block first — it tightens RLS on several existing tables, including making Invoicing owner-only), `supabase/schema_026_nudges.sql`, `supabase/schema_027_decision_log.sql`, `supabase/schema_028_weekly_review.sql`, `supabase/schema_029_cashflow.sql`, `supabase/schema_030_pattern_detection.sql`, `supabase/schema_031_voice_capture.sql`, and `supabase/schema_032_nova_memory.sql`, in that order. All are idempotent (`create table if not exists` / `add column if not exists`), so re-running any one alone is safe. From `schema_019` onward, `create policy` statements are also preceded by `drop policy if exists`, so those files are safe to re-run in full even after a partial failure — files before `schema_019` predate that fix and will error on a second full run's `create policy` lines (harmless — it means everything in that file already applied).
+3. **Create your login account** — Authentication → Users → Add user → enter email + password, check **Auto Confirm User**. As of the split-screen landing page (`src/auth/AuthScreen.tsx`), there's also a real public sign-up flow — new accounts land in onboarding (module picker → Stripe billing gate); the owner account (matched by email in `src/auth/ownerIdentity.ts`) always bypasses both.
 4. Copy `.env.example` to `.env.local` and fill in your project's URL and anon key (Project Settings → API).
 
 ## One-time backend setup (Claude API)
@@ -596,6 +596,57 @@ What's actually built:
   already generic dollar-amount examples, not personal, matching the spec's own allowance for "small clearly-generic
   examples."
 
+## Budgeting, Marketing, Nudges, and the AI Intelligence Layer
+
+Nine new modules and one new Nova capability, in `schema_024` through `schema_032` — see each file's own header
+comment for exactly what it adds and why. Summary:
+
+- **Budgeting** (`budgeting`) — categories with live allocated/spent/remaining, manual + recurring transactions
+  (auto-materializing catch-up on load), month-over-month history, and a **Subscription Tracker** sub-section
+  (monthly/annual spend, renewals in the next 30 days, unused-subscription flagging, a Mastermind-cost comparison
+  against an editable number, not a hardcoded price). Paid invoices feed Budgeting's income totals by being read
+  directly at query time (`client_documents` gained `status`/`paid_at` columns) rather than duplicated into a second
+  table — mark an invoice Paid from its detail page in Invoicing.
+- **Marketing** (`marketing`), under Scaling — asset storage (copy/creative/brand/reference, with AI draft/polish),
+  campaign tracking, a 4-stage content pipeline. **The entire Scaling category is owner-only** now, not just
+  Marketing — LeadFlow, Website/App Builder, Scaling Planner, Business Audits, Brand Lab, Idea Maker, and Invoicing
+  too, per an explicit build-prompt requirement. Enforced with RLS (`is_owner(auth.uid())` added to every
+  Scaling-category table's policy) and, for LeadFlow specifically (a separate Supabase project with no RLS tie to
+  this one), a new `requireOwner()` check in `worker/lib/auth.ts`. Read `schema_025`'s header before running it —
+  worth double-checking Invoicing-owner-only is actually what you want.
+- **Accountability nudges** — `src/data/useNudges.ts` evaluates six real triggers on load (broken sobriety streak,
+  budget overrun, call-volume/invoicing drop-off, goal pace, a flagged subscription's renewal, an overdue CRM
+  follow-up) and surfaces them as a dismissible, tap-to-navigate feed on Home. Settings (per-category on/off, daily
+  cap, quiet hours) live in Settings → Notifications. In-app delivery only — push would mean a new Netlify scheduled
+  function following `send-reminders.ts`'s pattern; not built this pass.
+- **Decision Log** (`decisions`) — log a decision with reasoning/confidence/emotional-vs-analytical and a review
+  date; once that date arrives, log the actual outcome with real cross-module context pulled for that window. A
+  pattern read (Claude, refuses under 3 reviewed decisions) looks for real correlations in your own judgment.
+- **Weekly Review** (`weekly-review`) — auto-generates once a calendar week completes (client-triggered on next
+  visit, not a background cron), pulling real money/calls/streak/goals/decisions data, explicitly instructed to be
+  accurate over flattering. Browsable history.
+- **Cash-Flow Forecast** (`cashflow`) — deterministic 30/60/90-day balance projection from real recurring items,
+  unpaid invoice due dates, and subscription renewals, plus an average daily variable-spend drag; flags the first
+  projected shortfall with the specific drivers named. Scenario questions ("what if this invoice pays late") are
+  AI-assisted against the real numbers.
+- **Patterns** (`patterns`) — buckets 10 weeks of real spend/income/streak/calls/workouts and asks Claude for actual
+  correlations, confidence-rated, explicit that correlation isn't causation, refuses under 4 weeks of activity.
+- **Voice Capture** (`voice-capture`) — speak a task/expense/income/contact/decision/note/follow-up; Claude
+  classifies it and files it directly into the real table (reminders, budget_transactions, contacts, decisions,
+  the new `voice_notes`). One-tap re-file if it guessed wrong (deletes and re-classifies against the same
+  transcript under the corrected type).
+- **Goal decomposition** — already existed (`src/lib/goalLockIn.ts`'s `generateGoalPlan`/`recalculateGoalPace`,
+  shipped earlier); this pass wired it into the two features above — nudges' `goal_pace` check and Weekly Review
+  both read `goals` directly, so an existing goal's pace now surfaces proactively without any change to Goals itself.
+- **Nova, connective tissue** — the actual gap: Nova's chat previously had no data access at all, text in/text out
+  only. `worker/handlers/nova-chat.ts` (routed at `/api/nova-chat`) now runs a real tool-use loop with two generic
+  tools, `query_data`/`write_data`, against a fixed table allowlist — not one hardcoded tool per module. Every call
+  executes with the caller's own JWT (never service-role), so RLS enforces the same per-user/owner boundary Nova
+  would hit through the normal client. `src/state.ts`'s `sendNova` now calls this instead of plain `askClaude`, with
+  the system prompt carrying the current screen (context awareness), active undismissed nudges (so Nova can
+  proactively mention them), and everything in the new `nova_memory` table — durable facts Nova writes about you
+  over time via the same `write_data` tool, read back into every conversation after.
+
 ## Structure
 
 - `src/state.ts` — app state + action handlers (drag, nav, Nova, sticky spot)
@@ -632,6 +683,6 @@ What's actually built:
 - `src/components/screens/InvoicingScreen.tsx` — list/filter, create, edit ⇄ preview, duplicate, business profile panel
 - `src/components/` — presentational components
 - `src/components/screens/` — per-screen views
-- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql` → `schema_015_mental_health_profile.sql` → `schema_016_goals_v2.sql` → `schema_017_daily_plan.sql` → `schema_018_streaming.sql` → `schema_019_stocks_bot.sql` → `schema_020_settings_recordings.sql` → `schema_021_invoicing.sql`)
+- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql` → `schema_015_mental_health_profile.sql` → `schema_016_goals_v2.sql` → `schema_017_daily_plan.sql` → `schema_018_streaming.sql` → `schema_019_stocks_bot.sql` → `schema_020_settings_recordings.sql` → `schema_021_invoicing.sql` → `schema_022_assistant_name.sql` → `schema_023_module_registry_billing.sql` → `schema_024_budgeting.sql` → `schema_025_marketing_scaling_owner_only.sql` → `schema_026_nudges.sql` → `schema_027_decision_log.sql` → `schema_028_weekly_review.sql` → `schema_029_cashflow.sql` → `schema_030_pattern_detection.sql` → `schema_031_voice_capture.sql` → `schema_032_nova_memory.sql`)
 
 
