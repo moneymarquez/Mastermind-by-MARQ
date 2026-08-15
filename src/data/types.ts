@@ -527,6 +527,28 @@ export interface NotificationSettings {
   dinner_time: string;
 }
 
+export interface BrandConcept {
+  id: string;
+  name: string;
+  archetype: string;
+  palette: { bg: string; surface: string; primary: string; text: string; muted: string };
+  headingFont: string;
+  mood: string[];
+  blurb: string;
+}
+
+export interface BrandLabStepState {
+  text?: string;
+  confirmed: boolean;
+}
+
+export interface BrandLabSteps {
+  paletteTypography?: BrandLabStepState;
+  logoDirection?: BrandLabStepState;
+  voiceMessaging?: BrandLabStepState;
+  assetPrep?: BrandLabStepState;
+}
+
 export interface BrandLabBrief {
   id: string;
   direction: string;
@@ -534,6 +556,13 @@ export interface BrandLabBrief {
   reference_url_2: string | null;
   reference_url_3: string | null;
   ai_copy: BrandLabCopy | null;
+  business: string | null;
+  audience: string | null;
+  tone: string | null;
+  color_pref: string | null;
+  concepts: BrandConcept[];
+  pinned_concept_id: string | null;
+  steps: BrandLabSteps;
   created_at: string;
 }
 
