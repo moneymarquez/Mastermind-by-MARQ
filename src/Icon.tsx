@@ -5,7 +5,7 @@ import {
   ClipboardText, Receipt, Palette, Flask, Lightbulb, Microphone, Code, CalendarBlank,
   ChartLineUp, VideoCamera, Lightning, GearSix, TerminalWindow, Sparkle, List, Plus,
   CaretRight, ArrowLeft, PencilSimple, CircleDashed, X, ArrowUp, Bell, CaretDown, Flame,
-  AddressBook, Clock, Barcode, Drop, Star, Wallet, Megaphone, Lock, Scales, Notepad,
+  AddressBook, Clock, Barcode, Drop, Star, Wallet, Megaphone, Lock, Scales, Notepad, ChartLine,
 } from '@phosphor-icons/react';
 
 const ICONS: Record<string, PhosphorIcon> = {
@@ -53,6 +53,7 @@ const ICONS: Record<string, PhosphorIcon> = {
   lock: Lock,
   scales: Scales,
   notepad: Notepad,
+  'chart-line': ChartLine,
 };
 
 interface Props {
