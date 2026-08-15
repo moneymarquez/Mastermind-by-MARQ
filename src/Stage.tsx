@@ -132,7 +132,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         ) : (
           <>
         {state.screen === 'home' && (
-          <HomeScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} statGridStyle={vm.statGridStyle} statCards={vm.statCards} onOpenNova={actions.openNova} assistantName={assistantName} />
+          <HomeScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} statGridStyle={vm.statGridStyle} statCards={vm.statCards} onOpenNova={actions.openNova} assistantName={assistantName} onNavigate={actions.navigateTo} />
         )}
 
         {state.screen === 'daily-plan' && (

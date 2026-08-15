@@ -2,6 +2,8 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useNotificationSettings } from '../../data/useNotificationSettings';
 import { useReminders } from '../../data/useReminders';
+import { useNudges } from '../../data/useNudges';
+import type { NudgeSettings } from '../../data/useNudges';
 import { isNotificationSupported, requestNotificationPermission } from '../../lib/notifications';
 import { subscribeToPush } from '../../lib/push';
 import { dateStr } from '../../data/time';
@@ -50,6 +52,7 @@ function ToggleRow({ label, sub, checked, onChange }: { label: string; sub?: str
 export default function NotificationSettingsScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const { settings, loading, save } = useNotificationSettings();
   const { reminders, addReminder, markDone, deleteReminder } = useReminders();
+  const { settings: nudgeSettings, saveSettings: saveNudgeSettings, loading: nudgesLoading } = useNudges();
   const [permission, setPermission] = useState<NotificationPermission>(() => (isNotificationSupported() ? Notification.permission : 'denied'));
 
   const [newTitle, setNewTitle] = useState('');
@@ -71,6 +74,7 @@ export default function NotificationSettingsScreen({ homeHeadStyle, homeSubStyle
   };
 
   const toggle = (key: keyof NotificationSettings) => (v: boolean) => save({ [key]: v } as Partial<NotificationSettings>);
+  const toggleNudge = (key: keyof NudgeSettings) => (v: boolean) => saveNudgeSettings({ [key]: v } as Partial<NudgeSettings>);
 
   return (
     <div>
@@ -156,6 +160,35 @@ export default function NotificationSettingsScreen({ homeHeadStyle, homeSubStyle
             </div>
           ))}
           {reminders.length === 0 && <div style={{ fontSize: 12.5, color: '#565b64' }}>Nothing on the list.</div>}
+        </div>
+      </div>
+
+      <div style={{ ...cardStyle, marginTop: 20 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#8A8F98', textTransform: 'uppercase' }}>Accountability nudges</div>
+        <div style={{ fontSize: 11.5, color: '#565b64', marginTop: 4 }}>Proactive, data-driven check-ins — not generic reminders.</div>
+        {!nudgesLoading && (
+          <>
+            <ToggleRow label="Missed check-ins" sub="Broken sobriety streaks" checked={nudgeSettings.missed_checkin_enabled} onChange={toggleNudge('missed_checkin_enabled')} />
+            <ToggleRow label="Budget" sub="A category goes over its monthly allocation" checked={nudgeSettings.budget_enabled} onChange={toggleNudge('budget_enabled')} />
+            <ToggleRow label="Activity drop-off" sub="Call volume or invoicing falls off compared to the prior week" checked={nudgeSettings.activity_dropoff_enabled} onChange={toggleNudge('activity_dropoff_enabled')} />
+            <ToggleRow label="Goal pace" sub="A deadline is close with insufficient progress" checked={nudgeSettings.goal_pace_enabled} onChange={toggleNudge('goal_pace_enabled')} />
+            <ToggleRow label="Subscriptions" sub="A flagged-as-unused subscription is about to renew" checked={nudgeSettings.subscription_enabled} onChange={toggleNudge('subscription_enabled')} />
+            <ToggleRow label="Cold follow-ups" sub="An overdue callback in Dialing/Contacts" checked={nudgeSettings.cold_followup_enabled} onChange={toggleNudge('cold_followup_enabled')} />
+          </>
+        )}
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 16, paddingTop: 14, borderTop: '1px solid #1c1e23' }}>
+          <div>
+            <label style={{ fontSize: 11.5, color: '#8A8F98', marginBottom: 5, display: 'block' }}>Max new nudges/day</label>
+            <input type="number" min={1} max={20} style={{ ...inputStyle, width: 90 }} value={nudgeSettings.daily_cap} onChange={(e) => saveNudgeSettings({ daily_cap: Number(e.target.value) })} />
+          </div>
+          <div>
+            <label style={{ fontSize: 11.5, color: '#8A8F98', marginBottom: 5, display: 'block' }}>Quiet hours start</label>
+            <input type="time" style={inputStyle} value={nudgeSettings.quiet_hours_start ?? ''} onChange={(e) => saveNudgeSettings({ quiet_hours_start: e.target.value || null })} />
+          </div>
+          <div>
+            <label style={{ fontSize: 11.5, color: '#8A8F98', marginBottom: 5, display: 'block' }}>Quiet hours end</label>
+            <input type="time" style={inputStyle} value={nudgeSettings.quiet_hours_end ?? ''} onChange={(e) => saveNudgeSettings({ quiet_hours_end: e.target.value || null })} />
+          </div>
         </div>
       </div>
     </div>

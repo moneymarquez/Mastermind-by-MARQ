@@ -6,6 +6,7 @@ import { useEvents } from '../../data/useEvents';
 import { useContacts } from '../../data/useContacts';
 import { useFitness } from '../../data/useFitness';
 import { useCallOutcomes, DAILY_CALL_GOAL } from '../../data/useCallOutcomes';
+import { useNudges } from '../../data/useNudges';
 import { dateStr, formatTimeLabel } from '../../data/time';
 
 interface StatCard {
@@ -22,9 +23,11 @@ interface Props {
   statCards: StatCard[];
   onOpenNova: () => void;
   assistantName: string;
+  onNavigate: (screen: string) => void;
 }
 
-export default function HomeScreen({ homeHeadStyle, homeSubStyle, statGridStyle, statCards, onOpenNova, assistantName }: Props) {
+export default function HomeScreen({ homeHeadStyle, homeSubStyle, statGridStyle, statCards, onOpenNova, assistantName, onNavigate }: Props) {
+  const { nudges, dismiss: dismissNudge } = useNudges();
   const { streak, loading: sobrietyLoading } = useSobriety();
   const { totals, loading: macrosLoading } = useMacros();
   const { events, loading: eventsLoading } = useEvents();
@@ -83,6 +86,25 @@ export default function HomeScreen({ homeHeadStyle, homeSubStyle, statGridStyle,
           </div>
         ))}
       </div>
+
+      {nudges.length > 0 && (
+        <>
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7', marginTop: 32, marginBottom: 12 }}>Worth a look</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {nudges.map((n) => (
+              <div key={n.id} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, padding: '13px 18px', borderRadius: 12, background: '#14161A', border: '1px solid #22262B' }}>
+                <div
+                  style={{ fontSize: 13, color: '#C7CAD1', lineHeight: 1.5, cursor: n.target_screen ? 'pointer' : 'default' }}
+                  onClick={() => n.target_screen && onNavigate(n.target_screen)}
+                >
+                  {n.message}
+                </div>
+                <span style={{ fontSize: 11, color: '#565b64', cursor: 'pointer', flexShrink: 0, marginTop: 1 }} onClick={(e) => { e.stopPropagation(); dismissNudge(n.id); }}>Dismiss</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7', marginTop: 32, marginBottom: 12 }}>Today's schedule</div>
       <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid #22262B', borderRadius: 14, overflow: 'hidden' }}>
