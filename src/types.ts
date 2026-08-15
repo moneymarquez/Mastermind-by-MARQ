@@ -30,6 +30,7 @@ export type Screen =
   | 'weekly-review'
   | 'cashflow'
   | 'patterns'
+  | 'voice-capture'
   | 'manage-modules'
   | 'placeholder';
 

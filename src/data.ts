@@ -27,6 +27,7 @@ export const NAV_DATA: NavGroup[] = [
       { id: 'weekly-review', label: 'Weekly Review', icon: 'ph-notepad' },
       { id: 'cashflow', label: 'Cash-Flow Forecast', icon: 'ph-chart-line' },
       { id: 'patterns', label: 'Patterns', icon: 'ph-chart-scatter' },
+      { id: 'voice-capture', label: 'Voice Capture', icon: 'ph-microphone' },
       { id: 'opening-closing', label: 'Opening/Closing', icon: 'ph-clock' },
     ],
   },
