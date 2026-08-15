@@ -29,11 +29,8 @@ export const NAV_DATA: NavGroup[] = [
       { id: 'patterns', label: 'Patterns', icon: 'ph-chart-scatter' },
       { id: 'voice-capture', label: 'Voice Capture', icon: 'ph-microphone' },
       { id: 'opening-closing', label: 'Opening/Closing', icon: 'ph-clock' },
+      { id: 'fitness', label: 'Fitness', icon: 'ph-barbell' },
     ],
-  },
-  {
-    group: null,
-    items: [{ id: 'fitness', label: 'Fitness', icon: 'ph-barbell' }],
   },
   {
     group: 'Cold Calling',

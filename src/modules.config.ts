@@ -45,7 +45,7 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { key: 'patterns', label: 'Patterns', category: 'Personal', description: 'Real cross-module correlations in your own data — spending, sobriety, calls, workouts.', icon: 'ph-chart-scatter', routes: ['patterns'], requiresAI: true },
   { key: 'voice-capture', label: 'Voice Capture', category: 'Personal', description: 'Speak a task, expense, contact, decision, note, or follow-up — it files itself into the right module.', icon: 'ph-microphone', routes: ['voice-capture'], requiresAI: true },
   { key: 'opening-closing', label: 'Opening/Closing', category: 'Personal', description: 'Self-running shift checklist with real push notifications.', icon: 'ph-clock', routes: ['opening-closing'], requiresAI: false },
-  { key: 'fitness', label: 'Fitness', category: null, description: 'AI-generated workout/diet plans, full workout library, live workout mode.', icon: 'ph-barbell', routes: ['fitness'], requiresAI: true },
+  { key: 'fitness', label: 'Fitness', category: 'Personal', description: 'AI-generated workout/diet plans, full workout library, live workout mode.', icon: 'ph-barbell', routes: ['fitness'], requiresAI: true },
   { key: 'dialing', label: 'Dialing/Contacts', category: 'Cold Calling', description: 'Cold-calling queue, outcome tracking, and your Dialing/Scaling contacts.', icon: 'ph-phone-call', routes: ['dialing', 'contacts'], requiresAI: false },
   { key: 'call-recordings', label: 'Call Recordings', category: 'Cold Calling', description: 'Upload and organize call recordings, linked to contacts.', icon: 'ph-microphone', routes: ['call-recordings'], requiresAI: false },
   // The entire Scaling category is owner-only, not just Marketing —

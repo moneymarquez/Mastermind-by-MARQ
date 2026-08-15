@@ -28,5 +28,5 @@ export interface IdentityLike {
 export function isOwnerIdentity(user: IdentityLike | null | undefined): boolean {
   if (!user) return false;
   if (OWNER_USER_ID && user.id === OWNER_USER_ID) return true;
-  return !!user.email && user.email.toLowerCase() === OWNER_EMAIL.toLowerCase();
+  return !!user.email && user.email.trim().toLowerCase() === OWNER_EMAIL.toLowerCase();
 }
