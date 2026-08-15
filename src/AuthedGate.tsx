@@ -3,7 +3,7 @@ import { useMastermindState } from './state';
 import { useModuleAccess } from './data/useModuleAccess';
 import { useSubscription } from './data/useSubscription';
 import { isOwnerIdentity } from './auth/ownerIdentity';
-import OnboardingScreen from './onboarding/OnboardingScreen';
+import OnboardingFlow from './onboarding/OnboardingFlow';
 import BillingGateScreen from './billing/BillingGateScreen';
 
 interface Props {
@@ -41,7 +41,7 @@ export default function AuthedGate({ userId, userEmail, onSignOut }: Props) {
     }
     if (!moduleAccess.hasOnboarded) {
       return (
-        <OnboardingScreen
+        <OnboardingFlow
           onComplete={async (keys) => {
             await moduleAccess.saveModuleSelections(keys);
           }}
