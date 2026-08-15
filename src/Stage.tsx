@@ -34,6 +34,7 @@ import InvoicingScreen from './components/screens/InvoicingScreen';
 import BudgetingScreen from './components/screens/BudgetingScreen';
 import MarketingScreen from './components/screens/MarketingScreen';
 import DecisionLogScreen from './components/screens/DecisionLogScreen';
+import WeeklyReviewScreen from './components/screens/WeeklyReviewScreen';
 import ManageModulesScreen from './components/screens/ManageModulesScreen';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
 import { buildViewModel } from './viewModel';
@@ -44,7 +45,7 @@ const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
   'scaling-planner', 'audits', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings',
-  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'decisions', 'manage-modules',
+  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'manage-modules',
 ];
 
 interface Props {
@@ -250,6 +251,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'decisions' && (
           <DecisionLogScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'weekly-review' && (
+          <WeeklyReviewScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {state.screen === 'manage-modules' && (

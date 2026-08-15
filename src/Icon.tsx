@@ -5,7 +5,7 @@ import {
   ClipboardText, Receipt, Palette, Flask, Lightbulb, Microphone, Code, CalendarBlank,
   ChartLineUp, VideoCamera, Lightning, GearSix, TerminalWindow, Sparkle, List, Plus,
   CaretRight, ArrowLeft, PencilSimple, CircleDashed, X, ArrowUp, Bell, CaretDown, Flame,
-  AddressBook, Clock, Barcode, Drop, Star, Wallet, Megaphone, Lock, Scales,
+  AddressBook, Clock, Barcode, Drop, Star, Wallet, Megaphone, Lock, Scales, Notepad,
 } from '@phosphor-icons/react';
 
 const ICONS: Record<string, PhosphorIcon> = {
@@ -52,6 +52,7 @@ const ICONS: Record<string, PhosphorIcon> = {
   megaphone: Megaphone,
   lock: Lock,
   scales: Scales,
+  notepad: Notepad,
 };
 
 interface Props {

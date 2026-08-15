@@ -27,6 +27,7 @@ export type Screen =
   | 'budgeting'
   | 'marketing'
   | 'decisions'
+  | 'weekly-review'
   | 'manage-modules'
   | 'placeholder';
 
