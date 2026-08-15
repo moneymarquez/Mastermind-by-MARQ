@@ -24,6 +24,7 @@ export type Screen =
   | 'call-recordings'
   | 'website'
   | 'invoicing'
+  | 'budgeting'
   | 'manage-modules'
   | 'placeholder';
 

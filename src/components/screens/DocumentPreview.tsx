@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { DocType } from '../../data/documentSchemas';
 import type { PackageTier } from '../../data/documentSchemas';
 import type { BusinessProfile } from '../../data/useBusinessProfile';
+import { moneyValue } from '../../data/invoiceAmount';
 
 interface Props {
   docType: DocType;
@@ -110,10 +111,7 @@ function rowsOf(data: Record<string, unknown>, key: string): Row[] {
   return Array.isArray(val) ? (val as Row[]) : [];
 }
 
-function money(v: unknown): number {
-  const n = Number(String(v ?? '').replace(/[^0-9.-]/g, ''));
-  return Number.isFinite(n) ? n : 0;
-}
+const money = moneyValue;
 
 export default function DocumentPreview({ docType, data, profile }: Props) {
   return (

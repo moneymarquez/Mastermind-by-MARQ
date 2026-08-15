@@ -190,11 +190,20 @@ function NewDocumentPanel({ onCreated }: { onCreated: (id: string) => void }) {
   );
 }
 
+const STATUS_LABEL: Record<ClientDocument['status'], string> = { draft: 'Draft', sent: 'Sent', paid: 'Paid' };
+const STATUS_COLOR: Record<ClientDocument['status'], string> = { draft: '#565b64', sent: '#C9A24B', paid: '#7fae7f' };
+
 function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack: () => void; startTab: 'edit' | 'preview' }) {
-  const { update, duplicate, remove, error } = useClientDocuments();
+  const { update, duplicate, remove, setStatus, error } = useClientDocuments();
   const { profile } = useBusinessProfile();
   const [label, setLabel] = useState(doc.label);
   const [draftData, setDraftData] = useState(doc.data);
+  // Local + optimistic, same reason label/draftData are: this component's
+  // own useClientDocuments() call is a separate hook instance from the
+  // parent's (which is what `doc` was read from), so a refetch here
+  // doesn't flow back into the `doc` prop — mirroring an existing pattern
+  // in this file rather than a new inconsistency.
+  const [status, setLocalStatus] = useState(doc.status);
   const [tab, setTab] = useState<'edit' | 'preview'>(startTab);
   const [saved, setSaved] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -226,6 +235,31 @@ function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack
       <div style={{ display: 'inline-flex', padding: '9px 16px', borderRadius: 999, border: '1px solid #C9A24B55', background: '#C9A24B15', color: '#C9A24B', fontSize: 12, fontWeight: 600, marginBottom: 16 }}>
         Send to client — coming soon
       </div>
+
+      {doc.doc_type === 'invoice' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+          <span style={{ fontSize: 12, color: '#8A8F98' }}>Status:</span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {(['draft', 'sent', 'paid'] as const).map((s) => (
+              <div
+                key={s}
+                onClick={() => { setLocalStatus(s); setStatus(doc.id, s); }}
+                style={{
+                  padding: '5px 14px', borderRadius: 999, fontSize: 11.5, fontWeight: 600, cursor: 'pointer',
+                  border: `1px solid ${status === s ? STATUS_COLOR[s] : '#22262B'}`,
+                  color: status === s ? STATUS_COLOR[s] : '#565b64',
+                  background: status === s ? `${STATUS_COLOR[s]}15` : 'transparent',
+                }}
+              >
+                {STATUS_LABEL[s]}
+              </div>
+            ))}
+          </div>
+          {status === 'paid' && (
+            <span style={{ fontSize: 11, color: '#565b64' }}>Counted as income in Budgeting.</span>
+          )}
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
         <div style={chip(tab === 'preview')} onClick={() => setTab('preview')}>Preview</div>
@@ -288,6 +322,11 @@ export default function InvoicingScreen({ homeHeadStyle, homeSubStyle }: Props) 
                   {DOC_TYPE_LABELS[doc.doc_type]}{subtitle ? ` · ${subtitle}` : ''} · {new Date(doc.updated_at).toLocaleDateString()}
                 </div>
               </div>
+              {doc.doc_type === 'invoice' && (
+                <span style={{ fontSize: 10.5, fontWeight: 700, color: STATUS_COLOR[doc.status], border: `1px solid ${STATUS_COLOR[doc.status]}`, borderRadius: 999, padding: '3px 10px', flexShrink: 0 }}>
+                  {STATUS_LABEL[doc.status]}
+                </span>
+              )}
             </div>
           );
         })}

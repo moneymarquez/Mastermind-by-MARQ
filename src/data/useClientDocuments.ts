@@ -3,12 +3,16 @@ import { supabase } from '../lib/supabase';
 import type { DocType } from './documentSchemas';
 import { defaultDataFor, DOC_TYPE_LABELS } from './documentSchemas';
 
+export type DocumentStatus = 'draft' | 'sent' | 'paid';
+
 export interface ClientDocument {
   id: string;
   doc_type: DocType;
   contact_id: string | null;
   label: string;
   data: Record<string, unknown>;
+  status: DocumentStatus;
+  paid_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -86,6 +90,25 @@ export function useClientDocuments() {
     return data as ClientDocument;
   };
 
+  // Marking an invoice 'paid' is what makes it show up as income in
+  // Budgeting (see src/data/useBudgeting.ts, which reads paid_at directly
+  // rather than a duplicated transaction row). Clearing back to draft/sent
+  // clears paid_at too, so an accidental mark-paid can be undone cleanly.
+  const setStatus = async (id: string, status: DocumentStatus): Promise<boolean> => {
+    setError('');
+    const { error: err } = await supabase
+      .from('client_documents')
+      .update({ status, paid_at: status === 'paid' ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
+      .eq('id', id);
+    if (err) {
+      console.error('setStatus client_documents failed', err);
+      setError(err.message);
+      return false;
+    }
+    await load();
+    return true;
+  };
+
   const remove = async (id: string): Promise<boolean> => {
     setError('');
     const { error: err } = await supabase.from('client_documents').delete().eq('id', id);
@@ -98,5 +121,5 @@ export function useClientDocuments() {
     return true;
   };
 
-  return { documents, loading, error, create, update, duplicate, remove };
+  return { documents, loading, error, create, update, duplicate, remove, setStatus };
 }
