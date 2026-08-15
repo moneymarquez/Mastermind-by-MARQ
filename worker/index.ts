@@ -29,10 +29,12 @@ import { createSubscriptionIntent, stripeWebhook } from './handlers/billing';
 import type { BillingEnv } from './handlers/billing';
 import { novaChat } from './handlers/nova-chat';
 import type { NovaChatEnv } from './handlers/nova-chat';
+import { sendDeliveryEmail } from './handlers/deliver-email';
+import type { DeliverEmailEnv } from './handlers/deliver-email';
 
 const NETLIFY_ORIGIN = 'https://mastermindbymarq.netlify.app';
 
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
@@ -55,6 +57,8 @@ export default {
     if (url.pathname === '/api/billing/webhook') return stripeWebhook(request, env);
 
     if (url.pathname === '/api/nova-chat') return novaChat(request, env);
+
+    if (url.pathname === '/api/deliver-email') return sendDeliveryEmail(request, env);
 
     if (url.pathname.startsWith('/api/')) {
       const target = new URL(url.pathname + url.search, NETLIFY_ORIGIN);

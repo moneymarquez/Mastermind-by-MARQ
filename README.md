@@ -688,6 +688,70 @@ comment for exactly what it adds and why. Summary:
 - `src/components/screens/InvoicingScreen.tsx` — list/filter, create, edit ⇄ preview, duplicate, business profile panel
 - `src/components/` — presentational components
 - `src/components/screens/` — per-screen views
-- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql` → `schema_015_mental_health_profile.sql` → `schema_016_goals_v2.sql` → `schema_017_daily_plan.sql` → `schema_018_streaming.sql` → `schema_019_stocks_bot.sql` → `schema_020_settings_recordings.sql` → `schema_021_invoicing.sql` → `schema_022_assistant_name.sql` → `schema_023_module_registry_billing.sql` → `schema_024_budgeting.sql` → `schema_025_marketing_scaling_owner_only.sql` → `schema_026_nudges.sql` → `schema_027_decision_log.sql` → `schema_028_weekly_review.sql` → `schema_029_cashflow.sql` → `schema_030_pattern_detection.sql` → `schema_031_voice_capture.sql` → `schema_032_nova_memory.sql`)
+- `supabase/` — SQL schema, run once per file in the Supabase SQL editor (`schema.sql` → `schema_002_scaling.sql` → `schema_003_ai.sql` → `schema_004_calendar.sql` → `schema_005_shift_checklist.sql` → `schema_006_push.sql` → `schema_007_cold_calling.sql` → `schema_008_notifications.sql` → `schema_009_macros_v2.sql` → `schema_010_macros_intelligence.sql` → `schema_011_sobriety_v2.sql` → `schema_012_holiday_calendar.sql` → `schema_013_fitness_v2.sql` → `schema_014_fitness_notifications.sql` → `schema_015_mental_health_profile.sql` → `schema_016_goals_v2.sql` → `schema_017_daily_plan.sql` → `schema_018_streaming.sql` → `schema_019_stocks_bot.sql` → `schema_020_settings_recordings.sql` → `schema_021_invoicing.sql` → `schema_022_assistant_name.sql` → `schema_023_module_registry_billing.sql` → `schema_024_budgeting.sql` → `schema_025_marketing_scaling_owner_only.sql` → `schema_026_nudges.sql` → `schema_027_decision_log.sql` → `schema_028_weekly_review.sql` → `schema_029_cashflow.sql` → `schema_030_pattern_detection.sql` → `schema_031_voice_capture.sql` → `schema_032_nova_memory.sql` → `schema_033_onboarding_flow.sql` → `schema_034_scaling_start.sql` →
+  `schema_035_brand_lab_v2.sql` → `schema_036_delivery_pipeline.sql`)
+
+## Owner fix, Scaling Suite, and curated onboarding
+
+Built from a later master prompt that superseded the Budgeting/Nudges/AI-layer prompt above (that work was already
+done and matched what the new prompt asked for, so it wasn't rebuilt).
+
+- **Owner-lockout incident (fixed)** — the owner's own account got shown the onboarding/module-selection screen on
+  desktop, live. Root cause (confirmed via Supabase Studio, not guessed): `OWNER_EMAIL` in
+  `src/auth/ownerIdentity.ts` and `worker/lib/auth.ts` was hardcoded to `madebymarquez@icloud.com`, which doesn't
+  match the account's real Supabase Auth email (`marquez.cristopher@icloud.com`). Fixed by adding `OWNER_USER_ID`
+  (the real `auth.users.id`, confirmed directly in Supabase Studio) as the primary check, with the corrected email
+  kept only as a fallback. **Lesson recorded here on purpose: never assume an owner email without confirming it
+  against Supabase Studio directly** — this is the second incident from doing exactly that.
+- **Fitness recategorized** — moved from a standalone nav group to `Personal` (`src/modules.config.ts`,
+  `src/data.ts`), where it always belonged.
+- **Scaling Start** (`scaling-start`, owner-only) — a guided entry point at the top of Scaling. Create a project,
+  then link it to an Idea Maker session, a Brand Lab direction, a live site URL, and a Scaling Planner plan, in any
+  order (`scaling_projects` table, `src/data/useScalingProjects.ts`, `src/components/screens/ScalingStartScreen.tsx`).
+  Once anything's linked, Nova drafts a starter invoice from the assembled context straight into Invoicing. All four
+  linked modules remain fully usable on their own — Start only adds a trail connecting them, never replaces direct
+  access.
+- **Brand Lab redesign** (`src/components/screens/BrandLabScreen.tsx`) — replaced the old fixed
+  Minimal/Bold/Editorial templates with a real question flow (business, audience, reference sites, tone, color
+  preference) and a user-chosen count of 3, 4, or 5 concepts. Each concept picks a genuinely different layout
+  archetype from six real ones (never repeats one within a generation) with its own AI-generated palette and heading
+  font (three more Google Fonts added to `index.html` — Playfair Display, Space Grotesk, DM Sans — used only here,
+  the app's own UI stays on Inter). **No external image-generation API is wired up** — none exists in this project's
+  infra — so concepts render live as React/CSS mockups, not flat images; flagging that as a scope decision. After
+  pinning a favorite, a guided Step 1-4 (palette & typography → logo direction → voice & messaging → asset prep)
+  gets it to a handoff-ready state, then it can attach to a Scaling Start project.
+- **Product tour** (`src/components/ProductTour.tsx`) — spotlight-and-tooltip walkthrough of Overview, Daily Plan,
+  Macros, Fitness, Budgeting, Scaling Start, Brand Lab, Website Builder, Invoicing, and Nova. Each step navigates to
+  the real screen live rather than showing a screenshot, so it doubles as a sales-demo tool. On-demand only (never
+  auto-started), reachable from a "?" icon next to the hamburger or from Settings → Account, skippable any time.
+  Steps are filtered through the same `canAccess()` used for screen-level gating, so a non-owner account just skips
+  a stop it doesn't have instead of hitting a blocked screen mid-tour.
+- **Client delivery pipeline — "Show Your Work"** (`delivery`, owner-only,
+  `src/components/screens/ClientDeliveryScreen.tsx`) — a card per Scaling project (in progress / ready to deliver /
+  delivered-as-portfolio). "Mark ready to deliver" captures the client's name/email and a manually-uploaded
+  walkthrough video (`project-videos` Storage bucket — **no automated video generation**, upload only) alongside the
+  project's live preview link and linked invoice. "Send to client" is the one genuinely automation-worthy piece:
+  `worker/handlers/deliver-email.ts` (`/api/deliver-email`) packages the preview link, a signed video URL, and an
+  invoice total into one email via Resend's HTTP API. **No email-sending infrastructure existed anywhere in this
+  codebase before this** — Resend was chosen specifically because it's a plain API-key + `fetch` call, matching every
+  other Worker handler, rather than a real OAuth "connected email" (Gmail/Outlook) integration, which isn't
+  buildable in this environment (no domain, no OAuth consent screen, no client credentials). Needs Cloudflare Worker
+  secrets `RESEND_API_KEY` and `RESEND_FROM_EMAIL` (a sender address verified in your Resend account) — without
+  them, sending returns a clear "not configured yet" error instead of failing silently. Every other part of the
+  pipeline (assembling the package, writing to the new `delivery_log` table, flipping project status) runs
+  client-side through the caller's own Supabase session, same as every other module.
+- **Curated onboarding rework** (`src/onboarding/OnboardingFlow.tsx` and siblings) — new users now go through 3
+  curation questions (seeded into `nova_memory`) → name their AI (`useNovaPreferences`) → the existing module picker,
+  unchanged → a personalized demo dashboard built from their selected modules (`PersonalizedDemo.tsx` — the one
+  screen in the app deliberately allowed hardcoded sample data, since it's a pre-payment preview, never a real
+  route) → the existing embedded Stripe billing gate. Progress is resumable via a new `onboarding_progress` table,
+  so an abandoned signup picks back up where it left off. The billing gate's copy was also corrected from a stale
+  "$10/month" to the spec'd $19.97/month — the actual charge was already correctly driven by `STRIPE_PRICE_ID`, only
+  the display text was wrong. Owner path is completely untouched: `AuthedGate`'s owner short-circuit still runs
+  first, before any of this is ever reached.
+- **Nav bug fix (found while in `state.ts`)** — `directScreens` was missing `budgeting`, `marketing`, `decisions`,
+  `weekly-review`, `cashflow`, `patterns`, and `voice-capture`, so clicking those nav items fell through to the
+  generic "coming soon" placeholder instead of opening the real screen. Fixed alongside adding `scaling-start` and
+  `delivery` to the same list.
 
 

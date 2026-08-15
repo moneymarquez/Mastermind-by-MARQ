@@ -9,6 +9,7 @@ export type Screen =
   | 'goals'
   | 'mental'
   | 'scaling-start'
+  | 'delivery'
   | 'scaling-planner'
   | 'audits'
   | 'brand-lab'

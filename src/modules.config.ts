@@ -52,6 +52,7 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   // ownerOnly: true on every entry below is deliberate, per the explicit
   // "entire Scaling section is owner-only" requirement, not an oversight.
   { key: 'scaling-start', label: 'Start', category: 'Scaling', description: 'Guided entry point for a new client project — chains Idea Maker, Brand Lab, Website Builder, and Scaling Planner together.', icon: 'ph-lightning', routes: ['scaling-start'], requiresAI: true, ownerOnly: true },
+  { key: 'delivery', label: 'Show Your Work', category: 'Scaling', description: 'The client delivery pipeline — assemble a package, send it to the client, and keep a running portfolio.', icon: 'ph-video-camera', routes: ['delivery'], requiresAI: false, ownerOnly: true },
   { key: 'leadflow', label: 'LeadFlow', category: 'Scaling', description: 'Your LeadFlow CRM — Dashboard, War Room, Lead Pool, Lead Finder, and more.', icon: 'ph-users-three', routes: ['leadflow'], requiresAI: true, ownerOnly: true },
   { key: 'website', label: 'Website/App Builder', category: 'Scaling', description: "Website/App Builder roadmap — what's coming.", icon: 'ph-code', routes: ['website'], requiresAI: false, ownerOnly: true },
   { key: 'scaling-planner', label: 'Scaling Planner', category: 'Scaling', description: 'Guided questionnaire, real AI-generated business scaling plan.', icon: 'ph-rocket-launch', routes: ['scaling-planner'], requiresAI: true, ownerOnly: true },
