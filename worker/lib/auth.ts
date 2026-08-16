@@ -30,7 +30,7 @@ export async function requireUser(request: Request, supabaseUrl: string, supabas
 // email was wrong for a while (madebymarquez@icloud.com doesn't match
 // this account's real address) and is now fixed and kept only as a
 // redundant fallback.
-const OWNER_USER_ID = 'a4b89df9-7122-424a-afb5-fc4871e0963b';
+export const OWNER_USER_ID = 'a4b89df9-7122-424a-afb5-fc4871e0963b';
 const OWNER_EMAIL = 'marquez.cristopher@icloud.com';
 
 export function isOwnerUser(user: AuthedUser): boolean {

@@ -31,10 +31,12 @@ import { novaChat } from './handlers/nova-chat';
 import type { NovaChatEnv } from './handlers/nova-chat';
 import { sendDeliveryEmail } from './handlers/deliver-email';
 import type { DeliverEmailEnv } from './handlers/deliver-email';
+import { supportInboxWebhook } from './handlers/support-inbox';
+import type { SupportInboxEnv } from './handlers/support-inbox';
 
 const NETLIFY_ORIGIN = 'https://mastermindbymarq.netlify.app';
 
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
@@ -59,6 +61,8 @@ export default {
     if (url.pathname === '/api/nova-chat') return novaChat(request, env);
 
     if (url.pathname === '/api/deliver-email') return sendDeliveryEmail(request, env);
+
+    if (url.pathname === '/api/support-inbox-webhook') return supportInboxWebhook(request, env);
 
     if (url.pathname.startsWith('/api/')) {
       const target = new URL(url.pathname + url.search, NETLIFY_ORIGIN);

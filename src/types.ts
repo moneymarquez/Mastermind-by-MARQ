@@ -10,6 +10,8 @@ export type Screen =
   | 'mental'
   | 'scaling-start'
   | 'delivery'
+  | 'support-inbox'
+  | 'legal'
   | 'scaling-planner'
   | 'audits'
   | 'brand-lab'

@@ -754,4 +754,24 @@ done and matched what the new prompt asked for, so it wasn't rebuilt).
   generic "coming soon" placeholder instead of opening the real screen. Fixed alongside adding `scaling-start` and
   `delivery` to the same list.
 
+## Support Inbox and Legal/FAQ
+
+- **Support Inbox** (`support-inbox`, owner-only, `worker/handlers/support-inbox.ts` +
+  `src/components/screens/SupportInboxScreen.tsx`) — the narrow first version of "AI auto-support." Mail sent to
+  any `@mastermindsbymarq.com` address (once Resend's inbound receiving is configured and its webhook points at
+  `/api/support-inbox-webhook`) gets AI-categorized (billing/support/bug/general/spam) and drafted a reply by
+  Claude, stored in a new `support_inbox` table for review — **never auto-sent**. The webhook's signature is
+  verified by hand via Web Crypto (Resend signs the same way Svix does: `svix-id`/`svix-timestamp`/
+  `svix-signature` headers, HMAC-SHA256 over `{id}.{timestamp}.{body}`), matching the Stripe webhook's approach —
+  no Node-oriented SDK dependency in the Workers runtime. Needs `RESEND_WEBHOOK_SECRET` as a Worker secret; without
+  it the endpoint returns "not configured" rather than failing silently. `ANTHROPIC_API_KEY` (already required for
+  the Stocks bot's summary) powers the categorization/draft step — if unset, messages still get stored, just
+  without a category or draft.
+- **Legal & FAQ** (`legal`, all accounts, reachable from Settings, `src/components/screens/LegalScreen.tsx`) — a
+  real in-app page (not a placeholder) covering: AI output isn't professional advice, AI can be wrong, the Stocks
+  module is paper trading only, a plain-English data-handling summary, and how to cancel (email `billing@` — no
+  self-serve cancel button exists yet, a reasonable next addition once Stripe's secrets are live). Explicitly
+  flagged on the page itself as good-faith copy, not a lawyer-reviewed Terms of Service/Privacy Policy — real legal
+  review is still needed before wide release, especially once real payments and client data are flowing.
+
 

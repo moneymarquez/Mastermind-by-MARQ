@@ -45,6 +45,7 @@ export const NAV_DATA: NavGroup[] = [
     items: [
       { id: 'scaling-start', label: 'Start', icon: 'ph-lightning' },
       { id: 'delivery', label: 'Show Your Work', icon: 'ph-video-camera' },
+      { id: 'support-inbox', label: 'Support Inbox', icon: 'ph-address-book' },
       { id: 'leadflow', label: 'LeadFlow', icon: 'ph-users-three' },
       { id: 'website', label: 'Website/App Builder', icon: 'ph-code' },
       { id: 'scaling-planner', label: 'Scaling Planner', icon: 'ph-rocket-launch' },
@@ -75,7 +76,7 @@ export const NAV_DATA: NavGroup[] = [
         label: 'Settings',
         icon: 'ph-gear-six',
         collapsible: true,
-        sub: ['Account', 'Prompt & Voice', 'Notifications', 'Manage modules', 'Sign Out'],
+        sub: ['Account', 'Prompt & Voice', 'Notifications', 'Manage modules', 'Legal & FAQ', 'Sign Out'],
       },
       { id: 'codelab', label: 'Code Lab', icon: 'ph-terminal-window' },
     ],

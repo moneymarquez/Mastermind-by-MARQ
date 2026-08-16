@@ -33,4 +33,5 @@
   //   VITE_STRIPE_PUBLISHABLE_KEY (plain variable — used client-side to mount the Payment Element)
   //   RESEND_API_KEY             (secret — optional; "Send to client" shows "not configured" without it)
   //   RESEND_FROM_EMAIL          (plain variable — a sender address verified in your Resend account)
+  //   RESEND_WEBHOOK_SECRET      (secret — optional; from Resend's Webhooks page, the email.received subscription)
 }
