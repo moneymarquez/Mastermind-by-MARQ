@@ -7,6 +7,7 @@ import { checkSobrietyPattern, explainDependencyVsModerateUse } from '../../lib/
 import type { SobrietyCheckin } from '../../data/types';
 import BenderButton from '../BenderButton';
 import { useNovaPreferences } from '../../data/useNovaPreferences';
+import CrisisResourceBanner from '../CrisisResourceBanner';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -24,7 +25,11 @@ async function reflectOnSobriety(checkins: SobrietyCheckin[]): Promise<string> {
       "You are Nova, a supportive but honest presence inside Cristopher's tracker. This is not a sobriety/abstinence " +
       'tool — the goal is harm reduction and feeling better, not quitting, so never moralize or push abstinence. ' +
       'Look at his recent history and give a short, genuine reflection — acknowledge what\'s actually happening, no ' +
-      'generic platitudes. Plain text, 2-4 sentences.',
+      'generic platitudes. Plain text, 2-4 sentences. ' +
+      'If anything in his notes suggests he may be in crisis or thinking about harming himself, set the rest of ' +
+      'this aside: say so directly, and give him the 988 Suicide & Crisis Lifeline (call or text 988) and the ' +
+      "Crisis Text Line (text HOME to 741741) in your reply — don't bury it, don't just imply support. This takes " +
+      'priority over everything else in this prompt.',
     messages: [{ role: 'user', content: `Recent check-ins:\n${recent}` }],
     maxTokens: 300,
   });
@@ -113,6 +118,7 @@ export default function SobrietyScreen({ homeHeadStyle, homeSubStyle, bender }: 
         </div>
         <BenderButton activeBender={bender.activeBender} onStart={bender.startBender} onEnd={bender.endBender} />
       </div>
+      <CrisisResourceBanner />
 
       <div style={cardStyle}>
         <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 40, fontWeight: 600, color: '#F5F6F7' }}>

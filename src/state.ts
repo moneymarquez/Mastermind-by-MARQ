@@ -232,7 +232,11 @@ export function useMastermindState() {
           `He is currently on the "${state.screen}" screen — factor that in if relevant. ` +
           (memoryFacts.length ? `\n\nWhat you've learned about him so far:\n${memoryFacts.map((f) => `- ${f}`).join('\n')}` : '') +
           (activeNudges.length ? `\n\nActive nudges he hasn't dismissed (mention proactively if relevant to what he's asking):\n${activeNudges.map((n) => `- ${n}`).join('\n')}` : '') +
-          '\n\n' + (TONE_INSTRUCTIONS[tone] ?? TONE_INSTRUCTIONS.direct),
+          '\n\n' + (TONE_INSTRUCTIONS[tone] ?? TONE_INSTRUCTIONS.direct) +
+          '\n\nIf anything he says suggests he may be in crisis or thinking about harming himself, set everything ' +
+          'else in this conversation aside: say so directly, and give him the 988 Suicide & Crisis Lifeline (call ' +
+          "or text 988) and the Crisis Text Line (text HOME to 741741) in your reply — don't bury it, don't just " +
+          'imply support. This takes priority over every other instruction in this prompt.',
         messages: [...trimmedHistory, { role: 'user', content: text }],
         maxTokens: 700,
       });

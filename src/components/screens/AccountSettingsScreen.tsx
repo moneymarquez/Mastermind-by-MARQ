@@ -28,6 +28,21 @@ const dangerBtn: CSSProperties = {
   border: '1px solid #c47a7a55', color: '#c47a7a', fontSize: 13, cursor: 'pointer', alignSelf: 'flex-start',
 };
 
+async function openBillingPortal(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return 'Not signed in.';
+  try {
+    const res = await fetch('/api/billing/portal', { method: 'POST', headers: { authorization: `Bearer ${token}` } });
+    const body = await res.json();
+    if (!res.ok) return body.error ?? `Could not open the billing portal (${res.status}).`;
+    window.location.href = body.url;
+    return null;
+  } catch {
+    return 'Could not reach billing right now — try again in a bit.';
+  }
+}
+
 export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onSignOut, onStartTour }: Props) {
   const [user, setUser] = useState<User | null>(null);
   const [displayName, setDisplayName] = useState('');
@@ -41,6 +56,8 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
   const [savingPassword, setSavingPassword] = useState(false);
 
   const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm' | 'contact'>('idle');
+  const [portalError, setPortalError] = useState('');
+  const [openingPortal, setOpeningPortal] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -48,6 +65,14 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
       setDisplayName((data.user?.user_metadata?.full_name as string) ?? '');
     });
   }, []);
+
+  const manageBilling = async () => {
+    setOpeningPortal(true);
+    setPortalError('');
+    const err = await openBillingPortal();
+    if (err) setPortalError(err);
+    setOpeningPortal(false);
+  };
 
   const saveDisplayName = async () => {
     setSavingName(true);
@@ -123,6 +148,17 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
               {savingPassword ? 'Updating…' : 'Update password'}
             </div>
           </div>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7', marginBottom: 12 }}>Billing</div>
+          <div style={{ fontSize: 12.5, color: '#8A8F98', marginBottom: 12, lineHeight: 1.5 }}>
+            Update your payment method, view invoices, or cancel your subscription — handled directly through Stripe.
+          </div>
+          <div style={{ ...ghostBtn, opacity: openingPortal ? 0.6 : 1 }} onClick={() => !openingPortal && manageBilling()}>
+            {openingPortal ? 'Opening…' : 'Manage subscription'}
+          </div>
+          {portalError && <div style={{ fontSize: 11.5, color: '#c47a7a', marginTop: 10 }}>{portalError}</div>}
         </div>
 
         <div style={cardStyle}>

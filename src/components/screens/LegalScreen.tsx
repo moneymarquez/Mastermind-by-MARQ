@@ -20,11 +20,19 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'What happens to my data?',
-    a: "Your data (schedule, macros, budgeting, business info, everything) is stored per-account and access-controlled at the database level, so no other user's account can read it — including other non-owner accounts on this app. It's used to power the features you're using (e.g. Nova reading your data to answer a question) and isn't sold or shared with third parties. This is a plain-English summary, not a substitute for a lawyer-reviewed privacy policy — see the note at the bottom of this page.",
+    a: "Your data (schedule, macros, budgeting, business info, everything) is stored per-account and access-controlled at the database level, so no other user's account can read it — including other non-owner accounts on this app. It's used to power the features you're using (e.g. Nova reading your data to answer a question). See the data-handling note above for what's collected and which third-party services are involved.",
+  },
+  {
+    q: 'How do I get my data deleted?',
+    a: 'Settings → Account → "Delete account" starts the request. Deletion is handled manually right now rather than an instant automated button — for a request this consequential and irreversible, a human double-checking it happens correctly is safer than an untested automated process. Expect it to be handled within a few days.',
   },
   {
     q: 'How do I cancel my subscription?',
-    a: 'Email billing@mastermindsbymarq.com and it\'ll be handled directly. A self-serve cancel button isn\'t built yet — until it is, this is the reliable way to cancel.',
+    a: 'Settings → Account → "Manage subscription" opens Stripe\'s billing portal directly, where you can cancel, change payment method, or view invoices yourself — no need to email anyone. If that ever has trouble, billing@mastermindsbymarq.com is the fallback.',
+  },
+  {
+    q: 'If I\'m in crisis, or thinking about harming myself, what should I do?',
+    a: 'Call or text 988 (the Suicide & Crisis Lifeline), or text HOME to 741741 (Crisis Text Line) — both are free and available any time. This app is not equipped to handle a crisis; those resources are.',
   },
   {
     q: 'What if the AI gets something wrong — a bad plan, a miscalculated total, a wrong suggestion?',
@@ -61,6 +69,20 @@ export default function LegalScreen({ homeHeadStyle, homeSubStyle }: Props) {
             emails, categorized support mail — is produced by a language model reasoning over the data available to
             it. It can misread context, miss something important, or simply be incorrect. Review before you act on
             anything that matters.
+          </div>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={heading}>What data we collect, and who else sees it</div>
+          <div style={body}>
+            We collect what you enter directly (schedule, finances, health/fitness logs, business/client info,
+            uploaded photos and videos) and what the app generates from it (AI plans, drafted replies, categorized
+            support mail). We use AI — specifically Anthropic's Claude models — to process this data in order to
+            power features like Nova, meal-photo logging, and plan generation; your data is sent to Anthropic for
+            that processing. Beyond that, the following third-party services handle parts of the system and may
+            process data as a result: Stripe (payments), Supabase (database and file storage), Resend (email
+            delivery), Cloudflare (hosting), Open Food Facts (nutrition lookups), and Alpaca (paper-trading market
+            data — no real funds involved). Data is not sold. If you want your data deleted, see the FAQ below.
           </div>
         </div>
 

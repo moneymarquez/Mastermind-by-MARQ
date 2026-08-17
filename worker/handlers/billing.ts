@@ -101,6 +101,32 @@ export async function createSubscriptionIntent(request: Request, env: BillingEnv
   }
 }
 
+// Self-serve cancellation — Stripe's own hosted Billing Portal, not a
+// custom-built cancel flow. Genuinely simpler and safer than reimplementing
+// subscription-state changes by hand, and it closes the real gap that
+// existed before this: sign-up was a slick embedded Payment Element, but
+// cancelling required emailing billing@ with no self-serve path at all.
+export async function createPortalSession(request: Request, env: BillingEnv): Promise<Response> {
+  const user = await requireUser(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+  if (user instanceof Response) return user;
+  if (!env.STRIPE_SECRET_KEY) return notConfigured();
+
+  try {
+    const existingRes = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${user.id}&select=stripe_customer_id`, { headers: supabaseHeaders(env) });
+    const existing = (await existingRes.json()) as { stripe_customer_id: string | null }[];
+    const customerId = existing[0]?.stripe_customer_id;
+    if (!customerId) {
+      return new Response(JSON.stringify({ error: 'No subscription found for this account yet.' }), { status: 404, headers: { 'content-type': 'application/json' } });
+    }
+
+    const returnUrl = new URL(request.url).origin;
+    const session = await stripeRequest(env, '/billing_portal/sessions', { customer: customerId, return_url: returnUrl });
+    return new Response(JSON.stringify({ url: session.url }), { status: 200, headers: { 'content-type': 'application/json' } });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : 'Could not open the billing portal.' }), { status: 500, headers: { 'content-type': 'application/json' } });
+  }
+}
+
 async function verifyStripeSignature(rawBody: string, signatureHeader: string, secret: string): Promise<boolean> {
   const parts = Object.fromEntries(signatureHeader.split(',').map((p) => p.split('=') as [string, string]));
   const timestamp = parts.t;

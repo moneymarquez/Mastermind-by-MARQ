@@ -769,9 +769,45 @@ done and matched what the new prompt asked for, so it wasn't rebuilt).
   without a category or draft.
 - **Legal & FAQ** (`legal`, all accounts, reachable from Settings, `src/components/screens/LegalScreen.tsx`) — a
   real in-app page (not a placeholder) covering: AI output isn't professional advice, AI can be wrong, the Stocks
-  module is paper trading only, a plain-English data-handling summary, and how to cancel (email `billing@` — no
-  self-serve cancel button exists yet, a reasonable next addition once Stripe's secrets are live). Explicitly
-  flagged on the page itself as good-faith copy, not a lawyer-reviewed Terms of Service/Privacy Policy — real legal
-  review is still needed before wide release, especially once real payments and client data are flowing.
+  module is paper trading only, an explicit data-handling summary (what's collected, that AI processing goes
+  through Anthropic, and every third-party subprocessor — Stripe, Supabase, Resend, Cloudflare, Open Food Facts,
+  Alpaca), how to cancel, how to request data deletion, and crisis resources. Explicitly flagged on the page itself
+  as good-faith copy, not a lawyer-reviewed Terms of Service/Privacy Policy — real legal review is still needed
+  before wide release, especially once real payments and client data are flowing.
+
+## Safety net, self-serve billing, and the account-deletion checklist
+
+Built in response to a real gap-check against this app's actual surface area — not generic hardening, each item
+below maps to something this specific app touches (a Mental Health and Sobriety module, real Stripe payments, real
+third-party data processors).
+
+- **Crisis-resources safety net** — Mental Health and Sobriety are the two modules where a user could plausibly be
+  in real distress, and Nova has broad read/write reach across everything including those. Two layers, not one:
+  (1) `src/components/CrisisResourceBanner.tsx` is a small, always-visible line (988 Suicide & Crisis Lifeline,
+  Crisis Text Line) rendered on both screens regardless of anything the AI does or doesn't catch — the reliable
+  layer. (2) The system prompts for Mental Health's check-in reflection, Sobriety's pattern reflection, and Nova's
+  main system prompt (`src/state.ts`) all now carry an explicit, first-priority instruction: if anything suggests
+  the user may be in crisis, surface those same resources directly in the reply, not just imply support.
+- **Self-serve Stripe cancellation** (`worker/handlers/billing.ts`'s `createPortalSession`, routed at
+  `/api/billing/portal`) — Settings → Account → "Manage subscription" opens Stripe's own hosted Billing Portal
+  (cancel, change payment method, view invoices), using the `stripe_customer_id` already on the `subscriptions`
+  row. Closes a real asymmetry that existed before this: sign-up was a slick embedded Payment Element, cancellation
+  was "email billing@ and wait." No new Stripe secret needed — reuses `STRIPE_SECRET_KEY`.
+- **Account deletion — deliberately still manual.** Automating actual data deletion (purging rows across every
+  module's tables plus Storage objects) was considered and rejected for now: a bug in an automated deletion path
+  can destroy the wrong account's data permanently, with no undo, and that risk isn't worth it for what's still a
+  small user base. The existing "contact us" flow in `AccountSettingsScreen.tsx` stays as the entry point. What's
+  new is a checklist for actually fulfilling a deletion request thoroughly, since Storage objects don't cascade-delete
+  with their DB rows:
+  1. Confirm the requesting account's `user_id` (Supabase Studio → Authentication).
+  2. Delete their row from every per-user table (`user_modules`, `nova_preferences`, `nova_memory`, and every
+     module table — RLS-scoped ones can be found via `select table_name from information_schema.columns where
+     column_name = 'user_id'` in the SQL editor).
+  3. Delete their Storage objects — both `call-recordings` and `project-videos` buckets are folder-per-user
+     (`<user_id>/...`), so list and remove everything under that prefix in each bucket.
+  4. Delete the `subscriptions` row and cancel the Stripe subscription/customer if still active (via the Stripe
+     dashboard, or the same billing portal used for self-serve cancellation).
+  5. Delete the `auth.users` row last (Supabase Studio → Authentication → Users), which cascades any
+     `references auth.users(id) on delete cascade` columns not already caught above.
 
 

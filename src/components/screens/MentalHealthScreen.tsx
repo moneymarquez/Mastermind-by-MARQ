@@ -6,6 +6,7 @@ import { MENTAL_HEALTH_PROFILE } from '../../data/mentalHealthQuestions';
 import type { BenderSession, Mood } from '../../data/types';
 import { askClaude } from '../../lib/ai';
 import MentalHealthProfileView from './MentalHealthProfileView';
+import CrisisResourceBanner from '../CrisisResourceBanner';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -37,7 +38,11 @@ async function reflectOnCheckin(mood: Mood, note: string, activeBender: BenderSe
       "You are Nova, a warm, grounded presence inside Cristopher's mental health check-in tracker. He just logged " +
       "how he's feeling. Respond with a short, genuine reflection — not therapy, not a script, just something a " +
       "thoughtful friend who knows him would say. If the mood is rough or bad, take it seriously and offer one " +
-      'small, concrete thing that might help right now. Plain text, 2-3 sentences.' +
+      'small, concrete thing that might help right now. Plain text, 2-3 sentences. ' +
+      'If anything in what he wrote suggests he may be in crisis or thinking about harming himself, set the rest ' +
+      'of this aside: say so directly, and give him the 988 Suicide & Crisis Lifeline (call or text 988) and the ' +
+      "Crisis Text Line (text HOME to 741741) in your reply — don't bury it, don't just imply support. This " +
+      'takes priority over everything else in this prompt.' +
       benderContext +
       profileContext(profileAnswers),
     messages: [{ role: 'user', content: `Mood: ${mood}${note ? `\nNote: ${note}` : ''}` }],
@@ -95,6 +100,7 @@ export default function MentalHealthScreen({ homeHeadStyle, homeSubStyle, active
     <div>
       <div style={homeHeadStyle}>Mental Health</div>
       <div style={homeSubStyle}>Check in whenever — it's just for you.</div>
+      <CrisisResourceBanner />
 
       <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
         <div
