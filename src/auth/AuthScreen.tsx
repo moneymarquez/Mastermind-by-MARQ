@@ -77,29 +77,30 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0A0B0D', display: 'flex' }}>
+    <div style={{ minHeight: '100vh', background: '#0A0B0D', display: 'flex', position: 'relative' }}>
       <style>{`
         .auth-hero { display: flex; }
         @media (max-width: 860px) { .auth-hero { display: none; } }
       `}</style>
 
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+        <LetterGlitch
+          glitchColors={['#17191d', '#22262B', '#565b64']}
+          glitchSpeed={90}
+          smooth
+          centerVignette
+          outerVignette
+        />
+      </div>
+
       <div
         className="auth-hero"
         style={{
-          flex: 1, position: 'relative', flexDirection: 'column', justifyContent: 'center', padding: '0 64px',
-          background: '#0A0B0D', borderRight: '1px solid #17191d', overflow: 'hidden',
+          flex: 1, position: 'relative', zIndex: 1, flexDirection: 'column', justifyContent: 'center', padding: '0 64px',
+          borderRight: '1px solid #17191d', pointerEvents: 'none',
         }}
       >
-        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          <LetterGlitch
-            glitchColors={['#17191d', '#22262B', '#565b64']}
-            glitchSpeed={90}
-            smooth
-            centerVignette
-            outerVignette={false}
-          />
-        </div>
-        <div style={{ position: 'relative', zIndex: 1, pointerEvents: 'none' }}>
+        <div>
           <div style={{ fontSize: 15, fontWeight: 800, color: '#F5F6F7', letterSpacing: '-0.01em', marginBottom: 2 }}>Masterminds</div>
           <div style={{ fontSize: 10, fontWeight: 700, color: '#8A8F98', letterSpacing: '0.08em', marginBottom: 40 }}>by MARQ</div>
           <div style={{ fontSize: 40, fontWeight: 700, color: '#F5F6F7', lineHeight: 1.15, maxWidth: 460, letterSpacing: '-0.02em' }}>
@@ -111,7 +112,7 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
         </div>
       </div>
 
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div style={{ flex: 1, position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
         <div style={{ width: '100%', maxWidth: 360 }}>
           <form
             onSubmit={handleSubmit}
