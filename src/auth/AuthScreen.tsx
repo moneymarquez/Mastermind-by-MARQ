@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import type { SignUpResult } from './useAuth';
+import LetterGlitch from '../components/LetterGlitch';
 
 interface Props {
   onSignIn: (email: string, password: string) => Promise<string | null>;
@@ -86,17 +87,27 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
         className="auth-hero"
         style={{
           flex: 1, position: 'relative', flexDirection: 'column', justifyContent: 'center', padding: '0 64px',
-          background: 'radial-gradient(120% 120% at 20% 20%, #17191d 0%, #0A0B0D 60%)',
-          borderRight: '1px solid #17191d', overflow: 'hidden',
+          background: '#0A0B0D', borderRight: '1px solid #17191d', overflow: 'hidden',
         }}
       >
-        <div style={{ fontSize: 15, fontWeight: 800, color: '#F5F6F7', letterSpacing: '-0.01em', marginBottom: 2 }}>Masterminds</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: '#8A8F98', letterSpacing: '0.08em', marginBottom: 40 }}>by MARQ</div>
-        <div style={{ fontSize: 40, fontWeight: 700, color: '#F5F6F7', lineHeight: 1.15, maxWidth: 460, letterSpacing: '-0.02em' }}>
-          Your entire operation, in one place.
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+          <LetterGlitch
+            glitchColors={['#17191d', '#22262B', '#565b64']}
+            glitchSpeed={90}
+            smooth
+            centerVignette
+            outerVignette={false}
+          />
         </div>
-        <div style={{ fontSize: 14.5, color: '#8A8F98', marginTop: 18, maxWidth: 420, lineHeight: 1.6 }}>
-          Goals, health, business, and everything in between — tracked, planned, and pushed forward by Nova, day after day.
+        <div style={{ position: 'relative', zIndex: 1, pointerEvents: 'none' }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: '#F5F6F7', letterSpacing: '-0.01em', marginBottom: 2 }}>Masterminds</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#8A8F98', letterSpacing: '0.08em', marginBottom: 40 }}>by MARQ</div>
+          <div style={{ fontSize: 40, fontWeight: 700, color: '#F5F6F7', lineHeight: 1.15, maxWidth: 460, letterSpacing: '-0.02em' }}>
+            Your entire operation, in one place.
+          </div>
+          <div style={{ fontSize: 14.5, color: '#8A8F98', marginTop: 18, maxWidth: 420, lineHeight: 1.6 }}>
+            Goals, health, business, and everything in between — tracked, planned, and pushed forward by Nova, day after day.
+          </div>
         </div>
       </div>
 
