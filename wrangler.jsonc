@@ -9,16 +9,17 @@
   // run in the Workers runtime.
   "compatibility_flags": ["nodejs_compat"],
   "main": "worker/index.ts",
-  // Without this, every deploy (including the automatic ones triggered by
-  // a git push) replaces the Worker's whole variable/secret set with only
+  // Every deploy (including the automatic ones triggered by a git push)
+  // otherwise replaces the Worker's whole variable/secret set with only
   // what's declared below — silently wiping out anything set manually in
   // the dashboard, like SUPABASE_SERVICE_ROLE_KEY or STRIPE_SECRET_KEY.
   // This was the real cause of the "I just set this in the dashboard and
   // now it's gone again" loop: it wasn't the dashboard failing to save,
-  // it was the next deploy erasing it. keep_vars tells Wrangler to
-  // preserve anything already set (dashboard or `wrangler secret put`)
-  // that isn't explicitly declared here.
-  "keep_vars": true,
+  // it was the next deploy erasing it. A `keep_vars` config field here
+  // did NOT fix this (confirmed via the deploy log's bindings table still
+  // missing everything dashboard-set) — the actual fix is the `--keep-vars`
+  // flag on the Deploy command itself, set in Cloudflare's dashboard under
+  // Settings → Build configuration ("npx wrangler deploy --keep-vars").
   // VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, and STRIPE_PRICE_ID are not
   // sensitive (the first two are already shipped in the built frontend
   // bundle, readable by anyone; a Stripe Price ID doesn't let anyone
