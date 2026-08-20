@@ -9,20 +9,22 @@
   // run in the Workers runtime.
   "compatibility_flags": ["nodejs_compat"],
   "main": "worker/index.ts",
-  // VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are not sensitive (both
-  // are already shipped in the built frontend bundle, readable by anyone),
-  // so they're safe to commit here. This is a workaround for the
-  // Cloudflare dashboard's Variables and Secrets form not persisting
-  // these values reliably when set manually (confirmed via the Worker's
-  // live logs still showing VITE_SUPABASE_URL undefined, and then
-  // requireUser() getting a 401 from Supabase, after repeated dashboard
-  // edits) — declaring them here guarantees they're present on every
-  // deploy regardless of dashboard state. SUPABASE_SERVICE_ROLE_KEY and
-  // the Stripe/Resend keys stay dashboard-only (Secrets) per the note at
-  // the bottom of this file — those are genuinely sensitive.
+  // VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, and STRIPE_PRICE_ID are not
+  // sensitive (the first two are already shipped in the built frontend
+  // bundle, readable by anyone; a Stripe Price ID doesn't let anyone
+  // charge anything, it just identifies which price to subscribe to), so
+  // they're safe to commit here. This is a workaround for the Cloudflare
+  // dashboard's Variables and Secrets form not persisting values reliably
+  // when set manually (confirmed repeatedly via the Worker's live logs —
+  // each one showed up correctly in the dashboard form but was still
+  // missing at runtime) — declaring them here guarantees they're present
+  // on every deploy regardless of dashboard state. SUPABASE_SERVICE_ROLE_KEY
+  // and the remaining Stripe/Resend keys stay dashboard-only (Secrets) per
+  // the note at the bottom of this file — those are genuinely sensitive.
   "vars": {
     "VITE_SUPABASE_URL": "https://jqkxaxjuvurciqmvnsbw.supabase.co",
-    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impxa3hheGp1dnVyY2lxbXZuc2J3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNDE1ODAsImV4cCI6MjEwMTYxNzU4MH0.TjKqBJCBlqVQLXnQZIL6tyyGE3KEIdCdaa7FySOfOHA"
+    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impxa3hheGp1dnVyY2lxbXZuc2J3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNDE1ODAsImV4cCI6MjEwMTYxNzU4MH0.TjKqBJCBlqVQLXnQZIL6tyyGE3KEIdCdaa7FySOfOHA",
+    "STRIPE_PRICE_ID": "price_1U6IH4RyuG1KPb7GQAUQjnCz"
   },
   "assets": {
     "directory": "./dist",
