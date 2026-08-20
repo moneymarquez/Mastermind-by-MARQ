@@ -1,6 +1,6 @@
 import { requireUser } from '../lib/auth';
 
-// Stripe embedded billing — $10/mo, Payment Element mounted client-side
+// Stripe embedded billing — $19.99/mo, Payment Element mounted client-side
 // (BillingGateScreen.tsx), never a hosted Stripe Checkout redirect. Talks
 // to Stripe's REST API directly via fetch rather than pulling in the
 // `stripe` npm SDK (Node-oriented; raw fetch matches every other Worker
@@ -49,7 +49,7 @@ async function stripeRequest(env: BillingEnv, path: string, body: Record<string,
 }
 
 // Creates (or reuses) a Stripe Customer for this user, starts a
-// subscription in `default_incomplete` state against the $10/mo Price the
+// subscription in `default_incomplete` state against the $19.99/mo Price the
 // user creates in their own Stripe dashboard, and returns the client
 // secret needed to mount the Payment Element and confirm the first
 // payment. The subscriptions row is written immediately (service role,

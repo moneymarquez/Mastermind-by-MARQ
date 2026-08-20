@@ -60,7 +60,7 @@
   //   SUPABASE_SERVICE_ROLE_KEY  (secret)
   //   ANTHROPIC_API_KEY          (secret — optional; Nova commentary is skipped without it)
   //   STRIPE_SECRET_KEY          (secret — optional; billing gate shows "not configured" without it)
-  //   STRIPE_PRICE_ID            (secret — the $19.97/mo Price you create in your own Stripe dashboard)
+  //   STRIPE_PRICE_ID            (secret — the $19.99/mo recurring Price you create in your own Stripe dashboard)
   //   STRIPE_WEBHOOK_SECRET      (secret — from a webhook endpoint pointed at /api/billing/webhook)
   //   VITE_STRIPE_PUBLISHABLE_KEY (plain variable — used client-side to mount the Payment Element)
   //   RESEND_API_KEY             (secret — optional; "Send to client" shows "not configured" without it)

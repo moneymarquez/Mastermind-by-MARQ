@@ -50,7 +50,7 @@ function PaymentForm({ onSubscribed }: { onSubscribed: () => void }) {
           cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1,
         }}
       >
-        {submitting ? 'Processing…' : 'Subscribe — $19.97/month'}
+        {submitting ? 'Processing…' : 'Subscribe — $19.99/month'}
       </button>
     </div>
   );
@@ -92,7 +92,7 @@ export default function BillingGateScreen({ onSubscribed, onSignOut }: Props) {
       <div style={{ width: 380, maxWidth: '90vw', background: '#14161A', border: '1px solid #22262B', borderRadius: 16, padding: '32px 28px' }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#F5F6F7', marginBottom: 6 }}>Subscribe to continue</div>
         <div style={{ fontSize: 12.5, color: '#8A8F98', marginBottom: 24, lineHeight: 1.6 }}>
-          $19.97/month, cancel anytime. Your modules and data are already set up — this just unlocks them.
+          $19.99/month, cancel anytime. Your modules and data are already set up — this just unlocks them.
         </div>
 
         {loading && <div style={{ fontSize: 12.5, color: '#565b64' }}>Loading…</div>}
