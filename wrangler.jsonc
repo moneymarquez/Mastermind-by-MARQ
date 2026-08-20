@@ -9,6 +9,18 @@
   // run in the Workers runtime.
   "compatibility_flags": ["nodejs_compat"],
   "main": "worker/index.ts",
+  // VITE_SUPABASE_URL is not sensitive (it's this project's public
+  // Supabase URL, already shipped in the built frontend bundle), so it's
+  // safe to commit here. This is a workaround for the Cloudflare dashboard's
+  // Variables and Secrets form not persisting this value when set manually
+  // (confirmed via the Worker's live logs still showing it undefined after
+  // repeated dashboard edits) — declaring it here guarantees it's present
+  // on every deploy regardless of dashboard state. Everything else
+  // (VITE_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, Stripe/Resend keys)
+  // stays dashboard-only per the note at the bottom of this file.
+  "vars": {
+    "VITE_SUPABASE_URL": "https://jqkxaxjuvurciqmvnsbw.supabase.co"
+  },
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
