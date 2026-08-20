@@ -15,11 +15,15 @@
   // the dashboard, like SUPABASE_SERVICE_ROLE_KEY or STRIPE_SECRET_KEY.
   // This was the real cause of the "I just set this in the dashboard and
   // now it's gone again" loop: it wasn't the dashboard failing to save,
-  // it was the next deploy erasing it. A `keep_vars` config field here
-  // did NOT fix this (confirmed via the deploy log's bindings table still
-  // missing everything dashboard-set) — the actual fix is the `--keep-vars`
-  // flag on the Deploy command itself, set in Cloudflare's dashboard under
-  // Settings → Build configuration ("npx wrangler deploy --keep-vars").
+  // it was the next deploy erasing it. Neither a `keep_vars` config field
+  // here nor `wrangler deploy --keep-vars` actually preserved Secret-type
+  // bindings (confirmed via the deploy log's bindings table — plain vars
+  // survived, Secrets still vanished). The real fix lives in Cloudflare's
+  // dashboard under Settings → Build configuration: the Deploy command
+  // there now explicitly re-uploads STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
+  // SUPABASE_SERVICE_ROLE_KEY, and VITE_STRIPE_PUBLISHABLE_KEY via
+  // `wrangler secret bulk` (sourced from Cloudflare's own Build variables,
+  // so nothing sensitive touches this repo) before every `wrangler deploy`.
   // VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, and STRIPE_PRICE_ID are not
   // sensitive (the first two are already shipped in the built frontend
   // bundle, readable by anyone; a Stripe Price ID doesn't let anyone
