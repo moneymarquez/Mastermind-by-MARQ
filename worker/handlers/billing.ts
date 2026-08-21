@@ -76,11 +76,19 @@ export async function createSubscriptionIntent(request: Request, env: BillingEnv
       payment_behavior: 'default_incomplete',
       'payment_settings[save_default_payment_method]': 'on_subscription',
       'expand[0]': 'latest_invoice.payment_intent',
+      'expand[1]': 'latest_invoice.confirmation_secret',
       'metadata[mastermind_user_id]': user.id,
     });
 
-    const latestInvoice = subscription.latest_invoice as { payment_intent?: { client_secret?: string } } | undefined;
-    const clientSecret = latestInvoice?.payment_intent?.client_secret;
+    // Newer Stripe API versions attach the client secret needed to confirm
+    // payment to the invoice's confirmation_secret instead of a
+    // latest_invoice.payment_intent — the account's default API version
+    // decides which shape comes back, so check both rather than assuming.
+    const latestInvoice = subscription.latest_invoice as {
+      payment_intent?: { client_secret?: string };
+      confirmation_secret?: { client_secret?: string };
+    } | undefined;
+    const clientSecret = latestInvoice?.payment_intent?.client_secret ?? latestInvoice?.confirmation_secret?.client_secret;
     if (!clientSecret) throw new Error('Stripe did not return a payment intent client secret.');
 
     await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/subscriptions?on_conflict=user_id`, {
