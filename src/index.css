@@ -17,6 +17,7 @@
   --text-tertiary: #565b64;
   --text-quaternary: #C7CAD1;
   --text-quaternary-2: #c8cad0;
+  --shine: #40454d;
 }
 
 :root[data-theme="light"] {
@@ -32,6 +33,7 @@
   --text-tertiary: #9CA3AF;
   --text-quaternary: #4B5563;
   --text-quaternary-2: #4B5563;
+  --shine: #DADCE0;
 }
 
 body {
@@ -104,16 +106,19 @@ input, textarea, [contenteditable="true"] {
   transform: scale(0.99);
 }
 
-/* Background matching the Higgsfield reference: a soft directional light
-   easing in from the top-right corner, not a hard geometric diagonal
-   split — a radial glow anchored off-canvas at the top-right, faded into
-   flat --bg toward the bottom-left. */
+/* Background matching the Higgsfield reference exactly: a clearly visible
+   diagonal split — flat --bg filling the bottom-left roughly 40% of the
+   screen, a distinctly lighter --shine panel filling the top-right, a
+   short feathered seam between them. --shine is a dedicated, higher-
+   contrast token (not --border/--surface, which were too close to --bg
+   to actually read as a visible band once rendered). */
 .app-shine-bg {
   background-color: var(--bg);
-  background-image: radial-gradient(
-    circle at 88% -10%,
-    var(--border) 0%,
-    var(--surface) 32%,
-    var(--bg) 68%
+  background-image: linear-gradient(
+    132deg,
+    var(--bg) 0%,
+    var(--bg) 34%,
+    var(--shine) 52%,
+    var(--shine) 100%
   );
 }
