@@ -104,21 +104,17 @@ input, textarea, [contenteditable="true"] {
   transform: scale(0.99);
 }
 
-/* Diagonal shine — the app-wide background treatment (matches the
-   Higgsfield reference: a soft light band cutting across the top-right
-   corner, at rest against a flat --bg). Theme-aware via --bg alone; the
-   band itself uses --text at a low, fixed opacity so it reads as a subtle
-   sheen in both themes rather than a colored accent. */
+/* Diagonal shine — the app-wide background treatment matching the
+   Higgsfield reference: a clean diagonal split, flat --bg in the
+   bottom-left, a solid --border-toned panel in the top-right, with only a
+   short feather at the seam (not a wide, low-opacity haze). */
 .app-shine-bg {
   background-color: var(--bg);
   background-image: linear-gradient(
-    135deg,
-    transparent 0%,
-    transparent 38%,
-    color-mix(in srgb, var(--text) 6%, transparent) 48%,
-    color-mix(in srgb, var(--text) 10%, transparent) 52%,
-    color-mix(in srgb, var(--text) 6%, transparent) 56%,
-    transparent 66%,
-    transparent 100%
+    140deg,
+    var(--bg) 0%,
+    var(--bg) 40%,
+    var(--border) 58%,
+    var(--border) 100%
   );
 }
