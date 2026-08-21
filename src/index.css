@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 
 /* Theme tokens — dark is the default/current look and must render pixel-
    identical to before this system existed; :root[data-theme="light"]
@@ -37,7 +37,7 @@
 body {
   margin: 0;
   background: var(--bg);
-  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  font-family: 'Manrope', 'Inter', system-ui, sans-serif;
 }
 
 * {
@@ -104,17 +104,16 @@ input, textarea, [contenteditable="true"] {
   transform: scale(0.99);
 }
 
-/* Diagonal shine — the app-wide background treatment matching the
-   Higgsfield reference: a clean diagonal split, flat --bg in the
-   bottom-left, a solid --border-toned panel in the top-right, with only a
-   short feather at the seam (not a wide, low-opacity haze). */
+/* Background matching the Higgsfield reference: a soft directional light
+   easing in from the top-right corner, not a hard geometric diagonal
+   split — a radial glow anchored off-canvas at the top-right, faded into
+   flat --bg toward the bottom-left. */
 .app-shine-bg {
   background-color: var(--bg);
-  background-image: linear-gradient(
-    140deg,
-    var(--bg) 0%,
-    var(--bg) 40%,
-    var(--border) 58%,
-    var(--border) 100%
+  background-image: radial-gradient(
+    circle at 88% -10%,
+    var(--border) 0%,
+    var(--surface) 32%,
+    var(--bg) 68%
   );
 }
