@@ -2,6 +2,7 @@ import Stage from './Stage';
 import { useMastermindState } from './state';
 import { useModuleAccess } from './data/useModuleAccess';
 import { useSubscription } from './data/useSubscription';
+import { useTheme } from './data/useTheme';
 import { isOwnerIdentity } from './auth/ownerIdentity';
 import OnboardingFlow from './onboarding/OnboardingFlow';
 import BillingGateScreen from './billing/BillingGateScreen';
@@ -34,10 +35,11 @@ export default function AuthedGate({ userId, userEmail, onSignOut }: Props) {
   const isOwner = isOwnerIdentity({ id: userId, email: userEmail });
   const moduleAccess = useModuleAccess(userId, isOwner);
   const subscription = useSubscription(isOwner);
+  const theme = useTheme();
 
   if (!isOwner) {
     if (moduleAccess.loading) {
-      return <div style={{ minHeight: '100vh', background: '#0A0B0D' }} />;
+      return <div style={{ minHeight: '100vh', background: 'var(--bg)' }} />;
     }
     if (!moduleAccess.hasOnboarded) {
       return (
@@ -49,15 +51,15 @@ export default function AuthedGate({ userId, userEmail, onSignOut }: Props) {
       );
     }
     if (subscription.loading) {
-      return <div style={{ minHeight: '100vh', background: '#0A0B0D' }} />;
+      return <div style={{ minHeight: '100vh', background: 'var(--bg)' }} />;
     }
     if (!subscription.isActive) {
-      return <BillingGateScreen onSubscribed={subscription.refresh} onSignOut={onSignOut} />;
+      return <BillingGateScreen onSubscribed={subscription.refresh} onSignOut={onSignOut} theme={theme.theme} />;
     }
   }
 
   return (
-    <div style={{ background: '#0A0B0D' }}>
+    <div style={{ background: 'var(--bg)' }}>
       <Stage
         state={state}
         actions={actions}
@@ -66,6 +68,8 @@ export default function AuthedGate({ userId, userEmail, onSignOut }: Props) {
         onSignOut={onSignOut}
         currentUserId={userId}
         isOwner={isOwner}
+        theme={theme.theme}
+        onThemeChange={theme.save}
       />
     </div>
   );

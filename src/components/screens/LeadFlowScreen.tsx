@@ -35,7 +35,7 @@ export default function LeadFlowScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const panelStyle: CSSProperties = {
     background: '#fafafa',
     borderRadius: 20,
-    border: '1px solid #22262B',
+    border: '1px solid var(--border)',
     marginTop: 24,
     fontFamily: 'Inter, sans-serif',
     color: '#111',

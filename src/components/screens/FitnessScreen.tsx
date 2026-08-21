@@ -35,12 +35,12 @@ async function generateFitnessPlan(kind: FitnessPlanKind, workouts: FitnessWorko
 }
 
 const inputStyle: CSSProperties = {
-  background: '#14161A', border: '1px solid #22262B', borderRadius: 8, padding: '9px 12px',
-  color: '#F5F6F7', fontSize: 13.5, outline: 'none',
+  background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 12px',
+  color: 'var(--text)', fontSize: 13.5, outline: 'none',
 };
 const tabStyle = (active: boolean): CSSProperties => ({
   padding: '9px 18px', borderRadius: 999, cursor: 'pointer', fontSize: 13, fontWeight: 600,
-  border: `1px solid ${active ? '#F5F6F7' : '#22262B'}`, color: active ? '#F5F6F7' : '#565b64',
+  border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, color: active ? 'var(--text)' : 'var(--text-tertiary)',
   background: active ? '#F5F6F71a' : 'transparent',
 });
 
@@ -104,9 +104,9 @@ export default function FitnessScreen({ homeHeadStyle, homeSubStyle }: Props) {
       <div style={homeSubStyle}>Library workouts, a custom Lock In plan, or log anything ad hoc.</div>
 
       <div style={{ display: 'flex', gap: 14, marginTop: 20, flexWrap: 'wrap' }}>
-        <div style={{ background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: '16px 20px', minWidth: 140 }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 28, fontWeight: 600, color: '#F5F6F7' }}>{loading ? '—' : weekCount}</div>
-          <div style={{ fontSize: 12.5, color: '#8A8F98', marginTop: 4 }}>Workouts this week</div>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 20px', minWidth: 140 }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 28, fontWeight: 600, color: 'var(--text)' }}>{loading ? '—' : weekCount}</div>
+          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 4 }}>Workouts this week</div>
         </div>
       </div>
 
@@ -123,13 +123,13 @@ export default function FitnessScreen({ homeHeadStyle, homeSubStyle }: Props) {
         <div style={{ marginTop: 20 }}>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <div
-              style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999, background: generating ? '#22262B' : '#F5F6F7', color: generating ? '#8A8F98' : '#0A0B0D', fontSize: 13, fontWeight: 600, cursor: generating ? 'default' : 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999, background: generating ? 'var(--border)' : 'var(--text)', color: generating ? 'var(--text-secondary)' : 'var(--bg)', fontSize: 13, fontWeight: 600, cursor: generating ? 'default' : 'pointer' }}
               onClick={() => !generating && generate('workout')}
             >
               {generating === 'workout' ? 'Generating…' : '✨ AI workout plan'}
             </div>
             <div
-              style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999, border: '1px solid #F5F6F7', color: generating ? '#565b64' : '#F5F6F7', fontSize: 13, fontWeight: 500, cursor: generating ? 'default' : 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999, border: '1px solid var(--text)', color: generating ? 'var(--text-tertiary)' : 'var(--text)', fontSize: 13, fontWeight: 500, cursor: generating ? 'default' : 'pointer' }}
               onClick={() => !generating && generate('diet')}
             >
               {generating === 'diet' ? 'Generating…' : '✨ AI diet plan'}
@@ -138,11 +138,11 @@ export default function FitnessScreen({ homeHeadStyle, homeSubStyle }: Props) {
           {aiError && <div style={{ fontSize: 12.5, color: '#c47a7a', marginTop: 8 }}>{aiError}</div>}
 
           {plans.length > 0 && (
-            <div style={{ marginTop: 18, background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: 22, maxWidth: 640 }}>
-              <div style={{ fontSize: 12, color: '#8A8F98', marginBottom: 8 }}>
+            <div style={{ marginTop: 18, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 22, maxWidth: 640 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
                 Latest {plans[0].kind} plan · {new Date(plans[0].created_at).toLocaleDateString()}
               </div>
-              <div style={{ fontSize: 13.5, color: '#F5F6F7', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontFamily: "'JetBrains Mono', monospace" }}>{plans[0].plan_text}</div>
+              <div style={{ fontSize: 13.5, color: 'var(--text)', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontFamily: "'JetBrains Mono', monospace" }}>{plans[0].plan_text}</div>
             </div>
           )}
 
@@ -152,29 +152,29 @@ export default function FitnessScreen({ homeHeadStyle, homeSubStyle }: Props) {
             <input style={{ ...inputStyle, flex: '1 1 100px' }} placeholder="Miles (opt.)" value={distance} onChange={(e) => setDistance(e.target.value)} />
             <input style={{ ...inputStyle, flex: '2 1 160px' }} placeholder="Notes (opt.)" value={notes} onChange={(e) => setNotes(e.target.value)} />
             <div
-              style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999, border: '1px solid #F5F6F7', color: '#F5F6F7', fontSize: 13, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}
+              style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999, border: '1px solid var(--text)', color: 'var(--text)', fontSize: 13, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}
               onClick={submit}
             >
               Log workout
             </div>
           </div>
 
-          <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', border: '1px solid #22262B', borderRadius: 14, overflow: 'hidden', maxWidth: 640 }}>
+          <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', maxWidth: 640 }}>
             {workouts.map((w) => (
-              <div key={w.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid #1c1e23', background: '#101114' }}>
+              <div key={w.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)' }}>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7' }}>{w.workout_type}</div>
-                  <div style={{ fontSize: 12.5, color: '#8A8F98', marginTop: 2 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{w.workout_type}</div>
+                  <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 2 }}>
                     {w.workout_date}
                     {w.duration_min ? ` · ${w.duration_min} min` : ''}
                     {w.distance_mi ? ` · ${w.distance_mi} mi` : ''}
                   </div>
                 </div>
-                <span style={{ fontSize: 13, color: '#565b64', cursor: 'pointer' }} onClick={() => removeWorkout(w.id)}>Remove</span>
+                <span style={{ fontSize: 13, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => removeWorkout(w.id)}>Remove</span>
               </div>
             ))}
             {!loading && workouts.length === 0 && (
-              <div style={{ padding: '18px', fontSize: 13, color: '#565b64', background: '#101114' }}>No workouts logged yet.</div>
+              <div style={{ padding: '18px', fontSize: 13, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No workouts logged yet.</div>
             )}
           </div>
         </div>

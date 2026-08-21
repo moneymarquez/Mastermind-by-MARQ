@@ -9,12 +9,12 @@ interface Props {
 }
 
 const inputStyle: CSSProperties = {
-  flex: 1, background: '#1a1c21', border: '1px solid #2b2f36', borderRadius: 999, padding: '10px 16px',
-  color: '#F5F6F7', fontSize: 13.5, outline: 'none',
+  flex: 1, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 999, padding: '10px 16px',
+  color: 'var(--text)', fontSize: 13.5, outline: 'none',
 };
 const primaryBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999,
-  background: '#F5F6F7', color: '#0A0B0D', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+  background: 'var(--text)', color: 'var(--bg)', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
 };
 
 export default function IdeaMakerScreen({ homeHeadStyle, homeSubStyle }: Props) {
@@ -28,7 +28,7 @@ export default function IdeaMakerScreen({ homeHeadStyle, homeSubStyle }: Props) 
       <div>
         <div style={homeHeadStyle}>Idea Maker</div>
         <div style={homeSubStyle}>Drop a raw idea — {assistantName} takes a first pass, then digs in with you.</div>
-        <div style={{ fontSize: 12, color: '#565b64', marginTop: 14, maxWidth: 560, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 14, maxWidth: 560, lineHeight: 1.5 }}>
           Real {assistantName}, pressure-testing your idea back and forth — not a script.
         </div>
 
@@ -57,18 +57,18 @@ export default function IdeaMakerScreen({ homeHeadStyle, homeSubStyle }: Props) 
           </div>
         </div>
 
-        <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', border: '1px solid #22262B', borderRadius: 14, overflow: 'hidden', maxWidth: 640 }}>
+        <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', maxWidth: 640 }}>
           {sessions.map((s) => (
             <div
               key={s.id}
               onClick={() => setActiveSessionId(s.id)}
-              style={{ padding: '14px 20px', borderBottom: '1px solid #1c1e23', background: '#101114', cursor: 'pointer', fontSize: 13.5, color: '#C7CAD1' }}
+              style={{ padding: '14px 20px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)', cursor: 'pointer', fontSize: 13.5, color: 'var(--text-quaternary)' }}
             >
               {s.idea_text}
             </div>
           ))}
           {!loading && sessions.length === 0 && (
-            <div style={{ padding: 18, fontSize: 13, color: '#565b64', background: '#101114' }}>No ideas explored yet.</div>
+            <div style={{ padding: 18, fontSize: 13, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No ideas explored yet.</div>
           )}
         </div>
       </div>
@@ -77,7 +77,7 @@ export default function IdeaMakerScreen({ homeHeadStyle, homeSubStyle }: Props) 
 
   return (
     <div>
-      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 13, color: '#8A8F98', cursor: 'pointer', marginBottom: 18 }} onClick={() => setActiveSessionId(null)}>
+      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 18 }} onClick={() => setActiveSessionId(null)}>
         ← New idea
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 640, marginBottom: 18 }}>
@@ -86,9 +86,9 @@ export default function IdeaMakerScreen({ homeHeadStyle, homeSubStyle }: Props) 
             key={m.id}
             style={{
               alignSelf: m.from_role === 'user' ? 'flex-end' : 'flex-start',
-              background: m.from_role === 'user' ? '#F5F6F7' : '#14161A',
-              color: m.from_role === 'user' ? '#0A0B0D' : '#e9e9ed',
-              border: m.from_role === 'nova' ? '1px solid #22262B' : 'none',
+              background: m.from_role === 'user' ? 'var(--text)' : 'var(--surface)',
+              color: m.from_role === 'user' ? 'var(--bg)' : '#e9e9ed',
+              border: m.from_role === 'nova' ? '1px solid var(--border)' : 'none',
               padding: '12px 16px', borderRadius: 14, fontSize: 13.5, maxWidth: '85%', lineHeight: 1.6, whiteSpace: 'pre-wrap',
             }}
           >
@@ -96,7 +96,7 @@ export default function IdeaMakerScreen({ homeHeadStyle, homeSubStyle }: Props) 
           </div>
         ))}
         {thinking && (
-          <div style={{ alignSelf: 'flex-start', background: '#14161A', border: '1px solid #22262B', color: '#8A8F98', padding: '12px 16px', borderRadius: 14, fontSize: 13.5 }}>
+          <div style={{ alignSelf: 'flex-start', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-secondary)', padding: '12px 16px', borderRadius: 14, fontSize: 13.5 }}>
             …
           </div>
         )}

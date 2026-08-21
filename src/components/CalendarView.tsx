@@ -142,15 +142,15 @@ const CalendarView = forwardRef<CalendarViewHandle, Props>(function CalendarView
       {mode === 'month' && (
         <div style={{ marginTop: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-            <span style={{ cursor: 'pointer', color: '#8A8F98', fontSize: 16 }} onClick={() => setMonthAnchor(new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() - 1, 1))}>‹</span>
-            <div style={{ fontSize: 16, fontWeight: 600, color: '#F5F6F7', minWidth: 160 }}>{MONTH_NAMES[monthAnchor.getMonth()]} {monthAnchor.getFullYear()}</div>
-            <span style={{ cursor: 'pointer', color: '#8A8F98', fontSize: 16 }} onClick={() => setMonthAnchor(new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() + 1, 1))}>›</span>
-            <div style={{ fontSize: 12, color: '#8A8F98', cursor: 'pointer', border: '1px solid #22262B', borderRadius: 999, padding: '5px 12px' }} onClick={() => setMonthAnchor(new Date())}>Today</div>
+            <span style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 16 }} onClick={() => setMonthAnchor(new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() - 1, 1))}>‹</span>
+            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', minWidth: 160 }}>{MONTH_NAMES[monthAnchor.getMonth()]} {monthAnchor.getFullYear()}</div>
+            <span style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 16 }} onClick={() => setMonthAnchor(new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() + 1, 1))}>›</span>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer', border: '1px solid var(--border)', borderRadius: 999, padding: '5px 12px' }} onClick={() => setMonthAnchor(new Date())}>Today</div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, background: '#1c1e23', border: '1px solid #1c1e23', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, background: 'var(--surface-3)', border: '1px solid var(--surface-3)', borderRadius: 12, overflow: 'hidden' }}>
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-              <div key={d} style={{ background: '#14161A', padding: '8px 10px', fontSize: 11, color: '#565b64', fontWeight: 600 }}>{d}</div>
+              <div key={d} style={{ background: 'var(--surface)', padding: '8px 10px', fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 600 }}>{d}</div>
             ))}
             {monthGrid(monthAnchor).map((d, i) => {
               const ds = dateStr(d);
@@ -161,9 +161,9 @@ const CalendarView = forwardRef<CalendarViewHandle, Props>(function CalendarView
                 <div
                   key={i}
                   onClick={() => openDay(d)}
-                  style={{ background: '#101114', minHeight: 76, padding: '8px 8px', cursor: 'pointer', opacity: inMonth ? 1 : 0.35 }}
+                  style={{ background: 'var(--surface-2)', minHeight: 76, padding: '8px 8px', cursor: 'pointer', opacity: inMonth ? 1 : 0.35 }}
                 >
-                  <div style={{ fontSize: 12, color: isToday ? '#0A0B0D' : '#C7CAD1', fontWeight: isToday ? 700 : 400, display: 'inline-flex', width: 20, height: 20, alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: isToday ? '#F5F6F7' : 'transparent' }}>
+                  <div style={{ fontSize: 12, color: isToday ? 'var(--bg)' : 'var(--text-quaternary)', fontWeight: isToday ? 700 : 400, display: 'inline-flex', width: 20, height: 20, alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: isToday ? 'var(--text)' : 'transparent' }}>
                     {d.getDate()}
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 6 }}>
@@ -181,12 +181,12 @@ const CalendarView = forwardRef<CalendarViewHandle, Props>(function CalendarView
       {mode === 'day' && (
         <div style={{ marginTop: 20, maxWidth: 620 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-            <span style={{ cursor: 'pointer', color: '#8A8F98', fontSize: 13 }} onClick={() => setMode('month')}>← Month</span>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#F5F6F7' }}>{formatDateLabel(selectedDate)}</div>
+            <span style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 13 }} onClick={() => setMode('month')}>← Month</span>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{formatDateLabel(selectedDate)}</div>
           </div>
-          <div style={{ fontSize: 11.5, color: '#565b64', marginBottom: 10 }}>Drag across the timeline to add an event — a quick click blocks off 30 minutes.</div>
+          <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginBottom: 10 }}>Drag across the timeline to add an event — a quick click blocks off 30 minutes.</div>
 
-          <div style={{ position: 'relative', border: '1px solid #22262B', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ position: 'relative', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
             <div
               ref={timelineRef}
               onPointerDown={onTimelinePointerDown}
@@ -195,9 +195,9 @@ const CalendarView = forwardRef<CalendarViewHandle, Props>(function CalendarView
               style={{ position: 'relative', height: HOUR_HEIGHT * 24, touchAction: 'none', cursor: 'crosshair' }}
             >
               {Array.from({ length: 24 }).map((_, h) => (
-                <div key={h} style={{ position: 'absolute', top: h * HOUR_HEIGHT, left: 0, right: 0, height: HOUR_HEIGHT, borderTop: '1px solid #1c1e23', display: 'flex' }}>
-                  <div style={{ width: 56, flexShrink: 0, fontSize: 10.5, color: '#565b64', padding: '2px 8px' }}>{formatTimeLabel(`${String(h).padStart(2, '0')}:00`)}</div>
-                  <div style={{ flex: 1, background: '#101114' }} />
+                <div key={h} style={{ position: 'absolute', top: h * HOUR_HEIGHT, left: 0, right: 0, height: HOUR_HEIGHT, borderTop: '1px solid var(--surface-3)', display: 'flex' }}>
+                  <div style={{ width: 56, flexShrink: 0, fontSize: 10.5, color: 'var(--text-tertiary)', padding: '2px 8px' }}>{formatTimeLabel(`${String(h).padStart(2, '0')}:00`)}</div>
+                  <div style={{ flex: 1, background: 'var(--surface-2)' }} />
                 </div>
               ))}
 
@@ -205,7 +205,7 @@ const CalendarView = forwardRef<CalendarViewHandle, Props>(function CalendarView
                 <div
                   style={{
                     position: 'absolute', left: 60, right: 6, top: (dragRange.start / 60) * HOUR_HEIGHT, height: Math.max(4, ((dragRange.end - dragRange.start) / 60) * HOUR_HEIGHT),
-                    background: 'rgba(245,246,247,0.18)', border: '1px solid #F5F6F7', borderRadius: 6, pointerEvents: 'none',
+                    background: 'rgba(245,246,247,0.18)', border: '1px solid var(--text)', borderRadius: 6, pointerEvents: 'none',
                   }}
                 />
               )}
@@ -226,8 +226,8 @@ const CalendarView = forwardRef<CalendarViewHandle, Props>(function CalendarView
                       padding: '4px 8px', overflow: 'hidden', cursor: 'pointer',
                     }}
                   >
-                    <div style={{ fontSize: 11.5, fontWeight: 600, color: '#F5F6F7', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
-                    <div style={{ fontSize: 10, color: '#8A8F98' }}>{formatTimeLabel(ev.start_time)} – {formatTimeLabel(ev.end_time)}</div>
+                    <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{formatTimeLabel(ev.start_time)} – {formatTimeLabel(ev.end_time)}</div>
                   </div>
                 );
               })}

@@ -64,25 +64,25 @@ export default function WorkoutSession({ workout, onFinish, onExit }: Props) {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#0A0B0D', zIndex: 220, display: 'flex', flexDirection: 'column', padding: 24 }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'var(--bg)', zIndex: 220, display: 'flex', flexDirection: 'column', padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: 12, color: '#8A8F98' }}>{workout.name}</div>
-          <div style={{ fontSize: 11, color: '#565b64', marginTop: 2 }}>Exercise {exerciseIdx + 1} of {workout.exercises.length}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{workout.name}</div>
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>Exercise {exerciseIdx + 1} of {workout.exercises.length}</div>
         </div>
         <span style={{ cursor: 'pointer', padding: 6 }} onClick={onExit}>
-          <Icon name="x" color="#8A8F98" />
+          <Icon name="x" color="var(--text-secondary)" />
         </span>
       </div>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
         {resting ? (
           <>
-            <div style={{ fontSize: 13, color: '#8A8F98', marginBottom: 10 }}>Rest</div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 64, fontWeight: 600, color: '#F5F6F7' }}>{restLeft}s</div>
-            <div style={{ fontSize: 12.5, color: '#565b64', marginTop: 14 }}>Next: set {setsDone + 1} of {exercise.sets}, {exercise.name}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 10 }}>Rest</div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 64, fontWeight: 600, color: 'var(--text)' }}>{restLeft}s</div>
+            <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', marginTop: 14 }}>Next: set {setsDone + 1} of {exercise.sets}, {exercise.name}</div>
             <div
-              style={{ marginTop: 20, padding: '9px 18px', borderRadius: 999, border: '1px solid #22262B', color: '#8A8F98', fontSize: 12.5, cursor: 'pointer' }}
+              style={{ marginTop: 20, padding: '9px 18px', borderRadius: 999, border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 12.5, cursor: 'pointer' }}
               onClick={() => setResting(false)}
             >
               Skip rest
@@ -90,16 +90,16 @@ export default function WorkoutSession({ workout, onFinish, onExit }: Props) {
           </>
         ) : (
           <>
-            <div style={{ fontSize: 22, fontWeight: 600, color: '#F5F6F7', maxWidth: 320 }}>{exercise.name}</div>
-            <div style={{ fontSize: 15, color: '#8A8F98', marginTop: 10 }}>{exercise.reps || '—'} reps</div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 40, fontWeight: 600, color: '#F5F6F7', marginTop: 24 }}>
+            <div style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', maxWidth: 320 }}>{exercise.name}</div>
+            <div style={{ fontSize: 15, color: 'var(--text-secondary)', marginTop: 10 }}>{exercise.reps || '—'} reps</div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 40, fontWeight: 600, color: 'var(--text)', marginTop: 24 }}>
               {setsDone} / {exercise.sets}
             </div>
-            <div style={{ fontSize: 12, color: '#565b64', marginTop: 4 }}>sets completed</div>
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>sets completed</div>
 
             {!allSetsDone && (
               <div
-                style={{ marginTop: 28, padding: '14px 32px', borderRadius: 999, background: '#F5F6F7', color: '#0A0B0D', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                style={{ marginTop: 28, padding: '14px 32px', borderRadius: 999, background: 'var(--text)', color: 'var(--bg)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
                 onClick={completeSet}
               >
                 Complete set
@@ -107,7 +107,7 @@ export default function WorkoutSession({ workout, onFinish, onExit }: Props) {
             )}
             {allSetsDone && !isLastExercise && (
               <div
-                style={{ marginTop: 28, padding: '14px 32px', borderRadius: 999, background: '#F5F6F7', color: '#0A0B0D', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                style={{ marginTop: 28, padding: '14px 32px', borderRadius: 999, background: 'var(--text)', color: 'var(--bg)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
                 onClick={nextExercise}
               >
                 Next exercise →
@@ -115,7 +115,7 @@ export default function WorkoutSession({ workout, onFinish, onExit }: Props) {
             )}
             {allSetsDone && isLastExercise && (
               <div
-                style={{ marginTop: 28, padding: '14px 32px', borderRadius: 999, background: finishing ? '#22262B' : '#F5F6F7', color: finishing ? '#8A8F98' : '#0A0B0D', fontSize: 14, fontWeight: 600, cursor: finishing ? 'default' : 'pointer' }}
+                style={{ marginTop: 28, padding: '14px 32px', borderRadius: 999, background: finishing ? 'var(--border)' : 'var(--text)', color: finishing ? 'var(--text-secondary)' : 'var(--bg)', fontSize: 14, fontWeight: 600, cursor: finishing ? 'default' : 'pointer' }}
                 onClick={() => !finishing && finish()}
               >
                 {finishing ? 'Saving…' : 'Finish workout'}
@@ -127,7 +127,7 @@ export default function WorkoutSession({ workout, onFinish, onExit }: Props) {
 
       <div style={{ display: 'flex', gap: 4 }}>
         {workout.exercises.map((_, i) => (
-          <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i < exerciseIdx || (i === exerciseIdx && allSetsDone) ? '#F5F6F7' : i === exerciseIdx ? '#565b64' : '#22262B' }} />
+          <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i < exerciseIdx || (i === exerciseIdx && allSetsDone) ? 'var(--text)' : i === exerciseIdx ? 'var(--text-tertiary)' : 'var(--border)' }} />
         ))}
       </div>
     </div>

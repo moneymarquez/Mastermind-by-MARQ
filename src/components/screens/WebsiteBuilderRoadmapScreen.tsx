@@ -5,7 +5,7 @@ interface Props {
   homeSubStyle: CSSProperties;
 }
 
-const cardStyle: CSSProperties = { background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: 20 };
+const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 20 };
 
 const PHASES: { title: string; desc: string }[] = [
   { title: 'Phase 1 — Embedded terminal', desc: 'A browser-based terminal (via something like WebContainers or a remote dev sandbox), scoped to a project directory inside Mastermind.' },
@@ -19,7 +19,7 @@ export default function WebsiteBuilderRoadmapScreen({ homeHeadStyle, homeSubStyl
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <div style={homeHeadStyle}>Website / App Builder</div>
-        <div style={{ padding: '3px 10px', borderRadius: 999, background: '#8A8F9822', border: '1px solid #8A8F9855', color: '#8A8F98', fontSize: 10.5, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>
+        <div style={{ padding: '3px 10px', borderRadius: 999, background: '#8A8F9822', border: '1px solid #8A8F9855', color: 'var(--text-secondary)', fontSize: 10.5, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>
           In planning
         </div>
       </div>
@@ -28,8 +28,8 @@ export default function WebsiteBuilderRoadmapScreen({ homeHeadStyle, homeSubStyl
       <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 620 }}>
         {PHASES.map((p) => (
           <div key={p.title} style={cardStyle}>
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#F5F6F7' }}>{p.title}</div>
-            <div style={{ fontSize: 12.5, color: '#8A8F98', marginTop: 6, lineHeight: 1.5 }}>{p.desc}</div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>{p.title}</div>
+            <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>{p.desc}</div>
           </div>
         ))}
       </div>

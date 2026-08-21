@@ -16,25 +16,25 @@ interface Props {
 
 const ALL_TYPES = Object.keys(DOC_TYPE_LABELS) as DocType[];
 
-const cardStyle: CSSProperties = { background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: 18 };
+const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 18 };
 const inputStyle: CSSProperties = {
-  background: '#1a1c21', border: '1px solid #2b2f36', borderRadius: 8, padding: '9px 12px',
-  color: '#F5F6F7', fontSize: 13.5, outline: 'none',
+  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '9px 12px',
+  color: 'var(--text)', fontSize: 13.5, outline: 'none',
 };
 const primaryBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 999,
-  background: '#F5F6F7', color: '#0A0B0D', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+  background: 'var(--text)', color: 'var(--bg)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
 };
 const ghostBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 999,
-  border: '1px solid #22262B', color: '#8A8F98', fontSize: 13, cursor: 'pointer',
+  border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer',
 };
 const chip = (active: boolean): CSSProperties => ({
   padding: '7px 14px', borderRadius: 999, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap',
-  border: `1px solid ${active ? '#F5F6F7' : '#22262B'}`, color: active ? '#F5F6F7' : '#565b64',
+  border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, color: active ? 'var(--text)' : 'var(--text-tertiary)',
   background: active ? '#F5F6F71a' : 'transparent',
 });
-const fieldLabel: CSSProperties = { fontSize: 11.5, color: '#8A8F98', marginBottom: 5 };
+const fieldLabel: CSSProperties = { fontSize: 11.5, color: 'var(--text-secondary)', marginBottom: 5 };
 
 function BusinessProfilePanel() {
   const { profile, save, error } = useBusinessProfile();
@@ -58,10 +58,10 @@ function BusinessProfilePanel() {
   return (
     <div style={{ ...cardStyle, marginBottom: 20 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => (open ? setOpen(false) : openPanel())}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7' }}>Business profile</div>
-        <div style={{ fontSize: 12, color: '#565b64' }}>{open ? 'Hide' : 'Edit'}</div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Business profile</div>
+        <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{open ? 'Hide' : 'Edit'}</div>
       </div>
-      <div style={{ fontSize: 11.5, color: '#565b64', marginTop: 4 }}>Shows up in every document's header/footer — set once here.</div>
+      <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 4 }}>Shows up in every document's header/footer — set once here.</div>
       {open && (
         <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 420 }}>
           <input style={inputStyle} placeholder="Business address" value={draft.business_address} onChange={(e) => { setDraft({ ...draft, business_address: e.target.value }); setSaved(false); }} />
@@ -122,8 +122,8 @@ function NewDocumentPanel({ onCreated }: { onCreated: (id: string) => void }) {
 
   return (
     <div style={{ ...cardStyle, marginBottom: 20 }}>
-      <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7', marginBottom: 4 }}>New document</div>
-      <div style={{ fontSize: 11.5, color: '#565b64', marginBottom: 14 }}>Pick a type, then link a contact or type the client info in — it's created already filled in, not blank.</div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>New document</div>
+      <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginBottom: 14 }}>Pick a type, then link a contact or type the client info in — it's created already filled in, not blank.</div>
 
       <div style={fieldLabel}>Document type</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
@@ -191,7 +191,7 @@ function NewDocumentPanel({ onCreated }: { onCreated: (id: string) => void }) {
 }
 
 const STATUS_LABEL: Record<ClientDocument['status'], string> = { draft: 'Draft', sent: 'Sent', paid: 'Paid' };
-const STATUS_COLOR: Record<ClientDocument['status'], string> = { draft: '#565b64', sent: '#C9A24B', paid: '#7fae7f' };
+const STATUS_COLOR: Record<ClientDocument['status'], string> = { draft: 'var(--text-tertiary)', sent: '#C9A24B', paid: '#7fae7f' };
 
 function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack: () => void; startTab: 'edit' | 'preview' }) {
   const { update, duplicate, remove, setStatus, error } = useClientDocuments();
@@ -222,7 +222,7 @@ function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack
 
   return (
     <div>
-      <div style={{ fontSize: 13, color: '#565b64', cursor: 'pointer', marginBottom: 14 }} onClick={onBack}>&larr; All documents</div>
+      <div style={{ fontSize: 13, color: 'var(--text-tertiary)', cursor: 'pointer', marginBottom: 14 }} onClick={onBack}>&larr; All documents</div>
 
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
         <input style={{ ...inputStyle, fontSize: 15, fontWeight: 600, flex: 1, minWidth: 200 }} value={label} onChange={(e) => { setLabel(e.target.value); setSaved(false); }} />
@@ -238,7 +238,7 @@ function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack
 
       {doc.doc_type === 'invoice' && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <span style={{ fontSize: 12, color: '#8A8F98' }}>Status:</span>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Status:</span>
           <div style={{ display: 'flex', gap: 6 }}>
             {(['draft', 'sent', 'paid'] as const).map((s) => (
               <div
@@ -246,8 +246,8 @@ function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack
                 onClick={() => { setLocalStatus(s); setStatus(doc.id, s); }}
                 style={{
                   padding: '5px 14px', borderRadius: 999, fontSize: 11.5, fontWeight: 600, cursor: 'pointer',
-                  border: `1px solid ${status === s ? STATUS_COLOR[s] : '#22262B'}`,
-                  color: status === s ? STATUS_COLOR[s] : '#565b64',
+                  border: `1px solid ${status === s ? STATUS_COLOR[s] : 'var(--border)'}`,
+                  color: status === s ? STATUS_COLOR[s] : 'var(--text-tertiary)',
                   background: status === s ? `${STATUS_COLOR[s]}15` : 'transparent',
                 }}
               >
@@ -256,7 +256,7 @@ function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack
             ))}
           </div>
           {status === 'paid' && (
-            <span style={{ fontSize: 11, color: '#565b64' }}>Counted as income in Budgeting.</span>
+            <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Counted as income in Budgeting.</span>
           )}
         </div>
       )}
@@ -268,7 +268,7 @@ function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack
 
       {tab === 'edit' && <DocumentEditForm docType={doc.doc_type} data={draftData} onChange={onDataChange} />}
       {tab === 'preview' && (
-        <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid #22262B', maxWidth: 860 }}>
+        <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid var(--border)', maxWidth: 860 }}>
           <DocumentPreview docType={doc.doc_type} data={draftData} profile={profile} />
         </div>
       )}
@@ -306,7 +306,7 @@ export default function InvoicingScreen({ homeHeadStyle, homeSubStyle }: Props) 
         {ALL_TYPES.map((t) => <div key={t} style={chip(filter === t)} onClick={() => setFilter(t)}>{DOC_TYPE_LABELS[t]}</div>)}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid #22262B', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
         {filtered.map((doc) => {
           const dataClientName = typeof doc.data.client_name === 'string' && doc.data.client_name ? doc.data.client_name : null;
           const subtitle = dataClientName ?? contactName(doc.contact_id);
@@ -314,11 +314,11 @@ export default function InvoicingScreen({ homeHeadStyle, homeSubStyle }: Props) 
             <div
               key={doc.id}
               onClick={() => { setOpenedFromCreate(false); setSelectedId(doc.id); }}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid #1c1e23', background: '#101114', cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)', cursor: 'pointer' }}
             >
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7' }}>{doc.label}</div>
-                <div style={{ fontSize: 12, color: '#8A8F98', marginTop: 2 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{doc.label}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
                   {DOC_TYPE_LABELS[doc.doc_type]}{subtitle ? ` · ${subtitle}` : ''} · {new Date(doc.updated_at).toLocaleDateString()}
                 </div>
               </div>
@@ -331,7 +331,7 @@ export default function InvoicingScreen({ homeHeadStyle, homeSubStyle }: Props) 
           );
         })}
         {!loading && filtered.length === 0 && (
-          <div style={{ padding: 18, fontSize: 13, color: '#565b64', background: '#101114' }}>No documents yet — start one above.</div>
+          <div style={{ padding: 18, fontSize: 13, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No documents yet — start one above.</div>
         )}
       </div>
     </div>

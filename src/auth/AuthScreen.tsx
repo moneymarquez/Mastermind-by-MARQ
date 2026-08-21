@@ -9,10 +9,10 @@ interface Props {
 }
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', background: '#1a1c21', border: '1px solid #2b2f36', borderRadius: 8,
-  padding: '10px 12px', color: '#F5F6F7', fontSize: 13.5, outline: 'none',
+  width: '100%', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8,
+  padding: '10px 12px', color: 'var(--text)', fontSize: 13.5, outline: 'none',
 };
-const labelStyle: React.CSSProperties = { fontSize: 11.5, color: '#8A8F98', display: 'block', marginBottom: 6 };
+const labelStyle: React.CSSProperties = { fontSize: 11.5, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 };
 
 // Split-screen layout — a brand/hero side and a clean minimal form side —
 // loosely structured after Instagram's login page (panel split, simple
@@ -77,7 +77,7 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0A0B0D', display: 'flex', position: 'relative' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', position: 'relative' }}>
       <style>{`
         .auth-hero { display: flex; }
         @media (max-width: 860px) { .auth-hero { display: none; } }
@@ -101,12 +101,12 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
         }}
       >
         <div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: '#F5F6F7', letterSpacing: '-0.01em', marginBottom: 2 }}>Masterminds</div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#8A8F98', letterSpacing: '0.08em', marginBottom: 40 }}>by MARQ</div>
-          <div style={{ fontSize: 40, fontWeight: 700, color: '#F5F6F7', lineHeight: 1.15, maxWidth: 460, letterSpacing: '-0.02em' }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em', marginBottom: 2 }}>Masterminds</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.08em', marginBottom: 40 }}>by MARQ</div>
+          <div style={{ fontSize: 40, fontWeight: 700, color: 'var(--text)', lineHeight: 1.15, maxWidth: 460, letterSpacing: '-0.02em' }}>
             Your entire operation, in one place.
           </div>
-          <div style={{ fontSize: 14.5, color: '#8A8F98', marginTop: 18, maxWidth: 420, lineHeight: 1.6 }}>
+          <div style={{ fontSize: 14.5, color: 'var(--text-secondary)', marginTop: 18, maxWidth: 420, lineHeight: 1.6 }}>
             Goals, health, business, and everything in between — tracked, planned, and pushed forward by Nova, day after day.
           </div>
         </div>
@@ -116,12 +116,12 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
         <div style={{ width: '100%', maxWidth: 360 }}>
           <form
             onSubmit={handleSubmit}
-            style={{ width: '100%', background: '#14161A', border: '1px solid #22262B', borderRadius: 16, padding: '32px 28px' }}
+            style={{ width: '100%', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '32px 28px' }}
           >
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#F5F6F7', marginBottom: 4 }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>
               {mode === 'login' ? 'Log in' : 'Create your account'}
             </div>
-            <div style={{ fontSize: 12.5, color: '#565b64', marginBottom: 24 }}>
+            <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', marginBottom: 24 }}>
               {mode === 'login' ? 'Welcome back.' : 'Takes about a minute.'}
             </div>
 
@@ -150,21 +150,21 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
               disabled={submitting}
               style={{
                 width: '100%', padding: '11px 18px', borderRadius: 999, border: 'none',
-                background: '#F5F6F7', color: '#0A0B0D', fontSize: 13.5, fontWeight: 600,
+                background: 'var(--text)', color: 'var(--bg)', fontSize: 13.5, fontWeight: 600,
                 cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1,
               }}
             >
               {submitting ? (mode === 'login' ? 'Signing in…' : 'Creating account…') : mode === 'login' ? 'Login' : 'Sign up'}
             </button>
 
-            <div style={{ textAlign: 'center', marginTop: 20, fontSize: 12.5, color: '#8A8F98' }}>
+            <div style={{ textAlign: 'center', marginTop: 20, fontSize: 12.5, color: 'var(--text-secondary)' }}>
               {mode === 'login' ? (
                 <>Don't have an account?{' '}
-                  <span style={{ color: '#F5F6F7', cursor: 'pointer', fontWeight: 600 }} onClick={() => switchMode('signup')}>Sign up</span>
+                  <span style={{ color: 'var(--text)', cursor: 'pointer', fontWeight: 600 }} onClick={() => switchMode('signup')}>Sign up</span>
                 </>
               ) : (
                 <>Already have an account?{' '}
-                  <span style={{ color: '#F5F6F7', cursor: 'pointer', fontWeight: 600 }} onClick={() => switchMode('login')}>Log in</span>
+                  <span style={{ color: 'var(--text)', cursor: 'pointer', fontWeight: 600 }} onClick={() => switchMode('login')}>Log in</span>
                 </>
               )}
             </div>

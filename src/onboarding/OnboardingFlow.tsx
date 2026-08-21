@@ -27,7 +27,7 @@ function ProgressBar({ step }: { step: OnboardingStep }) {
   return (
     <div style={barStyle}>
       {STEPS.map((s, i) => (
-        <div key={s} style={{ flex: 1, height: 3, borderRadius: 999, background: i <= idx ? '#F5F6F7' : '#22262B' }} title={STEP_LABEL[s]} />
+        <div key={s} style={{ flex: 1, height: 3, borderRadius: 999, background: i <= idx ? 'var(--text)' : 'var(--border)' }} title={STEP_LABEL[s]} />
       ))}
     </div>
   );
@@ -38,7 +38,7 @@ export default function OnboardingFlow({ onComplete }: Props) {
   const { assistantName, saveAssistantName } = useNovaPreferences();
   const [finishing, setFinishing] = useState(false);
 
-  if (loading) return <div style={{ minHeight: '100vh', background: '#0A0B0D' }} />;
+  if (loading) return <div style={{ minHeight: '100vh', background: 'var(--bg)' }} />;
 
   const submitQuestions = async (a: OnboardingAnswers) => {
     // Seeds Nova's long-term memory (see schema_032 / worker/handlers/nova-chat.ts)

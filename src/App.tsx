@@ -6,7 +6,7 @@ export default function App() {
   const { session, loading, signIn, signUp, signOut } = useAuth();
 
   if (loading) {
-    return <div style={{ minHeight: '100vh', background: '#0A0B0D' }} />;
+    return <div style={{ minHeight: '100vh', background: 'var(--bg)' }} />;
   }
 
   if (!session) {

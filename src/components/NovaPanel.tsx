@@ -46,7 +46,7 @@ export default function NovaPanel({
         height: 'min(72vh, 480px)',
         borderRadius: '20px 20px 0 0',
         paddingBottom: 'env(safe-area-inset-bottom)',
-        background: '#101114', border: '1px solid #22262B', borderTop: '1px solid #22262B', display: 'flex', flexDirection: 'column',
+        background: 'var(--surface-2)', border: '1px solid var(--border)', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column',
         boxShadow: '0 -12px 40px rgba(0,0,0,0.55)', animation: 'sheetSlideUp 0.2s ease', zIndex: 60, overflow: 'hidden',
       }
     : {
@@ -57,7 +57,7 @@ export default function NovaPanel({
         left: stackLeft != null ? stackLeft : `calc(${SPACING}px + env(safe-area-inset-left))`,
         bottom: `calc(${SPACING + stackBottomOffset}px + env(safe-area-inset-bottom))`,
         width: 320, height: 400,
-        background: '#101114', border: '1px solid #22262B', borderRadius: 16, display: 'flex', flexDirection: 'column',
+        background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 16, display: 'flex', flexDirection: 'column',
         boxShadow: '0 20px 50px rgba(0,0,0,0.5)', animation: 'bubbleFade 0.18s ease', zIndex: 45, overflow: 'hidden',
       };
 
@@ -70,13 +70,13 @@ export default function NovaPanel({
         />
       )}
       <div style={panelStyle}>
-      <div style={{ display: 'flex', alignItems: 'center', padding: '14px 16px', borderBottom: '1px solid #1c1e23', fontSize: 13.5, fontWeight: 600, color: '#F5F6F7' }}>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '14px 16px', borderBottom: '1px solid var(--surface-3)', fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>
         <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-          <Icon name="sparkle" style={{ marginRight: 8 }} color="#F5F6F7" />
+          <Icon name="sparkle" style={{ marginRight: 8 }} color="var(--text)" />
           {assistantName}
         </div>
         <span style={{ marginLeft: 'auto', cursor: 'pointer', padding: 4 }} onClick={onClose}>
-          <Icon name="x" color="#565b64" />
+          <Icon name="x" color="var(--text-tertiary)" />
         </span>
       </div>
       <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -85,8 +85,8 @@ export default function NovaPanel({
             key={i}
             style={{
               alignSelf: msg.from === 'user' ? 'flex-end' : 'flex-start',
-              background: msg.from === 'user' ? '#F5F6F7' : '#1a1c21',
-              color: msg.from === 'user' ? '#0A0B0D' : '#e9e9ed',
+              background: msg.from === 'user' ? 'var(--text)' : 'var(--surface-4)',
+              color: msg.from === 'user' ? 'var(--bg)' : '#e9e9ed',
               padding: '9px 13px', borderRadius: 14, fontSize: 13, maxWidth: '85%', lineHeight: 1.4,
             }}
           >
@@ -94,14 +94,14 @@ export default function NovaPanel({
           </div>
         ))}
         {thinking && (
-          <div style={{ alignSelf: 'flex-start', background: '#1a1c21', color: '#8A8F98', padding: '9px 13px', borderRadius: 14, fontSize: 13 }}>
+          <div style={{ alignSelf: 'flex-start', background: 'var(--surface-4)', color: 'var(--text-secondary)', padding: '9px 13px', borderRadius: 14, fontSize: 13 }}>
             …
           </div>
         )}
       </div>
-      <div style={{ display: 'flex', gap: 8, padding: 12, borderTop: '1px solid #1c1e23' }}>
+      <div style={{ display: 'flex', gap: 8, padding: 12, borderTop: '1px solid var(--surface-3)' }}>
         <input
-          style={{ flex: 1, background: '#1a1c21', border: '1px solid #2b2f36', borderRadius: 999, padding: '9px 14px', color: '#F5F6F7', fontSize: 13, outline: 'none' }}
+          style={{ flex: 1, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 999, padding: '9px 14px', color: 'var(--text)', fontSize: 13, outline: 'none' }}
           placeholder={listening ? 'Listening…' : `Talk to ${assistantName}...`}
           value={input}
           onChange={onInputChange}
@@ -114,19 +114,19 @@ export default function NovaPanel({
               width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', flexShrink: 0,
               background: listening ? '#c47a7a' : 'transparent',
-              border: listening ? 'none' : '1px solid #2b2f36',
+              border: listening ? 'none' : '1px solid var(--border-2)',
               animation: listening ? 'micPulse 1.2s ease-in-out infinite' : 'none',
             }}
             onClick={onMicClick}
           >
-            <Icon name="microphone" color={listening ? '#F5F6F7' : '#8A8F98'} size={16} />
+            <Icon name="microphone" color={listening ? 'var(--text)' : 'var(--text-secondary)'} size={16} />
           </div>
         )}
         <div
-          style={{ width: 34, height: 34, borderRadius: '50%', background: '#F5F6F7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0A0B0D', cursor: 'pointer', flexShrink: 0 }}
+          style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--bg)', cursor: 'pointer', flexShrink: 0 }}
           onClick={onSend}
         >
-          <Icon name="arrow-up" color="#0A0B0D" />
+          <Icon name="arrow-up" color="var(--bg)" />
         </div>
       </div>
       </div>

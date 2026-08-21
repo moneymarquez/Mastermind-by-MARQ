@@ -5,7 +5,7 @@ import type { CSSProperties } from 'react';
 // prompt are a second layer, not the only one. A static resource that's
 // just always there is the more reliable safety net.
 const style: CSSProperties = {
-  fontSize: 11.5, color: '#565b64', marginTop: 18, lineHeight: 1.6,
+  fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 18, lineHeight: 1.6,
 };
 
 export default function CrisisResourceBanner() {

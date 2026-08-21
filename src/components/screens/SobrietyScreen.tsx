@@ -37,13 +37,13 @@ async function reflectOnSobriety(checkins: SobrietyCheckin[]): Promise<string> {
 
 const toggleStyle = (active: boolean): CSSProperties => ({
   flex: 1, textAlign: 'center', padding: '12px 10px', borderRadius: 10, cursor: 'pointer',
-  border: `1px solid ${active ? '#F5F6F7' : '#22262B'}`,
-  background: active ? '#F5F6F7' : 'transparent',
-  color: active ? '#0A0B0D' : '#C7CAD1',
+  border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`,
+  background: active ? 'var(--text)' : 'transparent',
+  color: active ? 'var(--bg)' : 'var(--text-quaternary)',
   fontSize: 13, fontWeight: 600,
 });
-const cardStyle: CSSProperties = { background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: 24, marginTop: 24, maxWidth: 480 };
-const linkStyle: CSSProperties = { fontSize: 12, color: '#8A8F98', cursor: 'pointer' };
+const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, marginTop: 24, maxWidth: 480 };
+const linkStyle: CSSProperties = { fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' };
 
 export default function SobrietyScreen({ homeHeadStyle, homeSubStyle, bender }: Props) {
   const { assistantName } = useNovaPreferences();
@@ -121,8 +121,8 @@ export default function SobrietyScreen({ homeHeadStyle, homeSubStyle, bender }: 
       <CrisisResourceBanner />
 
       <div style={cardStyle}>
-        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 40, fontWeight: 600, color: '#F5F6F7' }}>
-          {loading ? '—' : streak} <span style={{ fontSize: 18, color: '#565b64' }}>day{streak === 1 ? '' : 's'} clean</span>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 40, fontWeight: 600, color: 'var(--text)' }}>
+          {loading ? '—' : streak} <span style={{ fontSize: 18, color: 'var(--text-tertiary)' }}>day{streak === 1 ? '' : 's'} clean</span>
         </div>
 
         {heavy && (
@@ -136,7 +136,7 @@ export default function SobrietyScreen({ homeHeadStyle, homeSubStyle, bender }: 
           </div>
         )}
 
-        <div style={{ fontSize: 12.5, color: '#8A8F98', marginTop: 20, marginBottom: 8 }}>Today</div>
+        <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 20, marginBottom: 8 }}>Today</div>
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={toggleStyle(drank)} onClick={() => saveToday({ drank: !drank })}>Drank</div>
           <div style={toggleStyle(weed)} onClick={() => saveToday({ weed: !weed })}>Weed</div>
@@ -148,14 +148,14 @@ export default function SobrietyScreen({ homeHeadStyle, homeSubStyle, bender }: 
           onChange={(e) => setNote(e.target.value)}
           onBlur={() => saveToday({ note: note || null })}
           placeholder="Note (optional)"
-          style={{ width: '100%', marginTop: 12, background: '#1a1c21', border: '1px solid #2b2f36', borderRadius: 8, padding: '9px 12px', color: '#F5F6F7', fontSize: 13, outline: 'none' }}
+          style={{ width: '100%', marginTop: 12, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '9px 12px', color: 'var(--text)', fontSize: 13, outline: 'none' }}
         />
 
         <div style={{ display: 'flex', gap: 16, marginTop: 14, alignItems: 'center', flexWrap: 'wrap' }}>
           <div
             style={{
               display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 999,
-              background: thinking || !todayCheckin ? '#22262B' : '#F5F6F7', color: thinking || !todayCheckin ? '#8A8F98' : '#0A0B0D',
+              background: thinking || !todayCheckin ? 'var(--border)' : 'var(--text)', color: thinking || !todayCheckin ? 'var(--text-secondary)' : 'var(--bg)',
               fontSize: 12.5, fontWeight: 600, cursor: thinking || !todayCheckin ? 'default' : 'pointer',
             }}
             onClick={() => !thinking && todayCheckin && getInsight()}
@@ -171,28 +171,28 @@ export default function SobrietyScreen({ homeHeadStyle, homeSubStyle, bender }: 
         </div>
         {aiError && <div style={{ fontSize: 12, color: '#c47a7a', marginTop: 8 }}>{aiError}</div>}
         {todayCheckin?.ai_insight && (
-          <div style={{ marginTop: 12, background: '#101114', border: '1px solid #22262B', borderRadius: 10, padding: '12px 14px' }}>
-            <div style={{ fontSize: 12.5, color: '#C7CAD1', lineHeight: 1.6 }}>{todayCheckin.ai_insight}</div>
+          <div style={{ marginTop: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
+            <div style={{ fontSize: 12.5, color: 'var(--text-quaternary)', lineHeight: 1.6 }}>{todayCheckin.ai_insight}</div>
           </div>
         )}
         {patternError && <div style={{ fontSize: 12, color: '#c47a7a', marginTop: 8 }}>{patternError}</div>}
         {patternText && (
-          <div style={{ marginTop: 12, background: '#101114', border: '1px solid #22262B', borderRadius: 10, padding: '12px 14px' }}>
-            <div style={{ fontSize: 12.5, color: '#C7CAD1', lineHeight: 1.6 }}>{patternText}</div>
+          <div style={{ marginTop: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
+            <div style={{ fontSize: 12.5, color: 'var(--text-quaternary)', lineHeight: 1.6 }}>{patternText}</div>
           </div>
         )}
         {explainerText && (
-          <div style={{ marginTop: 12, background: '#101114', border: '1px solid #22262B', borderRadius: 10, padding: '12px 14px' }}>
-            <div style={{ fontSize: 12.5, color: '#C7CAD1', lineHeight: 1.6 }}>{explainerText}</div>
+          <div style={{ marginTop: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
+            <div style={{ fontSize: 12.5, color: 'var(--text-quaternary)', lineHeight: 1.6 }}>{explainerText}</div>
           </div>
         )}
       </div>
 
-      <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', border: '1px solid #22262B', borderRadius: 14, overflow: 'hidden', maxWidth: 480 }}>
+      <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', maxWidth: 480 }}>
         {checkins.slice(0, 14).map((c) => (
-          <div key={c.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 18px', borderBottom: '1px solid #1c1e23', background: '#101114' }}>
-            <span style={{ fontSize: 13, color: '#C7CAD1' }}>{c.checkin_date}</span>
-            <span style={{ fontSize: 12, color: c.drank || c.weed || c.nicotine ? '#B7690C' : '#8A8F98' }}>
+          <div key={c.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 18px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)' }}>
+            <span style={{ fontSize: 13, color: 'var(--text-quaternary)' }}>{c.checkin_date}</span>
+            <span style={{ fontSize: 12, color: c.drank || c.weed || c.nicotine ? '#B7690C' : 'var(--text-secondary)' }}>
               {c.drank || c.weed || c.nicotine
                 ? [c.drank && 'Drank', c.weed && 'Weed', c.nicotine && 'Nicotine'].filter(Boolean).join(', ')
                 : 'Nothing logged'}
@@ -200,12 +200,12 @@ export default function SobrietyScreen({ homeHeadStyle, homeSubStyle, bender }: 
           </div>
         ))}
         {!loading && checkins.length === 0 && (
-          <div style={{ padding: '18px', fontSize: 13, color: '#565b64', background: '#101114' }}>No check-ins logged yet.</div>
+          <div style={{ padding: '18px', fontSize: 13, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No check-ins logged yet.</div>
         )}
       </div>
 
-      <div style={{ marginTop: 28, fontSize: 14, fontWeight: 600, color: '#F5F6F7', maxWidth: 480 }}>Journal</div>
-      <div style={{ fontSize: 12, color: '#8A8F98', marginTop: 4, maxWidth: 480 }}>
+      <div style={{ marginTop: 28, fontSize: 14, fontWeight: 600, color: 'var(--text)', maxWidth: 480 }}>Journal</div>
+      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, maxWidth: 480 }}>
         Bender starts/stops log here automatically. Add anything else worth remembering.
       </div>
       <div style={{ display: 'flex', gap: 8, marginTop: 12, maxWidth: 480 }}>
@@ -214,24 +214,24 @@ export default function SobrietyScreen({ homeHeadStyle, homeSubStyle, bender }: 
           onChange={(e) => setJournalDraft(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && submitJournal()}
           placeholder="Add a journal note…"
-          style={{ flex: 1, background: '#14161A', border: '1px solid #22262B', borderRadius: 8, padding: '9px 12px', color: '#F5F6F7', fontSize: 13, outline: 'none' }}
+          style={{ flex: 1, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 12px', color: 'var(--text)', fontSize: 13, outline: 'none' }}
         />
         <div
-          style={{ padding: '9px 16px', borderRadius: 8, border: '1px solid #F5F6F7', color: '#F5F6F7', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
+          style={{ padding: '9px 16px', borderRadius: 8, border: '1px solid var(--text)', color: 'var(--text)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
           onClick={submitJournal}
         >
           Add
         </div>
       </div>
-      <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', border: '1px solid #22262B', borderRadius: 14, overflow: 'hidden', maxWidth: 480 }}>
+      <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', maxWidth: 480 }}>
         {bender.journal.slice(0, 20).map((j) => (
-          <div key={j.id} style={{ padding: '12px 18px', borderBottom: '1px solid #1c1e23', background: '#101114' }}>
-            <div style={{ fontSize: 12.5, color: '#C7CAD1' }}>{j.entry_text}</div>
-            <div style={{ fontSize: 11, color: '#565b64', marginTop: 3 }}>{j.entry_date}</div>
+          <div key={j.id} style={{ padding: '12px 18px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)' }}>
+            <div style={{ fontSize: 12.5, color: 'var(--text-quaternary)' }}>{j.entry_text}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 3 }}>{j.entry_date}</div>
           </div>
         ))}
         {!bender.loading && bender.journal.length === 0 && (
-          <div style={{ padding: '18px', fontSize: 13, color: '#565b64', background: '#101114' }}>Nothing in the journal yet.</div>
+          <div style={{ padding: '18px', fontSize: 13, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>Nothing in the journal yet.</div>
         )}
       </div>
     </div>

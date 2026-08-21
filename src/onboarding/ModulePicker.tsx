@@ -18,7 +18,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 const cardStyle = (active: boolean): CSSProperties => ({
   display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
-  border: `1px solid ${active ? '#F5F6F7' : '#22262B'}`, background: active ? '#F5F6F71a' : '#14161A',
+  border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? '#F5F6F71a' : 'var(--surface)',
   transition: 'border-color 0.12s ease, background 0.12s ease',
 });
 
@@ -31,7 +31,7 @@ export default function ModulePicker({ selected, onToggle }: Props) {
         return (
           <div key={cat ?? 'uncategorized'}>
             {cat && (
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#8A8F98', textTransform: 'uppercase', marginBottom: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: 12 }}>
                 {CATEGORY_LABEL[cat]}
               </div>
             )}
@@ -45,14 +45,14 @@ export default function ModulePicker({ selected, onToggle }: Props) {
                 if (m.ownerOnly) {
                   return (
                     <div key={m.key} style={{ ...cardStyle(false), cursor: 'default', opacity: 0.55 }}>
-                      <Icon name="lock" size={16} color="#565b64" style={{ marginTop: 1, flexShrink: 0 }} />
+                      <Icon name="lock" size={16} color="var(--text-tertiary)" style={{ marginTop: 1, flexShrink: 0 }} />
                       <div style={{ minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <Icon name={m.icon} size={14} color="#565b64" />
-                          <div style={{ fontSize: 13.5, fontWeight: 600, color: '#8A8F98' }}>{m.label}</div>
+                          <Icon name={m.icon} size={14} color="var(--text-tertiary)" />
+                          <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-secondary)' }}>{m.label}</div>
                         </div>
-                        <div style={{ fontSize: 11.5, color: '#565b64', marginTop: 4, lineHeight: 1.5 }}>{m.description}</div>
-                        <div style={{ fontSize: 10, color: '#565b64', marginTop: 4 }}>Owner-managed — not available on this account.</div>
+                        <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 4, lineHeight: 1.5 }}>{m.description}</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 4 }}>Owner-managed — not available on this account.</div>
                       </div>
                     </div>
                   );
@@ -62,19 +62,19 @@ export default function ModulePicker({ selected, onToggle }: Props) {
                   <div key={m.key} style={cardStyle(active)} onClick={() => onToggle(m.key)}>
                     <div style={{
                       width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1,
-                      border: `1px solid ${active ? '#F5F6F7' : '#3a3d43'}`, background: active ? '#F5F6F7' : 'transparent',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#0A0B0D', fontWeight: 700,
+                      border: `1px solid ${active ? 'var(--text)' : '#3a3d43'}`, background: active ? 'var(--text)' : 'transparent',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--bg)', fontWeight: 700,
                     }}>
                       {active ? '✓' : ''}
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Icon name={m.icon} size={14} color={active ? '#F5F6F7' : '#8A8F98'} />
-                        <div style={{ fontSize: 13.5, fontWeight: 600, color: '#F5F6F7' }}>{m.label}</div>
+                        <Icon name={m.icon} size={14} color={active ? 'var(--text)' : 'var(--text-secondary)'} />
+                        <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>{m.label}</div>
                       </div>
-                      <div style={{ fontSize: 11.5, color: '#8A8F98', marginTop: 4, lineHeight: 1.5 }}>{m.description}</div>
+                      <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>{m.description}</div>
                       {m.requiresAI && (
-                        <div style={{ fontSize: 10, color: '#565b64', marginTop: 4 }}>Needs the Anthropic key funded for its AI features.</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 4 }}>Needs the Anthropic key funded for its AI features.</div>
                       )}
                     </div>
                   </div>

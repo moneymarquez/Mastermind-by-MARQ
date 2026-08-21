@@ -15,22 +15,22 @@ const overlayStyle: CSSProperties = {
 };
 const panelStyle: CSSProperties = {
   width: '100%', maxWidth: 520, maxHeight: '88vh', overflowY: 'auto',
-  background: '#101114', border: '1px solid #22262B', borderRadius: 16,
+  background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 16,
   boxShadow: '0 30px 80px rgba(0,0,0,0.5)', animation: 'bubbleFade 0.18s ease', padding: '24px 26px',
 };
 const inputStyle: CSSProperties = {
-  background: '#1a1c21', border: '1px solid #2b2f36', borderRadius: 8, padding: '9px 12px',
-  color: '#F5F6F7', fontSize: 13.5, outline: 'none', width: '100%',
+  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '9px 12px',
+  color: 'var(--text)', fontSize: 13.5, outline: 'none', width: '100%',
 };
-const labelStyle: CSSProperties = { fontSize: 11.5, color: '#8A8F98', marginBottom: 5, display: 'block' };
+const labelStyle: CSSProperties = { fontSize: 11.5, color: 'var(--text-secondary)', marginBottom: 5, display: 'block' };
 const fieldWrap: CSSProperties = { marginBottom: 12 };
 const primaryBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', padding: '10px 20px', borderRadius: 999,
-  background: '#F5F6F7', color: '#0A0B0D', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+  background: 'var(--text)', color: 'var(--bg)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
 };
 const ghostBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999,
-  border: '1px solid #22262B', color: '#8A8F98', fontSize: 13, cursor: 'pointer',
+  border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer',
 };
 
 function YesNoSelect({ label, value, onChange, includeUnsure }: { label: string; value: string; onChange: (v: string) => void; includeUnsure?: boolean }) {
@@ -122,7 +122,7 @@ export default function ContactFormModal({ onSave, onClose }: Props) {
   return (
     <div style={overlayStyle} onClick={onClose}>
       <div style={panelStyle} onClick={(e) => e.stopPropagation()}>
-        <div style={{ fontSize: 18, fontWeight: 600, color: '#F5F6F7', marginBottom: 18 }}>Add Contact</div>
+        <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', marginBottom: 18 }}>Add Contact</div>
 
         <div style={fieldWrap}>
           <label style={labelStyle}>Name</label>

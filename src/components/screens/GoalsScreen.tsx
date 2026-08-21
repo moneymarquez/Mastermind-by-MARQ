@@ -15,8 +15,8 @@ interface Props {
 }
 
 const inputStyle: CSSProperties = {
-  background: '#1a1c21', border: '1px solid #2b2f36', borderRadius: 8, padding: '9px 12px',
-  color: '#F5F6F7', fontSize: 13.5, outline: 'none',
+  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '9px 12px',
+  color: 'var(--text)', fontSize: 13.5, outline: 'none',
 };
 
 function goalContext(goal: Goal): string {
@@ -68,8 +68,8 @@ function LockInIntake({ goal, otherGoals, onLocked }: { goal: Goal; otherGoals: 
   };
 
   return (
-    <div style={{ marginTop: 14, background: '#101114', border: '1px dashed #22262B', borderRadius: 10, padding: 16 }}>
-      <div style={{ fontSize: 12.5, color: '#8A8F98', marginBottom: 10 }}>Lock this in — turn it into hard numbers and real paths.</div>
+    <div style={{ marginTop: 14, background: 'var(--surface-2)', border: '1px dashed var(--border)', borderRadius: 10, padding: 16 }}>
+      <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 10 }}>Lock this in — turn it into hard numbers and real paths.</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <input style={inputStyle} placeholder="What's the target? (cost, count, weight, etc.)" value={targetDescription} onChange={(e) => setTargetDescription(e.target.value)} />
         <input style={inputStyle} placeholder="Deadline (e.g. 3 months, Dec 1)" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
@@ -77,7 +77,7 @@ function LockInIntake({ goal, otherGoals, onLocked }: { goal: Goal; otherGoals: 
       </div>
       {error && <div style={{ fontSize: 12, color: '#c47a7a', marginTop: 8 }}>{error}</div>}
       <div
-        style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 999, background: generating ? '#22262B' : '#F5F6F7', color: generating ? '#8A8F98' : '#0A0B0D', fontSize: 12.5, fontWeight: 600, cursor: generating ? 'default' : 'pointer' }}
+        style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 999, background: generating ? 'var(--border)' : 'var(--text)', color: generating ? 'var(--text-secondary)' : 'var(--bg)', fontSize: 12.5, fontWeight: 600, cursor: generating ? 'default' : 'pointer' }}
         onClick={() => !generating && run()}
       >
         {generating ? 'Reverse-engineering…' : 'Lock it in'}
@@ -97,24 +97,24 @@ function PathPicker({ goal, onChoose }: { goal: Goal; onChoose: (path: GoalPath)
           ⚠ {goal.conflict_notes}
         </div>
       )}
-      <div style={{ fontSize: 12, color: '#8A8F98' }}>
+      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
         Target: {goal.target_metric_value} {goal.target_metric} · check-in {goal.check_in_cadence}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
         {goal.paths.map((p) => (
-          <div key={p.id} style={{ background: '#101114', border: `1px solid ${p.is_recommended ? '#F5F6F7' : '#22262B'}`, borderRadius: 10, padding: 14 }}>
+          <div key={p.id} style={{ background: 'var(--surface-2)', border: `1px solid ${p.is_recommended ? 'var(--text)' : 'var(--border)'}`, borderRadius: 10, padding: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7' }}>{p.title}</span>
-              {p.is_recommended && <span style={{ fontSize: 9.5, fontWeight: 700, color: '#0A0B0D', background: '#F5F6F7', borderRadius: 999, padding: '2px 7px' }}>RECOMMENDED</span>}
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{p.title}</span>
+              {p.is_recommended && <span style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--bg)', background: 'var(--text)', borderRadius: 999, padding: '2px 7px' }}>RECOMMENDED</span>}
             </div>
-            <div style={{ fontSize: 12, color: '#8A8F98', marginTop: 6, lineHeight: 1.5 }}>{p.description}</div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>{p.description}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
               {p.actions.map((a, i) => (
-                <div key={i} style={{ fontSize: 11.5, color: '#565b64' }}>• {a.description} — {a.frequency}</div>
+                <div key={i} style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>• {a.description} — {a.frequency}</div>
               ))}
             </div>
             <div
-              style={{ marginTop: 10, display: 'inline-flex', padding: '7px 14px', borderRadius: 999, background: choosing ? '#22262B' : '#F5F6F7', color: choosing ? '#8A8F98' : '#0A0B0D', fontSize: 12, fontWeight: 600, cursor: choosing ? 'default' : 'pointer' }}
+              style={{ marginTop: 10, display: 'inline-flex', padding: '7px 14px', borderRadius: 999, background: choosing ? 'var(--border)' : 'var(--text)', color: choosing ? 'var(--text-secondary)' : 'var(--bg)', fontSize: 12, fontWeight: 600, cursor: choosing ? 'default' : 'pointer' }}
               onClick={async () => { if (choosing) return; setChoosing(p.id); await onChoose(p); setChoosing(null); }}
             >
               {choosing === p.id ? 'Committing…' : 'Choose this path'}
@@ -201,29 +201,29 @@ function GoalCard({
   const hasPaths = goal.paths.length > 0;
 
   return (
-    <div style={{ background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: 22 }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 22 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <div>
-          <div style={{ fontSize: 17, fontWeight: 600, color: '#F5F6F7' }}>{goal.title}</div>
-          {goal.why && <div style={{ fontSize: 12.5, color: '#8A8F98', marginTop: 4 }}>{goal.why}</div>}
+          <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)' }}>{goal.title}</div>
+          {goal.why && <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 4 }}>{goal.why}</div>}
         </div>
-        <span style={{ fontSize: 12, color: '#565b64', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => onDelete(goal.id)}>Delete</span>
+        <span style={{ fontSize: 12, color: 'var(--text-tertiary)', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => onDelete(goal.id)}>Delete</span>
       </div>
 
       {(goal.target_cost != null || locked) && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16, fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: '#F5F6F7' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16, fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: 'var(--text)' }}>
             <span>{goal.target_cost != null ? `$${goal.current_saved.toLocaleString()}` : `${Math.round(pct)}%`}</span>
-            {goal.target_cost != null && <span style={{ color: '#565b64' }}>${goal.target_cost.toLocaleString()}</span>}
+            {goal.target_cost != null && <span style={{ color: 'var(--text-tertiary)' }}>${goal.target_cost.toLocaleString()}</span>}
           </div>
-          <div style={{ height: 8, background: '#22262B', borderRadius: 999, marginTop: 6, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${pct}%`, background: '#F5F6F7', borderRadius: 999 }} />
+          <div style={{ height: 8, background: 'var(--border)', borderRadius: 999, marginTop: 6, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${pct}%`, background: 'var(--text)', borderRadius: 999 }} />
           </div>
           {goal.target_cost != null && (
             <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
               <input style={{ ...inputStyle, width: 120 }} value={savedInput} onChange={(e) => setSavedInput(e.target.value)} />
               <div
-                style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, border: '1px solid #22262B', color: '#8A8F98', fontSize: 12.5, cursor: 'pointer' }}
+                style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 12.5, cursor: 'pointer' }}
                 onClick={() => onSaveProgress(goal.id, Number(savedInput) || 0)}
               >
                 Update saved
@@ -234,7 +234,7 @@ function GoalCard({
       )}
 
       {goal.url && (
-        <a href={goal.url} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 12, fontSize: 12.5, color: '#8A8F98' }}>
+        <a href={goal.url} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 12, fontSize: 12.5, color: 'var(--text-secondary)' }}>
           {goal.url}
         </a>
       )}
@@ -250,20 +250,20 @@ function GoalCard({
 
       {locked && (
         <>
-          <div style={{ fontSize: 12, color: '#8A8F98', marginTop: 16, marginBottom: 8 }}>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 16, marginBottom: 8 }}>
             Steps — {goal.committed_path!.title} · check-in {goal.check_in_cadence}
           </div>
           {goal.steps.map((s) =>
             s.auto_tracked_source === 'dialing_calls' ? (
               <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
-                <span style={{ fontSize: 13, color: '#C7CAD1', flex: 1 }}>{s.description}</span>
+                <span style={{ fontSize: 13, color: 'var(--text-quaternary)', flex: 1 }}>{s.description}</span>
                 <span style={{ fontSize: 11.5, color: '#4CAF7D', fontFamily: "'JetBrains Mono', monospace" }}>{todayDialCount} today (live)</span>
               </div>
             ) : (
               <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
                 <input type="checkbox" checked={s.done} onChange={(e) => onToggleStep(s.id, e.target.checked)} />
-                <span style={{ fontSize: 13, color: s.done ? '#565b64' : '#C7CAD1', textDecoration: s.done ? 'line-through' : 'none', flex: 1 }}>{s.description}{s.frequency ? ` (${s.frequency})` : ''}</span>
-                <span style={{ fontSize: 12, color: '#565b64', cursor: 'pointer' }} onClick={() => onRemoveStep(s.id)}>×</span>
+                <span style={{ fontSize: 13, color: s.done ? 'var(--text-tertiary)' : 'var(--text-quaternary)', textDecoration: s.done ? 'line-through' : 'none', flex: 1 }}>{s.description}{s.frequency ? ` (${s.frequency})` : ''}</span>
+                <span style={{ fontSize: 12, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => onRemoveStep(s.id)}>×</span>
               </div>
             )
           )}
@@ -286,14 +286,14 @@ function GoalCard({
 
       <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>
         <div
-          style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, background: busy ? '#22262B' : '#F5F6F7', color: busy ? '#8A8F98' : '#0A0B0D', fontSize: 12.5, fontWeight: 600, cursor: busy ? 'default' : 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, background: busy ? 'var(--border)' : 'var(--text)', color: busy ? 'var(--text-secondary)' : 'var(--bg)', fontSize: 12.5, fontWeight: 600, cursor: busy ? 'default' : 'pointer' }}
           onClick={() => !busy && runCritique()}
         >
           {busy === 'critique' ? 'Thinking…' : '✨ AI critique'}
         </div>
         {locked && (
           <div
-            style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, border: '1px solid #22262B', color: busy ? '#565b64' : '#8A8F98', fontSize: 12.5, cursor: busy ? 'default' : 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, border: '1px solid var(--border)', color: busy ? 'var(--text-tertiary)' : 'var(--text-secondary)', fontSize: 12.5, cursor: busy ? 'default' : 'pointer' }}
             onClick={() => !busy && runCheckin()}
           >
             {busy === 'checkin' ? 'Checking in…' : '✨ Check in now'}
@@ -301,7 +301,7 @@ function GoalCard({
         )}
         {locked && !revising && (
           <div
-            style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, color: '#565b64', fontSize: 12.5, cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, color: 'var(--text-tertiary)', fontSize: 12.5, cursor: 'pointer' }}
             onClick={() => setRevising(true)}
           >
             Revise path
@@ -309,7 +309,7 @@ function GoalCard({
         )}
         {locked && revising && (
           <div
-            style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, background: busy ? '#22262B' : '#F5F6F7', color: busy ? '#8A8F98' : '#0A0B0D', fontSize: 12.5, fontWeight: 600, cursor: busy ? 'default' : 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, background: busy ? 'var(--border)' : 'var(--text)', color: busy ? 'var(--text-secondary)' : 'var(--bg)', fontSize: 12.5, fontWeight: 600, cursor: busy ? 'default' : 'pointer' }}
             onClick={() => !busy && runRevise()}
           >
             {busy === 'revise' ? 'Revising…' : 'Confirm revise (generates new paths)'}
@@ -319,18 +319,18 @@ function GoalCard({
       {aiError && <div style={{ fontSize: 12, color: '#c47a7a', marginTop: 8 }}>{aiError}</div>}
 
       {goal.ai_critique && (
-        <div style={{ marginTop: 14, background: '#101114', border: '1px solid #22262B', borderRadius: 10, padding: '12px 14px' }}>
-          <div style={{ fontSize: 11, color: '#8A8F98', marginBottom: 6 }}>{assistantName}'s critique</div>
-          <div style={{ fontSize: 12.5, color: '#C7CAD1', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{goal.ai_critique}</div>
+        <div style={{ marginTop: 14, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 6 }}>{assistantName}'s critique</div>
+          <div style={{ fontSize: 12.5, color: 'var(--text-quaternary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{goal.ai_critique}</div>
         </div>
       )}
 
       {goal.checkins.length > 0 && (
         <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {goal.checkins.slice(0, 3).map((c) => (
-            <div key={c.id} style={{ background: '#101114', border: '1px solid #1c1e23', borderRadius: 10, padding: '10px 14px' }}>
-              <div style={{ fontSize: 10.5, color: '#565b64', marginBottom: 4 }}>{new Date(c.created_at).toLocaleDateString()} check-in</div>
-              <div style={{ fontSize: 12.5, color: '#C7CAD1', lineHeight: 1.6 }}>{c.checkin_text}</div>
+            <div key={c.id} style={{ background: 'var(--surface-2)', border: '1px solid var(--surface-3)', borderRadius: 10, padding: '10px 14px' }}>
+              <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginBottom: 4 }}>{new Date(c.created_at).toLocaleDateString()} check-in</div>
+              <div style={{ fontSize: 12.5, color: 'var(--text-quaternary)', lineHeight: 1.6 }}>{c.checkin_text}</div>
             </div>
           ))}
         </div>
@@ -374,7 +374,7 @@ export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
           <div style={homeSubStyle}>Living contracts — reverse-engineered into numbers and real paths.</div>
         </div>
         <div
-          style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999, border: '1px solid #F5F6F7', color: '#F5F6F7', fontSize: 13, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}
+          style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999, border: '1px solid var(--text)', color: 'var(--text)', fontSize: 13, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}
           onClick={() => setShowForm((v) => !v)}
         >
           {showForm ? 'Cancel' : '+ Add Goal'}
@@ -382,19 +382,19 @@ export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
       </div>
 
       {showForm && (
-        <div style={{ background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: 20, marginTop: 20, maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 20, marginTop: 20, maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <input style={inputStyle} placeholder="What's the goal?" value={title} onChange={(e) => setTitle(e.target.value)} />
           <input style={inputStyle} placeholder="Why does it matter?" value={why} onChange={(e) => setWhy(e.target.value)} />
           <input style={inputStyle} placeholder="Category (e.g. savings, business)" value={category} onChange={(e) => setCategory(e.target.value)} />
           <input style={inputStyle} placeholder="Target cost ($, optional — for savings-style goals)" value={targetCost} onChange={(e) => setTargetCost(e.target.value)} />
           <input style={inputStyle} placeholder="Reference URL (optional)" value={url} onChange={(e) => setUrl(e.target.value)} />
           <div
-            style={{ alignSelf: 'flex-start', padding: '9px 16px', borderRadius: 999, background: '#F5F6F7', color: '#0A0B0D', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            style={{ alignSelf: 'flex-start', padding: '9px 16px', borderRadius: 999, background: 'var(--text)', color: 'var(--bg)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
             onClick={submit}
           >
             Save goal
           </div>
-          <div style={{ fontSize: 11.5, color: '#565b64' }}>You'll lock it into hard numbers and pick a path right after saving.</div>
+          <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>You'll lock it into hard numbers and pick a path right after saving.</div>
         </div>
       )}
 
@@ -418,7 +418,7 @@ export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
         ))}
       </div>
       {!loading && goals.length === 0 && (
-        <div style={{ fontSize: 13, color: '#565b64', marginTop: 24 }}>No goals yet — add one to get started.</div>
+        <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 24 }}>No goals yet — add one to get started.</div>
       )}
     </div>
   );

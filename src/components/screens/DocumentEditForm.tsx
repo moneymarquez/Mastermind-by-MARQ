@@ -9,13 +9,13 @@ interface Props {
 }
 
 const inputStyle: CSSProperties = {
-  background: '#1a1c21', border: '1px solid #2b2f36', borderRadius: 8, padding: '9px 12px',
-  color: '#F5F6F7', fontSize: 13.5, outline: 'none', width: '100%',
+  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '9px 12px',
+  color: 'var(--text)', fontSize: 13.5, outline: 'none', width: '100%',
 };
-const groupLabel: CSSProperties = { fontSize: 11, fontWeight: 700, color: '#565b64', textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 22, marginBottom: 10 };
-const fieldLabel: CSSProperties = { fontSize: 12, color: '#8A8F98', marginBottom: 5 };
-const ghostBtn: CSSProperties = { fontSize: 12, color: '#8A8F98', cursor: 'pointer' };
-const addBtn: CSSProperties = { display: 'inline-block', marginTop: 10, padding: '7px 14px', borderRadius: 999, border: '1px solid #22262B', color: '#F5F6F7', fontSize: 12, cursor: 'pointer' };
+const groupLabel: CSSProperties = { fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 22, marginBottom: 10 };
+const fieldLabel: CSSProperties = { fontSize: 12, color: 'var(--text-secondary)', marginBottom: 5 };
+const ghostBtn: CSSProperties = { fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' };
+const addBtn: CSSProperties = { display: 'inline-block', marginTop: 10, padding: '7px 14px', borderRadius: 999, border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12, cursor: 'pointer' };
 
 function s(v: unknown): string {
   return typeof v === 'string' ? v : '';
@@ -59,7 +59,7 @@ export default function DocumentEditForm({ docType, data, onChange }: Props) {
             <div style={groupLabel}>{t.label}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {rows.map((row, i) => (
-                <div key={i} style={{ border: '1px solid #22262B', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div key={i} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {t.columns.map((c) => (
                     <input
                       key={c.key} style={inputStyle} placeholder={c.label}
@@ -91,7 +91,7 @@ function TiersEditor({ data, onChange }: { data: Record<string, unknown>; onChan
       <div style={groupLabel}>Pricing tiers</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {tiers.map((tier, i) => (
-          <div key={i} style={{ border: '1px solid #22262B', borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div key={i} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={fieldLabel}>Badge (optional, e.g. "Most popular")</div>
             <input style={inputStyle} value={s(tier.badge)} onChange={(e) => setTier(i, { badge: e.target.value })} />
             <div style={fieldLabel}>Tier name</div>

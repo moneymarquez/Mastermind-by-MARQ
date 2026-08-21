@@ -10,14 +10,14 @@ interface Props {
   homeSubStyle: CSSProperties;
 }
 
-const cardStyle: CSSProperties = { background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: 18 };
+const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 18 };
 const inputStyle: CSSProperties = {
-  background: '#1a1c21', border: '1px solid #2b2f36', borderRadius: 8, padding: '9px 12px',
-  color: '#F5F6F7', fontSize: 13.5, outline: 'none',
+  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '9px 12px',
+  color: 'var(--text)', fontSize: 13.5, outline: 'none',
 };
 const primaryBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999,
-  background: '#F5F6F7', color: '#0A0B0D', fontSize: 13, fontWeight: 600, cursor: 'pointer', alignSelf: 'flex-start',
+  background: 'var(--text)', color: 'var(--bg)', fontSize: 13, fontWeight: 600, cursor: 'pointer', alignSelf: 'flex-start',
 };
 
 function DetailView({ recording, contactName, onBack }: { recording: CallRecording; contactName: string | null; onBack: () => void }) {
@@ -33,20 +33,20 @@ function DetailView({ recording, contactName, onBack }: { recording: CallRecordi
 
   return (
     <div style={{ marginTop: 20, maxWidth: 640 }}>
-      <div style={{ fontSize: 13, color: '#565b64', cursor: 'pointer', marginBottom: 14 }} onClick={onBack}>&larr; All recordings</div>
+      <div style={{ fontSize: 13, color: 'var(--text-tertiary)', cursor: 'pointer', marginBottom: 14 }} onClick={onBack}>&larr; All recordings</div>
       <div style={cardStyle}>
-        <div style={{ fontSize: 16, fontWeight: 600, color: '#F5F6F7' }}>{recording.title}</div>
-        <div style={{ fontSize: 12.5, color: '#8A8F98', marginTop: 4 }}>
+        <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)' }}>{recording.title}</div>
+        <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 4 }}>
           {new Date(recording.recorded_at).toLocaleString()}{contactName ? ` · ${contactName}` : ''}
         </div>
         {url ? (
           <audio controls src={url} style={{ width: '100%', marginTop: 16 }} />
         ) : (
-          <div style={{ fontSize: 12.5, color: '#565b64', marginTop: 16 }}>Loading audio…</div>
+          <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', marginTop: 16 }}>Loading audio…</div>
         )}
 
         <div style={{ marginTop: 20 }}>
-          <div style={{ fontSize: 12, color: '#8A8F98', marginBottom: 6 }}>Notes</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Notes</div>
           <textarea
             style={{ ...inputStyle, width: '100%', minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }}
             value={notes}
@@ -56,14 +56,14 @@ function DetailView({ recording, contactName, onBack }: { recording: CallRecordi
           {saved && <div style={{ fontSize: 11.5, color: '#4CAF7D', marginTop: 4 }}>Saved.</div>}
         </div>
 
-        <div style={{ marginTop: 20, padding: '12px 14px', borderRadius: 10, background: '#1a1c21', border: '1px solid #2b2f36' }}>
+        <div style={{ marginTop: 20, padding: '12px 14px', borderRadius: 10, background: 'var(--surface-4)', border: '1px solid var(--border-2)' }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: '#C9A24B' }}>AI call breakdown — pending Anthropic key</div>
-          <div style={{ fontSize: 11.5, color: '#565b64', marginTop: 4 }}>
+          <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 4 }}>
             {recording.ai_analysis ?? `${assistantName} will summarize this call automatically once the API key is funded — nothing to set up here when that happens.`}
           </div>
         </div>
 
-        <div style={{ fontSize: 12, color: '#565b64', cursor: 'pointer', marginTop: 20 }} onClick={() => remove(recording.id, recording.file_path).then(onBack)}>
+        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', cursor: 'pointer', marginTop: 20 }} onClick={() => remove(recording.id, recording.file_path).then(onBack)}>
           Delete recording
         </div>
       </div>
@@ -116,7 +116,7 @@ export default function CallRecordingsScreen({ homeHeadStyle, homeSubStyle }: Pr
 
       {showForm && (
         <div style={{ ...cardStyle, marginTop: 20, maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <input ref={fileRef} type="file" accept="audio/*" onChange={(e) => onFilePicked(e.target.files?.[0] ?? null)} style={{ fontSize: 13, color: '#c8cad0' }} />
+          <input ref={fileRef} type="file" accept="audio/*" onChange={(e) => onFilePicked(e.target.files?.[0] ?? null)} style={{ fontSize: 13, color: 'var(--text-quaternary-2)' }} />
           <input style={inputStyle} placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
           <select style={inputStyle} value={contactId} onChange={(e) => setContactId(e.target.value)}>
             <option value="">No linked contact</option>
@@ -129,16 +129,16 @@ export default function CallRecordingsScreen({ homeHeadStyle, homeSubStyle }: Pr
         </div>
       )}
 
-      <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', border: '1px solid #22262B', borderRadius: 14, overflow: 'hidden', maxWidth: 640 }}>
+      <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', maxWidth: 640 }}>
         {recordings.map((r) => (
           <div
             key={r.id}
             onClick={() => setSelectedId(r.id)}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid #1c1e23', background: '#101114', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)', cursor: 'pointer' }}
           >
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7' }}>{r.title}</div>
-              <div style={{ fontSize: 12, color: '#8A8F98', marginTop: 2 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{r.title}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
                 {new Date(r.recorded_at).toLocaleDateString()}{contactName(r.contact_id) ? ` · ${contactName(r.contact_id)}` : ''}
               </div>
             </div>
@@ -146,7 +146,7 @@ export default function CallRecordingsScreen({ homeHeadStyle, homeSubStyle }: Pr
           </div>
         ))}
         {!loading && recordings.length === 0 && (
-          <div style={{ padding: 18, fontSize: 13, color: '#565b64', background: '#101114' }}>No recordings uploaded yet.</div>
+          <div style={{ padding: 18, fontSize: 13, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No recordings uploaded yet.</div>
         )}
       </div>
     </div>

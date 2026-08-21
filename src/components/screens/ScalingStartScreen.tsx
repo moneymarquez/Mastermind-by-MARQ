@@ -15,18 +15,18 @@ interface Props {
   onNavigate: (id: string) => void;
 }
 
-const cardStyle: CSSProperties = { background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: 20 };
+const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 20 };
 const inputStyle: CSSProperties = {
-  width: '100%', background: '#1a1c21', border: '1px solid #2b2f36', borderRadius: 8,
-  padding: '10px 13px', color: '#F5F6F7', fontSize: 13, outline: 'none', boxSizing: 'border-box',
+  width: '100%', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8,
+  padding: '10px 13px', color: 'var(--text)', fontSize: 13, outline: 'none', boxSizing: 'border-box',
 };
 const selectStyle: CSSProperties = { ...inputStyle, cursor: 'pointer' };
 const ghostBtn: CSSProperties = {
-  padding: '7px 13px', borderRadius: 999, border: '1px solid #2b2f36', background: 'transparent',
-  color: '#C7CAD1', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+  padding: '7px 13px', borderRadius: 999, border: '1px solid var(--border-2)', background: 'transparent',
+  color: 'var(--text-quaternary)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
 };
 const primaryBtn: CSSProperties = {
-  padding: '9px 16px', borderRadius: 999, border: 'none', background: '#F5F6F7', color: '#0A0B0D',
+  padding: '9px 16px', borderRadius: 999, border: 'none', background: 'var(--text)', color: 'var(--bg)',
   fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
 };
 
@@ -34,9 +34,9 @@ function StepBadge({ done }: { done: boolean }) {
   return (
     <div style={{
       width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: done ? '#4a7a5a33' : '#22262B', border: `1px solid ${done ? '#4a7a5a' : '#2b2f36'}`, flexShrink: 0,
+      background: done ? '#4a7a5a33' : 'var(--border)', border: `1px solid ${done ? '#4a7a5a' : 'var(--border-2)'}`, flexShrink: 0,
     }}>
-      {done ? <Icon name="check" size={12} color="#8fae8f" /> : <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#565b64' }} />}
+      {done ? <Icon name="check" size={12} color="#8fae8f" /> : <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--text-tertiary)' }} />}
     </div>
   );
 }
@@ -131,14 +131,14 @@ export default function ScalingStartScreen({ homeHeadStyle, homeSubStyle, onNavi
         </div>
 
         <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 620 }}>
-          {projects.length === 0 && <div style={{ fontSize: 12.5, color: '#565b64' }}>No projects yet — start one above.</div>}
+          {projects.length === 0 && <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>No projects yet — start one above.</div>}
           {projects.map((p) => (
             <div key={p.id} style={{ ...cardStyle, padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => open(p.id)}>
               <div>
-                <div style={{ fontSize: 13.5, fontWeight: 600, color: '#F5F6F7' }}>{p.name}</div>
-                <div style={{ fontSize: 11.5, color: '#8A8F98', marginTop: 3 }}>{trailCount(p)} / 4 steps linked · {p.status.replace(/_/g, ' ')}</div>
+                <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>{p.name}</div>
+                <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 3 }}>{trailCount(p)} / 4 steps linked · {p.status.replace(/_/g, ' ')}</div>
               </div>
-              <Icon name="caret-right" size={16} color="#565b64" />
+              <Icon name="caret-right" size={16} color="var(--text-tertiary)" />
             </div>
           ))}
         </div>
@@ -162,9 +162,9 @@ export default function ScalingStartScreen({ homeHeadStyle, homeSubStyle, onNavi
         <div style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             <StepBadge done={!!ideaLinked} />
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#F5F6F7' }}>1. Idea Maker</div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>1. Idea Maker</div>
           </div>
-          {ideaLinked && <div style={{ fontSize: 12, color: '#8A8F98', marginBottom: 10, lineHeight: 1.5 }}>{ideaLinked.idea_text}</div>}
+          {ideaLinked && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 10, lineHeight: 1.5 }}>{ideaLinked.idea_text}</div>}
           <div style={{ display: 'flex', gap: 8 }}>
             <select style={selectStyle} value={selected.idea_session_id ?? ''} onChange={(e) => patch(selected.id, { idea_session_id: e.target.value || null })}>
               <option value="">— link an idea session —</option>
@@ -177,9 +177,9 @@ export default function ScalingStartScreen({ homeHeadStyle, homeSubStyle, onNavi
         <div style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             <StepBadge done={!!brandLinked} />
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#F5F6F7' }}>2. Brand Lab</div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>2. Brand Lab</div>
           </div>
-          {brandLinked && <div style={{ fontSize: 12, color: '#8A8F98', marginBottom: 10, lineHeight: 1.5 }}>{brandLinked.direction}</div>}
+          {brandLinked && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 10, lineHeight: 1.5 }}>{brandLinked.direction}</div>}
           <div style={{ display: 'flex', gap: 8 }}>
             <select style={selectStyle} value={selected.brand_lab_brief_id ?? ''} onChange={(e) => patch(selected.id, { brand_lab_brief_id: e.target.value || null })}>
               <option value="">— link a brand direction —</option>
@@ -192,9 +192,9 @@ export default function ScalingStartScreen({ homeHeadStyle, homeSubStyle, onNavi
         <div style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             <StepBadge done={!!selected.website_url} />
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#F5F6F7' }}>3. Website & App Builder</div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>3. Website & App Builder</div>
           </div>
-          <div style={{ fontSize: 11.5, color: '#565b64', marginBottom: 10 }}>
+          <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginBottom: 10 }}>
             The builder itself is still in development (see its roadmap) — paste the live site URL here once it exists.
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -212,9 +212,9 @@ export default function ScalingStartScreen({ homeHeadStyle, homeSubStyle, onNavi
         <div style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             <StepBadge done={!!planLinked} />
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#F5F6F7' }}>4. Scaling Planner <span style={{ color: '#565b64', fontWeight: 400 }}>(parallel — anytime)</span></div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>4. Scaling Planner <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>(parallel — anytime)</span></div>
           </div>
-          {planLinked?.plan_text && <div style={{ fontSize: 12, color: '#8A8F98', marginBottom: 10, lineHeight: 1.5 }}>{planLinked.plan_text.slice(0, 160)}…</div>}
+          {planLinked?.plan_text && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 10, lineHeight: 1.5 }}>{planLinked.plan_text.slice(0, 160)}…</div>}
           <div style={{ display: 'flex', gap: 8 }}>
             <select style={selectStyle} value={selected.scaling_plan_id ?? ''} onChange={(e) => patch(selected.id, { scaling_plan_id: e.target.value || null })}>
               <option value="">— link a scaling plan —</option>
@@ -227,9 +227,9 @@ export default function ScalingStartScreen({ homeHeadStyle, homeSubStyle, onNavi
         <div style={{ ...cardStyle, borderColor: '#3a3520' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             <Icon name="sparkle" size={16} color="#C9A24B" />
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#F5F6F7' }}>5. Nova — tie it together</div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>5. Nova — tie it together</div>
           </div>
-          <div style={{ fontSize: 12, color: '#8A8F98', marginBottom: 14, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14, lineHeight: 1.5 }}>
             Once at least one piece above is linked, Nova drafts a starter invoice from the project's trail — the
             first downstream artifact, with more to follow as this project matures.
           </div>

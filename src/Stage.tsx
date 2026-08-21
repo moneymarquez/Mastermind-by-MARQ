@@ -48,6 +48,7 @@ import ProductTour, { filterTourSteps } from './components/ProductTour';
 import { buildViewModel } from './viewModel';
 import { moduleKeyForRoute } from './modules.config';
 import type { AppState, MastermindActions } from './state';
+import type { Theme } from './data/useTheme';
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
@@ -64,9 +65,11 @@ interface Props {
   onSignOut: () => void;
   currentUserId: string;
   isOwner: boolean;
+  theme: Theme;
+  onThemeChange: (next: Theme) => void;
 }
 
-export default function Stage({ state, actions, assistantName, canAccess, onSignOut, currentUserId, isOwner }: Props) {
+export default function Stage({ state, actions, assistantName, canAccess, onSignOut, currentUserId, isOwner, theme, onThemeChange }: Props) {
   const vm = buildViewModel(state, actions.navigateTo, onSignOut, canAccess);
   const { isMobile } = vm;
   const bender = useBender();
@@ -120,13 +123,16 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   const novaStackBottomOffset = isMobile ? remindersBox.height + 16 : 0;
 
   // Fills the real viewport edge-to-edge — no more fixed-size device-mockup
-  // box (border/rounded corners/shadow) floating on a page background.
+  // box (border/rounded corners/shadow) floating on a page background. The
+  // diagonal shine (app-shine-bg, defined in index.css) supplies the
+  // background instead of a flat color — no inline `background` here, or
+  // it'd win specificity over the class and flatten the gradient.
   const stageStyle: CSSProperties = {
-    width: vm.stageWidth, height: vm.stageHeight, background: '#0A0B0D', position: 'relative', overflow: 'hidden',
+    width: vm.stageWidth, height: vm.stageHeight, position: 'relative', overflow: 'hidden',
   };
 
   return (
-    <div style={stageStyle}>
+    <div className="app-shine-bg" style={stageStyle}>
       <Logo isMobile={isMobile} onClick={() => actions.goScreen('home')} />
 
       <NavDrawer
@@ -142,8 +148,8 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           onClick={startTour}
           style={{
             position: 'absolute', top: 'calc(24px + env(safe-area-inset-top))', right: 72, width: 42, height: 42, borderRadius: '50%',
-            background: '#14161A', border: '1px solid #22262B', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', cursor: 'pointer', zIndex: 41, fontSize: 15, fontWeight: 700, color: '#8A8F98',
+            background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', cursor: 'pointer', zIndex: 41, fontSize: 15, fontWeight: 700, color: 'var(--text-secondary)',
           }}
         >
           ?
@@ -278,7 +284,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'account-settings' && (
-          <AccountSettingsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onSignOut={onSignOut} onStartTour={startTour} />
+          <AccountSettingsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onSignOut={onSignOut} onStartTour={startTour} theme={theme} onThemeChange={onThemeChange} />
         )}
 
         {state.screen === 'prompt-voice-settings' && (

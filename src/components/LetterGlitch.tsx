@@ -194,7 +194,7 @@ export default function LetterGlitch({
   }, [glitchSpeed, smooth]);
 
   const containerStyle: CSSProperties = {
-    position: 'relative', width: '100%', height: '100%', backgroundColor: '#0A0B0D', overflow: 'hidden', pointerEvents: 'none',
+    position: 'relative', width: '100%', height: '100%', backgroundColor: 'var(--bg)', overflow: 'hidden', pointerEvents: 'none',
   };
   const canvasStyle: CSSProperties = { display: 'block', width: '100%', height: '100%' };
   const outerVignetteStyle: CSSProperties = {

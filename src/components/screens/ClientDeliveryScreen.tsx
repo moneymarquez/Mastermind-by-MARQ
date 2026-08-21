@@ -11,18 +11,18 @@ interface Props {
   onNavigate: (id: string) => void;
 }
 
-const cardStyle: CSSProperties = { background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: 20 };
+const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 20 };
 const inputStyle: CSSProperties = {
-  width: '100%', background: '#1a1c21', border: '1px solid #2b2f36', borderRadius: 8,
-  padding: '9px 12px', color: '#F5F6F7', fontSize: 13, outline: 'none', boxSizing: 'border-box',
+  width: '100%', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8,
+  padding: '9px 12px', color: 'var(--text)', fontSize: 13, outline: 'none', boxSizing: 'border-box',
 };
 const primaryBtn: CSSProperties = {
-  padding: '9px 16px', borderRadius: 999, border: 'none', background: '#F5F6F7', color: '#0A0B0D',
+  padding: '9px 16px', borderRadius: 999, border: 'none', background: 'var(--text)', color: 'var(--bg)',
   fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
 };
 const ghostBtn: CSSProperties = {
-  padding: '7px 13px', borderRadius: 999, border: '1px solid #2b2f36', background: 'transparent',
-  color: '#C7CAD1', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+  padding: '7px 13px', borderRadius: 999, border: '1px solid var(--border-2)', background: 'transparent',
+  color: 'var(--text-quaternary)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
 };
 
 const TABS: { key: ScalingProject['status']; label: string }[] = [
@@ -32,7 +32,7 @@ const TABS: { key: ScalingProject['status']; label: string }[] = [
 ];
 
 function statusBadge(status: ScalingProject['status']): CSSProperties {
-  const colors: Record<ScalingProject['status'], string> = { in_progress: '#8A8F98', ready_to_deliver: '#C9A24B', delivered: '#8fae8f' };
+  const colors: Record<ScalingProject['status'], string> = { in_progress: 'var(--text-secondary)', ready_to_deliver: '#C9A24B', delivered: '#8fae8f' };
   const c = colors[status];
   return { padding: '3px 9px', borderRadius: 999, background: `${c}22`, border: `1px solid ${c}55`, color: c, fontSize: 10, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase' };
 }
@@ -136,12 +136,12 @@ export default function ClientDeliveryScreen({ homeHeadStyle, homeSubStyle, onNa
           <span style={statusBadge(selected.status)}>{selected.status.replace(/_/g, ' ')}</span>
         </div>
         <div style={homeSubStyle}>
-          {selected.website_url ? <a href={selected.website_url} target="_blank" rel="noreferrer" style={{ color: '#8A8F98' }}>{selected.website_url}</a> : 'No live preview link yet — set one from Start.'}
+          {selected.website_url ? <a href={selected.website_url} target="_blank" rel="noreferrer" style={{ color: 'var(--text-secondary)' }}>{selected.website_url}</a> : 'No live preview link yet — set one from Start.'}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 22, maxWidth: 560 }}>
           <div style={cardStyle}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7', marginBottom: 12 }}>Client</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Client</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <input style={{ ...inputStyle, flex: 1, minWidth: 160 }} placeholder="Client name" value={clientNameDraft} onChange={(e) => setClientNameDraft(e.target.value)} disabled={selected.status === 'delivered'} />
               <input style={{ ...inputStyle, flex: 1, minWidth: 200 }} placeholder="Client email" value={clientEmailDraft} onChange={(e) => setClientEmailDraft(e.target.value)} disabled={selected.status === 'delivered'} />
@@ -149,8 +149,8 @@ export default function ClientDeliveryScreen({ homeHeadStyle, homeSubStyle, onNa
           </div>
 
           <div style={cardStyle}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7', marginBottom: 12 }}>Walkthrough video</div>
-            <div style={{ fontSize: 11.5, color: '#565b64', marginBottom: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Walkthrough video</div>
+            <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginBottom: 10 }}>
               Manually uploaded — no automated video generation here.
             </div>
             {videoUrl && <video src={videoUrl} controls style={{ width: '100%', borderRadius: 8, marginBottom: 10, background: '#000' }} />}
@@ -162,14 +162,14 @@ export default function ClientDeliveryScreen({ homeHeadStyle, homeSubStyle, onNa
           </div>
 
           <div style={cardStyle}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7', marginBottom: 12 }}>Invoice</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Invoice</div>
             {invoice ? (
-              <div style={{ fontSize: 12.5, color: '#8A8F98' }}>
+              <div style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>
                 {invoice.label} — ${invoiceTotal((invoice.data.line_items as { qty?: string; rate?: string }[]) ?? []).toFixed(2)}
-                <span style={{ marginLeft: 10, cursor: 'pointer', color: '#C7CAD1' }} onClick={() => onNavigate('invoicing')}>Open →</span>
+                <span style={{ marginLeft: 10, cursor: 'pointer', color: 'var(--text-quaternary)' }} onClick={() => onNavigate('invoicing')}>Open →</span>
               </div>
             ) : (
-              <div style={{ fontSize: 12.5, color: '#565b64' }}>No invoice linked yet — generate one from the project's Start page, or create one in Invoicing.</div>
+              <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>No invoice linked yet — generate one from the project's Start page, or create one in Invoicing.</div>
             )}
           </div>
 
@@ -182,17 +182,17 @@ export default function ClientDeliveryScreen({ homeHeadStyle, homeSubStyle, onNa
               <div style={primaryBtn} onClick={sendToClient}>
                 {sending ? 'Sending…' : 'Send to client'}
               </div>
-              {!selected.client_email && <div style={{ fontSize: 11.5, color: '#565b64', marginTop: 8 }}>Add a client email above first.</div>}
+              {!selected.client_email && <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 8 }}>Add a client email above first.</div>}
               {sendError && <div style={{ fontSize: 12, color: '#c47a7a', marginTop: 8 }}>{sendError}</div>}
             </div>
           )}
 
           <div style={cardStyle}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7', marginBottom: 12 }}>Delivery log</div>
-            {logEntries.length === 0 && <div style={{ fontSize: 12, color: '#565b64' }}>Nothing logged yet.</div>}
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Delivery log</div>
+            {logEntries.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Nothing logged yet.</div>}
             {logEntries.map((e) => (
-              <div key={e.id} style={{ fontSize: 12, color: '#8A8F98', padding: '6px 0', borderTop: '1px solid #1c1e23' }}>
-                <span style={{ color: '#C7CAD1', fontWeight: 600 }}>{e.event.replace(/_/g, ' ')}</span> — {e.note} · {new Date(e.created_at).toLocaleString()}
+              <div key={e.id} style={{ fontSize: 12, color: 'var(--text-secondary)', padding: '6px 0', borderTop: '1px solid var(--surface-3)' }}>
+                <span style={{ color: 'var(--text-quaternary)', fontWeight: 600 }}>{e.event.replace(/_/g, ' ')}</span> — {e.note} · {new Date(e.created_at).toLocaleString()}
               </div>
             ))}
           </div>
@@ -208,7 +208,7 @@ export default function ClientDeliveryScreen({ homeHeadStyle, homeSubStyle, onNa
 
       <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
         {TABS.map((t) => (
-          <div key={t.key} style={{ ...ghostBtn, ...(tab === t.key ? { background: '#F5F6F7', color: '#0A0B0D', border: 'none' } : {}) }} onClick={() => setTab(t.key)}>
+          <div key={t.key} style={{ ...ghostBtn, ...(tab === t.key ? { background: 'var(--text)', color: 'var(--bg)', border: 'none' } : {}) }} onClick={() => setTab(t.key)}>
             {t.label} ({projects.filter((p) => p.status === t.key).length})
           </div>
         ))}
@@ -218,18 +218,18 @@ export default function ClientDeliveryScreen({ homeHeadStyle, homeSubStyle, onNa
         {filtered.map((p) => (
           <div key={p.id} style={{ ...cardStyle, cursor: 'pointer' }} onClick={() => open(p)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div style={{ fontSize: 13.5, fontWeight: 600, color: '#F5F6F7' }}>{p.name}</div>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>{p.name}</div>
               <span style={statusBadge(p.status)}>{p.status.replace(/_/g, ' ')}</span>
             </div>
-            {p.client_name && <div style={{ fontSize: 11.5, color: '#8A8F98', marginTop: 6 }}>{p.client_name}</div>}
+            {p.client_name && <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 6 }}>{p.client_name}</div>}
             {p.status === 'delivered' && p.delivered_at && (
-              <div style={{ fontSize: 10.5, color: '#565b64', marginTop: 6 }}>Delivered {new Date(p.delivered_at).toLocaleDateString()}</div>
+              <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 6 }}>Delivered {new Date(p.delivered_at).toLocaleDateString()}</div>
             )}
-            {p.website_url && <div style={{ fontSize: 10.5, color: '#565b64', marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.website_url}</div>}
+            {p.website_url && <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.website_url}</div>}
           </div>
         ))}
         {filtered.length === 0 && (
-          <div style={{ fontSize: 12.5, color: '#565b64' }}>Nothing here yet — projects start in Scaling → Start.</div>
+          <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>Nothing here yet — projects start in Scaling → Start.</div>
         )}
       </div>
     </div>

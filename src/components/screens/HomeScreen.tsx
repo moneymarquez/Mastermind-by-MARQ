@@ -79,43 +79,43 @@ export default function HomeScreen({ homeHeadStyle, homeSubStyle, statGridStyle,
       <div style={homeSubStyle}>Here's where things stand today.</div>
       <div style={statGridStyle}>
         {cards.map((card, i) => (
-          <div key={i} style={{ background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: 20, position: 'relative', minWidth: 0 }}>
-            <Icon name={card.icon} size={18} color="#565b64" style={{ position: 'absolute', top: 16, right: 16 }} />
+          <div key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 20, position: 'relative', minWidth: 0 }}>
+            <Icon name={card.icon} size={18} color="var(--text-tertiary)" style={{ position: 'absolute', top: 16, right: 16 }} />
             <div style={card.valueStyle}>{card.value}</div>
-            <div style={{ fontSize: 12.5, color: '#8A8F98', marginTop: 6 }}>{card.caption}</div>
+            <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 6 }}>{card.caption}</div>
           </div>
         ))}
       </div>
 
       {nudges.length > 0 && (
         <>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7', marginTop: 32, marginBottom: 12 }}>Worth a look</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginTop: 32, marginBottom: 12 }}>Worth a look</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {nudges.map((n) => (
-              <div key={n.id} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, padding: '13px 18px', borderRadius: 12, background: '#14161A', border: '1px solid #22262B' }}>
+              <div key={n.id} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, padding: '13px 18px', borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--border)' }}>
                 <div
-                  style={{ fontSize: 13, color: '#C7CAD1', lineHeight: 1.5, cursor: n.target_screen ? 'pointer' : 'default' }}
+                  style={{ fontSize: 13, color: 'var(--text-quaternary)', lineHeight: 1.5, cursor: n.target_screen ? 'pointer' : 'default' }}
                   onClick={() => n.target_screen && onNavigate(n.target_screen)}
                 >
                   {n.message}
                 </div>
-                <span style={{ fontSize: 11, color: '#565b64', cursor: 'pointer', flexShrink: 0, marginTop: 1 }} onClick={(e) => { e.stopPropagation(); dismissNudge(n.id); }}>Dismiss</span>
+                <span style={{ fontSize: 11, color: 'var(--text-tertiary)', cursor: 'pointer', flexShrink: 0, marginTop: 1 }} onClick={(e) => { e.stopPropagation(); dismissNudge(n.id); }}>Dismiss</span>
               </div>
             ))}
           </div>
         </>
       )}
 
-      <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7', marginTop: 32, marginBottom: 12 }}>Today's schedule</div>
-      <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid #22262B', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginTop: 32, marginBottom: 12 }}>Today's schedule</div>
+      <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
         {todayEvents.map((e) => (
-          <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 20px', borderBottom: '1px solid #1c1e23', background: '#101114' }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, color: '#8A8F98', minWidth: 64 }}>{formatTimeLabel(e.start_time)}</div>
-            <div style={{ fontSize: 13.5, color: '#c8cad0' }}>{e.notes || e.type}</div>
+          <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 20px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)' }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, color: 'var(--text-secondary)', minWidth: 64 }}>{formatTimeLabel(e.start_time)}</div>
+            <div style={{ fontSize: 13.5, color: 'var(--text-quaternary-2)' }}>{e.notes || e.type}</div>
           </div>
         ))}
         {!eventsLoading && todayEvents.length === 0 && (
-          <div style={{ padding: '16px 20px', fontSize: 13, color: '#565b64', background: '#101114' }}>Nothing on the calendar today.</div>
+          <div style={{ padding: '16px 20px', fontSize: 13, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>Nothing on the calendar today.</div>
         )}
       </div>
 
@@ -123,13 +123,13 @@ export default function HomeScreen({ homeHeadStyle, homeSubStyle, statGridStyle,
         onClick={onOpenNova}
         style={{
           display: 'flex', alignItems: 'center', gap: 12, marginTop: 20, padding: '14px 18px', borderRadius: 12,
-          background: '#14161A', border: '1px solid #22262B', cursor: 'pointer', maxWidth: 420,
+          background: 'var(--surface)', border: '1px solid var(--border)', cursor: 'pointer', maxWidth: 420,
         }}
       >
         <Icon name="sparkle" size={16} color="#C9A24B" />
         <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7' }}>Ask {assistantName}</div>
-          <div style={{ fontSize: 11.5, color: '#8A8F98', marginTop: 1 }}>Anything about today, or anywhere else in the app.</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Ask {assistantName}</div>
+          <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 1 }}>Anything about today, or anywhere else in the app.</div>
         </div>
       </div>
     </div>

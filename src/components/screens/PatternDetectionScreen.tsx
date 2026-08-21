@@ -7,8 +7,8 @@ interface Props {
   homeSubStyle: CSSProperties;
 }
 
-const cardStyle: CSSProperties = { background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: 18 };
-const CONFIDENCE_COLOR: Record<Confidence, string> = { low: '#565b64', medium: '#C9A24B', high: '#8fae8f' };
+const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 18 };
+const CONFIDENCE_COLOR: Record<Confidence, string> = { low: 'var(--text-tertiary)', medium: '#C9A24B', high: '#8fae8f' };
 const CONFIDENCE_LABEL: Record<Confidence, string> = { low: 'Low confidence', medium: 'Medium confidence', high: 'High confidence' };
 
 export default function PatternDetectionScreen({ homeHeadStyle, homeSubStyle }: Props) {
@@ -21,33 +21,33 @@ export default function PatternDetectionScreen({ homeHeadStyle, homeSubStyle }: 
 
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
         <div
-          style={{ padding: '10px 22px', borderRadius: 999, background: '#F5F6F7', color: '#0A0B0D', fontSize: 12.5, fontWeight: 600, cursor: generating ? 'default' : 'pointer', opacity: generating ? 0.6 : 1 }}
+          style={{ padding: '10px 22px', borderRadius: 999, background: 'var(--text)', color: 'var(--bg)', fontSize: 12.5, fontWeight: 600, cursor: generating ? 'default' : 'pointer', opacity: generating ? 0.6 : 1 }}
           onClick={() => !generating && refresh()}
         >
           {generating ? 'Looking for patterns…' : 'Look for patterns'}
         </div>
       </div>
-      {error && <div style={{ fontSize: 12.5, color: '#8A8F98', marginTop: 12, textAlign: 'center', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>{error}</div>}
+      {error && <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 12, textAlign: 'center', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>{error}</div>}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 24 }}>
         {insights.map((i) => (
           <div key={i.id} style={cardStyle}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-              <div style={{ fontSize: 13.5, color: '#C7CAD1', lineHeight: 1.6 }}>{i.summary}</div>
-              <span style={{ fontSize: 11, color: '#565b64', cursor: 'pointer', flexShrink: 0 }} onClick={() => dismiss(i.id)}>Dismiss</span>
+              <div style={{ fontSize: 13.5, color: 'var(--text-quaternary)', lineHeight: 1.6 }}>{i.summary}</div>
+              <span style={{ fontSize: 11, color: 'var(--text-tertiary)', cursor: 'pointer', flexShrink: 0 }} onClick={() => dismiss(i.id)}>Dismiss</span>
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               <span style={{ fontSize: 10.5, fontWeight: 700, color: CONFIDENCE_COLOR[i.confidence], border: `1px solid ${CONFIDENCE_COLOR[i.confidence]}`, borderRadius: 999, padding: '2px 10px' }}>
                 {CONFIDENCE_LABEL[i.confidence]}
               </span>
               {i.modules.map((m) => (
-                <span key={m} style={{ fontSize: 10.5, color: '#565b64', border: '1px solid #22262B', borderRadius: 999, padding: '2px 10px' }}>{m}</span>
+                <span key={m} style={{ fontSize: 10.5, color: 'var(--text-tertiary)', border: '1px solid var(--border)', borderRadius: 999, padding: '2px 10px' }}>{m}</span>
               ))}
             </div>
           </div>
         ))}
         {!loading && insights.length === 0 && !error && (
-          <div style={{ fontSize: 12.5, color: '#565b64', textAlign: 'center' }}>No patterns found yet — click above to look, once you've got a few weeks of activity logged.</div>
+          <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', textAlign: 'center' }}>No patterns found yet — click above to look, once you've got a few weeks of activity logged.</div>
         )}
       </div>
     </div>

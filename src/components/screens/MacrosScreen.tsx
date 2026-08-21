@@ -61,13 +61,13 @@ async function estimateMealFromPhoto(image: { mediaType: string; data: string },
 }
 
 const inputStyle: CSSProperties = {
-  background: '#14161A', border: '1px solid #22262B', borderRadius: 8, padding: '9px 12px',
-  color: '#F5F6F7', fontSize: 13.5, outline: 'none',
+  background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 12px',
+  color: 'var(--text)', fontSize: 13.5, outline: 'none',
 };
-const statCardStyle: CSSProperties = { background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: '16px 20px', minWidth: 120 };
+const statCardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 20px', minWidth: 120 };
 const actionPillStyle = (active: boolean): CSSProperties => ({
   display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 999,
-  background: active ? '#22262B' : '#F5F6F7', color: active ? '#8A8F98' : '#0A0B0D',
+  background: active ? 'var(--border)' : 'var(--text)', color: active ? 'var(--text-secondary)' : 'var(--bg)',
   fontSize: 13, fontWeight: 600, cursor: active ? 'default' : 'pointer',
 });
 const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -266,18 +266,18 @@ export default function MacrosScreen({ homeHeadStyle, homeSubStyle, activeBender
           { label: 'Fat (g)', value: totals.fat_g },
         ].map((s) => (
           <div key={s.label} style={statCardStyle}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 24, fontWeight: 600, color: '#F5F6F7' }}>{loading ? '—' : s.value}</div>
-            <div style={{ fontSize: 12, color: '#8A8F98', marginTop: 4 }}>{s.label}</div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 24, fontWeight: 600, color: 'var(--text)' }}>{loading ? '—' : s.value}</div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>{s.label}</div>
           </div>
         ))}
         <div style={statCardStyle}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 24, fontWeight: 600, color: '#F5F6F7' }}>{loading ? '—' : todayWaterOz}</span>
-            <span style={{ fontSize: 11, color: '#565b64' }}>oz</span>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 24, fontWeight: 600, color: 'var(--text)' }}>{loading ? '—' : todayWaterOz}</span>
+            <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>oz</span>
           </div>
-          <div style={{ fontSize: 12, color: '#8A8F98', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Icon name="drop" size={12} color="#8A8F98" /> Water
-            <span style={{ marginLeft: 'auto', cursor: 'pointer', color: '#F5F6F7', fontWeight: 600 }} onClick={() => addWaterLog(8)}>+8oz</span>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="drop" size={12} color="var(--text-secondary)" /> Water
+            <span style={{ marginLeft: 'auto', cursor: 'pointer', color: 'var(--text)', fontWeight: 600 }} onClick={() => addWaterLog(8)}>+8oz</span>
           </div>
         </div>
       </div>
@@ -285,18 +285,18 @@ export default function MacrosScreen({ homeHeadStyle, homeSubStyle, activeBender
       {/* Favorites strip */}
       {savedMeals.length > 0 && (
         <div style={{ marginTop: 22 }}>
-          <div style={{ fontSize: 12, color: '#8A8F98', marginBottom: 8 }}>Favorites — tap to log</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>Favorites — tap to log</div>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
             {savedMeals.map((sm) => (
               <div
                 key={sm.id}
-                style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 999, border: '1px solid #22262B', background: '#14161A', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 999, border: '1px solid var(--border)', background: 'var(--surface)', cursor: 'pointer', whiteSpace: 'nowrap' }}
                 onClick={() => logFromSavedMeal(sm)}
               >
-                <Icon name="star" size={13} color="#8A8F98" />
-                <span style={{ fontSize: 12.5, color: '#F5F6F7' }}>{sm.name}</span>
-                {sm.calories != null && <span style={{ fontSize: 11.5, color: '#565b64' }}>{sm.calories} cal</span>}
-                <span style={{ fontSize: 12, color: '#565b64', marginLeft: 4 }} onClick={(e) => { e.stopPropagation(); removeSavedMeal(sm.id); }}>✕</span>
+                <Icon name="star" size={13} color="var(--text-secondary)" />
+                <span style={{ fontSize: 12.5, color: 'var(--text)' }}>{sm.name}</span>
+                {sm.calories != null && <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>{sm.calories} cal</span>}
+                <span style={{ fontSize: 12, color: 'var(--text-tertiary)', marginLeft: 4 }} onClick={(e) => { e.stopPropagation(); removeSavedMeal(sm.id); }}>✕</span>
               </div>
             ))}
           </div>
@@ -309,10 +309,10 @@ export default function MacrosScreen({ homeHeadStyle, homeSubStyle, activeBender
           {analyzing ? 'Analyzing photo…' : '📷 Snap a meal — AI counts it'}
         </div>
         <div style={actionPillStyle(false)} onClick={() => { setBarcodeError(''); setScannerOpen(true); }}>
-          <Icon name="barcode" size={15} color="#0A0B0D" /> Scan barcode
+          <Icon name="barcode" size={15} color="var(--bg)" /> Scan barcode
         </div>
         {aiConfidence && (
-          <span style={{ fontSize: 12, color: '#8A8F98' }}>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
             AI estimate ({aiConfidence} confidence) — review below before logging.
           </span>
         )}
@@ -320,7 +320,7 @@ export default function MacrosScreen({ homeHeadStyle, homeSubStyle, activeBender
       {aiError && <div style={{ fontSize: 12.5, color: '#c47a7a', marginTop: 8 }}>{aiError}</div>}
       {barcodeError && <div style={{ fontSize: 12.5, color: '#c47a7a', marginTop: 8 }}>{barcodeError}</div>}
       {logMethod === 'barcode' && barcodeValue && (
-        <div style={{ fontSize: 12, color: '#8A8F98', marginTop: 8 }}>From barcode {barcodeValue} — exact product data, not an estimate.</div>
+        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 8 }}>From barcode {barcodeValue} — exact product data, not an estimate.</div>
       )}
 
       {scannerOpen && <BarcodeScanner onScan={onBarcodeScanned} onClose={() => setScannerOpen(false)} />}
@@ -342,40 +342,40 @@ export default function MacrosScreen({ homeHeadStyle, homeSubStyle, activeBender
         <input style={{ ...inputStyle, width: 90 }} placeholder="Fat" value={fat} onChange={(e) => setFat(e.target.value)} />
         <input style={{ ...inputStyle, flex: '1 1 140px' }} placeholder="Note (opt.)" value={note} onChange={(e) => setNote(e.target.value)} />
         <div
-          style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999, border: '1px solid #F5F6F7', color: '#F5F6F7', fontSize: 13, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}
+          style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999, border: '1px solid var(--text)', color: 'var(--text)', fontSize: 13, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}
           onClick={submitMeal}
         >
           Log meal
         </div>
-        <span style={{ fontSize: 12, color: '#8A8F98', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} onClick={saveCurrentAsFavorite}>
-          <Icon name="star" size={13} color="#8A8F98" /> Save as favorite
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} onClick={saveCurrentAsFavorite}>
+          <Icon name="star" size={13} color="var(--text-secondary)" /> Save as favorite
         </span>
       </div>
 
-      <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', border: '1px solid #22262B', borderRadius: 14, overflow: 'hidden', maxWidth: 720 }}>
+      <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', maxWidth: 720 }}>
         {todayMeals.map((m) => (
-          <div key={m.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid #1c1e23', background: '#101114' }}>
+          <div key={m.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)' }}>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7' }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
                 {m.meal_type[0].toUpperCase() + m.meal_type.slice(1)}{m.restaurant_name ? ` · ${m.restaurant_name}` : ''}
                 {m.log_method !== 'manual' && (
-                  <span style={{ fontSize: 10.5, color: '#565b64', fontWeight: 500, marginLeft: 8, textTransform: 'uppercase' }}>{m.log_method}</span>
+                  <span style={{ fontSize: 10.5, color: 'var(--text-tertiary)', fontWeight: 500, marginLeft: 8, textTransform: 'uppercase' }}>{m.log_method}</span>
                 )}
               </div>
-              <div style={{ fontSize: 12.5, color: '#8A8F98', marginTop: 2 }}>
+              <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 2 }}>
                 {[m.calories && `${m.calories} cal`, m.protein_g && `${m.protein_g}p`, m.carbs_g && `${m.carbs_g}c`, m.fat_g && `${m.fat_g}f`].filter(Boolean).join(' · ') || '—'}
               </div>
             </div>
-            <span style={{ fontSize: 13, color: '#565b64', cursor: 'pointer' }} onClick={() => removeMeal(m.id)}>Remove</span>
+            <span style={{ fontSize: 13, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => removeMeal(m.id)}>Remove</span>
           </div>
         ))}
         {!loading && todayMeals.length === 0 && (
-          <div style={{ padding: '18px', fontSize: 13, color: '#565b64', background: '#101114' }}>No meals logged today.</div>
+          <div style={{ padding: '18px', fontSize: 13, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No meals logged today.</div>
         )}
       </div>
 
       <div
-        style={{ marginTop: 28, fontSize: 13, color: '#8A8F98', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+        style={{ marginTop: 28, fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
         onClick={() => setShowFastFood((v) => !v)}
       >
         {showFastFood ? 'Hide' : 'Show'} fast-food reference list
@@ -385,7 +385,7 @@ export default function MacrosScreen({ homeHeadStyle, homeSubStyle, activeBender
         <div style={{ marginTop: 14, maxWidth: 720 }}>
           {fastFood.length === 0 && (
             <div
-              style={{ display: 'inline-flex', alignItems: 'center', padding: '8px 16px', borderRadius: 999, border: '1px solid #F5F6F7', color: '#F5F6F7', fontSize: 12.5, cursor: seedingFastFood ? 'default' : 'pointer', marginBottom: 12, opacity: seedingFastFood ? 0.6 : 1 }}
+              style={{ display: 'inline-flex', alignItems: 'center', padding: '8px 16px', borderRadius: 999, border: '1px solid var(--text)', color: 'var(--text)', fontSize: 12.5, cursor: seedingFastFood ? 'default' : 'pointer', marginBottom: 12, opacity: seedingFastFood ? 0.6 : 1 }}
               onClick={() => !seedingFastFood && loadStarterFastFood()}
             >
               {seedingFastFood ? 'Loading…' : 'Load starter list (~20 chains)'}
@@ -396,7 +396,7 @@ export default function MacrosScreen({ homeHeadStyle, homeSubStyle, activeBender
             <input style={{ ...inputStyle, flex: '1 1 200px' }} placeholder="Go-to order" value={ffItem} onChange={(e) => setFfItem(e.target.value)} />
             <input style={{ ...inputStyle, width: 100 }} placeholder="Cal (opt.)" value={ffCalories} onChange={(e) => setFfCalories(e.target.value)} />
             <div
-              style={{ display: 'flex', alignItems: 'center', padding: '9px 16px', borderRadius: 999, border: '1px solid #F5F6F7', color: '#F5F6F7', fontSize: 12.5, cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', padding: '9px 16px', borderRadius: 999, border: '1px solid var(--text)', color: 'var(--text)', fontSize: 12.5, cursor: 'pointer' }}
               onClick={submitFastFood}
             >
               Add
@@ -410,7 +410,7 @@ export default function MacrosScreen({ homeHeadStyle, homeSubStyle, activeBender
                   key={tag}
                   style={{
                     fontSize: 11.5, padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
-                    background: ffFilter === tag ? '#F5F6F7' : '#14161A', color: ffFilter === tag ? '#0A0B0D' : '#8A8F98', border: '1px solid #22262B',
+                    background: ffFilter === tag ? 'var(--text)' : 'var(--surface)', color: ffFilter === tag ? 'var(--bg)' : 'var(--text-secondary)', border: '1px solid var(--border)',
                   }}
                   onClick={() => setFfFilter(ffFilter === tag ? null : tag)}
                 >
@@ -420,24 +420,24 @@ export default function MacrosScreen({ homeHeadStyle, homeSubStyle, activeBender
             </div>
           )}
 
-          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', border: '1px solid #22262B', borderRadius: 14, overflow: 'hidden' }}>
+          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
             {visibleFastFood.map((f) => (
-              <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 18px', borderBottom: '1px solid #1c1e23', background: '#101114' }}>
+              <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 18px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)' }}>
                 <div>
-                  <span style={{ fontSize: 13, color: '#C7CAD1' }}>{f.restaurant_name} — {f.item_name}{f.calories ? ` (${f.calories} cal)` : ''}</span>
+                  <span style={{ fontSize: 13, color: 'var(--text-quaternary)' }}>{f.restaurant_name} — {f.item_name}{f.calories ? ` (${f.calories} cal)` : ''}</span>
                   {f.goal_tags?.length > 0 && (
                     <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
                       {f.goal_tags.map((t) => (
-                        <span key={t} style={{ fontSize: 10.5, color: '#565b64' }}>{GOAL_TAG_LABELS[t] ?? t}</span>
+                        <span key={t} style={{ fontSize: 10.5, color: 'var(--text-tertiary)' }}>{GOAL_TAG_LABELS[t] ?? t}</span>
                       ))}
                     </div>
                   )}
                 </div>
-                <span style={{ fontSize: 12, color: '#565b64', cursor: 'pointer' }} onClick={() => removeFastFoodOption(f.id)}>Remove</span>
+                <span style={{ fontSize: 12, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => removeFastFoodOption(f.id)}>Remove</span>
               </div>
             ))}
             {visibleFastFood.length === 0 && (
-              <div style={{ padding: '14px 18px', fontSize: 12.5, color: '#565b64', background: '#101114' }}>Nothing here yet — add your go-to orders, or load the starter list above.</div>
+              <div style={{ padding: '14px 18px', fontSize: 12.5, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>Nothing here yet — add your go-to orders, or load the starter list above.</div>
             )}
           </div>
         </div>

@@ -17,12 +17,12 @@ const STYLE_OPTIONS = [
 
 const chipStyle = (active: boolean): CSSProperties => ({
   padding: '10px 16px', borderRadius: 999, fontSize: 13, cursor: 'pointer',
-  border: `1px solid ${active ? '#F5F6F7' : '#22262B'}`, background: active ? '#F5F6F71a' : '#14161A',
-  color: active ? '#F5F6F7' : '#8A8F98',
+  border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? '#F5F6F71a' : 'var(--surface)',
+  color: active ? 'var(--text)' : 'var(--text-secondary)',
 });
 const inputStyle: CSSProperties = {
-  width: '100%', background: '#1a1c21', border: '1px solid #2b2f36', borderRadius: 8,
-  padding: '11px 14px', color: '#F5F6F7', fontSize: 14, outline: 'none', boxSizing: 'border-box',
+  width: '100%', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8,
+  padding: '11px 14px', color: 'var(--text)', fontSize: 14, outline: 'none', boxSizing: 'border-box',
 };
 
 export default function CurationQuestions({ initial, onComplete }: Props) {
@@ -40,30 +40,30 @@ export default function CurationQuestions({ initial, onComplete }: Props) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0A0B0D', padding: '48px 24px 60px', display: 'flex', justifyContent: 'center' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '48px 24px 60px', display: 'flex', justifyContent: 'center' }}>
       <div style={{ width: '100%', maxWidth: 560 }}>
-        <div style={{ fontSize: 22, fontWeight: 800, color: '#F5F6F7', letterSpacing: '-0.01em', marginBottom: 2 }}>Masterminds by MARQ</div>
-        <div style={{ fontSize: 26, fontWeight: 700, color: '#F5F6F7', marginTop: 24, marginBottom: 6 }}>A few quick questions</div>
-        <div style={{ fontSize: 13.5, color: '#8A8F98', marginBottom: 32, lineHeight: 1.6 }}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em', marginBottom: 2 }}>Masterminds by MARQ</div>
+        <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text)', marginTop: 24, marginBottom: 6 }}>A few quick questions</div>
+        <div style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginBottom: 32, lineHeight: 1.6 }}>
           Not a survey — just enough for this to feel like yours from the start.
         </div>
 
         <div style={{ marginBottom: 28 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7', marginBottom: 12 }}>What are you hoping to get out of Mastermind?</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>What are you hoping to get out of Mastermind?</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {GOAL_OPTIONS.map((o) => <div key={o} style={chipStyle(goal === o)} onClick={() => setGoal(o)}>{o}</div>)}
           </div>
         </div>
 
         <div style={{ marginBottom: 28 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7', marginBottom: 12 }}>How would you describe how you operate?</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>How would you describe how you operate?</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {STYLE_OPTIONS.map((o) => <div key={o} style={chipStyle(style === o)} onClick={() => setStyle(o)}>{o}</div>)}
           </div>
         </div>
 
         <div style={{ marginBottom: 36 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7', marginBottom: 12 }}>Why are you looking for something like this right now?</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Why are you looking for something like this right now?</div>
           <textarea style={{ ...inputStyle, minHeight: 70, resize: 'vertical' }} value={why} onChange={(e) => setWhy(e.target.value)} placeholder="A sentence or two is plenty" />
         </div>
 
@@ -71,7 +71,7 @@ export default function CurationQuestions({ initial, onComplete }: Props) {
           onClick={submit}
           disabled={!canContinue || submitting}
           style={{
-            width: '100%', padding: '13px 18px', borderRadius: 999, border: 'none', background: '#F5F6F7', color: '#0A0B0D',
+            width: '100%', padding: '13px 18px', borderRadius: 999, border: 'none', background: 'var(--text)', color: 'var(--bg)',
             fontSize: 13.5, fontWeight: 600, cursor: !canContinue || submitting ? 'default' : 'pointer', opacity: !canContinue || submitting ? 0.5 : 1,
           }}
         >

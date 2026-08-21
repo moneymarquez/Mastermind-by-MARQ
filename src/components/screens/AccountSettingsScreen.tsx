@@ -2,26 +2,29 @@ import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
+import type { Theme } from '../../data/useTheme';
 
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
   onSignOut: () => void;
   onStartTour: () => void;
+  theme: Theme;
+  onThemeChange: (next: Theme) => void;
 }
 
-const cardStyle: CSSProperties = { background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: 20, maxWidth: 480 };
+const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 20, maxWidth: 480 };
 const inputStyle: CSSProperties = {
-  background: '#1a1c21', border: '1px solid #2b2f36', borderRadius: 8, padding: '9px 12px',
-  color: '#F5F6F7', fontSize: 13.5, outline: 'none',
+  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '9px 12px',
+  color: 'var(--text)', fontSize: 13.5, outline: 'none',
 };
 const primaryBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 999,
-  background: '#F5F6F7', color: '#0A0B0D', fontSize: 13, fontWeight: 600, cursor: 'pointer', alignSelf: 'flex-start',
+  background: 'var(--text)', color: 'var(--bg)', fontSize: 13, fontWeight: 600, cursor: 'pointer', alignSelf: 'flex-start',
 };
 const ghostBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 999,
-  border: '1px solid #22262B', color: '#8A8F98', fontSize: 13, cursor: 'pointer', alignSelf: 'flex-start',
+  border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', alignSelf: 'flex-start',
 };
 const dangerBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 999,
@@ -43,7 +46,7 @@ async function openBillingPortal(): Promise<string | null> {
   }
 }
 
-export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onSignOut, onStartTour }: Props) {
+export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onSignOut, onStartTour, theme, onThemeChange }: Props) {
   const [user, setUser] = useState<User | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [savingName, setSavingName] = useState(false);
@@ -112,22 +115,45 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
 
       <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={cardStyle}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7', marginBottom: 12 }}>Product tour</div>
-          <div style={{ fontSize: 12.5, color: '#8A8F98', marginBottom: 12, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Appearance</div>
+          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.5 }}>
+            Switches instantly, everywhere in the app — synced to your account, so it carries over to any device you sign in on.
+          </div>
+          <div style={{ display: 'inline-flex', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 999, padding: 3 }}>
+            {(['dark', 'light'] as Theme[]).map((option) => (
+              <div
+                key={option}
+                onClick={() => onThemeChange(option)}
+                style={{
+                  padding: '7px 18px', borderRadius: 999, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                  textTransform: 'capitalize', transition: 'background 150ms ease, color 150ms ease',
+                  background: theme === option ? 'var(--text)' : 'transparent',
+                  color: theme === option ? 'var(--bg)' : 'var(--text-secondary)',
+                }}
+              >
+                {option}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Product tour</div>
+          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.5 }}>
             A guided walkthrough of the app — handy for getting reoriented, or for showing someone else around live.
           </div>
           <div style={ghostBtn} onClick={onStartTour}>Take the product tour</div>
         </div>
 
         <div style={cardStyle}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7', marginBottom: 12 }}>Profile</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Profile</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div>
-              <div style={{ fontSize: 11.5, color: '#565b64', marginBottom: 4 }}>Email</div>
-              <div style={{ fontSize: 13.5, color: '#c8cad0' }}>{user?.email ?? '—'}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginBottom: 4 }}>Email</div>
+              <div style={{ fontSize: 13.5, color: 'var(--text-quaternary-2)' }}>{user?.email ?? '—'}</div>
             </div>
             <div>
-              <div style={{ fontSize: 11.5, color: '#565b64', marginBottom: 4 }}>Display name</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginBottom: 4 }}>Display name</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <input style={{ ...inputStyle, flex: 1 }} placeholder="Cristopher" value={displayName} onChange={(e) => { setDisplayName(e.target.value); setNameSaved(false); }} />
                 <div style={primaryBtn} onClick={saveDisplayName}>{savingName ? 'Saving…' : 'Save'}</div>
@@ -138,7 +164,7 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
         </div>
 
         <div style={cardStyle}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7', marginBottom: 12 }}>Change password</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Change password</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <input style={inputStyle} type="password" placeholder="New password" value={newPassword} onChange={(e) => { setNewPassword(e.target.value); setPasswordSaved(false); }} />
             <input style={inputStyle} type="password" placeholder="Confirm new password" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setPasswordSaved(false); }} />
@@ -151,8 +177,8 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
         </div>
 
         <div style={cardStyle}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7', marginBottom: 12 }}>Billing</div>
-          <div style={{ fontSize: 12.5, color: '#8A8F98', marginBottom: 12, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Billing</div>
+          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.5 }}>
             Update your payment method, view invoices, or cancel your subscription — handled directly through Stripe.
           </div>
           <div style={{ ...ghostBtn, opacity: openingPortal ? 0.6 : 1 }} onClick={() => !openingPortal && manageBilling()}>
@@ -162,7 +188,7 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
         </div>
 
         <div style={cardStyle}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7', marginBottom: 12 }}>Session</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Session</div>
           <div style={ghostBtn} onClick={onSignOut}>Sign out</div>
         </div>
 
@@ -170,13 +196,13 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
           <div style={{ fontSize: 13, fontWeight: 600, color: '#c47a7a', marginBottom: 8 }}>Delete account</div>
           {deleteStep === 'idle' && (
             <>
-              <div style={{ fontSize: 12.5, color: '#8A8F98', marginBottom: 12 }}>Permanently removes your account and data. This can't be undone.</div>
+              <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 12 }}>Permanently removes your account and data. This can't be undone.</div>
               <div style={dangerBtn} onClick={() => setDeleteStep('confirm')}>Delete my account</div>
             </>
           )}
           {deleteStep === 'confirm' && (
             <>
-              <div style={{ fontSize: 12.5, color: '#c8cad0', marginBottom: 12 }}>Are you sure? This permanently deletes your account and all data in it.</div>
+              <div style={{ fontSize: 12.5, color: 'var(--text-quaternary-2)', marginBottom: 12 }}>Are you sure? This permanently deletes your account and all data in it.</div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <div style={dangerBtn} onClick={() => setDeleteStep('contact')}>Yes, delete it</div>
                 <div style={ghostBtn} onClick={() => setDeleteStep('idle')}>Cancel</div>
@@ -184,7 +210,7 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
             </>
           )}
           {deleteStep === 'contact' && (
-            <div style={{ fontSize: 12.5, color: '#8A8F98', lineHeight: 1.6 }}>
+            <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
               Full self-serve deletion isn't wired up yet — email support to have your account and data removed. Nothing has been deleted.
             </div>
           )}

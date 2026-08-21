@@ -7,7 +7,7 @@ interface Props {
   homeSubStyle: CSSProperties;
 }
 
-const cardStyle: CSSProperties = { background: '#14161A', border: '1px solid #22262B', borderRadius: 14, padding: 20 };
+const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 20 };
 
 function weekLabel(weekStart: string): string {
   const start = new Date(`${weekStart}T00:00:00`);
@@ -27,19 +27,19 @@ export default function WeeklyReviewScreen({ homeHeadStyle, homeSubStyle }: Prop
       <div style={homeHeadStyle}>Weekly Review</div>
       <div style={homeSubStyle}>An honest read on what moved, what stalled, and what to do next — generated automatically each week.</div>
 
-      {loading && <div style={{ fontSize: 12.5, color: '#565b64', marginTop: 20 }}>Checking for this week's review…</div>}
+      {loading && <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', marginTop: 20 }}>Checking for this week's review…</div>}
 
       {!loading && latest && (
         <div style={{ ...cardStyle, marginTop: 24 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#8A8F98', textTransform: 'uppercase' }}>Week of {weekLabel(latest.week_start)}</div>
-          <div style={{ fontSize: 13.5, color: '#C7CAD1', marginTop: 12, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{latest.summary}</div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Week of {weekLabel(latest.week_start)}</div>
+          <div style={{ fontSize: 13.5, color: 'var(--text-quaternary)', marginTop: 12, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{latest.summary}</div>
           {latest.recommended_actions.length > 0 && (
             <>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#F5F6F7', marginTop: 18 }}>For the coming week</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', marginTop: 18 }}>For the coming week</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
                 {latest.recommended_actions.map((a, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12.5, color: '#C7CAD1' }}>
-                    <span style={{ color: '#565b64' }}>{i + 1}.</span>{a}
+                  <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12.5, color: 'var(--text-quaternary)' }}>
+                    <span style={{ color: 'var(--text-tertiary)' }}>{i + 1}.</span>{a}
                   </div>
                 ))}
               </div>
@@ -49,14 +49,14 @@ export default function WeeklyReviewScreen({ homeHeadStyle, homeSubStyle }: Prop
       )}
 
       {!loading && !latest && (
-        <div style={{ ...cardStyle, marginTop: 24, textAlign: 'center', color: '#565b64', fontSize: 13 }}>
+        <div style={{ ...cardStyle, marginTop: 24, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
           No review yet — one generates automatically once a full week has passed, or generate a look at the current week now.
         </div>
       )}
 
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
         <div
-          style={{ padding: '9px 20px', borderRadius: 999, border: '1px solid #22262B', color: generating ? '#565b64' : '#8A8F98', fontSize: 12.5, cursor: generating ? 'default' : 'pointer' }}
+          style={{ padding: '9px 20px', borderRadius: 999, border: '1px solid var(--border)', color: generating ? 'var(--text-tertiary)' : 'var(--text-secondary)', fontSize: 12.5, cursor: generating ? 'default' : 'pointer' }}
           onClick={() => !generating && generateCurrentWeek()}
         >
           {generating ? 'Generating…' : 'Generate progress review for the current week'}
@@ -66,22 +66,22 @@ export default function WeeklyReviewScreen({ homeHeadStyle, homeSubStyle }: Prop
 
       {history.length > 0 && (
         <>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7', marginTop: 40, marginBottom: 12 }}>History</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginTop: 40, marginBottom: 12 }}>History</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {history.map((r) => (
               <div key={r.id} style={cardStyle} onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7' }}>Week of {weekLabel(r.week_start)}</div>
-                  <span style={{ fontSize: 11, color: '#565b64' }}>{expandedId === r.id ? 'Hide' : 'Expand'}</span>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Week of {weekLabel(r.week_start)}</div>
+                  <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{expandedId === r.id ? 'Hide' : 'Expand'}</span>
                 </div>
                 {expandedId === r.id && (
                   <>
-                    <div style={{ fontSize: 13, color: '#C7CAD1', marginTop: 12, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{r.summary}</div>
+                    <div style={{ fontSize: 13, color: 'var(--text-quaternary)', marginTop: 12, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{r.summary}</div>
                     {r.recommended_actions.length > 0 && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
                         {r.recommended_actions.map((a, i) => (
-                          <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12.5, color: '#C7CAD1' }}>
-                            <span style={{ color: '#565b64' }}>{i + 1}.</span>{a}
+                          <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12.5, color: 'var(--text-quaternary)' }}>
+                            <span style={{ color: 'var(--text-tertiary)' }}>{i + 1}.</span>{a}
                           </div>
                         ))}
                       </div>

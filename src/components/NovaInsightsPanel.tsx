@@ -23,13 +23,13 @@ interface Props {
 }
 
 const inputStyle: CSSProperties = {
-  background: '#14161A', border: '1px solid #22262B', borderRadius: 8, padding: '9px 12px',
-  color: '#F5F6F7', fontSize: 13.5, outline: 'none',
+  background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 12px',
+  color: 'var(--text)', fontSize: 13.5, outline: 'none',
 };
-const cardStyle: CSSProperties = { background: '#101114', border: '1px solid #22262B', borderRadius: 14, padding: '18px 20px', maxWidth: 720 };
+const cardStyle: CSSProperties = { background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 20px', maxWidth: 720 };
 const buttonStyle = (disabled: boolean): CSSProperties => ({
   display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 999,
-  border: '1px solid #F5F6F7', color: disabled ? '#565b64' : '#F5F6F7', borderColor: disabled ? '#22262B' : '#F5F6F7',
+  border: '1px solid var(--text)', color: disabled ? 'var(--text-tertiary)' : 'var(--text)', borderColor: disabled ? 'var(--border)' : 'var(--text)',
   fontSize: 12.5, fontWeight: 500, cursor: disabled ? 'default' : 'pointer',
 });
 function daysAgo(n: number): string {
@@ -134,25 +134,25 @@ export default function NovaInsightsPanel({
 
   return (
     <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F6F7', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <Icon name="sparkle" size={15} color="#F5F6F7" /> {assistantName} — intelligence layer
+      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Icon name="sparkle" size={15} color="var(--text)" /> {assistantName} — intelligence layer
       </div>
 
       {/* Daily target */}
       <div style={cardStyle}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7' }}>Daily macro target</div>
-          <span style={{ fontSize: 12, color: '#8A8F98', cursor: 'pointer' }} onClick={() => setShowTargetForm((v) => !v)}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Daily macro target</div>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }} onClick={() => setShowTargetForm((v) => !v)}>
             {nutritionTarget ? 'Change' : 'Set target'}
           </span>
         </div>
         {nutritionTarget && !showTargetForm && (
-          <div style={{ fontSize: 12.5, color: '#8A8F98', marginTop: 8 }}>
+          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 8 }}>
             {nutritionTarget.daily_calories} cal · {nutritionTarget.daily_protein_g}p / {nutritionTarget.daily_carbs_g}c / {nutritionTarget.daily_fat_g}f
           </div>
         )}
         {!nutritionTarget && !showTargetForm && (
-          <div style={{ fontSize: 12.5, color: '#565b64', marginTop: 8 }}>No target set — meal suggestions will use general judgment instead of hitting specific numbers.</div>
+          <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', marginTop: 8 }}>No target set — meal suggestions will use general judgment instead of hitting specific numbers.</div>
         )}
         {showTargetForm && (
           <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -168,43 +168,43 @@ export default function NovaInsightsPanel({
       {/* Meal suggestion */}
       <div style={cardStyle}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7' }}>What should I eat next?</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>What should I eat next?</div>
           <div style={buttonStyle(suggesting)} onClick={() => !suggesting && runSuggestion()}>{suggesting ? 'Thinking…' : `Ask ${assistantName}`}</div>
         </div>
         {activeBender && <div style={{ fontSize: 11.5, color: '#e0a35c', marginTop: 8 }}>Bender active — suggestions will lean recovery-minded (hydration, electrolytes, easy food).</div>}
-        {suggestion && <div style={{ fontSize: 13, color: '#C7CAD1', marginTop: 10, lineHeight: 1.5 }}>{suggestion}</div>}
+        {suggestion && <div style={{ fontSize: 13, color: 'var(--text-quaternary)', marginTop: 10, lineHeight: 1.5 }}>{suggestion}</div>}
         {suggestError && <div style={{ fontSize: 12.5, color: '#c47a7a', marginTop: 8 }}>{suggestError}</div>}
       </div>
 
       {/* Weekly analysis */}
       <div style={cardStyle}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7' }}>Weekly analysis</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Weekly analysis</div>
           <div style={buttonStyle(analyzing)} onClick={() => !analyzing && runWeeklyAnalysis()}>{analyzing ? 'Analyzing…' : 'Analyze this week'}</div>
         </div>
         {insightError && <div style={{ fontSize: 12.5, color: '#c47a7a', marginTop: 8 }}>{insightError}</div>}
         {latestInsight && (
           <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div>
-              <div style={{ fontSize: 11.5, color: '#565b64', textTransform: 'uppercase', letterSpacing: 0.4 }}>Nutrient gaps</div>
-              <div style={{ fontSize: 13, color: '#C7CAD1', marginTop: 3, lineHeight: 1.5 }}>{latestInsight.nutrient_gaps}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: 0.4 }}>Nutrient gaps</div>
+              <div style={{ fontSize: 13, color: 'var(--text-quaternary)', marginTop: 3, lineHeight: 1.5 }}>{latestInsight.nutrient_gaps}</div>
             </div>
             <div>
-              <div style={{ fontSize: 11.5, color: '#565b64', textTransform: 'uppercase', letterSpacing: 0.4 }}>Meal timing</div>
-              <div style={{ fontSize: 13, color: '#C7CAD1', marginTop: 3, lineHeight: 1.5 }}>{latestInsight.timing_pattern}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: 0.4 }}>Meal timing</div>
+              <div style={{ fontSize: 13, color: 'var(--text-quaternary)', marginTop: 3, lineHeight: 1.5 }}>{latestInsight.timing_pattern}</div>
             </div>
             <div>
-              <div style={{ fontSize: 11.5, color: '#565b64', textTransform: 'uppercase', letterSpacing: 0.4 }}>Symptom patterns</div>
-              <div style={{ fontSize: 13, color: '#C7CAD1', marginTop: 3, lineHeight: 1.5 }}>{latestInsight.symptom_correlations}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: 0.4 }}>Symptom patterns</div>
+              <div style={{ fontSize: 13, color: 'var(--text-quaternary)', marginTop: 3, lineHeight: 1.5 }}>{latestInsight.symptom_correlations}</div>
             </div>
-            <div style={{ fontSize: 11, color: '#565b64' }}>{latestInsight.window_start} → {latestInsight.window_end}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{latestInsight.window_start} → {latestInsight.window_end}</div>
           </div>
         )}
       </div>
 
       {/* Symptom logging */}
       <div style={cardStyle}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7' }}>Log a symptom</div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Log a symptom</div>
         <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
           <input style={{ ...inputStyle, flex: '1 1 140px' }} placeholder="Headache, bloated, sluggish…" value={symptom} onChange={(e) => setSymptom(e.target.value)} />
           <select style={inputStyle} value={severity} onChange={(e) => setSeverity(Number(e.target.value))}>
@@ -216,7 +216,7 @@ export default function NovaInsightsPanel({
         {symptomLogs.length > 0 && (
           <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
             {symptomLogs.slice(0, 5).map((s) => (
-              <div key={s.id} style={{ fontSize: 12, color: '#8A8F98' }}>
+              <div key={s.id} style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                 {s.log_date} — {s.symptom}{s.severity ? ` (${s.severity}/5)` : ''}{s.note ? ` · ${s.note}` : ''}
               </div>
             ))}
@@ -227,12 +227,12 @@ export default function NovaInsightsPanel({
       {/* Grocery list */}
       <div style={cardStyle}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F6F7' }}>Weekly grocery list</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Weekly grocery list</div>
           <div style={buttonStyle(generatingList)} onClick={() => !generatingList && runGroceryList()}>{generatingList ? 'Generating…' : latestGroceryList ? 'Regenerate' : 'Generate'}</div>
         </div>
         {listError && <div style={{ fontSize: 12.5, color: '#c47a7a', marginTop: 8 }}>{listError}</div>}
         {latestGroceryList && (
-          <pre style={{ fontSize: 12.5, color: '#C7CAD1', marginTop: 10, whiteSpace: 'pre-wrap', fontFamily: 'inherit', lineHeight: 1.6 }}>{latestGroceryList.list_text}</pre>
+          <pre style={{ fontSize: 12.5, color: 'var(--text-quaternary)', marginTop: 10, whiteSpace: 'pre-wrap', fontFamily: 'inherit', lineHeight: 1.6 }}>{latestGroceryList.list_text}</pre>
         )}
       </div>
     </div>

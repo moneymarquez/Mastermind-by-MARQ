@@ -31,8 +31,8 @@ export function buildViewModel(
       : `calc(152px + env(safe-area-inset-top)) 40px 60px ${circleSize + 64}px`,
   };
 
-  const homeHeadStyle: CSSProperties = { fontSize: isMobile ? 24 : 32, fontWeight: 600, color: '#F5F6F7', letterSpacing: '-0.01em' };
-  const homeSubStyle: CSSProperties = { fontSize: 14, color: '#8A8F98', marginTop: 6 };
+  const homeHeadStyle: CSSProperties = { fontSize: isMobile ? 24 : 32, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em' };
+  const homeSubStyle: CSSProperties = { fontSize: 14, color: 'var(--text-secondary)', marginTop: 6 };
 
   const statDefs = [
     { icon: 'ph-phone-call', value: '0 / 100', caption: "Today's call goal" },
@@ -50,7 +50,7 @@ export function buildViewModel(
       fontFamily: "'JetBrains Mono', monospace",
       fontSize: d.value.length > 10 ? 20 : 26,
       fontWeight: 600,
-      color: '#F5F6F7',
+      color: 'var(--text)',
       marginTop: 8,
     } as CSSProperties,
   }));
