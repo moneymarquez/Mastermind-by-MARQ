@@ -17,7 +17,7 @@
   --text-tertiary: #565b64;
   --text-quaternary: #C7CAD1;
   --text-quaternary-2: #c8cad0;
-  --shine: #40454d;
+  --shine: #26292F;
 }
 
 :root[data-theme="light"] {
@@ -33,7 +33,7 @@
   --text-tertiary: #9CA3AF;
   --text-quaternary: #4B5563;
   --text-quaternary-2: #4B5563;
-  --shine: #DADCE0;
+  --shine: #EAEAEA;
 }
 
 body {
@@ -106,19 +106,22 @@ input, textarea, [contenteditable="true"] {
   transform: scale(0.99);
 }
 
-/* Background matching the Higgsfield reference exactly: a clearly visible
-   diagonal split — flat --bg filling the bottom-left roughly 40% of the
-   screen, a distinctly lighter --shine panel filling the top-right, a
-   short feathered seam between them. --shine is a dedicated, higher-
-   contrast token (not --border/--surface, which were too close to --bg
-   to actually read as a visible band once rendered). */
+/* Diagonal glare — per the exact build spec: a single soft-edged band
+   (not a two-tone split, not a radial spotlight) at 115deg, dark/light on
+   both sides of the band, --shine only in the 38%-62% middle. Scoped to
+   the authenticated app shell only (Stage.tsx) — never the landing page
+   or onboarding flow. background-attachment: fixed keeps the band
+   anchored to the viewport rather than scrolling with page content. */
 .app-shine-bg {
   background-color: var(--bg);
   background-image: linear-gradient(
-    132deg,
+    115deg,
     var(--bg) 0%,
-    var(--bg) 34%,
-    var(--shine) 52%,
-    var(--shine) 100%
+    var(--bg) 38%,
+    var(--shine) 50%,
+    var(--bg) 62%,
+    var(--bg) 100%
   );
+  background-attachment: fixed;
+  min-height: 100vh;
 }
