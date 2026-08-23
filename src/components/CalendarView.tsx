@@ -140,8 +140,8 @@ const CalendarView = forwardRef<CalendarViewHandle, Props>(function CalendarView
   return (
     <div>
       {mode === 'month' && (
-        <div style={{ marginTop: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+        <div style={{ marginTop: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8 }}>
             <span style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 16 }} onClick={() => setMonthAnchor(new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() - 1, 1))}>‹</span>
             <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', minWidth: 160 }}>{MONTH_NAMES[monthAnchor.getMonth()]} {monthAnchor.getFullYear()}</div>
             <span style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 16 }} onClick={() => setMonthAnchor(new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() + 1, 1))}>›</span>
@@ -150,7 +150,7 @@ const CalendarView = forwardRef<CalendarViewHandle, Props>(function CalendarView
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, background: 'var(--surface-3)', border: '1px solid var(--surface-3)', borderRadius: 12, overflow: 'hidden' }}>
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-              <div key={d} style={{ background: 'var(--surface)', padding: '8px 10px', fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 600 }}>{d}</div>
+              <div key={d} style={{ background: 'var(--surface)', padding: '5px 10px', fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 600 }}>{d}</div>
             ))}
             {monthGrid(monthAnchor).map((d, i) => {
               const ds = dateStr(d);
@@ -161,14 +161,14 @@ const CalendarView = forwardRef<CalendarViewHandle, Props>(function CalendarView
                 <div
                   key={i}
                   onClick={() => openDay(d)}
-                  style={{ background: 'var(--surface-2)', minHeight: 76, padding: '8px 8px', cursor: 'pointer', opacity: inMonth ? 1 : 0.35 }}
+                  style={{ background: 'var(--surface-2)', aspectRatio: '1 / 0.72', padding: '6px 7px', cursor: 'pointer', opacity: inMonth ? 1 : 0.35 }}
                 >
-                  <div style={{ fontSize: 12, color: isToday ? 'var(--bg)' : 'var(--text-quaternary)', fontWeight: isToday ? 700 : 400, display: 'inline-flex', width: 20, height: 20, alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: isToday ? 'var(--text)' : 'transparent' }}>
+                  <div style={{ fontSize: 11.5, color: isToday ? 'var(--bg)' : 'var(--text-quaternary)', fontWeight: isToday ? 700 : 400, display: 'inline-flex', width: 18, height: 18, alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: isToday ? 'var(--text)' : 'transparent' }}>
                     {d.getDate()}
                   </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 6 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 4 }}>
                     {dayEvts.slice(0, 4).map((e) => (
-                      <span key={e.id} style={{ width: 6, height: 6, borderRadius: '50%', background: EVENT_TYPE_COLOR[e.type] }} />
+                      <span key={e.id} style={{ width: 5, height: 5, borderRadius: '50%', background: EVENT_TYPE_COLOR[e.type] }} />
                     ))}
                   </div>
                 </div>

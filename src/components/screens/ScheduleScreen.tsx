@@ -59,7 +59,7 @@ export default function ScheduleScreen({ homeHeadStyle, homeSubStyle }: Props) {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
+      <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
         <div
           style={{ padding: '7px 16px', borderRadius: 999, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, border: `1px solid ${calendar === 'main' ? 'var(--text)' : 'var(--border)'}`, color: calendar === 'main' ? 'var(--text)' : 'var(--text-tertiary)' }}
           onClick={() => setCalendar('main')}
@@ -78,7 +78,7 @@ export default function ScheduleScreen({ homeHeadStyle, homeSubStyle }: Props) {
 
       {calendar === 'main' && (
         <>
-          <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
             {FILTERABLE_TYPES.map((t) => (
               <div key={t} style={filterChipStyle(t)} onClick={() => toggleFilter(t)}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: EVENT_TYPE_COLOR[t] }} />

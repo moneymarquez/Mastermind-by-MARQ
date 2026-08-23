@@ -148,7 +148,7 @@ export default function HolidayCalendarView() {
         <div style={{ padding: '9px 16px', borderRadius: 8, border: '1px solid var(--text)', color: 'var(--text)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} onClick={submitManual}>Add shift</div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 22, marginBottom: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16, marginBottom: 8 }}>
         <span style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 16 }} onClick={() => setMonthAnchor(new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() - 1, 1))}>‹</span>
         <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', minWidth: 160 }}>{MONTH_NAMES[monthAnchor.getMonth()]} {monthAnchor.getFullYear()}</div>
         <span style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 16 }} onClick={() => setMonthAnchor(new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() + 1, 1))}>›</span>
@@ -156,7 +156,7 @@ export default function HolidayCalendarView() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, background: 'var(--surface-3)', border: '1px solid var(--surface-3)', borderRadius: 12, overflow: 'hidden' }}>
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-          <div key={d} style={{ background: 'var(--surface)', padding: '8px 10px', fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 600 }}>{d}</div>
+          <div key={d} style={{ background: 'var(--surface)', padding: '5px 10px', fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 600 }}>{d}</div>
         ))}
         {monthGrid(monthAnchor).map((d, i) => {
           const ds = dateStr(d);
@@ -167,18 +167,18 @@ export default function HolidayCalendarView() {
             <div
               key={i}
               onClick={() => setSelectedDate(ds)}
-              style={{ background: 'var(--surface-2)', minHeight: 84, padding: '8px 8px', cursor: 'pointer', opacity: inMonth ? 1 : 0.35 }}
+              style={{ background: 'var(--surface-2)', aspectRatio: '1 / 0.8', padding: '6px 7px', cursor: 'pointer', opacity: inMonth ? 1 : 0.35 }}
             >
-              <div style={{ fontSize: 12, color: isToday ? 'var(--bg)' : 'var(--text-quaternary)', fontWeight: isToday ? 700 : 400, display: 'inline-flex', width: 20, height: 20, alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: isToday ? 'var(--text)' : 'transparent' }}>
+              <div style={{ fontSize: 11.5, color: isToday ? 'var(--bg)' : 'var(--text-quaternary)', fontWeight: isToday ? 700 : 400, display: 'inline-flex', width: 18, height: 18, alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: isToday ? 'var(--text)' : 'transparent' }}>
                 {d.getDate()}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 5 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 3 }}>
                 {dayList.slice(0, 3).map((s) => (
-                  <div key={s.id} style={{ fontSize: 9.5, color: colorForName(s.person_name), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div key={s.id} style={{ fontSize: 9, color: colorForName(s.person_name), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {s.person_name}
                   </div>
                 ))}
-                {dayList.length > 3 && <div style={{ fontSize: 9.5, color: 'var(--text-tertiary)' }}>+{dayList.length - 3} more</div>}
+                {dayList.length > 3 && <div style={{ fontSize: 9, color: 'var(--text-tertiary)' }}>+{dayList.length - 3} more</div>}
               </div>
             </div>
           );
