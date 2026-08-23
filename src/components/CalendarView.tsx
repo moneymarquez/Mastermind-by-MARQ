@@ -148,9 +148,9 @@ const CalendarView = forwardRef<CalendarViewHandle, Props>(function CalendarView
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer', border: '1px solid var(--border)', borderRadius: 999, padding: '5px 12px' }} onClick={() => setMonthAnchor(new Date())}>Today</div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, background: 'var(--surface-3)', border: '1px solid var(--surface-3)', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 1, background: 'var(--surface-3)', border: '1px solid var(--surface-3)', borderRadius: 12, overflow: 'hidden' }}>
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-              <div key={d} style={{ background: 'var(--surface)', padding: '5px 10px', fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 600 }}>{d}</div>
+              <div key={d} style={{ background: 'var(--surface)', padding: '5px 6px', fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 600, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d}</div>
             ))}
             {monthGrid(monthAnchor).map((d, i) => {
               const ds = dateStr(d);
@@ -161,7 +161,7 @@ const CalendarView = forwardRef<CalendarViewHandle, Props>(function CalendarView
                 <div
                   key={i}
                   onClick={() => openDay(d)}
-                  style={{ background: 'var(--surface-2)', aspectRatio: '1 / 0.72', padding: '6px 7px', cursor: 'pointer', opacity: inMonth ? 1 : 0.35 }}
+                  style={{ background: 'var(--surface-2)', aspectRatio: '1 / 0.72', padding: '6px 7px', cursor: 'pointer', opacity: inMonth ? 1 : 0.35, minWidth: 0, overflow: 'hidden' }}
                 >
                   <div style={{ fontSize: 11.5, color: isToday ? 'var(--bg)' : 'var(--text-quaternary)', fontWeight: isToday ? 700 : 400, display: 'inline-flex', width: 18, height: 18, alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: isToday ? 'var(--text)' : 'transparent' }}>
                     {d.getDate()}
