@@ -104,7 +104,10 @@ export default function HolidayCalendarView() {
       </div>
 
       <div style={{ display: 'flex', gap: 10, marginTop: 14, alignItems: 'center', flexWrap: 'wrap' }}>
-        <input ref={photoInputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={onPhotoSelected} />
+        {/* No `capture` attribute — on iOS Safari, pairing accept="image/*"
+            with capture forces the camera to open directly, skipping the
+            native picker's Photo Library / Take Photo / Browse choice. */}
+        <input ref={photoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onPhotoSelected} />
         <div
           style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 999, background: parsing ? 'var(--border)' : 'var(--text)', color: parsing ? 'var(--text-secondary)' : 'var(--bg)', fontSize: 12.5, fontWeight: 600, cursor: parsing ? 'default' : 'pointer' }}
           onClick={() => !parsing && photoInputRef.current?.click()}
