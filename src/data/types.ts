@@ -514,6 +514,7 @@ export interface Reminder {
   done: boolean;
   created_at: string;
   goal_id: string | null;
+  recurring: boolean;
 }
 
 export interface NotificationSettings {

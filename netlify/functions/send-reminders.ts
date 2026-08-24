@@ -65,7 +65,7 @@ function eventLabel(details: Record<string, unknown>, type: string): string {
 
 interface PushSubRow { id: string; user_id: string; endpoint: string; p256dh: string; auth: string }
 interface EventRow { id: string; user_id: string; type: string; event_date: string; start_time: string; end_time: string; details: Record<string, unknown> }
-interface ReminderRow { id: string; user_id: string; title: string; due_date: string; due_time: string | null }
+interface ReminderRow { id: string; user_id: string; title: string; due_date: string; due_time: string | null; recurring: boolean }
 interface MealRow { user_id: string; meal_type: string }
 interface FitnessRouteRow { workout_time?: string }
 interface CustomPlanRow { user_id: string; chosen_route: 'a' | 'b' | null; route_a: FitnessRouteRow; route_b: FitnessRouteRow }
@@ -101,7 +101,10 @@ export default async () => {
 
   const [eventsRes, remindersRes, mealsRes, settingsRes, fitnessPlansRes] = await Promise.all([
     fetch(`${supabaseUrl}/rest/v1/events?event_date=gte.${today}&event_date=lte.${dayAfter}&select=*`, { headers }),
-    fetch(`${supabaseUrl}/rest/v1/reminders?done=eq.false&due_date=gte.${today}&due_date=lte.${dayAfter}&select=*`, { headers }),
+    // Recurring rows are matched regardless of due_date (see
+    // schema_038_recurring_reminders.sql) — the or() clause pulls in both
+    // the normal date-windowed rows and every recurring row in one query.
+    fetch(`${supabaseUrl}/rest/v1/reminders?done=eq.false&or=(and(due_date.gte.${today},due_date.lte.${dayAfter}),recurring.eq.true)&select=*`, { headers }),
     fetch(`${supabaseUrl}/rest/v1/meals?meal_date=eq.${today}&select=user_id,meal_type`, { headers }),
     fetch(`${supabaseUrl}/rest/v1/notification_settings?select=*`, { headers }),
     fetch(`${supabaseUrl}/rest/v1/custom_fitness_plans?active=eq.true&select=user_id,chosen_route,route_a,route_b`, { headers }),
@@ -150,7 +153,17 @@ export default async () => {
       }
       const userReminders = reminders.filter((r) => r.user_id === userId);
       for (const r of userReminders) {
-        if (r.due_time) {
+        if (r.recurring) {
+          // Fires once, at the reminder's own time, every day — not the
+          // 24h/1h advance-warning pair one-shot reminders get. Keying by
+          // today's date (not the row id alone) is what makes it repeat:
+          // notification_log dedupes per key, so a fresh key each day lets
+          // the same reminder fire again tomorrow.
+          if (r.due_time) {
+            const start = atTime(today, r.due_time);
+            candidates.push({ key: `reminder-recurring-${r.id}-${today}`, at: start, title: 'Reminder', body: r.title });
+          }
+        } else if (r.due_time) {
           const start = atTime(r.due_date, r.due_time);
           const body = `${r.title} at ${clockLabel(start)}`;
           candidates.push({ key: `event-24h-reminder-${r.id}`, at: new Date(start.getTime() - 24 * 3600000), title: 'Reminder tomorrow', body });

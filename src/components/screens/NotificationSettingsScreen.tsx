@@ -59,6 +59,7 @@ export default function NotificationSettingsScreen({ homeHeadStyle, homeSubStyle
   const [newDate, setNewDate] = useState(dateStr(new Date()));
   const [newTime, setNewTime] = useState('');
   const [newAllDay, setNewAllDay] = useState(true);
+  const [newRecurring, setNewRecurring] = useState(false);
 
   const enableAlerts = async () => {
     const result = await requestNotificationPermission();
@@ -68,9 +69,10 @@ export default function NotificationSettingsScreen({ homeHeadStyle, homeSubStyle
 
   const submitReminder = async () => {
     if (!newTitle.trim()) return;
-    await addReminder({ title: newTitle.trim(), due_date: newDate, due_time: newAllDay ? null : newTime || null });
+    await addReminder({ title: newTitle.trim(), due_date: newDate, due_time: newAllDay ? null : newTime || null, recurring: newRecurring });
     setNewTitle('');
     setNewTime('');
+    setNewRecurring(false);
   };
 
   const toggle = (key: keyof NotificationSettings) => (v: boolean) => save({ [key]: v } as Partial<NotificationSettings>);
@@ -143,6 +145,12 @@ export default function NotificationSettingsScreen({ homeHeadStyle, homeSubStyle
               <input type="time" style={inputStyle} value={newTime} onChange={(e) => setNewTime(e.target.value)} />
             </div>
           )}
+          {!newAllDay && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingBottom: 9 }}>
+              <input type="checkbox" checked={newRecurring} onChange={(e) => setNewRecurring(e.target.checked)} />
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Repeats daily</span>
+            </div>
+          )}
           <div style={primaryBtn} onClick={submitReminder}>Add</div>
         </div>
 
@@ -151,7 +159,9 @@ export default function NotificationSettingsScreen({ homeHeadStyle, homeSubStyle
             <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10 }}>
               <div>
                 <div style={{ fontSize: 13, color: 'var(--text-quaternary)' }}>{r.title}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{r.due_date}{r.due_time ? ` · ${r.due_time.slice(0, 5)}` : ' · all-day'}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                  {r.recurring ? 'Daily' : r.due_date}{r.due_time ? ` · ${r.due_time.slice(0, 5)}` : ' · all-day'}
+                </div>
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <span style={{ fontSize: 12, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => markDone(r.id)}>Done</span>
