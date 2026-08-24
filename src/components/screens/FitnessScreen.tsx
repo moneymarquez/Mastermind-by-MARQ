@@ -57,6 +57,7 @@ export default function FitnessScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const [notes, setNotes] = useState('');
   const [generating, setGenerating] = useState<FitnessPlanKind | null>(null);
   const [aiError, setAiError] = useState('');
+  const [openPlan, setOpenPlan] = useState<FitnessPlanKind | null>(null);
 
   const generate = async (kind: FitnessPlanKind) => {
     setGenerating(kind);
@@ -137,14 +138,29 @@ export default function FitnessScreen({ homeHeadStyle, homeSubStyle }: Props) {
           </div>
           {aiError && <div style={{ fontSize: 12.5, color: '#c47a7a', marginTop: 8 }}>{aiError}</div>}
 
+          <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
+            {(['workout', 'diet'] as FitnessPlanKind[]).map((kind) => {
+              const latest = plans.find((p) => p.kind === kind);
+              if (!latest) return null;
+              const open = openPlan === kind;
+              return (
+                <div
+                  key={kind}
+                  style={{ ...tabStyle(open), textTransform: 'capitalize' }}
+                  onClick={() => setOpenPlan(open ? null : kind)}
+                >
+                  {open ? '▾' : '▸'} {kind} plan · {new Date(latest.created_at).toLocaleDateString()}
+                </div>
+              );
+            })}
+          </div>
+
           {(['workout', 'diet'] as FitnessPlanKind[]).map((kind) => {
+            if (openPlan !== kind) return null;
             const latest = plans.find((p) => p.kind === kind);
             if (!latest) return null;
             return (
-              <div key={kind} style={{ marginTop: 18, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 22, maxWidth: 640 }}>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
-                  Latest {latest.kind} plan · {new Date(latest.created_at).toLocaleDateString()}
-                </div>
+              <div key={kind} style={{ marginTop: 12, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 22, maxWidth: 640 }}>
                 <div style={{ fontSize: 13.5, color: 'var(--text)', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontFamily: "'JetBrains Mono', monospace" }}>{latest.plan_text}</div>
               </div>
             );
