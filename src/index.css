@@ -106,22 +106,24 @@ input, textarea, [contenteditable="true"] {
   transform: scale(0.99);
 }
 
-/* Diagonal glare — per the exact build spec: a single soft-edged band
-   (not a two-tone split, not a radial spotlight) at 115deg, dark/light on
-   both sides of the band, --shine only in the 38%-62% middle. Scoped to
-   the authenticated app shell only (Stage.tsx) — never the landing page
-   or onboarding flow. background-attachment: fixed keeps the band
+/* Diagonal glare — the actual reference image, cropped into dark/light
+   halves (public/backgrounds/glare-{dark,light}.png), not a hand-tuned
+   CSS gradient. Pixel-exact to what was supplied, rather than an
+   approximation. cover + center keeps the diagonal's angle intact across
+   viewport sizes at the cost of cropping some edge content on very wide
+   or very narrow screens — the tradeoff inherent to any raster background.
+   Scoped to the authenticated app shell only (Stage.tsx) — never the
+   landing page or onboarding flow. background-attachment: fixed keeps it
    anchored to the viewport rather than scrolling with page content. */
 .app-shine-bg {
   background-color: var(--bg);
-  background-image: linear-gradient(
-    115deg,
-    var(--bg) 0%,
-    var(--bg) 38%,
-    var(--shine) 50%,
-    var(--bg) 62%,
-    var(--bg) 100%
-  );
+  background-image: url('/backgrounds/glare-dark.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   background-attachment: fixed;
   min-height: 100vh;
+}
+:root[data-theme="light"] .app-shine-bg {
+  background-image: url('/backgrounds/glare-light.png');
 }
