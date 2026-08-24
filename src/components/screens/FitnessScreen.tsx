@@ -137,14 +137,18 @@ export default function FitnessScreen({ homeHeadStyle, homeSubStyle }: Props) {
           </div>
           {aiError && <div style={{ fontSize: 12.5, color: '#c47a7a', marginTop: 8 }}>{aiError}</div>}
 
-          {plans.length > 0 && (
-            <div style={{ marginTop: 18, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 22, maxWidth: 640 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
-                Latest {plans[0].kind} plan · {new Date(plans[0].created_at).toLocaleDateString()}
+          {(['workout', 'diet'] as FitnessPlanKind[]).map((kind) => {
+            const latest = plans.find((p) => p.kind === kind);
+            if (!latest) return null;
+            return (
+              <div key={kind} style={{ marginTop: 18, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 22, maxWidth: 640 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                  Latest {latest.kind} plan · {new Date(latest.created_at).toLocaleDateString()}
+                </div>
+                <div style={{ fontSize: 13.5, color: 'var(--text)', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontFamily: "'JetBrains Mono', monospace" }}>{latest.plan_text}</div>
               </div>
-              <div style={{ fontSize: 13.5, color: 'var(--text)', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontFamily: "'JetBrains Mono', monospace" }}>{plans[0].plan_text}</div>
-            </div>
-          )}
+            );
+          })}
 
           <div style={{ display: 'flex', gap: 10, marginTop: 24, flexWrap: 'wrap', maxWidth: 640 }}>
             <input style={{ ...inputStyle, flex: '2 1 160px' }} placeholder="Type (e.g. Run, Lift)" value={type} onChange={(e) => setType(e.target.value)} />
