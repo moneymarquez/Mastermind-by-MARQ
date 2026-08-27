@@ -35,10 +35,12 @@ import { supportInboxWebhook } from './handlers/support-inbox';
 import type { SupportInboxEnv } from './handlers/support-inbox';
 import { publicAuditQuestions, publicAuditSubmit, publicClientDashboard, createClientInvoice } from './handlers/client-crm';
 import type { ClientCrmEnv } from './handlers/client-crm';
+import { claudeProxy } from './handlers/claude';
+import type { ClaudeEnv } from './handlers/claude';
+import { pushSubscription } from './handlers/push-subscription';
+import type { PushSubscriptionEnv } from './handlers/push-subscription';
 
-const NETLIFY_ORIGIN = 'https://mastermindbymarq.netlify.app';
-
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
@@ -72,11 +74,29 @@ export default {
     if (url.pathname === '/api/client-crm/public-dashboard') return publicClientDashboard(request, env);
     if (url.pathname === '/api/client-crm/create-invoice') return createClientInvoice(request, env);
 
+    if (url.pathname === '/api/claude') return claudeProxy(request, env);
+    if (url.pathname === '/api/push-subscription') return pushSubscription(request, env);
+
+    // Every /api/* route this app calls at request time is now handled
+    // natively above. The Netlify reverse-proxy that used to catch the
+    // remainder is gone: it made features silently depend on a Netlify
+    // deploy staying alive, and when Netlify went away the failure mode
+    // was an unexplained error inside a healthy-looking Cloudflare
+    // deploy. Failing loudly here is worth more than a broken proxy hop.
+    //
+    // Still on Netlify, deliberately: the three Scheduled Functions that
+    // send push (send-reminders, send-shift-reminders,
+    // generate-daily-plan). They depend on `web-push`, which needs Node
+    // crypto and doesn't run reliably in the Workers runtime. Nothing in
+    // the app's request path calls them — the scheduler does — so they
+    // don't belong on this route either way. If Netlify is fully retired,
+    // those need porting to WebCrypto VAPID or moving to another runner,
+    // and push notifications stop until that happens.
     if (url.pathname.startsWith('/api/')) {
-      const target = new URL(url.pathname + url.search, NETLIFY_ORIGIN);
-      const proxied = new Request(target, request);
-      proxied.headers.delete('host');
-      return fetch(proxied);
+      return new Response(
+        JSON.stringify({ error: `Unknown API route: ${url.pathname}` }),
+        { status: 404, headers: { 'content-type': 'application/json' } },
+      );
     }
     return env.ASSETS.fetch(request);
   },
