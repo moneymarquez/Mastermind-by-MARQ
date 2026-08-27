@@ -3,6 +3,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { supabase } from '../lib/supabase';
 import type { Theme } from '../data/useTheme';
+import { PLANS, LIVE_PLAN } from './plans';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
 const stripePromise = PUBLISHABLE_KEY ? loadStripe(PUBLISHABLE_KEY) : null;
@@ -44,15 +45,12 @@ function PaymentForm({ onSubscribed }: { onSubscribed: () => void }) {
       <PaymentElement />
       {error && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', marginTop: 14 }}>{error}</div>}
       <button
+        className="ap-btn ap-btn-primary ap-btn-block"
         onClick={submit}
         disabled={submitting || !stripe}
-        style={{
-          width: '100%', marginTop: 20, padding: '12px 18px', borderRadius: 'var(--radius-pill)', border: 'none',
-          background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-lg)', fontWeight: 600,
-          cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1,
-        }}
+        style={{ marginTop: 20, padding: '12px 18px' }}
       >
-        {submitting ? 'Processing…' : 'Subscribe — $19.99/month'}
+        {submitting ? 'Processing…' : `Subscribe — ${LIVE_PLAN.price}${LIVE_PLAN.cadence}`}
       </button>
     </div>
   );
@@ -91,11 +89,47 @@ export default function BillingGateScreen({ onSubscribed, onSignOut, theme }: Pr
         <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={onSignOut}>Sign out</span>
       </div>
 
-      <div style={{ width: 380, maxWidth: '90vw', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-2xl)', padding: '32px 28px' }}>
-        <div style={{ fontSize: 'var(--text-title)', fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Subscribe to continue</div>
-        <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.6 }}>
-          $19.99/month, cancel anytime. Your modules and data are already set up — this just unlocks them.
+      <div style={{ width: 780, maxWidth: '94vw', display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap', justifyContent: 'center' }}>
+        {/* The lineup. Prices come from plans.ts so the number read here
+            and the number Stripe charges can't drift apart. */}
+        <div style={{ flex: '1 1 260px', minWidth: 240, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ fontSize: 'var(--text-display)', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.015em' }}>Pricing</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+            Your modules and data are already set up — this just unlocks them.
+          </div>
+
+          {PLANS.map((plan) => (
+            <div
+              key={plan.key}
+              className={`ap-card ${plan.featured ? 'ap-elev-md' : ''}`}
+              style={{ padding: 18, gap: 8, opacity: plan.live ? 1 : 0.55 }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <div className="ap-card-title" style={{ color: 'var(--text)' }}>{plan.name}</div>
+                {plan.featured && <span className="ap-tag ap-tag-accent">Current</span>}
+                {!plan.live && <span className="ap-tag ap-tag-neutral">Not yet available</span>}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
+                <span style={{ fontSize: 'var(--text-display)', fontWeight: 700, color: 'var(--text)', fontFamily: 'var(--font-mono)' }}>{plan.price}</span>
+                <span style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>{plan.cadence}</span>
+              </div>
+              <p className="ap-card-body" style={{ color: 'var(--text-secondary)' }}>{plan.tagline}</p>
+              {plan.includes.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 2 }}>
+                  {plan.includes.map((f) => (
+                    <div key={f} style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>· {f}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
+
+        <div style={{ flex: '1 1 340px', minWidth: 300, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '28px 26px' }}>
+          <div style={{ fontSize: 'var(--text-title)', fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Subscribe to continue</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.6 }}>
+            {LIVE_PLAN.price}{LIVE_PLAN.cadence}, cancel anytime.
+          </div>
 
         {loading && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>Loading…</div>}
         {!loading && error && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', lineHeight: 1.6 }}>{error}</div>}
@@ -103,18 +137,23 @@ export default function BillingGateScreen({ onSubscribed, onSignOut, theme }: Pr
           // Stripe Elements renders in its own iframe, which can't resolve
           // this page's CSS custom properties — literal hex values matching
           // the current theme are required here, not var() references.
+          // These are the Aperture values, kept in step with index.css by
+          // hand: --surface-4, --text, and --accent for each ground. If the
+          // palette moves again, this block has to move with it or the
+          // payment form silently strands itself on the old theme.
           <Elements
             stripe={stripePromise}
             options={{
               clientSecret,
               appearance: theme === 'light'
-                ? { theme: 'stripe', variables: { colorBackground: '#F3F4F6', colorText: '#0A0B0D', colorPrimary: '#0A0B0D', borderRadius: '8px' } }
-                : { theme: 'night', variables: { colorBackground: '#1a1c21', colorText: '#F5F6F7', colorPrimary: '#F5F6F7', borderRadius: '8px' } },
+                ? { theme: 'stripe', variables: { colorBackground: '#e9ecf7', colorText: '#292b31', colorPrimary: '#5d5294', borderRadius: '8px' } }
+                : { theme: 'night', variables: { colorBackground: '#202230', colorText: '#e9e9ed', colorPrimary: '#9184d9', borderRadius: '8px' } },
             }}
           >
             <PaymentForm onSubscribed={onSubscribed} />
           </Elements>
         )}
+        </div>
       </div>
     </div>
   );
