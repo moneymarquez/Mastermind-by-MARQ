@@ -12,7 +12,7 @@ interface PublicQuestion {
 
 const pageStyle: CSSProperties = {
   minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', padding: '48px 20px',
-  fontFamily: "'Manrope', system-ui, sans-serif", display: 'flex', justifyContent: 'center',
+  fontFamily: 'var(--font-sans)', display: 'flex', justifyContent: 'center',
 };
 const containerStyle: CSSProperties = { width: '100%', maxWidth: 640 };
 const inputStyle: CSSProperties = {

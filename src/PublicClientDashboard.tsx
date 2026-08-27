@@ -67,7 +67,7 @@ interface DashboardData {
 
 const page: CSSProperties = {
   minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', padding: '40px 20px 80px',
-  fontFamily: "'Manrope', system-ui, sans-serif",
+  fontFamily: 'var(--font-sans)',
 };
 const wrap: CSSProperties = { width: '100%', maxWidth: 820, margin: '0 auto' };
 const card: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 22 };

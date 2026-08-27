@@ -1,39 +1,66 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* Theme tokens — dark is the default/current look and must render pixel-
-   identical to before this system existed; :root[data-theme="light"]
-   overrides every token for the light variant. New users default to dark
-   (see useTheme.ts); existing users are never silently switched. */
+/* ── Aperture / "Nocturne" ───────────────────────────────────────────────
+   The palette below is the Masterminds Aperture direction, taken from its
+   own token file rather than eyeballed: the grounds and text are its
+   literal values, and every supporting step is drawn from its OKLCH
+   neutral/accent ramps (neutral-100…900, accent-100…900) so the tonal
+   relationships it was designed around survive the port.
+
+   Two things worth knowing:
+
+   1. The ramps are wider than this app's slot names. Aperture ships one
+      --color-surface; the app distinguishes four surface levels, so the
+      in-between steps are interpolated within its own family rather than
+      invented from a different one.
+   2. Aperture's CSS only defines the dark ground — its light variant is
+      applied at runtime by the canvas's theme switch, so there was no
+      light token block to copy. The light values here are derived by
+      mirroring the dark relationships onto the same neutral ramp
+      (ground lightest, text at neutral-900), which is what the shared
+      lightness scale exists to make possible. They are a faithful
+      derivation, not a transcription — worth a look on a real screen. */
 :root {
-  --bg: #0A0B0D;
-  --surface: #14161A;
-  --surface-2: #101114;
-  --surface-3: #1c1e23;
-  --surface-4: #1a1c21;
-  --border: #22262B;
-  --border-2: #2b2f36;
-  --text: #F5F6F7;
-  --text-secondary: #8A8F98;
-  --text-tertiary: #565b64;
-  --text-quaternary: #C7CAD1;
-  --text-quaternary-2: #c8cad0;
-  --shine: #26292F;
+  --bg: #161826;              /* Aperture --color-bg */
+  --surface: #232532;         /* Aperture --color-surface */
+  --surface-2: #1c1e2b;
+  --surface-3: #2b2d3b;
+  --surface-4: #202230;
+  --border: #3f424d;          /* neutral-800 */
+  --border-2: #595d6c;        /* neutral-700 */
+  --text: #e9e9ed;            /* Aperture --color-text */
+  --text-secondary: #9397ab;  /* neutral-500 */
+  --text-tertiary: #75798c;   /* neutral-600 */
+  --text-quaternary: #cfd3e5; /* neutral-300 */
+  --text-quaternary-2: #b2b6ca;
+  --shine: #2b2d3f;
+
+  --accent: #9184d9;          /* Aperture --color-accent, the blurple */
+  --accent-2: #a7a1db;
+  --accent-strong: #796cbf;   /* accent-600 */
+  --accent-soft: #2b2741;     /* accent-900 */
 }
 
 :root[data-theme="light"] {
-  --bg: #FFFFFF;
-  --surface: #F5F5F6;
-  --surface-2: #F3F4F6;
-  --surface-3: #F0F0F2;
-  --surface-4: #EDEDEF;
-  --border: #E5E7EB;
-  --border-2: #D1D5DB;
-  --text: #0A0B0D;
-  --text-secondary: #6B7280;
-  --text-tertiary: #9CA3AF;
-  --text-quaternary: #4B5563;
-  --text-quaternary-2: #4B5563;
-  --shine: #EAEAEA;
+  --bg: #f7f8fe;
+  --surface: #f3f5fe;         /* neutral-100 */
+  --surface-2: #eef0fa;
+  --surface-3: #e4e7f5;       /* neutral-200 */
+  --surface-4: #e9ecf7;
+  --border: #cfd3e5;          /* neutral-300 */
+  --border-2: #b2b6ca;        /* neutral-400 */
+  --text: #292b31;            /* neutral-900 */
+  --text-secondary: #595d6c;  /* neutral-700 */
+  --text-tertiary: #75798c;   /* neutral-600 */
+  --text-quaternary: #3f424d; /* neutral-800 */
+  --text-quaternary-2: #3f424d;
+  --shine: #e4e7f5;
+
+  --accent: #5d5294;          /* accent-700 — the blurple, darkened to
+                                 hold contrast against a light ground */
+  --accent-2: #796cbf;
+  --accent-strong: #423a6a;
+  --accent-soft: #e7e5fe;
 }
 
 /* ── Type scale, radii, and font ─────────────────────────────────────────
@@ -72,17 +99,30 @@
   --text-stat: 22px;        /* stat/metric numbers on dashboards */
   --text-display: 26px;
 
-  --radius-xs: 4px;
-  --radius-sm: 8px;         /* inputs, small cards */
-  --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-xl: 14px;        /* standard card */
-  --radius-2xl: 16px;
-  --radius-3xl: 20px;
+  /* Aperture specifies exactly three radii — 4 / 8 / 14 — where this app
+     had grown seven. The app's slot names are kept so no component had to
+     change, but each now resolves to its nearest Aperture step, which
+     collapses the drift onto the direction's tighter vocabulary. Undoing
+     that is a matter of restoring the old numbers here. --radius-pill is
+     structural (a fully-rounded control), not a size, so it stands. */
+  --radius-xs: 4px;         /* Aperture --radius-sm */
+  --radius-sm: 8px;         /* Aperture --radius-md — inputs, small cards */
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-xl: 14px;        /* Aperture --radius-lg — standard card */
+  --radius-2xl: 14px;
+  --radius-3xl: 14px;
   --radius-pill: 999px;     /* buttons, tabs, badges */
 
-  --font-sans: 'Manrope', 'Inter', system-ui, sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+  --font-heading-weight: 500;
+
+  /* Aperture's elevation: a hairline ring plus ambient darkness, rather
+     than a diffuse drop shadow. */
+  --shadow-sm: 0 0 0 1px #3f424d;
+  --shadow-md: 0 0 0 1px #595d6c, 0 6px 18px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 0 0 1px #9397ab, 0 16px 40px rgba(0, 0, 0, 0.65);
 }
 
 body {
