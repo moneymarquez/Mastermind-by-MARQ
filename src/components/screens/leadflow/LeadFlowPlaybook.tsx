@@ -187,40 +187,40 @@ function getTheme(title: string): Theme {
 
 function renderBlock(block: Block, key: number, theme: Theme) {
   if (block.type === 'para') {
-    return <p key={key} style={{ color: '#374151', lineHeight: 1.7, marginBottom: '0.85rem', fontSize: 14 }}>{block.text}</p>;
+    return <p key={key} style={{ color: '#374151', lineHeight: 1.7, marginBottom: '0.85rem', fontSize: 'var(--text-label)' }}>{block.text}</p>;
   }
   if (block.type === 'quote') {
     return <p key={key} style={{ fontStyle: 'italic', color: '#374151', lineHeight: 1.7, fontSize: 14.5, margin: '0.4rem 0' }}>{block.text}</p>;
   }
   if (block.type === 'callout') {
-    return <div key={key} style={{ background: '#111', color: '#fff', borderRadius: 12, padding: '1.1rem 1.25rem', margin: '1rem 0', lineHeight: 1.7, fontSize: 14 }}>{block.text}</div>;
+    return <div key={key} style={{ background: '#111', color: '#fff', borderRadius: 'var(--radius-lg)', padding: '1.1rem 1.25rem', margin: '1rem 0', lineHeight: 1.7, fontSize: 'var(--text-label)' }}>{block.text}</div>;
   }
   if (block.type === 'entry') {
     return (
-      <div key={key} style={{ background: '#f9fafb', borderRadius: 10, padding: '0.9rem 1.1rem', margin: '0.6rem 0' }}>
-        <div style={{ fontWeight: 700, fontSize: 12, color: theme.color, marginBottom: 4 }}>{block.title}</div>
-        <p style={{ color: '#374151', margin: 0, fontSize: 13.5, lineHeight: 1.6 }}>{block.text}</p>
+      <div key={key} style={{ background: '#f9fafb', borderRadius: 'var(--radius-md)', padding: '0.9rem 1.1rem', margin: '0.6rem 0' }}>
+        <div style={{ fontWeight: 700, fontSize: 'var(--text-small)', color: theme.color, marginBottom: 4 }}>{block.title}</div>
+        <p style={{ color: '#374151', margin: 0, fontSize: 'var(--text-body-lg)', lineHeight: 1.6 }}>{block.text}</p>
       </div>
     );
   }
   if (block.type === 'pain') {
     return (
       <div key={key} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '0.75rem 0' }}>
-        <div style={{ background: '#fff5f5', border: '1px solid #fecaca', borderRadius: 10, padding: '1rem' }}>
-          <div style={{ fontWeight: 700, fontSize: 12, color: '#dc2626', marginBottom: 8 }}>EMOTIONAL PAIN</div>
+        <div style={{ background: '#fff5f5', border: '1px solid #fecaca', borderRadius: 'var(--radius-md)', padding: '1rem' }}>
+          <div style={{ fontWeight: 700, fontSize: 'var(--text-small)', color: '#dc2626', marginBottom: 8 }}>EMOTIONAL PAIN</div>
           {block.emotional.map((p, j) => (
             <div key={j} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#dc2626', marginTop: 6, flexShrink: 0 }} />
-              <p style={{ fontSize: 13, color: '#374151', margin: 0, lineHeight: 1.5 }}>{p}</p>
+              <p style={{ fontSize: 'var(--text-body)', color: '#374151', margin: 0, lineHeight: 1.5 }}>{p}</p>
             </div>
           ))}
         </div>
-        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '1rem' }}>
-          <div style={{ fontWeight: 700, fontSize: 12, color: '#d97706', marginBottom: 8 }}>FINANCIAL PAIN</div>
+        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 'var(--radius-md)', padding: '1rem' }}>
+          <div style={{ fontWeight: 700, fontSize: 'var(--text-small)', color: '#d97706', marginBottom: 8 }}>FINANCIAL PAIN</div>
           {block.financial.map((p, j) => (
             <div key={j} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#d97706', marginTop: 6, flexShrink: 0 }} />
-              <p style={{ fontSize: 13, color: '#374151', margin: 0, lineHeight: 1.5 }}>{p}</p>
+              <p style={{ fontSize: 'var(--text-body)', color: '#374151', margin: 0, lineHeight: 1.5 }}>{p}</p>
             </div>
           ))}
         </div>
@@ -229,12 +229,12 @@ function renderBlock(block: Block, key: number, theme: Theme) {
   }
   if (block.type === 'script') {
     return (
-      <div key={key} style={{ background: '#1e1e2e', borderRadius: 12, padding: '1.1rem', margin: '0.75rem 0' }}>
-        <div style={{ fontSize: 11, color: '#6b7280', fontWeight: 600, marginBottom: 10, letterSpacing: '0.05em' }}>CALL SCRIPT</div>
+      <div key={key} style={{ background: '#1e1e2e', borderRadius: 'var(--radius-lg)', padding: '1.1rem', margin: '0.75rem 0' }}>
+        <div style={{ fontSize: 'var(--text-tiny)', color: '#6b7280', fontWeight: 600, marginBottom: 10, letterSpacing: '0.05em' }}>CALL SCRIPT</div>
         {block.lines.map((line, j) => (
           <div key={j} style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 10.5, color: '#4ade80', fontWeight: 700, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{line.label}</div>
-            <div style={{ color: '#e2e8f0', fontSize: 13.5, lineHeight: 1.7, fontStyle: 'italic' }}>{line.text}</div>
+            <div style={{ fontSize: 'var(--text-micro)', color: '#4ade80', fontWeight: 700, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{line.label}</div>
+            <div style={{ color: '#e2e8f0', fontSize: 'var(--text-body-lg)', lineHeight: 1.7, fontStyle: 'italic' }}>{line.text}</div>
           </div>
         ))}
       </div>
@@ -266,7 +266,7 @@ export default function LeadFlowPlaybook() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '1rem 0', marginBottom: '1rem', flexShrink: 0 }}>
         {sections.map((s) => (
-          <button key={s.id} onClick={() => setActive(s.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 9999, border: active === s.id ? 'none' : '1px solid #e5e7eb', background: active === s.id ? '#16a34a' : '#fff', color: active === s.id ? '#fff' : '#374151', cursor: 'pointer', fontSize: 13, fontWeight: active === s.id ? 600 : 500 }}>
+          <button key={s.id} onClick={() => setActive(s.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 'var(--radius-pill)', border: active === s.id ? 'none' : '1px solid #e5e7eb', background: active === s.id ? '#16a34a' : '#fff', color: active === s.id ? '#fff' : '#374151', cursor: 'pointer', fontSize: 'var(--text-body)', fontWeight: active === s.id ? 600 : 500 }}>
             <span>{s.emoji}</span>{s.title}
           </button>
         ))}
@@ -276,16 +276,16 @@ export default function LeadFlowPlaybook() {
         <div style={{ maxWidth: 760, margin: '0 auto' }}>
           <div style={{ marginBottom: '2rem' }}>
             <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: 4, color: '#111' }}>{section.title}</h1>
-            <p style={{ color: '#9ca3af', fontSize: 15 }}>{section.subtitle}</p>
+            <p style={{ color: '#9ca3af', fontSize: 'var(--text-subhead)' }}>{section.subtitle}</p>
           </div>
 
           {groups.map((group, gi) => {
             const theme = getTheme(group.title);
             return (
-              <div key={gi} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: '1.5rem', marginBottom: '1.25rem' }}>
+              <div key={gi} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 'var(--radius-2xl)', padding: '1.5rem', marginBottom: '1.25rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                  <span style={{ fontSize: 15 }}>{theme.icon}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', color: theme.color, textTransform: 'uppercase' }}>{group.title}</span>
+                  <span style={{ fontSize: 'var(--text-subhead)' }}>{theme.icon}</span>
+                  <span style={{ fontSize: 'var(--text-small)', fontWeight: 700, letterSpacing: '0.06em', color: theme.color, textTransform: 'uppercase' }}>{group.title}</span>
                 </div>
                 {group.items.map((block, i) => renderBlock(block, i, theme))}
               </div>

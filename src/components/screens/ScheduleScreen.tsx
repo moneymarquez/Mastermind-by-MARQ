@@ -36,7 +36,7 @@ export default function ScheduleScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const visibleEvents = events.filter((e) => filters.has(e.type));
 
   const filterChipStyle = (t: EventType): CSSProperties => ({
-    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 999, cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
+    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body-sm)', fontWeight: 600,
     border: `1px solid ${filters.has(t) ? EVENT_TYPE_COLOR[t] : 'var(--border)'}`,
     color: filters.has(t) ? 'var(--text)' : 'var(--text-tertiary)',
     background: filters.has(t) ? `${EVENT_TYPE_COLOR[t]}22` : 'transparent',
@@ -51,7 +51,7 @@ export default function ScheduleScreen({ homeHeadStyle, homeSubStyle }: Props) {
         </div>
         {calendar === 'main' && (
           <div
-            style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999, border: '1px solid var(--text)', color: 'var(--text)', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--text)', color: 'var(--text)', fontSize: 'var(--text-body)', fontWeight: 500, cursor: 'pointer' }}
             onClick={() => calendarRef.current?.openAddModal()}
           >
             + Add event
@@ -61,13 +61,13 @@ export default function ScheduleScreen({ homeHeadStyle, homeSubStyle }: Props) {
 
       <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
         <div
-          style={{ padding: '7px 16px', borderRadius: 999, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, border: `1px solid ${calendar === 'main' ? 'var(--text)' : 'var(--border)'}`, color: calendar === 'main' ? 'var(--text)' : 'var(--text-tertiary)' }}
+          style={{ padding: '7px 16px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body-sm)', fontWeight: 600, border: `1px solid ${calendar === 'main' ? 'var(--text)' : 'var(--border)'}`, color: calendar === 'main' ? 'var(--text)' : 'var(--text-tertiary)' }}
           onClick={() => setCalendar('main')}
         >
           Main Calendar
         </div>
         <div
-          style={{ padding: '7px 16px', borderRadius: 999, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, border: `1px solid ${calendar === 'holiday' ? 'var(--text)' : 'var(--border)'}`, color: calendar === 'holiday' ? 'var(--text)' : 'var(--text-tertiary)' }}
+          style={{ padding: '7px 16px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body-sm)', fontWeight: 600, border: `1px solid ${calendar === 'holiday' ? 'var(--text)' : 'var(--border)'}`, color: calendar === 'holiday' ? 'var(--text)' : 'var(--text-tertiary)' }}
           onClick={() => setCalendar('holiday')}
         >
           Holiday Calendar (team)

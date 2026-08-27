@@ -26,20 +26,20 @@ const RemindersBox = forwardRef<HTMLDivElement, Props>(function RemindersBox({ i
       ref={ref}
       style={{
         position: 'absolute', right: 20, bottom: 20, width: isMobile ? 180 : 210,
-        background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', zIndex: 20,
+        background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '14px 16px', zIndex: 20,
       }}
     >
-      <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}>
+      <div style={{ fontSize: 'var(--text-caption)', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}>
         <Icon name="bell" style={{ marginRight: 6 }} color="var(--text-secondary)" />
         Reminders
       </div>
       {visible.map((r) => (
-        <div key={r.id} style={{ fontSize: 12, color: 'var(--text-quaternary)', padding: '6px 0', borderTop: '1px solid var(--surface-3)' }}>
+        <div key={r.id} style={{ fontSize: 'var(--text-small)', color: 'var(--text-quaternary)', padding: '6px 0', borderTop: '1px solid var(--surface-3)' }}>
           {r.title} — {dueLabel(r.due_date)}
         </div>
       ))}
       {!loading && visible.length === 0 && (
-        <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', padding: '6px 0', borderTop: '1px solid var(--surface-3)' }}>Nothing due.</div>
+        <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', padding: '6px 0', borderTop: '1px solid var(--surface-3)' }}>Nothing due.</div>
       )}
     </div>
   );

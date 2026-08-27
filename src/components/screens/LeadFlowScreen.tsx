@@ -34,7 +34,7 @@ export default function LeadFlowScreen({ homeHeadStyle, homeSubStyle }: Props) {
 
   const panelStyle: CSSProperties = {
     background: '#fafafa',
-    borderRadius: 20,
+    borderRadius: 'var(--radius-3xl)',
     border: '1px solid var(--border)',
     marginTop: 24,
     fontFamily: 'Inter, sans-serif',
@@ -71,11 +71,11 @@ export default function LeadFlowScreen({ homeHeadStyle, homeSubStyle }: Props) {
               key={t.id}
               onClick={() => setTab(t.id)}
               style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 9999,
+                display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 'var(--radius-pill)',
                 border: tab === t.id ? 'none' : '1px solid #e5e7eb',
                 background: tab === t.id ? GREEN : '#fff',
                 color: tab === t.id ? '#fff' : '#374151',
-                cursor: 'pointer', fontSize: 13, fontWeight: tab === t.id ? 600 : 500, whiteSpace: 'nowrap',
+                cursor: 'pointer', fontSize: 'var(--text-body)', fontWeight: tab === t.id ? 600 : 500, whiteSpace: 'nowrap',
               }}
             >
               <span>{t.icon}</span>{t.label}

@@ -652,6 +652,32 @@ comment for exactly what it adds and why. Summary:
   proactively mention them), and everything in the new `nova_memory` table — durable facts Nova writes about you
   over time via the same `write_data` tool, read back into every conversation after.
 
+## Design tokens
+
+`src/index.css` is the single place the app's visual language is defined. Three groups:
+
+- **Colors** — `--bg`, `--surface*`, `--border*`, `--text*`, `--shine`. Defined twice: `:root` (dark, the default)
+  and `:root[data-theme="light"]`. Themes swap via the toggle in Settings → Account → Appearance.
+- **Type scale** — `--text-nano` (10px) through `--text-display` (26px), named by role rather than by number,
+  because a role is what a design direction specifies and a number stops being true the moment the scale shifts.
+- **Radii** — `--radius-xs` through `--radius-pill`, plus `--font-sans` / `--font-mono`.
+
+Every value in the type and radius scales is the exact size that was previously hardcoded inline; the scale was
+derived from what the app already used rather than imposed on it, so introducing it changed nothing visually.
+Components reference them from inline styles (`fontSize: 'var(--text-body)'`) — React passes CSS custom properties
+straight through, which is why the tokens must carry their `px` unit.
+
+**Applying a new design direction means editing this one file**, not sweeping the ~1,600 literals that used to live
+across 81 components. Two things to know before doing that:
+
+1. Several type steps are near-duplicates that accumulated organically — `--text-body`/`--text-body-lg` differ by
+   0.5px, as do `--text-small`/`--text-body-sm`. They were deliberately *not* collapsed during tokenization,
+   because merging them is a visual decision belonging to a design direction, not to a mechanical refactor.
+   Collapsing them is a good idea; just do it on purpose.
+2. A handful of genuine one-off sizes remain inline (hero type at 40/48/64px, a few micro radii). Those are
+   display treatments a design direction handles individually anyway. The page-title size is responsive and lives
+   in `src/viewModel.ts` (`homeHeadStyle`), not in the token file.
+
 ## Structure
 
 - `src/state.ts` — app state + action handlers (drag, nav, Nova, sticky spot)

@@ -17,10 +17,10 @@ interface Props {
 }
 
 const inputStyle: CSSProperties = {
-  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '9px 12px',
-  color: 'var(--text)', fontSize: 13.5, outline: 'none',
+  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)', padding: '9px 12px',
+  color: 'var(--text)', fontSize: 'var(--text-body-lg)', outline: 'none',
 };
-const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 18 };
+const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 18 };
 const FORMAT_LABEL: Record<StreamFormat, string> = { solo: 'Solo', duo: 'Duo' };
 const STATUS_LABEL: Record<StreamStatus, string> = { idea: 'Idea', planned: 'Planned', recorded: 'Recorded', posted: 'Posted' };
 const STREAM_COLOR = EVENT_TYPE_COLOR.streaming;
@@ -51,8 +51,8 @@ function IdeaCard({ idea, onUpdate, onDelete }: { idea: StreamingIdea; onUpdate:
           <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
         <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-          <div style={{ padding: '7px 14px', borderRadius: 999, background: 'var(--text)', color: 'var(--bg)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }} onClick={save}>Save</div>
-          <div style={{ padding: '7px 14px', borderRadius: 999, color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }} onClick={() => setEditing(false)}>Cancel</div>
+          <div style={{ padding: '7px 14px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-small)', fontWeight: 600, cursor: 'pointer' }} onClick={save}>Save</div>
+          <div style={{ padding: '7px 14px', borderRadius: 'var(--radius-pill)', color: 'var(--text-secondary)', fontSize: 'var(--text-small)', cursor: 'pointer' }} onClick={() => setEditing(false)}>Cancel</div>
         </div>
       </div>
     );
@@ -61,21 +61,21 @@ function IdeaCard({ idea, onUpdate, onDelete }: { idea: StreamingIdea; onUpdate:
   return (
     <div style={cardStyle}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{idea.title}</div>
-        <span style={{ fontSize: 11, color: 'var(--text-tertiary)', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={onDelete}>Delete</span>
+        <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>{idea.title}</div>
+        <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={onDelete}>Delete</span>
       </div>
       <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 10.5, fontWeight: 700, color: STREAM_COLOR, border: `1px solid ${STREAM_COLOR}`, borderRadius: 999, padding: '2px 8px' }}>
+        <span style={{ fontSize: 'var(--text-micro)', fontWeight: 700, color: STREAM_COLOR, border: `1px solid ${STREAM_COLOR}`, borderRadius: 'var(--radius-pill)', padding: '2px 8px' }}>
           {FORMAT_LABEL[idea.format]}
         </span>
-        {idea.vibe && <span style={{ fontSize: 10.5, color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 999, padding: '2px 8px' }}>{idea.vibe}</span>}
+        {idea.vibe && <span style={{ fontSize: 'var(--text-micro)', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)', padding: '2px 8px' }}>{idea.vibe}</span>}
       </div>
-      {idea.description && <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 10, lineHeight: 1.5 }}>{idea.description}</div>}
+      {idea.description && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 10, lineHeight: 1.5 }}>{idea.description}</div>}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
-        <select style={{ ...inputStyle, flex: 1, fontSize: 12.5, padding: '6px 10px' }} value={idea.status} onChange={(e) => onUpdate({ status: e.target.value as StreamStatus })}>
+        <select style={{ ...inputStyle, flex: 1, fontSize: 'var(--text-body-sm)', padding: '6px 10px' }} value={idea.status} onChange={(e) => onUpdate({ status: e.target.value as StreamStatus })}>
           {STREAM_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
         </select>
-        <span style={{ fontSize: 11, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => setEditing(true)}>Edit</span>
+        <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => setEditing(true)}>Edit</span>
       </div>
     </div>
   );
@@ -122,18 +122,18 @@ export default function StreamingScreen({ homeHeadStyle, homeSubStyle, isOwner }
       <div style={homeSubStyle}>Ideas Bank + your streaming schedule.</div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 28, flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>Ideas Bank</div>
+        <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>Ideas Bank</div>
         <div style={{ display: 'flex', gap: 8 }}>
           {ideas.length === 0 && isOwner && (
             <div
-              style={{ padding: '8px 16px', borderRadius: 999, border: '1px solid var(--border)', color: seeding ? 'var(--text-tertiary)' : 'var(--text-secondary)', fontSize: 12.5, cursor: seeding ? 'default' : 'pointer' }}
+              style={{ padding: '8px 16px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border)', color: seeding ? 'var(--text-tertiary)' : 'var(--text-secondary)', fontSize: 'var(--text-body-sm)', cursor: seeding ? 'default' : 'pointer' }}
               onClick={() => !seeding && loadStarterIdeas()}
             >
               {seeding ? 'Loading…' : 'Load starter ideas (20)'}
             </div>
           )}
           <div
-            style={{ padding: '8px 16px', borderRadius: 999, border: '1px solid var(--text)', color: 'var(--text)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
+            style={{ padding: '8px 16px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--text)', color: 'var(--text)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer' }}
             onClick={() => setShowForm((v) => !v)}
           >
             {showForm ? 'Cancel' : '+ Add idea'}
@@ -151,7 +151,7 @@ export default function StreamingScreen({ homeHeadStyle, homeSubStyle, isOwner }
             <input style={{ ...inputStyle, flex: 1 }} placeholder="Vibe (e.g. Horror, Cooking)" value={vibe} onChange={(e) => setVibe(e.target.value)} />
           </div>
           <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} placeholder="One-line description" value={description} onChange={(e) => setDescription(e.target.value)} />
-          <div style={{ alignSelf: 'flex-start', padding: '9px 16px', borderRadius: 999, background: 'var(--text)', color: 'var(--bg)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }} onClick={submit}>
+          <div style={{ alignSelf: 'flex-start', padding: '9px 16px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer' }} onClick={submit}>
             Save idea
           </div>
         </div>
@@ -163,19 +163,19 @@ export default function StreamingScreen({ homeHeadStyle, homeSubStyle, isOwner }
         ))}
       </div>
       {!loading && ideas.length === 0 && (
-        <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', marginTop: 8 }}>Nothing here yet — load the starter list or add your own.</div>
+        <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', marginTop: 8 }}>Nothing here yet — load the starter list or add your own.</div>
       )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 36, flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>Schedule</div>
+        <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>Schedule</div>
         <div
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 999, border: `1px solid ${STREAM_COLOR}`, color: STREAM_COLOR, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 'var(--radius-pill)', border: `1px solid ${STREAM_COLOR}`, color: STREAM_COLOR, fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer' }}
           onClick={() => calendarRef.current?.openAddModal()}
         >
           + New Stream
         </div>
       </div>
-      <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 4 }}>
+      <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 4 }}>
         Same calendar as Schedule, filtered to Streaming — anything added here shows up there too, and vice versa.
       </div>
 

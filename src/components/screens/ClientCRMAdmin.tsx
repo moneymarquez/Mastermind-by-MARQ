@@ -41,7 +41,7 @@ export function AuditQuestionsAdmin({ crm, onClose, homeHeadStyle, homeSubStyle 
 
   return (
     <div>
-      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 14 }} onClick={onClose}>
+      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 'var(--text-body)', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 14 }} onClick={onClose}>
         ← Back to Client CRM
       </div>
       <div style={homeHeadStyle}>Audit Questions</div>
@@ -52,17 +52,17 @@ export function AuditQuestionsAdmin({ crm, onClose, homeHeadStyle, homeSubStyle 
           <div key={q.id} style={{ ...cardStyle, padding: 14, opacity: q.active ? 1 : 0.5 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>{q.category}</div>
-                <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', marginTop: 4 }}>{q.prompt}</div>
-                {q.helper_text && <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 4, fontStyle: 'italic' }}>{q.helper_text}</div>}
+                <div style={{ fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>{q.category}</div>
+                <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)', marginTop: 4 }}>{q.prompt}</div>
+                {q.helper_text && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 4, fontStyle: 'italic' }}>{q.helper_text}</div>}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end', flexShrink: 0 }}>
                 <div style={{ display: 'flex', gap: 6 }}>
-                  <span style={{ fontSize: 12, color: i === 0 ? 'var(--text-quaternary)' : 'var(--text-tertiary)', cursor: i === 0 ? 'default' : 'pointer' }} onClick={() => i > 0 && move(q.id, -1)}>↑</span>
-                  <span style={{ fontSize: 12, color: i === sorted.length - 1 ? 'var(--text-quaternary)' : 'var(--text-tertiary)', cursor: i === sorted.length - 1 ? 'default' : 'pointer' }} onClick={() => i < sorted.length - 1 && move(q.id, 1)}>↓</span>
+                  <span style={{ fontSize: 'var(--text-small)', color: i === 0 ? 'var(--text-quaternary)' : 'var(--text-tertiary)', cursor: i === 0 ? 'default' : 'pointer' }} onClick={() => i > 0 && move(q.id, -1)}>↑</span>
+                  <span style={{ fontSize: 'var(--text-small)', color: i === sorted.length - 1 ? 'var(--text-quaternary)' : 'var(--text-tertiary)', cursor: i === sorted.length - 1 ? 'default' : 'pointer' }} onClick={() => i < sorted.length - 1 && move(q.id, 1)}>↓</span>
                 </div>
-                <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.updateQuestion(q.id, { active: !q.active })}>{q.active ? 'Retire' : 'Reactivate'}</span>
-                <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.removeQuestion(q.id)}>Delete</span>
+                <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.updateQuestion(q.id, { active: !q.active })}>{q.active ? 'Retire' : 'Reactivate'}</span>
+                <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.removeQuestion(q.id)}>Delete</span>
               </div>
             </div>
           </div>
@@ -70,7 +70,7 @@ export function AuditQuestionsAdmin({ crm, onClose, homeHeadStyle, homeSubStyle 
       </div>
 
       <div style={{ ...cardStyle, marginTop: 18, maxWidth: 640, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Add a question</div>
+        <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Add a question</div>
         <input style={inputStyle} placeholder="Category (e.g. Rapport, Vision, Positioning/Niche)" value={category} onChange={(e) => setCategory(e.target.value)} />
         <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} placeholder="Question prompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} />
         <input style={inputStyle} placeholder="Helper text (optional)" value={helperText} onChange={(e) => setHelperText(e.target.value)} />
@@ -102,7 +102,7 @@ export function PricingTemplateAdmin({ crm, onClose, homeHeadStyle, homeSubStyle
 
   return (
     <div>
-      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 14 }} onClick={onClose}>
+      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 'var(--text-body)', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 14 }} onClick={onClose}>
         ← Back to Client CRM
       </div>
       <div style={homeHeadStyle}>Default Pricing Template</div>
@@ -112,18 +112,18 @@ export function PricingTemplateAdmin({ crm, onClose, homeHeadStyle, homeSubStyle
         {[...crm.template].sort((a, b) => a.sort_order - b.sort_order).map((item) => (
           <div key={item.id} style={{ ...cardStyle, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+              <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>
                 {item.label}
-                {item.is_upfront && <span style={{ fontSize: 10, color: 'var(--text-tertiary)', fontWeight: 400 }}> · upfront</span>}
+                {item.is_upfront && <span style={{ fontSize: 'var(--text-nano)', color: 'var(--text-tertiary)', fontWeight: 400 }}> · upfront</span>}
               </div>
-              <div style={{ fontSize: 11.5, color: item.amount === null ? '#C9A24B' : 'var(--text-secondary)', marginTop: 2 }}>
+              <div style={{ fontSize: 'var(--text-caption)', color: item.amount === null ? '#C9A24B' : 'var(--text-secondary)', marginTop: 2 }}>
                 {item.amount === null ? 'TBD' : `$${item.amount.toLocaleString()}`} {item.cadence === 'monthly' ? `/mo × ${item.repeat_count}` : 'one-time'}
               </div>
             </div>
-            <span style={{ fontSize: 12, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.removeTemplateItem(item.id)}>Remove</span>
+            <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.removeTemplateItem(item.id)}>Remove</span>
           </div>
         ))}
-        {crm.template.length === 0 && <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>No template items — add one below.</div>}
+        {crm.template.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No template items — add one below.</div>}
       </div>
 
       <div style={{ ...cardStyle, marginTop: 18, maxWidth: 560, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -167,7 +167,7 @@ export function ServiceCatalogAdmin({ crm, onClose, homeHeadStyle, homeSubStyle 
 
   return (
     <div>
-      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 14 }} onClick={onClose}>
+      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 'var(--text-body)', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 14 }} onClick={onClose}>
         ← Back to Client CRM
       </div>
       <div style={homeHeadStyle}>Service Catalog</div>
@@ -178,19 +178,19 @@ export function ServiceCatalogAdmin({ crm, onClose, homeHeadStyle, homeSubStyle 
       <div style={{ marginTop: 20, maxWidth: 640 }}>
         {categories.map((cat) => (
           <div key={cat} style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 8 }}>{cat}</div>
+            <div style={{ fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 8 }}>{cat}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {crm.services.filter((s) => s.category === cat).map((s) => (
                 <div key={s.id} style={{ ...cardStyle, padding: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, opacity: s.active ? 1 : 0.5 }}>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, color: 'var(--text)' }}>{s.name}</div>
-                    <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                    <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text)' }}>{s.name}</div>
+                    <div style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)', marginTop: 2 }}>
                       {s.price_type === 'monthly' ? 'Monthly' : 'One-time'}{s.notes ? ` · ${s.notes}` : ''}
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                     <input
-                      style={{ ...inputStyle, width: 82, padding: '6px 9px', fontSize: 12 }}
+                      style={{ ...inputStyle, width: 82, padding: '6px 9px', fontSize: 'var(--text-small)' }}
                       value={priceDraft[s.id] ?? String(s.default_price)}
                       onChange={(e) => setPriceDraft((d) => ({ ...d, [s.id]: e.target.value }))}
                       onBlur={() => {
@@ -200,10 +200,10 @@ export function ServiceCatalogAdmin({ crm, onClose, homeHeadStyle, homeSubStyle 
                         }
                       }}
                     />
-                    <span style={{ fontSize: 11, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.updateService(s.id, { active: !s.active })}>
+                    <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.updateService(s.id, { active: !s.active })}>
                       {s.active ? 'Retire' : 'Restore'}
                     </span>
-                    <span style={{ fontSize: 11, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.removeService(s.id)}>Delete</span>
+                    <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.removeService(s.id)}>Delete</span>
                   </div>
                 </div>
               ))}
@@ -211,7 +211,7 @@ export function ServiceCatalogAdmin({ crm, onClose, homeHeadStyle, homeSubStyle 
           </div>
         ))}
         {crm.services.length === 0 && (
-          <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>Catalog is empty — run `schema_040_client_crm_catalog.sql` to seed it, or add entries below.</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>Catalog is empty — run `schema_040_client_crm_catalog.sql` to seed it, or add entries below.</div>
         )}
       </div>
 

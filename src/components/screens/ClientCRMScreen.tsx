@@ -28,29 +28,29 @@ const STAGE_COLOR: Record<ClientStage, string> = {
   retainer: '#4a9a8a',
 };
 
-export const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 20 };
+export const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 20 };
 export const inputStyle: CSSProperties = {
-  width: '100%', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8,
-  padding: '10px 13px', color: 'var(--text)', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
+  width: '100%', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)',
+  padding: '10px 13px', color: 'var(--text)', fontSize: 'var(--text-body)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
 };
 export const selectStyle: CSSProperties = { ...inputStyle, cursor: 'pointer' };
 export const primaryBtn: CSSProperties = {
-  padding: '9px 16px', borderRadius: 999, border: 'none', background: 'var(--text)', color: 'var(--bg)',
-  fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+  padding: '9px 16px', borderRadius: 'var(--radius-pill)', border: 'none', background: 'var(--text)', color: 'var(--bg)',
+  fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer',
 };
 export const ghostBtn: CSSProperties = {
-  padding: '7px 13px', borderRadius: 999, border: '1px solid var(--border-2)', background: 'transparent',
-  color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+  padding: '7px 13px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-2)', background: 'transparent',
+  color: 'var(--text-secondary)', fontSize: 'var(--text-small)', fontWeight: 600, cursor: 'pointer',
 };
 export const tabStyle = (active: boolean): CSSProperties => ({
-  padding: '8px 16px', borderRadius: 999, cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
+  padding: '8px 16px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body-sm)', fontWeight: 600,
   border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, color: active ? 'var(--text)' : 'var(--text-tertiary)',
 });
 
 function StagePill({ stage }: { stage: ClientStage }) {
   const color = STAGE_COLOR[stage];
   return (
-    <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color, border: `1px solid ${color}66`, background: `${color}1a`, borderRadius: 999, padding: '3px 9px' }}>
+    <span style={{ fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color, border: `1px solid ${color}66`, background: `${color}1a`, borderRadius: 'var(--radius-pill)', padding: '3px 9px' }}>
       {STAGES.find((s) => s.key === stage)?.label ?? stage}
     </span>
   );
@@ -146,22 +146,22 @@ export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle }: Props) 
       </div>
 
       <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 720 }}>
-        {visible.length === 0 && <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>No clients in this stage yet.</div>}
+        {visible.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No clients in this stage yet.</div>}
         {visible.map((c) => (
           <div key={c.id} style={{ ...cardStyle, padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, cursor: 'pointer' }} onClick={() => setSelectedId(c.id)}>
             <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{c.business_name}</div>
+                <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>{c.business_name}</div>
                 <StagePill stage={c.stage} />
                 {c.source === 'public' && (
-                  <span style={{ fontSize: 10, color: 'var(--text-tertiary)', border: '1px solid var(--border)', borderRadius: 999, padding: '2px 7px' }}>via public audit</span>
+                  <span style={{ fontSize: 'var(--text-nano)', color: 'var(--text-tertiary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)', padding: '2px 7px' }}>via public audit</span>
                 )}
               </div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 4 }}>
+              <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 4 }}>
                 {nextPaymentDue(c)} · {c.reveal_full_schedule ? 'Full schedule visible' : 'Current payment only'} · Last activity {new Date(c.last_activity_at).toLocaleDateString()}
               </div>
             </div>
-            <span style={{ fontSize: 16, color: 'var(--text-tertiary)', flexShrink: 0 }}>→</span>
+            <span style={{ fontSize: 'var(--text-head)', color: 'var(--text-tertiary)', flexShrink: 0 }}>→</span>
           </div>
         ))}
       </div>

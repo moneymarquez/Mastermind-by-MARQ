@@ -104,13 +104,13 @@ export default function MentalHealthScreen({ homeHeadStyle, homeSubStyle, active
 
       <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
         <div
-          style={{ padding: '9px 18px', borderRadius: 999, cursor: 'pointer', fontSize: 13, fontWeight: 600, border: `1px solid ${tab === 'checkin' ? 'var(--text)' : 'var(--border)'}`, color: tab === 'checkin' ? 'var(--text)' : 'var(--text-tertiary)' }}
+          style={{ padding: '9px 18px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body)', fontWeight: 600, border: `1px solid ${tab === 'checkin' ? 'var(--text)' : 'var(--border)'}`, color: tab === 'checkin' ? 'var(--text)' : 'var(--text-tertiary)' }}
           onClick={() => setTab('checkin')}
         >
           Check-in
         </div>
         <div
-          style={{ padding: '9px 18px', borderRadius: 999, cursor: 'pointer', fontSize: 13, fontWeight: 600, border: `1px solid ${tab === 'profile' ? 'var(--text)' : 'var(--border)'}`, color: tab === 'profile' ? 'var(--text)' : 'var(--text-tertiary)' }}
+          style={{ padding: '9px 18px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body)', fontWeight: 600, border: `1px solid ${tab === 'profile' ? 'var(--text)' : 'var(--border)'}`, color: tab === 'profile' ? 'var(--text)' : 'var(--text-tertiary)' }}
           onClick={() => setTab('profile')}
         >
           Profile {!profile.loading && `(${profile.answeredCount})`}
@@ -121,15 +121,15 @@ export default function MentalHealthScreen({ homeHeadStyle, homeSubStyle, active
 
       {tab === 'checkin' && (
       <>
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, marginTop: 24, maxWidth: 520 }}>
-        <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 10 }}>How are you feeling right now?</div>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 24, marginTop: 24, maxWidth: 520 }}>
+        <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginBottom: 10 }}>How are you feeling right now?</div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {MOODS.map((m) => (
             <div
               key={m.key}
               onClick={() => setMood(m.key)}
               style={{
-                padding: '9px 16px', borderRadius: 999, cursor: 'pointer', fontSize: 13, fontWeight: 500,
+                padding: '9px 16px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body)', fontWeight: 500,
                 border: `1px solid ${mood === m.key ? 'var(--text)' : 'var(--border)'}`,
                 background: mood === m.key ? 'var(--text)' : 'transparent',
                 color: mood === m.key ? 'var(--bg)' : 'var(--text-quaternary)',
@@ -143,38 +143,38 @@ export default function MentalHealthScreen({ homeHeadStyle, homeSubStyle, active
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="What's going on? (optional)"
-          style={{ width: '100%', marginTop: 14, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '10px 12px', color: 'var(--text)', fontSize: 13.5, outline: 'none' }}
+          style={{ width: '100%', marginTop: 14, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)', padding: '10px 12px', color: 'var(--text)', fontSize: 'var(--text-body-lg)', outline: 'none' }}
         />
         <div
           style={{
-            display: 'inline-flex', alignItems: 'center', marginTop: 14, padding: '10px 18px', borderRadius: 999,
-            border: '1px solid var(--text)', color: mood ? 'var(--text)' : 'var(--text-tertiary)', fontSize: 13, cursor: mood ? 'pointer' : 'default',
+            display: 'inline-flex', alignItems: 'center', marginTop: 14, padding: '10px 18px', borderRadius: 'var(--radius-pill)',
+            border: '1px solid var(--text)', color: mood ? 'var(--text)' : 'var(--text-tertiary)', fontSize: 'var(--text-body)', cursor: mood ? 'pointer' : 'default',
             opacity: mood ? 1 : 0.5,
           }}
           onClick={submit}
         >
           Log check-in
         </div>
-        {thinking && <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 10 }}>Nova is reflecting on that…</div>}
+        {thinking && <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', marginTop: 10 }}>Nova is reflecting on that…</div>}
       </div>
 
-      <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', maxWidth: 520 }}>
+      <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', maxWidth: 520 }}>
         {checkins.map((c) => (
           <div key={c.id} style={{ padding: '14px 20px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', textTransform: 'capitalize' }}>{c.mood}</span>
-              <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{timeAgo(c.created_at)}</span>
+              <span style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)', textTransform: 'capitalize' }}>{c.mood}</span>
+              <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }}>{timeAgo(c.created_at)}</span>
             </div>
-            {c.note && <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 4 }}>{c.note}</div>}
+            {c.note && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>{c.note}</div>}
             {c.ai_insight && (
               <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--surface-3)' }}>
-                <div style={{ fontSize: 12.5, color: 'var(--text-quaternary)', lineHeight: 1.6 }}>{c.ai_insight}</div>
+                <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-quaternary)', lineHeight: 1.6 }}>{c.ai_insight}</div>
               </div>
             )}
           </div>
         ))}
         {!loading && checkins.length === 0 && (
-          <div style={{ padding: '18px', fontSize: 13, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No check-ins yet.</div>
+          <div style={{ padding: '18px', fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No check-ins yet.</div>
         )}
       </div>
       </>

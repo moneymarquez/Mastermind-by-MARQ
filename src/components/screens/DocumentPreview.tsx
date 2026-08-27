@@ -20,14 +20,14 @@ const HAIRLINE = '#ECECEC';
 const page: CSSProperties = { background: '#ffffff', color: INK, padding: '48px 56px', maxWidth: 820, margin: '0 auto' };
 const brandRow: CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: 16, borderBottom: `2px solid ${INK}` };
 const brandName: CSSProperties = { fontSize: 17, fontWeight: 700, color: INK };
-const docTypeLabel: CSSProperties = { fontSize: 12, fontWeight: 600, color: INK, letterSpacing: '0.08em', textTransform: 'uppercase' };
-const sectionLabel: CSSProperties = { fontSize: 11, fontWeight: 600, color: LABEL_GRAY, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 };
+const docTypeLabel: CSSProperties = { fontSize: 'var(--text-small)', fontWeight: 600, color: INK, letterSpacing: '0.08em', textTransform: 'uppercase' };
+const sectionLabel: CSSProperties = { fontSize: 'var(--text-tiny)', fontWeight: 600, color: LABEL_GRAY, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 };
 const title: CSSProperties = { fontSize: 30, fontWeight: 700, color: INK, marginBottom: 22, lineHeight: 1.25 };
-const bodyText: CSSProperties = { fontSize: 13.5, color: '#333333', lineHeight: 1.6, marginBottom: 22 };
-const gridLabel: CSSProperties = { fontSize: 10.5, fontWeight: 600, color: LABEL_GRAY, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 5 };
-const gridValue: CSSProperties = { fontSize: 14, color: INK, fontWeight: 600 };
+const bodyText: CSSProperties = { fontSize: 'var(--text-body-lg)', color: '#333333', lineHeight: 1.6, marginBottom: 22 };
+const gridLabel: CSSProperties = { fontSize: 'var(--text-micro)', fontWeight: 600, color: LABEL_GRAY, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 5 };
+const gridValue: CSSProperties = { fontSize: 'var(--text-label)', color: INK, fontWeight: 600 };
 const section: CSSProperties = { paddingTop: 24, paddingBottom: 24, borderTop: `1px solid ${HAIRLINE}` };
-const footer: CSSProperties = { marginTop: 8, paddingTop: 14, borderTop: `1px solid ${INK}`, fontSize: 11, color: LABEL_GRAY };
+const footer: CSSProperties = { marginTop: 8, paddingTop: 14, borderTop: `1px solid ${INK}`, fontSize: 'var(--text-tiny)', color: LABEL_GRAY };
 
 const DOC_LABEL_TEXT: Record<DocType, string> = {
   client_agreement: 'Client Agreement', welcome: 'Welcome', invoice: 'Invoice', project_brief: 'Project Brief',
@@ -75,14 +75,14 @@ function LV({ label, value }: { label: string; value: string }) {
 function BlackLabelGrayValue({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div style={{ fontSize: 13, fontWeight: 700, color: INK, marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 13, color: LABEL_GRAY }}>{value}</div>
+      <div style={{ fontSize: 'var(--text-body)', fontWeight: 700, color: INK, marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 'var(--text-body)', color: LABEL_GRAY }}>{value}</div>
     </div>
   );
 }
 function Blockquote({ children }: { children: ReactNode }) {
   return (
-    <div style={{ borderLeft: `2px solid ${INK}`, paddingLeft: 16, fontSize: 14, fontWeight: 600, color: INK, lineHeight: 1.6 }}>
+    <div style={{ borderLeft: `2px solid ${INK}`, paddingLeft: 16, fontSize: 'var(--text-label)', fontWeight: 600, color: INK, lineHeight: 1.6 }}>
       {children}
     </div>
   );
@@ -95,10 +95,10 @@ function DataTable({ columns, rows }: { columns: { key: string; label: string }[
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns.length}, 1fr)`, gap: 10, paddingBottom: 8, borderBottom: `1px solid ${INK}` }}>
-        {columns.map((c) => <div key={c.key} style={{ fontSize: 10.5, fontWeight: 600, color: LABEL_GRAY, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{c.label}</div>)}
+        {columns.map((c) => <div key={c.key} style={{ fontSize: 'var(--text-micro)', fontWeight: 600, color: LABEL_GRAY, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{c.label}</div>)}
       </div>
       {rows.map((row, i) => (
-        <div key={i} style={{ display: 'grid', gridTemplateColumns: `repeat(${columns.length}, 1fr)`, gap: 10, padding: '10px 0', background: i % 2 === 1 ? '#FAFAFA' : 'transparent', fontSize: 13, color: INK }}>
+        <div key={i} style={{ display: 'grid', gridTemplateColumns: `repeat(${columns.length}, 1fr)`, gap: 10, padding: '10px 0', background: i % 2 === 1 ? '#FAFAFA' : 'transparent', fontSize: 'var(--text-body)', color: INK }}>
           {columns.map((c) => <div key={c.key}>{s(row[c.key]) || <span style={{ color: '#C4C4C4' }}>—</span>}</div>)}
         </div>
       ))}
@@ -141,15 +141,15 @@ function ClientAgreement({ data, profile }: { data: Record<string, unknown>; pro
       <Grid columns={2}>
         <div>
           <div style={gridLabel}>Service provider</div>
-          <div style={{ fontSize: 14, fontWeight: 700 }}>Made by Marq</div>
-          <div style={{ fontSize: 12.5, color: LABEL_GRAY, marginTop: 2 }}>{bracket(profile.business_address, 'Business address')}</div>
-          <div style={{ fontSize: 12.5, color: LABEL_GRAY }}>{bracket(profile.business_email, 'Business email')}</div>
+          <div style={{ fontSize: 'var(--text-label)', fontWeight: 700 }}>Made by Marq</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: LABEL_GRAY, marginTop: 2 }}>{bracket(profile.business_address, 'Business address')}</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: LABEL_GRAY }}>{bracket(profile.business_email, 'Business email')}</div>
         </div>
         <div>
           <div style={gridLabel}>Client</div>
-          <div style={{ fontSize: 14, fontWeight: 700 }}>{bracket(data.client_name, 'Client name')}</div>
-          <div style={{ fontSize: 12.5, color: LABEL_GRAY, marginTop: 2 }}>{bracket(data.client_company, 'Client company')}</div>
-          <div style={{ fontSize: 12.5, color: LABEL_GRAY }}>{bracket(data.client_email, 'Client email')}</div>
+          <div style={{ fontSize: 'var(--text-label)', fontWeight: 700 }}>{bracket(data.client_name, 'Client name')}</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: LABEL_GRAY, marginTop: 2 }}>{bracket(data.client_company, 'Client company')}</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: LABEL_GRAY }}>{bracket(data.client_email, 'Client email')}</div>
         </div>
       </Grid>
       <div style={section}>
@@ -164,8 +164,8 @@ function ClientAgreement({ data, profile }: { data: Record<string, unknown>; pro
         <div style={{ ...bodyText, marginBottom: 0 }}>Any revisions or additions beyond what is listed in the Deliverables table above will be quoted and billed separately, and require written approval before work begins.</div>
       </div>
       <Grid columns={2}>
-        <div style={{ borderTop: `1px solid ${INK}`, paddingTop: 8, fontSize: 11, color: LABEL_GRAY }}>Signature — Service Provider · Date [DD/MM/YYYY]</div>
-        <div style={{ borderTop: `1px solid ${INK}`, paddingTop: 8, fontSize: 11, color: LABEL_GRAY }}>Signature — Client · Date [DD/MM/YYYY]</div>
+        <div style={{ borderTop: `1px solid ${INK}`, paddingTop: 8, fontSize: 'var(--text-tiny)', color: LABEL_GRAY }}>Signature — Service Provider · Date [DD/MM/YYYY]</div>
+        <div style={{ borderTop: `1px solid ${INK}`, paddingTop: 8, fontSize: 'var(--text-tiny)', color: LABEL_GRAY }}>Signature — Client · Date [DD/MM/YYYY]</div>
       </Grid>
     </>
   );
@@ -192,10 +192,10 @@ function Welcome({ data }: { data: Record<string, unknown> }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {steps.map((step, i) => (
             <div key={i} style={{ display: 'flex', gap: 14 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: LABEL_GRAY, minWidth: 22 }}>{String(i + 1).padStart(2, '0')}</div>
+              <div style={{ fontSize: 'var(--text-body)', fontWeight: 700, color: LABEL_GRAY, minWidth: 22 }}>{String(i + 1).padStart(2, '0')}</div>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700 }}>{s(step.title) || 'Untitled step'}</div>
-                <div style={{ fontSize: 12.5, color: LABEL_GRAY, marginTop: 2 }}>{bracket(step.description, 'Brief one-line description')}</div>
+                <div style={{ fontSize: 'var(--text-label)', fontWeight: 700 }}>{s(step.title) || 'Untitled step'}</div>
+                <div style={{ fontSize: 'var(--text-body-sm)', color: LABEL_GRAY, marginTop: 2 }}>{bracket(step.description, 'Brief one-line description')}</div>
               </div>
             </div>
           ))}
@@ -218,15 +218,15 @@ function Invoice({ data, profile }: { data: Record<string, unknown>; profile: Bu
       <Grid columns={2}>
         <div>
           <div style={gridLabel}>From</div>
-          <div style={{ fontSize: 14, fontWeight: 700 }}>Made by Marq</div>
-          <div style={{ fontSize: 12.5, color: LABEL_GRAY, marginTop: 2 }}>{bracket(profile.business_address, 'Business address')}</div>
-          <div style={{ fontSize: 12.5, color: LABEL_GRAY }}>{bracket(profile.business_email, 'Business email')}</div>
+          <div style={{ fontSize: 'var(--text-label)', fontWeight: 700 }}>Made by Marq</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: LABEL_GRAY, marginTop: 2 }}>{bracket(profile.business_address, 'Business address')}</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: LABEL_GRAY }}>{bracket(profile.business_email, 'Business email')}</div>
         </div>
         <div>
           <div style={gridLabel}>Bill to</div>
-          <div style={{ fontSize: 14, fontWeight: 700 }}>{bracket(data.client_name, 'Client name')}</div>
-          <div style={{ fontSize: 12.5, color: LABEL_GRAY, marginTop: 2 }}>{bracket(data.client_company, 'Client company')}</div>
-          <div style={{ fontSize: 12.5, color: LABEL_GRAY }}>{bracket(data.client_email, 'Client email')}</div>
+          <div style={{ fontSize: 'var(--text-label)', fontWeight: 700 }}>{bracket(data.client_name, 'Client name')}</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: LABEL_GRAY, marginTop: 2 }}>{bracket(data.client_company, 'Client company')}</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: LABEL_GRAY }}>{bracket(data.client_email, 'Client email')}</div>
         </div>
       </Grid>
       <div style={{ marginTop: 22 }}>
@@ -242,12 +242,12 @@ function Invoice({ data, profile }: { data: Record<string, unknown>; profile: Bu
           rows={items.map((r) => ({ ...r, amount: r.qty && r.rate ? `$${(money(r.qty) * money(r.rate)).toFixed(2)}` : '' }))}
         />
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, marginTop: 16 }}>
-          <div style={{ fontSize: 12.5, color: LABEL_GRAY }}>Subtotal &nbsp;&nbsp; ${subtotal.toFixed(2)}</div>
-          <div style={{ fontSize: 12.5, color: LABEL_GRAY }}>Tax ({taxPct || 0}%) &nbsp;&nbsp; ${tax.toFixed(2)}</div>
-          <div style={{ fontSize: 15, fontWeight: 700, borderTop: `1px solid ${INK}`, paddingTop: 6 }}>Total due &nbsp;&nbsp; ${total.toFixed(2)}</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: LABEL_GRAY }}>Subtotal &nbsp;&nbsp; ${subtotal.toFixed(2)}</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: LABEL_GRAY }}>Tax ({taxPct || 0}%) &nbsp;&nbsp; ${tax.toFixed(2)}</div>
+          <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 700, borderTop: `1px solid ${INK}`, paddingTop: 6 }}>Total due &nbsp;&nbsp; ${total.toFixed(2)}</div>
         </div>
       </div>
-      <div style={{ fontSize: 12, color: LABEL_GRAY, lineHeight: 1.6 }}>
+      <div style={{ fontSize: 'var(--text-small)', color: LABEL_GRAY, lineHeight: 1.6 }}>
         Payment via {bracket(data.payment_method, 'bank transfer / Stripe link / PayPal')}. A late fee of {bracket(data.late_fee, 'flat fee / percentage')} will be added to invoices unpaid past the due date.
       </div>
     </>
@@ -312,7 +312,7 @@ function DeliveryGuide({ data }: { data: Record<string, unknown> }) {
             ['Password', bracket(data.password, 'PASSWORD')],
             ['Expires', bracket(data.expires, 'DD Month YYYY')],
           ].map(([label, value]) => (
-            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${HAIRLINE}`, fontSize: 13 }}>
+            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${HAIRLINE}`, fontSize: 'var(--text-body)' }}>
               <span style={{ color: LABEL_GRAY }}>{label}</span>
               <span style={{ fontWeight: 600 }}>{value}</span>
             </div>
@@ -397,12 +397,12 @@ function Feedback({ data: _data }: { data: Record<string, unknown> }) {
       <div style={section}>
         <div style={sectionLabel}>Rate your experience</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr repeat(5, 32px)', gap: 8, paddingBottom: 8, borderBottom: `1px solid ${INK}`, alignItems: 'center' }}>
-          <div style={{ fontSize: 10.5, fontWeight: 600, color: LABEL_GRAY, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Category</div>
-          {[1, 2, 3, 4, 5].map((n) => <div key={n} style={{ fontSize: 11, color: LABEL_GRAY, textAlign: 'center' }}>{n}</div>)}
+          <div style={{ fontSize: 'var(--text-micro)', fontWeight: 600, color: LABEL_GRAY, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Category</div>
+          {[1, 2, 3, 4, 5].map((n) => <div key={n} style={{ fontSize: 'var(--text-tiny)', color: LABEL_GRAY, textAlign: 'center' }}>{n}</div>)}
         </div>
         {categories.map((cat, i) => (
           <div key={cat} style={{ display: 'grid', gridTemplateColumns: '1fr repeat(5, 32px)', gap: 8, alignItems: 'center', padding: '10px 0', background: i % 2 === 1 ? '#FAFAFA' : 'transparent' }}>
-            <div style={{ fontSize: 13 }}>{cat}</div>
+            <div style={{ fontSize: 'var(--text-body)' }}>{cat}</div>
             {[1, 2, 3, 4, 5].map((n) => (
               <div key={n} style={{ display: 'flex', justifyContent: 'center' }}>
                 <div style={{ width: 14, height: 14, borderRadius: '50%', border: `1px solid ${LABEL_GRAY}` }} />
@@ -412,9 +412,9 @@ function Feedback({ data: _data }: { data: Record<string, unknown> }) {
         ))}
       </div>
       <div style={{ marginTop: 8 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 700, marginBottom: 20 }}>What did you enjoy most about working with us?</div>
+        <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 700, marginBottom: 20 }}>What did you enjoy most about working with us?</div>
         <div style={{ borderBottom: `1px solid ${INK}`, height: 24 }} />
-        <div style={{ fontSize: 13.5, fontWeight: 700, marginTop: 28, marginBottom: 20 }}>What could we improve?</div>
+        <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 700, marginTop: 28, marginBottom: 20 }}>What could we improve?</div>
         <div style={{ borderBottom: `1px solid ${INK}`, height: 24 }} />
       </div>
     </>
@@ -431,14 +431,14 @@ function Packages({ data }: { data: Record<string, unknown> }) {
       <div style={{ ...section, display: 'grid', gridTemplateColumns: `repeat(${tiers.length || 3}, 1fr)`, gap: 28 }}>
         {tiers.map((tier, i) => (
           <div key={i}>
-            {s(tier.badge) ? <div style={{ fontSize: 10.5, fontWeight: 700, color: LABEL_GRAY, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>{tier.badge}</div> : <div style={{ height: 17 }} />}
-            <div style={{ fontSize: 11, fontWeight: 700, color: INK, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>{s(tier.tier_label) || 'Tier'}</div>
-            <div style={{ fontSize: 26, fontWeight: 700 }}>
-              ${bracket(tier.price, 'PRICE')}<span style={{ fontSize: 13, fontWeight: 400, color: LABEL_GRAY }}>/mo</span>
+            {s(tier.badge) ? <div style={{ fontSize: 'var(--text-micro)', fontWeight: 700, color: LABEL_GRAY, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>{tier.badge}</div> : <div style={{ height: 17 }} />}
+            <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, color: INK, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>{s(tier.tier_label) || 'Tier'}</div>
+            <div style={{ fontSize: 'var(--text-display)', fontWeight: 700 }}>
+              ${bracket(tier.price, 'PRICE')}<span style={{ fontSize: 'var(--text-body)', fontWeight: 400, color: LABEL_GRAY }}>/mo</span>
             </div>
-            <div style={{ fontSize: 12, color: LABEL_GRAY, marginTop: 8, marginBottom: 16, lineHeight: 1.5 }}>{bracket(tier.description, 'One-line description of who this is for')}</div>
+            <div style={{ fontSize: 'var(--text-small)', color: LABEL_GRAY, marginTop: 8, marginBottom: 16, lineHeight: 1.5 }}>{bracket(tier.description, 'One-line description of who this is for')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {(tier.features ?? []).map((f, fi) => <div key={fi} style={{ fontSize: 12.5, color: '#333333' }}>{s(f) || <span style={{ color: '#C4C4C4' }}>[Feature]</span>}</div>)}
+              {(tier.features ?? []).map((f, fi) => <div key={fi} style={{ fontSize: 'var(--text-body-sm)', color: '#333333' }}>{s(f) || <span style={{ color: '#C4C4C4' }}>[Feature]</span>}</div>)}
             </div>
           </div>
         ))}

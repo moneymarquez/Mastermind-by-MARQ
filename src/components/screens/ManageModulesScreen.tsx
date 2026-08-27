@@ -62,13 +62,13 @@ export default function ManageModulesScreen({ homeHeadStyle, homeSubStyle, curre
           onClick={save}
           disabled={saving}
           style={{
-            padding: '11px 22px', borderRadius: 999, border: 'none', background: 'var(--text)', color: 'var(--bg)',
-            fontSize: 13, fontWeight: 600, cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.6 : 1,
+            padding: '11px 22px', borderRadius: 'var(--radius-pill)', border: 'none', background: 'var(--text)', color: 'var(--bg)',
+            fontSize: 'var(--text-body)', fontWeight: 600, cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.6 : 1,
           }}
         >
           {saving ? 'Saving…' : 'Save changes'}
         </button>
-        {saved && <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Saved.</span>}
+        {saved && <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }}>Saved.</span>}
       </div>
     </div>
   );

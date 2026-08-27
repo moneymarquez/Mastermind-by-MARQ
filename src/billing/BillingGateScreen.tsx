@@ -42,13 +42,13 @@ function PaymentForm({ onSubscribed }: { onSubscribed: () => void }) {
   return (
     <div>
       <PaymentElement />
-      {error && <div style={{ fontSize: 12.5, color: '#c47a7a', marginTop: 14 }}>{error}</div>}
+      {error && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', marginTop: 14 }}>{error}</div>}
       <button
         onClick={submit}
         disabled={submitting || !stripe}
         style={{
-          width: '100%', marginTop: 20, padding: '12px 18px', borderRadius: 999, border: 'none',
-          background: 'var(--text)', color: 'var(--bg)', fontSize: 13.5, fontWeight: 600,
+          width: '100%', marginTop: 20, padding: '12px 18px', borderRadius: 'var(--radius-pill)', border: 'none',
+          background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-lg)', fontWeight: 600,
           cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1,
         }}
       >
@@ -84,21 +84,21 @@ export default function BillingGateScreen({ onSubscribed, onSignOut, theme }: Pr
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ position: 'absolute', top: 24, left: 24, lineHeight: 1.1 }}>
-        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em' }}>Masterminds</div>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)', letterSpacing: '0.04em', marginTop: 2 }}>by MARQ</div>
+        <div style={{ fontSize: 'var(--text-stat)', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em' }}>Masterminds</div>
+        <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, color: 'var(--text)', letterSpacing: '0.04em', marginTop: 2 }}>by MARQ</div>
       </div>
       <div style={{ position: 'absolute', top: 24, right: 24 }}>
-        <span style={{ fontSize: 12, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={onSignOut}>Sign out</span>
+        <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={onSignOut}>Sign out</span>
       </div>
 
-      <div style={{ width: 380, maxWidth: '90vw', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '32px 28px' }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Subscribe to continue</div>
-        <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.6 }}>
+      <div style={{ width: 380, maxWidth: '90vw', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-2xl)', padding: '32px 28px' }}>
+        <div style={{ fontSize: 'var(--text-title)', fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Subscribe to continue</div>
+        <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.6 }}>
           $19.99/month, cancel anytime. Your modules and data are already set up — this just unlocks them.
         </div>
 
-        {loading && <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>Loading…</div>}
-        {!loading && error && <div style={{ fontSize: 12.5, color: '#c47a7a', lineHeight: 1.6 }}>{error}</div>}
+        {loading && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>Loading…</div>}
+        {!loading && error && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', lineHeight: 1.6 }}>{error}</div>}
         {!loading && !error && clientSecret && stripePromise && (
           // Stripe Elements renders in its own iframe, which can't resolve
           // this page's CSS custom properties — literal hex values matching

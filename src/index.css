@@ -36,10 +36,59 @@
   --shine: #EAEAEA;
 }
 
+/* ── Type scale, radii, and font ─────────────────────────────────────────
+   Theme-independent (identical in dark and light), so these live outside
+   both blocks above rather than being duplicated in each.
+
+   Every value here is the EXACT size that was previously hardcoded inline
+   across the components — this scale was derived from what the app already
+   used, not imposed on it, so introducing it changed nothing visually.
+   That's the point: it's the single place a new design direction gets
+   applied, instead of sweeping ~1,600 literals across 81 files.
+
+   Named by role rather than by number, because a role is what a design
+   direction actually specifies ("body text", "captions") and a number
+   stops being true the moment the scale shifts.
+
+   Note for whoever applies the next design: several steps below are
+   near-duplicates that accumulated organically — body/body-lg differ by
+   0.5px, as do small/body-sm. They're kept separate rather than silently
+   collapsed, because merging them is a visual decision that belongs to
+   the design direction, not to a mechanical refactor. Collapsing them is
+   a good idea; just do it deliberately. */
+:root {
+  --text-nano: 10px;        /* uppercase overlines, tiny badges */
+  --text-micro: 10.5px;     /* badges, timestamps, dense meta */
+  --text-tiny: 11px;        /* helper text, footnotes */
+  --text-caption: 11.5px;   /* captions, secondary meta */
+  --text-small: 12px;       /* secondary UI text */
+  --text-body-sm: 12.5px;   /* dense body copy, list subtitles */
+  --text-body: 13px;        /* default body — the most-used size */
+  --text-body-lg: 13.5px;   /* emphasized body, plan/analysis text */
+  --text-label: 14px;       /* labels, list item titles */
+  --text-subhead: 15px;
+  --text-head: 16px;
+  --text-title: 20px;
+  --text-stat: 22px;        /* stat/metric numbers on dashboards */
+  --text-display: 26px;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;         /* inputs, small cards */
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;        /* standard card */
+  --radius-2xl: 16px;
+  --radius-3xl: 20px;
+  --radius-pill: 999px;     /* buttons, tabs, badges */
+
+  --font-sans: 'Manrope', 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
 body {
   margin: 0;
   background: var(--bg);
-  font-family: 'Manrope', 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 * {

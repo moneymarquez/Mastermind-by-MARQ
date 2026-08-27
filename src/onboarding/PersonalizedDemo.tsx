@@ -9,8 +9,8 @@ interface Props {
   submitting: boolean;
 }
 
-const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 18 };
-const sectionTitle: CSSProperties = { fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 12 };
+const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 18 };
+const sectionTitle: CSSProperties = { fontSize: 'var(--text-body)', fontWeight: 700, color: 'var(--text)', marginBottom: 12 };
 
 // Sample data is deliberately hardcoded here and nowhere else — this
 // screen is the one explicitly-scoped exception to "no fake data" in the
@@ -27,7 +27,7 @@ function DialingDemo() {
     <div style={cardStyle}>
       <div style={sectionTitle}>Dialing — 14 / 40 calls today</div>
       {rows.map((r) => (
-        <div key={r.name} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderTop: '1px solid var(--surface-3)', fontSize: 12.5 }}>
+        <div key={r.name} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderTop: '1px solid var(--surface-3)', fontSize: 'var(--text-body-sm)' }}>
           <span style={{ color: 'var(--text)' }}>{r.name}</span>
           <span style={{ color: 'var(--text-secondary)' }}>{r.outcome}</span>
           <span style={{ color: 'var(--text-tertiary)' }}>{r.time}</span>
@@ -41,8 +41,8 @@ function SobrietyDemo() {
   return (
     <div style={cardStyle}>
       <div style={sectionTitle}>Sobriety</div>
-      <div style={{ fontSize: 28, fontWeight: 700, color: '#8fae8f', fontFamily: "'JetBrains Mono', monospace" }}>41 days</div>
-      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>Longest streak: 41 days — this is it.</div>
+      <div style={{ fontSize: 28, fontWeight: 700, color: '#8fae8f', fontFamily: 'var(--font-mono)' }}>41 days</div>
+      <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 4 }}>Longest streak: 41 days — this is it.</div>
     </div>
   );
 }
@@ -61,12 +61,12 @@ function BudgetingDemo() {
         const over = c.spent > c.allocated;
         return (
           <div key={c.name} style={{ marginTop: 10 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-small)' }}>
               <span style={{ color: 'var(--text)' }}>{c.name}</span>
               <span style={{ color: over ? '#c47a7a' : 'var(--text-secondary)' }}>${c.spent} / ${c.allocated}</span>
             </div>
-            <div style={{ height: 5, background: 'var(--border)', borderRadius: 999, marginTop: 5 }}>
-              <div style={{ height: '100%', width: `${pct}%`, background: over ? '#c47a7a' : 'var(--text)', borderRadius: 999 }} />
+            <div style={{ height: 5, background: 'var(--border)', borderRadius: 'var(--radius-pill)', marginTop: 5 }}>
+              <div style={{ height: '100%', width: `${pct}%`, background: over ? '#c47a7a' : 'var(--text)', borderRadius: 'var(--radius-pill)' }} />
             </div>
           </div>
         );
@@ -79,11 +79,11 @@ function GoalsDemo() {
   return (
     <div style={cardStyle}>
       <div style={sectionTitle}>Goals</div>
-      <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600 }}>Hit $10k in monthly recurring revenue</div>
-      <div style={{ height: 6, background: 'var(--border)', borderRadius: 999, marginTop: 10 }}>
-        <div style={{ height: '100%', width: '58%', background: 'var(--text)', borderRadius: 999 }} />
+      <div style={{ fontSize: 'var(--text-body)', color: 'var(--text)', fontWeight: 600 }}>Hit $10k in monthly recurring revenue</div>
+      <div style={{ height: 6, background: 'var(--border)', borderRadius: 'var(--radius-pill)', marginTop: 10 }}>
+        <div style={{ height: '100%', width: '58%', background: 'var(--text)', borderRadius: 'var(--radius-pill)' }} />
       </div>
-      <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 6 }}>58% there, on pace for the Q4 deadline.</div>
+      <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 6 }}>58% there, on pace for the Q4 deadline.</div>
     </div>
   );
 }
@@ -92,8 +92,8 @@ function MacrosDemo() {
   return (
     <div style={cardStyle}>
       <div style={sectionTitle}>Macros & Meals — today</div>
-      <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)', fontFamily: "'JetBrains Mono', monospace" }}>1,840 kcal</div>
-      <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 4 }}>142p / 180c / 60f — logged from 2 photos.</div>
+      <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)', fontFamily: 'var(--font-mono)' }}>1,840 kcal</div>
+      <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 4 }}>142p / 180c / 60f — logged from 2 photos.</div>
     </div>
   );
 }
@@ -102,8 +102,8 @@ function ScheduleDemo() {
   return (
     <div style={cardStyle}>
       <div style={sectionTitle}>Schedule — next up</div>
-      <div style={{ fontSize: 13, color: 'var(--text)' }}>2:30 PM — Client call, Riverside Detailing</div>
-      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>6:00 PM — Gym</div>
+      <div style={{ fontSize: 'var(--text-body)', color: 'var(--text)' }}>2:30 PM — Client call, Riverside Detailing</div>
+      <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 4 }}>6:00 PM — Gym</div>
     </div>
   );
 }
@@ -117,7 +117,7 @@ function GenericDemo({ label, description }: { label: string; description: strin
   return (
     <div style={cardStyle}>
       <div style={sectionTitle}>{label}</div>
-      <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{description}</div>
+      <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{description}</div>
     </div>
   );
 }
@@ -128,8 +128,8 @@ export default function PersonalizedDemo({ assistantName, selectedKeys, onContin
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '40px 24px 140px' }}>
       <div style={{ maxWidth: 820, margin: '0 auto' }}>
-        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em' }}>Masterminds by MARQ</div>
-        <div style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginTop: 8, lineHeight: 1.6, maxWidth: 560 }}>
+        <div style={{ fontSize: 'var(--text-stat)', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em' }}>Masterminds by MARQ</div>
+        <div style={{ fontSize: 'var(--text-body-lg)', color: 'var(--text-secondary)', marginTop: 8, lineHeight: 1.6, maxWidth: 560 }}>
           This is what your dashboard looks like, built out with {selectedModules.length} module{selectedModules.length === 1 ? '' : 's'} you picked.
           {' '}<strong style={{ color: 'var(--text)' }}>{assistantName}</strong> is already reading across all of it.
         </div>
@@ -143,7 +143,7 @@ export default function PersonalizedDemo({ assistantName, selectedKeys, onContin
 
         <div style={{ ...cardStyle, marginTop: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
           <Icon name="sparkle" size={16} color="#C9A24B" />
-          <div style={{ fontSize: 12.5, color: 'var(--text-quaternary)' }}>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-quaternary)' }}>
             "Hey — {assistantName} here. I'll flag things before they become problems, not after. Ready when you are."
           </div>
         </div>

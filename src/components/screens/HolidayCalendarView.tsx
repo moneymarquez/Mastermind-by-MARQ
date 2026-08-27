@@ -32,8 +32,8 @@ function colorForName(name: string): string {
 }
 
 const inputStyle: CSSProperties = {
-  background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 12px',
-  color: 'var(--text)', fontSize: 13, outline: 'none',
+  background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '9px 12px',
+  color: 'var(--text)', fontSize: 'var(--text-body)', outline: 'none',
 };
 
 export default function HolidayCalendarView() {
@@ -98,7 +98,7 @@ export default function HolidayCalendarView() {
 
   return (
     <div style={{ marginTop: 20 }}>
-      <div style={{ fontSize: 12, color: 'var(--text-secondary)', maxWidth: 560, lineHeight: 1.5 }}>
+      <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', maxWidth: 560, lineHeight: 1.5 }}>
         The whole team's posted gas-station schedule — who's working when, so you can find someone to cover or pick
         up a shift at a glance. Separate from the Main Calendar above.
       </div>
@@ -109,17 +109,17 @@ export default function HolidayCalendarView() {
             native picker's Photo Library / Take Photo / Browse choice. */}
         <input ref={photoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onPhotoSelected} />
         <div
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 999, background: parsing ? 'var(--border)' : 'var(--text)', color: parsing ? 'var(--text-secondary)' : 'var(--bg)', fontSize: 12.5, fontWeight: 600, cursor: parsing ? 'default' : 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 'var(--radius-pill)', background: parsing ? 'var(--border)' : 'var(--text)', color: parsing ? 'var(--text-secondary)' : 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: parsing ? 'default' : 'pointer' }}
           onClick={() => !parsing && photoInputRef.current?.click()}
         >
           {parsing ? 'Reading schedule…' : '📷 Upload schedule photo'}
         </div>
       </div>
-      {parseError && <div style={{ fontSize: 12, color: '#c47a7a', marginTop: 8 }}>{parseError}</div>}
+      {parseError && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a', marginTop: 8 }}>{parseError}</div>}
 
       {reviewShifts && reviewShifts.length > 0 && (
-        <div style={{ marginTop: 14, border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', maxWidth: 620 }}>
-          <div style={{ padding: '10px 14px', fontSize: 12, color: 'var(--text-secondary)', background: 'var(--surface-2)', borderBottom: '1px solid var(--surface-3)' }}>
+        <div style={{ marginTop: 14, border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', maxWidth: 620 }}>
+          <div style={{ padding: '10px 14px', fontSize: 'var(--text-small)', color: 'var(--text-secondary)', background: 'var(--surface-2)', borderBottom: '1px solid var(--surface-3)' }}>
             Review before adding — {reviewShifts.length} shift{reviewShifts.length === 1 ? '' : 's'} found
           </div>
           {reviewShifts.map((s, i) => (
@@ -128,14 +128,14 @@ export default function HolidayCalendarView() {
               <input type="date" style={{ ...inputStyle, width: 130 }} value={s.shift_date} onChange={(e) => updateReviewShift(i, { shift_date: e.target.value })} />
               <input type="time" style={{ ...inputStyle, width: 100 }} value={s.start_time} onChange={(e) => updateReviewShift(i, { start_time: e.target.value })} />
               <input type="time" style={{ ...inputStyle, width: 100 }} value={s.end_time} onChange={(e) => updateReviewShift(i, { end_time: e.target.value })} />
-              <span style={{ fontSize: 12, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => removeReviewShift(i)}>✕</span>
+              <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => removeReviewShift(i)}>✕</span>
             </div>
           ))}
           <div style={{ display: 'flex', gap: 10, padding: 12, background: 'var(--surface-2)' }}>
-            <div style={{ padding: '8px 16px', borderRadius: 999, border: '1px solid var(--text)', color: 'var(--text)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} onClick={confirmReview}>
+            <div style={{ padding: '8px 16px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--text)', color: 'var(--text)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer' }} onClick={confirmReview}>
               Add {reviewShifts.length} shift{reviewShifts.length === 1 ? '' : 's'}
             </div>
-            <div style={{ padding: '8px 16px', borderRadius: 999, color: 'var(--text-secondary)', fontSize: 12.5, cursor: 'pointer' }} onClick={() => setReviewShifts(null)}>Discard</div>
+            <div style={{ padding: '8px 16px', borderRadius: 'var(--radius-pill)', color: 'var(--text-secondary)', fontSize: 'var(--text-body-sm)', cursor: 'pointer' }} onClick={() => setReviewShifts(null)}>Discard</div>
           </div>
         </div>
       )}
@@ -145,18 +145,18 @@ export default function HolidayCalendarView() {
         <input type="date" style={{ ...inputStyle, width: 140 }} value={manualDate} onChange={(e) => setManualDate(e.target.value)} />
         <input type="time" style={{ ...inputStyle, width: 100 }} value={manualStart} onChange={(e) => setManualStart(e.target.value)} />
         <input type="time" style={{ ...inputStyle, width: 100 }} value={manualEnd} onChange={(e) => setManualEnd(e.target.value)} />
-        <div style={{ padding: '9px 16px', borderRadius: 8, border: '1px solid var(--text)', color: 'var(--text)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} onClick={submitManual}>Add shift</div>
+        <div style={{ padding: '9px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--text)', color: 'var(--text)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer' }} onClick={submitManual}>Add shift</div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16, marginBottom: 8 }}>
-        <span style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 16 }} onClick={() => setMonthAnchor(new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() - 1, 1))}>‹</span>
-        <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', minWidth: 160 }}>{MONTH_NAMES[monthAnchor.getMonth()]} {monthAnchor.getFullYear()}</div>
-        <span style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 16 }} onClick={() => setMonthAnchor(new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() + 1, 1))}>›</span>
+        <span style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 'var(--text-head)' }} onClick={() => setMonthAnchor(new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() - 1, 1))}>‹</span>
+        <div style={{ fontSize: 'var(--text-head)', fontWeight: 600, color: 'var(--text)', minWidth: 160 }}>{MONTH_NAMES[monthAnchor.getMonth()]} {monthAnchor.getFullYear()}</div>
+        <span style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 'var(--text-head)' }} onClick={() => setMonthAnchor(new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() + 1, 1))}>›</span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 1, background: 'var(--surface-3)', border: '1px solid var(--surface-3)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 1, background: 'var(--surface-3)', border: '1px solid var(--surface-3)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-          <div key={d} style={{ background: 'var(--surface)', padding: '5px 6px', fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 600, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d}</div>
+          <div key={d} style={{ background: 'var(--surface)', padding: '5px 6px', fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', fontWeight: 600, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d}</div>
         ))}
         {monthGrid(monthAnchor).map((d, i) => {
           const ds = dateStr(d);
@@ -169,7 +169,7 @@ export default function HolidayCalendarView() {
               onClick={() => setSelectedDate(ds)}
               style={{ background: 'var(--surface-2)', aspectRatio: '1 / 0.8', padding: '6px 7px', cursor: 'pointer', opacity: inMonth ? 1 : 0.35, minWidth: 0, overflow: 'hidden' }}
             >
-              <div style={{ fontSize: 11.5, color: isToday ? 'var(--bg)' : 'var(--text-quaternary)', fontWeight: isToday ? 700 : 400, display: 'inline-flex', width: 18, height: 18, alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: isToday ? 'var(--text)' : 'transparent' }}>
+              <div style={{ fontSize: 'var(--text-caption)', color: isToday ? 'var(--bg)' : 'var(--text-quaternary)', fontWeight: isToday ? 700 : 400, display: 'inline-flex', width: 18, height: 18, alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: isToday ? 'var(--text)' : 'transparent' }}>
                 {d.getDate()}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 3 }}>
@@ -185,26 +185,26 @@ export default function HolidayCalendarView() {
         })}
       </div>
       {!loading && shifts.length === 0 && (
-        <div style={{ marginTop: 14, fontSize: 12.5, color: 'var(--text-tertiary)' }}>No shifts yet — upload a schedule photo or add one manually above.</div>
+        <div style={{ marginTop: 14, fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No shifts yet — upload a schedule photo or add one manually above.</div>
       )}
 
       {selectedDate && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(6,7,9,0.85)', zIndex: 210, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setSelectedDate(null)}>
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20, width: '100%', maxWidth: 380, maxHeight: '70vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-2xl)', padding: 20, width: '100%', maxWidth: 380, maxHeight: '70vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>{new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
               {dayShifts.map((s) => (
-                <div key={s.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 8, background: 'var(--surface-2)', border: `1px solid ${colorForName(s.person_name)}44` }}>
+                <div key={s.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)', border: `1px solid ${colorForName(s.person_name)}44` }}>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: colorForName(s.person_name) }}>{s.person_name}</div>
-                    <div style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>{formatTimeLabel(s.start_time)} – {formatTimeLabel(s.end_time)}</div>
+                    <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: colorForName(s.person_name) }}>{s.person_name}</div>
+                    <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>{formatTimeLabel(s.start_time)} – {formatTimeLabel(s.end_time)}</div>
                   </div>
-                  <span style={{ fontSize: 12, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => removeShift(s.id)}>Remove</span>
+                  <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => removeShift(s.id)}>Remove</span>
                 </div>
               ))}
-              {dayShifts.length === 0 && <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>No shifts logged for this day.</div>}
+              {dayShifts.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No shifts logged for this day.</div>}
             </div>
-            <div style={{ marginTop: 16, textAlign: 'center', fontSize: 12.5, color: 'var(--text-secondary)', cursor: 'pointer' }} onClick={() => setSelectedDate(null)}>Close</div>
+            <div style={{ marginTop: 16, textAlign: 'center', fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', cursor: 'pointer' }} onClick={() => setSelectedDate(null)}>Close</div>
           </div>
         </div>
       )}

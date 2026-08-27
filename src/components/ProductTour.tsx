@@ -92,7 +92,7 @@ export default function ProductTour({ active, steps, stepIndex, onNext, onBack, 
         left: rect.left - pad,
         width: rect.width + pad * 2,
         height: rect.height + pad * 2,
-        borderRadius: 16,
+        borderRadius: 'var(--radius-2xl)',
         boxShadow: '0 0 0 9999px rgba(6,7,9,0.8)',
         border: '1px solid #F5F6F755',
         pointerEvents: 'none',
@@ -110,13 +110,13 @@ export default function ProductTour({ active, steps, stepIndex, onNext, onBack, 
         style={{
           position: 'fixed', top: 'calc(88px + env(safe-area-inset-top))', left: '50%', transform: 'translateX(-50%)',
           width: 340, maxWidth: 'calc(100vw - 32px)', background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: 14, padding: '18px 20px', zIndex: 92, boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+          borderRadius: 'var(--radius-xl)', padding: '18px 20px', zIndex: 92, boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <div style={{ display: 'flex', gap: 4 }}>
             {steps.map((s, i) => (
-              <div key={s.id} style={{ width: 14, height: 3, borderRadius: 999, background: i <= stepIndex ? 'var(--text)' : 'var(--border-2)' }} />
+              <div key={s.id} style={{ width: 14, height: 3, borderRadius: 'var(--radius-pill)', background: i <= stepIndex ? 'var(--text)' : 'var(--border-2)' }} />
             ))}
           </div>
           <div style={{ cursor: 'pointer' }} onClick={onSkip} title="Skip tour">
@@ -124,23 +124,23 @@ export default function ProductTour({ active, steps, stepIndex, onNext, onBack, 
           </div>
         </div>
 
-        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>{step.title}</div>
-        <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55, marginBottom: 16 }}>{step.body}</div>
+        <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>{step.title}</div>
+        <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', lineHeight: 1.55, marginBottom: 16 }}>{step.body}</div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{stepIndex + 1} / {steps.length}</span>
+          <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)' }}>{stepIndex + 1} / {steps.length}</span>
           <div style={{ display: 'flex', gap: 8 }}>
             {stepIndex > 0 && (
               <button
                 onClick={onBack}
-                style={{ padding: '7px 13px', borderRadius: 999, border: '1px solid var(--border-2)', background: 'transparent', color: 'var(--text-quaternary)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                style={{ padding: '7px 13px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-2)', background: 'transparent', color: 'var(--text-quaternary)', fontSize: 'var(--text-small)', fontWeight: 600, cursor: 'pointer' }}
               >
                 Back
               </button>
             )}
             <button
               onClick={onNext}
-              style={{ padding: '7px 15px', borderRadius: 999, border: 'none', background: 'var(--text)', color: 'var(--bg)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+              style={{ padding: '7px 15px', borderRadius: 'var(--radius-pill)', border: 'none', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-small)', fontWeight: 600, cursor: 'pointer' }}
             >
               {stepIndex === steps.length - 1 ? 'Finish' : 'Next'}
             </button>

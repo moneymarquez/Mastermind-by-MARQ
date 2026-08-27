@@ -70,15 +70,15 @@ const page: CSSProperties = {
   fontFamily: "'Manrope', system-ui, sans-serif",
 };
 const wrap: CSSProperties = { width: '100%', maxWidth: 820, margin: '0 auto' };
-const card: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 22 };
+const card: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 22 };
 const sectionHead: CSSProperties = { fontSize: 17, fontWeight: 700, marginBottom: 14 };
-const muted: CSSProperties = { fontSize: 12.5, color: 'var(--text-secondary)' };
+const muted: CSSProperties = { fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)' };
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ flex: '1 1 130px', background: 'var(--surface-4)', borderRadius: 12, padding: '14px 16px' }}>
-      <div style={{ fontSize: 22, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{value}</div>
-      <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 4 }}>{label}</div>
+    <div style={{ flex: '1 1 130px', background: 'var(--surface-4)', borderRadius: 'var(--radius-lg)', padding: '14px 16px' }}>
+      <div style={{ fontSize: 'var(--text-stat)', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{value}</div>
+      <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 4 }}>{label}</div>
     </div>
   );
 }
@@ -107,7 +107,7 @@ export default function PublicClientDashboard({ token }: { token: string }) {
   if (state === 'notfound') {
     return (
       <div style={page}><div style={wrap}>
-        <div style={{ fontSize: 22, fontWeight: 700 }}>Dashboard not found</div>
+        <div style={{ fontSize: 'var(--text-stat)', fontWeight: 700 }}>Dashboard not found</div>
         <div style={{ ...muted, marginTop: 10 }}>This link may have been changed. Reach out and we'll send you a fresh one.</div>
       </div></div>
     );
@@ -115,7 +115,7 @@ export default function PublicClientDashboard({ token }: { token: string }) {
   if (state === 'error' || !data) {
     return (
       <div style={page}><div style={wrap}>
-        <div style={{ fontSize: 22, fontWeight: 700 }}>Something went wrong</div>
+        <div style={{ fontSize: 'var(--text-stat)', fontWeight: 700 }}>Something went wrong</div>
         <div style={{ ...muted, marginTop: 10 }}>Try refreshing in a moment.</div>
       </div></div>
     );
@@ -138,7 +138,7 @@ export default function PublicClientDashboard({ token }: { token: string }) {
   return (
     <div style={page}>
       <div style={wrap}>
-        <div style={{ fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: 'var(--text-tertiary)', fontWeight: 700 }}>Made by Marq</div>
+        <div style={{ fontSize: 'var(--text-small)', letterSpacing: 1.2, textTransform: 'uppercase', color: 'var(--text-tertiary)', fontWeight: 700 }}>Made by Marq</div>
         <div style={{ fontSize: 30, fontWeight: 700, marginTop: 6 }}>{data.businessName}</div>
         <div style={{ ...muted, marginTop: 6 }}>Your marketing progress and what's been delivered.</div>
 
@@ -149,7 +149,7 @@ export default function PublicClientDashboard({ token }: { token: string }) {
                 key={r.id}
                 onClick={() => setPeriodIdx(i)}
                 style={{
-                  padding: '7px 15px', borderRadius: 999, cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
+                  padding: '7px 15px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body-sm)', fontWeight: 600,
                   border: `1px solid ${i === periodIdx ? 'var(--text)' : 'var(--border)'}`,
                   color: i === periodIdx ? 'var(--text)' : 'var(--text-tertiary)',
                 }}
@@ -162,7 +162,7 @@ export default function PublicClientDashboard({ token }: { token: string }) {
 
         {!report ? (
           <div style={{ ...card, marginTop: 24 }}>
-            <div style={{ fontSize: 15, fontWeight: 600 }}>Your first report is on the way</div>
+            <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 600 }}>Your first report is on the way</div>
             <div style={{ ...muted, marginTop: 8 }}>Once this month's numbers are in, they'll show up here.</div>
           </div>
         ) : (
@@ -185,7 +185,7 @@ export default function PublicClientDashboard({ token }: { token: string }) {
 
               {(report.gbp_views !== null || report.gbp_calls !== null || report.gbp_directions !== null) && (
                 <>
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '20px 0 10px' }}>
+                  <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '20px 0 10px' }}>
                     Google Business Profile
                   </div>
                   <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -204,9 +204,9 @@ export default function PublicClientDashboard({ token }: { token: string }) {
                   <ResponsiveContainer>
                     <LineChart data={followerSeries} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                      <XAxis dataKey="period" tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} stroke="var(--border-2)" />
-                      <YAxis tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} stroke="var(--border-2)" />
-                      <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
+                      <XAxis dataKey="period" tick={{ fontSize: 'var(--text-tiny)', fill: 'var(--text-tertiary)' }} stroke="var(--border-2)" />
+                      <YAxis tick={{ fontSize: 'var(--text-tiny)', fill: 'var(--text-tertiary)' }} stroke="var(--border-2)" />
+                      <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: 'var(--text-small)' }} />
                       <Line type="monotone" dataKey="followers" stroke="var(--text)" strokeWidth={2} dot={{ r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -220,14 +220,14 @@ export default function PublicClientDashboard({ token }: { token: string }) {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
                   {contentAssets.map((a) => (
                     <div key={a.id}>
-                      <div style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 10, overflow: 'hidden', background: 'var(--surface-4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'var(--surface-4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {(a.mime_type ?? '').startsWith('image/') && a.url
                           ? <img src={a.url} alt={a.caption ?? a.file_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           : a.url
-                            ? <a href={a.url} target="_blank" rel="noreferrer" style={{ fontSize: 11.5, color: 'var(--text-secondary)', padding: 10, textAlign: 'center' }}>{a.file_name}</a>
-                            : <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>{a.file_name}</span>}
+                            ? <a href={a.url} target="_blank" rel="noreferrer" style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', padding: 10, textAlign: 'center' }}>{a.file_name}</a>
+                            : <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>{a.file_name}</span>}
                       </div>
-                      {a.caption && <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6 }}>{a.caption}</div>}
+                      {a.caption && <div style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', marginTop: 6 }}>{a.caption}</div>}
                     </div>
                   ))}
                 </div>
@@ -240,12 +240,12 @@ export default function PublicClientDashboard({ token }: { token: string }) {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
                   {proofAssets.map((a) => (
                     <div key={a.id}>
-                      <div style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 10, overflow: 'hidden', background: 'var(--surface-4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'var(--surface-4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {(a.mime_type ?? '').startsWith('image/') && a.url
                           ? <img src={a.url} alt={a.file_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          : <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)', padding: 10, textAlign: 'center' }}>{a.file_name}</span>}
+                          : <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', padding: 10, textAlign: 'center' }}>{a.file_name}</span>}
                       </div>
-                      <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 6, textTransform: 'capitalize' }}>{a.status}</div>
+                      <div style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)', marginTop: 6, textTransform: 'capitalize' }}>{a.status}</div>
                     </div>
                   ))}
                 </div>
@@ -257,9 +257,9 @@ export default function PublicClientDashboard({ token }: { token: string }) {
                 <div style={sectionHead}>Campaigns this period</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {report.client_report_campaigns.map((c) => (
-                    <div key={c.id} style={{ padding: 14, borderRadius: 10, background: 'var(--surface-4)' }}>
-                      <div style={{ fontSize: 13.5, fontWeight: 600 }}>{c.name}</div>
-                      {c.launched_on && <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 3 }}>Launched {c.launched_on}</div>}
+                    <div key={c.id} style={{ padding: 14, borderRadius: 'var(--radius-md)', background: 'var(--surface-4)' }}>
+                      <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600 }}>{c.name}</div>
+                      {c.launched_on && <div style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', marginTop: 3 }}>Launched {c.launched_on}</div>}
                       {c.description && <div style={{ ...muted, marginTop: 7, lineHeight: 1.6 }}>{c.description}</div>}
                       {c.result_notes && <div style={{ ...muted, marginTop: 7, lineHeight: 1.6 }}><strong>Result:</strong> {c.result_notes}</div>}
                     </div>
@@ -273,9 +273,9 @@ export default function PublicClientDashboard({ token }: { token: string }) {
                 <div style={sectionHead}>What's included</div>
                 {report.whats_included && <div style={{ ...muted, whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>{report.whats_included}</div>}
                 {report.roi_snapshot && (
-                  <div style={{ marginTop: 16, padding: 14, borderRadius: 10, background: 'var(--surface-4)' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 6 }}>Return snapshot</div>
-                    <div style={{ fontSize: 14, lineHeight: 1.6 }}>{report.roi_snapshot}</div>
+                  <div style={{ marginTop: 16, padding: 14, borderRadius: 'var(--radius-md)', background: 'var(--surface-4)' }}>
+                    <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 6 }}>Return snapshot</div>
+                    <div style={{ fontSize: 'var(--text-label)', lineHeight: 1.6 }}>{report.roi_snapshot}</div>
                   </div>
                 )}
               </div>
@@ -287,17 +287,17 @@ export default function PublicClientDashboard({ token }: { token: string }) {
               {[...outstanding, ...paid].map((inv, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '11px 0', borderBottom: '1px solid var(--surface-3)' }}>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 13 }}>{inv.description}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                    <div style={{ fontSize: 'var(--text-body)' }}>{inv.description}</div>
+                    <div style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', marginTop: 2 }}>
                       {inv.status === 'paid'
                         ? `Paid${inv.paid_at ? ` ${new Date(inv.paid_at).toLocaleDateString()}` : ''}`
                         : inv.due_date ? `Due ${inv.due_date}` : 'Outstanding'}
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>${inv.amount.toLocaleString()}</div>
+                    <div style={{ fontSize: 'var(--text-body)', fontWeight: 600 }}>${inv.amount.toLocaleString()}</div>
                     {inv.status !== 'paid' && inv.stripe_invoice_url && (
-                      <a href={inv.stripe_invoice_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', border: '1px solid var(--text)', borderRadius: 999, padding: '5px 13px', textDecoration: 'none' }}>Pay</a>
+                      <a href={inv.stripe_invoice_url} target="_blank" rel="noreferrer" style={{ fontSize: 'var(--text-small)', fontWeight: 600, color: 'var(--text)', border: '1px solid var(--text)', borderRadius: 'var(--radius-pill)', padding: '5px 13px', textDecoration: 'none' }}>Pay</a>
                     )}
                   </div>
                 </div>
@@ -308,9 +308,9 @@ export default function PublicClientDashboard({ token }: { token: string }) {
                   included, server-side. */}
               {data.revealFullSchedule && data.upcoming.length > 0 && (
                 <div style={{ marginTop: 18 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 8 }}>Your full plan</div>
+                  <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 8 }}>Your full plan</div>
                   {data.upcoming.map((p, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '7px 0', fontSize: 12.5 }}>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '7px 0', fontSize: 'var(--text-body-sm)' }}>
                       <span style={{ color: 'var(--text-secondary)' }}>{p.label}</span>
                       <span style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
                         ${p.amount.toLocaleString()}{p.cadence === 'monthly' ? `/mo × ${p.repeat_count}` : ''}
@@ -326,14 +326,14 @@ export default function PublicClientDashboard({ token }: { token: string }) {
                 <div style={sectionHead}>Updates &amp; what's next</div>
                 {report.client_report_notes.map((note) => (
                   <div key={note.id} style={{ paddingBottom: 14, marginBottom: 14, borderBottom: '1px solid var(--surface-3)' }}>
-                    <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)' }}>{new Date(note.created_at).toLocaleDateString()}</div>
-                    <div style={{ fontSize: 13, marginTop: 5, whiteSpace: 'pre-wrap', lineHeight: 1.65 }}>{note.body}</div>
+                    <div style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)' }}>{new Date(note.created_at).toLocaleDateString()}</div>
+                    <div style={{ fontSize: 'var(--text-body)', marginTop: 5, whiteSpace: 'pre-wrap', lineHeight: 1.65 }}>{note.body}</div>
                   </div>
                 ))}
                 {report.upcoming_plan && (
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 6 }}>Coming up</div>
-                    <div style={{ fontSize: 13, whiteSpace: 'pre-wrap', lineHeight: 1.65 }}>{report.upcoming_plan}</div>
+                    <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 6 }}>Coming up</div>
+                    <div style={{ fontSize: 'var(--text-body)', whiteSpace: 'pre-wrap', lineHeight: 1.65 }}>{report.upcoming_plan}</div>
                   </div>
                 )}
               </div>
@@ -341,7 +341,7 @@ export default function PublicClientDashboard({ token }: { token: string }) {
           </div>
         )}
 
-        <div style={{ marginTop: 36, fontSize: 11, color: 'var(--text-tertiary)', textAlign: 'center' }}>
+        <div style={{ marginTop: 36, fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', textAlign: 'center' }}>
           Made by Marq · Questions? Just reply to your last email.
         </div>
       </div>

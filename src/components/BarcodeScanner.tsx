@@ -72,7 +72,7 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 20,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)', fontSize: 14, fontWeight: 600 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)', fontSize: 'var(--text-label)', fontWeight: 600 }}>
         <Icon name="barcode" color="var(--text)" /> Scan a barcode
         <span style={{ marginLeft: 12, cursor: 'pointer', padding: 4 }} onClick={onClose}>
           <Icon name="x" color="var(--text-secondary)" />
@@ -80,11 +80,11 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
       </div>
 
       {detectorSupported && !error && (
-        <video ref={videoRef} muted playsInline style={{ width: '100%', maxWidth: 360, borderRadius: 12, background: '#000' }} />
+        <video ref={videoRef} muted playsInline style={{ width: '100%', maxWidth: 360, borderRadius: 'var(--radius-lg)', background: '#000' }} />
       )}
-      {error && <div style={{ fontSize: 12.5, color: '#c47a7a', maxWidth: 320, textAlign: 'center' }}>{error}</div>}
+      {error && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', maxWidth: 320, textAlign: 'center' }}>{error}</div>}
       {!detectorSupported && (
-        <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', maxWidth: 320, textAlign: 'center' }}>
+        <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', maxWidth: 320, textAlign: 'center' }}>
           Live scanning isn't supported in this browser — enter the barcode number instead.
         </div>
       )}
@@ -97,10 +97,10 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
           value={manualCode}
           onChange={(e) => setManualCode(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && manualCode.trim() && onScan(manualCode.trim())}
-          style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', color: 'var(--text)', fontSize: 14, width: 220, outline: 'none' }}
+          style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px 14px', color: 'var(--text)', fontSize: 'var(--text-label)', width: 220, outline: 'none' }}
         />
         <div
-          style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 8, background: manualCode.trim() ? 'var(--text)' : 'var(--border)', color: manualCode.trim() ? 'var(--bg)' : 'var(--text-tertiary)', fontSize: 13, fontWeight: 600, cursor: manualCode.trim() ? 'pointer' : 'default' }}
+          style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 'var(--radius-sm)', background: manualCode.trim() ? 'var(--text)' : 'var(--border)', color: manualCode.trim() ? 'var(--bg)' : 'var(--text-tertiary)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: manualCode.trim() ? 'pointer' : 'default' }}
           onClick={() => manualCode.trim() && onScan(manualCode.trim())}
         >
           Look up

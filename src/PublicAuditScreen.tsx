@@ -16,13 +16,13 @@ const pageStyle: CSSProperties = {
 };
 const containerStyle: CSSProperties = { width: '100%', maxWidth: 640 };
 const inputStyle: CSSProperties = {
-  width: '100%', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8,
-  padding: '12px 14px', color: 'var(--text)', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
+  width: '100%', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)',
+  padding: '12px 14px', color: 'var(--text)', fontSize: 'var(--text-label)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
 };
 const textareaStyle: CSSProperties = { ...inputStyle, minHeight: 90, resize: 'vertical' };
 const primaryBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '12px 24px', borderRadius: 999,
-  background: 'var(--text)', color: 'var(--bg)', fontSize: 14, fontWeight: 600, cursor: 'pointer', border: 'none',
+  display: 'inline-flex', alignItems: 'center', padding: '12px 24px', borderRadius: 'var(--radius-pill)',
+  background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-label)', fontWeight: 600, cursor: 'pointer', border: 'none',
 };
 
 /** Part 1b — the public-facing free lead-gen questionnaire, reachable at
@@ -82,8 +82,8 @@ export default function PublicAuditScreen() {
     return (
       <div style={pageStyle}>
         <div style={containerStyle}>
-          <div style={{ fontSize: 26, fontWeight: 700 }}>Thanks — got it.</div>
-          <div style={{ fontSize: 15, color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.6 }}>
+          <div style={{ fontSize: 'var(--text-display)', fontWeight: 700 }}>Thanks — got it.</div>
+          <div style={{ fontSize: 'var(--text-subhead)', color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.6 }}>
             Cristopher will review your answers and follow up soon.
           </div>
         </div>
@@ -94,8 +94,8 @@ export default function PublicAuditScreen() {
   return (
     <div style={pageStyle}>
       <div style={containerStyle}>
-        <div style={{ fontSize: 26, fontWeight: 700 }}>Free Business Audit</div>
-        <div style={{ fontSize: 15, color: 'var(--text-secondary)', marginTop: 10, lineHeight: 1.6 }}>
+        <div style={{ fontSize: 'var(--text-display)', fontWeight: 700 }}>Free Business Audit</div>
+        <div style={{ fontSize: 'var(--text-subhead)', color: 'var(--text-secondary)', marginTop: 10, lineHeight: 1.6 }}>
           A few honest questions about where your business stands today — Made by Marq reviews every submission personally.
         </div>
 
@@ -111,14 +111,14 @@ export default function PublicAuditScreen() {
 
             {questions.map((q) => (
               <div key={q.id}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 6 }}>{q.category}</div>
-                <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>{q.prompt}</div>
+                <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 6 }}>{q.category}</div>
+                <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 600, marginBottom: 8 }}>{q.prompt}</div>
                 <textarea
                   style={textareaStyle}
                   value={answers[q.key] ?? ''}
                   onChange={(e) => setAnswers((a) => ({ ...a, [q.key]: e.target.value }))}
                 />
-                {q.helper_text && <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 6, fontStyle: 'italic' }}>{q.helper_text}</div>}
+                {q.helper_text && <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', marginTop: 6, fontStyle: 'italic' }}>{q.helper_text}</div>}
               </div>
             ))}
 
@@ -126,7 +126,7 @@ export default function PublicAuditScreen() {
               <button style={{ ...primaryBtn, pointerEvents: submitting || !businessName.trim() ? 'none' : 'auto', opacity: submitting || !businessName.trim() ? 0.6 : 1 }} onClick={submit}>
                 {submitting ? 'Submitting…' : 'Submit'}
               </button>
-              {submitError && <div style={{ fontSize: 13, color: '#c47a7a', marginTop: 10 }}>{submitError}</div>}
+              {submitError && <div style={{ fontSize: 'var(--text-body)', color: '#c47a7a', marginTop: 10 }}>{submitError}</div>}
             </div>
           </div>
         )}

@@ -27,7 +27,7 @@ export default function WorkoutLibraryView({ fitness }: Props) {
   const [session, setSession] = useState<WorkoutLibraryItem | null>(null);
 
   const chipStyle = (active: boolean): CSSProperties => ({
-    padding: '7px 14px', borderRadius: 999, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap',
+    padding: '7px 14px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body-sm)', fontWeight: 600, whiteSpace: 'nowrap',
     border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, color: active ? 'var(--text)' : 'var(--text-tertiary)',
     background: active ? '#F5F6F71a' : 'transparent',
   });
@@ -60,7 +60,7 @@ export default function WorkoutLibraryView({ fitness }: Props) {
     <div style={{ marginTop: 20 }}>
       {!loading && library.length === 0 && (
         <div
-          style={{ display: 'inline-flex', alignItems: 'center', padding: '9px 18px', borderRadius: 999, background: seeding ? 'var(--border)' : 'var(--text)', color: seeding ? 'var(--text-secondary)' : 'var(--bg)', fontSize: 12.5, fontWeight: 600, cursor: seeding ? 'default' : 'pointer', marginBottom: 16 }}
+          style={{ display: 'inline-flex', alignItems: 'center', padding: '9px 18px', borderRadius: 'var(--radius-pill)', background: seeding ? 'var(--border)' : 'var(--text)', color: seeding ? 'var(--text-secondary)' : 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: seeding ? 'default' : 'pointer', marginBottom: 16 }}
           onClick={() => !seeding && loadSeed()}
         >
           {seeding ? 'Loading library…' : 'Load workout library (40 workouts)'}
@@ -80,39 +80,39 @@ export default function WorkoutLibraryView({ fitness }: Props) {
           <div
             key={w.id}
             onClick={() => setSelected(w)}
-            style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px', cursor: 'pointer' }}
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '14px 16px', cursor: 'pointer' }}
           >
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>{w.name}</div>
-            {w.day_label && <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{w.day_label}</div>}
-            <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 6 }}>{w.exercises.length} exercise{w.exercises.length === 1 ? '' : 's'}</div>
+            <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)' }}>{w.name}</div>
+            {w.day_label && <div style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', marginTop: 2 }}>{w.day_label}</div>}
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 6 }}>{w.exercises.length} exercise{w.exercises.length === 1 ? '' : 's'}</div>
           </div>
         ))}
         {!loading && items.length > 0 === false && library.length > 0 && (
-          <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>Nothing in this category.</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>Nothing in this category.</div>
         )}
       </div>
 
       {selected && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(6,7,9,0.85)', zIndex: 210, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setSelected(null)}>
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 22, width: '100%', maxWidth: 420, maxHeight: '75vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{selected.name}</div>
-            {selected.day_label && <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>{selected.day_label}</div>}
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-2xl)', padding: 22, width: '100%', maxWidth: 420, maxHeight: '75vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 600, color: 'var(--text)' }}>{selected.name}</div>
+            {selected.day_label && <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', marginTop: 2 }}>{selected.day_label}</div>}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 }}>
               {selected.exercises.map((e, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--surface-3)' }}>
-                  <span style={{ fontSize: 13, color: 'var(--text-quaternary)' }}>{e.name}</span>
-                  <span style={{ fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'nowrap', marginLeft: 10 }}>{e.sets} × {e.reps || '—'}</span>
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)', border: '1px solid var(--surface-3)' }}>
+                  <span style={{ fontSize: 'var(--text-body)', color: 'var(--text-quaternary)' }}>{e.name}</span>
+                  <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', whiteSpace: 'nowrap', marginLeft: 10 }}>{e.sets} × {e.reps || '—'}</span>
                 </div>
               ))}
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
               <div
-                style={{ flex: 1, textAlign: 'center', padding: '10px 16px', borderRadius: 999, background: 'var(--text)', color: 'var(--bg)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                style={{ flex: 1, textAlign: 'center', padding: '10px 16px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer' }}
                 onClick={() => { setSession(selected); setSelected(null); }}
               >
                 Start workout
               </div>
-              <div style={{ padding: '10px 16px', borderRadius: 999, color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }} onClick={() => setSelected(null)}>Close</div>
+              <div style={{ padding: '10px 16px', borderRadius: 'var(--radius-pill)', color: 'var(--text-secondary)', fontSize: 'var(--text-body)', cursor: 'pointer' }} onClick={() => setSelected(null)}>Close</div>
             </div>
           </div>
         </div>

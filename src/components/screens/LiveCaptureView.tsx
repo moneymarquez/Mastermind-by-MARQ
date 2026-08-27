@@ -19,11 +19,11 @@ const shell: CSSProperties = {
 };
 const bigInput: CSSProperties = {
   width: '100%', flex: 1, minHeight: 160, background: 'var(--surface-4)', border: '1px solid var(--border-2)',
-  borderRadius: 14, padding: '18px 20px', color: 'var(--text)', fontSize: 19, lineHeight: 1.55,
+  borderRadius: 'var(--radius-xl)', padding: '18px 20px', color: 'var(--text)', fontSize: 19, lineHeight: 1.55,
   outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box',
 };
 const navBtn = (primary: boolean): CSSProperties => ({
-  padding: '15px 26px', borderRadius: 999, fontSize: 15, fontWeight: 600, cursor: 'pointer',
+  padding: '15px 26px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-subhead)', fontWeight: 600, cursor: 'pointer',
   border: primary ? 'none' : '1px solid var(--border-2)',
   background: primary ? 'var(--text)' : 'transparent',
   color: primary ? 'var(--bg)' : 'var(--text-secondary)',
@@ -107,7 +107,7 @@ export default function LiveCaptureView({
     return (
       <div style={shell}>
         <div style={{ padding: 24 }}>
-          <div style={{ fontSize: 16, color: 'var(--text-secondary)' }}>No active questions in the bank.</div>
+          <div style={{ fontSize: 'var(--text-head)', color: 'var(--text-secondary)' }}>No active questions in the bank.</div>
           <div style={{ ...navBtn(true), marginTop: 16, display: 'inline-block' }} onClick={onExit}>Close</div>
         </div>
       </div>
@@ -118,20 +118,20 @@ export default function LiveCaptureView({
     <div style={shell}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px' }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{businessName}</div>
-          <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 2 }}>
+          <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{businessName}</div>
+          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 2 }}>
             {step + 1} of {questions.length} · {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : 'Autosaves as you type'}
           </div>
         </div>
-        <div style={{ ...navBtn(false), padding: '10px 18px', fontSize: 13.5, flexShrink: 0 }} onClick={onExit}>Done</div>
+        <div style={{ ...navBtn(false), padding: '10px 18px', fontSize: 'var(--text-body-lg)', flexShrink: 0 }} onClick={onExit}>Done</div>
       </div>
 
-      <div style={{ height: 3, background: 'var(--border)', margin: '0 20px', borderRadius: 999, overflow: 'hidden' }}>
+      <div style={{ height: 3, background: 'var(--border)', margin: '0 20px', borderRadius: 'var(--radius-pill)', overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${((step + 1) / questions.length) * 100}%`, background: 'var(--text)', transition: 'width 200ms ease' }} />
       </div>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '20px 20px 0', minHeight: 0 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>{q.category}</div>
+        <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>{q.category}</div>
         <div style={{ fontSize: 23, fontWeight: 600, color: 'var(--text)', margin: '10px 0 16px', lineHeight: 1.35 }}>{q.prompt}</div>
 
         <textarea
@@ -145,13 +145,13 @@ export default function LiveCaptureView({
         {/* The "do you know that for sure, or is that a rough guess?"
             probe, captured at the moment it's asked. */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Is that number solid?</span>
+          <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }}>Is that number solid?</span>
           {(['confirmed', 'estimated'] as AnswerConfidence[]).map((tag) => (
             <div
               key={tag}
               onClick={() => setTag(tag)}
               style={{
-                padding: '8px 16px', borderRadius: 999, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize',
+                padding: '8px 16px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize',
                 border: `1px solid ${confidence[q.key] === tag ? 'transparent' : 'var(--border-2)'}`,
                 background: confidence[q.key] === tag ? (tag === 'confirmed' ? '#4a9a5a' : '#C9A24B') : 'transparent',
                 color: confidence[q.key] === tag ? '#0A0B0D' : 'var(--text-secondary)',
@@ -163,7 +163,7 @@ export default function LiveCaptureView({
         </div>
 
         {q.helper_text && (
-          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 12, fontStyle: 'italic', lineHeight: 1.5 }}>{q.helper_text}</div>
+          <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', marginTop: 12, fontStyle: 'italic', lineHeight: 1.5 }}>{q.helper_text}</div>
         )}
       </div>
 

@@ -8,10 +8,10 @@ interface Props {
   homeSubStyle: CSSProperties;
 }
 
-const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 18 };
+const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 18 };
 const ghostBtn: CSSProperties = {
-  padding: '7px 13px', borderRadius: 999, border: '1px solid var(--border-2)', background: 'transparent',
-  color: 'var(--text-quaternary)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+  padding: '7px 13px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-2)', background: 'transparent',
+  color: 'var(--text-quaternary)', fontSize: 'var(--text-small)', fontWeight: 600, cursor: 'pointer',
 };
 
 const CATEGORY_COLOR: Record<string, string> = {
@@ -22,7 +22,7 @@ function StatusPill({ status }: { status: SupportInboxEntry['status'] }) {
   const colors: Record<SupportInboxEntry['status'], string> = { new: '#C9A24B', reviewed: 'var(--text-secondary)', replied: '#8fae8f', ignored: 'var(--text-tertiary)' };
   const c = colors[status];
   return (
-    <span style={{ padding: '3px 9px', borderRadius: 999, background: `${c}22`, border: `1px solid ${c}55`, color: c, fontSize: 10, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase' }}>
+    <span style={{ padding: '3px 9px', borderRadius: 'var(--radius-pill)', background: `${c}22`, border: `1px solid ${c}55`, color: c, fontSize: 'var(--text-nano)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase' }}>
       {status}
     </span>
   );
@@ -69,18 +69,18 @@ export default function SupportInboxScreen({ homeHeadStyle, homeSubStyle }: Prop
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 20, maxWidth: 680 }}>
         {!loading && filtered.length === 0 && (
-          <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>Nothing here.</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>Nothing here.</div>
         )}
         {filtered.map((e) => (
           <div key={e.id} style={cardStyle}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
               <div>
-                <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>{e.subject || '(no subject)'}</div>
-                <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 3 }}>{e.from_email} → {e.to_email}</div>
+                <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)' }}>{e.subject || '(no subject)'}</div>
+                <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 3 }}>{e.from_email} → {e.to_email}</div>
               </div>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                 {e.category && (
-                  <span style={{ fontSize: 10.5, color: CATEGORY_COLOR[e.category] ?? 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.3 }}>
+                  <span style={{ fontSize: 'var(--text-micro)', color: CATEGORY_COLOR[e.category] ?? 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.3 }}>
                     {e.category}
                   </span>
                 )}
@@ -89,15 +89,15 @@ export default function SupportInboxScreen({ homeHeadStyle, homeSubStyle }: Prop
             </div>
 
             {e.body_text && (
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.5, maxHeight: 100, overflow: 'auto' }}>
+              <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.5, maxHeight: 100, overflow: 'auto' }}>
                 {e.body_text}
               </div>
             )}
 
             {e.ai_draft_reply && (
-              <div style={{ marginTop: 14, padding: 14, background: 'var(--surface-2)', border: '1px solid var(--surface-3)', borderRadius: 10 }}>
-                <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 8 }}>Drafted reply</div>
-                <div style={{ fontSize: 12.5, color: 'var(--text-quaternary)', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{e.ai_draft_reply}</div>
+              <div style={{ marginTop: 14, padding: 14, background: 'var(--surface-2)', border: '1px solid var(--surface-3)', borderRadius: 'var(--radius-md)' }}>
+                <div style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 8 }}>Drafted reply</div>
+                <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-quaternary)', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{e.ai_draft_reply}</div>
               </div>
             )}
 

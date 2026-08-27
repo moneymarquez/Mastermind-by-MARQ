@@ -13,7 +13,7 @@ export default function Logo({ isMobile, onClick }: Props) {
       // this blurred panel keeps it legible regardless of what's beneath.
       style={{
         position: 'absolute', top: 'calc(24px + env(safe-area-inset-top))', left: 20, cursor: 'pointer', zIndex: 41, lineHeight: 1.1,
-        padding: '6px 10px', margin: '-6px -10px', borderRadius: 10,
+        padding: '6px 10px', margin: '-6px -10px', borderRadius: 'var(--radius-md)',
         background: 'color-mix(in srgb, var(--bg) 78%, transparent)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
       }}
       onClick={onClick}

@@ -5,9 +5,9 @@ interface Props {
   homeSubStyle: CSSProperties;
 }
 
-const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 20, marginBottom: 14 };
-const heading: CSSProperties = { fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 8 };
-const body: CSSProperties = { fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.6 };
+const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 20, marginBottom: 14 };
+const heading: CSSProperties = { fontSize: 'var(--text-label)', fontWeight: 700, color: 'var(--text)', marginBottom: 8 };
+const body: CSSProperties = { fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', lineHeight: 1.6 };
 
 const FAQS: { q: string; a: string }[] = [
   {
@@ -90,7 +90,7 @@ export default function LegalScreen({ homeHeadStyle, homeSubStyle }: Props) {
           <div style={heading}>Frequently asked</div>
           {FAQS.map((f) => (
             <div key={f.q} style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>{f.q}</div>
+              <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>{f.q}</div>
               <div style={body}>{f.a}</div>
             </div>
           ))}

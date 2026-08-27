@@ -9,10 +9,10 @@ interface Props {
 }
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8,
-  padding: '10px 12px', color: 'var(--text)', fontSize: 13.5, outline: 'none',
+  width: '100%', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)',
+  padding: '10px 12px', color: 'var(--text)', fontSize: 'var(--text-body-lg)', outline: 'none',
 };
-const labelStyle: React.CSSProperties = { fontSize: 11.5, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 };
+const labelStyle: React.CSSProperties = { fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', display: 'block', marginBottom: 6 };
 
 // Split-screen layout — a brand/hero side and a clean minimal form side —
 // loosely structured after Instagram's login page (panel split, simple
@@ -101,8 +101,8 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
         }}
       >
         <div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em', marginBottom: 2 }}>Masterminds</div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.08em', marginBottom: 40 }}>by MARQ</div>
+          <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em', marginBottom: 2 }}>Masterminds</div>
+          <div style={{ fontSize: 'var(--text-nano)', fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.08em', marginBottom: 40 }}>by MARQ</div>
           <div style={{ fontSize: 40, fontWeight: 700, color: 'var(--text)', lineHeight: 1.15, maxWidth: 460, letterSpacing: '-0.02em' }}>
             Your entire operation, in one place.
           </div>
@@ -116,12 +116,12 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
         <div style={{ width: '100%', maxWidth: 360 }}>
           <form
             onSubmit={handleSubmit}
-            style={{ width: '100%', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '32px 28px' }}
+            style={{ width: '100%', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-2xl)', padding: '32px 28px' }}
           >
-            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>
+            <div style={{ fontSize: 'var(--text-stat)', fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>
               {mode === 'login' ? 'Log in' : 'Create your account'}
             </div>
-            <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', marginBottom: 24 }}>
+            <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', marginBottom: 24 }}>
               {mode === 'login' ? 'Welcome back.' : 'Takes about a minute.'}
             </div>
 
@@ -142,22 +142,22 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
               </div>
             )}
 
-            {error && <div style={{ fontSize: 12.5, color: '#c47a7a', marginBottom: 16 }}>{error}</div>}
-            {notice && <div style={{ fontSize: 12.5, color: '#8fae8f', marginBottom: 16 }}>{notice}</div>}
+            {error && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', marginBottom: 16 }}>{error}</div>}
+            {notice && <div style={{ fontSize: 'var(--text-body-sm)', color: '#8fae8f', marginBottom: 16 }}>{notice}</div>}
 
             <button
               type="submit"
               disabled={submitting}
               style={{
-                width: '100%', padding: '11px 18px', borderRadius: 999, border: 'none',
-                background: 'var(--text)', color: 'var(--bg)', fontSize: 13.5, fontWeight: 600,
+                width: '100%', padding: '11px 18px', borderRadius: 'var(--radius-pill)', border: 'none',
+                background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-lg)', fontWeight: 600,
                 cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1,
               }}
             >
               {submitting ? (mode === 'login' ? 'Signing in…' : 'Creating account…') : mode === 'login' ? 'Login' : 'Sign up'}
             </button>
 
-            <div style={{ textAlign: 'center', marginTop: 20, fontSize: 12.5, color: 'var(--text-secondary)' }}>
+            <div style={{ textAlign: 'center', marginTop: 20, fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)' }}>
               {mode === 'login' ? (
                 <>Don't have an account?{' '}
                   <span style={{ color: 'var(--text)', cursor: 'pointer', fontWeight: 600 }} onClick={() => switchMode('signup')}>Sign up</span>

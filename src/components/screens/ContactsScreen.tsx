@@ -13,12 +13,12 @@ interface Props {
 }
 
 const inputStyle: CSSProperties = {
-  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '9px 12px',
-  color: 'var(--text)', fontSize: 13.5, outline: 'none',
+  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)', padding: '9px 12px',
+  color: 'var(--text)', fontSize: 'var(--text-body-lg)', outline: 'none',
 };
 const primaryBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '11px 20px', borderRadius: 999,
-  background: 'var(--text)', color: 'var(--bg)', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+  display: 'inline-flex', alignItems: 'center', padding: '11px 20px', borderRadius: 'var(--radius-pill)',
+  background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-lg)', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
 };
 
 const SOURCE_LABEL: Record<ContactSource, string> = { dialing: 'Dialing', scalez: 'Scaling', manual: 'Manual' };
@@ -39,7 +39,7 @@ function matches(c: Contact, q: string): boolean {
 function fieldRowStyle(): CSSProperties {
   return { marginBottom: 14 };
 }
-const detailLabelStyle: CSSProperties = { fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 5, display: 'block' };
+const detailLabelStyle: CSSProperties = { fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', marginBottom: 5, display: 'block' };
 
 function EditableText({ label, value, onSave, textarea, type = 'text' }: {
   label: string; value: string; onSave: (v: string) => void; textarea?: boolean; type?: string;
@@ -110,19 +110,19 @@ export default function ContactsScreen({ homeHeadStyle, homeSubStyle }: Props) {
     const d = selected.details as Partial<DialingContactDetails> & Partial<ScalingContactDetails>;
     return (
       <div>
-        <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 18 }} onClick={() => setSelectedId(null)}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 'var(--text-body)', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 18 }} onClick={() => setSelectedId(null)}>
           ← Back to contacts
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <div style={homeHeadStyle}>{selected.name}</div>
-          <span style={{ fontSize: 11, fontWeight: 600, color: SOURCE_COLOR[selected.source], border: `1px solid ${SOURCE_COLOR[selected.source]}55`, borderRadius: 999, padding: '3px 10px' }}>
+          <span style={{ fontSize: 'var(--text-tiny)', fontWeight: 600, color: SOURCE_COLOR[selected.source], border: `1px solid ${SOURCE_COLOR[selected.source]}55`, borderRadius: 'var(--radius-pill)', padding: '3px 10px' }}>
             {SOURCE_LABEL[selected.source]}
           </span>
         </div>
         <div style={homeSubStyle}>Fields save automatically as you edit.</div>
 
         <div style={{ marginTop: 24, maxWidth: 480 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 12 }}>Contact</div>
+          <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 12 }}>Contact</div>
           <EditableText label="Name" value={selected.name} onSave={(v) => saveDetail({ name: v })} />
           <EditableText label="Phone" value={selected.phone ?? ''} onSave={(v) => saveDetail({ phone: v || null })} />
           <EditableText label="Email" value={selected.email ?? ''} onSave={(v) => saveDetail({ email: v || null })} />
@@ -132,7 +132,7 @@ export default function ContactsScreen({ homeHeadStyle, homeSubStyle }: Props) {
 
           {selected.source === 'dialing' && (
             <>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-tertiary)', textTransform: 'uppercase', margin: '22px 0 12px' }}>Dialing details</div>
+              <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-tertiary)', textTransform: 'uppercase', margin: '22px 0 12px' }}>Dialing details</div>
               <EditableText label="Appointment date/time" type="datetime-local" value={d.appointment_at ?? ''} onSave={(v) => saveDetailsField('appointment_at', v || null)} />
               <EditableText label="Address" value={d.address ?? ''} onSave={(v) => saveDetailsField('address', v)} />
               <EditableSelect label="Homeowner?" value={d.homeowner ?? ''} options={YES_NO} onSave={(v) => saveDetailsField('homeowner', v || null)} />
@@ -147,7 +147,7 @@ export default function ContactsScreen({ homeHeadStyle, homeSubStyle }: Props) {
 
           {selected.source === 'scalez' && (
             <>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-tertiary)', textTransform: 'uppercase', margin: '22px 0 12px' }}>Scaling details</div>
+              <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-tertiary)', textTransform: 'uppercase', margin: '22px 0 12px' }}>Scaling details</div>
               <EditableText label="Appointment date/time" type="datetime-local" value={d.appointment_at ?? ''} onSave={(v) => saveDetailsField('appointment_at', v || null)} />
               <EditableText label="Industry/niche" value={d.industry ?? ''} onSave={(v) => saveDetailsField('industry', v)} />
               <EditableSelect label="Currently has website?" value={d.has_website ?? ''} options={YES_NO} onSave={(v) => saveDetailsField('has_website', v || null)} />
@@ -157,24 +157,24 @@ export default function ContactsScreen({ homeHeadStyle, homeSubStyle }: Props) {
             </>
           )}
 
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-tertiary)', textTransform: 'uppercase', margin: '22px 0 12px' }}>Notes</div>
+          <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-tertiary)', textTransform: 'uppercase', margin: '22px 0 12px' }}>Notes</div>
           <EditableText label="Notes" textarea value={selected.notes ?? ''} onSave={(v) => saveDetail({ notes: v || null })} />
         </div>
 
-        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 28, marginBottom: 10 }}>Event history ({history.length})</div>
-        <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', maxWidth: 640 }}>
+        <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 28, marginBottom: 10 }}>Event history ({history.length})</div>
+        <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', maxWidth: 640 }}>
           {history.map((e) => (
             <div key={e.id} style={{ padding: '14px 20px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>{formatDateLabel(e.event_date)}</span>
-                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{formatTimeLabel(e.start_time)}</span>
+                <span style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)' }}>{formatDateLabel(e.event_date)}</span>
+                <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)' }}>{formatTimeLabel(e.start_time)}</span>
               </div>
-              {e.status && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3 }}>{e.status}</div>}
-              {e.notes && <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 4 }}>{e.notes}</div>}
+              {e.status && <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 3 }}>{e.status}</div>}
+              {e.notes && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>{e.notes}</div>}
             </div>
           ))}
           {history.length === 0 && (
-            <div style={{ padding: 18, fontSize: 13, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No events tied to this contact yet.</div>
+            <div style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No events tied to this contact yet.</div>
           )}
         </div>
       </div>
@@ -201,7 +201,7 @@ export default function ContactsScreen({ homeHeadStyle, homeSubStyle }: Props) {
         </select>
       </div>
 
-      <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', maxWidth: 640 }}>
+      <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', maxWidth: 640 }}>
         {filtered.map((c) => (
           <div
             key={c.id}
@@ -209,18 +209,18 @@ export default function ContactsScreen({ homeHeadStyle, homeSubStyle }: Props) {
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)', cursor: 'pointer' }}
           >
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{c.name}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+              <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>{c.name}</div>
+              <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 2 }}>
                 {[c.business_name, c.phone, c.email].filter(Boolean).join(' · ') || '—'}
               </div>
             </div>
-            <span style={{ fontSize: 11, fontWeight: 600, color: SOURCE_COLOR[c.source], border: `1px solid ${SOURCE_COLOR[c.source]}55`, borderRadius: 999, padding: '3px 10px' }}>
+            <span style={{ fontSize: 'var(--text-tiny)', fontWeight: 600, color: SOURCE_COLOR[c.source], border: `1px solid ${SOURCE_COLOR[c.source]}55`, borderRadius: 'var(--radius-pill)', padding: '3px 10px' }}>
               {SOURCE_LABEL[c.source]}
             </span>
           </div>
         ))}
         {!loading && filtered.length === 0 && (
-          <div style={{ padding: 18, fontSize: 13, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>
+          <div style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>
             {contacts.length === 0 ? 'No contacts yet — add one, or they show up automatically from Dialing/Scaling activity.' : 'No matches.'}
           </div>
         )}

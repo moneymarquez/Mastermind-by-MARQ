@@ -28,26 +28,26 @@ const overlayStyle: CSSProperties = {
 };
 const panelStyle: CSSProperties = {
   width: '100%', maxWidth: 560, maxHeight: '88vh', overflowY: 'auto',
-  background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 16,
+  background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-2xl)',
   boxShadow: '0 30px 80px rgba(0,0,0,0.5)', animation: 'bubbleFade 0.18s ease',
 };
 const inputStyle: CSSProperties = {
-  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '9px 12px',
-  color: 'var(--text)', fontSize: 13.5, outline: 'none', width: '100%',
+  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)', padding: '9px 12px',
+  color: 'var(--text)', fontSize: 'var(--text-body-lg)', outline: 'none', width: '100%',
 };
-const labelStyle: CSSProperties = { fontSize: 11.5, color: 'var(--text-secondary)', marginBottom: 5, display: 'block' };
+const labelStyle: CSSProperties = { fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 5, display: 'block' };
 const fieldWrap: CSSProperties = { marginBottom: 12 };
 const primaryBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '10px 20px', borderRadius: 999,
-  background: 'var(--text)', color: 'var(--bg)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+  display: 'inline-flex', alignItems: 'center', padding: '10px 20px', borderRadius: 'var(--radius-pill)',
+  background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer',
 };
 const ghostBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999,
-  border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer',
+  display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 'var(--radius-pill)',
+  border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 'var(--text-body)', cursor: 'pointer',
 };
 const dangerBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999,
-  border: '1px solid #3a2222', color: '#c47a7a', fontSize: 13, cursor: 'pointer',
+  display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 'var(--radius-pill)',
+  border: '1px solid #3a2222', color: '#c47a7a', fontSize: 'var(--text-body)', cursor: 'pointer',
 };
 
 const TYPE_LABEL: Record<EventType, string> = { holiday: 'HOLIDAY', dialing: 'DIALING', scalez: 'SCALEZ', streaming: 'STREAMING' };
@@ -60,12 +60,12 @@ function ContactSearch({ searchContacts, onPick }: { searchContacts: (q: string)
       <label style={labelStyle}>Search existing contacts (optional — autofills the fields below)</label>
       <input style={inputStyle} placeholder="Name, phone, or email…" value={q} onChange={(e) => setQ(e.target.value)} />
       {results.length > 0 && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8, overflow: 'hidden', zIndex: 5 }}>
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', zIndex: 5 }}>
           {results.map((c) => (
             <div
               key={c.id}
               onClick={() => { onPick(c); setQ(''); }}
-              style={{ padding: '9px 12px', fontSize: 13, color: 'var(--text-quaternary)', cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
+              style={{ padding: '9px 12px', fontSize: 'var(--text-body)', color: 'var(--text-quaternary)', cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
             >
               {c.name}{c.business_name ? ` — ${c.business_name}` : ''}{c.phone ? ` · ${c.phone}` : ''}
             </div>
@@ -243,7 +243,7 @@ export default function EventAdderModal({
               key={t}
               onClick={() => !isEditing && setType(t)}
               style={{
-                flex: 1, textAlign: 'center', padding: '16px 8px', fontSize: 12.5, fontWeight: 700, letterSpacing: '0.06em',
+                flex: 1, textAlign: 'center', padding: '16px 8px', fontSize: 'var(--text-body-sm)', fontWeight: 700, letterSpacing: '0.06em',
                 cursor: isEditing ? 'default' : 'pointer', color: type === t ? EVENT_TYPE_COLOR[t] : 'var(--text-tertiary)',
                 borderBottom: `2px solid ${type === t ? EVENT_TYPE_COLOR[t] : 'transparent'}`,
                 opacity: isEditing && type !== t ? 0.35 : 1,
@@ -260,7 +260,7 @@ export default function EventAdderModal({
               {isEditing ? (
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Date</label>
-                  <div style={{ fontSize: 13.5, color: 'var(--text)' }}>{new Date(`${initialDate}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div>
+                  <div style={{ fontSize: 'var(--text-body-lg)', color: 'var(--text)' }}>{new Date(`${initialDate}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div>
                 </div>
               ) : (
                 <>
@@ -271,7 +271,7 @@ export default function EventAdderModal({
                         key={label}
                         onClick={() => toggleDay(idx)}
                         style={{
-                          flex: 1, textAlign: 'center', padding: '9px 0', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
+                          flex: 1, textAlign: 'center', padding: '9px 0', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: 'var(--text-body-sm)', fontWeight: 600,
                           border: `1px solid ${holidayDays.has(idx) ? 'var(--text)' : 'var(--border)'}`,
                           background: holidayDays.has(idx) ? 'var(--text)' : 'transparent',
                           color: holidayDays.has(idx) ? 'var(--bg)' : 'var(--text-quaternary)',
@@ -281,7 +281,7 @@ export default function EventAdderModal({
                       </div>
                     ))}
                   </div>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginBottom: 14 }}>
+                  <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 14 }}>
                     Applies to the week of {weekStartOf(initialDate).toLocaleDateString()} — one shift per day checked above.
                   </div>
                 </>
@@ -296,7 +296,7 @@ export default function EventAdderModal({
                   <input type="time" style={inputStyle} value={holidayEnd} onChange={(e) => setHolidayEnd(e.target.value)} />
                 </div>
               </div>
-              <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 14 }}>
+              <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginBottom: 14 }}>
                 {isEditing
                   ? `${hoursBetween(holidayStart, holidayEnd).toFixed(1)} hours`
                   : `${hoursBetween(holidayStart, holidayEnd).toFixed(1)} hours/day × ${holidayDays.size || 1} day${holidayDays.size === 1 ? '' : 's'}`}
@@ -455,7 +455,7 @@ export default function EventAdderModal({
             </div>
           )}
 
-          {error && <div style={{ fontSize: 12.5, color: '#c47a7a', marginBottom: 10 }}>{error}</div>}
+          {error && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', marginBottom: 10 }}>{error}</div>}
 
           <div style={{ display: 'flex', gap: 10, marginTop: 8, alignItems: 'center' }}>
             <div style={{ ...primaryBtn, opacity: saving ? 0.6 : 1, pointerEvents: saving ? 'none' : 'auto' }} onClick={save}>

@@ -49,19 +49,19 @@ async function generateConcepts(
 }
 
 const inputStyle: CSSProperties = {
-  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '9px 12px',
-  color: 'var(--text)', fontSize: 13.5, outline: 'none', width: '100%', boxSizing: 'border-box',
+  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)', padding: '9px 12px',
+  color: 'var(--text)', fontSize: 'var(--text-body-lg)', outline: 'none', width: '100%', boxSizing: 'border-box',
 };
 const primaryBtn: CSSProperties = {
-  alignSelf: 'flex-start', padding: '10px 18px', borderRadius: 999, background: 'var(--text)',
-  color: 'var(--bg)', fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none',
+  alignSelf: 'flex-start', padding: '10px 18px', borderRadius: 'var(--radius-pill)', background: 'var(--text)',
+  color: 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer', border: 'none',
 };
 const ghostBtn: CSSProperties = {
-  padding: '8px 15px', borderRadius: 999, border: '1px solid var(--border-2)', background: 'transparent',
-  color: 'var(--text-quaternary)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+  padding: '8px 15px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-2)', background: 'transparent',
+  color: 'var(--text-quaternary)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer',
 };
 const chipStyle = (active: boolean): CSSProperties => ({
-  padding: '8px 14px', borderRadius: 999, fontSize: 12.5, cursor: 'pointer',
+  padding: '8px 14px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-body-sm)', cursor: 'pointer',
   border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? '#F5F6F71a' : 'var(--surface)',
   color: active ? 'var(--text)' : 'var(--text-secondary)',
 });
@@ -69,17 +69,17 @@ const chipStyle = (active: boolean): CSSProperties => ({
 function ConceptMock({ concept }: { concept: BrandConcept }) {
   const { bg, surface, primary, text, muted } = concept.palette;
   const headStyle: CSSProperties = { fontFamily: `'${concept.headingFont}', 'Inter', sans-serif` };
-  const box: CSSProperties = { borderRadius: 10, overflow: 'hidden', height: 200, position: 'relative' };
+  const box: CSSProperties = { borderRadius: 'var(--radius-md)', overflow: 'hidden', height: 200, position: 'relative' };
 
   switch (concept.archetype) {
     case 'bold-split':
       return (
         <div style={{ ...box, display: 'flex' }}>
           <div style={{ flex: 1.2, background: primary, display: 'flex', alignItems: 'center', padding: 18 }}>
-            <div style={{ ...headStyle, fontSize: 20, fontWeight: 700, color: bg, lineHeight: 1.1 }}>{concept.name}</div>
+            <div style={{ ...headStyle, fontSize: 'var(--text-title)', fontWeight: 700, color: bg, lineHeight: 1.1 }}>{concept.name}</div>
           </div>
           <div style={{ flex: 1, background: surface, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 14, gap: 6 }}>
-            {concept.mood.map((m) => <div key={m} style={{ fontSize: 10, color: muted }}>{m}</div>)}
+            {concept.mood.map((m) => <div key={m} style={{ fontSize: 'var(--text-nano)', color: muted }}>{m}</div>)}
           </div>
         </div>
       );
@@ -89,14 +89,14 @@ function ConceptMock({ concept }: { concept: BrandConcept }) {
           <div style={{ width: 2, background: primary, flexShrink: 0 }} />
           <div>
             <div style={{ ...headStyle, fontSize: 18, fontStyle: 'italic', color: text, lineHeight: 1.25 }}>{concept.name}</div>
-            <div style={{ fontSize: 11, color: muted, marginTop: 10, lineHeight: 1.5 }}>{concept.blurb}</div>
+            <div style={{ fontSize: 'var(--text-tiny)', color: muted, marginTop: 10, lineHeight: 1.5 }}>{concept.blurb}</div>
           </div>
         </div>
       );
     case 'grid-cards':
       return (
         <div style={{ ...box, background: bg, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ ...headStyle, fontSize: 16, fontWeight: 700, color: text }}>{concept.name}</div>
+          <div style={{ ...headStyle, fontSize: 'var(--text-head)', fontWeight: 700, color: text }}>{concept.name}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, flex: 1 }}>
             {[0, 1, 2].map((i) => (
               <div key={i} style={{ background: surface, borderRadius: 6, border: `1px solid ${primary}33` }} />
@@ -108,8 +108,8 @@ function ConceptMock({ concept }: { concept: BrandConcept }) {
       return (
         <div style={{ ...box, background: primary, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 18 }}>
           <div>
-            <div style={{ ...headStyle, fontSize: 20, fontWeight: 700, color: bg }}>{concept.name}</div>
-            <div style={{ fontSize: 10.5, color: bg, opacity: 0.75, marginTop: 8 }}>{concept.mood.join(' · ')}</div>
+            <div style={{ ...headStyle, fontSize: 'var(--text-title)', fontWeight: 700, color: bg }}>{concept.name}</div>
+            <div style={{ fontSize: 'var(--text-micro)', color: bg, opacity: 0.75, marginTop: 8 }}>{concept.mood.join(' · ')}</div>
           </div>
         </div>
       );
@@ -117,11 +117,11 @@ function ConceptMock({ concept }: { concept: BrandConcept }) {
       return (
         <div style={{ ...box, background: bg, display: 'flex' }}>
           <div style={{ width: 34, background: surface, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 14, gap: 8 }}>
-            {[0, 1, 2].map((i) => <div key={i} style={{ width: 12, height: 12, borderRadius: 4, background: primary, opacity: 0.5 + i * 0.15 }} />)}
+            {[0, 1, 2].map((i) => <div key={i} style={{ width: 12, height: 12, borderRadius: 'var(--radius-xs)', background: primary, opacity: 0.5 + i * 0.15 }} />)}
           </div>
           <div style={{ flex: 1, padding: 16 }}>
-            <div style={{ ...headStyle, fontSize: 15, fontWeight: 700, color: text }}>{concept.name}</div>
-            <div style={{ fontSize: 10.5, color: muted, marginTop: 6, lineHeight: 1.5 }}>{concept.blurb}</div>
+            <div style={{ ...headStyle, fontSize: 'var(--text-subhead)', fontWeight: 700, color: text }}>{concept.name}</div>
+            <div style={{ fontSize: 'var(--text-micro)', color: muted, marginTop: 6, lineHeight: 1.5 }}>{concept.blurb}</div>
           </div>
         </div>
       );
@@ -131,7 +131,7 @@ function ConceptMock({ concept }: { concept: BrandConcept }) {
         <div style={{ ...box, background: bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 18 }}>
           <div style={{ fontSize: 9, letterSpacing: '0.18em', color: muted, textTransform: 'uppercase' }}>{concept.mood[0]}</div>
           <div style={{ ...headStyle, fontSize: 18, color: text, marginTop: 10 }}>{concept.name}</div>
-          <div style={{ marginTop: 14, padding: '7px 16px', border: `1px solid ${muted}`, borderRadius: 999, fontSize: 10.5, color: text }}>{concept.blurb.slice(0, 24)}…</div>
+          <div style={{ marginTop: 14, padding: '7px 16px', border: `1px solid ${muted}`, borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-micro)', color: text }}>{concept.blurb.slice(0, 24)}…</div>
         </div>
       );
   }
@@ -139,12 +139,12 @@ function ConceptMock({ concept }: { concept: BrandConcept }) {
 
 function ConceptCard({ concept, pinned, onPin }: { concept: BrandConcept; pinned: boolean; onPin: () => void }) {
   return (
-    <div style={{ background: 'var(--surface)', border: `1px solid ${pinned ? '#C9A24B' : 'var(--border)'}`, borderRadius: 14, padding: 14 }}>
+    <div style={{ background: 'var(--surface)', border: `1px solid ${pinned ? '#C9A24B' : 'var(--border)'}`, borderRadius: 'var(--radius-xl)', padding: 14 }}>
       <ConceptMock concept={concept} />
       <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)' }}>{concept.name}</div>
-          <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 2 }}>{concept.mood.join(' · ')}</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: 'var(--text)' }}>{concept.name}</div>
+          <div style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)', marginTop: 2 }}>{concept.mood.join(' · ')}</div>
         </div>
         <div style={pinned ? { ...ghostBtn, borderColor: '#C9A24B', color: '#C9A24B' } : ghostBtn} onClick={onPin}>
           {pinned ? 'Pinned ★' : 'Pin'}
@@ -158,8 +158,8 @@ function StepCard({
   index, title, children,
 }: { index: number; title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 18 }}>
-      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Step {index} — {title}</div>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 18 }}>
+      <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Step {index} — {title}</div>
       {children}
     </div>
   );
@@ -292,11 +292,11 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
         <div style={{ ...homeHeadStyle, marginTop: 12 }}>{active.business || active.direction}</div>
         <div style={homeSubStyle}>{active.audience ? `For: ${active.audience}` : 'A visual design-direction generator — not a site builder.'}</div>
 
-        {generating && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 12 }}>Nova is working on it…</div>}
-        {aiError && <div style={{ fontSize: 12, color: '#c47a7a', marginTop: 12 }}>{aiError}</div>}
+        {generating && <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 12 }}>Nova is working on it…</div>}
+        {aiError && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a', marginTop: 12 }}>{aiError}</div>}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 20 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Concepts</div>
+          <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Concepts</div>
           <span style={ghostBtn} onClick={() => regenerate(active)}>Regenerate</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginTop: 12, maxWidth: 900 }}>
@@ -304,14 +304,14 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
             <ConceptCard key={c.id} concept={c} pinned={active.pinned_concept_id === c.id} onPin={() => pinConcept(active.id, c.id)} />
           ))}
           {active.concepts.length === 0 && !generating && (
-            <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>No concepts yet — try regenerating.</div>
+            <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No concepts yet — try regenerating.</div>
           )}
         </div>
 
         {pinnedConcept && (
           <div style={{ marginTop: 32 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>Guided handoff prep</div>
-            <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginBottom: 16 }}>
+            <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>Guided handoff prep</div>
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 16 }}>
               Once these four are confirmed, this concept is ready to hand off to Website Builder.
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 620 }}>
@@ -321,7 +321,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
                     <div key={k} title={`${k}: ${v}`} style={{ width: 28, height: 28, borderRadius: 6, background: v, border: '1px solid var(--border-2)' }} />
                   ))}
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 10 }}>Heading: {pinnedConcept.headingFont} · Body: Inter</div>
+                <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginBottom: 10 }}>Heading: {pinnedConcept.headingFont} · Body: Inter</div>
                 <div
                   style={active.steps.paletteTypography?.confirmed ? { ...ghostBtn, borderColor: '#4a7a5a', color: '#8fae8f' } : primaryBtn}
                   onClick={() => saveStep(active.id, 'paletteTypography', { confirmed: true })}
@@ -367,7 +367,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
               </StepCard>
 
               <StepCard index={4} title="Asset prep for Website Builder handoff">
-                <textarea style={{ ...inputStyle, minHeight: 120, marginBottom: 10, fontFamily: 'monospace', fontSize: 11.5 }} readOnly value={assetPrepText} />
+                <textarea style={{ ...inputStyle, minHeight: 120, marginBottom: 10, fontFamily: 'monospace', fontSize: 'var(--text-caption)' }} readOnly value={assetPrepText} />
                 <div
                   style={active.steps.assetPrep?.confirmed ? { ...ghostBtn, borderColor: '#4a7a5a', color: '#8fae8f' } : primaryBtn}
                   onClick={() => saveStep(active.id, 'assetPrep', { text: assetPrepText, confirmed: true })}
@@ -379,7 +379,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
 
             {allStepsConfirmed && (
               <div style={{ ...inputStyle, marginTop: 20, maxWidth: 480, background: 'var(--surface)', border: '1px solid #C9A24B55', padding: 18 }}>
-                <div style={{ fontSize: 12.5, color: '#C9A24B', fontWeight: 600, marginBottom: 10 }}>Finalized — ready as a project asset</div>
+                <div style={{ fontSize: 'var(--text-body-sm)', color: '#C9A24B', fontWeight: 600, marginBottom: 10 }}>Finalized — ready as a project asset</div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <select style={{ ...inputStyle, flex: 1 }} value={attachProjectId} onChange={(e) => setAttachProjectId(e.target.value)}>
                     <option value="">— attach to a Scaling project —</option>
@@ -406,21 +406,21 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
       </div>
 
       {showForm && (
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 20, marginTop: 20, maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 20, marginTop: 20, maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <input style={inputStyle} placeholder="What's the business?" value={business} onChange={(e) => setBusiness(e.target.value)} />
           <input style={inputStyle} placeholder="Who's the audience?" value={audience} onChange={(e) => setAudience(e.target.value)} />
           <input style={inputStyle} placeholder="Reference site 1 (optional)" value={url1} onChange={(e) => setUrl1(e.target.value)} />
           <input style={inputStyle} placeholder="Reference site 2 (optional)" value={url2} onChange={(e) => setUrl2(e.target.value)} />
           <input style={inputStyle} placeholder="Reference site 3 (optional)" value={url3} onChange={(e) => setUrl3(e.target.value)} />
           <div>
-            <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginBottom: 8 }}>Tone</div>
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 8 }}>Tone</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {TONE_OPTIONS.map((t) => <div key={t} style={chipStyle(tone === t)} onClick={() => setTone(t)}>{t}</div>)}
             </div>
           </div>
           <input style={inputStyle} placeholder="Color preference (optional — leave blank for AI's judgment)" value={colorPref} onChange={(e) => setColorPref(e.target.value)} />
           <div>
-            <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginBottom: 8 }}>How many concepts?</div>
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 8 }}>How many concepts?</div>
             <div style={{ display: 'flex', gap: 6 }}>
               {([3, 4, 5] as const).map((n) => <div key={n} style={chipStyle(count === n)} onClick={() => setCount(n)}>{n}</div>)}
             </div>
@@ -429,7 +429,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
         </div>
       )}
 
-      <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', maxWidth: 640 }}>
+      <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', maxWidth: 640 }}>
         {briefs.map((b) => (
           <div
             key={b.id}
@@ -437,14 +437,14 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)', cursor: 'pointer' }}
           >
             <div>
-              <span style={{ fontSize: 13.5, color: 'var(--text-quaternary)' }}>{b.business || b.direction}</span>
-              {b.pinned_concept_id && <span style={{ fontSize: 11, color: '#C9A24B', marginLeft: 10 }}>★ pinned</span>}
+              <span style={{ fontSize: 'var(--text-body-lg)', color: 'var(--text-quaternary)' }}>{b.business || b.direction}</span>
+              {b.pinned_concept_id && <span style={{ fontSize: 'var(--text-tiny)', color: '#C9A24B', marginLeft: 10 }}>★ pinned</span>}
             </div>
-            <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }} onClick={(e) => { e.stopPropagation(); removeBrief(b.id); }}>Delete</span>
+            <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }} onClick={(e) => { e.stopPropagation(); removeBrief(b.id); }}>Delete</span>
           </div>
         ))}
         {!loading && briefs.length === 0 && (
-          <div style={{ padding: 18, fontSize: 13, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No briefs yet.</div>
+          <div style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No briefs yet.</div>
         )}
       </div>
     </div>

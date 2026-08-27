@@ -17,7 +17,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 };
 
 const cardStyle = (active: boolean): CSSProperties => ({
-  display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
+  display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px', borderRadius: 'var(--radius-lg)', cursor: 'pointer',
   border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? '#F5F6F71a' : 'var(--surface)',
   transition: 'border-color 0.12s ease, background 0.12s ease',
 });
@@ -31,7 +31,7 @@ export default function ModulePicker({ selected, onToggle }: Props) {
         return (
           <div key={cat ?? 'uncategorized'}>
             {cat && (
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: 12 }}>
+              <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: 12 }}>
                 {CATEGORY_LABEL[cat]}
               </div>
             )}
@@ -49,10 +49,10 @@ export default function ModulePicker({ selected, onToggle }: Props) {
                       <div style={{ minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           <Icon name={m.icon} size={14} color="var(--text-tertiary)" />
-                          <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-secondary)' }}>{m.label}</div>
+                          <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text-secondary)' }}>{m.label}</div>
                         </div>
-                        <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 4, lineHeight: 1.5 }}>{m.description}</div>
-                        <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 4 }}>Owner-managed — not available on this account.</div>
+                        <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 4, lineHeight: 1.5 }}>{m.description}</div>
+                        <div style={{ fontSize: 'var(--text-nano)', color: 'var(--text-tertiary)', marginTop: 4 }}>Owner-managed — not available on this account.</div>
                       </div>
                     </div>
                   );
@@ -63,18 +63,18 @@ export default function ModulePicker({ selected, onToggle }: Props) {
                     <div style={{
                       width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1,
                       border: `1px solid ${active ? 'var(--text)' : '#3a3d43'}`, background: active ? 'var(--text)' : 'transparent',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--bg)', fontWeight: 700,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--text-tiny)', color: 'var(--bg)', fontWeight: 700,
                     }}>
                       {active ? '✓' : ''}
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <Icon name={m.icon} size={14} color={active ? 'var(--text)' : 'var(--text-secondary)'} />
-                        <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>{m.label}</div>
+                        <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)' }}>{m.label}</div>
                       </div>
-                      <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>{m.description}</div>
+                      <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>{m.description}</div>
                       {m.requiresAI && (
-                        <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 4 }}>Needs the Anthropic key funded for its AI features.</div>
+                        <div style={{ fontSize: 'var(--text-nano)', color: 'var(--text-tertiary)', marginTop: 4 }}>Needs the Anthropic key funded for its AI features.</div>
                       )}
                     </div>
                   </div>

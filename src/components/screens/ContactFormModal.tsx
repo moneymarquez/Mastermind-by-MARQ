@@ -15,22 +15,22 @@ const overlayStyle: CSSProperties = {
 };
 const panelStyle: CSSProperties = {
   width: '100%', maxWidth: 520, maxHeight: '88vh', overflowY: 'auto',
-  background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 16,
+  background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-2xl)',
   boxShadow: '0 30px 80px rgba(0,0,0,0.5)', animation: 'bubbleFade 0.18s ease', padding: '24px 26px',
 };
 const inputStyle: CSSProperties = {
-  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '9px 12px',
-  color: 'var(--text)', fontSize: 13.5, outline: 'none', width: '100%',
+  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)', padding: '9px 12px',
+  color: 'var(--text)', fontSize: 'var(--text-body-lg)', outline: 'none', width: '100%',
 };
-const labelStyle: CSSProperties = { fontSize: 11.5, color: 'var(--text-secondary)', marginBottom: 5, display: 'block' };
+const labelStyle: CSSProperties = { fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 5, display: 'block' };
 const fieldWrap: CSSProperties = { marginBottom: 12 };
 const primaryBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '10px 20px', borderRadius: 999,
-  background: 'var(--text)', color: 'var(--bg)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+  display: 'inline-flex', alignItems: 'center', padding: '10px 20px', borderRadius: 'var(--radius-pill)',
+  background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer',
 };
 const ghostBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999,
-  border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer',
+  display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 'var(--radius-pill)',
+  border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 'var(--text-body)', cursor: 'pointer',
 };
 
 function YesNoSelect({ label, value, onChange, includeUnsure }: { label: string; value: string; onChange: (v: string) => void; includeUnsure?: boolean }) {
@@ -207,7 +207,7 @@ export default function ContactFormModal({ onSave, onClose }: Props) {
           <textarea style={{ ...inputStyle, minHeight: 70, resize: 'vertical' }} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
 
-        {error && <div style={{ fontSize: 12.5, color: '#c47a7a', marginBottom: 10 }}>{error}</div>}
+        {error && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', marginBottom: 10 }}>{error}</div>}
 
         <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
           <div style={{ ...primaryBtn, opacity: saving ? 0.6 : 1, pointerEvents: saving ? 'none' : 'auto' }} onClick={save}>

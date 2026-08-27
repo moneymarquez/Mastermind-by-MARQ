@@ -13,19 +13,19 @@ const GOLD = '#C9A24B';
 const GREEN = '#4CAF7D';
 const RED = '#c47a7a';
 
-const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 18 };
-const mono: CSSProperties = { fontFamily: "'JetBrains Mono', monospace" };
+const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 18 };
+const mono: CSSProperties = { fontFamily: 'var(--font-mono)' };
 const inputStyle: CSSProperties = {
-  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '9px 12px',
-  color: 'var(--text)', fontSize: 13.5, outline: 'none',
+  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)', padding: '9px 12px',
+  color: 'var(--text)', fontSize: 'var(--text-body-lg)', outline: 'none',
 };
 const tabStyle = (active: boolean): CSSProperties => ({
-  padding: '9px 16px', borderRadius: 999, cursor: 'pointer', fontSize: 13, fontWeight: 600,
+  padding: '9px 16px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body)', fontWeight: 600,
   border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, color: active ? 'var(--text)' : 'var(--text-tertiary)',
   background: active ? '#F5F6F71a' : 'transparent', whiteSpace: 'nowrap',
 });
 const pillButton = (variant: 'solid' | 'outline', danger?: boolean): CSSProperties => ({
-  display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 999, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+  display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer',
   background: variant === 'solid' ? (danger ? RED : 'var(--text)') : 'transparent',
   color: variant === 'solid' ? 'var(--bg)' : danger ? RED : 'var(--text)',
   border: variant === 'outline' ? `1px solid ${danger ? RED : 'var(--text)'}` : 'none',
@@ -103,8 +103,8 @@ function Walkthrough() {
   return (
     <div style={{ ...cardStyle, marginTop: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => setOpen(!open)}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>How to run this bot</div>
-        <div style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>{doneCount}/{WALKTHROUGH_STEPS.length} · {open ? 'Hide' : 'Show'}</div>
+        <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>How to run this bot</div>
+        <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)' }}>{doneCount}/{WALKTHROUGH_STEPS.length} · {open ? 'Hide' : 'Show'}</div>
       </div>
       {open && (
         <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -113,11 +113,11 @@ function Walkthrough() {
               <div style={{
                 width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1,
                 border: `1px solid ${checked[i] ? GOLD : 'var(--border-2)'}`, background: checked[i] ? GOLD : 'transparent',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--bg)', fontWeight: 700,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--text-tiny)', color: 'var(--bg)', fontWeight: 700,
               }}>
                 {checked[i] ? '✓' : ''}
               </div>
-              <div style={{ fontSize: 13, color: checked[i] ? 'var(--text-tertiary)' : 'var(--text-quaternary-2)', textDecoration: checked[i] ? 'line-through' : 'none', lineHeight: 1.5 }}>
+              <div style={{ fontSize: 'var(--text-body)', color: checked[i] ? 'var(--text-tertiary)' : 'var(--text-quaternary-2)', textDecoration: checked[i] ? 'line-through' : 'none', lineHeight: 1.5 }}>
                 {step}
               </div>
             </div>
@@ -129,7 +129,7 @@ function Walkthrough() {
 }
 
 function Sparkline({ points }: { points: number[] }) {
-  if (points.length < 2) return <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', padding: '30px 0' }}>Not enough days yet — check back after a few trading days.</div>;
+  if (points.length < 2) return <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', padding: '30px 0' }}>Not enough days yet — check back after a few trading days.</div>;
   const w = 600, h = 120, pad = 8;
   const min = Math.min(...points), max = Math.max(...points);
   const range = max - min || 1;
@@ -154,49 +154,49 @@ function TodayPanel({ signals, trades, account, accountLoading }: ReturnType<typ
     <div style={{ marginTop: 20 }}>
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
         <div style={{ ...cardStyle, minWidth: 160 }}>
-          <div style={{ ...mono, fontSize: 26, fontWeight: 600, color: accountLoading ? 'var(--text-tertiary)' : pnlColor(account.dailyPl) }}>
+          <div style={{ ...mono, fontSize: 'var(--text-display)', fontWeight: 600, color: accountLoading ? 'var(--text-tertiary)' : pnlColor(account.dailyPl) }}>
             {accountLoading ? '—' : money(account.dailyPl)}
           </div>
-          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 4 }}>Net P&L today {accountLoading ? '' : `(${pct(account.dailyPlPct)})`}</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>Net P&L today {accountLoading ? '' : `(${pct(account.dailyPlPct)})`}</div>
         </div>
         <div style={{ ...cardStyle, minWidth: 160 }}>
-          <div style={{ ...mono, fontSize: 26, fontWeight: 600, color: 'var(--text)' }}>{accountLoading ? '—' : money(account.equity)}</div>
-          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 4 }}>Paper account equity</div>
+          <div style={{ ...mono, fontSize: 'var(--text-display)', fontWeight: 600, color: 'var(--text)' }}>{accountLoading ? '—' : money(account.equity)}</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>Paper account equity</div>
         </div>
         <div style={{ ...cardStyle, minWidth: 160 }}>
-          <div style={{ ...mono, fontSize: 26, fontWeight: 600, color: 'var(--text)' }}>{account.positions.length}</div>
-          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 4 }}>Open positions</div>
+          <div style={{ ...mono, fontSize: 'var(--text-display)', fontWeight: 600, color: 'var(--text)' }}>{account.positions.length}</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>Open positions</div>
         </div>
       </div>
 
-      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginTop: 24, marginBottom: 10 }}>Open positions</div>
-      <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginTop: 24, marginBottom: 10 }}>Open positions</div>
+      <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden' }}>
         {account.positions.map((p) => (
           <div key={p.symbol} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)' }}>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{p.symbol}</div>
-              <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 2 }}>{p.qty} sh · avg {money(p.avg_entry_price)} · now {money(p.current_price)}</div>
+              <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>{p.symbol}</div>
+              <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 2 }}>{p.qty} sh · avg {money(p.avg_entry_price)} · now {money(p.current_price)}</div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ ...mono, fontSize: 14, fontWeight: 600, color: pnlColor(p.unrealized_pl) }}>{money(p.unrealized_pl)}</div>
-              <div style={{ fontSize: 12, color: pnlColor(p.unrealized_plpc) }}>{pct(p.unrealized_plpc)}</div>
+              <div style={{ ...mono, fontSize: 'var(--text-label)', fontWeight: 600, color: pnlColor(p.unrealized_pl) }}>{money(p.unrealized_pl)}</div>
+              <div style={{ fontSize: 'var(--text-small)', color: pnlColor(p.unrealized_plpc) }}>{pct(p.unrealized_plpc)}</div>
             </div>
           </div>
         ))}
         {!accountLoading && account.positions.length === 0 && (
-          <div style={{ padding: 18, fontSize: 13, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No open positions right now.</div>
+          <div style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No open positions right now.</div>
         )}
       </div>
 
-      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginTop: 24, marginBottom: 10 }}>
+      <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginTop: 24, marginBottom: 10 }}>
         Today's signals <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>— including blocked ones, so you can see why the bot did (or didn't) act</span>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden' }}>
         {todaySignals.map((s) => <SignalRow key={s.id} signal={s} />)}
-        {todaySignals.length === 0 && <div style={{ padding: 18, fontSize: 13, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No signals yet today.</div>}
+        {todaySignals.length === 0 && <div style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No signals yet today.</div>}
       </div>
       {openTrades.length === 0 && account.positions.length === 0 && (
-        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 10 }}>No trades open — the bot is watching the watchlist for a setup.</div>
+        <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', marginTop: 10 }}>No trades open — the bot is watching the watchlist for a setup.</div>
       )}
     </div>
   );
@@ -207,12 +207,12 @@ function SignalRow({ signal }: { signal: BotSignal }) {
   const label = signal.signal_type === 'entry' ? 'Entered' : signal.signal_type === 'exit' ? 'Exited' : 'Blocked';
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 20px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)' }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: 0.4, minWidth: 56, marginTop: 2 }}>{label}</div>
+      <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: 0.4, minWidth: 56, marginTop: 2 }}>{label}</div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>{signal.ticker === '*' ? 'Bot-wide' : signal.ticker}</div>
-        <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 2 }}>{signal.reason}</div>
+        <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)' }}>{signal.ticker === '*' ? 'Bot-wide' : signal.ticker}</div>
+        <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 2 }}>{signal.reason}</div>
       </div>
-      <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{new Date(signal.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+      <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{new Date(signal.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
     </div>
   );
 }
@@ -243,40 +243,40 @@ function PerformancePanel({ trades, dailySummaries }: ReturnType<typeof useStock
   return (
     <div style={{ marginTop: 20 }}>
       <div style={cardStyle}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Equity curve since start</div>
+        <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Equity curve since start</div>
         <Sparkline points={equityPoints} />
       </div>
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 16 }}>
         <div style={{ ...cardStyle, minWidth: 140 }}>
-          <div style={{ ...mono, fontSize: 22, fontWeight: 600, color: 'var(--text)' }}>{winRate == null ? '—' : `${winRate.toFixed(0)}%`}</div>
-          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 4 }}>Win rate</div>
+          <div style={{ ...mono, fontSize: 'var(--text-stat)', fontWeight: 600, color: 'var(--text)' }}>{winRate == null ? '—' : `${winRate.toFixed(0)}%`}</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>Win rate</div>
         </div>
         <div style={{ ...cardStyle, minWidth: 140 }}>
-          <div style={{ ...mono, fontSize: 22, fontWeight: 600, color: 'var(--text)' }}>{closed.length}</div>
-          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 4 }}>Total closed trades</div>
+          <div style={{ ...mono, fontSize: 'var(--text-stat)', fontWeight: 600, color: 'var(--text)' }}>{closed.length}</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>Total closed trades</div>
         </div>
         <div style={{ ...cardStyle, minWidth: 140 }}>
-          <div style={{ ...mono, fontSize: 22, fontWeight: 600, color: GREEN }}>{money(avgWin)}</div>
-          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 4 }}>Average win</div>
+          <div style={{ ...mono, fontSize: 'var(--text-stat)', fontWeight: 600, color: GREEN }}>{money(avgWin)}</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>Average win</div>
         </div>
         <div style={{ ...cardStyle, minWidth: 140 }}>
-          <div style={{ ...mono, fontSize: 22, fontWeight: 600, color: RED }}>{money(avgLoss)}</div>
-          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 4 }}>Average loss</div>
+          <div style={{ ...mono, fontSize: 'var(--text-stat)', fontWeight: 600, color: RED }}>{money(avgLoss)}</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>Average loss</div>
         </div>
         <div style={{ ...cardStyle, minWidth: 140 }}>
-          <div style={{ ...mono, fontSize: 22, fontWeight: 600, color: RED }}>{maxDrawdown.toFixed(1)}%</div>
-          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 4 }}>Max drawdown</div>
+          <div style={{ ...mono, fontSize: 'var(--text-stat)', fontWeight: 600, color: RED }}>{maxDrawdown.toFixed(1)}%</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>Max drawdown</div>
         </div>
       </div>
 
       {dailySummaries[0]?.nova_commentary ? (
         <div style={{ ...cardStyle, marginTop: 16, borderColor: `${GOLD}44` }}>
-          <div style={{ fontSize: 12, color: GOLD, fontWeight: 600, marginBottom: 6 }}>{assistantName} · {dailySummaries[0].summary_date}</div>
-          <div style={{ fontSize: 13.5, color: 'var(--text-quaternary-2)', lineHeight: 1.6 }}>{dailySummaries[0].nova_commentary}</div>
+          <div style={{ fontSize: 'var(--text-small)', color: GOLD, fontWeight: 600, marginBottom: 6 }}>{assistantName} · {dailySummaries[0].summary_date}</div>
+          <div style={{ fontSize: 'var(--text-body-lg)', color: 'var(--text-quaternary-2)', lineHeight: 1.6 }}>{dailySummaries[0].nova_commentary}</div>
         </div>
       ) : dailySummaries[0] ? (
         <div style={{ ...cardStyle, marginTop: 16 }}>
-          <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>{assistantName} commentary — pending API key.</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>{assistantName} commentary — pending API key.</div>
         </div>
       ) : null}
     </div>
@@ -295,12 +295,12 @@ function TradeLogPanel({ trades }: { trades: BotTrade[] }) {
         {tickers.map((t) => <div key={t} style={tabStyle(filter === t)} onClick={() => setFilter(t)}>{t}</div>)}
       </div>
       <div style={{ overflowX: 'auto' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', minWidth: 560 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '80px 60px 70px 90px 90px 90px 90px 1fr', gap: 8, padding: '10px 20px', background: 'var(--surface-4)', fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: 0.3 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', minWidth: 560 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '80px 60px 70px 90px 90px 90px 90px 1fr', gap: 8, padding: '10px 20px', background: 'var(--surface-4)', fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: 0.3 }}>
             <div>Ticker</div><div>Side</div><div>Qty</div><div>Entry</div><div>Exit</div><div>Stop</div><div>P&L</div><div>Opened</div>
           </div>
           {filtered.map((t) => (
-            <div key={t.id} style={{ display: 'grid', gridTemplateColumns: '80px 60px 70px 90px 90px 90px 90px 1fr', gap: 8, padding: '12px 20px', borderTop: '1px solid var(--surface-3)', background: 'var(--surface-2)', fontSize: 13, alignItems: 'center' }}>
+            <div key={t.id} style={{ display: 'grid', gridTemplateColumns: '80px 60px 70px 90px 90px 90px 90px 1fr', gap: 8, padding: '12px 20px', borderTop: '1px solid var(--surface-3)', background: 'var(--surface-2)', fontSize: 'var(--text-body)', alignItems: 'center' }}>
               <div style={{ fontWeight: 600, color: 'var(--text)' }}>{t.ticker}</div>
               <div style={{ color: 'var(--text-secondary)' }}>{t.side}</div>
               <div style={mono}>{t.qty}</div>
@@ -308,10 +308,10 @@ function TradeLogPanel({ trades }: { trades: BotTrade[] }) {
               <div style={mono}>{t.exit_price != null ? money(t.exit_price) : '—'}</div>
               <div style={{ ...mono, color: 'var(--text-secondary)' }}>{t.stop_loss_price != null ? money(t.stop_loss_price) : '—'}</div>
               <div style={{ ...mono, color: t.pnl != null ? pnlColor(t.pnl) : 'var(--text-tertiary)' }}>{t.pnl != null ? money(t.pnl) : t.status === 'open' ? 'open' : '—'}</div>
-              <div style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>{new Date(t.opened_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+              <div style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-small)' }}>{new Date(t.opened_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
             </div>
           ))}
-          {filtered.length === 0 && <div style={{ padding: 18, fontSize: 13, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No trades yet.</div>}
+          {filtered.length === 0 && <div style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No trades yet.</div>}
         </div>
       </div>
     </div>
@@ -333,14 +333,14 @@ function SettingsPanel(bot: ReturnType<typeof useStocksBot>) {
   return (
     <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 640 }}>
       <div style={cardStyle}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>Broker keys — Alpaca (paper)</div>
-        <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 12 }}>
+        <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>Broker keys — Alpaca (paper)</div>
+        <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginBottom: 12 }}>
           {brokerStatus.connected ? `Connected · key ${brokerStatus.apiKeyIdMasked}` : 'Not connected yet.'}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <input style={inputStyle} placeholder="Paper API Key ID" value={apiKeyId} onChange={(e) => setApiKeyId(e.target.value)} />
           <input style={inputStyle} placeholder="Paper API Secret" type="password" value={apiSecret} onChange={(e) => setApiSecret(e.target.value)} />
-          {keysError && <div style={{ fontSize: 12.5, color: RED }}>{keysError}</div>}
+          {keysError && <div style={{ fontSize: 'var(--text-body-sm)', color: RED }}>{keysError}</div>}
           <div
             style={{ ...pillButton('solid'), alignSelf: 'flex-start', opacity: savingKeys || !apiKeyId.trim() || !apiSecret.trim() ? 0.5 : 1, pointerEvents: savingKeys ? 'none' : 'auto' }}
             onClick={() => apiKeyId.trim() && apiSecret.trim() && saveBrokerKeys(apiKeyId.trim(), apiSecret.trim()).then(() => { setApiKeyId(''); setApiSecret(''); })}
@@ -351,7 +351,7 @@ function SettingsPanel(bot: ReturnType<typeof useStocksBot>) {
       </div>
 
       <div style={cardStyle}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>Watchlist <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>(5 max)</span></div>
+        <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>Watchlist <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>(5 max)</span></div>
         <div style={{ display: 'flex', gap: 8 }}>
           <input style={{ ...inputStyle, flex: 1 }} placeholder="SPY, QQQ, AAPL" value={watchlistInput} onChange={(e) => setWatchlistInput(e.target.value)} />
           <div style={pillButton('outline')} onClick={saveWatchlist}>Save</div>
@@ -359,10 +359,10 @@ function SettingsPanel(bot: ReturnType<typeof useStocksBot>) {
       </div>
 
       <div style={cardStyle}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 10 }}>Risk rules <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>(view only — hard limits, can't be loosened here)</span></div>
+        <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 10 }}>Risk rules <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>(view only — hard limits, can't be loosened here)</span></div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {RISK_RULES.map((r, i) => (
-            <div key={i} style={{ fontSize: 13, color: 'var(--text-quaternary-2)', display: 'flex', gap: 8 }}>
+            <div key={i} style={{ fontSize: 'var(--text-body)', color: 'var(--text-quaternary-2)', display: 'flex', gap: 8 }}>
               <span style={{ color: GOLD }}>·</span>{r}
             </div>
           ))}
@@ -370,10 +370,10 @@ function SettingsPanel(bot: ReturnType<typeof useStocksBot>) {
       </div>
 
       <div style={cardStyle}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 10 }}>Strategy</div>
+        <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 10 }}>Strategy</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {STRATEGY_PARAMS.map((r, i) => (
-            <div key={i} style={{ fontSize: 13, color: 'var(--text-quaternary-2)', display: 'flex', gap: 8 }}>
+            <div key={i} style={{ fontSize: 'var(--text-body)', color: 'var(--text-quaternary-2)', display: 'flex', gap: 8 }}>
               <span style={{ color: GOLD }}>·</span>{r}
             </div>
           ))}
@@ -388,15 +388,15 @@ function NewsPanel({ account, accountLoading }: { account: ReturnType<typeof use
     <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
       {account.news.map((n, i) => (
         <a key={i} href={n.url} target="_blank" rel="noreferrer" style={{ ...cardStyle, display: 'block', textDecoration: 'none' }}>
-          <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', lineHeight: 1.4 }}>{n.headline}</div>
-          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 6 }}>
+          <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)', lineHeight: 1.4 }}>{n.headline}</div>
+          <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', marginTop: 6 }}>
             {n.source} · {n.symbols.join(', ')} · {new Date(n.createdAt).toLocaleDateString()}
           </div>
         </a>
       ))}
       {!accountLoading && account.news.length === 0 && (
         <div style={cardStyle}>
-          <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{account.connected ? 'No recent headlines for your watchlist.' : 'Connect your Alpaca keys to see market news for your watchlist.'}</div>
+          <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-tertiary)' }}>{account.connected ? 'No recent headlines for your watchlist.' : 'Connect your Alpaca keys to see market news for your watchlist.'}</div>
         </div>
       )}
     </div>
@@ -419,17 +419,17 @@ export default function StocksScreen({ homeHeadStyle, homeSubStyle }: Props) {
 
       <div style={{ ...cardStyle, marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ padding: '5px 12px', borderRadius: 999, background: `${GOLD}22`, border: `1px solid ${GOLD}55`, color: GOLD, fontSize: 11.5, fontWeight: 700, letterSpacing: 0.5 }}>PAPER</div>
+          <div style={{ padding: '5px 12px', borderRadius: 'var(--radius-pill)', background: `${GOLD}22`, border: `1px solid ${GOLD}55`, color: GOLD, fontSize: 'var(--text-caption)', fontWeight: 700, letterSpacing: 0.5 }}>PAPER</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: config.enabled ? GREEN : 'var(--text-tertiary)' }} />
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>{config.enabled ? 'Running' : 'Paused'}</div>
+            <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)' }}>{config.enabled ? 'Running' : 'Paused'}</div>
           </div>
           {halted && (
-            <div style={{ padding: '5px 12px', borderRadius: 999, background: `${RED}22`, border: `1px solid ${RED}55`, color: RED, fontSize: 11.5, fontWeight: 700 }}>
+            <div style={{ padding: '5px 12px', borderRadius: 'var(--radius-pill)', background: `${RED}22`, border: `1px solid ${RED}55`, color: RED, fontSize: 'var(--text-caption)', fontWeight: 700 }}>
               HALTED — {config.halted_reason}
             </div>
           )}
-          <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Last run: {timeAgo(config.last_run_at)}</div>
+          <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }}>Last run: {timeAgo(config.last_run_at)}</div>
         </div>
         <div style={pillButton(config.enabled ? 'outline' : 'solid', config.enabled)} onClick={toggleEnabled}>
           {config.enabled ? 'Kill switch — stop bot' : 'Turn bot ON'}

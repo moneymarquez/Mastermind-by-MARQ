@@ -34,16 +34,16 @@ interface Props<T extends Row> {
 }
 
 const textareaStyle: CSSProperties = {
-  width: '100%', minHeight: 96, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8,
-  padding: '12px 14px', color: 'var(--text)', fontSize: 14, outline: 'none', resize: 'vertical', fontFamily: 'inherit',
+  width: '100%', minHeight: 96, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)',
+  padding: '12px 14px', color: 'var(--text)', fontSize: 'var(--text-label)', outline: 'none', resize: 'vertical', fontFamily: 'inherit',
 };
 const primaryBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999,
-  background: 'var(--text)', color: 'var(--bg)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+  display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 'var(--radius-pill)',
+  background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer',
 };
 const ghostBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 999,
-  border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer',
+  display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 'var(--radius-pill)',
+  border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 'var(--text-body)', cursor: 'pointer',
 };
 
 export default function QuestionnaireFlow<T extends Row>({
@@ -63,7 +63,7 @@ export default function QuestionnaireFlow<T extends Row>({
     if (active) setDraft(active.answers[questions[step]?.key] ?? '');
   }, [active, step, questions]);
 
-  const flagStyle: CSSProperties = { fontSize: 12, color: 'var(--text-tertiary)', marginTop: 14, maxWidth: 560, lineHeight: 1.5 };
+  const flagStyle: CSSProperties = { fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', marginTop: 14, maxWidth: 560, lineHeight: 1.5 };
 
   if (!active) {
     return (
@@ -73,7 +73,7 @@ export default function QuestionnaireFlow<T extends Row>({
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <div style={homeHeadStyle}>{title}</div>
               {badge && (
-                <div style={{ padding: '3px 10px', borderRadius: 999, background: '#C9A24B22', border: '1px solid #C9A24B55', color: '#C9A24B', fontSize: 10.5, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>
+                <div style={{ padding: '3px 10px', borderRadius: 'var(--radius-pill)', background: '#C9A24B22', border: '1px solid #C9A24B55', color: '#C9A24B', fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>
                   {badge}
                 </div>
               )}
@@ -84,7 +84,7 @@ export default function QuestionnaireFlow<T extends Row>({
         </div>
         <div style={flagStyle}>{flagNote}</div>
 
-        <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', maxWidth: 640 }}>
+        <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', maxWidth: 640 }}>
           {rows.map((row) => (
             <div
               key={row.id}
@@ -92,16 +92,16 @@ export default function QuestionnaireFlow<T extends Row>({
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)', cursor: 'pointer' }}
             >
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{itemLabel(row)}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>{itemLabel(row)}</div>
+                <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 2 }}>
                   {row.status === 'complete' ? 'Complete' : `In progress · step ${Object.keys(row.answers).length + 1} of ${questions.length}`}
                 </div>
               </div>
-              <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }} onClick={(e) => { e.stopPropagation(); remove(row.id); }}>Delete</span>
+              <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }} onClick={(e) => { e.stopPropagation(); remove(row.id); }}>Delete</span>
             </div>
           ))}
           {!loading && rows.length === 0 && (
-            <div style={{ padding: 18, fontSize: 13, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>Nothing started yet.</div>
+            <div style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>Nothing started yet.</div>
           )}
         </div>
       </div>
@@ -112,11 +112,11 @@ export default function QuestionnaireFlow<T extends Row>({
   if (active.status === 'complete' && text) {
     return (
       <div>
-        <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 18 }} onClick={() => setActiveId(null)}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 'var(--text-body)', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 18 }} onClick={() => setActiveId(null)}>
           ← Back to list
         </div>
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 28, maxWidth: 680 }}>
-          <div style={{ fontSize: 13.5, color: 'var(--text)', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontFamily: "'JetBrains Mono', monospace" }}>{text}</div>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 28, maxWidth: 680 }}>
+          <div style={{ fontSize: 'var(--text-body-lg)', color: 'var(--text)', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontFamily: 'var(--font-mono)' }}>{text}</div>
         </div>
       </div>
     );
@@ -127,30 +127,30 @@ export default function QuestionnaireFlow<T extends Row>({
 
   return (
     <div>
-      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 18 }} onClick={() => setActiveId(null)}>
+      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 'var(--text-body)', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 18 }} onClick={() => setActiveId(null)}>
         ← Back to list
       </div>
       <div style={homeSubStyle}>Step {step + 1} of {questions.length}</div>
-      <div style={{ height: 4, background: 'var(--border)', borderRadius: 999, marginTop: 10, marginBottom: 24, maxWidth: 480, overflow: 'hidden' }}>
+      <div style={{ height: 4, background: 'var(--border)', borderRadius: 'var(--radius-pill)', marginTop: 10, marginBottom: 24, maxWidth: 480, overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${((step + 1) / questions.length) * 100}%`, background: 'var(--text)' }} />
       </div>
 
       {q.phase && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>{q.phase}</span>
+          <span style={{ fontSize: 'var(--text-nano)', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>{q.phase}</span>
           {q.priority && (
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 999, padding: '2px 8px' }}>
+            <span style={{ fontSize: 'var(--text-nano)', fontWeight: 700, letterSpacing: '0.05em', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)', padding: '2px 8px' }}>
               {q.priority}
             </span>
           )}
         </div>
       )}
-      <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--text)', marginBottom: 14, maxWidth: 560 }}>{q.prompt}</div>
+      <div style={{ fontSize: 'var(--text-title)', fontWeight: 600, color: 'var(--text)', marginBottom: 14, maxWidth: 560 }}>{q.prompt}</div>
       <textarea style={{ ...textareaStyle, maxWidth: 560 }} value={draft} onChange={(e) => setDraft(e.target.value)} autoFocus />
       {q.insight && (
-        <div style={{ marginTop: 14, maxWidth: 560, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px' }}>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontStyle: 'italic', lineHeight: 1.5 }}>{q.insight}</div>
-          {q.study && <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 6 }}>Study: {q.study}</div>}
+        <div style={{ marginTop: 14, maxWidth: 560, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px 14px' }}>
+          <div style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-secondary)', fontStyle: 'italic', lineHeight: 1.5 }}>{q.insight}</div>
+          {q.study && <div style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)', marginTop: 6 }}>Study: {q.study}</div>}
         </div>
       )}
 
@@ -186,7 +186,7 @@ export default function QuestionnaireFlow<T extends Row>({
         >
           {isLast ? (generating ? 'Generating…' : 'Generate') : 'Next'}
         </div>
-        {genError && <span style={{ fontSize: 12.5, color: '#c47a7a' }}>{genError}</span>}
+        {genError && <span style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a' }}>{genError}</span>}
       </div>
     </div>
   );

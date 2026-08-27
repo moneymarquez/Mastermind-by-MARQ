@@ -57,7 +57,7 @@ export default function NovaPanel({
         left: stackLeft != null ? stackLeft : `calc(${SPACING}px + env(safe-area-inset-left))`,
         bottom: `calc(${SPACING + stackBottomOffset}px + env(safe-area-inset-bottom))`,
         width: 320, height: 400,
-        background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 16, display: 'flex', flexDirection: 'column',
+        background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-2xl)', display: 'flex', flexDirection: 'column',
         boxShadow: '0 20px 50px rgba(0,0,0,0.5)', animation: 'bubbleFade 0.18s ease', zIndex: 45, overflow: 'hidden',
       };
 
@@ -70,7 +70,7 @@ export default function NovaPanel({
         />
       )}
       <div style={panelStyle}>
-      <div style={{ display: 'flex', alignItems: 'center', padding: '14px 16px', borderBottom: '1px solid var(--surface-3)', fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '14px 16px', borderBottom: '1px solid var(--surface-3)', fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)' }}>
         <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
           <Icon name="sparkle" style={{ marginRight: 8 }} color="var(--text)" />
           {assistantName}
@@ -87,21 +87,21 @@ export default function NovaPanel({
               alignSelf: msg.from === 'user' ? 'flex-end' : 'flex-start',
               background: msg.from === 'user' ? 'var(--text)' : 'var(--surface-4)',
               color: msg.from === 'user' ? 'var(--bg)' : '#e9e9ed',
-              padding: '9px 13px', borderRadius: 14, fontSize: 13, maxWidth: '85%', lineHeight: 1.4,
+              padding: '9px 13px', borderRadius: 'var(--radius-xl)', fontSize: 'var(--text-body)', maxWidth: '85%', lineHeight: 1.4,
             }}
           >
             {msg.text}
           </div>
         ))}
         {thinking && (
-          <div style={{ alignSelf: 'flex-start', background: 'var(--surface-4)', color: 'var(--text-secondary)', padding: '9px 13px', borderRadius: 14, fontSize: 13 }}>
+          <div style={{ alignSelf: 'flex-start', background: 'var(--surface-4)', color: 'var(--text-secondary)', padding: '9px 13px', borderRadius: 'var(--radius-xl)', fontSize: 'var(--text-body)' }}>
             …
           </div>
         )}
       </div>
       <div style={{ display: 'flex', gap: 8, padding: 12, borderTop: '1px solid var(--surface-3)' }}>
         <input
-          style={{ flex: 1, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 999, padding: '9px 14px', color: 'var(--text)', fontSize: 13, outline: 'none' }}
+          style={{ flex: 1, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-pill)', padding: '9px 14px', color: 'var(--text)', fontSize: 'var(--text-body)', outline: 'none' }}
           placeholder={listening ? 'Listening…' : `Talk to ${assistantName}...`}
           value={input}
           onChange={onInputChange}

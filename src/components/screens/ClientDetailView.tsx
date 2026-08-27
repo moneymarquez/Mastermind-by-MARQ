@@ -19,8 +19,8 @@ interface Props {
 type Tab = 'audit' | 'analysis' | 'pricing' | 'invoices' | 'reports';
 
 const textareaStyle: CSSProperties = {
-  width: '100%', minHeight: 70, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8,
-  padding: '10px 13px', color: 'var(--text)', fontSize: 13, outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box',
+  width: '100%', minHeight: 70, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)',
+  padding: '10px 13px', color: 'var(--text)', fontSize: 'var(--text-body)', outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box',
 };
 
 function money(n: number): string {
@@ -188,7 +188,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
 
   return (
     <div>
-      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 14 }} onClick={onBack}>
+      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 'var(--text-body)', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 14 }} onClick={onBack}>
         ← All clients
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
@@ -232,15 +232,15 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         <div style={{ marginTop: 18, maxWidth: 640 }}>
           {!client.audit ? (
             <div style={cardStyle}>
-              <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>No discovery answers yet for this client.</div>
+              <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)', marginBottom: 12 }}>No discovery answers yet for this client.</div>
               <div style={primaryBtn} onClick={startAudit}>Start audit</div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>On a call right now?</div>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 3 }}>
+                  <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>On a call right now?</div>
+                  <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 3 }}>
                     One question at a time, big fields, autosaves as you type.
                   </div>
                 </div>
@@ -249,8 +249,8 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
 
               {activeQuestions.map((q) => (
                 <div key={q.id} style={cardStyle}>
-                  <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 6 }}>{q.category}</div>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', marginBottom: 10 }}>{q.prompt}</div>
+                  <div style={{ fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 6 }}>{q.category}</div>
+                  <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)', marginBottom: 10 }}>{q.prompt}</div>
                   <textarea
                     key={`${q.key}-${answers[q.key] ?? ''}`}
                     style={textareaStyle}
@@ -258,13 +258,13 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                     onBlur={(e) => saveAnswer(q.key, e.target.value)}
                   />
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 10, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Confidence:</span>
+                    <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)' }}>Confidence:</span>
                     {(['confirmed', 'estimated'] as AnswerConfidence[]).map((tag) => (
                       <div
                         key={tag}
                         onClick={() => setTag(q.key, tag)}
                         style={{
-                          padding: '4px 11px', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize',
+                          padding: '4px 11px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-tiny)', fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize',
                           border: `1px solid ${confidence[q.key] === tag ? 'transparent' : 'var(--border-2)'}`,
                           background: confidence[q.key] === tag ? (tag === 'confirmed' ? '#4a9a5a' : '#C9A24B') : 'transparent',
                           color: confidence[q.key] === tag ? '#0A0B0D' : 'var(--text-tertiary)',
@@ -273,16 +273,16 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                         {tag}
                       </div>
                     ))}
-                    {!confidence[q.key] && <span style={{ fontSize: 10.5, color: 'var(--text-quaternary)' }}>untagged — treated as estimated</span>}
+                    {!confidence[q.key] && <span style={{ fontSize: 'var(--text-micro)', color: 'var(--text-quaternary)' }}>untagged — treated as estimated</span>}
                   </div>
-                  {q.helper_text && <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 8, fontStyle: 'italic' }}>{q.helper_text}</div>}
+                  {q.helper_text && <div style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', marginTop: 8, fontStyle: 'italic' }}>{q.helper_text}</div>}
                 </div>
               ))}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ ...primaryBtn, pointerEvents: generating ? 'none' : 'auto', opacity: generating ? 0.6 : 1 }} onClick={runGenerate}>
                   {generating ? 'Generating…' : client.audit.status === 'complete' ? 'Regenerate analysis' : 'Generate analysis'}
                 </div>
-                {genError && <span style={{ fontSize: 12.5, color: '#c47a7a' }}>{genError}</span>}
+                {genError && <span style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a' }}>{genError}</span>}
               </div>
             </div>
           )}
@@ -292,11 +292,11 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
       {tab === 'analysis' && (
         <div style={{ marginTop: 18, maxWidth: 680 }}>
           {!client.audit?.analysis_text ? (
-            <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>No analysis generated yet — fill out the Audit tab and click Generate.</div>
+            <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No analysis generated yet — fill out the Audit tab and click Generate.</div>
           ) : (
             <>
               <textarea
-                style={{ ...textareaStyle, minHeight: 420, fontFamily: "'JetBrains Mono', monospace", fontSize: 13.5, lineHeight: 1.7 }}
+                style={{ ...textareaStyle, minHeight: 420, fontFamily: 'var(--font-mono)', fontSize: 'var(--text-body-lg)', lineHeight: 1.7 }}
                 value={analysisDraft}
                 onChange={(e) => setAnalysisDraft(e.target.value)}
                 onBlur={saveAnalysisEdit}
@@ -308,7 +308,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                 {client.stage !== 'analysis_sent' && client.stage !== 'invoice_sent' && client.stage !== 'active' && client.stage !== 'retainer' && (
                   <div style={primaryBtn} onClick={() => crm.markAnalysisSent(client.id)}>Mark analysis sent</div>
                 )}
-                {genError && <span style={{ fontSize: 12.5, color: '#c47a7a' }}>{genError}</span>}
+                {genError && <span style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a' }}>{genError}</span>}
               </div>
             </>
           )}
@@ -319,19 +319,19 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         <div style={{ marginTop: 18, maxWidth: 680 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <div
-              style={{ display: 'inline-flex', alignItems: 'center', width: 40, height: 22, borderRadius: 999, background: client.reveal_full_schedule ? 'var(--text)' : 'var(--border-2)', cursor: 'pointer', padding: 2 }}
+              style={{ display: 'inline-flex', alignItems: 'center', width: 40, height: 22, borderRadius: 'var(--radius-pill)', background: client.reveal_full_schedule ? 'var(--text)' : 'var(--border-2)', cursor: 'pointer', padding: 2 }}
               onClick={() => crm.setRevealSchedule(client.id, !client.reveal_full_schedule)}
             >
               <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'var(--bg)', transform: client.reveal_full_schedule ? 'translateX(18px)' : 'translateX(0)', transition: 'transform 150ms ease' }} />
             </div>
-            <div style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>
+            <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)' }}>
               Reveal full payment schedule to client — {client.reveal_full_schedule ? 'ON, they see every future payment' : 'OFF, they only see what\'s currently due'}
             </div>
           </div>
 
           {client.pricingItems.length === 0 && (
             <div style={{ ...cardStyle, marginBottom: 16 }}>
-              <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>No pricing plan yet for this client.</div>
+              <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)', marginBottom: 12 }}>No pricing plan yet for this client.</div>
               <div style={primaryBtn} onClick={() => crm.applyTemplateToClient(client.id)}>Use default template</div>
             </div>
           )}
@@ -340,7 +340,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
               written analysis, flagging what this business actually needs. */}
           <div style={{ ...cardStyle, marginBottom: 16, borderColor: suggestions.length ? '#3a3520' : 'var(--border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+              <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>
                 ✨ Nova's suggested services{suggestions.length ? ` (${suggestions.length})` : ''}
               </div>
               <div
@@ -350,10 +350,10 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                 {matching ? 'Matching…' : suggestions.length ? 'Re-match' : 'Match services'}
               </div>
             </div>
-            {matchError && <div style={{ fontSize: 12, color: '#c47a7a', marginTop: 8 }}>{matchError}</div>}
-            {!client.audit && <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 8 }}>Fill out the audit first — the match reads from those answers.</div>}
+            {matchError && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a', marginTop: 8 }}>{matchError}</div>}
+            {!client.audit && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 8 }}>Fill out the audit first — the match reads from those answers.</div>}
             {suggestions.length === 0 && client.audit && !matchError && (
-              <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 8 }}>
+              <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 8 }}>
                 Nothing flagged yet. Runs automatically when you generate the analysis.
               </div>
             )}
@@ -362,29 +362,29 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                 const svc = crm.services.find((x) => x.name === s.name);
                 const alreadyAdded = client.pricingItems.some((p) => p.service_id && svc && p.service_id === svc.id);
                 return (
-                  <div key={s.name} style={{ padding: '11px 13px', borderRadius: 8, background: 'var(--surface-4)' }}>
+                  <div key={s.name} style={{ padding: '11px 13px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-4)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)' }}>{s.name}</div>
-                        <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                        <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: 'var(--text)' }}>{s.name}</div>
+                        <div style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)', marginTop: 2 }}>
                           {s.category}{svc ? ` · ${money(svc.default_price)}${svc.price_type === 'monthly' ? '/mo' : ''}` : ''}
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
                         {alreadyAdded ? (
-                          <span style={{ fontSize: 11, color: '#4a9a5a', fontWeight: 600 }}>Added</span>
+                          <span style={{ fontSize: 'var(--text-tiny)', color: '#4a9a5a', fontWeight: 600 }}>Added</span>
                         ) : svc ? (
-                          <span style={{ fontSize: 11.5, color: 'var(--text)', cursor: 'pointer', fontWeight: 600 }} onClick={() => crm.addServiceToClient(client.id, svc)}>Add</span>
+                          <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text)', cursor: 'pointer', fontWeight: 600 }} onClick={() => crm.addServiceToClient(client.id, svc)}>Add</span>
                         ) : null}
                         <span
-                          style={{ fontSize: 11, color: 'var(--text-tertiary)', cursor: 'pointer' }}
+                          style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', cursor: 'pointer' }}
                           onClick={() => client.audit && crm.dismissSuggestion(client.audit.id, s.name, suggestions)}
                         >
                           Dismiss
                         </span>
                       </div>
                     </div>
-                    {s.reason && <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>{s.reason}</div>}
+                    {s.reason && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>{s.reason}</div>}
                   </div>
                 );
               })}
@@ -397,8 +397,8 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
               return (
                 <div key={item.id} style={{ ...cardStyle, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{item.label}</div>
-                    <div style={{ fontSize: 11.5, color: isTbd ? '#C9A24B' : 'var(--text-secondary)', marginTop: 2 }}>
+                    <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>{item.label}</div>
+                    <div style={{ fontSize: 'var(--text-caption)', color: isTbd ? '#C9A24B' : 'var(--text-secondary)', marginTop: 2 }}>
                       {amountLabel(item.amount)} {item.cadence === 'monthly' ? `/mo × ${item.repeat_count}` : 'one-time'}
                       {isTbd && ' — not shown to the client, not invoiceable'}
                     </div>
@@ -407,13 +407,13 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                     {/* Quick-switch for the launch fee — $1,000 standard,
                         $500 a deliberate tight-budget override. */}
                     {item.is_upfront && !isTbd && (
-                      <div style={{ display: 'inline-flex', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 999, padding: 2 }}>
+                      <div style={{ display: 'inline-flex', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-pill)', padding: 2 }}>
                         {[1000, 500].map((amt) => (
                           <div
                             key={amt}
                             onClick={() => crm.setItemAmount(item.id, amt)}
                             style={{
-                              padding: '4px 11px', borderRadius: 999, fontSize: 11.5, fontWeight: 600, cursor: 'pointer',
+                              padding: '4px 11px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-caption)', fontWeight: 600, cursor: 'pointer',
                               background: Number(item.amount) === amt ? 'var(--text)' : 'transparent',
                               color: Number(item.amount) === amt ? 'var(--bg)' : 'var(--text-secondary)',
                             }}
@@ -444,9 +444,9 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                         </div>
                       </>
                     ) : (
-                      <span style={{ fontSize: 12, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.setItemAmount(item.id, null)}>Mark TBD</span>
+                      <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.setItemAmount(item.id, null)}>Mark TBD</span>
                     )}
-                    <span style={{ fontSize: 12, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.removePricingItem(item.id)}>Remove</span>
+                    <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.removePricingItem(item.id)}>Remove</span>
                   </div>
                 </div>
               );
@@ -455,7 +455,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
 
           <div style={{ ...cardStyle, marginTop: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Add from service catalog</div>
+              <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Add from service catalog</div>
               <div style={ghostBtn} onClick={() => setCatalogOpen((o) => !o)}>{catalogOpen ? 'Hide' : 'Browse'}</div>
             </div>
             {catalogOpen && (
@@ -473,21 +473,21 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                       <div
                         key={s.id}
                         onClick={() => crm.addServiceToClient(client.id, s)}
-                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 8, background: 'var(--surface-4)', cursor: 'pointer' }}
+                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-4)', cursor: 'pointer' }}
                       >
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 12.5, color: 'var(--text)' }}>{s.name}</div>
-                          <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text)' }}>{s.name}</div>
+                          <div style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)', marginTop: 2 }}>
                             {s.category}{s.notes ? ` · ${s.notes}` : ''}
                           </div>
                         </div>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontSize: 'var(--text-small)', fontWeight: 600, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                           {money(s.default_price)}{s.price_type === 'monthly' ? '/mo' : ''}
                         </div>
                       </div>
                     ))}
                   {crm.services.length === 0 && (
-                    <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Catalog is empty — seed it by running schema_040.</div>
+                    <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }}>Catalog is empty — seed it by running schema_040.</div>
                   )}
                 </div>
               </div>
@@ -512,19 +512,19 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
       {tab === 'invoices' && (
         <div style={{ marginTop: 18, maxWidth: 680 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
-            {client.invoices.length === 0 && <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>No invoices sent yet.</div>}
+            {client.invoices.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No invoices sent yet.</div>}
             {client.invoices.map((inv) => (
               <div key={inv.id} style={{ ...cardStyle, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{inv.description}</div>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 2 }}>
+                  <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>{inv.description}</div>
+                  <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 2 }}>
                     {money(inv.amount)} {inv.due_date ? `· due ${inv.due_date}` : ''} {inv.stripe_invoice_url && (
                       <a href={inv.stripe_invoice_url} target="_blank" rel="noreferrer" style={{ color: 'var(--text-secondary)' }}> · View invoice ↗</a>
                     )}
                   </div>
                 </div>
                 <span style={{
-                  fontSize: 10.5, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', borderRadius: 999, padding: '3px 9px',
+                  fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', borderRadius: 'var(--radius-pill)', padding: '3px 9px',
                   color: inv.status === 'paid' ? '#4a9a5a' : inv.status === 'overdue' ? '#c47a7a' : 'var(--text-tertiary)',
                   border: `1px solid ${inv.status === 'paid' ? '#4a9a5a66' : inv.status === 'overdue' ? '#c47a7a66' : 'var(--border)'}`,
                 }}>
@@ -535,7 +535,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
           </div>
 
           <div style={cardStyle}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Send a new invoice</div>
+            <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Send a new invoice</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <select
                 style={selectStyle}
@@ -556,7 +556,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                 ))}
               </select>
               {client.pricingItems.some((p) => p.amount === null) && (
-                <div style={{ fontSize: 11, color: '#C9A24B' }}>
+                <div style={{ fontSize: 'var(--text-tiny)', color: '#C9A24B' }}>
                   {client.pricingItems.filter((p) => p.amount === null).length} TBD line item(s) hidden — set an amount on the Pricing tab to invoice them.
                 </div>
               )}
@@ -569,16 +569,16 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                 <div style={{ ...primaryBtn, pointerEvents: sendingInvoice ? 'none' : 'auto', opacity: sendingInvoice ? 0.6 : 1 }} onClick={sendInvoice}>
                   {sendingInvoice ? 'Sending…' : 'Send invoice'}
                 </div>
-                {invoiceError && <span style={{ fontSize: 12.5, color: '#c47a7a' }}>{invoiceError}</span>}
+                {invoiceError && <span style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a' }}>{invoiceError}</span>}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Generates a real Stripe invoice and emails it to the client's contact email — nothing auto-charges.</div>
+              <div style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)' }}>Generates a real Stripe invoice and emails it to the client's contact email — nothing auto-charges.</div>
             </div>
           </div>
         </div>
       )}
 
       <div style={{ marginTop: 24 }}>
-        <span style={{ fontSize: 12, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => { crm.removeClient(client.id); onBack(); }}>
+        <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => { crm.removeClient(client.id); onBack(); }}>
           Delete client
         </span>
       </div>

@@ -116,32 +116,32 @@ export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Pr
         </div>
         {isNotificationSupported() && permission !== 'granted' && (
           <div
-            style={{ display: 'flex', alignItems: 'center', padding: '9px 16px', borderRadius: 999, border: '1px solid var(--text)', color: 'var(--text)', fontSize: 12.5, cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', padding: '9px 16px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--text)', color: 'var(--text)', fontSize: 'var(--text-body-sm)', cursor: 'pointer' }}
             onClick={enableAlerts}
           >
             {permission === 'denied' ? 'Alerts blocked — check browser settings' : 'Enable task alerts'}
           </div>
         )}
-        {permission === 'granted' && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Alerts on</div>}
+        {permission === 'granted' && <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }}>Alerts on</div>}
       </div>
 
       {showHomeScreenPrompt && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 16px', marginTop: 16, maxWidth: 560 }}>
-          <span style={{ fontSize: 12.5, color: 'var(--text-quaternary)' }}>Add this to your home screen to get task reminders.</span>
-          <span style={{ fontSize: 16, color: 'var(--text-tertiary)', cursor: 'pointer', flexShrink: 0 }} onClick={dismissHomeScreenPrompt}>×</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '12px 16px', marginTop: 16, maxWidth: 560 }}>
+          <span style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-quaternary)' }}>Add this to your home screen to get task reminders.</span>
+          <span style={{ fontSize: 'var(--text-head)', color: 'var(--text-tertiary)', cursor: 'pointer', flexShrink: 0 }} onClick={dismissHomeScreenPrompt}>×</span>
         </div>
       )}
 
-      <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 12, maxWidth: 560, lineHeight: 1.5 }}>
+      <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 12, maxWidth: 560, lineHeight: 1.5 }}>
         Auto-detected from your device's clock — no need to enter today's date. Re-checks every minute while open; the current task is highlighted.
         With alerts enabled, a reminder also fires as a real push notification even with the app fully closed
         (checked server-side every 5 minutes) — on iOS this requires installing to your home screen first.
       </div>
 
       {!eventsLoading && !hasShiftToday && (
-        <div style={{ marginTop: 20, padding: 24, border: '1px solid var(--border)', borderRadius: 14, maxWidth: 640, background: 'var(--surface-2)' }}>
-          <div style={{ fontSize: 13.5, color: 'var(--text-quaternary)', fontWeight: 500 }}>No shift today</div>
-          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4, lineHeight: 1.5 }}>
+        <div style={{ marginTop: 20, padding: 24, border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', maxWidth: 640, background: 'var(--surface-2)' }}>
+          <div style={{ fontSize: 'var(--text-body-lg)', color: 'var(--text-quaternary)', fontWeight: 500 }}>No shift today</div>
+          <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', marginTop: 4, lineHeight: 1.5 }}>
             The checklist and its task alerts only show up on days you actually have a shift scheduled — add one under
             Schedule → Holiday Calendar and it'll appear here.
           </div>
@@ -149,7 +149,7 @@ export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Pr
       )}
 
       {hasShiftToday && (
-      <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', maxWidth: 640 }}>
+      <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', maxWidth: 640 }}>
         {schedule.tasks.map((task) => {
           const done = completedIds.includes(task.id);
           const status = taskStatus(task, now, done);
@@ -167,34 +167,34 @@ export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Pr
               <input type="checkbox" checked={done} readOnly style={{ marginTop: 3 }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', fontFamily: "'JetBrains Mono', monospace" }}>{clockLabel(task.at)}</span>
+                  <span style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>{clockLabel(task.at)}</span>
                   {task.kind === 'nudge' && (
-                    <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 999, padding: '1px 7px' }}>
+                    <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)', padding: '1px 7px' }}>
                       WHILE STEADY
                     </span>
                   )}
                   {task.kind === 'till' && (
-                    <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 999, padding: '1px 7px' }}>
+                    <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)', padding: '1px 7px' }}>
                       FINAL
                     </span>
                   )}
                 </div>
                 <div
                   style={{
-                    fontSize: 13.5, marginTop: 3, color: STATUS_COLOR[status],
+                    fontSize: 'var(--text-body-lg)', marginTop: 3, color: STATUS_COLOR[status],
                     fontWeight: isCurrent ? 600 : 400,
                     textDecoration: status === 'done' ? 'line-through' : 'none',
                   }}
                 >
                   {task.name}
                 </div>
-                {status === 'overdue' && <div style={{ fontSize: 10.5, color: '#c47a7a', marginTop: 2 }}>Overdue</div>}
+                {status === 'overdue' && <div style={{ fontSize: 'var(--text-micro)', color: '#c47a7a', marginTop: 2 }}>Overdue</div>}
               </div>
             </div>
           );
         })}
         {!loading && schedule.tasks.length === 0 && (
-          <div style={{ padding: 18, fontSize: 13, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>Nothing scheduled today.</div>
+          <div style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>Nothing scheduled today.</div>
         )}
       </div>
       )}

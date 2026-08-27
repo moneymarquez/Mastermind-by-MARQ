@@ -150,7 +150,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           style={{
             position: 'absolute', top: 'calc(24px + env(safe-area-inset-top))', right: 72, width: 42, height: 42, borderRadius: '50%',
             background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', cursor: 'pointer', zIndex: 41, fontSize: 15, fontWeight: 700, color: 'var(--text-secondary)',
+            justifyContent: 'center', cursor: 'pointer', zIndex: 41, fontSize: 'var(--text-subhead)', fontWeight: 700, color: 'var(--text-secondary)',
           }}
         >
           ?

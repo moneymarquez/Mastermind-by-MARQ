@@ -27,7 +27,7 @@ function ProgressBar({ step }: { step: OnboardingStep }) {
   return (
     <div style={barStyle}>
       {STEPS.map((s, i) => (
-        <div key={s} style={{ flex: 1, height: 3, borderRadius: 999, background: i <= idx ? 'var(--text)' : 'var(--border)' }} title={STEP_LABEL[s]} />
+        <div key={s} style={{ flex: 1, height: 3, borderRadius: 'var(--radius-pill)', background: i <= idx ? 'var(--text)' : 'var(--border)' }} title={STEP_LABEL[s]} />
       ))}
     </div>
   );

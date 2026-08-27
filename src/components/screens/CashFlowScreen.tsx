@@ -7,18 +7,18 @@ interface Props {
   homeSubStyle: CSSProperties;
 }
 
-const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 18 };
+const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 18 };
 const inputStyle: CSSProperties = {
-  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8, padding: '9px 12px',
-  color: 'var(--text)', fontSize: 13.5, outline: 'none',
+  background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)', padding: '9px 12px',
+  color: 'var(--text)', fontSize: 'var(--text-body-lg)', outline: 'none',
 };
 const money = (n: number) => `${n < 0 ? '-' : ''}$${Math.abs(n).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
 function StatTile({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
     <div style={{ ...cardStyle, flex: 1, minWidth: 140 }}>
-      <div style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color: color ?? 'var(--text)', marginTop: 6, fontFamily: "'JetBrains Mono', monospace" }}>{value}</div>
+      <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>{label}</div>
+      <div style={{ fontSize: 'var(--text-stat)', fontWeight: 700, color: color ?? 'var(--text)', marginTop: 6, fontFamily: 'var(--font-mono)' }}>{value}</div>
     </div>
   );
 }
@@ -35,12 +35,12 @@ export default function CashFlowScreen({ homeHeadStyle, homeSubStyle }: Props) {
       <div style={homeHeadStyle}>Cash-Flow Forecast</div>
       <div style={homeSubStyle}>30/60/90-day balance projection from real invoices, recurring items, and spending.</div>
 
-      {loading && <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', marginTop: 20 }}>Building the forecast…</div>}
+      {loading && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', marginTop: 20 }}>Building the forecast…</div>}
 
       {!loading && forecast && (
         <>
           <div style={{ ...cardStyle, marginTop: 24, maxWidth: 320 }}>
-            <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginBottom: 6 }}>Current balance (starting point)</div>
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 6 }}>Current balance (starting point)</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <input
                 type="number" style={{ ...inputStyle, flex: 1 }}
@@ -48,7 +48,7 @@ export default function CashFlowScreen({ homeHeadStyle, homeSubStyle }: Props) {
                 value={balanceDraft}
                 onChange={(e) => setBalanceDraft(e.target.value)}
               />
-              <div style={{ padding: '9px 16px', borderRadius: 999, background: 'var(--text)', color: 'var(--bg)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} onClick={() => { if (balanceDraft) { setStartingBalance(Number(balanceDraft)); setBalanceDraft(''); } }}>
+              <div style={{ padding: '9px 16px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer' }} onClick={() => { if (balanceDraft) { setStartingBalance(Number(balanceDraft)); setBalanceDraft(''); } }}>
                 Set
               </div>
             </div>
@@ -63,19 +63,19 @@ export default function CashFlowScreen({ homeHeadStyle, homeSubStyle }: Props) {
 
           {forecast.firstShortfall ? (
             <div style={{ ...cardStyle, marginTop: 16, borderColor: '#c47a7a55', background: '#c47a7a10' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#c47a7a' }}>
+              <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: '#c47a7a' }}>
                 Projected shortfall on {new Date(forecast.firstShortfall.date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-quaternary)', marginTop: 8 }}>Driven by: {forecast.firstShortfall.drivers.join(', ')}</div>
+              <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-quaternary)', marginTop: 8 }}>Driven by: {forecast.firstShortfall.drivers.join(', ')}</div>
             </div>
           ) : (
-            <div style={{ ...cardStyle, marginTop: 16, fontSize: 12.5, color: '#8fae8f' }}>No projected shortfall in the next 90 days, at current pace.</div>
+            <div style={{ ...cardStyle, marginTop: 16, fontSize: 'var(--text-body-sm)', color: '#8fae8f' }}>No projected shortfall in the next 90 days, at current pace.</div>
           )}
 
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginTop: 36, marginBottom: 14 }}>Upcoming known events</div>
-          <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
+          <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 700, color: 'var(--text)', marginTop: 36, marginBottom: 14 }}>Upcoming known events</div>
+          <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden' }}>
             {upcomingEvents.map((e, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 16px', borderBottom: '1px solid var(--surface-3)', fontSize: 12.5 }}>
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 16px', borderBottom: '1px solid var(--surface-3)', fontSize: 'var(--text-body-sm)' }}>
                 <span style={{ color: 'var(--text)' }}>{e.label}</span>
                 <div style={{ display: 'flex', gap: 14 }}>
                   <span style={{ color: 'var(--text-tertiary)' }}>{new Date(e.date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
@@ -83,13 +83,13 @@ export default function CashFlowScreen({ homeHeadStyle, homeSubStyle }: Props) {
                 </div>
               </div>
             ))}
-            {upcomingEvents.length === 0 && <div style={{ padding: 16, fontSize: 12.5, color: 'var(--text-tertiary)' }}>Nothing scheduled — recurring items, unpaid invoices with due dates, and subscription renewals show up here.</div>}
+            {upcomingEvents.length === 0 && <div style={{ padding: 16, fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>Nothing scheduled — recurring items, unpaid invoices with due dates, and subscription renewals show up here.</div>}
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 8 }}>
+          <div style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', marginTop: 8 }}>
             Plus an average daily variable spend of {money(forecast.avgDailyVariableExpense)}/day, based on your last 30 days of non-recurring expenses.
           </div>
 
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginTop: 36, marginBottom: 14 }}>Ask a scenario question</div>
+          <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 700, color: 'var(--text)', marginTop: 36, marginBottom: 14 }}>Ask a scenario question</div>
           <div style={{ ...cardStyle }}>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <input
@@ -99,12 +99,12 @@ export default function CashFlowScreen({ homeHeadStyle, homeSubStyle }: Props) {
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && question.trim() && !scenarioLoading) askScenario(question.trim()); }}
               />
-              <div style={{ padding: '9px 18px', borderRadius: 999, background: 'var(--text)', color: 'var(--bg)', fontSize: 12.5, fontWeight: 600, cursor: scenarioLoading ? 'default' : 'pointer', opacity: scenarioLoading ? 0.6 : 1 }} onClick={() => question.trim() && !scenarioLoading && askScenario(question.trim())}>
+              <div style={{ padding: '9px 18px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: scenarioLoading ? 'default' : 'pointer', opacity: scenarioLoading ? 0.6 : 1 }} onClick={() => question.trim() && !scenarioLoading && askScenario(question.trim())}>
                 {scenarioLoading ? 'Thinking…' : 'Ask'}
               </div>
             </div>
-            {scenarioError && <div style={{ fontSize: 12, color: '#c47a7a', marginTop: 10 }}>{scenarioError}</div>}
-            {scenarioAnswer && <div style={{ fontSize: 13, color: 'var(--text-quaternary)', marginTop: 12, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{scenarioAnswer}</div>}
+            {scenarioError && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a', marginTop: 10 }}>{scenarioError}</div>}
+            {scenarioAnswer && <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-quaternary)', marginTop: 12, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{scenarioAnswer}</div>}
           </div>
         </>
       )}

@@ -10,11 +10,11 @@ interface Props {
 }
 
 const textareaStyle: CSSProperties = {
-  width: '100%', minHeight: 70, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8,
-  padding: '10px 13px', color: 'var(--text)', fontSize: 13, outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box',
+  width: '100%', minHeight: 70, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)',
+  padding: '10px 13px', color: 'var(--text)', fontSize: 'var(--text-body)', outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box',
 };
-const labelStyle: CSSProperties = { fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 4 };
-const sectionTitle: CSSProperties = { fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 12 };
+const labelStyle: CSSProperties = { fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', marginBottom: 4 };
+const sectionTitle: CSSProperties = { fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 12 };
 
 /** Numeric fields are stored as null when blank rather than 0 — "we didn't
  *  track this" and "this was zero" are different claims to put in front of
@@ -74,19 +74,19 @@ function AssetThumb({
 
   return (
     <div style={{ width: 132, display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <div style={{ width: 132, height: 96, borderRadius: 8, overflow: 'hidden', background: 'var(--surface-4)', border: '1px solid var(--border-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 132, height: 96, borderRadius: 'var(--radius-sm)', overflow: 'hidden', background: 'var(--surface-4)', border: '1px solid var(--border-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {isImage && url
           ? <img src={url} alt={asset.file_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          : <span style={{ fontSize: 10.5, color: 'var(--text-tertiary)', padding: 8, textAlign: 'center', wordBreak: 'break-word' }}>{asset.file_name}</span>}
+          : <span style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)', padding: 8, textAlign: 'center', wordBreak: 'break-word' }}>{asset.file_name}</span>}
       </div>
       {asset.kind === 'proof' && (
-        <select style={{ ...selectStyle, padding: '5px 8px', fontSize: 11 }} value={asset.status} onChange={(e) => onStatus(e.target.value as ReportAssetStatus)}>
+        <select style={{ ...selectStyle, padding: '5px 8px', fontSize: 'var(--text-tiny)' }} value={asset.status} onChange={(e) => onStatus(e.target.value as ReportAssetStatus)}>
           <option value="draft">Draft</option>
           <option value="approved">Approved</option>
           <option value="live">Live</option>
         </select>
       )}
-      <span style={{ fontSize: 10.5, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={onRemove}>Remove</span>
+      <span style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={onRemove}>Remove</span>
     </div>
   );
 }
@@ -137,15 +137,15 @@ export default function ClientReportsTab({ clientId, publicToken }: Props) {
     ? active.followers_end - active.followers_start
     : null;
 
-  if (r.loading) return <div style={{ marginTop: 18, fontSize: 12.5, color: 'var(--text-tertiary)' }}>Loading…</div>;
+  if (r.loading) return <div style={{ marginTop: 18, fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>Loading…</div>;
 
   return (
     <div style={{ marginTop: 18, maxWidth: 680 }}>
       <div style={{ ...cardStyle, marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)' }}>Client dashboard link</div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 3, wordBreak: 'break-all' }}>{dashboardUrl}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>
+          <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: 'var(--text)' }}>Client dashboard link</div>
+          <div style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', marginTop: 3, wordBreak: 'break-all' }}>{dashboardUrl}</div>
+          <div style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', marginTop: 4 }}>
             Auto-attached to every invoice footer. Only published periods appear.
           </div>
         </div>
@@ -169,11 +169,11 @@ export default function ClientReportsTab({ clientId, publicToken }: Props) {
       </div>
 
       {!active ? (
-        <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>Add a reporting period to start filling in this client's report.</div>
+        <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>Add a reporting period to start filling in this client's report.</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <div style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>
+            <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)' }}>
               {active.published ? 'Published — visible on the client dashboard.' : 'Draft — not visible to the client yet.'}
             </div>
             <div style={active.published ? ghostBtn : primaryBtn} onClick={() => patch({ published: !active.published })}>
@@ -195,7 +195,7 @@ export default function ClientReportsTab({ clientId, publicToken }: Props) {
               <MetricInput label="Followers — end" value={active.followers_end} onCommit={(v) => patch({ followers_end: v })} />
               <div style={{ flex: '1 1 120px', paddingBottom: 10 }}>
                 <div style={labelStyle}>Growth</div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: followerDelta === null ? 'var(--text-tertiary)' : followerDelta >= 0 ? '#4a9a5a' : '#c47a7a' }}>
+                <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 600, color: followerDelta === null ? 'var(--text-tertiary)' : followerDelta >= 0 ? '#4a9a5a' : '#c47a7a' }}>
                   {followerDelta === null ? '—' : `${followerDelta >= 0 ? '+' : ''}${followerDelta.toLocaleString()}`}
                 </div>
               </div>
@@ -210,18 +210,18 @@ export default function ClientReportsTab({ clientId, publicToken }: Props) {
 
           <div style={cardStyle}>
             <div style={sectionTitle}>Content gallery</div>
-            <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginBottom: 10 }}>Delivered work this period — shown to the client as-is.</div>
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 10 }}>Delivered work this period — shown to the client as-is.</div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
               {active.assets.filter((a) => a.kind === 'content').map((a) => (
                 <AssetThumb key={a.id} asset={a} getUrl={r.assetPreviewUrl} onStatus={(s) => r.setAssetStatus(a.id, s)} onRemove={() => r.removeAsset(a.id, a.storage_path)} />
               ))}
             </div>
-            <input type="file" multiple accept="image/*,video/*" onChange={(e) => { upload(e.target.files, 'content'); e.target.value = ''; }} style={{ fontSize: 12, color: 'var(--text-secondary)' }} />
+            <input type="file" multiple accept="image/*,video/*" onChange={(e) => { upload(e.target.files, 'content'); e.target.value = ''; }} style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)' }} />
           </div>
 
           <div style={cardStyle}>
             <div style={sectionTitle}>Design proofs &amp; drafts</div>
-            <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginBottom: 10 }}>
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 10 }}>
               Only Approved and Live proofs reach the client dashboard — Drafts stay internal.
             </div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
@@ -229,26 +229,26 @@ export default function ClientReportsTab({ clientId, publicToken }: Props) {
                 <AssetThumb key={a.id} asset={a} getUrl={r.assetPreviewUrl} onStatus={(s) => r.setAssetStatus(a.id, s)} onRemove={() => r.removeAsset(a.id, a.storage_path)} />
               ))}
             </div>
-            <input type="file" multiple onChange={(e) => { upload(e.target.files, 'proof'); e.target.value = ''; }} style={{ fontSize: 12, color: 'var(--text-secondary)' }} />
-            {uploading && <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 8 }}>Uploading…</div>}
-            {uploadError && <div style={{ fontSize: 12, color: '#c47a7a', marginTop: 8 }}>{uploadError}</div>}
+            <input type="file" multiple onChange={(e) => { upload(e.target.files, 'proof'); e.target.value = ''; }} style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)' }} />
+            {uploading && <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', marginTop: 8 }}>Uploading…</div>}
+            {uploadError && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a', marginTop: 8 }}>{uploadError}</div>}
           </div>
 
           <div style={cardStyle}>
             <div style={sectionTitle}>Campaign log</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
               {active.campaigns.map((c) => (
-                <div key={c.id} style={{ padding: 12, borderRadius: 8, background: 'var(--surface-4)' }}>
+                <div key={c.id} style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-4)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)' }}>{c.name}</div>
-                    <span style={{ fontSize: 11, color: 'var(--text-tertiary)', cursor: 'pointer', flexShrink: 0 }} onClick={() => r.removeCampaign(c.id)}>Remove</span>
+                    <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: 'var(--text)' }}>{c.name}</div>
+                    <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', cursor: 'pointer', flexShrink: 0 }} onClick={() => r.removeCampaign(c.id)}>Remove</span>
                   </div>
-                  {c.launched_on && <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 2 }}>Launched {c.launched_on}</div>}
-                  {c.description && <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 5 }}>{c.description}</div>}
-                  {c.result_notes && <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 5 }}><strong>Result:</strong> {c.result_notes}</div>}
+                  {c.launched_on && <div style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)', marginTop: 2 }}>Launched {c.launched_on}</div>}
+                  {c.description && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 5 }}>{c.description}</div>}
+                  {c.result_notes && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 5 }}><strong>Result:</strong> {c.result_notes}</div>}
                 </div>
               ))}
-              {active.campaigns.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>No campaigns logged this period.</div>}
+              {active.campaigns.length === 0 && <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }}>No campaigns logged this period.</div>}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -277,7 +277,7 @@ export default function ClientReportsTab({ clientId, publicToken }: Props) {
 
           <div style={cardStyle}>
             <div style={sectionTitle}>Financials &amp; transparency</div>
-            <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginBottom: 12 }}>
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 12 }}>
               Payment history and upcoming invoices are pulled straight from the Invoices tab — nothing to re-enter here.
             </div>
             <TextField label="What's included this month" value={active.whats_included} onCommit={(v) => patch({ whats_included: v })} placeholder="Plain-language list of what their package covers this period" />
@@ -288,15 +288,15 @@ export default function ClientReportsTab({ clientId, publicToken }: Props) {
             <div style={sectionTitle}>Notes &amp; next steps</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
               {active.notes.map((n) => (
-                <div key={n.id} style={{ padding: 10, borderRadius: 8, background: 'var(--surface-4)' }}>
+                <div key={n.id} style={{ padding: 10, borderRadius: 'var(--radius-sm)', background: 'var(--surface-4)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-                    <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)' }}>{new Date(n.created_at).toLocaleString()}</div>
-                    <span style={{ fontSize: 11, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => r.removeNote(n.id)}>Remove</span>
+                    <div style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)' }}>{new Date(n.created_at).toLocaleString()}</div>
+                    <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => r.removeNote(n.id)}>Remove</span>
                   </div>
-                  <div style={{ fontSize: 12.5, color: 'var(--text)', marginTop: 4, whiteSpace: 'pre-wrap' }}>{n.body}</div>
+                  <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text)', marginTop: 4, whiteSpace: 'pre-wrap' }}>{n.body}</div>
                 </div>
               ))}
-              {active.notes.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>No notes yet.</div>}
+              {active.notes.length === 0 && <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }}>No notes yet.</div>}
             </div>
             <textarea style={textareaStyle} placeholder="Add an update the client will see…" value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} />
             <div style={{ ...primaryBtn, marginTop: 8, display: 'inline-block' }} onClick={() => { r.addNote(active.id, noteDraft); setNoteDraft(''); }}>Add note</div>
@@ -306,7 +306,7 @@ export default function ClientReportsTab({ clientId, publicToken }: Props) {
           </div>
 
           <div>
-            <span style={{ fontSize: 12, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => { r.removeReport(active.id); setActiveId(null); }}>
+            <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => { r.removeReport(active.id); setActiveId(null); }}>
               Delete this reporting period
             </span>
           </div>
