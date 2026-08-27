@@ -33,7 +33,7 @@ import { sendDeliveryEmail } from './handlers/deliver-email';
 import type { DeliverEmailEnv } from './handlers/deliver-email';
 import { supportInboxWebhook } from './handlers/support-inbox';
 import type { SupportInboxEnv } from './handlers/support-inbox';
-import { publicAuditQuestions, publicAuditSubmit, createClientInvoice } from './handlers/client-crm';
+import { publicAuditQuestions, publicAuditSubmit, publicClientDashboard, createClientInvoice } from './handlers/client-crm';
 import type { ClientCrmEnv } from './handlers/client-crm';
 
 const NETLIFY_ORIGIN = 'https://mastermindbymarq.netlify.app';
@@ -69,6 +69,7 @@ export default {
 
     if (url.pathname === '/api/client-crm/public-questions') return publicAuditQuestions(request, env);
     if (url.pathname === '/api/client-crm/public-audit') return publicAuditSubmit(request, env);
+    if (url.pathname === '/api/client-crm/public-dashboard') return publicClientDashboard(request, env);
     if (url.pathname === '/api/client-crm/create-invoice') return createClientInvoice(request, env);
 
     if (url.pathname.startsWith('/api/')) {

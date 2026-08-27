@@ -4,6 +4,7 @@ import type { useClientCRM, CrmClientWithChildren } from '../../data/useClientCR
 import type { ClientStage, PricingCadence } from '../../data/types';
 import { AiError } from '../../lib/ai';
 import { STAGES, cardStyle, inputStyle, selectStyle, primaryBtn, ghostBtn, tabStyle } from './ClientCRMScreen';
+import ClientReportsTab from './ClientReportsTab';
 
 interface Props {
   client: CrmClientWithChildren;
@@ -13,7 +14,7 @@ interface Props {
   homeSubStyle: CSSProperties;
 }
 
-type Tab = 'audit' | 'analysis' | 'pricing' | 'invoices';
+type Tab = 'audit' | 'analysis' | 'pricing' | 'invoices' | 'reports';
 
 const textareaStyle: CSSProperties = {
   width: '100%', minHeight: 70, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 8,
@@ -169,7 +170,10 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         <div style={tabStyle(tab === 'analysis')} onClick={() => setTab('analysis')}>Analysis</div>
         <div style={tabStyle(tab === 'pricing')} onClick={() => setTab('pricing')}>Pricing</div>
         <div style={tabStyle(tab === 'invoices')} onClick={() => setTab('invoices')}>Invoices ({client.invoices.length})</div>
+        <div style={tabStyle(tab === 'reports')} onClick={() => setTab('reports')}>Reports</div>
       </div>
+
+      {tab === 'reports' && <ClientReportsTab clientId={client.id} publicToken={client.public_token} />}
 
       {tab === 'audit' && (
         <div style={{ marginTop: 18, maxWidth: 640 }}>

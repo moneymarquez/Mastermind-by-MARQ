@@ -803,8 +803,8 @@ third-party data processors).
   2. Delete their row from every per-user table (`user_modules`, `nova_preferences`, `nova_memory`, and every
      module table — RLS-scoped ones can be found via `select table_name from information_schema.columns where
      column_name = 'user_id'` in the SQL editor).
-  3. Delete their Storage objects — both `call-recordings` and `project-videos` buckets are folder-per-user
-     (`<user_id>/...`), so list and remove everything under that prefix in each bucket.
+  3. Delete their Storage objects — the `call-recordings`, `project-videos`, and `client-reports` buckets are all
+     folder-per-user (`<user_id>/...`), so list and remove everything under that prefix in each bucket.
   4. Delete the `subscriptions` row and cancel the Stripe subscription/customer if still active (via the Stripe
      dashboard, or the same billing portal used for self-serve cancellation).
   5. Delete the `auth.users` row last (Supabase Studio → Authentication → Users), which cascades any
@@ -813,9 +813,10 @@ third-party data processors).
 ## Client Audit, Analysis & Invoicing System (Scaling → Client CRM)
 
 The full client-acquisition-to-payment pipeline: Discovery → Analysis → Package/Pricing → Invoice → Payment →
-Active Client, live under Scaling → **Client CRM**. Run `supabase/schema_039_client_crm.sql` then
-`supabase/schema_040_client_crm_catalog.sql` (after `schema_038_recurring_reminders.sql`) — together they seed a
-starter audit-question bank, the default pricing template, and the 40-item service catalog on first run. No new
+Active Client, live under Scaling → **Client CRM**. Run `supabase/schema_039_client_crm.sql`,
+`supabase/schema_040_client_crm_catalog.sql`, then `supabase/schema_041_client_dashboard.sql` (after
+`schema_038_recurring_reminders.sql`) — together they seed a starter audit-question bank, the default pricing
+template, and the 40-item service catalog on first run. No new
 secrets required; the Stripe invoice flow reuses the same `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` already
 configured for the Masterminds subscription billing.
 
@@ -876,6 +877,36 @@ configured for the Masterminds subscription billing.
 - **CRM board** (`ClientCRMScreen.tsx`) — filterable by stage (`New Lead → Discovery Complete → Analysis Sent →
   Invoice Sent → Active (Paid) → Retainer`), each card showing business name, stage, next payment due, the
   reveal-schedule state, and last activity. Clicking a card opens `ClientDetailView.tsx` — audit answers, analysis,
-  pricing, and invoices in one place, plus a stage dropdown for manual overrides.
+  pricing, invoices, and reports in one place, plus a stage dropdown for manual overrides.
+
+### Client dashboard (Part 7)
+
+A read-only, per-client progress dashboard at `/client/<token>`, fed by a manual monthly report the owner fills in.
+Run `supabase/schema_041_client_dashboard.sql` for it.
+
+- **Manual by design, API-shaped.** Every field is hand-entered — no Meta/Google integrations yet — but the columns
+  (`reach`, `engagement_count`, follower start/end, `gbp_views`/`gbp_calls`/`gbp_directions`) deliberately mirror
+  what those APIs return, so wiring them up later changes how a column gets *filled* without touching the column,
+  the dashboard, or what the client sees.
+- **Admin side** — a Reports tab per client (`ClientReportsTab.tsx`), one report per month
+  (`unique (client_id, period_start)`, normalized to the 1st). Performance metrics, a content gallery and a separate
+  design-proof gallery with Draft/Approved/Live status, a campaign log, "what's included", an ROI snapshot,
+  timestamped notes, and next-period plan. Blank numeric fields store `null`, not `0`, and render as an em dash —
+  "not tracked" and "zero" are different claims to put in front of a paying client.
+- **Publish gate.** A report is a draft until explicitly published, so a half-entered month isn't live to the client
+  the moment the first field is typed. Unapproved design proofs are filtered out server-side too — a draft the
+  client hasn't been shown shouldn't leak through their dashboard.
+- **The token is the credential.** Clients have no login, so `crm_clients.public_token` (random uuid, unique index,
+  revocable by updating the column) is what stands in. The dashboard reads through a service-role Worker endpoint
+  (`publicClientDashboard`), never RLS, and returns only published reports plus the fields a client should see.
+- **Private bucket, signed URLs.** Uploads go to a private `client-reports` bucket under `<user_id>/<report_id>/…`
+  (matching `call-recordings` and `project-videos`, which the account-deletion checklist depends on). A public
+  bucket would leak every file to anyone who ever saw one URL, so the Worker mints 1-hour signed URLs instead.
+- **Money is never re-keyed.** Payment history comes straight from `client_invoices`. Paid and outstanding invoices
+  always show (the client already has them); the forward-looking schedule appears only when that client's
+  `reveal_full_schedule` is on, and TBD line items are excluded server-side regardless.
+- **Linked from the invoice.** `createClientInvoice` puts the dashboard URL in the Stripe invoice `footer` (and
+  metadata), which Stripe renders on both the emailed invoice and the hosted payment page — so paying and seeing the
+  work delivered are one experience rather than two disconnected ones.
 
 

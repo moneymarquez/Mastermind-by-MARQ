@@ -653,6 +653,9 @@ export interface CrmClient {
   stage: ClientStage;
   reveal_full_schedule: boolean;
   source: 'internal' | 'public';
+  /** The credential for the client's read-only dashboard at
+   *  /client/<token> — they have no login, so this is what stands in. */
+  public_token: string;
   notes: string | null;
   last_activity_at: string;
   created_at: string;
@@ -721,6 +724,65 @@ export interface ClientPricingItem {
   repeat_count: number;
   is_upfront: boolean;
   sort_order: number;
+  created_at: string;
+}
+
+// ── Client dashboard (Part 7) ────────────────────────────────────────────
+// Manual data entry for now; the field shapes mirror what the Meta /
+// Google Business Profile APIs return so they can be auto-filled later
+// without changing the dashboard or what the client sees.
+
+export interface ClientReport {
+  id: string;
+  client_id: string;
+  period_start: string;
+  period_label: string;
+  reach: number | null;
+  engagement_count: number | null;
+  engagement_summary: string | null;
+  followers_start: number | null;
+  followers_end: number | null;
+  gbp_views: number | null;
+  gbp_calls: number | null;
+  gbp_directions: number | null;
+  whats_included: string | null;
+  roi_snapshot: string | null;
+  upcoming_plan: string | null;
+  published: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ReportAssetKind = 'content' | 'proof';
+export type ReportAssetStatus = 'draft' | 'approved' | 'live';
+
+export interface ClientReportAsset {
+  id: string;
+  report_id: string;
+  kind: ReportAssetKind;
+  storage_path: string;
+  file_name: string;
+  mime_type: string | null;
+  status: ReportAssetStatus;
+  caption: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface ClientReportCampaign {
+  id: string;
+  report_id: string;
+  name: string;
+  description: string | null;
+  launched_on: string | null;
+  result_notes: string | null;
+  created_at: string;
+}
+
+export interface ClientReportNote {
+  id: string;
+  report_id: string;
+  body: string;
   created_at: string;
 }
 

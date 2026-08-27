@@ -112,6 +112,92 @@ export async function publicAuditSubmit(request: Request, env: ClientCrmEnv): Pr
   return json({ ok: true });
 }
 
+// ── Public client dashboard (Part 7) ───────────────────────────────────────
+// The client has no Mastermind login, so crm_clients.public_token is the
+// credential — /client/<token>. Service-role read, same reasoning as the
+// public audit endpoint. Deliberately narrow: only published reports, only
+// the fields the client should see, and financials filtered by that
+// client's own reveal_full_schedule setting.
+async function signAsset(env: ClientCrmEnv, path: string): Promise<string | null> {
+  const res = await fetch(`${env.VITE_SUPABASE_URL}/storage/v1/object/sign/client-reports/${path}`, {
+    method: 'POST',
+    headers: supabaseHeaders(env),
+    body: JSON.stringify({ expiresIn: 3600 }),
+  });
+  if (!res.ok) return null;
+  const data = (await res.json()) as { signedURL?: string };
+  return data.signedURL ? `${env.VITE_SUPABASE_URL}/storage/v1${data.signedURL}` : null;
+}
+
+export async function publicClientDashboard(request: Request, env: ClientCrmEnv): Promise<Response> {
+  const token = new URL(request.url).searchParams.get('token');
+  if (!token || !/^[0-9a-f-]{36}$/i.test(token)) return json({ error: 'Not found.' }, 404);
+
+  const headers = supabaseHeaders(env);
+  const clientRes = await fetch(
+    `${env.VITE_SUPABASE_URL}/rest/v1/crm_clients?public_token=eq.${token}&select=id,business_name,contact_name,reveal_full_schedule`,
+    { headers },
+  );
+  if (!clientRes.ok) return json({ error: 'Could not load this dashboard.' }, 500);
+  const [client] = (await clientRes.json()) as {
+    id: string;
+    business_name: string;
+    contact_name: string | null;
+    reveal_full_schedule: boolean;
+  }[];
+  if (!client) return json({ error: 'Not found.' }, 404);
+
+  const reportsRes = await fetch(
+    `${env.VITE_SUPABASE_URL}/rest/v1/client_reports?client_id=eq.${client.id}&published=eq.true` +
+      '&select=*,client_report_assets(*),client_report_campaigns(*),client_report_notes(*)&order=period_start.desc',
+    { headers },
+  );
+  const reports = (await reportsRes.json()) as Record<string, unknown>[];
+
+  // Sign every asset the client is allowed to see. Unapproved proofs are
+  // dropped entirely rather than shown greyed out — a draft the client
+  // hasn't been shown yet shouldn't leak through their dashboard.
+  for (const r of reports) {
+    const assets = ((r.client_report_assets ?? []) as Record<string, unknown>[]).filter(
+      (a) => a.kind === 'content' || a.status === 'approved' || a.status === 'live',
+    );
+    for (const a of assets) {
+      a.url = await signAsset(env, a.storage_path as string);
+    }
+    r.client_report_assets = assets;
+  }
+
+  // Money comes straight from the invoicing system — never re-keyed.
+  // Paid/sent invoices are always shown (the client already has them);
+  // the reveal_full_schedule flag governs the forward-looking plan only,
+  // and TBD line items (amount is null) are excluded regardless.
+  const invoicesRes = await fetch(
+    `${env.VITE_SUPABASE_URL}/rest/v1/client_invoices?client_id=eq.${client.id}` +
+      '&select=description,amount,due_date,status,paid_at,stripe_invoice_url&order=created_at.asc',
+    { headers },
+  );
+  const invoices = await invoicesRes.json();
+
+  let upcoming: unknown[] = [];
+  if (client.reveal_full_schedule) {
+    const planRes = await fetch(
+      `${env.VITE_SUPABASE_URL}/rest/v1/client_pricing_items?client_id=eq.${client.id}&amount=not.is.null` +
+        '&select=label,amount,cadence,repeat_count&order=sort_order.asc',
+      { headers },
+    );
+    upcoming = await planRes.json();
+  }
+
+  return json({
+    businessName: client.business_name,
+    contactName: client.contact_name,
+    revealFullSchedule: client.reveal_full_schedule,
+    reports,
+    invoices,
+    upcoming,
+  });
+}
+
 // ── Invoice creation (Part 4 — manual trigger only) ────────────────────────
 interface CreateInvoiceBody {
   clientId?: string;
@@ -162,6 +248,7 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
       contact_email: string | null;
       stripe_customer_id: string | null;
       stage: string;
+      public_token: string;
     }[];
     if (!client) return json({ error: 'Client not found.' }, 404);
     if (!client.contact_email) return json({ error: 'Add a contact email for this client before sending an invoice.' }, 400);
@@ -192,11 +279,19 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
     const dueDate = body.dueDate ? new Date(body.dueDate) : null;
     const daysUntilDue = dueDate ? Math.max(1, Math.ceil((dueDate.getTime() - Date.now()) / 86_400_000)) : 14;
 
+    // The dashboard link rides on the invoice footer so paying and seeing
+    // the work delivered are one experience rather than two disconnected
+    // ones — Stripe renders the footer on both the emailed invoice and the
+    // hosted payment page.
+    const dashboardUrl = `${new URL(request.url).origin}/client/${client.public_token}`;
+
     const invoice = await stripeRequest(env, '/invoices', {
       customer: customerId,
       collection_method: 'send_invoice',
       days_until_due: String(daysUntilDue),
+      footer: `Your live progress dashboard: ${dashboardUrl}`,
       'metadata[mastermind_crm_client_id]': client.id,
+      'metadata[mastermind_dashboard_url]': dashboardUrl,
     });
 
     const finalized = await stripeRequest(env, `/invoices/${invoice.id}/finalize`, {});

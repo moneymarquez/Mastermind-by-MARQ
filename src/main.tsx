@@ -3,17 +3,25 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import PublicAuditScreen from './PublicAuditScreen.tsx'
+import PublicClientDashboard from './PublicClientDashboard.tsx'
 
-// /audit is the one genuinely public route in the app (Part 1b of the
-// Client CRM build) — a prospect filling it out has no Mastermind
-// session, so this bypasses App.tsx's auth gate entirely rather than
-// trying to thread an unauthenticated path through it. Everything else
-// still goes through App -> AuthedGate -> Stage as before.
-const isPublicAudit = window.location.pathname.replace(/\/+$/, '') === '/audit';
+// The two genuinely public routes in the app — /audit (Part 1b: a prospect
+// filling out the lead-gen questionnaire) and /client/<token> (Part 7: a
+// client viewing their own progress dashboard). Neither visitor has a
+// Mastermind session, so both bypass App.tsx's auth gate entirely rather
+// than threading an unauthenticated path through it. Everything else still
+// goes through App -> AuthedGate -> Stage as before.
+const path = window.location.pathname.replace(/\/+$/, '');
+const isPublicAudit = path === '/audit';
+const clientToken = path.startsWith('/client/') ? path.slice('/client/'.length) : null;
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {isPublicAudit ? <PublicAuditScreen /> : <App />}
+    {isPublicAudit
+      ? <PublicAuditScreen />
+      : clientToken
+        ? <PublicClientDashboard token={clientToken} />
+        : <App />}
   </StrictMode>,
 )
 
