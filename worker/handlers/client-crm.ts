@@ -40,7 +40,7 @@ function json(body: unknown, status = 200): Response {
 // audit_questions is owner-only RLS, same as every Scaling table, so a
 // prospect's anon Supabase client can't read it directly — this is the
 // public, read-only, service-role-backed view of just the active rows.
-export async function publicAuditQuestions(request: Request, env: ClientCrmEnv): Promise<Response> {
+export async function publicAuditQuestions(_request: Request, env: ClientCrmEnv): Promise<Response> {
   const res = await fetch(
     `${env.VITE_SUPABASE_URL}/rest/v1/audit_questions?user_id=eq.${OWNER_USER_ID}&active=eq.true&select=id,category,key,prompt,helper_text,sort_order&order=sort_order`,
     { headers: supabaseHeaders(env) },

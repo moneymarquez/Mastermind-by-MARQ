@@ -1,0 +1,39 @@
+{
+  /* The Cloudflare Worker was never type-checked before: `npm run build`
+     runs `tsc -b`, which only covered src/ and vite.config.ts, while the
+     Worker itself is bundled by esbuild at deploy time — and esbuild only
+     transpiles, it never type-checks. A broken handler therefore reached
+     production and failed at runtime instead of at build time.
+
+     Now that the Worker owns every /api/* route natively (no Netlify
+     fallback to absorb mistakes) that gap is worth closing. Kept as its own
+     project because the Worker's globals are neither the browser's DOM nor
+     Node's — it needs DOM lib for fetch/Request/Response/crypto without
+     "types": ["node"] pulling in a conflicting Node environment. */
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.worker.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM"],
+    "types": [],
+    "skipLibCheck": true,
+
+    /* Bundler mode — matches how esbuild actually resolves these files. */
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  /* src/data/analysisEngine.ts is pulled in through worker/handlers/audit.ts
+     — that shared module is the whole point of the arrangement, so it must
+     type-check under the Worker's settings too, not just the browser's. */
+  "include": ["worker"]
+}

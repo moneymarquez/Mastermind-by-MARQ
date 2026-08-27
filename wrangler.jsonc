@@ -39,7 +39,19 @@
   "vars": {
     "VITE_SUPABASE_URL": "https://jqkxaxjuvurciqmvnsbw.supabase.co",
     "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impxa3hheGp1dnVyY2lxbXZuc2J3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNDE1ODAsImV4cCI6MjEwMTYxNzU4MH0.TjKqBJCBlqVQLXnQZIL6tyyGE3KEIdCdaa7FySOfOHA",
-    "STRIPE_PRICE_ID": "price_1U6YjXRyuG1KPb7GE5a7AamS"
+    "STRIPE_PRICE_ID": "price_1U6YjXRyuG1KPb7GE5a7AamS",
+    // Timezone the Made by Marq booking slots are expressed in. Sandy, UT
+    // observes DST, and booking_availability stores local wall-clock times,
+    // so this must be an IANA zone name — NOT a fixed offset. Deliberately
+    // separate from STORE_TIMEZONE (America/Chicago), which belongs to the
+    // shift-reminder feature and is a different business's hours.
+    "BOOKING_TIMEZONE": "America/Denver"
+    // PUBLIC_SITE_ORIGINS (optional, plain variable) — comma-separated
+    // extra origins allowed to call the public /api/audit/* and
+    // /api/booking/* routes, ADDED to the built-in defaults in
+    // worker/lib/http.ts rather than replacing them. Set this when a
+    // preview deploy gets a generated hostname; the production domains are
+    // already in the defaults.
   },
   "assets": {
     "directory": "./dist",
@@ -66,4 +78,23 @@
   //   RESEND_API_KEY             (secret — optional; "Send to client" shows "not configured" without it)
   //   RESEND_FROM_EMAIL          (plain variable — a sender address verified in your Resend account)
   //   RESEND_WEBHOOK_SECRET      (secret — optional; from Resend's Webhooks page, the email.received subscription)
+  //
+  // Made by Marq public site (worker/handlers/audit.ts):
+  //   ANTHROPIC_API_KEY          (secret — already listed above; without it the public
+  //                               audit still saves the lead and shows a holding message
+  //                               instead of a generated diagnosis, it does not fail)
+  //   RESEND_API_KEY /
+  //   RESEND_FROM_EMAIL          (already listed above — reused for the "new lead" alert
+  //                               and the booking confirmation sent to the prospect)
+  //   BOOKING_TIMEZONE           (plain variable — declared above)
+  //   PUBLIC_SITE_ORIGINS        (plain variable — optional, see above)
+  //
+  // NOTE: Netlify is no longer part of this stack. netlify/ and
+  // netlify.toml were removed and every /api/* route is now Worker-native,
+  // so nothing here depends on a Netlify deploy being live any more. The
+  // one casualty is the three SCHEDULED push functions (send-reminders,
+  // send-shift-reminders, generate-daily-plan) — they used the `web-push`
+  // npm package, which doesn't run in the Workers runtime, so scheduled
+  // push notifications do not currently fire. Their last working source is
+  // in git history for whoever ports VAPID signing to Web Crypto.
 }
