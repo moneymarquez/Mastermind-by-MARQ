@@ -10,6 +10,7 @@ import type {
   CrmClient,
   PricingCadence,
   PricingTemplateItem,
+  Service,
 } from './types';
 
 type ClientRow = CrmClient & {
@@ -33,16 +34,18 @@ export function useClientCRM() {
   const [clients, setClients] = useState<CrmClientWithChildren[]>([]);
   const [questions, setQuestions] = useState<AuditQuestion[]>([]);
   const [template, setTemplate] = useState<PricingTemplateItem[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const [clientsRes, questionsRes, templateRes] = await Promise.all([
+    const [clientsRes, questionsRes, templateRes, servicesRes] = await Promise.all([
       supabase
         .from('crm_clients')
         .select('*, client_audits(*), client_pricing_items(*), client_invoices(*)')
         .order('last_activity_at', { ascending: false }),
       supabase.from('audit_questions').select('*').order('sort_order'),
       supabase.from('pricing_template_items').select('*').order('sort_order'),
+      supabase.from('services').select('*').order('sort_order'),
     ]);
     const rows = (clientsRes.data ?? []) as unknown as ClientRow[];
     setClients(
@@ -55,6 +58,7 @@ export function useClientCRM() {
     );
     setQuestions((questionsRes.data ?? []) as AuditQuestion[]);
     setTemplate((templateRes.data ?? []) as PricingTemplateItem[]);
+    setServices((servicesRes.data ?? []) as Service[]);
     setLoading(false);
   }, []);
 
@@ -162,14 +166,34 @@ export function useClientCRM() {
     await load();
   };
 
+  // ── Service catalog (Part 6) ────────────────────────────────────────────
+  const addService = async (s: { category: string; name: string; price_type: PricingCadence; default_price: number; notes?: string | null }) => {
+    const sort_order = services.length ? Math.max(...services.map((x) => x.sort_order)) + 1 : 0;
+    await supabase.from('services').insert({ ...s, sort_order });
+    await load();
+  };
+
+  const updateService = async (
+    id: string,
+    patch: Partial<Pick<Service, 'category' | 'name' | 'price_type' | 'default_price' | 'notes' | 'active'>>,
+  ) => {
+    await supabase.from('services').update(patch).eq('id', id);
+    await load();
+  };
+
+  const removeService = async (id: string) => {
+    await supabase.from('services').delete().eq('id', id);
+    await load();
+  };
+
   // ── Pricing template — the editable default package (Part 3) ───────────
-  const addTemplateItem = async (item: { label: string; amount: number; cadence: PricingCadence; repeat_count: number }) => {
+  const addTemplateItem = async (item: { label: string; amount: number | null; cadence: PricingCadence; repeat_count: number; is_upfront?: boolean }) => {
     const sort_order = template.length ? Math.max(...template.map((x) => x.sort_order)) + 1 : 0;
     await supabase.from('pricing_template_items').insert({ ...item, sort_order });
     await load();
   };
 
-  const updateTemplateItem = async (id: string, patch: Partial<Pick<PricingTemplateItem, 'label' | 'amount' | 'cadence' | 'repeat_count'>>) => {
+  const updateTemplateItem = async (id: string, patch: Partial<Pick<PricingTemplateItem, 'label' | 'amount' | 'cadence' | 'repeat_count' | 'is_upfront'>>) => {
     await supabase.from('pricing_template_items').update(patch).eq('id', id);
     await load();
   };
@@ -188,13 +212,17 @@ export function useClientCRM() {
       amount: t.amount,
       cadence: t.cadence,
       repeat_count: t.repeat_count,
+      is_upfront: t.is_upfront,
       sort_order: t.sort_order,
     }));
     await supabase.from('client_pricing_items').insert(rows);
     await load();
   };
 
-  const addPricingItem = async (clientId: string, item: { label: string; amount: number; cadence: PricingCadence; repeat_count: number }) => {
+  const addPricingItem = async (
+    clientId: string,
+    item: { label: string; amount: number | null; cadence: PricingCadence; repeat_count: number; is_upfront?: boolean; service_id?: string | null },
+  ) => {
     const client = clients.find((c) => c.id === clientId);
     const existing = client?.pricingItems ?? [];
     const sort_order = existing.length ? Math.max(...existing.map((x) => x.sort_order)) + 1 : 0;
@@ -202,8 +230,31 @@ export function useClientCRM() {
     await load();
   };
 
-  const updatePricingItem = async (id: string, patch: Partial<Pick<ClientPricingItem, 'label' | 'amount' | 'cadence' | 'repeat_count'>>) => {
+  /** Adds a catalog service to a client's plan, carrying its price over as
+   *  the starting amount — still fully editable per client from there. */
+  const addServiceToClient = async (clientId: string, service: Service) => {
+    await addPricingItem(clientId, {
+      label: service.notes ? `${service.name} (${service.notes})` : service.name,
+      amount: service.default_price,
+      cadence: service.price_type,
+      repeat_count: 1,
+      service_id: service.id,
+    });
+  };
+
+  const updatePricingItem = async (
+    id: string,
+    patch: Partial<Pick<ClientPricingItem, 'label' | 'amount' | 'cadence' | 'repeat_count' | 'is_upfront'>>,
+  ) => {
     await supabase.from('client_pricing_items').update(patch).eq('id', id);
+    await load();
+  };
+
+  /** TBD ⇄ real amount. Passing null marks the month undecided — nothing
+   *  is shown to the client and it can't be invoiced until a number is
+   *  set here. */
+  const setItemAmount = async (id: string, amount: number | null) => {
+    await supabase.from('client_pricing_items').update({ amount }).eq('id', id);
     await load();
   };
 
@@ -254,6 +305,7 @@ export function useClientCRM() {
     clients,
     questions,
     template,
+    services,
     loading,
     createClient,
     updateClient,
@@ -269,12 +321,17 @@ export function useClientCRM() {
     regenerateAnalysis,
     editAnalysisText,
     markAnalysisSent,
+    addService,
+    updateService,
+    removeService,
     addTemplateItem,
     updateTemplateItem,
     removeTemplateItem,
     applyTemplateToClient,
     addPricingItem,
+    addServiceToClient,
     updatePricingItem,
+    setItemAmount,
     removePricingItem,
     setRevealSchedule,
     createInvoice,

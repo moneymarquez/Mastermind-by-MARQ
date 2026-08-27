@@ -24,6 +24,13 @@ function money(n: number): string {
   return `$${n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
+/** A null amount is TBD — undecided, not merely hidden. Rendered as the
+ *  word rather than a placeholder number so nothing implies a commitment
+ *  that hasn't been made. */
+function amountLabel(amount: number | null): string {
+  return amount === null ? 'TBD' : money(amount);
+}
+
 export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, homeSubStyle }: Props) {
   const [tab, setTab] = useState<Tab>(client.audit?.status === 'complete' ? 'analysis' : 'audit');
   const [nameDraft, setNameDraft] = useState(client.business_name);
@@ -37,6 +44,9 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
   const [newItemAmount, setNewItemAmount] = useState('');
   const [newItemCadence, setNewItemCadence] = useState<PricingCadence>('one_time');
   const [newItemRepeat, setNewItemRepeat] = useState('1');
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const [catalogCategory, setCatalogCategory] = useState('');
+  const [tbdDraft, setTbdDraft] = useState<Record<string, string>>({});
   const [invoiceItemId, setInvoiceItemId] = useState('');
   const [invoiceDesc, setInvoiceDesc] = useState('');
   const [invoiceAmount, setInvoiceAmount] = useState('');
@@ -83,10 +93,19 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
     await crm.editAnalysisText(client.audit.id, analysisDraft);
   };
 
+  // A blank amount is allowed and means TBD — that's the whole point of
+  // being able to send Month 1 without committing to Months 2-4 in writing.
   const addPricingItem = async () => {
-    const amount = Number(newItemAmount);
-    if (!newItemLabel.trim() || !amount || amount <= 0) return;
-    await crm.addPricingItem(client.id, { label: newItemLabel.trim(), amount, cadence: newItemCadence, repeat_count: newItemCadence === 'monthly' ? Number(newItemRepeat) || 1 : 1 });
+    if (!newItemLabel.trim()) return;
+    const raw = newItemAmount.trim();
+    const amount = raw === '' ? null : Number(raw);
+    if (amount !== null && (!Number.isFinite(amount) || amount < 0)) return;
+    await crm.addPricingItem(client.id, {
+      label: newItemLabel.trim(),
+      amount,
+      cadence: newItemCadence,
+      repeat_count: newItemCadence === 'monthly' ? Number(newItemRepeat) || 1 : 1,
+    });
     setNewItemLabel('');
     setNewItemAmount('');
     setNewItemRepeat('1');
@@ -232,22 +251,111 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {client.pricingItems.map((item) => (
-              <div key={item.id} style={{ ...cardStyle, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{item.label}</div>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 2 }}>
-                    {money(item.amount)} {item.cadence === 'monthly' ? `/mo × ${item.repeat_count}` : 'one-time'}
+            {client.pricingItems.map((item) => {
+              const isTbd = item.amount === null;
+              return (
+                <div key={item.id} style={{ ...cardStyle, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{item.label}</div>
+                    <div style={{ fontSize: 11.5, color: isTbd ? '#C9A24B' : 'var(--text-secondary)', marginTop: 2 }}>
+                      {amountLabel(item.amount)} {item.cadence === 'monthly' ? `/mo × ${item.repeat_count}` : 'one-time'}
+                      {isTbd && ' — not shown to the client, not invoiceable'}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    {/* Quick-switch for the launch fee — $1,000 standard,
+                        $500 a deliberate tight-budget override. */}
+                    {item.is_upfront && !isTbd && (
+                      <div style={{ display: 'inline-flex', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 999, padding: 2 }}>
+                        {[1000, 500].map((amt) => (
+                          <div
+                            key={amt}
+                            onClick={() => crm.setItemAmount(item.id, amt)}
+                            style={{
+                              padding: '4px 11px', borderRadius: 999, fontSize: 11.5, fontWeight: 600, cursor: 'pointer',
+                              background: Number(item.amount) === amt ? 'var(--text)' : 'transparent',
+                              color: Number(item.amount) === amt ? 'var(--bg)' : 'var(--text-secondary)',
+                            }}
+                          >
+                            ${amt.toLocaleString()}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {isTbd ? (
+                      <>
+                        <input
+                          style={{ ...inputStyle, width: 90 }}
+                          placeholder="Set $"
+                          value={tbdDraft[item.id] ?? ''}
+                          onChange={(e) => setTbdDraft((d) => ({ ...d, [item.id]: e.target.value }))}
+                        />
+                        <div
+                          style={ghostBtn}
+                          onClick={() => {
+                            const n = Number(tbdDraft[item.id]);
+                            if (!Number.isFinite(n) || n < 0) return;
+                            crm.setItemAmount(item.id, n);
+                            setTbdDraft((d) => ({ ...d, [item.id]: '' }));
+                          }}
+                        >
+                          Confirm
+                        </div>
+                      </>
+                    ) : (
+                      <span style={{ fontSize: 12, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.setItemAmount(item.id, null)}>Mark TBD</span>
+                    )}
+                    <span style={{ fontSize: 12, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.removePricingItem(item.id)}>Remove</span>
                   </div>
                 </div>
-                <span style={{ fontSize: 12, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.removePricingItem(item.id)}>Remove</span>
+              );
+            })}
+          </div>
+
+          <div style={{ ...cardStyle, marginTop: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Add from service catalog</div>
+              <div style={ghostBtn} onClick={() => setCatalogOpen((o) => !o)}>{catalogOpen ? 'Hide' : 'Browse'}</div>
+            </div>
+            {catalogOpen && (
+              <div style={{ marginTop: 12 }}>
+                <select style={selectStyle} value={catalogCategory} onChange={(e) => setCatalogCategory(e.target.value)}>
+                  <option value="">— all categories —</option>
+                  {[...new Set(crm.services.filter((s) => s.active).map((s) => s.category))].map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 300, overflowY: 'auto' }}>
+                  {crm.services
+                    .filter((s) => s.active && (!catalogCategory || s.category === catalogCategory))
+                    .map((s) => (
+                      <div
+                        key={s.id}
+                        onClick={() => crm.addServiceToClient(client.id, s)}
+                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 8, background: 'var(--surface-4)', cursor: 'pointer' }}
+                      >
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 12.5, color: 'var(--text)' }}>{s.name}</div>
+                          <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                            {s.category}{s.notes ? ` · ${s.notes}` : ''}
+                          </div>
+                        </div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                          {money(s.default_price)}{s.price_type === 'monthly' ? '/mo' : ''}
+                        </div>
+                      </div>
+                    ))}
+                  {crm.services.length === 0 && (
+                    <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Catalog is empty — seed it by running schema_040.</div>
+                  )}
+                </div>
               </div>
-            ))}
+            )}
           </div>
 
           <div style={{ ...cardStyle, marginTop: 14, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            <input style={{ ...inputStyle, flex: '2 1 160px' }} placeholder="Line item label" value={newItemLabel} onChange={(e) => setNewItemLabel(e.target.value)} />
-            <input style={{ ...inputStyle, flex: '1 1 90px' }} placeholder="Amount" value={newItemAmount} onChange={(e) => setNewItemAmount(e.target.value)} />
+            <input style={{ ...inputStyle, flex: '2 1 160px' }} placeholder="Custom line item label" value={newItemLabel} onChange={(e) => setNewItemLabel(e.target.value)} />
+            <input style={{ ...inputStyle, flex: '1 1 90px' }} placeholder="Amount (blank = TBD)" value={newItemAmount} onChange={(e) => setNewItemAmount(e.target.value)} />
             <select style={{ ...selectStyle, flex: '1 1 100px' }} value={newItemCadence} onChange={(e) => setNewItemCadence(e.target.value as PricingCadence)}>
               <option value="one_time">One-time</option>
               <option value="monthly">Monthly</option>
@@ -298,8 +406,19 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                 }}
               >
                 <option value="">— free-form / custom —</option>
-                {client.pricingItems.map((item) => <option key={item.id} value={item.id}>{item.label} ({money(item.amount)})</option>)}
+                {/* TBD items are excluded rather than shown disabled —
+                    there's no amount to invoice, and listing them invites
+                    sending a number that was never agreed. Confirm the
+                    amount on the Pricing tab first. */}
+                {client.pricingItems.filter((p) => p.amount !== null).map((item) => (
+                  <option key={item.id} value={item.id}>{item.label} ({money(item.amount as number)})</option>
+                ))}
               </select>
+              {client.pricingItems.some((p) => p.amount === null) && (
+                <div style={{ fontSize: 11, color: '#C9A24B' }}>
+                  {client.pricingItems.filter((p) => p.amount === null).length} TBD line item(s) hidden — set an amount on the Pricing tab to invoice them.
+                </div>
+              )}
               <input style={inputStyle} placeholder="Description" value={invoiceDesc} onChange={(e) => setInvoiceDesc(e.target.value)} />
               <div style={{ display: 'flex', gap: 8 }}>
                 <input style={inputStyle} placeholder="Amount" value={invoiceAmount} onChange={(e) => setInvoiceAmount(e.target.value)} />

@@ -682,12 +682,31 @@ export interface ClientAudit {
 
 export type PricingCadence = 'one_time' | 'monthly';
 
+/** The priced service catalog the package builder pulls line items from.
+ *  default_price is the client-facing "Your Price"; 0 is meaningful (a
+ *  service bundled into a retainer), not missing. */
+export interface Service {
+  id: string;
+  category: string;
+  name: string;
+  price_type: PricingCadence;
+  default_price: number;
+  notes: string | null;
+  sort_order: number;
+  active: boolean;
+  created_at: string;
+}
+
+/** `amount: null` means TBD — no number committed yet. Deliberately
+ *  distinct from a decided-but-hidden amount, which is the client's
+ *  reveal_full_schedule flag. A TBD item is not invoiceable. */
 export interface PricingTemplateItem {
   id: string;
   label: string;
-  amount: number;
+  amount: number | null;
   cadence: PricingCadence;
   repeat_count: number;
+  is_upfront: boolean;
   sort_order: number;
   created_at: string;
 }
@@ -695,10 +714,12 @@ export interface PricingTemplateItem {
 export interface ClientPricingItem {
   id: string;
   client_id: string;
+  service_id: string | null;
   label: string;
-  amount: number;
+  amount: number | null;
   cadence: PricingCadence;
   repeat_count: number;
+  is_upfront: boolean;
   sort_order: number;
   created_at: string;
 }

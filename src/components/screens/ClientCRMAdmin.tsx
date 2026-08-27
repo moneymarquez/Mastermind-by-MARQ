@@ -90,8 +90,10 @@ export function PricingTemplateAdmin({ crm, onClose, homeHeadStyle, homeSubStyle
   const [repeat, setRepeat] = useState('1');
 
   const add = async () => {
-    const amt = Number(amount);
-    if (!label.trim() || !amt || amt <= 0) return;
+    if (!label.trim()) return;
+    const raw = amount.trim();
+    const amt = raw === '' ? null : Number(raw);
+    if (amt !== null && (!Number.isFinite(amt) || amt < 0)) return;
     await crm.addTemplateItem({ label: label.trim(), amount: amt, cadence, repeat_count: cadence === 'monthly' ? Number(repeat) || 1 : 1 });
     setLabel('');
     setAmount('');
@@ -110,9 +112,12 @@ export function PricingTemplateAdmin({ crm, onClose, homeHeadStyle, homeSubStyle
         {[...crm.template].sort((a, b) => a.sort_order - b.sort_order).map((item) => (
           <div key={item.id} style={{ ...cardStyle, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{item.label}</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 2 }}>
-                ${item.amount.toLocaleString()} {item.cadence === 'monthly' ? `/mo × ${item.repeat_count}` : 'one-time'}
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                {item.label}
+                {item.is_upfront && <span style={{ fontSize: 10, color: 'var(--text-tertiary)', fontWeight: 400 }}> · upfront</span>}
+              </div>
+              <div style={{ fontSize: 11.5, color: item.amount === null ? '#C9A24B' : 'var(--text-secondary)', marginTop: 2 }}>
+                {item.amount === null ? 'TBD' : `$${item.amount.toLocaleString()}`} {item.cadence === 'monthly' ? `/mo × ${item.repeat_count}` : 'one-time'}
               </div>
             </div>
             <span style={{ fontSize: 12, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.removeTemplateItem(item.id)}>Remove</span>
@@ -123,7 +128,7 @@ export function PricingTemplateAdmin({ crm, onClose, homeHeadStyle, homeSubStyle
 
       <div style={{ ...cardStyle, marginTop: 18, maxWidth: 560, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         <input style={{ ...inputStyle, flex: '2 1 160px' }} placeholder="Label" value={label} onChange={(e) => setLabel(e.target.value)} />
-        <input style={{ ...inputStyle, flex: '1 1 90px' }} placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <input style={{ ...inputStyle, flex: '1 1 90px' }} placeholder="Amount (blank = TBD)" value={amount} onChange={(e) => setAmount(e.target.value)} />
         <select style={{ ...selectStyle, flex: '1 1 100px' }} value={cadence} onChange={(e) => setCadence(e.target.value as PricingCadence)}>
           <option value="one_time">One-time</option>
           <option value="monthly">Monthly</option>
@@ -135,6 +140,93 @@ export function PricingTemplateAdmin({ crm, onClose, homeHeadStyle, homeSubStyle
       </div>
       <div style={{ marginTop: 10 }}>
         <span style={ghostBtn} onClick={onClose}>Done</span>
+      </div>
+    </div>
+  );
+}
+
+/** Part 6's priced service catalog. Seeded with the real 40-item menu, but
+ *  editable here — prices move, and a stale catalog is worse than none
+ *  since it's what pre-fills real client invoices. */
+export function ServiceCatalogAdmin({ crm, onClose, homeHeadStyle, homeSubStyle }: AdminProps) {
+  const [category, setCategory] = useState('');
+  const [name, setName] = useState('');
+  const [priceType, setPriceType] = useState<PricingCadence>('one_time');
+  const [price, setPrice] = useState('');
+  const [priceDraft, setPriceDraft] = useState<Record<string, string>>({});
+
+  const categories = [...new Set(crm.services.map((s) => s.category))];
+
+  const add = async () => {
+    const p = Number(price);
+    if (!category.trim() || !name.trim() || !Number.isFinite(p) || p < 0) return;
+    await crm.addService({ category: category.trim(), name: name.trim(), price_type: priceType, default_price: p });
+    setName('');
+    setPrice('');
+  };
+
+  return (
+    <div>
+      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 14 }} onClick={onClose}>
+        ← Back to Client CRM
+      </div>
+      <div style={homeHeadStyle}>Service Catalog</div>
+      <div style={homeSubStyle}>
+        The priced menu the package builder pulls from. Prices here are your client-facing numbers — what lands on an invoice.
+      </div>
+
+      <div style={{ marginTop: 20, maxWidth: 640 }}>
+        {categories.map((cat) => (
+          <div key={cat} style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 8 }}>{cat}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {crm.services.filter((s) => s.category === cat).map((s) => (
+                <div key={s.id} style={{ ...cardStyle, padding: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, opacity: s.active ? 1 : 0.5 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 12.5, color: 'var(--text)' }}>{s.name}</div>
+                    <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                      {s.price_type === 'monthly' ? 'Monthly' : 'One-time'}{s.notes ? ` · ${s.notes}` : ''}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    <input
+                      style={{ ...inputStyle, width: 82, padding: '6px 9px', fontSize: 12 }}
+                      value={priceDraft[s.id] ?? String(s.default_price)}
+                      onChange={(e) => setPriceDraft((d) => ({ ...d, [s.id]: e.target.value }))}
+                      onBlur={() => {
+                        const n = Number(priceDraft[s.id]);
+                        if (priceDraft[s.id] !== undefined && Number.isFinite(n) && n >= 0 && n !== s.default_price) {
+                          crm.updateService(s.id, { default_price: n });
+                        }
+                      }}
+                    />
+                    <span style={{ fontSize: 11, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.updateService(s.id, { active: !s.active })}>
+                      {s.active ? 'Retire' : 'Restore'}
+                    </span>
+                    <span style={{ fontSize: 11, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.removeService(s.id)}>Delete</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+        {crm.services.length === 0 && (
+          <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>Catalog is empty — run `schema_040_client_crm_catalog.sql` to seed it, or add entries below.</div>
+        )}
+      </div>
+
+      <div style={{ ...cardStyle, marginTop: 8, maxWidth: 640, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <input style={{ ...inputStyle, flex: '1 1 150px' }} placeholder="Category" list="crm-service-categories" value={category} onChange={(e) => setCategory(e.target.value)} />
+        <datalist id="crm-service-categories">
+          {categories.map((c) => <option key={c} value={c} />)}
+        </datalist>
+        <input style={{ ...inputStyle, flex: '2 1 170px' }} placeholder="Service name" value={name} onChange={(e) => setName(e.target.value)} />
+        <input style={{ ...inputStyle, flex: '0 1 90px' }} placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} />
+        <select style={{ ...selectStyle, flex: '1 1 110px' }} value={priceType} onChange={(e) => setPriceType(e.target.value as PricingCadence)}>
+          <option value="one_time">One-time</option>
+          <option value="monthly">Monthly</option>
+        </select>
+        <div style={primaryBtn} onClick={add}>Add</div>
       </div>
     </div>
   );

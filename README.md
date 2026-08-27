@@ -813,10 +813,11 @@ third-party data processors).
 ## Client Audit, Analysis & Invoicing System (Scaling → Client CRM)
 
 The full client-acquisition-to-payment pipeline: Discovery → Analysis → Package/Pricing → Invoice → Payment →
-Active Client, live under Scaling → **Client CRM**. Run `supabase/schema_039_client_crm.sql` (after
-`schema_038_recurring_reminders.sql`) — it seeds a starter audit-question bank and the default pricing template on
-first run. No new secrets required; the Stripe invoice flow reuses the same `STRIPE_SECRET_KEY` and
-`STRIPE_WEBHOOK_SECRET` already configured for the Masterminds subscription billing.
+Active Client, live under Scaling → **Client CRM**. Run `supabase/schema_039_client_crm.sql` then
+`supabase/schema_040_client_crm_catalog.sql` (after `schema_038_recurring_reminders.sql`) — together they seed a
+starter audit-question bank, the default pricing template, and the 40-item service catalog on first run. No new
+secrets required; the Stripe invoice flow reuses the same `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` already
+configured for the Masterminds subscription billing.
 
 - **Editable question bank, not hardcoded** — `audit_questions` seeds with one starter question per category
   (Rapport, Vision, Positioning/Niche, Unit Economics, Marketing/Acquisition, Lifetime Value, Bottleneck Question),
@@ -837,12 +838,27 @@ first run. No new secrets required; the Stripe invoice flow reuses the same `STR
   numbers come from the pricing builder below, never invented by the model. Fully editable in place
   (`ClientDetailView`'s Analysis tab) before anything is sent, and "Regenerate" re-runs from whatever the current
   answers are.
-- **Package & Pricing Builder** — `pricing_template_items` is the editable default (seeded: Month 1 $500 upfront,
+- **Package & Pricing Builder** — `pricing_template_items` is the editable default (seeded: Month 1 $1,000 upfront,
   Months 2-4 $1,000/mo × 3), edited from "Default pricing template" in Client CRM. A client's own plan
   (`client_pricing_items`) is a one-time copy made when "Use default template" is clicked, then fully independent —
   editing the template afterward never touches an already-finalized client plan. Add/remove line items freely per
   client. The per-client **"Reveal full payment schedule"** toggle (default OFF) lives on `crm_clients` and is
   shown right on the Pricing tab.
+- **Service catalog** (`services`, seeded by `schema_040_client_crm_catalog.sql`) — the real 40-service priced menu
+  across 11 categories (Visibility, Positioning, Social/Content, Paid Ads, Funnel, Retention, Branding, Website,
+  Data, Systems, Strategic Growth). The Pricing tab's "Add from service catalog" picker drops any of them into a
+  client's plan at its catalog price, still editable from there; `client_pricing_items.service_id` records where a
+  line came from, and free-typed custom lines just leave it null. Editable from "Service catalog" on the CRM board,
+  since prices move and a stale catalog is worse than none when it's what pre-fills real invoices.
+- **$1,000 / $500 upfront quick-switch** — the launch line is flagged `is_upfront`, and rows carrying that flag get a
+  two-button switch on the Pricing tab. $1,000 is the standard; $500 is a deliberate per-client override for
+  tight-budget clients, not a second default.
+- **TBD months** — `amount` is nullable on both pricing tables, and null means *undecided*, which is a different
+  thing from decided-but-hidden (that's `reveal_full_schedule`). A TBD line renders as the word "TBD" rather than a
+  placeholder number, is excluded from the invoice dropdown entirely, and is skipped by the board's "next payment
+  due" — so no figure exists anywhere until it's actually committed. "Mark TBD" and an inline "Set $ → Confirm"
+  flip a line between states at any time, which is what lets a Month 1 invoice go out without ever having put a
+  3-month number in writing.
 - **Stripe invoicing — manual trigger only** (`worker/handlers/client-crm.ts`'s `createClientInvoice`, routed at
   `/api/client-crm/create-invoice`) — same raw-fetch-against-Stripe's-REST-API pattern as `billing.ts` (no `stripe`
   npm SDK). "Send invoice" on a client's Invoices tab creates (or reuses) a Stripe Customer for that client, adds an

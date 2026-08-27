@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import { useClientCRM } from '../../data/useClientCRM';
 import type { ClientStage } from '../../data/types';
 import ClientDetailView from './ClientDetailView';
-import { AuditQuestionsAdmin, PricingTemplateAdmin } from './ClientCRMAdmin';
+import { AuditQuestionsAdmin, PricingTemplateAdmin, ServiceCatalogAdmin } from './ClientCRMAdmin';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -59,8 +59,12 @@ function StagePill({ stage }: { stage: ClientStage }) {
 function nextPaymentDue(client: ReturnType<typeof useClientCRM>['clients'][number]): string {
   const pending = client.invoices.find((i) => i.status === 'sent' || i.status === 'overdue');
   if (pending) return `$${pending.amount.toLocaleString()} due${pending.due_date ? ` ${pending.due_date}` : ''}`;
-  const nextItem = client.pricingItems[0];
-  if (nextItem && client.invoices.length === 0) return `$${nextItem.amount.toLocaleString()} not yet sent`;
+  // Only a priced item counts as an upcoming payment — a TBD month has no
+  // number to surface, and inventing one here would be the exact thing the
+  // TBD state exists to avoid.
+  const nextItem = client.pricingItems.find((p) => p.amount !== null);
+  if (nextItem && client.invoices.length === 0) return `$${(nextItem.amount as number).toLocaleString()} not yet sent`;
+  if (client.pricingItems.some((p) => p.amount === null)) return 'TBD';
   return '—';
 }
 
@@ -70,6 +74,7 @@ export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle }: Props) 
   const [showNewClient, setShowNewClient] = useState(false);
   const [showQuestionAdmin, setShowQuestionAdmin] = useState(false);
   const [showTemplateAdmin, setShowTemplateAdmin] = useState(false);
+  const [showCatalogAdmin, setShowCatalogAdmin] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -82,6 +87,9 @@ export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle }: Props) 
   }
   if (showTemplateAdmin) {
     return <PricingTemplateAdmin crm={crm} onClose={() => setShowTemplateAdmin(false)} homeHeadStyle={homeHeadStyle} homeSubStyle={homeSubStyle} />;
+  }
+  if (showCatalogAdmin) {
+    return <ServiceCatalogAdmin crm={crm} onClose={() => setShowCatalogAdmin(false)} homeHeadStyle={homeHeadStyle} homeSubStyle={homeSubStyle} />;
   }
 
   const selected = crm.clients.find((c) => c.id === selectedId) ?? null;
@@ -108,7 +116,8 @@ export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle }: Props) 
           <div style={homeHeadStyle}>Client CRM</div>
           <div style={homeSubStyle}>Discovery → Analysis → Package/Pricing → Invoice → Payment → Active Client.</div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div style={ghostBtn} onClick={() => setShowCatalogAdmin(true)}>Service catalog</div>
           <div style={ghostBtn} onClick={() => setShowTemplateAdmin(true)}>Default pricing template</div>
           <div style={ghostBtn} onClick={() => setShowQuestionAdmin(true)}>Manage audit questions</div>
           <div style={primaryBtn} onClick={() => setShowNewClient((s) => !s)}>+ New lead</div>
