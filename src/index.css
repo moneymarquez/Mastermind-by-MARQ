@@ -136,7 +136,7 @@ body {
 }
 
 ::selection {
-  background: rgba(245, 246, 247, 0.3);
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 @keyframes bloomPop {
@@ -195,24 +195,115 @@ input, textarea, [contenteditable="true"] {
   transform: scale(0.99);
 }
 
-/* Diagonal glare — the actual reference image, cropped into dark/light
-   halves (public/backgrounds/glare-{dark,light}.png), not a hand-tuned
-   CSS gradient. Pixel-exact to what was supplied, rather than an
-   approximation. cover + center keeps the diagonal's angle intact across
-   viewport sizes at the cost of cropping some edge content on very wide
-   or very narrow screens — the tradeoff inherent to any raster background.
-   Scoped to the authenticated app shell only (Stage.tsx) — never the
-   landing page or onboarding flow. background-attachment: fixed keeps it
-   anchored to the viewport rather than scrolling with page content. */
+/* App shell ground. The diagonal glare that used to live here (a crop of
+   the supplied reference photos) was retired when Aperture won the
+   direction: Aperture carries its own ground treatment, and layering a
+   photographic glare built for a neutral-black base under its blue-cast
+   #161826 read as two competing grounds rather than one. The PNGs stay in
+   public/backgrounds/ — restoring them is re-adding the background-image
+   lines below. */
 .app-shine-bg {
   background-color: var(--bg);
-  background-image: url('/backgrounds/glare-dark.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
   min-height: 100vh;
 }
-:root[data-theme="light"] .app-shine-bg {
-  background-image: url('/backgrounds/glare-light.png');
+
+/* ══════════════════════════════════════════════════════════════════════
+   Nocturne component layer — ported from the Aperture direction's own
+   stylesheet (kept verbatim at design/aperture-nocturne.css). Its class
+   names and behaviour are unchanged; only the token names are remapped
+   onto this app's existing ones (--color-bg -> --bg, --color-divider ->
+   --border, and so on), so the two systems share one source of truth
+   instead of drifting apart.
+
+   These are opt-in. Nothing renders differently until a component adopts
+   a class, which is what makes porting the designed screens onto them a
+   safe, screen-by-screen job rather than one unreviewable sweep.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Rules fade to transparent at both ends rather than stopping cleanly —
+   the direction's signature. Freestanding rules fade; box outlines and
+   in-control separators stay solid. */
+.ap-hr {
+  height: 1px; border: 0; margin: 11.2px 0;
+  background: linear-gradient(to right, transparent, var(--border), transparent);
 }
+
+.ap-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; text-decoration: none;
+  font-family: var(--font-sans); font-weight: var(--font-heading-weight);
+  font-size: var(--text-label); line-height: 1.2; color: var(--text);
+  background: transparent; border: 1px solid transparent;
+  padding: 5.6px 10px; border-radius: var(--radius-sm);
+}
+.ap-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+/* Aperture's primary is an outlined, accent-tinted control — not the
+   filled block this app used. That's the most visible single change the
+   direction makes to an interactive surface. */
+.ap-btn-primary { color: var(--accent); border-color: var(--accent); }
+.ap-btn-primary:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.ap-btn-primary:active { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.ap-btn-secondary { border-color: var(--border); }
+.ap-btn-secondary:hover { background: color-mix(in srgb, var(--text) 7%, transparent); }
+.ap-btn-secondary:active { background: color-mix(in srgb, var(--text) 14%, transparent); }
+.ap-btn-ghost { color: var(--accent); padding-inline: 2.8px; }
+.ap-btn-ghost:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.ap-btn-icon { width: 36px; height: 36px; padding: 0; }
+.ap-btn-block { width: 100%; margin-top: 5.6px; }
+
+.ap-input {
+  width: 100%; min-height: 36px; padding: 6px 10px; font: inherit;
+  font-size: var(--text-label); color: var(--text); caret-color: var(--accent);
+  background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+.ap-input:hover { border-color: color-mix(in srgb, var(--text) 45%, transparent); }
+.ap-input:focus-visible { border-color: var(--accent); outline-offset: 0; }
+textarea.ap-input { min-height: 90px; resize: vertical; }
+
+.ap-card {
+  display: flex; flex-direction: column; gap: 5.6px;
+  padding: 8.4px; border-radius: var(--radius-sm); background: var(--surface);
+}
+.ap-card-kicker { font-size: var(--text-nano); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+.ap-card-title { font-weight: var(--font-heading-weight); font-size: 17px; line-height: 1.2; }
+.ap-card-body { margin: 0; font-size: var(--text-body); opacity: 0.8; flex: 1; }
+.ap-card-meta { display: flex; align-items: center; gap: 6px; font-size: var(--text-tiny); color: color-mix(in srgb, var(--text) 50%, transparent); }
+
+.ap-elev-sm { box-shadow: var(--shadow-sm); }
+.ap-elev-md { box-shadow: var(--shadow-md); }
+.ap-elev-lg { box-shadow: var(--shadow-lg); }
+
+.ap-tag {
+  display: inline-flex; align-items: center; font-size: var(--text-tiny);
+  letter-spacing: 0.02em; padding: 3px 10px; border-radius: 6px;
+}
+.ap-tag-accent { background: var(--accent-soft); color: var(--accent); }
+.ap-tag-neutral { background: var(--surface-3); color: var(--text-quaternary); }
+.ap-tag-outline { border: 1px solid var(--accent); color: var(--accent); }
+
+.ap-nav { display: flex; align-items: center; gap: 11.2px; padding: 8.4px 11.2px; border-bottom: none; }
+.ap-nav-brand { font-weight: var(--font-heading-weight); font-size: 18px; margin-right: auto; }
+.ap-nav a { color: inherit; text-decoration: none; font-size: var(--text-label); }
+.ap-nav a:hover, .ap-nav a[aria-current='page'] { color: var(--accent); }
+
+/* Row rules are painted on the row, not the cell, so the end-fade spans
+   the full row rather than restarting at every column boundary. */
+.ap-table { width: 100%; border-collapse: collapse; font-size: var(--text-label); }
+.ap-table th {
+  text-align: left; font-size: var(--text-tiny); letter-spacing: 0.08em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--text) 60%, transparent);
+  padding: 5.6px; border-bottom: 1px solid transparent;
+}
+.ap-table td { padding: 5.6px; border-bottom: 1px solid transparent; }
+.ap-table thead tr {
+  background: linear-gradient(to right, transparent, var(--border) 48px,
+    var(--border) calc(100% - 48px), transparent) no-repeat bottom / 100% 1px;
+}
+.ap-table tbody tr {
+  background: linear-gradient(to right, transparent,
+    color-mix(in srgb, var(--text) 8%, transparent) 48px,
+    color-mix(in srgb, var(--text) 8%, transparent) calc(100% - 48px), transparent) no-repeat bottom / 100% 1px;
+}
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
