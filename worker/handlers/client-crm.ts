@@ -206,7 +206,15 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
       method: 'POST',
       headers: { ...headers, Prefer: 'return=representation' },
       body: JSON.stringify({
-        user_id: OWNER_USER_ID,
+        // The authenticated caller's own id, not the OWNER_USER_ID
+        // constant. requireOwner accepts either a user_id match OR an
+        // owner-email match (see worker/lib/auth.ts), so those two can
+        // legitimately differ — an account recreated under the same
+        // email would get a new uid. Writing the constant in that case
+        // would insert a row the caller's own RLS (auth.uid() = user_id)
+        // can't read back. publicAuditSubmit above still has to use the
+        // constant since it has no session at all.
+        user_id: user.id,
         client_id: client.id,
         pricing_item_id: body.pricingItemId ?? null,
         sequence_index: body.sequenceIndex ?? 1,
