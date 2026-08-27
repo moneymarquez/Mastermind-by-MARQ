@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { generateClientAnalysis } from './clientAnalysis';
+import { generateClientAnalysis, matchServices } from './clientAnalysis';
 import type {
+  AnswerConfidence,
   AuditQuestion,
   ClientAudit,
   ClientInvoice,
@@ -138,9 +139,28 @@ export function useClientCRM() {
     await load();
   };
 
-  const completeAudit = async (clientId: string, auditId: string, businessName: string, answers: Record<string, string>) => {
+  /** Live-capture writes straight through without a reload — the whole
+   *  point is that a dropped call never loses a partial answer, and
+   *  re-fetching the whole CRM on every keystroke-debounce would fight
+   *  the input. The caller refreshes when it leaves the flow. */
+  const saveAnswerQuiet = async (auditId: string, answers: Record<string, string>) => {
+    await supabase.from('client_audits').update({ answers, updated_at: new Date().toISOString() }).eq('id', auditId);
+  };
+
+  const setAnswerConfidence = async (auditId: string, confidence: Record<string, AnswerConfidence>, quiet = false) => {
+    await supabase.from('client_audits').update({ answer_confidence: confidence, updated_at: new Date().toISOString() }).eq('id', auditId);
+    if (!quiet) await load();
+  };
+
+  const completeAudit = async (
+    clientId: string,
+    auditId: string,
+    businessName: string,
+    answers: Record<string, string>,
+    confidence: Record<string, AnswerConfidence> = {},
+  ) => {
     const active = questions.filter((q) => q.active);
-    const text = await generateClientAnalysis(businessName, active, answers);
+    const text = await generateClientAnalysis(businessName, active, answers, confidence);
     await supabase.from('client_audits').update({ status: 'complete', analysis_text: text, updated_at: new Date().toISOString() }).eq('id', auditId);
     const client = clients.find((c) => c.id === clientId);
     if (client && client.stage === 'new_lead') {
@@ -149,10 +169,39 @@ export function useClientCRM() {
     await load();
   };
 
-  const regenerateAnalysis = async (auditId: string, businessName: string, answers: Record<string, string>) => {
+  const regenerateAnalysis = async (
+    auditId: string,
+    businessName: string,
+    answers: Record<string, string>,
+    confidence: Record<string, AnswerConfidence> = {},
+  ) => {
     const active = questions.filter((q) => q.active);
-    const text = await generateClientAnalysis(businessName, active, answers);
+    const text = await generateClientAnalysis(businessName, active, answers, confidence);
     await supabase.from('client_audits').update({ analysis_text: text, updated_at: new Date().toISOString() }).eq('id', auditId);
+    await load();
+  };
+
+  /** Service Matcher — the branch running alongside the written analysis.
+   *  Flags which catalog services this client actually needs, stored so
+   *  the flags survive between sessions. */
+  const runServiceMatch = async (
+    auditId: string,
+    businessName: string,
+    answers: Record<string, string>,
+    confidence: Record<string, AnswerConfidence> = {},
+  ) => {
+    const active = questions.filter((q) => q.active);
+    const suggestions = await matchServices(businessName, active, answers, confidence, services);
+    await supabase.from('client_audits').update({ suggested_services: suggestions, updated_at: new Date().toISOString() }).eq('id', auditId);
+    await load();
+    return suggestions;
+  };
+
+  const dismissSuggestion = async (auditId: string, name: string, current: { name: string; category: string; reason: string }[]) => {
+    await supabase
+      .from('client_audits')
+      .update({ suggested_services: current.filter((s) => s.name !== name), updated_at: new Date().toISOString() })
+      .eq('id', auditId);
     await load();
   };
 
@@ -317,8 +366,13 @@ export function useClientCRM() {
     reorderQuestions,
     ensureAudit,
     saveAnswer,
+    saveAnswerQuiet,
+    setAnswerConfidence,
     completeAudit,
     regenerateAnalysis,
+    runServiceMatch,
+    dismissSuggestion,
+    reload: load,
     editAnalysisText,
     markAnalysisSent,
     addService,

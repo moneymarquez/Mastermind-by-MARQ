@@ -814,9 +814,11 @@ third-party data processors).
 
 The full client-acquisition-to-payment pipeline: Discovery → Analysis → Package/Pricing → Invoice → Payment →
 Active Client, live under Scaling → **Client CRM**. Run `supabase/schema_039_client_crm.sql`,
-`supabase/schema_040_client_crm_catalog.sql`, then `supabase/schema_041_client_dashboard.sql` (after
-`schema_038_recurring_reminders.sql`) — together they seed a starter audit-question bank, the default pricing
-template, and the 40-item service catalog on first run. No new
+`supabase/schema_040_client_crm_catalog.sql`, `supabase/schema_041_client_dashboard.sql`, then
+`supabase/schema_042_live_capture_taco_seed.sql` (after `schema_038_recurring_reminders.sql`) — together they seed
+a starter audit-question bank, the default pricing template, the 40-item service catalog, and the Taco Stand
+(Sandy, UT) client, so the system launches with live data rather than an empty state. The Taco Stand seed is
+guarded on its business name: re-running never duplicates it and never overwrites edits made since. No new
 secrets required; the Stripe invoice flow reuses the same `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` already
 configured for the Masterminds subscription billing.
 
@@ -833,6 +835,25 @@ configured for the Masterminds subscription billing.
   `source: 'public'`, stage `New Lead`) and drops a `reminders` row so Cristopher sees it in-app. Auto-sending a
   confirmation/notification email is still out of scope, same as the rest of the app, pending the Made by Marq
   domain + Resend setup.
+- **Live-capture mode** (`LiveCaptureView.tsx`, "Live capture" on the Audit tab) — for holding a phone or iPad
+  during an actual discovery call: full-screen, one question at a time, a field big enough to type into without
+  aiming, and a 600ms debounced autosave on every pause rather than only on submit. It also flushes on unmount and
+  on `visibilitychange`/`pagehide`, because on iOS a swipe away or an incoming call can suspend the page before a
+  pending debounce fires — which is exactly the case this mode exists to survive. Writes bypass the CRM reload so
+  the save never fights the input.
+- **Confidence tags** — every answer carries a Confirmed/Estimated tag (`client_audits.answer_confidence`),
+  capturing the "do you know that for sure, or is that a rough guess?" probe at the moment it's asked. Untagged is
+  treated as estimated everywhere — nobody explicitly stood behind it. The analysis prompt receives the tags and is
+  instructed to hedge on soft numbers and say plainly when one is load-bearing enough to measure before betting on
+  it, rather than restating a guess as fact.
+- **Service Matcher** (`matchServices` in `clientAnalysis.ts`) — the second branch of the fork in the system flow.
+  Alongside the written plan, Claude reads the same answers against the master catalog and flags 3-6 services this
+  business genuinely needs, each with a one-sentence reason tied to what they said; results persist on
+  `client_audits.suggested_services`, and each can be one-click added to the pricing plan or dismissed. Two
+  guardrails: the prompt is told explicitly that padding the list to raise the invoice is the failure mode to
+  avoid, and any name that doesn't resolve to a real catalog row is dropped client-side, so a hallucinated service
+  can never reach the pricing builder with no price. It runs automatically with the analysis (a matcher failure
+  never blocks the written plan) and can be re-run from the Pricing tab.
 - **Analysis engine** (`src/data/clientAnalysis.ts`) — one Claude call per client, grouped by the question bank's
   categories, producing exactly the proven five-section format: Where Things Stand Today / What Sets Them Apart /
   The Plan / Investment / Next Steps. The Investment section is deliberately left as a placeholder paragraph — real

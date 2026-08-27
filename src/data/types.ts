@@ -673,10 +673,24 @@ export interface AuditQuestion {
   created_at: string;
 }
 
+/** Per-answer reliability, from the "do you know that for sure, or is that
+ *  a rough guess?" probe on the discovery call. Untagged is treated as
+ *  estimated everywhere — nobody explicitly stood behind it. */
+export type AnswerConfidence = 'confirmed' | 'estimated';
+
+/** A catalog service the matcher flagged as relevant for this client. */
+export interface SuggestedService {
+  name: string;
+  category: string;
+  reason: string;
+}
+
 export interface ClientAudit {
   id: string;
   client_id: string;
   answers: Record<string, string>;
+  answer_confidence: Record<string, AnswerConfidence>;
+  suggested_services: SuggestedService[];
   status: QuestionnaireStatus;
   analysis_text: string | null;
   created_at: string;

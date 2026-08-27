@@ -5,6 +5,8 @@ import type { ClientStage, PricingCadence } from '../../data/types';
 import { AiError } from '../../lib/ai';
 import { STAGES, cardStyle, inputStyle, selectStyle, primaryBtn, ghostBtn, tabStyle } from './ClientCRMScreen';
 import ClientReportsTab from './ClientReportsTab';
+import LiveCaptureView from './LiveCaptureView';
+import type { AnswerConfidence } from '../../data/types';
 
 interface Props {
   client: CrmClientWithChildren;
@@ -48,6 +50,9 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [catalogCategory, setCatalogCategory] = useState('');
   const [tbdDraft, setTbdDraft] = useState<Record<string, string>>({});
+  const [liveCapture, setLiveCapture] = useState(false);
+  const [matching, setMatching] = useState(false);
+  const [matchError, setMatchError] = useState('');
   const [invoiceItemId, setInvoiceItemId] = useState('');
   const [invoiceDesc, setInvoiceDesc] = useState('');
   const [invoiceAmount, setInvoiceAmount] = useState('');
@@ -61,6 +66,8 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
 
   const activeQuestions = crm.questions.filter((q) => q.active).sort((a, b) => a.sort_order - b.sort_order);
   const answers = client.audit?.answers ?? {};
+  const confidence = client.audit?.answer_confidence ?? {};
+  const suggestions = client.audit?.suggested_services ?? [];
 
   const startAudit = async () => {
     await crm.ensureAudit(client.id);
@@ -71,22 +78,53 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
     await crm.saveAnswer(client.audit.id, key, value, answers);
   };
 
+  // Analysis and the service match are the two branches of the same fork
+  // in the system flow, so they run together off one click rather than
+  // making him remember to trigger the matcher separately. A matcher
+  // failure never blocks the analysis — the written plan is the thing
+  // that has to land.
   const runGenerate = async () => {
     setGenerating(true);
     setGenError('');
     try {
       if (!client.audit) return;
       if (client.audit.status === 'complete') {
-        await crm.regenerateAnalysis(client.audit.id, client.business_name, answers);
+        await crm.regenerateAnalysis(client.audit.id, client.business_name, answers, confidence);
       } else {
-        await crm.completeAudit(client.id, client.audit.id, client.business_name, answers);
+        await crm.completeAudit(client.id, client.audit.id, client.business_name, answers, confidence);
       }
       setTab('analysis');
+      try {
+        await crm.runServiceMatch(client.audit.id, client.business_name, answers, confidence);
+      } catch {
+        setMatchError('Analysis is ready, but the service match failed — retry it from the Pricing tab.');
+      }
     } catch (err) {
       setGenError(err instanceof AiError ? err.message : 'Could not generate the analysis — try again.');
     } finally {
       setGenerating(false);
     }
+  };
+
+  const runMatch = async () => {
+    if (!client.audit) return;
+    setMatching(true);
+    setMatchError('');
+    try {
+      await crm.runServiceMatch(client.audit.id, client.business_name, answers, confidence);
+    } catch (err) {
+      setMatchError(err instanceof AiError ? err.message : 'Could not match services — try again.');
+    } finally {
+      setMatching(false);
+    }
+  };
+
+  const setTag = (key: string, tag: AnswerConfidence) => {
+    if (!client.audit) return;
+    const next = { ...confidence };
+    if (next[key] === tag) delete next[key];
+    else next[key] = tag;
+    crm.setAnswerConfidence(client.audit.id, next);
   };
 
   const saveAnalysisEdit = async () => {
@@ -132,6 +170,21 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
       setSendingInvoice(false);
     }
   };
+
+  if (liveCapture && client.audit) {
+    return (
+      <LiveCaptureView
+        businessName={client.business_name}
+        questions={activeQuestions}
+        auditId={client.audit.id}
+        initialAnswers={answers}
+        initialConfidence={confidence}
+        saveAnswers={crm.saveAnswerQuiet}
+        saveConfidence={crm.setAnswerConfidence}
+        onExit={() => { setLiveCapture(false); crm.reload(); }}
+      />
+    );
+  }
 
   return (
     <div>
@@ -184,15 +237,44 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>On a call right now?</div>
+                  <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 3 }}>
+                    One question at a time, big fields, autosaves as you type.
+                  </div>
+                </div>
+                <div style={primaryBtn} onClick={() => setLiveCapture(true)}>Live capture</div>
+              </div>
+
               {activeQuestions.map((q) => (
                 <div key={q.id} style={cardStyle}>
                   <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 6 }}>{q.category}</div>
                   <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', marginBottom: 10 }}>{q.prompt}</div>
                   <textarea
+                    key={`${q.key}-${answers[q.key] ?? ''}`}
                     style={textareaStyle}
                     defaultValue={answers[q.key] ?? ''}
                     onBlur={(e) => saveAnswer(q.key, e.target.value)}
                   />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 10, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Confidence:</span>
+                    {(['confirmed', 'estimated'] as AnswerConfidence[]).map((tag) => (
+                      <div
+                        key={tag}
+                        onClick={() => setTag(q.key, tag)}
+                        style={{
+                          padding: '4px 11px', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize',
+                          border: `1px solid ${confidence[q.key] === tag ? 'transparent' : 'var(--border-2)'}`,
+                          background: confidence[q.key] === tag ? (tag === 'confirmed' ? '#4a9a5a' : '#C9A24B') : 'transparent',
+                          color: confidence[q.key] === tag ? '#0A0B0D' : 'var(--text-tertiary)',
+                        }}
+                      >
+                        {tag}
+                      </div>
+                    ))}
+                    {!confidence[q.key] && <span style={{ fontSize: 10.5, color: 'var(--text-quaternary)' }}>untagged — treated as estimated</span>}
+                  </div>
                   {q.helper_text && <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 8, fontStyle: 'italic' }}>{q.helper_text}</div>}
                 </div>
               ))}
@@ -253,6 +335,61 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
               <div style={primaryBtn} onClick={() => crm.applyTemplateToClient(client.id)}>Use default template</div>
             </div>
           )}
+
+          {/* Service Matcher output — the branch that runs alongside the
+              written analysis, flagging what this business actually needs. */}
+          <div style={{ ...cardStyle, marginBottom: 16, borderColor: suggestions.length ? '#3a3520' : 'var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                ✨ Nova's suggested services{suggestions.length ? ` (${suggestions.length})` : ''}
+              </div>
+              <div
+                style={{ ...ghostBtn, pointerEvents: matching || !client.audit ? 'none' : 'auto', opacity: matching || !client.audit ? 0.5 : 1 }}
+                onClick={runMatch}
+              >
+                {matching ? 'Matching…' : suggestions.length ? 'Re-match' : 'Match services'}
+              </div>
+            </div>
+            {matchError && <div style={{ fontSize: 12, color: '#c47a7a', marginTop: 8 }}>{matchError}</div>}
+            {!client.audit && <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 8 }}>Fill out the audit first — the match reads from those answers.</div>}
+            {suggestions.length === 0 && client.audit && !matchError && (
+              <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 8 }}>
+                Nothing flagged yet. Runs automatically when you generate the analysis.
+              </div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: suggestions.length ? 12 : 0 }}>
+              {suggestions.map((s) => {
+                const svc = crm.services.find((x) => x.name === s.name);
+                const alreadyAdded = client.pricingItems.some((p) => p.service_id && svc && p.service_id === svc.id);
+                return (
+                  <div key={s.name} style={{ padding: '11px 13px', borderRadius: 8, background: 'var(--surface-4)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)' }}>{s.name}</div>
+                        <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                          {s.category}{svc ? ` · ${money(svc.default_price)}${svc.price_type === 'monthly' ? '/mo' : ''}` : ''}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
+                        {alreadyAdded ? (
+                          <span style={{ fontSize: 11, color: '#4a9a5a', fontWeight: 600 }}>Added</span>
+                        ) : svc ? (
+                          <span style={{ fontSize: 11.5, color: 'var(--text)', cursor: 'pointer', fontWeight: 600 }} onClick={() => crm.addServiceToClient(client.id, svc)}>Add</span>
+                        ) : null}
+                        <span
+                          style={{ fontSize: 11, color: 'var(--text-tertiary)', cursor: 'pointer' }}
+                          onClick={() => client.audit && crm.dismissSuggestion(client.audit.id, s.name, suggestions)}
+                        >
+                          Dismiss
+                        </span>
+                      </div>
+                    </div>
+                    {s.reason && <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>{s.reason}</div>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {client.pricingItems.map((item) => {
