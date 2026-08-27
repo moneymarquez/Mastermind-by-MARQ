@@ -53,11 +53,11 @@ function DetailView({ recording, contactName, onBack }: { recording: CallRecordi
             onChange={(e) => { setNotes(e.target.value); setSaved(false); }}
             onBlur={() => { updateNotes(recording.id, notes); setSaved(true); }}
           />
-          {saved && <div style={{ fontSize: 'var(--text-caption)', color: '#4CAF7D', marginTop: 4 }}>Saved.</div>}
+          {saved && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--success)', marginTop: 4 }}>Saved.</div>}
         </div>
 
         <div style={{ marginTop: 20, padding: '12px 14px', borderRadius: 'var(--radius-md)', background: 'var(--surface-4)', border: '1px solid var(--border-2)' }}>
-          <div style={{ fontSize: 'var(--text-small)', fontWeight: 600, color: '#C9A24B' }}>AI call breakdown — pending Anthropic key</div>
+          <div style={{ fontSize: 'var(--text-small)', fontWeight: 600, color: 'var(--warning)' }}>AI call breakdown — pending Anthropic key</div>
           <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 4 }}>
             {recording.ai_analysis ?? `${assistantName} will summarize this call automatically once the API key is funded — nothing to set up here when that happens.`}
           </div>
@@ -122,7 +122,7 @@ export default function CallRecordingsScreen({ homeHeadStyle, homeSubStyle }: Pr
             <option value="">No linked contact</option>
             {contacts.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.source})</option>)}
           </select>
-          {uploadError && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a' }}>{uploadError}</div>}
+          {uploadError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)' }}>{uploadError}</div>}
           <div style={{ ...primaryBtn, opacity: uploading || !pendingFile || !title.trim() ? 0.5 : 1 }} onClick={() => !uploading && submit()}>
             {uploading ? 'Uploading…' : 'Save recording'}
           </div>
@@ -142,7 +142,7 @@ export default function CallRecordingsScreen({ homeHeadStyle, homeSubStyle }: Pr
                 {new Date(r.recorded_at).toLocaleDateString()}{contactName(r.contact_id) ? ` · ${contactName(r.contact_id)}` : ''}
               </div>
             </div>
-            <div style={{ fontSize: 'var(--text-micro)', fontWeight: 700, color: '#C9A24B', textTransform: 'uppercase' }}>AI pending</div>
+            <div style={{ fontSize: 'var(--text-micro)', fontWeight: 700, color: 'var(--warning)', textTransform: 'uppercase' }}>AI pending</div>
           </div>
         ))}
         {!loading && recordings.length === 0 && (

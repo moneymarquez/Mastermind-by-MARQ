@@ -43,7 +43,7 @@ function PaymentForm({ onSubscribed }: { onSubscribed: () => void }) {
   return (
     <div>
       <PaymentElement />
-      {error && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', marginTop: 14 }}>{error}</div>}
+      {error && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginTop: 14 }}>{error}</div>}
       <button
         className="ap-btn ap-btn-primary ap-btn-block"
         onClick={submit}
@@ -132,7 +132,7 @@ export default function BillingGateScreen({ onSubscribed, onSignOut, theme }: Pr
           </div>
 
         {loading && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>Loading…</div>}
-        {!loading && error && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', lineHeight: 1.6 }}>{error}</div>}
+        {!loading && error && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', lineHeight: 1.6 }}>{error}</div>}
         {!loading && !error && clientSecret && stripePromise && (
           // Stripe Elements renders in its own iframe, which can't resolve
           // this page's CSS custom properties — literal hex values matching

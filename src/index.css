@@ -39,6 +39,16 @@
   --accent-2: #a7a1db;
   --accent-strong: #796cbf;   /* accent-600 */
   --accent-soft: #2b2741;     /* accent-900 */
+
+  /* Status. Aperture defines no status palette — it's a marketing/deck
+     system and never needed one — so these are chosen to sit with it
+     rather than lifted from it: each is pulled toward the ground's blue
+     cast so it reads as part of this palette instead of a warning sticker
+     from a different app. The pre-Aperture values were #c47a7a / #8fae8f
+     / #C9A24B against a neutral black. */
+  --danger: #d98a95;
+  --success: #7fb894;
+  --warning: #d9b061;
 }
 
 :root[data-theme="light"] {
@@ -61,6 +71,12 @@
   --accent-2: #796cbf;
   --accent-strong: #423a6a;
   --accent-soft: #e7e5fe;
+
+  /* Darkened for contrast against the light ground — the dark-mode values
+     above would fail legibility here. */
+  --danger: #a34d5c;
+  --success: #3f7a58;
+  --warning: #8a6a1f;
 }
 
 /* ── Type scale, radii, and font ─────────────────────────────────────────

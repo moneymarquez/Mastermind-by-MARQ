@@ -97,7 +97,7 @@ export default function LegalScreen({ homeHeadStyle, homeSubStyle }: Props) {
         </div>
 
         <div style={{ ...cardStyle, borderColor: '#3a3520' }}>
-          <div style={{ ...heading, color: '#C9A24B' }}>A note on this page itself</div>
+          <div style={{ ...heading, color: 'var(--warning)' }}>A note on this page itself</div>
           <div style={body}>
             This page was written in good faith to be clear and honest about how the app works, but it is not a
             substitute for actual Terms of Service and a Privacy Policy reviewed by a lawyer — especially once real

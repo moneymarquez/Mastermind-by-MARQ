@@ -25,7 +25,7 @@ function monthGrid(anchor: Date): Date[] {
 // Deterministic color per person so the same coworker reads consistently
 // across the calendar without maintaining a manual color map.
 function colorForName(name: string): string {
-  const palette = ['#5B8DEF', '#4CAF7D', '#e0a35c', '#c47ad1', '#5cc0e0', '#e05c7a', '#a3c95c'];
+  const palette = ['#5B8DEF', 'var(--success)', 'var(--warning)', '#c47ad1', '#5cc0e0', '#e05c7a', '#a3c95c'];
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
   return palette[hash % palette.length];
@@ -115,7 +115,7 @@ export default function HolidayCalendarView() {
           {parsing ? 'Reading schedule…' : '📷 Upload schedule photo'}
         </div>
       </div>
-      {parseError && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a', marginTop: 8 }}>{parseError}</div>}
+      {parseError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 8 }}>{parseError}</div>}
 
       {reviewShifts && reviewShifts.length > 0 && (
         <div style={{ marginTop: 14, border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', maxWidth: 620 }}>

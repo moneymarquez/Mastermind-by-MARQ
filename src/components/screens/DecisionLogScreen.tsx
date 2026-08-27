@@ -17,7 +17,7 @@ const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px so
 const sectionTitle: CSSProperties = { fontSize: 'var(--text-subhead)', fontWeight: 700, color: 'var(--text)', marginTop: 36, marginBottom: 14 };
 const MODE_LABEL: Record<DecisionMode, string> = { emotional: 'Emotional', analytical: 'Analytical', mixed: 'Mixed' };
 const RATING_LABEL: Record<OutcomeRating, string> = { good: 'Good call', mixed: 'Mixed', bad: 'Bad call' };
-const RATING_COLOR: Record<OutcomeRating, string> = { good: '#8fae8f', mixed: '#C9A24B', bad: '#c47a7a' };
+const RATING_COLOR: Record<OutcomeRating, string> = { good: 'var(--success)', mixed: 'var(--warning)', bad: 'var(--danger)' };
 
 function NewDecisionForm({ onAdd }: { onAdd: (input: { title: string; reasoning: string; expected_outcome: string; confidence: number | null; mode: DecisionMode | null; review_date: string }) => Promise<void> }) {
   const [open, setOpen] = useState(false);
@@ -127,7 +127,7 @@ export default function DecisionLogScreen({ homeHeadStyle, homeSubStyle }: Props
       <div style={homeHeadStyle}>Decision Log</div>
       <div style={homeSubStyle}>Log the call, the reasoning, and what you expected — then see what actually happened.</div>
 
-      <div style={{ ...cardStyle, marginTop: 24, borderColor: pattern ? '#C9A24B55' : undefined }}>
+      <div style={{ ...cardStyle, marginTop: 24, borderColor: pattern ? 'color-mix(in srgb, var(--warning) 33%, transparent)' : undefined }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
           <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Pattern read</div>
           <div style={{ fontSize: 'var(--text-small)', color: generatingPattern ? 'var(--text-tertiary)' : 'var(--text-secondary)', cursor: generatingPattern ? 'default' : 'pointer' }} onClick={() => !generatingPattern && refreshPattern()}>
@@ -142,7 +142,7 @@ export default function DecisionLogScreen({ homeHeadStyle, homeSubStyle }: Props
         ) : (
           <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', marginTop: 8 }}>Review a few decisions below, then generate a read on how you actually decide.</div>
         )}
-        {patternError && <div style={{ fontSize: 'var(--text-caption)', color: '#c47a7a', marginTop: 8 }}>{patternError}</div>}
+        {patternError && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--danger)', marginTop: 8 }}>{patternError}</div>}
       </div>
 
       {dueForReview.length > 0 && (

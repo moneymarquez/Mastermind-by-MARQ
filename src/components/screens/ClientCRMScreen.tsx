@@ -22,9 +22,9 @@ export const STAGES: { key: ClientStage; label: string }[] = [
 const STAGE_COLOR: Record<ClientStage, string> = {
   new_lead: '#8a8a8a',
   discovery_complete: '#6a8fc9',
-  analysis_sent: '#C9A24B',
+  analysis_sent: 'var(--warning)',
   invoice_sent: '#c98f4b',
-  active: '#4a9a5a',
+  active: 'var(--success)',
   retainer: '#4a9a8a',
 };
 

@@ -317,8 +317,8 @@ export default function MacrosScreen({ homeHeadStyle, homeSubStyle, activeBender
           </span>
         )}
       </div>
-      {aiError && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', marginTop: 8 }}>{aiError}</div>}
-      {barcodeError && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', marginTop: 8 }}>{barcodeError}</div>}
+      {aiError && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginTop: 8 }}>{aiError}</div>}
+      {barcodeError && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginTop: 8 }}>{barcodeError}</div>}
       {logMethod === 'barcode' && barcodeValue && (
         <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 8 }}>From barcode {barcodeValue} — exact product data, not an estimate.</div>
       )}

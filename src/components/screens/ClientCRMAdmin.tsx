@@ -116,7 +116,7 @@ export function PricingTemplateAdmin({ crm, onClose, homeHeadStyle, homeSubStyle
                 {item.label}
                 {item.is_upfront && <span style={{ fontSize: 'var(--text-nano)', color: 'var(--text-tertiary)', fontWeight: 400 }}> · upfront</span>}
               </div>
-              <div style={{ fontSize: 'var(--text-caption)', color: item.amount === null ? '#C9A24B' : 'var(--text-secondary)', marginTop: 2 }}>
+              <div style={{ fontSize: 'var(--text-caption)', color: item.amount === null ? 'var(--warning)' : 'var(--text-secondary)', marginTop: 2 }}>
                 {item.amount === null ? 'TBD' : `$${item.amount.toLocaleString()}`} {item.cadence === 'monthly' ? `/mo × ${item.repeat_count}` : 'one-time'}
               </div>
             </div>

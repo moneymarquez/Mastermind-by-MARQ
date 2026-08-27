@@ -41,7 +41,7 @@ function SobrietyDemo() {
   return (
     <div style={cardStyle}>
       <div style={sectionTitle}>Sobriety</div>
-      <div style={{ fontSize: 28, fontWeight: 700, color: '#8fae8f', fontFamily: 'var(--font-mono)' }}>41 days</div>
+      <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--success)', fontFamily: 'var(--font-mono)' }}>41 days</div>
       <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 4 }}>Longest streak: 41 days — this is it.</div>
     </div>
   );
@@ -63,10 +63,10 @@ function BudgetingDemo() {
           <div key={c.name} style={{ marginTop: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-small)' }}>
               <span style={{ color: 'var(--text)' }}>{c.name}</span>
-              <span style={{ color: over ? '#c47a7a' : 'var(--text-secondary)' }}>${c.spent} / ${c.allocated}</span>
+              <span style={{ color: over ? 'var(--danger)' : 'var(--text-secondary)' }}>${c.spent} / ${c.allocated}</span>
             </div>
             <div style={{ height: 5, background: 'var(--border)', borderRadius: 'var(--radius-pill)', marginTop: 5 }}>
-              <div style={{ height: '100%', width: `${pct}%`, background: over ? '#c47a7a' : 'var(--text)', borderRadius: 'var(--radius-pill)' }} />
+              <div style={{ height: '100%', width: `${pct}%`, background: over ? 'var(--danger)' : 'var(--text)', borderRadius: 'var(--radius-pill)' }} />
             </div>
           </div>
         );
@@ -142,7 +142,7 @@ export default function PersonalizedDemo({ assistantName, selectedKeys, onContin
         </div>
 
         <div style={{ ...cardStyle, marginTop: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Icon name="sparkle" size={16} color="#C9A24B" />
+          <Icon name="sparkle" size={16} color="var(--warning)" />
           <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-quaternary)' }}>
             "Hey — {assistantName} here. I'll flag things before they become problems, not after. Ready when you are."
           </div>

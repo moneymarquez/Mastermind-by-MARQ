@@ -113,7 +113,7 @@ export default function NovaPanel({
             style={{
               width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', flexShrink: 0,
-              background: listening ? '#c47a7a' : 'transparent',
+              background: listening ? 'var(--danger)' : 'transparent',
               border: listening ? 'none' : '1px solid var(--border-2)',
               animation: listening ? 'micPulse 1.2s ease-in-out infinite' : 'none',
             }}

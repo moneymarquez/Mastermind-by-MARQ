@@ -100,7 +100,7 @@ export default function PublicAuditScreen() {
         </div>
 
         {loading && <div style={{ marginTop: 30, color: 'var(--text-tertiary)' }}>Loading…</div>}
-        {loadError && <div style={{ marginTop: 30, color: '#c47a7a' }}>Could not load the questionnaire right now — try refreshing.</div>}
+        {loadError && <div style={{ marginTop: 30, color: 'var(--danger)' }}>Could not load the questionnaire right now — try refreshing.</div>}
 
         {!loading && !loadError && (
           <div style={{ marginTop: 30, display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -126,7 +126,7 @@ export default function PublicAuditScreen() {
               <button style={{ ...primaryBtn, pointerEvents: submitting || !businessName.trim() ? 'none' : 'auto', opacity: submitting || !businessName.trim() ? 0.6 : 1 }} onClick={submit}>
                 {submitting ? 'Submitting…' : 'Submit'}
               </button>
-              {submitError && <div style={{ fontSize: 'var(--text-body)', color: '#c47a7a', marginTop: 10 }}>{submitError}</div>}
+              {submitError && <div style={{ fontSize: 'var(--text-body)', color: 'var(--danger)', marginTop: 10 }}>{submitError}</div>}
             </div>
           </div>
         )}

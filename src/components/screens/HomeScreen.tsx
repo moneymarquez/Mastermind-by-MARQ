@@ -126,7 +126,7 @@ export default function HomeScreen({ homeHeadStyle, homeSubStyle, statGridStyle,
           background: 'var(--surface)', border: '1px solid var(--border)', cursor: 'pointer', maxWidth: 420,
         }}
       >
-        <Icon name="sparkle" size={16} color="#C9A24B" />
+        <Icon name="sparkle" size={16} color="var(--warning)" />
         <div>
           <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Ask {assistantName}</div>
           <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 1 }}>Anything about today, or anywhere else in the app.</div>

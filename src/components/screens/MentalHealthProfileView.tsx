@@ -79,7 +79,7 @@ export default function MentalHealthProfileView({ profile }: Props) {
         </div>
         <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{answeredCount} / {TOTAL_PROFILE_QUESTIONS}</span>
       </div>
-      {completedAt && <div style={{ fontSize: 'var(--text-caption)', color: '#4CAF7D', marginTop: 6 }}>Complete — edit any section anytime.</div>}
+      {completedAt && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--success)', marginTop: 6 }}>Complete — edit any section anytime.</div>}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 }}>
         {MENTAL_HEALTH_PROFILE.map((cat) => {
@@ -91,7 +91,7 @@ export default function MentalHealthProfileView({ profile }: Props) {
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 'var(--radius-md)', background: 'var(--surface)', border: '1px solid var(--border)', cursor: 'pointer' }}
             >
               <span style={{ fontSize: 'var(--text-body)', color: 'var(--text)' }}>{cat.label}</span>
-              <span style={{ fontSize: 'var(--text-caption)', color: done === total ? '#4CAF7D' : 'var(--text-tertiary)' }}>{done}/{total}</span>
+              <span style={{ fontSize: 'var(--text-caption)', color: done === total ? 'var(--success)' : 'var(--text-tertiary)' }}>{done}/{total}</span>
             </div>
           );
         })}

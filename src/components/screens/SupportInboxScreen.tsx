@@ -15,11 +15,11 @@ const ghostBtn: CSSProperties = {
 };
 
 const CATEGORY_COLOR: Record<string, string> = {
-  billing: '#C9A24B', support: '#8fae8f', bug: '#c47a7a', general: 'var(--text-secondary)', spam: 'var(--text-tertiary)',
+  billing: 'var(--warning)', support: 'var(--success)', bug: 'var(--danger)', general: 'var(--text-secondary)', spam: 'var(--text-tertiary)',
 };
 
 function StatusPill({ status }: { status: SupportInboxEntry['status'] }) {
-  const colors: Record<SupportInboxEntry['status'], string> = { new: '#C9A24B', reviewed: 'var(--text-secondary)', replied: '#8fae8f', ignored: 'var(--text-tertiary)' };
+  const colors: Record<SupportInboxEntry['status'], string> = { new: 'var(--warning)', reviewed: 'var(--text-secondary)', replied: 'var(--success)', ignored: 'var(--text-tertiary)' };
   const c = colors[status];
   return (
     <span style={{ padding: '3px 9px', borderRadius: 'var(--radius-pill)', background: `${c}22`, border: `1px solid ${c}55`, color: c, fontSize: 'var(--text-nano)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase' }}>

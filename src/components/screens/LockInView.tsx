@@ -150,7 +150,7 @@ export default function LockInView({ fitness, onPlanConfirmed }: Props) {
         onChange={(e) => setAnswers((prev) => ({ ...prev, [q.key]: e.target.value }))}
         onKeyDown={(e) => e.key === 'Enter' && submitAnswer()}
       />
-      {genError && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', marginTop: 10 }}>{genError}</div>}
+      {genError && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginTop: 10 }}>{genError}</div>}
       <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
         {qIdx > 0 && (
           <div style={{ padding: '10px 16px', borderRadius: 'var(--radius-pill)', color: 'var(--text-secondary)', fontSize: 'var(--text-body)', cursor: 'pointer' }} onClick={() => setQIdx((i) => i - 1)}>

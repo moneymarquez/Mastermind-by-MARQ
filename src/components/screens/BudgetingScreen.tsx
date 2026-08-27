@@ -169,9 +169,9 @@ export default function BudgetingScreen({ homeHeadStyle, homeSubStyle }: Props) 
       </div>
 
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 16 }}>
-        <StatTile label="Income" value={money(summary.totalIncome)} color="#8fae8f" />
-        <StatTile label="Expenses" value={money(summary.totalExpense)} color="#c47a7a" />
-        <StatTile label="Net" value={money(summary.net)} color={summary.net >= 0 ? '#8fae8f' : '#c47a7a'} />
+        <StatTile label="Income" value={money(summary.totalIncome)} color="var(--success)" />
+        <StatTile label="Expenses" value={money(summary.totalExpense)} color="var(--danger)" />
+        <StatTile label="Net" value={money(summary.net)} color={summary.net >= 0 ? 'var(--success)' : 'var(--danger)'} />
       </div>
 
       <div style={sectionTitle}>Categories</div>
@@ -183,12 +183,12 @@ export default function BudgetingScreen({ homeHeadStyle, homeSubStyle }: Props) 
             <div key={category.id} style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-body)' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text)' }}>{category.name}</span>
-                <span style={{ color: over ? '#c47a7a' : 'var(--text-secondary)' }}>{money(spent)} of {money(allocated)}</span>
+                <span style={{ color: over ? 'var(--danger)' : 'var(--text-secondary)' }}>{money(spent)} of {money(allocated)}</span>
               </div>
               <div style={{ height: 6, background: 'var(--border)', borderRadius: 'var(--radius-pill)', marginTop: 10, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${pct}%`, background: over ? '#c47a7a' : 'var(--text)', borderRadius: 'var(--radius-pill)' }} />
+                <div style={{ height: '100%', width: `${pct}%`, background: over ? 'var(--danger)' : 'var(--text)', borderRadius: 'var(--radius-pill)' }} />
               </div>
-              <div style={{ fontSize: 'var(--text-caption)', color: over ? '#c47a7a' : 'var(--text-tertiary)', marginTop: 6 }}>
+              <div style={{ fontSize: 'var(--text-caption)', color: over ? 'var(--danger)' : 'var(--text-tertiary)', marginTop: 6 }}>
                 {over ? `${money(Math.abs(remaining))} over` : `${money(remaining)} remaining`}
               </div>
             </div>
@@ -209,7 +209,7 @@ export default function BudgetingScreen({ homeHeadStyle, homeSubStyle }: Props) 
             <span style={{ color: 'var(--text)' }}>{t.description || (t.type === 'income' ? 'Income' : 'Expense')}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ color: 'var(--text-tertiary)' }}>{new Date(t.occurred_on + 'T00:00:00').toLocaleDateString()}</span>
-              <span style={{ fontWeight: 600, color: t.type === 'income' ? '#8fae8f' : '#c47a7a' }}>{t.type === 'income' ? '+' : '-'}{money(t.amount)}</span>
+              <span style={{ fontWeight: 600, color: t.type === 'income' ? 'var(--success)' : 'var(--danger)' }}>{t.type === 'income' ? '+' : '-'}{money(t.amount)}</span>
               <span style={{ color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => budgeting.removeTransaction(t.id)}>Delete</span>
             </div>
           </div>
@@ -217,7 +217,7 @@ export default function BudgetingScreen({ homeHeadStyle, homeSubStyle }: Props) 
         {budgeting.paidInvoices.filter((i) => i.paid_at.slice(0, 7) === monthKey).map((inv) => (
           <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--surface-3)', fontSize: 'var(--text-body-sm)' }}>
             <span style={{ color: 'var(--text)' }}>{inv.label} <span style={{ color: 'var(--text-tertiary)' }}>(invoice, paid)</span></span>
-            <span style={{ fontWeight: 600, color: '#8fae8f' }}>+{money(inv.amount)}</span>
+            <span style={{ fontWeight: 600, color: 'var(--success)' }}>+{money(inv.amount)}</span>
           </div>
         ))}
         {budgeting.transactions.filter((t) => t.occurred_on.slice(0, 7) === monthKey).length === 0 && budgeting.paidInvoices.filter((i) => i.paid_at.slice(0, 7) === monthKey).length === 0 && (
@@ -234,7 +234,7 @@ export default function BudgetingScreen({ homeHeadStyle, homeSubStyle }: Props) 
               <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 2 }}>{CADENCE_LABEL[r.cadence]} · next {new Date(r.next_occurrence + 'T00:00:00').toLocaleDateString()}</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontWeight: 600, color: r.type === 'income' ? '#8fae8f' : '#c47a7a' }}>{r.type === 'income' ? '+' : '-'}{money(r.amount)}</span>
+              <span style={{ fontWeight: 600, color: r.type === 'income' ? 'var(--success)' : 'var(--danger)' }}>{r.type === 'income' ? '+' : '-'}{money(r.amount)}</span>
               <span style={{ color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: 'var(--text-small)' }} onClick={() => budgeting.removeRecurring(r.id)}>Remove</span>
             </div>
           </div>
@@ -248,9 +248,9 @@ export default function BudgetingScreen({ homeHeadStyle, homeSubStyle }: Props) 
           <div key={h.monthKey} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 16px', borderBottom: '1px solid var(--surface-3)', fontSize: 'var(--text-body-sm)' }}>
             <span style={{ color: 'var(--text)' }}>{monthLabel(h.monthKey)}</span>
             <div style={{ display: 'flex', gap: 16 }}>
-              <span style={{ color: '#8fae8f' }}>+{money(h.totalIncome)}</span>
-              <span style={{ color: '#c47a7a' }}>-{money(h.totalExpense)}</span>
-              <span style={{ fontWeight: 600, color: h.net >= 0 ? '#8fae8f' : '#c47a7a', minWidth: 80, textAlign: 'right' }}>{money(h.net)}</span>
+              <span style={{ color: 'var(--success)' }}>+{money(h.totalIncome)}</span>
+              <span style={{ color: 'var(--danger)' }}>-{money(h.totalExpense)}</span>
+              <span style={{ fontWeight: 600, color: h.net >= 0 ? 'var(--success)' : 'var(--danger)', minWidth: 80, textAlign: 'right' }}>{money(h.net)}</span>
             </div>
           </div>
         ))}
@@ -262,19 +262,19 @@ export default function BudgetingScreen({ homeHeadStyle, homeSubStyle }: Props) 
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
         <StatTile label="Monthly spend" value={money(subs.totalMonthly)} />
         <StatTile label="Annual spend" value={money(subs.totalAnnual)} />
-        <StatTile label="Renewing in 30 days" value={String(subs.upcomingRenewals.length)} color={subs.upcomingRenewals.length > 0 ? '#C9A24B' : undefined} />
+        <StatTile label="Renewing in 30 days" value={String(subs.upcomingRenewals.length)} color={subs.upcomingRenewals.length > 0 ? 'var(--warning)' : undefined} />
       </div>
 
       {subs.staleSubscriptions.length > 0 && (
-        <div style={{ ...cardStyle, marginTop: 14, borderColor: '#c47a7a55', background: '#c47a7a10' }}>
-          <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: '#c47a7a' }}>Up for review — not marked used in 45+ days</div>
+        <div style={{ ...cardStyle, marginTop: 14, borderColor: 'color-mix(in srgb, var(--danger) 33%, transparent)', background: 'color-mix(in srgb, var(--danger) 6%, transparent)' }}>
+          <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: 'var(--danger)' }}>Up for review — not marked used in 45+ days</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
             {subs.staleSubscriptions.map((s) => (
               <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--text-body-sm)' }}>
                 <span style={{ color: 'var(--text)' }}>{s.name} — {money(monthlyCost(s))}/mo</span>
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <span style={{ color: '#8fae8f', cursor: 'pointer' }} onClick={() => subs.markUsed(s.id)}>Still using it</span>
-                  <span style={{ color: '#c47a7a', cursor: 'pointer' }} onClick={() => subs.removeSubscription(s.id)}>Cancel/remove</span>
+                  <span style={{ color: 'var(--success)', cursor: 'pointer' }} onClick={() => subs.markUsed(s.id)}>Still using it</span>
+                  <span style={{ color: 'var(--danger)', cursor: 'pointer' }} onClick={() => subs.removeSubscription(s.id)}>Cancel/remove</span>
                 </div>
               </div>
             ))}
@@ -321,7 +321,7 @@ export default function BudgetingScreen({ homeHeadStyle, homeSubStyle }: Props) 
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-label)', fontWeight: 700 }}>
           <span style={{ color: 'var(--text)' }}>{subs.totalMonthly > subs.mastermindMonthlyCost ? "You're still paying more elsewhere" : 'Your subscriptions cost less right now'}</span>
         </div>
-        <div style={{ fontSize: 'var(--text-title)', fontWeight: 700, color: subs.totalMonthly > subs.mastermindMonthlyCost ? '#8fae8f' : '#c47a7a', marginTop: 4, fontFamily: 'var(--font-mono)' }}>
+        <div style={{ fontSize: 'var(--text-title)', fontWeight: 700, color: subs.totalMonthly > subs.mastermindMonthlyCost ? 'var(--success)' : 'var(--danger)', marginTop: 4, fontFamily: 'var(--font-mono)' }}>
           {money(Math.abs(subs.totalMonthly - subs.mastermindMonthlyCost))}/mo {subs.totalMonthly > subs.mastermindMonthlyCost ? 'saved by consolidating' : 'more than your subscriptions'}
         </div>
       </div>

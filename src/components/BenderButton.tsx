@@ -38,13 +38,13 @@ export default function BenderButton({ activeBender, onStart, onEnd }: Props) {
     fontSize: 'var(--text-caption)', fontWeight: 600, cursor: 'pointer',
     background: activeBender ? '#3a2412' : 'var(--surface)',
     border: `1px solid ${activeBender ? '#B7690C' : 'var(--border)'}`,
-    color: activeBender ? '#e0a35c' : 'var(--text-secondary)',
+    color: activeBender ? 'var(--warning)' : 'var(--text-secondary)',
   };
 
   return (
     <>
       <div style={pillStyle} onClick={() => setOpen(true)}>
-        <Icon name="flame" size={13} color={activeBender ? '#e0a35c' : 'var(--text-secondary)'} />
+        <Icon name="flame" size={13} color={activeBender ? 'var(--warning)' : 'var(--text-secondary)'} />
         {activeBender ? 'Bender active' : 'Bender mode'}
       </div>
 

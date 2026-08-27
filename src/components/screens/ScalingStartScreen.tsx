@@ -36,7 +36,7 @@ function StepBadge({ done }: { done: boolean }) {
       width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: done ? '#4a7a5a33' : 'var(--border)', border: `1px solid ${done ? '#4a7a5a' : 'var(--border-2)'}`, flexShrink: 0,
     }}>
-      {done ? <Icon name="check" size={12} color="#8fae8f" /> : <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--text-tertiary)' }} />}
+      {done ? <Icon name="check" size={12} color="var(--success)" /> : <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--text-tertiary)' }} />}
     </div>
   );
 }
@@ -226,7 +226,7 @@ export default function ScalingStartScreen({ homeHeadStyle, homeSubStyle, onNavi
 
         <div style={{ ...cardStyle, borderColor: '#3a3520' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            <Icon name="sparkle" size={16} color="#C9A24B" />
+            <Icon name="sparkle" size={16} color="var(--warning)" />
             <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)' }}>5. Nova — tie it together</div>
           </div>
           <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginBottom: 14, lineHeight: 1.5 }}>
@@ -244,7 +244,7 @@ export default function ScalingStartScreen({ homeHeadStyle, homeSubStyle, onNavi
               {generating ? 'Generating…' : 'Generate starter invoice'}
             </button>
           )}
-          {novaError && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a', marginTop: 10 }}>{novaError}</div>}
+          {novaError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 10 }}>{novaError}</div>}
         </div>
       </div>
     </div>

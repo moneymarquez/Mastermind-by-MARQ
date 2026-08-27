@@ -131,7 +131,7 @@ export default function SobrietyScreen({ homeHeadStyle, homeSubStyle, bender }: 
           </div>
         )}
         {bender.activeBender && (
-          <div style={{ marginTop: 14, padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid #B7690C', color: '#e0a35c', fontSize: 'var(--text-body-sm)' }}>
+          <div style={{ marginTop: 14, padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid #B7690C', color: 'var(--warning)', fontSize: 'var(--text-body-sm)' }}>
             Bender mode is active — tap the button above to check context or end it.
           </div>
         )}
@@ -169,13 +169,13 @@ export default function SobrietyScreen({ homeHeadStyle, homeSubStyle, bender }: 
             {explainerThinking ? 'Loading…' : 'Dependency vs. moderate use?'}
           </span>
         </div>
-        {aiError && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a', marginTop: 8 }}>{aiError}</div>}
+        {aiError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 8 }}>{aiError}</div>}
         {todayCheckin?.ai_insight && (
           <div style={{ marginTop: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '12px 14px' }}>
             <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-quaternary)', lineHeight: 1.6 }}>{todayCheckin.ai_insight}</div>
           </div>
         )}
-        {patternError && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a', marginTop: 8 }}>{patternError}</div>}
+        {patternError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 8 }}>{patternError}</div>}
         {patternText && (
           <div style={{ marginTop: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '12px 14px' }}>
             <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-quaternary)', lineHeight: 1.6 }}>{patternText}</div>

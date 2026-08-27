@@ -75,7 +75,7 @@ function LockInIntake({ goal, otherGoals, onLocked }: { goal: Goal; otherGoals: 
         <input style={inputStyle} placeholder="Deadline (e.g. 3 months, Dec 1)" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
         <input style={inputStyle} placeholder="Any constraints? (optional)" value={constraints} onChange={(e) => setConstraints(e.target.value)} />
       </div>
-      {error && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a', marginTop: 8 }}>{error}</div>}
+      {error && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 8 }}>{error}</div>}
       <div
         style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 'var(--radius-pill)', background: generating ? 'var(--border)' : 'var(--text)', color: generating ? 'var(--text-secondary)' : 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: generating ? 'default' : 'pointer' }}
         onClick={() => !generating && run()}
@@ -93,7 +93,7 @@ function PathPicker({ goal, onChoose }: { goal: Goal; onChoose: (path: GoalPath)
   return (
     <div style={{ marginTop: 14 }}>
       {goal.conflict_notes && (
-        <div style={{ padding: '10px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid #B7690C', color: '#e0a35c', fontSize: 'var(--text-body-sm)', marginBottom: 12, lineHeight: 1.5 }}>
+        <div style={{ padding: '10px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid #B7690C', color: 'var(--warning)', fontSize: 'var(--text-body-sm)', marginBottom: 12, lineHeight: 1.5 }}>
           ⚠ {goal.conflict_notes}
         </div>
       )}
@@ -243,7 +243,7 @@ function GoalCard({
       {!locked && hasPaths && <PathPicker goal={goal} onChoose={(p) => onCommitPath(goal, p)} />}
 
       {locked && goal.conflict_notes && (
-        <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid #B7690C', color: '#e0a35c', fontSize: 'var(--text-body-sm)', lineHeight: 1.5 }}>
+        <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid #B7690C', color: 'var(--warning)', fontSize: 'var(--text-body-sm)', lineHeight: 1.5 }}>
           ⚠ {goal.conflict_notes}
         </div>
       )}
@@ -257,7 +257,7 @@ function GoalCard({
             s.auto_tracked_source === 'dialing_calls' ? (
               <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
                 <span style={{ fontSize: 'var(--text-body)', color: 'var(--text-quaternary)', flex: 1 }}>{s.description}</span>
-                <span style={{ fontSize: 'var(--text-caption)', color: '#4CAF7D', fontFamily: 'var(--font-mono)' }}>{todayDialCount} today (live)</span>
+                <span style={{ fontSize: 'var(--text-caption)', color: 'var(--success)', fontFamily: 'var(--font-mono)' }}>{todayDialCount} today (live)</span>
               </div>
             ) : (
               <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
@@ -316,7 +316,7 @@ function GoalCard({
           </div>
         )}
       </div>
-      {aiError && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a', marginTop: 8 }}>{aiError}</div>}
+      {aiError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 8 }}>{aiError}</div>}
 
       {goal.ai_critique && (
         <div style={{ marginTop: 14, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '12px 14px' }}>

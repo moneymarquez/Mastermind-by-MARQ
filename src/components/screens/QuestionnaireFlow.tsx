@@ -73,7 +73,7 @@ export default function QuestionnaireFlow<T extends Row>({
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <div style={homeHeadStyle}>{title}</div>
               {badge && (
-                <div style={{ padding: '3px 10px', borderRadius: 'var(--radius-pill)', background: '#C9A24B22', border: '1px solid #C9A24B55', color: '#C9A24B', fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>
+                <div style={{ padding: '3px 10px', borderRadius: 'var(--radius-pill)', background: 'color-mix(in srgb, var(--warning) 13%, transparent)', border: '1px solid color-mix(in srgb, var(--warning) 33%, transparent)', color: 'var(--warning)', fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>
                   {badge}
                 </div>
               )}
@@ -186,7 +186,7 @@ export default function QuestionnaireFlow<T extends Row>({
         >
           {isLast ? (generating ? 'Generating…' : 'Generate') : 'Next'}
         </div>
-        {genError && <span style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a' }}>{genError}</span>}
+        {genError && <span style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)' }}>{genError}</span>}
       </div>
     </div>
   );

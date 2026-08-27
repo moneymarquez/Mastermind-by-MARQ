@@ -62,7 +62,7 @@ export default function WeeklyReviewScreen({ homeHeadStyle, homeSubStyle }: Prop
           {generating ? 'Generating…' : 'Generate progress review for the current week'}
         </div>
       </div>
-      {error && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', marginTop: 10, textAlign: 'center' }}>{error}</div>}
+      {error && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginTop: 10, textAlign: 'center' }}>{error}</div>}
 
       {history.length > 0 && (
         <>

@@ -136,7 +136,7 @@ export default function FitnessScreen({ homeHeadStyle, homeSubStyle }: Props) {
               {generating === 'diet' ? 'Generating…' : '✨ AI diet plan'}
             </div>
           </div>
-          {aiError && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', marginTop: 8 }}>{aiError}</div>}
+          {aiError && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginTop: 8 }}>{aiError}</div>}
 
           <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
             {(['workout', 'diet'] as FitnessPlanKind[]).map((kind) => {

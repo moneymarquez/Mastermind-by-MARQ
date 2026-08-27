@@ -24,7 +24,7 @@ const STATUS_COLOR: Record<TaskStatus, string> = {
   done: 'var(--text-tertiary)',
   current: 'var(--text)',
   upcoming: 'var(--text-secondary)',
-  overdue: '#c47a7a',
+  overdue: 'var(--danger)',
 };
 
 export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Props) {
@@ -188,7 +188,7 @@ export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Pr
                 >
                   {task.name}
                 </div>
-                {status === 'overdue' && <div style={{ fontSize: 'var(--text-micro)', color: '#c47a7a', marginTop: 2 }}>Overdue</div>}
+                {status === 'overdue' && <div style={{ fontSize: 'var(--text-micro)', color: 'var(--danger)', marginTop: 2 }}>Overdue</div>}
               </div>
             </div>
           );

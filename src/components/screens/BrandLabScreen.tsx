@@ -139,14 +139,14 @@ function ConceptMock({ concept }: { concept: BrandConcept }) {
 
 function ConceptCard({ concept, pinned, onPin }: { concept: BrandConcept; pinned: boolean; onPin: () => void }) {
   return (
-    <div style={{ background: 'var(--surface)', border: `1px solid ${pinned ? '#C9A24B' : 'var(--border)'}`, borderRadius: 'var(--radius-xl)', padding: 14 }}>
+    <div style={{ background: 'var(--surface)', border: `1px solid ${pinned ? 'var(--warning)' : 'var(--border)'}`, borderRadius: 'var(--radius-xl)', padding: 14 }}>
       <ConceptMock concept={concept} />
       <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: 'var(--text)' }}>{concept.name}</div>
           <div style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)', marginTop: 2 }}>{concept.mood.join(' · ')}</div>
         </div>
-        <div style={pinned ? { ...ghostBtn, borderColor: '#C9A24B', color: '#C9A24B' } : ghostBtn} onClick={onPin}>
+        <div style={pinned ? { ...ghostBtn, borderColor: 'var(--warning)', color: 'var(--warning)' } : ghostBtn} onClick={onPin}>
           {pinned ? 'Pinned ★' : 'Pin'}
         </div>
       </div>
@@ -293,7 +293,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
         <div style={homeSubStyle}>{active.audience ? `For: ${active.audience}` : 'A visual design-direction generator — not a site builder.'}</div>
 
         {generating && <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 12 }}>Nova is working on it…</div>}
-        {aiError && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a', marginTop: 12 }}>{aiError}</div>}
+        {aiError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 12 }}>{aiError}</div>}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 20 }}>
           <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Concepts</div>
@@ -323,7 +323,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
                 </div>
                 <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginBottom: 10 }}>Heading: {pinnedConcept.headingFont} · Body: Inter</div>
                 <div
-                  style={active.steps.paletteTypography?.confirmed ? { ...ghostBtn, borderColor: '#4a7a5a', color: '#8fae8f' } : primaryBtn}
+                  style={active.steps.paletteTypography?.confirmed ? { ...ghostBtn, borderColor: '#4a7a5a', color: 'var(--success)' } : primaryBtn}
                   onClick={() => saveStep(active.id, 'paletteTypography', { confirmed: true })}
                 >
                   {active.steps.paletteTypography?.confirmed ? 'Confirmed ✓' : 'Confirm'}
@@ -340,7 +340,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
                 <div style={{ display: 'flex', gap: 8 }}>
                   <div style={ghostBtn} onClick={generateLogoDirection}>Generate with Nova</div>
                   <div
-                    style={active.steps.logoDirection?.confirmed ? { ...ghostBtn, borderColor: '#4a7a5a', color: '#8fae8f' } : primaryBtn}
+                    style={active.steps.logoDirection?.confirmed ? { ...ghostBtn, borderColor: '#4a7a5a', color: 'var(--success)' } : primaryBtn}
                     onClick={() => saveStep(active.id, 'logoDirection', { text: logoDraft || active.steps.logoDirection?.text || '', confirmed: true })}
                   >
                     {active.steps.logoDirection?.confirmed ? 'Confirmed ✓' : 'Confirm'}
@@ -358,7 +358,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
                 <div style={{ display: 'flex', gap: 8 }}>
                   <div style={ghostBtn} onClick={generateVoiceMessaging}>Generate with Nova</div>
                   <div
-                    style={active.steps.voiceMessaging?.confirmed ? { ...ghostBtn, borderColor: '#4a7a5a', color: '#8fae8f' } : primaryBtn}
+                    style={active.steps.voiceMessaging?.confirmed ? { ...ghostBtn, borderColor: '#4a7a5a', color: 'var(--success)' } : primaryBtn}
                     onClick={() => saveStep(active.id, 'voiceMessaging', { text: voiceDraft || active.steps.voiceMessaging?.text || '', confirmed: true })}
                   >
                     {active.steps.voiceMessaging?.confirmed ? 'Confirmed ✓' : 'Confirm'}
@@ -369,7 +369,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
               <StepCard index={4} title="Asset prep for Website Builder handoff">
                 <textarea style={{ ...inputStyle, minHeight: 120, marginBottom: 10, fontFamily: 'monospace', fontSize: 'var(--text-caption)' }} readOnly value={assetPrepText} />
                 <div
-                  style={active.steps.assetPrep?.confirmed ? { ...ghostBtn, borderColor: '#4a7a5a', color: '#8fae8f' } : primaryBtn}
+                  style={active.steps.assetPrep?.confirmed ? { ...ghostBtn, borderColor: '#4a7a5a', color: 'var(--success)' } : primaryBtn}
                   onClick={() => saveStep(active.id, 'assetPrep', { text: assetPrepText, confirmed: true })}
                 >
                   {active.steps.assetPrep?.confirmed ? 'Marked ready ✓' : 'Mark ready for handoff'}
@@ -378,8 +378,8 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
             </div>
 
             {allStepsConfirmed && (
-              <div style={{ ...inputStyle, marginTop: 20, maxWidth: 480, background: 'var(--surface)', border: '1px solid #C9A24B55', padding: 18 }}>
-                <div style={{ fontSize: 'var(--text-body-sm)', color: '#C9A24B', fontWeight: 600, marginBottom: 10 }}>Finalized — ready as a project asset</div>
+              <div style={{ ...inputStyle, marginTop: 20, maxWidth: 480, background: 'var(--surface)', border: '1px solid color-mix(in srgb, var(--warning) 33%, transparent)', padding: 18 }}>
+                <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--warning)', fontWeight: 600, marginBottom: 10 }}>Finalized — ready as a project asset</div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <select style={{ ...inputStyle, flex: 1 }} value={attachProjectId} onChange={(e) => setAttachProjectId(e.target.value)}>
                     <option value="">— attach to a Scaling project —</option>
@@ -438,7 +438,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
           >
             <div>
               <span style={{ fontSize: 'var(--text-body-lg)', color: 'var(--text-quaternary)' }}>{b.business || b.direction}</span>
-              {b.pinned_concept_id && <span style={{ fontSize: 'var(--text-tiny)', color: '#C9A24B', marginLeft: 10 }}>★ pinned</span>}
+              {b.pinned_concept_id && <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--warning)', marginLeft: 10 }}>★ pinned</span>}
             </div>
             <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }} onClick={(e) => { e.stopPropagation(); removeBrief(b.id); }}>Delete</span>
           </div>

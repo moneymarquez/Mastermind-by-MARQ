@@ -82,7 +82,7 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
       {detectorSupported && !error && (
         <video ref={videoRef} muted playsInline style={{ width: '100%', maxWidth: 360, borderRadius: 'var(--radius-lg)', background: '#000' }} />
       )}
-      {error && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', maxWidth: 320, textAlign: 'center' }}>{error}</div>}
+      {error && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', maxWidth: 320, textAlign: 'center' }}>{error}</div>}
       {!detectorSupported && (
         <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', maxWidth: 320, textAlign: 'center' }}>
           Live scanning isn't supported in this browser — enter the barcode number instead.

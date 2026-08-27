@@ -22,7 +22,7 @@ export default function VoiceCaptureScreen({ homeHeadStyle, homeSubStyle }: Prop
       <div style={homeSubStyle}>Speak a task, expense, contact, decision, note, or follow-up — it files itself.</div>
 
       {!supported && (
-        <div style={{ ...cardStyle, marginTop: 24, color: '#c47a7a', fontSize: 'var(--text-body)' }}>Voice input isn't supported in this browser.</div>
+        <div style={{ ...cardStyle, marginTop: 24, color: 'var(--danger)', fontSize: 'var(--text-body)' }}>Voice input isn't supported in this browser.</div>
       )}
 
       {supported && (
@@ -31,7 +31,7 @@ export default function VoiceCaptureScreen({ homeHeadStyle, homeSubStyle }: Prop
             onClick={() => (listening ? stop() : start())}
             style={{
               width: 84, height: 84, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', background: listening ? '#c47a7a' : 'var(--text)',
+              cursor: 'pointer', background: listening ? 'var(--danger)' : 'var(--text)',
               animation: listening ? 'micPulse 1.2s ease-in-out infinite' : 'none',
             }}
           >
@@ -50,12 +50,12 @@ export default function VoiceCaptureScreen({ homeHeadStyle, homeSubStyle }: Prop
         </div>
       )}
 
-      {error && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', marginTop: 16, textAlign: 'center' }}>{error}</div>}
+      {error && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginTop: 16, textAlign: 'center' }}>{error}</div>}
 
       {filed && (
-        <div style={{ ...cardStyle, marginTop: 16, maxWidth: 520, marginLeft: 'auto', marginRight: 'auto', borderColor: '#8fae8f55', background: '#8fae8f10' }}>
+        <div style={{ ...cardStyle, marginTop: 16, maxWidth: 520, marginLeft: 'auto', marginRight: 'auto', borderColor: 'color-mix(in srgb, var(--success) 33%, transparent)', background: 'color-mix(in srgb, var(--success) 6%, transparent)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 'var(--text-micro)', fontWeight: 700, color: '#8fae8f', border: '1px solid #8fae8f', borderRadius: 'var(--radius-pill)', padding: '3px 10px' }}>
+            <span style={{ fontSize: 'var(--text-micro)', fontWeight: 700, color: 'var(--success)', border: '1px solid var(--success)', borderRadius: 'var(--radius-pill)', padding: '3px 10px' }}>
               Filed as {CAPTURE_TYPE_LABEL[filed.type]}
             </span>
             <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>in {CAPTURE_TYPE_MODULE[filed.type]}</span>
@@ -69,7 +69,7 @@ export default function VoiceCaptureScreen({ homeHeadStyle, homeSubStyle }: Prop
                 {CAPTURE_TYPE_LABEL[t]}
               </span>
             ))}
-            <span style={{ fontSize: 'var(--text-tiny)', color: '#c47a7a', cursor: 'pointer', padding: '4px 4px' }} onClick={discard}>Discard entirely</span>
+            <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--danger)', cursor: 'pointer', padding: '4px 4px' }} onClick={discard}>Discard entirely</span>
           </div>
         </div>
       )}

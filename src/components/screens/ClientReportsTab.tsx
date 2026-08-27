@@ -195,7 +195,7 @@ export default function ClientReportsTab({ clientId, publicToken }: Props) {
               <MetricInput label="Followers — end" value={active.followers_end} onCommit={(v) => patch({ followers_end: v })} />
               <div style={{ flex: '1 1 120px', paddingBottom: 10 }}>
                 <div style={labelStyle}>Growth</div>
-                <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 600, color: followerDelta === null ? 'var(--text-tertiary)' : followerDelta >= 0 ? '#4a9a5a' : '#c47a7a' }}>
+                <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 600, color: followerDelta === null ? 'var(--text-tertiary)' : followerDelta >= 0 ? 'var(--success)' : 'var(--danger)' }}>
                   {followerDelta === null ? '—' : `${followerDelta >= 0 ? '+' : ''}${followerDelta.toLocaleString()}`}
                 </div>
               </div>
@@ -231,7 +231,7 @@ export default function ClientReportsTab({ clientId, publicToken }: Props) {
             </div>
             <input type="file" multiple onChange={(e) => { upload(e.target.files, 'proof'); e.target.value = ''; }} style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)' }} />
             {uploading && <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', marginTop: 8 }}>Uploading…</div>}
-            {uploadError && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a', marginTop: 8 }}>{uploadError}</div>}
+            {uploadError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 8 }}>{uploadError}</div>}
           </div>
 
           <div style={cardStyle}>

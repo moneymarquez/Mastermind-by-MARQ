@@ -171,9 +171,9 @@ export default function NovaInsightsPanel({
           <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>What should I eat next?</div>
           <div style={buttonStyle(suggesting)} onClick={() => !suggesting && runSuggestion()}>{suggesting ? 'Thinking…' : `Ask ${assistantName}`}</div>
         </div>
-        {activeBender && <div style={{ fontSize: 'var(--text-caption)', color: '#e0a35c', marginTop: 8 }}>Bender active — suggestions will lean recovery-minded (hydration, electrolytes, easy food).</div>}
+        {activeBender && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--warning)', marginTop: 8 }}>Bender active — suggestions will lean recovery-minded (hydration, electrolytes, easy food).</div>}
         {suggestion && <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-quaternary)', marginTop: 10, lineHeight: 1.5 }}>{suggestion}</div>}
-        {suggestError && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', marginTop: 8 }}>{suggestError}</div>}
+        {suggestError && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginTop: 8 }}>{suggestError}</div>}
       </div>
 
       {/* Weekly analysis */}
@@ -182,7 +182,7 @@ export default function NovaInsightsPanel({
           <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Weekly analysis</div>
           <div style={buttonStyle(analyzing)} onClick={() => !analyzing && runWeeklyAnalysis()}>{analyzing ? 'Analyzing…' : 'Analyze this week'}</div>
         </div>
-        {insightError && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', marginTop: 8 }}>{insightError}</div>}
+        {insightError && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginTop: 8 }}>{insightError}</div>}
         {latestInsight && (
           <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div>
@@ -230,7 +230,7 @@ export default function NovaInsightsPanel({
           <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Weekly grocery list</div>
           <div style={buttonStyle(generatingList)} onClick={() => !generatingList && runGroceryList()}>{generatingList ? 'Generating…' : latestGroceryList ? 'Regenerate' : 'Generate'}</div>
         </div>
-        {listError && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', marginTop: 8 }}>{listError}</div>}
+        {listError && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginTop: 8 }}>{listError}</div>}
         {latestGroceryList && (
           <pre style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-quaternary)', marginTop: 10, whiteSpace: 'pre-wrap', fontFamily: 'inherit', lineHeight: 1.6 }}>{latestGroceryList.list_text}</pre>
         )}

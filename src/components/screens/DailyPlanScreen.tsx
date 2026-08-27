@@ -8,7 +8,7 @@ interface Props {
 }
 
 const TYPE_COLOR: Record<DailyPlanBlockType, string> = {
-  fixed: 'var(--text-secondary)', goal: '#5B8DEF', fitness: '#4CAF7D', macros: '#e0a35c', ai_suggested: '#c47ad1',
+  fixed: 'var(--text-secondary)', goal: '#5B8DEF', fitness: 'var(--success)', macros: 'var(--warning)', ai_suggested: '#c47ad1',
 };
 const TYPE_LABEL: Record<DailyPlanBlockType, string> = {
   fixed: 'Fixed', goal: 'Goal', fitness: 'Fitness', macros: 'Macros', ai_suggested: 'Nova suggested',
@@ -34,7 +34,7 @@ export default function DailyPlanScreen({ homeHeadStyle, homeSubStyle }: Props) 
       {!loading && plan && (
         <div style={{ marginTop: 24, maxWidth: 560 }}>
           {plan.status === 'confirmed' && (
-            <div style={{ fontSize: 'var(--text-small)', color: '#4CAF7D', marginBottom: 14 }}>Confirmed — this is your day.</div>
+            <div style={{ fontSize: 'var(--text-small)', color: 'var(--success)', marginBottom: 14 }}>Confirmed — this is your day.</div>
           )}
           {plan.status === 'skipped' && (
             <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', marginBottom: 14 }}>Skipped for today.</div>

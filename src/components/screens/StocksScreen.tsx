@@ -9,9 +9,9 @@ interface Props {
   homeSubStyle: CSSProperties;
 }
 
-const GOLD = '#C9A24B';
-const GREEN = '#4CAF7D';
-const RED = '#c47a7a';
+const GOLD = 'var(--warning)';
+const GREEN = 'var(--success)';
+const RED = 'var(--danger)';
 
 const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 18 };
 const mono: CSSProperties = { fontFamily: 'var(--font-mono)' };

@@ -47,7 +47,7 @@ const ghostBtn: CSSProperties = {
 };
 const dangerBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 'var(--radius-pill)',
-  border: '1px solid #3a2222', color: '#c47a7a', fontSize: 'var(--text-body)', cursor: 'pointer',
+  border: '1px solid #3a2222', color: 'var(--danger)', fontSize: 'var(--text-body)', cursor: 'pointer',
 };
 
 const TYPE_LABEL: Record<EventType, string> = { holiday: 'HOLIDAY', dialing: 'DIALING', scalez: 'SCALEZ', streaming: 'STREAMING' };
@@ -455,7 +455,7 @@ export default function EventAdderModal({
             </div>
           )}
 
-          {error && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', marginBottom: 10 }}>{error}</div>}
+          {error && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginBottom: 10 }}>{error}</div>}
 
           <div style={{ display: 'flex', gap: 10, marginTop: 8, alignItems: 'center' }}>
             <div style={{ ...primaryBtn, opacity: saving ? 0.6 : 1, pointerEvents: saving ? 'none' : 'auto' }} onClick={save}>

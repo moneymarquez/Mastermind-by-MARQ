@@ -28,7 +28,7 @@ const ghostBtn: CSSProperties = {
 };
 const dangerBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 'var(--radius-pill)',
-  border: '1px solid #c47a7a55', color: '#c47a7a', fontSize: 'var(--text-body)', cursor: 'pointer', alignSelf: 'flex-start',
+  border: '1px solid color-mix(in srgb, var(--danger) 33%, transparent)', color: 'var(--danger)', fontSize: 'var(--text-body)', cursor: 'pointer', alignSelf: 'flex-start',
 };
 
 async function openBillingPortal(): Promise<string | null> {
@@ -158,7 +158,7 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
                 <input style={{ ...inputStyle, flex: 1 }} placeholder="Cristopher" value={displayName} onChange={(e) => { setDisplayName(e.target.value); setNameSaved(false); }} />
                 <div style={primaryBtn} onClick={saveDisplayName}>{savingName ? 'Saving…' : 'Save'}</div>
               </div>
-              {nameSaved && <div style={{ fontSize: 'var(--text-caption)', color: '#4CAF7D', marginTop: 6 }}>Saved.</div>}
+              {nameSaved && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--success)', marginTop: 6 }}>Saved.</div>}
             </div>
           </div>
         </div>
@@ -168,8 +168,8 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <input style={inputStyle} type="password" placeholder="New password" value={newPassword} onChange={(e) => { setNewPassword(e.target.value); setPasswordSaved(false); }} />
             <input style={inputStyle} type="password" placeholder="Confirm new password" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setPasswordSaved(false); }} />
-            {passwordError && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a' }}>{passwordError}</div>}
-            {passwordSaved && <div style={{ fontSize: 'var(--text-small)', color: '#4CAF7D' }}>Password updated.</div>}
+            {passwordError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)' }}>{passwordError}</div>}
+            {passwordSaved && <div style={{ fontSize: 'var(--text-small)', color: 'var(--success)' }}>Password updated.</div>}
             <div style={{ ...primaryBtn, opacity: savingPassword ? 0.6 : 1 }} onClick={() => !savingPassword && changePassword()}>
               {savingPassword ? 'Updating…' : 'Update password'}
             </div>
@@ -184,7 +184,7 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
           <div style={{ ...ghostBtn, opacity: openingPortal ? 0.6 : 1 }} onClick={() => !openingPortal && manageBilling()}>
             {openingPortal ? 'Opening…' : 'Manage subscription'}
           </div>
-          {portalError && <div style={{ fontSize: 'var(--text-caption)', color: '#c47a7a', marginTop: 10 }}>{portalError}</div>}
+          {portalError && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--danger)', marginTop: 10 }}>{portalError}</div>}
         </div>
 
         <div style={cardStyle}>
@@ -192,8 +192,8 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
           <div style={ghostBtn} onClick={onSignOut}>Sign out</div>
         </div>
 
-        <div style={{ ...cardStyle, borderColor: '#c47a7a33' }}>
-          <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: '#c47a7a', marginBottom: 8 }}>Delete account</div>
+        <div style={{ ...cardStyle, borderColor: 'color-mix(in srgb, var(--danger) 20%, transparent)' }}>
+          <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--danger)', marginBottom: 8 }}>Delete account</div>
           {deleteStep === 'idle' && (
             <>
               <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginBottom: 12 }}>Permanently removes your account and data. This can't be undone.</div>

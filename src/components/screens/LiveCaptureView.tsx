@@ -153,7 +153,7 @@ export default function LiveCaptureView({
               style={{
                 padding: '8px 16px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize',
                 border: `1px solid ${confidence[q.key] === tag ? 'transparent' : 'var(--border-2)'}`,
-                background: confidence[q.key] === tag ? (tag === 'confirmed' ? '#4a9a5a' : '#C9A24B') : 'transparent',
+                background: confidence[q.key] === tag ? (tag === 'confirmed' ? 'var(--success)' : 'var(--warning)') : 'transparent',
                 color: confidence[q.key] === tag ? '#0A0B0D' : 'var(--text-secondary)',
               }}
             >

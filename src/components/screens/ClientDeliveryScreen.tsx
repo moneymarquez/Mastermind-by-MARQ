@@ -32,7 +32,7 @@ const TABS: { key: ScalingProject['status']; label: string }[] = [
 ];
 
 function statusBadge(status: ScalingProject['status']): CSSProperties {
-  const colors: Record<ScalingProject['status'], string> = { in_progress: 'var(--text-secondary)', ready_to_deliver: '#C9A24B', delivered: '#8fae8f' };
+  const colors: Record<ScalingProject['status'], string> = { in_progress: 'var(--text-secondary)', ready_to_deliver: 'var(--warning)', delivered: 'var(--success)' };
   const c = colors[status];
   return { padding: '3px 9px', borderRadius: 'var(--radius-pill)', background: `${c}22`, border: `1px solid ${c}55`, color: c, fontSize: 'var(--text-nano)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase' };
 }
@@ -183,7 +183,7 @@ export default function ClientDeliveryScreen({ homeHeadStyle, homeSubStyle, onNa
                 {sending ? 'Sending…' : 'Send to client'}
               </div>
               {!selected.client_email && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 8 }}>Add a client email above first.</div>}
-              {sendError && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a', marginTop: 8 }}>{sendError}</div>}
+              {sendError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 8 }}>{sendError}</div>}
             </div>
           )}
 

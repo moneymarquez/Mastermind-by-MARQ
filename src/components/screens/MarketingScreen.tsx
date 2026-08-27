@@ -17,7 +17,7 @@ const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px so
 const sectionTitle: CSSProperties = { fontSize: 'var(--text-head)', fontWeight: 700, color: 'var(--text)', marginTop: 40, marginBottom: 14 };
 const ASSET_TYPE_LABEL: Record<AssetType, string> = { copy: 'Copy', creative: 'Creative', brand: 'Brand', reference: 'Reference' };
 const STATUS_LABEL: Record<CampaignStatus, string> = { planned: 'Planned', running: 'Running', done: 'Done' };
-const STATUS_COLOR: Record<CampaignStatus, string> = { planned: 'var(--text-secondary)', running: '#C9A24B', done: '#8fae8f' };
+const STATUS_COLOR: Record<CampaignStatus, string> = { planned: 'var(--text-secondary)', running: 'var(--warning)', done: 'var(--success)' };
 const STAGE_LABEL: Record<PipelineStage, string> = { idea: 'Idea', drafted: 'Drafted', scheduled: 'Scheduled', published: 'Published' };
 const STAGES: PipelineStage[] = ['idea', 'drafted', 'scheduled', 'published'];
 
@@ -69,7 +69,7 @@ function AssetCard({ asset, onUpdate, onDelete }: { asset: { id: string; name: s
         onChange={(e) => setContent(e.target.value)}
         onBlur={() => onUpdate({ content })}
       />
-      {error && <div style={{ fontSize: 'var(--text-caption)', color: '#c47a7a', marginTop: 6 }}>{error}</div>}
+      {error && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--danger)', marginTop: 6 }}>{error}</div>}
       <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
         <div style={{ fontSize: 'var(--text-caption)', color: busy ? 'var(--text-tertiary)' : 'var(--text-secondary)', cursor: busy ? 'default' : 'pointer' }} onClick={() => !busy && runAi('draft')}>
           {busy === 'draft' ? 'Drafting…' : 'AI: draft'}

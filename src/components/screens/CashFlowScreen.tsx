@@ -56,20 +56,20 @@ export default function CashFlowScreen({ homeHeadStyle, homeSubStyle }: Props) {
 
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 16 }}>
             <StatTile label="Today" value={money(forecast.startingBalance)} />
-            <StatTile label="In 30 days" value={money(forecast.balanceAt30)} color={forecast.balanceAt30 < 0 ? '#c47a7a' : undefined} />
-            <StatTile label="In 60 days" value={money(forecast.balanceAt60)} color={forecast.balanceAt60 < 0 ? '#c47a7a' : undefined} />
-            <StatTile label="In 90 days" value={money(forecast.balanceAt90)} color={forecast.balanceAt90 < 0 ? '#c47a7a' : undefined} />
+            <StatTile label="In 30 days" value={money(forecast.balanceAt30)} color={forecast.balanceAt30 < 0 ? 'var(--danger)' : undefined} />
+            <StatTile label="In 60 days" value={money(forecast.balanceAt60)} color={forecast.balanceAt60 < 0 ? 'var(--danger)' : undefined} />
+            <StatTile label="In 90 days" value={money(forecast.balanceAt90)} color={forecast.balanceAt90 < 0 ? 'var(--danger)' : undefined} />
           </div>
 
           {forecast.firstShortfall ? (
-            <div style={{ ...cardStyle, marginTop: 16, borderColor: '#c47a7a55', background: '#c47a7a10' }}>
-              <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: '#c47a7a' }}>
+            <div style={{ ...cardStyle, marginTop: 16, borderColor: 'color-mix(in srgb, var(--danger) 33%, transparent)', background: 'color-mix(in srgb, var(--danger) 6%, transparent)' }}>
+              <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--danger)' }}>
                 Projected shortfall on {new Date(forecast.firstShortfall.date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
               </div>
               <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-quaternary)', marginTop: 8 }}>Driven by: {forecast.firstShortfall.drivers.join(', ')}</div>
             </div>
           ) : (
-            <div style={{ ...cardStyle, marginTop: 16, fontSize: 'var(--text-body-sm)', color: '#8fae8f' }}>No projected shortfall in the next 90 days, at current pace.</div>
+            <div style={{ ...cardStyle, marginTop: 16, fontSize: 'var(--text-body-sm)', color: 'var(--success)' }}>No projected shortfall in the next 90 days, at current pace.</div>
           )}
 
           <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 700, color: 'var(--text)', marginTop: 36, marginBottom: 14 }}>Upcoming known events</div>
@@ -79,7 +79,7 @@ export default function CashFlowScreen({ homeHeadStyle, homeSubStyle }: Props) {
                 <span style={{ color: 'var(--text)' }}>{e.label}</span>
                 <div style={{ display: 'flex', gap: 14 }}>
                   <span style={{ color: 'var(--text-tertiary)' }}>{new Date(e.date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-                  <span style={{ fontWeight: 600, color: e.amount >= 0 ? '#8fae8f' : '#c47a7a', minWidth: 70, textAlign: 'right' }}>{money(e.amount)}</span>
+                  <span style={{ fontWeight: 600, color: e.amount >= 0 ? 'var(--success)' : 'var(--danger)', minWidth: 70, textAlign: 'right' }}>{money(e.amount)}</span>
                 </div>
               </div>
             ))}
@@ -103,7 +103,7 @@ export default function CashFlowScreen({ homeHeadStyle, homeSubStyle }: Props) {
                 {scenarioLoading ? 'Thinking…' : 'Ask'}
               </div>
             </div>
-            {scenarioError && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a', marginTop: 10 }}>{scenarioError}</div>}
+            {scenarioError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 10 }}>{scenarioError}</div>}
             {scenarioAnswer && <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-quaternary)', marginTop: 12, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{scenarioAnswer}</div>}
           </div>
         </>

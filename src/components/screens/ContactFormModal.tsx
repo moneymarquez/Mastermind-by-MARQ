@@ -207,7 +207,7 @@ export default function ContactFormModal({ onSave, onClose }: Props) {
           <textarea style={{ ...inputStyle, minHeight: 70, resize: 'vertical' }} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
 
-        {error && <div style={{ fontSize: 'var(--text-body-sm)', color: '#c47a7a', marginBottom: 10 }}>{error}</div>}
+        {error && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginBottom: 10 }}>{error}</div>}
 
         <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
           <div style={{ ...primaryBtn, opacity: saving ? 0.6 : 1, pointerEvents: saving ? 'none' : 'auto' }} onClick={save}>

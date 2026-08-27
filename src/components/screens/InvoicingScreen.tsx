@@ -68,10 +68,10 @@ function BusinessProfilePanel() {
           <input style={inputStyle} placeholder="Business email" value={draft.business_email} onChange={(e) => { setDraft({ ...draft, business_email: e.target.value }); setSaved(false); }} />
           <input style={inputStyle} placeholder="Business phone" value={draft.business_phone} onChange={(e) => { setDraft({ ...draft, business_phone: e.target.value }); setSaved(false); }} />
           <input style={inputStyle} placeholder="Website" value={draft.website} onChange={(e) => { setDraft({ ...draft, website: e.target.value }); setSaved(false); }} />
-          {error && <div style={{ fontSize: 'var(--text-caption)', color: '#c47a7a' }}>Couldn't save: {error}</div>}
+          {error && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--danger)' }}>Couldn't save: {error}</div>}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ ...primaryBtn, opacity: saving ? 0.6 : 1 }} onClick={() => !saving && doSave()}>{saving ? 'Saving…' : 'Save'}</div>
-            {saved && !error && <span style={{ fontSize: 'var(--text-caption)', color: '#4CAF7D' }}>Saved.</span>}
+            {saved && !error && <span style={{ fontSize: 'var(--text-caption)', color: 'var(--success)' }}>Saved.</span>}
           </div>
         </div>
       )}
@@ -182,7 +182,7 @@ function NewDocumentPanel({ onCreated }: { onCreated: (id: string) => void }) {
         </>
       )}
 
-      {error && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a', marginTop: 12 }}>Couldn't create it: {error}</div>}
+      {error && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 12 }}>Couldn't create it: {error}</div>}
       <div style={{ ...primaryBtn, marginTop: 12, opacity: creating ? 0.6 : 1 }} onClick={() => !creating && create1()}>
         {creating ? 'Creating…' : 'Create document'}
       </div>
@@ -191,7 +191,7 @@ function NewDocumentPanel({ onCreated }: { onCreated: (id: string) => void }) {
 }
 
 const STATUS_LABEL: Record<ClientDocument['status'], string> = { draft: 'Draft', sent: 'Sent', paid: 'Paid' };
-const STATUS_COLOR: Record<ClientDocument['status'], string> = { draft: 'var(--text-tertiary)', sent: '#C9A24B', paid: '#7fae7f' };
+const STATUS_COLOR: Record<ClientDocument['status'], string> = { draft: 'var(--text-tertiary)', sent: 'var(--warning)', paid: '#7fae7f' };
 
 function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack: () => void; startTab: 'edit' | 'preview' }) {
   const { update, duplicate, remove, setStatus, error } = useClientDocuments();
@@ -228,11 +228,11 @@ function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack
         <input style={{ ...inputStyle, fontSize: 'var(--text-subhead)', fontWeight: 600, flex: 1, minWidth: 200 }} value={label} onChange={(e) => { setLabel(e.target.value); setSaved(false); }} />
         <div style={{ ...primaryBtn, opacity: saving ? 0.6 : saved ? 0.5 : 1 }} onClick={() => !saving && save()}>{saving ? 'Saving…' : saved ? 'Saved' : 'Save changes'}</div>
         <div style={ghostBtn} onClick={() => duplicate(doc)}>Duplicate</div>
-        <div style={{ ...ghostBtn, color: '#c47a7a' }} onClick={() => remove(doc.id).then((ok) => ok && onBack())}>Delete</div>
+        <div style={{ ...ghostBtn, color: 'var(--danger)' }} onClick={() => remove(doc.id).then((ok) => ok && onBack())}>Delete</div>
       </div>
-      {error && <div style={{ fontSize: 'var(--text-small)', color: '#c47a7a', marginBottom: 10 }}>Couldn't save: {error}</div>}
+      {error && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginBottom: 10 }}>Couldn't save: {error}</div>}
 
-      <div style={{ display: 'inline-flex', padding: '9px 16px', borderRadius: 'var(--radius-pill)', border: '1px solid #C9A24B55', background: '#C9A24B15', color: '#C9A24B', fontSize: 'var(--text-small)', fontWeight: 600, marginBottom: 16 }}>
+      <div style={{ display: 'inline-flex', padding: '9px 16px', borderRadius: 'var(--radius-pill)', border: '1px solid color-mix(in srgb, var(--warning) 33%, transparent)', background: 'color-mix(in srgb, var(--warning) 8%, transparent)', color: 'var(--warning)', fontSize: 'var(--text-small)', fontWeight: 600, marginBottom: 16 }}>
         Send to client — coming soon
       </div>
 

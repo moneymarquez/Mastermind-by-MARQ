@@ -8,7 +8,7 @@ interface Props {
 }
 
 const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 18 };
-const CONFIDENCE_COLOR: Record<Confidence, string> = { low: 'var(--text-tertiary)', medium: '#C9A24B', high: '#8fae8f' };
+const CONFIDENCE_COLOR: Record<Confidence, string> = { low: 'var(--text-tertiary)', medium: 'var(--warning)', high: 'var(--success)' };
 const CONFIDENCE_LABEL: Record<Confidence, string> = { low: 'Low confidence', medium: 'Medium confidence', high: 'High confidence' };
 
 export default function PatternDetectionScreen({ homeHeadStyle, homeSubStyle }: Props) {
