@@ -33,10 +33,12 @@ import { sendDeliveryEmail } from './handlers/deliver-email';
 import type { DeliverEmailEnv } from './handlers/deliver-email';
 import { supportInboxWebhook } from './handlers/support-inbox';
 import type { SupportInboxEnv } from './handlers/support-inbox';
+import { publicAuditQuestions, publicAuditSubmit, createClientInvoice } from './handlers/client-crm';
+import type { ClientCrmEnv } from './handlers/client-crm';
 
 const NETLIFY_ORIGIN = 'https://mastermindbymarq.netlify.app';
 
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
@@ -64,6 +66,10 @@ export default {
     if (url.pathname === '/api/deliver-email') return sendDeliveryEmail(request, env);
 
     if (url.pathname === '/api/support-inbox-webhook') return supportInboxWebhook(request, env);
+
+    if (url.pathname === '/api/client-crm/public-questions') return publicAuditQuestions(request, env);
+    if (url.pathname === '/api/client-crm/public-audit') return publicAuditSubmit(request, env);
+    if (url.pathname === '/api/client-crm/create-invoice') return createClientInvoice(request, env);
 
     if (url.pathname.startsWith('/api/')) {
       const target = new URL(url.pathname + url.search, NETLIFY_ORIGIN);

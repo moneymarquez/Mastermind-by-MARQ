@@ -14,6 +14,7 @@ export type Screen =
   | 'legal'
   | 'scaling-planner'
   | 'audits'
+  | 'client-crm'
   | 'brand-lab'
   | 'idea-maker'
   | 'schedule'

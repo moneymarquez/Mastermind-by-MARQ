@@ -810,4 +810,56 @@ third-party data processors).
   5. Delete the `auth.users` row last (Supabase Studio → Authentication → Users), which cascades any
      `references auth.users(id) on delete cascade` columns not already caught above.
 
+## Client Audit, Analysis & Invoicing System (Scaling → Client CRM)
+
+The full client-acquisition-to-payment pipeline: Discovery → Analysis → Package/Pricing → Invoice → Payment →
+Active Client, live under Scaling → **Client CRM**. Run `supabase/schema_039_client_crm.sql` (after
+`schema_038_recurring_reminders.sql`) — it seeds a starter audit-question bank and the default pricing template on
+first run. No new secrets required; the Stripe invoice flow reuses the same `STRIPE_SECRET_KEY` and
+`STRIPE_WEBHOOK_SECRET` already configured for the Masterminds subscription billing.
+
+- **Editable question bank, not hardcoded** — `audit_questions` seeds with one starter question per category
+  (Rapport, Vision, Positioning/Niche, Unit Economics, Marketing/Acquisition, Lifetime Value, Bottleneck Question),
+  but Cristopher adds/retires/reorders freely from Client CRM → "Manage audit questions"
+  (`ClientCRMAdmin.tsx`'s `AuditQuestionsAdmin`). Both the internal form (a client's Audit tab) and the public
+  questionnaire read the same active rows, so editing the bank changes both surfaces at once.
+- **Public lead-gen questionnaire at `/audit`** — no login. `src/main.tsx` checks the pathname before rendering
+  `App` at all and renders `PublicAuditScreen` standalone instead, since a prospect filling this out has no
+  Mastermind session. It reads the question bank via the worker's `publicAuditQuestions` (service-role, since
+  `audit_questions` is owner-only RLS like every Scaling table) and posts to `publicAuditSubmit`, which
+  auto-creates the `crm_clients` + `client_audits` rows (pinned to the owner via `OWNER_USER_ID`, tagged
+  `source: 'public'`, stage `New Lead`) and drops a `reminders` row so Cristopher sees it in-app. Auto-sending a
+  confirmation/notification email is still out of scope, same as the rest of the app, pending the Made by Marq
+  domain + Resend setup.
+- **Analysis engine** (`src/data/clientAnalysis.ts`) — one Claude call per client, grouped by the question bank's
+  categories, producing exactly the proven five-section format: Where Things Stand Today / What Sets Them Apart /
+  The Plan / Investment / Next Steps. The Investment section is deliberately left as a placeholder paragraph — real
+  numbers come from the pricing builder below, never invented by the model. Fully editable in place
+  (`ClientDetailView`'s Analysis tab) before anything is sent, and "Regenerate" re-runs from whatever the current
+  answers are.
+- **Package & Pricing Builder** — `pricing_template_items` is the editable default (seeded: Month 1 $500 upfront,
+  Months 2-4 $1,000/mo × 3), edited from "Default pricing template" in Client CRM. A client's own plan
+  (`client_pricing_items`) is a one-time copy made when "Use default template" is clicked, then fully independent —
+  editing the template afterward never touches an already-finalized client plan. Add/remove line items freely per
+  client. The per-client **"Reveal full payment schedule"** toggle (default OFF) lives on `crm_clients` and is
+  shown right on the Pricing tab.
+- **Stripe invoicing — manual trigger only** (`worker/handlers/client-crm.ts`'s `createClientInvoice`, routed at
+  `/api/client-crm/create-invoice`) — same raw-fetch-against-Stripe's-REST-API pattern as `billing.ts` (no `stripe`
+  npm SDK). "Send invoice" on a client's Invoices tab creates (or reuses) a Stripe Customer for that client, adds an
+  Invoice Item, creates the Invoice with `collection_method: send_invoice`, finalizes, and sends it — Stripe emails
+  the client directly. Nothing auto-charges and nothing auto-generates; every invoice is a deliberate click.
+  `client_invoices.status` goes `draft` → `sent` the instant this returns, then → `paid` via the webhook below —
+  the client's stage also advances to `Invoice Sent` automatically (unless it's already further along).
+- **Payment webhook — rides the existing endpoint** — rather than have Cristopher configure a second Stripe webhook,
+  `invoice.paid` handling was added directly to the existing `stripeWebhook` in `billing.ts` (`/api/billing/webhook`,
+  already configured for subscription billing). It looks up `client_invoices` by `stripe_invoice_id` first — if
+  found, it's a CRM invoice: flip that row to `paid`, stamp `paid_at`, and move the client's stage to `Active`, the
+  "red switch to green" moment. If not found, it falls through to the existing subscription-sync logic untouched.
+  **Action needed:** make sure the `invoice.paid` event type is enabled on that existing webhook endpoint in the
+  Stripe dashboard (Developers → Webhooks) — it may already be if the endpoint is subscribed to all events.
+- **CRM board** (`ClientCRMScreen.tsx`) — filterable by stage (`New Lead → Discovery Complete → Analysis Sent →
+  Invoice Sent → Active (Paid) → Retainer`), each card showing business name, stage, next payment due, the
+  reveal-schedule state, and last activity. Clicking a card opens `ClientDetailView.tsx` — audit answers, analysis,
+  pricing, and invoices in one place, plus a stage dropdown for manual overrides.
+
 

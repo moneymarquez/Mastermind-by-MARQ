@@ -174,6 +174,39 @@ export async function stripeWebhook(request: Request, env: BillingEnv): Promise<
   const event = JSON.parse(rawBody) as { type: string; data: { object: Record<string, unknown> } };
   const obj = event.data.object;
 
+  // Client CRM invoices (worker/handlers/client-crm.ts's createClientInvoice)
+  // ride this same webhook endpoint rather than a second one Cristopher
+  // would have to configure separately — same Stripe account, just a
+  // different kind of Invoice object (collection_method: send_invoice,
+  // not tied to a subscription). invoice.paid is the "red switch to
+  // green" moment: flip that invoice row to paid and move the client to
+  // Active. Checked by looking up stripe_invoice_id in client_invoices
+  // first, since a subscription invoice being paid also fires
+  // invoice.paid and must NOT fall through to CRM handling.
+  if (event.type === 'invoice.paid') {
+    const invoiceId = obj.id as string | undefined;
+    if (invoiceId) {
+      const lookupRes = await fetch(
+        `${env.VITE_SUPABASE_URL}/rest/v1/client_invoices?stripe_invoice_id=eq.${invoiceId}&select=id,client_id`,
+        { headers: supabaseHeaders(env) },
+      );
+      const [crmInvoice] = (await lookupRes.json()) as { id: string; client_id: string }[];
+      if (crmInvoice) {
+        await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/client_invoices?id=eq.${crmInvoice.id}`, {
+          method: 'PATCH',
+          headers: supabaseHeaders(env),
+          body: JSON.stringify({ status: 'paid', paid_at: new Date().toISOString(), updated_at: new Date().toISOString() }),
+        });
+        await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/crm_clients?id=eq.${crmInvoice.client_id}`, {
+          method: 'PATCH',
+          headers: supabaseHeaders(env),
+          body: JSON.stringify({ stage: 'active', last_activity_at: new Date().toISOString() }),
+        });
+        return new Response('ok', { status: 200 });
+      }
+    }
+  }
+
   let sub: StripeSubscriptionObject | null = null;
   if (event.type.startsWith('customer.subscription.')) {
     sub = obj as unknown as StripeSubscriptionObject;

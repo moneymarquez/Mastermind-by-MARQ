@@ -639,3 +639,86 @@ export interface BrokerKeyStatus {
   connected: boolean;
   apiKeyIdMasked: string | null;
 }
+
+// ── Client CRM (Client Audit, Analysis & Invoicing System) ────────────────
+
+export type ClientStage = 'new_lead' | 'discovery_complete' | 'analysis_sent' | 'invoice_sent' | 'active' | 'retainer';
+
+export interface CrmClient {
+  id: string;
+  business_name: string;
+  contact_name: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  stage: ClientStage;
+  reveal_full_schedule: boolean;
+  source: 'internal' | 'public';
+  notes: string | null;
+  last_activity_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AuditQuestion {
+  id: string;
+  category: string;
+  key: string;
+  prompt: string;
+  helper_text: string | null;
+  sort_order: number;
+  active: boolean;
+  created_at: string;
+}
+
+export interface ClientAudit {
+  id: string;
+  client_id: string;
+  answers: Record<string, string>;
+  status: QuestionnaireStatus;
+  analysis_text: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type PricingCadence = 'one_time' | 'monthly';
+
+export interface PricingTemplateItem {
+  id: string;
+  label: string;
+  amount: number;
+  cadence: PricingCadence;
+  repeat_count: number;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface ClientPricingItem {
+  id: string;
+  client_id: string;
+  label: string;
+  amount: number;
+  cadence: PricingCadence;
+  repeat_count: number;
+  sort_order: number;
+  created_at: string;
+}
+
+export type ClientInvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'void';
+
+export interface ClientInvoice {
+  id: string;
+  client_id: string;
+  pricing_item_id: string | null;
+  sequence_index: number;
+  description: string;
+  amount: number;
+  due_date: string | null;
+  status: ClientInvoiceStatus;
+  stripe_customer_id: string | null;
+  stripe_invoice_id: string | null;
+  stripe_invoice_url: string | null;
+  created_at: string;
+  updated_at: string;
+  sent_at: string | null;
+  paid_at: string | null;
+}

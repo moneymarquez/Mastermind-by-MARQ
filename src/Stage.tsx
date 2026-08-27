@@ -21,6 +21,7 @@ import SupportInboxScreen from './components/screens/SupportInboxScreen';
 import LegalScreen from './components/screens/LegalScreen';
 import ScalingPlannerScreen from './components/screens/ScalingPlannerScreen';
 import BusinessAuditsScreen from './components/screens/BusinessAuditsScreen';
+import ClientCRMScreen from './components/screens/ClientCRMScreen';
 import IdeaMakerScreen from './components/screens/IdeaMakerScreen';
 import BrandLabScreen from './components/screens/BrandLabScreen';
 import ScheduleScreen from './components/screens/ScheduleScreen';
@@ -52,7 +53,7 @@ import type { Theme } from './data/useTheme';
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
-  'scaling-start', 'delivery', 'support-inbox', 'legal', 'scaling-planner', 'audits', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
+  'scaling-start', 'delivery', 'support-inbox', 'legal', 'scaling-planner', 'audits', 'client-crm', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings',
   'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules',
 ];
@@ -241,6 +242,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'scaling-planner' && (
           <ScalingPlannerScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'client-crm' && (
+          <ClientCRMScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {state.screen === 'audits' && (
