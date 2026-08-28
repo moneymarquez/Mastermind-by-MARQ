@@ -21,6 +21,7 @@ export interface ModuleAccess {
   enabledKeys: Set<string>;
   canAccess: (moduleKey: string) => boolean;
   saveModuleSelections: (keys: string[]) => Promise<void>;
+  refresh: () => Promise<void>;
 }
 
 /**
@@ -85,5 +86,5 @@ export function useModuleAccess(userId: string, isOwner: boolean): ModuleAccess 
     await load();
   };
 
-  return { loading, isOwner, hasOnboarded, enabledKeys, canAccess, saveModuleSelections };
+  return { loading, isOwner, hasOnboarded, enabledKeys, canAccess, saveModuleSelections, refresh: load };
 }

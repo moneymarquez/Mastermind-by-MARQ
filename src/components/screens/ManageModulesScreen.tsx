@@ -19,6 +19,14 @@ interface CompedUser {
   created_at: string;
 }
 
+interface CompCode {
+  code: string;
+  note: string | null;
+  redeemed_by_email: string | null;
+  redeemed_at: string | null;
+  created_at: string;
+}
+
 const inputStyle: CSSProperties = {
   background: 'var(--surface-4)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
   padding: '10px 12px', color: 'var(--text)', fontSize: 'var(--text-body)', outline: 'none',
@@ -38,6 +46,12 @@ function CompedUsersAdmin() {
   const [users, setUsers] = useState<CompedUser[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [codeNote, setCodeNote] = useState('');
+  const [codes, setCodes] = useState<CompCode[]>([]);
+  const [codeBusy, setCodeBusy] = useState(false);
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     const { data, error: err } = await supabase.rpc('list_comped_users');
@@ -45,9 +59,45 @@ function CompedUsersAdmin() {
     setLoading(false);
   }, []);
 
+  const loadCodes = useCallback(async () => {
+    const { data, error: err } = await supabase.rpc('list_comp_codes');
+    if (!err) setCodes((data ?? []) as CompCode[]);
+  }, []);
+
   useEffect(() => {
     load();
-  }, [load]);
+    loadCodes();
+  }, [load, loadCodes]);
+
+  const generateCode = async () => {
+    setCodeBusy(true);
+    setCodeError(null);
+    const { error: err } = await supabase.rpc('generate_comp_code', { target_note: codeNote.trim() || null });
+    setCodeBusy(false);
+    if (err) {
+      setCodeError(err.message);
+      return;
+    }
+    setCodeNote('');
+    await loadCodes();
+  };
+
+  const cancelCode = async (code: string) => {
+    setCodeBusy(true);
+    await supabase.rpc('cancel_comp_code', { target_code: code });
+    setCodeBusy(false);
+    await loadCodes();
+  };
+
+  const copyCode = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedCode(code);
+      setTimeout(() => setCopiedCode((c) => (c === code ? null : c)), 1500);
+    } catch {
+      // Clipboard access can be blocked — the code is still shown on screen either way.
+    }
+  };
 
   const grant = async () => {
     if (!email.trim()) return;
@@ -116,6 +166,47 @@ function CompedUsersAdmin() {
       )}
       {!loading && users.length === 0 && (
         <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', marginTop: 16 }}>Nobody's comped in right now.</div>
+      )}
+
+      <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)', marginTop: 36 }}>Or generate a code</div>
+      <p style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', lineHeight: 1.6, marginTop: 6 }}>
+        Don't know their email yet, or just want to text them something short? Generate a code and send it to them —
+        they type it in on their end (top-right of the first onboarding screen after they sign up) and it grants the
+        same free access. Single-use, no expiration.
+      </p>
+      <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+        <input style={{ ...inputStyle, flex: '1 1 220px' }} placeholder="Note (optional, e.g. a name)" value={codeNote} onChange={(e) => setCodeNote(e.target.value)} />
+        <button onClick={generateCode} disabled={codeBusy} className="ap-btn ap-btn-primary" style={{ opacity: codeBusy ? 0.6 : 1 }}>
+          Generate a code
+        </button>
+      </div>
+      {codeError && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginTop: 8 }}>{codeError}</div>}
+
+      {codes.length > 0 && (
+        <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden' }}>
+          {codes.map((c) => (
+            <div key={c.code} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 18px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)' }}>
+              <div
+                onClick={() => copyCode(c.code)}
+                style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-body)', color: 'var(--text-quaternary)', cursor: 'pointer', letterSpacing: '0.02em' }}
+                title="Click to copy"
+              >
+                {c.code}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {copiedCode === c.code && <span style={{ fontSize: 'var(--text-caption)', color: 'var(--success)' }}>Copied</span>}
+                {copiedCode !== c.code && c.note && <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>{c.note}</span>}
+              </div>
+              {c.redeemed_by_email ? (
+                <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }}>Redeemed by {c.redeemed_by_email}</span>
+              ) : (
+                <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: codeBusy ? 'default' : 'pointer' }} onClick={() => !codeBusy && cancelCode(c.code)}>
+                  Cancel
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

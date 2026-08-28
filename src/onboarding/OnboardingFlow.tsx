@@ -16,6 +16,66 @@ interface Props {
    *  this point is draft state in onboarding_progress, not the real
    *  user_modules rows. */
   onComplete: (selectedKeys: string[]) => Promise<void>;
+  /** A comped invite code (schema_044_comp_codes.sql) — redeeming one
+   *  skips the rest of this flow entirely, same as onComplete does, just
+   *  via a code instead of picking modules and hitting a paywall. */
+  onRedeemCode: (code: string) => Promise<void>;
+}
+
+function InviteCodeEntry({ onRedeem }: { onRedeem: (code: string) => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async () => {
+    if (!code.trim()) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await onRedeem(code.trim());
+      // On success this component unmounts (hasOnboarded flips in
+      // AuthedGate) — no need to reset state here.
+    } catch (e) {
+      setBusy(false);
+      setError(e instanceof Error ? e.message : "That code didn't work.");
+    }
+  };
+
+  return (
+    <div style={{ position: 'fixed', top: 14, right: 20, zIndex: 60, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+      {!open ? (
+        <span
+          style={{ fontSize: 13, color: 'var(--text-tertiary)', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}
+          onClick={() => setOpen(true)}
+        >
+          Have an invite code?
+        </span>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: 10 }}>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input
+              autoFocus
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
+              placeholder="XXXX-XXXX"
+              style={{ width: 120, background: 'var(--surface-4)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '7px 9px', color: 'var(--text)', fontSize: 13.5, outline: 'none' }}
+            />
+            <button
+              onClick={submit}
+              disabled={busy || !code.trim()}
+              className="ap-btn ap-btn-primary"
+              style={{ padding: '7px 12px', fontSize: 13, opacity: busy || !code.trim() ? 0.6 : 1 }}
+            >
+              {busy ? '…' : 'Redeem'}
+            </button>
+          </div>
+          {error && <div style={{ fontSize: 12, color: 'var(--danger)' }}>{error}</div>}
+        </div>
+      )}
+    </div>
+  );
 }
 
 const STEPS: OnboardingStep[] = ['questions', 'ai-name', 'modules', 'demo'];
@@ -33,7 +93,7 @@ function ProgressBar({ step }: { step: OnboardingStep }) {
   );
 }
 
-export default function OnboardingFlow({ onComplete }: Props) {
+export default function OnboardingFlow({ onComplete, onRedeemCode }: Props) {
   const { step, answers, draftModuleKeys, loading, save } = useOnboardingProgress();
   const { assistantName, saveAssistantName } = useNovaPreferences();
   const [finishing, setFinishing] = useState(false);
@@ -72,6 +132,7 @@ export default function OnboardingFlow({ onComplete }: Props) {
   return (
     <>
       <ProgressBar step={step} />
+      <InviteCodeEntry onRedeem={onRedeemCode} />
       {step === 'questions' && <CurationQuestions initial={answers} onComplete={submitQuestions} />}
       {step === 'ai-name' && <AiNamingStep initialName={assistantName} onComplete={submitName} />}
       {step === 'modules' && <OnboardingScreen onComplete={submitModules} />}

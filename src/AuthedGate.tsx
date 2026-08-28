@@ -6,6 +6,7 @@ import { useTheme } from './data/useTheme';
 import { isOwnerIdentity } from './auth/ownerIdentity';
 import OnboardingFlow from './onboarding/OnboardingFlow';
 import BillingGateScreen from './billing/BillingGateScreen';
+import { supabase } from './lib/supabase';
 
 interface Props {
   userId: string;
@@ -46,6 +47,14 @@ export default function AuthedGate({ userId, userEmail, onSignOut }: Props) {
         <OnboardingFlow
           onComplete={async (keys) => {
             await moduleAccess.saveModuleSelections(keys);
+          }}
+          onRedeemCode={async (code) => {
+            const { error } = await supabase.rpc('redeem_comp_code', { input_code: code });
+            if (error) throw error;
+            // Flips hasOnboarded + comped in one shot — both hooks re-fetch
+            // is_comped(), and this whole gate re-renders straight to Stage
+            // (see schema_044_comp_codes.sql / useModuleAccess.ts).
+            await Promise.all([moduleAccess.refresh(), subscription.refresh()]);
           }}
         />
       );
