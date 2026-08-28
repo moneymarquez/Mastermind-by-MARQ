@@ -155,6 +155,9 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
         .ap-pricing-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; max-width: 720px; margin: 0 auto; }
         .ap-compare-row { display: grid; grid-template-columns: 1fr 140px; align-items: center; }
         .ap-faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; }
+        .ap-hero-ctas { display: flex; gap: 10px; flex-wrap: wrap; }
+        .only-mobile { display: none; }
+        .only-desktop { display: block; }
         @media (max-width: 900px) {
           .ap-hero-grid { grid-template-columns: 1fr; gap: 32px; }
           .ap-h1 { font-size: 38px; }
@@ -167,6 +170,10 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
           .ap-pricing-cards { grid-template-columns: 1fr; }
           .ap-compare-row { grid-template-columns: 1fr auto; }
           .ap-faq-grid { grid-template-columns: 1fr; gap: 20px; }
+          .ap-hero-ctas { flex-direction: column; }
+          .ap-hero-ctas .ap-btn { width: 100%; justify-content: center; }
+          .only-desktop { display: none; }
+          .only-mobile { display: block; }
         }
       `}</style>
 
@@ -219,11 +226,11 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
                 Goals, health, money, and the business — tracked in one record, so Nova can reason across all of it
                 instead of each part sitting in its own app knowing nothing about the others.
               </p>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <button className="ap-btn ap-btn-primary" style={{ padding: '15px 26px', fontSize: 15.5, display: 'flex', alignItems: 'center', gap: 8 }} onClick={() => { switchMode('signup'); scrollToLogin(); }}>
+              <div className="ap-hero-ctas">
+                <button className="ap-btn ap-btn-primary" style={{ padding: '15px 26px', fontSize: 15.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} onClick={() => { switchMode('signup'); scrollToLogin(); }}>
                   Create your account<Icon name="arrow-right" size={18} />
                 </button>
-                <a className="ap-btn ap-btn-secondary" href="#modules" style={{ padding: '15px 26px', fontSize: 15.5 }}>See what's inside</a>
+                <a className="ap-btn ap-btn-secondary" href="#modules" style={{ padding: '15px 26px', fontSize: 15.5, textAlign: 'center' }}>See what's inside</a>
               </div>
               <div style={{ fontSize: 13.5, color: 'var(--text-tertiary)' }}>
                 {LIVE_PLAN.price}{LIVE_PLAN.cadence} · cancel anytime, self-serve
@@ -274,11 +281,13 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
             </div>
           </div>
 
-          {/* Dashboard preview — browser-chrome mockup of the real Overview
-              screen with real module names, kept at the same illustrative
-              register as the reference's own preview: an example, not a
-              claim about the viewer's own live data. */}
-          <div style={{ position: 'relative', marginTop: 44, borderRadius: '20px 20px 0 0', border: '1px solid var(--border)', borderBottom: 'none', background: 'var(--surface)', boxShadow: '0 30px 70px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
+          {/* Dashboard preview — a browser-chrome mockup of the real
+              Overview screen on desktop; the reference uses a completely
+              different, compact "Your morning" card on mobile instead of
+              just shrinking the desktop one, so this does too. Both are
+              the same illustrative register (an example, not a claim about
+              the viewer's own live data), just different components. */}
+          <div className="only-desktop" style={{ position: 'relative', marginTop: 44, borderRadius: '20px 20px 0 0', border: '1px solid var(--border)', borderBottom: 'none', background: 'var(--surface)', boxShadow: '0 30px 70px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 18px', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
               <div style={{ display: 'flex', gap: 6 }}>
                 <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--border-2)' }} />
@@ -344,6 +353,47 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
                   <div style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--text-secondary)' }}>
                     Example: "Sleep ran short last night — dial block moved earlier, food logged after."
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile's own compact preview — a single "Your morning" card
+              (kicker + time, a 2-tile stat row, a Nova insight with its own
+              CTA) instead of a shrunk copy of the desktop browser-chrome
+              mockup, matching the reference's actual mobile artboard. */}
+          <div className="only-mobile" style={{ marginTop: 32, borderRadius: 22, border: '1px solid var(--border)', background: 'var(--surface)', boxShadow: '0 20px 50px rgba(0,0,0,0.18)', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
+              <div style={{ fontSize: 10.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>Your morning</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)' }}>{new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</div>
+            </div>
+            <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 11 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
+                {[
+                  { label: 'Protein', value: '168', sub: '/202g', pct: 83 },
+                  { label: 'Dials', value: '42', sub: '/100', pct: 42 },
+                ].map((t) => (
+                  <div key={t.label} style={{ padding: 13, borderRadius: 14, background: 'var(--surface-3)', display: 'flex', flexDirection: 'column', gap: 7 }}>
+                    <div style={{ fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>{t.label}</div>
+                    <div style={{ fontSize: 21, fontWeight: 600, letterSpacing: '-0.03em' }}>{t.value}<span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{t.sub}</span></div>
+                    <div style={{ height: 4, borderRadius: 4, background: 'var(--surface-4)' }}>
+                      <div style={{ width: `${t.pct}%`, height: '100%', borderRadius: 4, background: 'var(--text)' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding: 15, borderRadius: 16, background: 'var(--accent-soft)', color: 'var(--text)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 9.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--accent)' }}>
+                  <Icon name="sparkle" size={14} />Nova
+                </div>
+                <div style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--text-secondary)' }}>
+                  Example: "Sleep ran short — dial block moved earlier, food logged after."
+                </div>
+                <div
+                  onClick={() => { switchMode('signup'); scrollToLogin(); }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 44, padding: '0 14px', borderRadius: 12, background: 'var(--text)', color: 'var(--bg)', fontSize: 13, cursor: 'pointer' }}
+                >
+                  Try it free<Icon name="arrow-right" size={15} />
                 </div>
               </div>
             </div>
