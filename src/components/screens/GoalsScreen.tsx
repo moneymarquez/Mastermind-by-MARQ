@@ -93,7 +93,7 @@ function PathPicker({ goal, onChoose }: { goal: Goal; onChoose: (path: GoalPath)
   return (
     <div style={{ marginTop: 14 }}>
       {goal.conflict_notes && (
-        <div style={{ padding: '10px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid #B7690C', color: 'var(--warning)', fontSize: 'var(--text-body-sm)', marginBottom: 12, lineHeight: 1.5 }}>
+        <div style={{ padding: '10px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--warning)', color: 'var(--warning)', fontSize: 'var(--text-body-sm)', marginBottom: 12, lineHeight: 1.5 }}>
           ⚠ {goal.conflict_notes}
         </div>
       )}
@@ -243,7 +243,7 @@ function GoalCard({
       {!locked && hasPaths && <PathPicker goal={goal} onChoose={(p) => onCommitPath(goal, p)} />}
 
       {locked && goal.conflict_notes && (
-        <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid #B7690C', color: 'var(--warning)', fontSize: 'var(--text-body-sm)', lineHeight: 1.5 }}>
+        <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--warning)', color: 'var(--warning)', fontSize: 'var(--text-body-sm)', lineHeight: 1.5 }}>
           ⚠ {goal.conflict_notes}
         </div>
       )}

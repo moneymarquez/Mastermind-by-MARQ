@@ -191,7 +191,7 @@ function NewDocumentPanel({ onCreated }: { onCreated: (id: string) => void }) {
 }
 
 const STATUS_LABEL: Record<ClientDocument['status'], string> = { draft: 'Draft', sent: 'Sent', paid: 'Paid' };
-const STATUS_COLOR: Record<ClientDocument['status'], string> = { draft: 'var(--text-tertiary)', sent: 'var(--warning)', paid: '#7fae7f' };
+const STATUS_COLOR: Record<ClientDocument['status'], string> = { draft: 'var(--text-tertiary)', sent: 'var(--warning)', paid: 'var(--success)' };
 
 function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack: () => void; startTab: 'edit' | 'preview' }) {
   const { update, duplicate, remove, setStatus, error } = useClientDocuments();

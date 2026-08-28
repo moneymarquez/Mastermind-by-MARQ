@@ -96,7 +96,7 @@ export default function LegalScreen({ homeHeadStyle, homeSubStyle }: Props) {
           ))}
         </div>
 
-        <div style={{ ...cardStyle, borderColor: '#3a3520' }}>
+        <div style={{ ...cardStyle, borderColor: 'var(--warning)' }}>
           <div style={{ ...heading, color: 'var(--warning)' }}>A note on this page itself</div>
           <div style={body}>
             This page was written in good faith to be clear and honest about how the app works, but it is not a

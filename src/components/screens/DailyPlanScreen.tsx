@@ -65,12 +65,8 @@ export default function DailyPlanScreen({ homeHeadStyle, homeSubStyle }: Props) 
 
           {plan.status === 'draft' && (
             <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-              <div style={{ padding: '10px 24px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer' }} onClick={confirm}>
-                Confirm plan
-              </div>
-              <div style={{ padding: '10px 16px', borderRadius: 'var(--radius-pill)', color: 'var(--text-tertiary)', fontSize: 'var(--text-body)', cursor: 'pointer' }} onClick={skip}>
-                Skip today
-              </div>
+              <button className="ap-btn ap-btn-primary" onClick={confirm}>Confirm plan</button>
+              <button className="ap-btn ap-btn-secondary" onClick={skip}>Skip today</button>
             </div>
           )}
         </div>

@@ -323,7 +323,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
                 </div>
                 <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginBottom: 10 }}>Heading: {pinnedConcept.headingFont} · Body: Inter</div>
                 <div
-                  style={active.steps.paletteTypography?.confirmed ? { ...ghostBtn, borderColor: '#4a7a5a', color: 'var(--success)' } : primaryBtn}
+                  style={active.steps.paletteTypography?.confirmed ? { ...ghostBtn, borderColor: 'var(--success)', color: 'var(--success)' } : primaryBtn}
                   onClick={() => saveStep(active.id, 'paletteTypography', { confirmed: true })}
                 >
                   {active.steps.paletteTypography?.confirmed ? 'Confirmed ✓' : 'Confirm'}
@@ -340,7 +340,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
                 <div style={{ display: 'flex', gap: 8 }}>
                   <div style={ghostBtn} onClick={generateLogoDirection}>Generate with Nova</div>
                   <div
-                    style={active.steps.logoDirection?.confirmed ? { ...ghostBtn, borderColor: '#4a7a5a', color: 'var(--success)' } : primaryBtn}
+                    style={active.steps.logoDirection?.confirmed ? { ...ghostBtn, borderColor: 'var(--success)', color: 'var(--success)' } : primaryBtn}
                     onClick={() => saveStep(active.id, 'logoDirection', { text: logoDraft || active.steps.logoDirection?.text || '', confirmed: true })}
                   >
                     {active.steps.logoDirection?.confirmed ? 'Confirmed ✓' : 'Confirm'}
@@ -358,7 +358,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
                 <div style={{ display: 'flex', gap: 8 }}>
                   <div style={ghostBtn} onClick={generateVoiceMessaging}>Generate with Nova</div>
                   <div
-                    style={active.steps.voiceMessaging?.confirmed ? { ...ghostBtn, borderColor: '#4a7a5a', color: 'var(--success)' } : primaryBtn}
+                    style={active.steps.voiceMessaging?.confirmed ? { ...ghostBtn, borderColor: 'var(--success)', color: 'var(--success)' } : primaryBtn}
                     onClick={() => saveStep(active.id, 'voiceMessaging', { text: voiceDraft || active.steps.voiceMessaging?.text || '', confirmed: true })}
                   >
                     {active.steps.voiceMessaging?.confirmed ? 'Confirmed ✓' : 'Confirm'}
@@ -369,7 +369,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
               <StepCard index={4} title="Asset prep for Website Builder handoff">
                 <textarea style={{ ...inputStyle, minHeight: 120, marginBottom: 10, fontFamily: 'monospace', fontSize: 'var(--text-caption)' }} readOnly value={assetPrepText} />
                 <div
-                  style={active.steps.assetPrep?.confirmed ? { ...ghostBtn, borderColor: '#4a7a5a', color: 'var(--success)' } : primaryBtn}
+                  style={active.steps.assetPrep?.confirmed ? { ...ghostBtn, borderColor: 'var(--success)', color: 'var(--success)' } : primaryBtn}
                   onClick={() => saveStep(active.id, 'assetPrep', { text: assetPrepText, confirmed: true })}
                 >
                   {active.steps.assetPrep?.confirmed ? 'Marked ready ✓' : 'Mark ready for handoff'}

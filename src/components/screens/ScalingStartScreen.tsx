@@ -34,7 +34,7 @@ function StepBadge({ done }: { done: boolean }) {
   return (
     <div style={{
       width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: done ? '#4a7a5a33' : 'var(--border)', border: `1px solid ${done ? '#4a7a5a' : 'var(--border-2)'}`, flexShrink: 0,
+      background: done ? 'color-mix(in srgb, var(--success) 20%, transparent)' : 'var(--border)', border: `1px solid ${done ? 'var(--success)' : 'var(--border-2)'}`, flexShrink: 0,
     }}>
       {done ? <Icon name="check" size={12} color="var(--success)" /> : <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--text-tertiary)' }} />}
     </div>
@@ -224,7 +224,7 @@ export default function ScalingStartScreen({ homeHeadStyle, homeSubStyle, onNavi
           </div>
         </div>
 
-        <div style={{ ...cardStyle, borderColor: '#3a3520' }}>
+        <div style={{ ...cardStyle, borderColor: 'var(--warning)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             <Icon name="sparkle" size={16} color="var(--warning)" />
             <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)' }}>5. Nova — tie it together</div>

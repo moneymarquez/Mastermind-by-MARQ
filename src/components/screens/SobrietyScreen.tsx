@@ -126,12 +126,12 @@ export default function SobrietyScreen({ homeHeadStyle, homeSubStyle, bender }: 
         </div>
 
         {heavy && (
-          <div style={{ marginTop: 14, padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid #B7690C', color: '#B7690C', fontSize: 'var(--text-body-sm)' }}>
+          <div style={{ marginTop: 14, padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--warning)', color: 'var(--warning)', fontSize: 'var(--text-body-sm)' }}>
             Heavy day flagged — multiple substances logged today.
           </div>
         )}
         {bender.activeBender && (
-          <div style={{ marginTop: 14, padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid #B7690C', color: 'var(--warning)', fontSize: 'var(--text-body-sm)' }}>
+          <div style={{ marginTop: 14, padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--warning)', color: 'var(--warning)', fontSize: 'var(--text-body-sm)' }}>
             Bender mode is active — tap the button above to check context or end it.
           </div>
         )}
@@ -192,7 +192,7 @@ export default function SobrietyScreen({ homeHeadStyle, homeSubStyle, bender }: 
         {checkins.slice(0, 14).map((c) => (
           <div key={c.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 18px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)' }}>
             <span style={{ fontSize: 'var(--text-body)', color: 'var(--text-quaternary)' }}>{c.checkin_date}</span>
-            <span style={{ fontSize: 'var(--text-small)', color: c.drank || c.weed || c.nicotine ? '#B7690C' : 'var(--text-secondary)' }}>
+            <span style={{ fontSize: 'var(--text-small)', color: c.drank || c.weed || c.nicotine ? 'var(--warning)' : 'var(--text-secondary)' }}>
               {c.drank || c.weed || c.nicotine
                 ? [c.drank && 'Drank', c.weed && 'Weed', c.nicotine && 'Nicotine'].filter(Boolean).join(', ')
                 : 'Nothing logged'}

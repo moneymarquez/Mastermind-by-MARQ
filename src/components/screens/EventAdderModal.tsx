@@ -47,7 +47,7 @@ const ghostBtn: CSSProperties = {
 };
 const dangerBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 'var(--radius-pill)',
-  border: '1px solid #3a2222', color: 'var(--danger)', fontSize: 'var(--text-body)', cursor: 'pointer',
+  border: '1px solid color-mix(in srgb, var(--danger) 35%, transparent)', color: 'var(--danger)', fontSize: 'var(--text-body)', cursor: 'pointer',
 };
 
 const TYPE_LABEL: Record<EventType, string> = { holiday: 'HOLIDAY', dialing: 'DIALING', scalez: 'SCALEZ', streaming: 'STREAMING' };

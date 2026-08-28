@@ -87,7 +87,7 @@ export default function IdeaMakerScreen({ homeHeadStyle, homeSubStyle }: Props) 
             style={{
               alignSelf: m.from_role === 'user' ? 'flex-end' : 'flex-start',
               background: m.from_role === 'user' ? 'var(--text)' : 'var(--surface)',
-              color: m.from_role === 'user' ? 'var(--bg)' : '#e9e9ed',
+              color: m.from_role === 'user' ? 'var(--bg)' : 'var(--text)',
               border: m.from_role === 'nova' ? '1px solid var(--border)' : 'none',
               padding: '12px 16px', borderRadius: 'var(--radius-xl)', fontSize: 'var(--text-body-lg)', maxWidth: '85%', lineHeight: 1.6, whiteSpace: 'pre-wrap',
             }}

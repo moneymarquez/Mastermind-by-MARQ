@@ -81,7 +81,7 @@ export default function PromptVoiceSettingsScreen({ homeHeadStyle, homeSubStyle 
                 >
                   <div style={{
                     width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
-                    border: `1px solid ${active ? 'var(--text)' : '#3a3d43'}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: `1px solid ${active ? 'var(--text)' : 'var(--text-tertiary)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     {active && <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--text)' }} />}
                   </div>

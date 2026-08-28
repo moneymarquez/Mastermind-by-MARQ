@@ -338,7 +338,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
 
           {/* Service Matcher output — the branch that runs alongside the
               written analysis, flagging what this business actually needs. */}
-          <div style={{ ...cardStyle, marginBottom: 16, borderColor: suggestions.length ? '#3a3520' : 'var(--border)' }}>
+          <div style={{ ...cardStyle, marginBottom: 16, borderColor: suggestions.length ? 'var(--warning)' : 'var(--border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>
                 ✨ Nova's suggested services{suggestions.length ? ` (${suggestions.length})` : ''}

@@ -165,7 +165,7 @@ export default function BudgetingScreen({ homeHeadStyle, homeSubStyle }: Props) 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 24 }}>
         <span style={{ fontSize: 'var(--text-head)', cursor: 'pointer', color: 'var(--text-secondary)' }} onClick={() => setMonthKey(shiftMonthKey(monthKey, -1))}>&larr;</span>
         <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)', minWidth: 140, textAlign: 'center' }}>{monthLabel(monthKey)}</div>
-        <span style={{ fontSize: 'var(--text-head)', cursor: isCurrentMonth ? 'default' : 'pointer', color: isCurrentMonth ? '#33363c' : 'var(--text-secondary)' }} onClick={() => !isCurrentMonth && setMonthKey(shiftMonthKey(monthKey, 1))}>&rarr;</span>
+        <span style={{ fontSize: 'var(--text-head)', cursor: isCurrentMonth ? 'default' : 'pointer', color: isCurrentMonth ? 'var(--border-2)' : 'var(--text-secondary)' }} onClick={() => !isCurrentMonth && setMonthKey(shiftMonthKey(monthKey, 1))}>&rarr;</span>
       </div>
 
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 16 }}>
