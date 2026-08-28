@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { MODULE_KEYS, MODULE_REGISTRY } from '../modules.config';
+import { MODULE_KEYS, MODULE_REGISTRY, SELECTABLE_MODULE_KEYS } from '../modules.config';
 
 // The authoritative enforcement point for "owner-only modules are never
 // accessible to a non-owner" — independent of what onboarding/Manage
@@ -46,7 +46,19 @@ export function useModuleAccess(userId: string, isOwner: boolean): ModuleAccess 
       return;
     }
     setLoading(true);
-    const { data } = await supabase.from('user_modules').select('module_key, enabled');
+    const [{ data }, { data: comped }] = await Promise.all([
+      supabase.from('user_modules').select('module_key, enabled'),
+      supabase.rpc('is_comped'),
+    ]);
+    // A comped (owner-granted, no real subscription) account skips the
+    // module picker entirely — same as an owner minus the owner-only
+    // keys, which canAccess() below still blocks regardless of this set.
+    if (comped) {
+      setHasOnboarded(true);
+      setEnabledKeys(new Set(SELECTABLE_MODULE_KEYS));
+      setLoading(false);
+      return;
+    }
     const rows = data ?? [];
     setHasOnboarded(rows.length > 0);
     setEnabledKeys(new Set(rows.filter((r) => r.enabled).map((r) => r.module_key)));
