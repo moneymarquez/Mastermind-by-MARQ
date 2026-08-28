@@ -3,6 +3,8 @@ import { computeGeometry } from './geometry';
 import { buildNavRows } from './navRows';
 import { SIDEBAR_WIDTH } from './components/Sidebar';
 import { HEADER_HEIGHT } from './components/TopHeader';
+import { MOBILE_HEADER_HEIGHT } from './components/MobileHeader';
+import { TAB_BAR_HEIGHT } from './components/MobileTabBar';
 import type { AppState } from './state';
 
 export function buildViewModel(
@@ -18,15 +20,16 @@ export function buildViewModel(
 
   const navRows = buildNavRows(s.screen, s.settingsExpanded, navigateTo, onSignOut, canAccess);
 
-  // Mobile keeps the old floating logo/hamburger clearance math untouched.
-  // Desktop now has real, in-flow chrome (Sidebar + TopHeader, both fixed
-  // to the stage rather than floating over content) — content is offset
-  // by their actual width/height instead of a hand-tuned magic-number gap.
+  // Both mobile and desktop now have real, in-flow chrome (MobileHeader +
+  // MobileTabBar, or Sidebar + TopHeader) fixed to the stage rather than
+  // floating over content — content is offset by their actual
+  // width/height instead of a hand-tuned magic-number gap tied to the old
+  // floating logo/hamburger/circle.
   const contentStyle: CSSProperties = {
     position: 'absolute', top: 0, left: isMobile ? 0 : SIDEBAR_WIDTH, right: 0, bottom: 0,
     overflowY: 'auto',
     padding: isMobile
-      ? `calc(${circleSize + 64}px + env(safe-area-inset-top)) 20px 140px`
+      ? `calc(${MOBILE_HEADER_HEIGHT + 16}px + env(safe-area-inset-top)) 20px calc(${TAB_BAR_HEIGHT + 24}px + env(safe-area-inset-bottom))`
       : `${HEADER_HEIGHT + 32}px 32px 48px`,
   };
 
@@ -69,5 +72,6 @@ export function buildViewModel(
     stageWidth, stageHeight, circleSize,
     cx, cy,
     sidebarWidth: SIDEBAR_WIDTH, headerHeight: HEADER_HEIGHT,
+    mobileHeaderHeight: MOBILE_HEADER_HEIGHT, tabBarHeight: TAB_BAR_HEIGHT,
   };
 }

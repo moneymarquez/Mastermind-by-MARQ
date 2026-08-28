@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import Logo from './components/Logo';
-import NavDrawer from './components/NavDrawer';
 import Sidebar from './components/Sidebar';
 import TopHeader from './components/TopHeader';
+import MobileHeader from './components/MobileHeader';
+import MobileMenuSheet from './components/MobileMenuSheet';
+import MobileTabBar from './components/MobileTabBar';
 import NovaTrigger from './components/NovaTrigger';
 import NovaPanel from './components/NovaPanel';
 import RemindersBox from './components/RemindersBox';
@@ -146,28 +147,26 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
     <div className="app-shine-bg" style={stageStyle}>
       {isMobile ? (
         <>
-          <Logo isMobile={isMobile} onClick={() => actions.goScreen('home')} />
+          <MobileHeader onOpenMenu={actions.toggleDrawer} />
 
-          <NavDrawer
+          <MobileMenuSheet
             open={state.navDrawerOpen}
             rows={vm.navRows}
-            onToggle={actions.toggleDrawer}
+            ownerName={ownerDisplayName}
+            isOwner={isOwner}
+            theme={theme}
+            onThemeChange={onThemeChange}
             onClose={actions.closeDrawer}
+            onOpenSettings={() => actions.navigateTo('account-settings')}
+            onOpenTour={startTour}
           />
 
-          {!tourActive && (
-            <div
-              title="Take the product tour"
-              onClick={startTour}
-              style={{
-                position: 'absolute', top: 'calc(24px + env(safe-area-inset-top))', right: 72, width: 42, height: 42, borderRadius: '50%',
-                background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', cursor: 'pointer', zIndex: 41, fontSize: 'var(--text-subhead)', fontWeight: 700, color: 'var(--text-secondary)',
-              }}
-            >
-              ?
-            </div>
-          )}
+          <MobileTabBar
+            screen={state.screen}
+            novaOpen={state.novaOpen}
+            onNavigate={actions.navigateTo}
+            onToggleNova={state.novaOpen ? actions.closeNova : actions.openNova}
+          />
         </>
       ) : (
         <>
@@ -186,25 +185,21 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             onOpenTour={startTour}
             onOpenNotifications={() => actions.navigateTo('notification-settings')}
           />
-        </>
-      )}
 
-      {/* Hidden on mobile while Nova's open — the bottom sheet has its own
-          close button, and leaving this visible put a floating "X" wherever
-          circlePos happened to sit (e.g. under the hamburger) with no visual
-          connection to the sheet at the bottom of the screen. Desktop keeps
-          it, since desktop's panel is anchored near the trigger itself. */}
-      {!(isMobile && state.novaOpen) && (
-        <NovaTrigger
-          cx={vm.cx}
-          cy={vm.cy}
-          circleSize={vm.circleSize}
-          dragging={state.dragging}
-          novaOpen={state.novaOpen}
-          onPointerDown={actions.onCirclePointerDown}
-          onPointerMove={actions.onCirclePointerMove}
-          onPointerUp={actions.onCirclePointerUp}
-        />
+          {/* The floating draggable Nova trigger is desktop-only now —
+              mobile's entry point is the tab bar's centre FAB, matching the
+              reference's "bottom bar with Nova as the centre action". */}
+          <NovaTrigger
+            cx={vm.cx}
+            cy={vm.cy}
+            circleSize={vm.circleSize}
+            dragging={state.dragging}
+            novaOpen={state.novaOpen}
+            onPointerDown={actions.onCirclePointerDown}
+            onPointerMove={actions.onCirclePointerMove}
+            onPointerUp={actions.onCirclePointerUp}
+          />
+        </>
       )}
 
       <div id="tour-content-panel" style={vm.contentStyle}>
@@ -397,7 +392,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         />
       )}
 
-      <RemindersBox ref={remindersRef} isMobile={isMobile} />
+      <RemindersBox ref={remindersRef} isMobile={isMobile} bottomOffset={isMobile ? vm.tabBarHeight + 20 : 20} />
 
       <ProductTour
         active={tourActive}

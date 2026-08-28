@@ -5,6 +5,9 @@ import { dateStr } from '../data/time';
 
 interface Props {
   isMobile: boolean;
+  /** Clears the fixed mobile tab bar (MobileTabBar.tsx) on mobile; 20 (the
+   *  plain corner margin) everywhere else, including desktop. */
+  bottomOffset?: number;
 }
 
 function dueLabel(dueDate: string): string {
@@ -17,7 +20,7 @@ function dueLabel(dueDate: string): string {
   return `due ${new Date(`${dueDate}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
 }
 
-const RemindersBox = forwardRef<HTMLDivElement, Props>(function RemindersBox({ isMobile }, ref) {
+const RemindersBox = forwardRef<HTMLDivElement, Props>(function RemindersBox({ isMobile, bottomOffset = 20 }, ref) {
   const { reminders, loading } = useReminders();
   const visible = reminders.slice(0, 4);
 
@@ -25,7 +28,7 @@ const RemindersBox = forwardRef<HTMLDivElement, Props>(function RemindersBox({ i
     <div
       ref={ref}
       style={{
-        position: 'absolute', right: 20, bottom: 20, width: isMobile ? 180 : 210,
+        position: 'absolute', right: 20, bottom: bottomOffset, width: isMobile ? 180 : 210,
         background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '14px 16px', zIndex: 20,
       }}
     >
