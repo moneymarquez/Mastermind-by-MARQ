@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import type { SignUpResult } from './useAuth';
-import { LIVE_PLAN } from '../billing/plans';
+import { PLANS, LIVE_PLAN } from '../billing/plans';
 import { MODULE_REGISTRY } from '../modules.config';
 import Icon from '../Icon';
 
@@ -41,6 +41,13 @@ const SHOWCASE_KEYS = ['daily-plan', 'macros', 'fitness', 'budgeting', 'goals', 
 const showcaseModules = SHOWCASE_KEYS
   .map((k) => MODULE_REGISTRY.find((m) => m.key === k))
   .filter((m): m is NonNullable<typeof m> => !!m);
+
+// Every module a paying (non-owner) signup can actually turn on — the
+// Pricing section's "what's included" list uses this, not the full
+// registry, since the ownerOnly modules (Client CRM, LeadFlow, Marketing,
+// etc.) aren't part of what a customer is buying.
+const includedModules = MODULE_REGISTRY.filter((m) => !m.ownerOnly);
+const comingSoonPlan = PLANS.find((p) => !p.live) ?? null;
 
 /** The landing page, rebuilt against the exact "Masterminds Aperture"
  *  design-canvas markup (uploaded as Masterminds_Aperture__Complete.html) —
@@ -143,6 +150,11 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
         .ap-module-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         .ap-preview-sidebar { display: none; }
         @media (min-width: 760px) { .ap-preview-sidebar { display: flex; } }
+        .ap-preview-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .ap-nova-learn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+        .ap-pricing-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; max-width: 720px; margin: 0 auto; }
+        .ap-compare-row { display: grid; grid-template-columns: 1fr 140px; align-items: center; }
+        .ap-faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; }
         @media (max-width: 900px) {
           .ap-hero-grid { grid-template-columns: 1fr; gap: 32px; }
           .ap-h1 { font-size: 38px; }
@@ -150,6 +162,11 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
           .ap-navlinks { display: none; }
           .ap-module-grid { grid-template-columns: 1fr; }
           .ap-replaces-row { flex-direction: column; align-items: flex-start !important; gap: 20px !important; }
+          .ap-preview-kpis { grid-template-columns: repeat(2, 1fr); }
+          .ap-nova-learn-grid { grid-template-columns: 1fr; gap: 28px; }
+          .ap-pricing-cards { grid-template-columns: 1fr; }
+          .ap-compare-row { grid-template-columns: 1fr auto; }
+          .ap-faq-grid { grid-template-columns: 1fr; gap: 20px; }
         }
       `}</style>
 
@@ -302,7 +319,7 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
                     <span style={{ padding: '6px 12px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border)', color: 'var(--text-tertiary)' }}>Week</span>
                   </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                <div className="ap-preview-kpis">
                   {[
                     { label: 'Protein', value: '168', sub: '/202g', pct: 83 },
                     { label: 'Dials', value: '42', sub: '/100', pct: 42 },
@@ -377,8 +394,108 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
 
         <hr className="ap-hr" style={{ margin: '20px 0 0' }} />
 
+        {/* Pricing — the reference's own Pricing artboard is a 3-tier
+            comparison (Operator/Mastermind/Table) with a line-by-line
+            fake-vendor cost table and a 14-day trial. None of that maps
+            onto this product: there's one live tier, no free trial (you're
+            charged at signup, same as the rest of this file's copy has
+            said from the start), and no team/multi-seat plan. Same layout
+            language (kicker, big headline, card grid, line-item table,
+            FAQ) with only the two tiers that are real — the live plan and
+            the still-undecided "coming soon" slot from billing/plans.ts —
+            and a real full module list standing in for the fabricated
+            cost-comparison table. */}
+        <section id="pricing" style={{ padding: '72px 0', display: 'flex', flexDirection: 'column', gap: 48 }}>
+          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center' }}>
+            <div className="ap-card-kicker">Pricing</div>
+            <h2 className="ap-h2" style={{ maxWidth: 720 }}>One plan for the whole system, not eleven bills for pieces of it.</h2>
+            <p style={{ fontSize: 17, lineHeight: 1.6, color: 'var(--text-secondary)', maxWidth: 560, margin: 0 }}>
+              Every module includes Nova. No per-seat pricing, no usage meter — turn on what you need from Settings any time.
+            </p>
+          </div>
+
+          <div className="ap-pricing-cards">
+            <div style={{ position: 'relative', padding: 30, borderRadius: 22, background: 'var(--text)', color: 'var(--bg)', display: 'flex', flexDirection: 'column', gap: 20, boxShadow: '0 20px 50px rgba(0,0,0,0.2)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                <div style={{ fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase', opacity: 0.66 }}>{LIVE_PLAN.name}</div>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6 }}>
+                  <div style={{ fontSize: 48, fontWeight: 600, letterSpacing: '-0.05em', lineHeight: 1 }}>{LIVE_PLAN.price}</div>
+                  <div style={{ fontSize: 15, opacity: 0.66, paddingBottom: 6 }}>{LIVE_PLAN.cadence}</div>
+                </div>
+                <div style={{ fontSize: 14, lineHeight: 1.55, opacity: 0.75 }}>{LIVE_PLAN.tagline}</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14 }}>
+                {LIVE_PLAN.includes.map((line) => (
+                  <div key={line} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    <Icon name="check" size={16} style={{ marginTop: 2, opacity: 0.7 }} />{line}
+                  </div>
+                ))}
+              </div>
+              <div
+                onClick={() => { switchMode('signup'); scrollToLogin(); }}
+                style={{ marginTop: 'auto', padding: 15, borderRadius: 12, background: 'var(--bg)', color: 'var(--text)', textAlign: 'center', fontSize: 14.5, fontWeight: 600, cursor: 'pointer' }}
+              >
+                Create your account
+              </div>
+            </div>
+
+            {comingSoonPlan && (
+              <div style={{ padding: 30, borderRadius: 22, border: '1px solid var(--border)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                  <div style={{ fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>{comingSoonPlan.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6 }}>
+                    <div style={{ fontSize: 48, fontWeight: 600, letterSpacing: '-0.05em', lineHeight: 1, color: 'var(--text-tertiary)' }}>{comingSoonPlan.price}</div>
+                    <div style={{ fontSize: 15, color: 'var(--text-tertiary)', paddingBottom: 6 }}>{comingSoonPlan.cadence}</div>
+                  </div>
+                  <div style={{ fontSize: 14, lineHeight: 1.55, color: 'var(--text-secondary)' }}>{comingSoonPlan.tagline}</div>
+                </div>
+                <div style={{ marginTop: 'auto', padding: 15, borderRadius: 12, border: '1px solid var(--border-2)', textAlign: 'center', fontSize: 14.5, color: 'var(--text-tertiary)' }}>
+                  Not open yet
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Real module list standing in for the reference's fabricated
+              vendor-cost table — same line-item layout, honest content. */}
+          <div style={{ maxWidth: 900, margin: '0 auto', width: '100%' }}>
+            <div style={{ fontSize: 12, letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 16, textAlign: 'center' }}>Everything included</div>
+            <div style={{ borderRadius: 16, border: '1px solid var(--border)', overflow: 'hidden' }}>
+              {includedModules.map((m, i) => (
+                <div key={m.key} className="ap-compare-row" style={{ padding: '14px 20px', borderBottom: i === includedModules.length - 1 ? 'none' : '1px solid var(--border)', background: i % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <Icon name={m.icon} size={17} color="var(--text-tertiary)" />
+                    <span style={{ fontSize: 14, fontWeight: 500 }}>{m.label}</span>
+                  </div>
+                  <div style={{ textAlign: 'right', fontSize: 13, color: 'var(--text-secondary)' }}>Included</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center' }}>
+            <div className="ap-card-kicker">Straight answers</div>
+            <h3 className="ap-h2" style={{ fontSize: 30, maxWidth: 600 }}>The things people ask before switching.</h3>
+          </div>
+          <div className="ap-faq-grid" style={{ maxWidth: 900, margin: '0 auto', width: '100%' }}>
+            {[
+              { q: 'Is there a free trial?', a: `No — ${LIVE_PLAN.price}${LIVE_PLAN.cadence} starts at signup. No card-then-forget trial period to track.` },
+              { q: 'Can I turn modules on and off?', a: 'Yes, any time from Settings → Manage modules. Nova only reads what you\'ve turned on.' },
+              { q: 'What does Nova do with my data?', a: 'Reasons across your own record to answer questions and surface patterns — nothing more, and nothing shared outside your account.' },
+              { q: 'If I cancel?', a: 'Self-serve from Settings, no call required.' },
+            ].map((f) => (
+              <div key={f.q} style={{ padding: '18px 0', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 7 }}>
+                <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-0.01em' }}>{f.q}</div>
+                <div style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--text-secondary)' }}>{f.a}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <hr className="ap-hr" style={{ margin: '20px 0 0' }} />
+
         {/* How Nova learns you */}
-        <section style={{ padding: '72px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 56, alignItems: 'center' }}>
+        <section className="ap-nova-learn-grid" style={{ padding: '72px 0' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             <div className="ap-card-kicker">How Nova learns you</div>
             <h2 className="ap-h2">Separate apps can't see each other. Yours share one record.</h2>
@@ -413,7 +530,7 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
         <hr className="ap-hr" />
 
         {/* Closing CTA */}
-        <section id="pricing" style={{ position: 'relative', padding: '96px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, textAlign: 'center', overflow: 'hidden' }}>
+        <section style={{ position: 'relative', padding: '96px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, textAlign: 'center', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', left: '50%', bottom: '-60%', width: 700, height: 700, transform: 'translateX(-50%)', background: 'radial-gradient(closest-side, color-mix(in srgb, var(--accent) 18%, transparent), transparent 70%)', animation: 'apBloom 30s ease-in-out infinite', pointerEvents: 'none' }} />
           <h2 style={{ position: 'relative', fontSize: 42, fontWeight: 600, letterSpacing: '-0.04em', lineHeight: 1.05, maxWidth: 760, margin: 0, textWrap: 'balance' as React.CSSProperties['textWrap'] }}>
             One login for everything you're responsible for.
