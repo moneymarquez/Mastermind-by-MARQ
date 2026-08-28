@@ -67,6 +67,7 @@ export default function AuthedGate({ userId, userEmail, onSignOut }: Props) {
         canAccess={isOwner ? () => true : moduleAccess.canAccess}
         onSignOut={onSignOut}
         currentUserId={userId}
+        userEmail={userEmail}
         isOwner={isOwner}
         theme={theme.theme}
         onThemeChange={theme.save}

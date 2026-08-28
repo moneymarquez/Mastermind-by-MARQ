@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react';
 import { computeGeometry } from './geometry';
 import { buildNavRows } from './navRows';
+import { SIDEBAR_WIDTH } from './components/Sidebar';
+import { HEADER_HEIGHT } from './components/TopHeader';
 import type { AppState } from './state';
 
 export function buildViewModel(
@@ -16,19 +18,16 @@ export function buildViewModel(
 
   const navRows = buildNavRows(s.screen, s.settingsExpanded, navigateTo, onSignOut, canAccess);
 
-  // Top padding clears the logo/hamburger row (which itself sits below
-  // env(safe-area-inset-top)) with real breathing room underneath, rather
-  // than the two nearly touching. Desktop's logo (two stacked lines, ~24px
-  // top offset) bottoms out well under 100px even at its largest — 152px
-  // keeps a deliberately generous gap above every page's own title so the
-  // two can never visually collide, on any page, at any standard desktop
-  // width.
+  // Mobile keeps the old floating logo/hamburger clearance math untouched.
+  // Desktop now has real, in-flow chrome (Sidebar + TopHeader, both fixed
+  // to the stage rather than floating over content) — content is offset
+  // by their actual width/height instead of a hand-tuned magic-number gap.
   const contentStyle: CSSProperties = {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    position: 'absolute', top: 0, left: isMobile ? 0 : SIDEBAR_WIDTH, right: 0, bottom: 0,
     overflowY: 'auto',
     padding: isMobile
       ? `calc(${circleSize + 64}px + env(safe-area-inset-top)) 20px 140px`
-      : `calc(152px + env(safe-area-inset-top)) 40px 60px ${circleSize + 64}px`,
+      : `${HEADER_HEIGHT + 32}px 32px 48px`,
   };
 
   const homeHeadStyle: CSSProperties = { fontSize: isMobile ? 24 : 32, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em' };
@@ -69,5 +68,6 @@ export function buildViewModel(
     statCards, statGridStyle,
     stageWidth, stageHeight, circleSize,
     cx, cy,
+    sidebarWidth: SIDEBAR_WIDTH, headerHeight: HEADER_HEIGHT,
   };
 }

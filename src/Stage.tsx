@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import Logo from './components/Logo';
 import NavDrawer from './components/NavDrawer';
+import Sidebar from './components/Sidebar';
+import TopHeader from './components/TopHeader';
 import NovaTrigger from './components/NovaTrigger';
 import NovaPanel from './components/NovaPanel';
 import RemindersBox from './components/RemindersBox';
@@ -47,7 +49,7 @@ import ManageModulesScreen from './components/screens/ManageModulesScreen';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
 import ProductTour, { filterTourSteps } from './components/ProductTour';
 import { buildViewModel } from './viewModel';
-import { moduleKeyForRoute } from './modules.config';
+import { moduleKeyForRoute, MODULE_REGISTRY } from './modules.config';
 import type { AppState, MastermindActions } from './state';
 import type { Theme } from './data/useTheme';
 
@@ -65,15 +67,23 @@ interface Props {
   canAccess: (moduleKey: string) => boolean;
   onSignOut: () => void;
   currentUserId: string;
+  userEmail: string | null | undefined;
   isOwner: boolean;
   theme: Theme;
   onThemeChange: (next: Theme) => void;
 }
 
-export default function Stage({ state, actions, assistantName, canAccess, onSignOut, currentUserId, isOwner, theme, onThemeChange }: Props) {
+export default function Stage({ state, actions, assistantName, canAccess, onSignOut, currentUserId, userEmail, isOwner, theme, onThemeChange }: Props) {
   const vm = buildViewModel(state, actions.navigateTo, onSignOut, canAccess);
   const { isMobile } = vm;
   const bender = useBender();
+
+  // Real counts/labels for the desktop header — no invented "11 streams
+  // live" copy. isOwner sees every module as active (Stage always passes
+  // canAccess={() => true} for the owner, same as AuthedGate does).
+  const activeModuleCount = MODULE_REGISTRY.filter((m) => canAccess(m.key)).length;
+  const activeNavLabel = vm.navRows.find((r) => r.kind === 'item' && r.active)?.label ?? 'Overview';
+  const ownerDisplayName = isOwner ? 'Cristopher' : userEmail ?? 'Account';
 
   // Second, screen-level access check — buildNavData only ever filters
   // which rows the nav *drawer* shows; it doesn't stop state.screen from
@@ -134,27 +144,49 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
   return (
     <div className="app-shine-bg" style={stageStyle}>
-      <Logo isMobile={isMobile} onClick={() => actions.goScreen('home')} />
+      {isMobile ? (
+        <>
+          <Logo isMobile={isMobile} onClick={() => actions.goScreen('home')} />
 
-      <NavDrawer
-        open={state.navDrawerOpen}
-        rows={vm.navRows}
-        onToggle={actions.toggleDrawer}
-        onClose={actions.closeDrawer}
-      />
+          <NavDrawer
+            open={state.navDrawerOpen}
+            rows={vm.navRows}
+            onToggle={actions.toggleDrawer}
+            onClose={actions.closeDrawer}
+          />
 
-      {!tourActive && (
-        <div
-          title="Take the product tour"
-          onClick={startTour}
-          style={{
-            position: 'absolute', top: 'calc(24px + env(safe-area-inset-top))', right: 72, width: 42, height: 42, borderRadius: '50%',
-            background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', cursor: 'pointer', zIndex: 41, fontSize: 'var(--text-subhead)', fontWeight: 700, color: 'var(--text-secondary)',
-          }}
-        >
-          ?
-        </div>
+          {!tourActive && (
+            <div
+              title="Take the product tour"
+              onClick={startTour}
+              style={{
+                position: 'absolute', top: 'calc(24px + env(safe-area-inset-top))', right: 72, width: 42, height: 42, borderRadius: '50%',
+                background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', cursor: 'pointer', zIndex: 41, fontSize: 'var(--text-subhead)', fontWeight: 700, color: 'var(--text-secondary)',
+              }}
+            >
+              ?
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <Sidebar
+            rows={vm.navRows}
+            ownerName={ownerDisplayName}
+            isOwner={isOwner}
+            onOpenSettings={() => actions.navigateTo('account-settings')}
+          />
+          <TopHeader
+            left={vm.sidebarWidth}
+            screenLabel={activeNavLabel}
+            activeModuleCount={activeModuleCount}
+            theme={theme}
+            onThemeChange={onThemeChange}
+            onOpenTour={startTour}
+            onOpenNotifications={() => actions.navigateTo('notification-settings')}
+          />
+        </>
       )}
 
       {/* Hidden on mobile while Nova's open — the bottom sheet has its own
