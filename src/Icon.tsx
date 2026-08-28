@@ -6,6 +6,7 @@ import {
   ChartLineUp, VideoCamera, Lightning, GearSix, TerminalWindow, Sparkle, List, Plus,
   CaretRight, ArrowLeft, PencilSimple, CircleDashed, X, ArrowUp, Bell, CaretDown, Flame,
   AddressBook, Clock, Barcode, Drop, Star, Wallet, Megaphone, Lock, Scales, Notepad, ChartLine, ChartScatter, Check,
+  EnvelopeSimple, LockSimple, ArrowRight, Sun, Moon, Users,
 } from '@phosphor-icons/react';
 
 const ICONS: Record<string, PhosphorIcon> = {
@@ -56,6 +57,12 @@ const ICONS: Record<string, PhosphorIcon> = {
   'chart-line': ChartLine,
   'chart-scatter': ChartScatter,
   check: Check,
+  'envelope-simple': EnvelopeSimple,
+  'lock-simple': LockSimple,
+  'arrow-right': ArrowRight,
+  sun: Sun,
+  moon: Moon,
+  users: Users,
 };
 
 interface Props {
