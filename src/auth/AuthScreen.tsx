@@ -136,7 +136,7 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
+    <div style={{ height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--bg)', color: 'var(--text)' } as React.CSSProperties}>
       <style>{`
         @keyframes apBloom { 0%, 100% { transform: translate3d(0,0,0) scale(1); opacity: .85; } 50% { transform: translate3d(3%,-2%,0) scale(1.12); opacity: 1; } }
         @keyframes apPulse { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }

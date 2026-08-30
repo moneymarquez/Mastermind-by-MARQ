@@ -318,13 +318,57 @@ export function useClientCRM() {
   };
 
   // ── Invoices (Part 4 — manual trigger only, worker owns the Stripe call) ─
-  const createInvoice = async (input: {
+  // A draft is a plain client_invoices row (status: 'draft') written
+  // directly — no Stripe involvement until sendInvoice below promotes it.
+  // Freely editable while draft; RLS (owner-only) is the only enforcement,
+  // same as every other table here.
+  const createDraftInvoice = async (input: {
     clientId: string;
     pricingItemId?: string | null;
     sequenceIndex?: number;
     description: string;
     amount: number;
     dueDate?: string | null;
+  }) => {
+    const { data } = await supabase
+      .from('client_invoices')
+      .insert({
+        client_id: input.clientId,
+        pricing_item_id: input.pricingItemId ?? null,
+        sequence_index: input.sequenceIndex ?? 1,
+        description: input.description,
+        amount: input.amount,
+        due_date: input.dueDate ?? null,
+        status: 'draft',
+      })
+      .select()
+      .single();
+    await load();
+    return data as ClientInvoice | null;
+  };
+
+  const updateDraftInvoice = async (id: string, patch: Partial<Pick<ClientInvoice, 'description' | 'amount' | 'due_date'>>) => {
+    await supabase.from('client_invoices').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id);
+    await load();
+  };
+
+  const removeDraftInvoice = async (id: string) => {
+    await supabase.from('client_invoices').delete().eq('id', id);
+    await load();
+  };
+
+  /** Sends either a brand-new invoice (omit invoiceId, the original
+   *  quick-send path) or promotes an existing draft in place (pass its
+   *  id — the worker UPDATEs that same row instead of inserting a
+   *  second one). Either way this is the one moment Stripe is touched. */
+  const sendInvoice = async (input: {
+    clientId: string;
+    pricingItemId?: string | null;
+    sequenceIndex?: number;
+    description: string;
+    amount: number;
+    dueDate?: string | null;
+    invoiceId?: string;
   }) => {
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
@@ -340,11 +384,12 @@ export function useClientCRM() {
         description: input.description,
         amount: input.amount,
         dueDate: input.dueDate ?? null,
+        invoiceId: input.invoiceId,
       }),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      throw new Error(body.error || `Could not create the invoice (${res.status}).`);
+      throw new Error(body.error || `Could not send the invoice (${res.status}).`);
     }
     await load();
     return (await res.json()) as ClientInvoice;
@@ -406,7 +451,10 @@ export function useClientCRM() {
     setItemAmount,
     removePricingItem,
     setRevealSchedule,
-    createInvoice,
+    createDraftInvoice,
+    updateDraftInvoice,
+    removeDraftInvoice,
+    sendInvoice,
     createClientLogin,
   };
 }

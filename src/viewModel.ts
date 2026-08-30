@@ -28,6 +28,8 @@ export function buildViewModel(
   const contentStyle: CSSProperties = {
     position: 'absolute', top: 0, left: isMobile ? 0 : SIDEBAR_WIDTH, right: 0, bottom: 0,
     overflowY: 'auto',
+    overscrollBehaviorY: 'contain',
+    WebkitOverflowScrolling: 'touch',
     padding: isMobile
       ? `calc(${MOBILE_HEADER_HEIGHT + 16}px + env(safe-area-inset-top)) 20px calc(${TAB_BAR_HEIGHT + 24}px + env(safe-area-inset-bottom))`
       : `${HEADER_HEIGHT + 32}px 32px 48px`,

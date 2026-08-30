@@ -141,6 +141,21 @@
   --shadow-lg: 0 0 0 1px #9397ab, 0 16px 40px rgba(0, 0, 0, 0.65);
 }
 
+/* App-not-website lockdown (Step 4). Stage.tsx sizes itself off a
+   JS-measured visualViewport (see src/state.ts), not a CSS vh unit, so
+   there's no 100vh-vs-100dvh fight here — this block only needs to stop
+   the OUTER document from behaving like a webpage (pinch-zoom, rubber-
+   band bounce, horizontal scroll) around that already-correct inner
+   stage. */
+html, body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   margin: 0;
   background: var(--bg);
@@ -149,6 +164,18 @@ body {
 
 * {
   box-sizing: border-box;
+}
+
+/* iOS Safari force-zooms the page when focusing any input/textarea/select
+   under 16px — and --text-body (the app's most-used size) is 13px. This
+   floor overrides that at the browser-zoom-relevant breakpoint only, so
+   nothing above 16px on desktop gets bumped down or up. !important is
+   required: every field in this app sets its font-size inline via a
+   CSSProperties object, which otherwise beats a plain element selector. */
+@media (max-width: 900px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
 }
 
 ::selection {

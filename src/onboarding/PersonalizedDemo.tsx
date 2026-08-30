@@ -126,7 +126,7 @@ export default function PersonalizedDemo({ assistantName, selectedKeys, onContin
   const selectedModules = MODULE_REGISTRY.filter((m) => selectedKeys.includes(m.key));
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '40px 24px 140px' }}>
+    <div style={{ height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--bg)', padding: '40px 24px 140px' } as CSSProperties}>
       <div style={{ maxWidth: 820, margin: '0 auto' }}>
         <div style={{ fontSize: 'var(--text-stat)', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em' }}>Masterminds by MARQ</div>
         <div style={{ fontSize: 'var(--text-body-lg)', color: 'var(--text-secondary)', marginTop: 8, lineHeight: 1.6, maxWidth: 560 }}>

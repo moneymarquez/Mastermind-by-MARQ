@@ -22,7 +22,7 @@ export default function AiNamingStep({ initialName, onComplete }: Props) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '48px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--bg)', padding: '48px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center' } as CSSProperties}>
       <div style={{ width: '100%', maxWidth: 420, textAlign: 'center' }}>
         <div style={{ fontSize: 'var(--text-display)', fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Name your AI</div>
         <div style={{ fontSize: 'var(--text-body-lg)', color: 'var(--text-secondary)', marginBottom: 28, lineHeight: 1.6 }}>

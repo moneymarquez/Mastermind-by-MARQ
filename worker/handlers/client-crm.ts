@@ -236,7 +236,7 @@ export async function publicClientDashboard(request: Request, env: ClientCrmEnv)
   // the reveal_full_schedule flag governs the forward-looking plan only,
   // and TBD line items (amount is null) are excluded regardless.
   const invoicesRes = await fetch(
-    `${env.VITE_SUPABASE_URL}/rest/v1/client_invoices?client_id=eq.${client.id}` +
+    `${env.VITE_SUPABASE_URL}/rest/v1/client_invoices?client_id=eq.${client.id}&status=neq.draft` +
       '&select=description,amount,due_date,status,paid_at,stripe_invoice_url&order=created_at.asc',
     { headers },
   );
@@ -270,6 +270,11 @@ interface CreateInvoiceBody {
   description?: string;
   amount?: number;
   dueDate?: string | null;
+  /** When set, promotes an existing draft row (see saveInvoiceDraft below)
+   *  to sent in place — UPDATE instead of INSERT — so a draft never turns
+   *  into two rows. Omitted entirely by the original quick-send flow,
+   *  which is unchanged. */
+  invoiceId?: string;
 }
 
 async function stripeRequest(env: ClientCrmEnv, path: string, body: Record<string, string>): Promise<Record<string, unknown>> {
@@ -361,33 +366,50 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
     const finalized = await stripeRequest(env, `/invoices/${invoice.id}/finalize`, {});
     const sent = await stripeRequest(env, `/invoices/${finalized.id}/send`, {});
 
-    const rowRes = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/client_invoices`, {
-      method: 'POST',
-      headers: { ...headers, Prefer: 'return=representation' },
-      body: JSON.stringify({
-        // The authenticated caller's own id, not the OWNER_USER_ID
-        // constant. requireOwner accepts either a user_id match OR an
-        // owner-email match (see worker/lib/auth.ts), so those two can
-        // legitimately differ — an account recreated under the same
-        // email would get a new uid. Writing the constant in that case
-        // would insert a row the caller's own RLS (auth.uid() = user_id)
-        // can't read back. publicAuditSubmit above still has to use the
-        // constant since it has no session at all.
-        user_id: user.id,
-        client_id: client.id,
-        pricing_item_id: body.pricingItemId ?? null,
-        sequence_index: body.sequenceIndex ?? 1,
-        description,
-        amount,
-        due_date: body.dueDate ?? null,
-        status: 'sent',
-        stripe_customer_id: customerId,
-        stripe_invoice_id: sent.id as string,
-        stripe_invoice_url: (sent.hosted_invoice_url as string) ?? null,
-        sent_at: new Date().toISOString(),
-      }),
-    });
-    const [row] = (await rowRes.json()) as unknown[];
+    const sentFields = {
+      description,
+      amount,
+      due_date: body.dueDate ?? null,
+      status: 'sent',
+      stripe_customer_id: customerId,
+      stripe_invoice_id: sent.id as string,
+      stripe_invoice_url: (sent.hosted_invoice_url as string) ?? null,
+      sent_at: new Date().toISOString(),
+    };
+
+    // Promoting an existing draft (schema unchanged — same table, just an
+    // UPDATE instead of an INSERT) vs. the original quick-send path that
+    // always created a fresh row.
+    let row: unknown;
+    if (body.invoiceId) {
+      const updRes = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/client_invoices?id=eq.${body.invoiceId}`, {
+        method: 'PATCH',
+        headers: { ...headers, Prefer: 'return=representation' },
+        body: JSON.stringify(sentFields),
+      });
+      [row] = (await updRes.json()) as unknown[];
+    } else {
+      const rowRes = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/client_invoices`, {
+        method: 'POST',
+        headers: { ...headers, Prefer: 'return=representation' },
+        body: JSON.stringify({
+          // The authenticated caller's own id, not the OWNER_USER_ID
+          // constant. requireOwner accepts either a user_id match OR an
+          // owner-email match (see worker/lib/auth.ts), so those two can
+          // legitimately differ — an account recreated under the same
+          // email would get a new uid. Writing the constant in that case
+          // would insert a row the caller's own RLS (auth.uid() = user_id)
+          // can't read back. publicAuditSubmit above still has to use the
+          // constant since it has no session at all.
+          user_id: user.id,
+          client_id: client.id,
+          pricing_item_id: body.pricingItemId ?? null,
+          sequence_index: body.sequenceIndex ?? 1,
+          ...sentFields,
+        }),
+      });
+      [row] = (await rowRes.json()) as unknown[];
+    }
 
     if (!ADVANCED_STAGES.has(client.stage)) {
       await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/crm_clients?id=eq.${client.id}`, {

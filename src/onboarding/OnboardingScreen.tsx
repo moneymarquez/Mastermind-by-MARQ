@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { CSSProperties } from 'react';
 import ModulePicker from './ModulePicker';
 import { SELECTABLE_MODULE_KEYS } from '../modules.config';
 
@@ -25,7 +26,7 @@ export default function OnboardingScreen({ onComplete }: Props) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '48px 24px 120px', display: 'flex', justifyContent: 'center' }}>
+    <div style={{ height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--bg)', padding: '48px 24px 120px', display: 'flex', justifyContent: 'center' } as CSSProperties}>
       <div style={{ width: '100%', maxWidth: 760 }}>
         <div style={{ fontSize: 'var(--text-stat)', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em', marginBottom: 2 }}>Masterminds by MARQ</div>
         <div style={{ fontSize: 'var(--text-display)', fontWeight: 700, color: 'var(--text)', marginTop: 24, marginBottom: 6 }}>What do you want turned on?</div>

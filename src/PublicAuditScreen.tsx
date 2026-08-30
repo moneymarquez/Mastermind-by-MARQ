@@ -11,7 +11,8 @@ interface PublicQuestion {
 }
 
 const pageStyle: CSSProperties = {
-  minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', padding: '48px 20px',
+  height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch',
+  background: 'var(--bg)', color: 'var(--text)', padding: '48px 20px',
   fontFamily: 'var(--font-sans)', display: 'flex', justifyContent: 'center',
 };
 const containerStyle: CSSProperties = { width: '100%', maxWidth: 640 };

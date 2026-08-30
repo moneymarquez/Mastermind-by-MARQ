@@ -66,7 +66,8 @@ interface DashboardData {
 }
 
 const page: CSSProperties = {
-  minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', padding: '40px 20px 80px',
+  height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch',
+  background: 'var(--bg)', color: 'var(--text)', padding: '40px 20px 80px',
   fontFamily: 'var(--font-sans)',
 };
 const wrap: CSSProperties = { width: '100%', maxWidth: 820, margin: '0 auto' };

@@ -7,7 +7,11 @@ interface Props {
   onSignOut: () => void;
 }
 
-const shell: CSSProperties = { minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', padding: '28px 20px 60px' };
+const shell: CSSProperties = {
+  height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch',
+  background: 'var(--bg)', color: 'var(--text)',
+  padding: '28px 20px calc(60px + env(safe-area-inset-bottom))',
+};
 const container: CSSProperties = { maxWidth: 720, margin: '0 auto' };
 const cardStyle: CSSProperties = {
   background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 18,
@@ -44,7 +48,10 @@ export default function ClientPortal({ onSignOut }: Props) {
         supabase.from('crm_clients').select('*').maybeSingle(),
         supabase.from('client_audits').select('*').order('created_at', { ascending: false }),
         supabase.from('audit_questions').select('*').order('sort_order'),
-        supabase.from('client_invoices').select('*').order('created_at', { ascending: true }),
+        // Drafts are internal-only — nothing exists client-side to promote
+        // one, and showing a not-yet-sent invoice here would be confusing
+        // at best (see ClientDetailView's draft flow).
+        supabase.from('client_invoices').select('*').neq('status', 'draft').order('created_at', { ascending: true }),
       ]);
       setClient((clientRes.data as CrmClient) ?? null);
       setAudit(((auditsRes.data ?? [])[0] as ClientAudit) ?? null);
