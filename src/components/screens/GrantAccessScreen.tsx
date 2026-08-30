@@ -23,6 +23,14 @@ interface CompCode {
   created_at: string;
 }
 
+interface ClientLogin {
+  user_id: string;
+  email: string;
+  client_id: string | null;
+  business_name: string | null;
+  created_at: string;
+}
+
 const inputStyle: CSSProperties = {
   background: 'var(--surface-4)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
   padding: '10px 12px', color: 'var(--text)', fontSize: 'var(--text-body)', outline: 'none',
@@ -55,6 +63,10 @@ export default function GrantAccessScreen({ homeHeadStyle, homeSubStyle }: Props
   const [codeError, setCodeError] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
+  const [clientLogins, setClientLogins] = useState<ClientLogin[]>([]);
+  const [loginsLoading, setLoginsLoading] = useState(true);
+  const [revokingLogin, setRevokingLogin] = useState<string | null>(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     const { data, error: err } = await supabase.rpc('list_comped_users');
@@ -67,10 +79,25 @@ export default function GrantAccessScreen({ homeHeadStyle, homeSubStyle }: Props
     if (!err) setCodes((data ?? []) as CompCode[]);
   }, []);
 
+  const loadClientLogins = useCallback(async () => {
+    setLoginsLoading(true);
+    const { data, error: err } = await supabase.rpc('list_client_logins');
+    if (!err) setClientLogins((data ?? []) as ClientLogin[]);
+    setLoginsLoading(false);
+  }, []);
+
   useEffect(() => {
     load();
     loadCodes();
-  }, [load, loadCodes]);
+    loadClientLogins();
+  }, [load, loadCodes, loadClientLogins]);
+
+  const revokeClientLogin = async (userId: string) => {
+    setRevokingLogin(userId);
+    await supabase.rpc('revoke_client_login', { target_user_id: userId });
+    setRevokingLogin(null);
+    await loadClientLogins();
+  };
 
   const generateCode = async () => {
     setCodeBusy(true);
@@ -129,7 +156,7 @@ export default function GrantAccessScreen({ homeHeadStyle, homeSubStyle }: Props
   return (
     <div>
       <div style={homeHeadStyle}>Grant Access</div>
-      <div style={homeSubStyle}>Give someone a real, separate login with full free access — owner-only, visible only to you.</div>
+      <div style={homeSubStyle}>Everyone with a login besides you, and exactly what each one can see — owner-only, visible only to you.</div>
 
       <div style={{ marginTop: 32, maxWidth: 560 }}>
         <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>Give someone the whole app, free</div>
@@ -162,6 +189,7 @@ export default function GrantAccessScreen({ homeHeadStyle, homeSubStyle }: Props
                 <Icon name="users" size={16} color="var(--text-tertiary)" />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-quaternary)' }}>{u.email}</div>
+                  <div style={{ fontSize: 'var(--text-caption)', color: 'var(--success)', marginTop: 1 }}>Full app access — every module except Scaling tools</div>
                   {u.note && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 1 }}>{u.note}</div>}
                 </div>
                 <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: busy ? 'default' : 'pointer' }} onClick={() => !busy && revoke(u.email)}>
@@ -214,6 +242,38 @@ export default function GrantAccessScreen({ homeHeadStyle, homeSubStyle }: Props
               </div>
             ))}
           </div>
+        )}
+
+        <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)', marginTop: 36 }}>Client logins</div>
+        <p style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', lineHeight: 1.6, marginTop: 6 }}>
+          Different from the free-access accounts above — a client login is scoped to exactly one business: their own
+          audit and their own invoices, nothing else, no app modules at all. Create one from that client's page in
+          Client CRM ("Give this client a login"); manage and revoke them here.
+        </p>
+
+        {!loginsLoading && clientLogins.length > 0 && (
+          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden' }}>
+            {clientLogins.map((l) => (
+              <div key={l.user_id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 18px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)' }}>
+                <Icon name="users" size={16} color="var(--text-tertiary)" />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-quaternary)' }}>{l.email}</div>
+                  <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 1 }}>
+                    {l.business_name ? `Scoped to ${l.business_name} — audit + invoices only` : 'Linked client not found'}
+                  </div>
+                </div>
+                <span
+                  style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: revokingLogin === l.user_id ? 'default' : 'pointer' }}
+                  onClick={() => revokingLogin !== l.user_id && revokeClientLogin(l.user_id)}
+                >
+                  {revokingLogin === l.user_id ? 'Revoking…' : 'Revoke'}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+        {!loginsLoading && clientLogins.length === 0 && (
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', marginTop: 16 }}>No client logins yet.</div>
         )}
       </div>
     </div>
