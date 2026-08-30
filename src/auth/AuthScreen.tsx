@@ -74,6 +74,13 @@ const comingSoonPlan = PLANS.find((p) => !p.live) ?? null;
  *  terminal query), not asserted as a claim about the viewer's own data. */
 export default function AuthScreen({ onSignIn, onSignUp }: Props) {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
+  // Purely a label/copy switch on the login card — a client signs in
+  // through the exact same email/password form as everyone else;
+  // AuthedGate routes them to ClientPortal by role after. This just
+  // confirms to a client landing here that they're in the right spot,
+  // instead of "Client login" silently doing nothing when the card is
+  // already showing the login form.
+  const [loginContext, setLoginContext] = useState<'owner' | 'client'>('owner');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -91,6 +98,7 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
     setMode(next);
     setError(null);
     setNotice(null);
+    if (next === 'signup') setLoginContext('owner');
   };
 
   const scrollToLogin = () => {
@@ -234,17 +242,17 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
               </div>
               <div style={{ fontSize: 13.5, color: 'var(--text-tertiary)' }}>
                 {LIVE_PLAN.price}{LIVE_PLAN.cadence} · cancel anytime, self-serve
-                {' · '}
-                <span style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-2)', cursor: 'pointer' }} onClick={() => { switchMode('login'); scrollToLogin(); }}>
-                  Client login
-                </span>
               </div>
             </div>
 
             <div id="login-card" style={{ padding: 26, borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', background: 'var(--surface)', boxShadow: 'var(--shadow-lg, 0 20px 60px rgba(0,0,0,0.25))', display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div>
-                <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em' }}>{mode === 'login' ? 'Log in' : 'Create your account'}</div>
-                <div style={{ fontSize: 13.5, color: 'var(--text-tertiary)', marginTop: 4 }}>{mode === 'login' ? 'Nova has your morning ready.' : 'Takes about a minute.'}</div>
+                <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em' }}>
+                  {mode === 'signup' ? 'Create your account' : loginContext === 'client' ? 'Client login' : 'Log in'}
+                </div>
+                <div style={{ fontSize: 13.5, color: 'var(--text-tertiary)', marginTop: 4 }}>
+                  {mode === 'signup' ? 'Takes about a minute.' : loginContext === 'client' ? "See your project's progress." : 'Nova has your morning ready.'}
+                </div>
               </div>
 
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -275,6 +283,8 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
                 {mode === 'login' ? (
                   <>No account?{' '}
                     <span style={{ color: 'var(--text)', borderBottom: '1px solid var(--border-2)', cursor: 'pointer' }} onClick={() => switchMode('signup')}>Start free</span>
+                    {' · '}
+                    <span style={{ color: 'var(--text)', borderBottom: '1px solid var(--border-2)', cursor: 'pointer' }} onClick={() => setLoginContext('client')}>Client login</span>
                   </>
                 ) : (
                   <>Already have an account?{' '}
@@ -432,7 +442,7 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
                 <div style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--text-secondary)' }}>{m.description}</div>
               </div>
             ))}
-            <div id="nova" style={{ padding: 24, borderRadius: 20, background: 'var(--text)', color: 'var(--bg)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ padding: 24, borderRadius: 20, background: 'var(--text)', color: 'var(--bg)', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Icon name="sparkle" size={24} />
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, opacity: 0.66 }}>included</span>
@@ -548,8 +558,11 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
 
         <hr className="ap-hr" style={{ margin: '20px 0 0' }} />
 
-        {/* How Nova learns you */}
-        <section className="ap-nova-learn-grid" style={{ padding: '72px 0' }}>
+        {/* How Nova learns you — the actual explanation the nav's "Nova"
+            link should land on, not the small module-grid card above
+            (which is sized/worded like every other module tile and
+            explains nothing on its own). */}
+        <section id="nova" className="ap-nova-learn-grid" style={{ padding: '72px 0' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             <div className="ap-card-kicker">How Nova learns you</div>
             <h2 className="ap-h2">Separate apps can't see each other. Yours share one record.</h2>
