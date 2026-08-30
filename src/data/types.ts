@@ -770,6 +770,23 @@ export interface ClientReport {
 export type ReportAssetKind = 'content' | 'proof';
 export type ReportAssetStatus = 'draft' | 'approved' | 'live';
 
+export type ClientMediaCategory = 'truck' | 'food' | 'business_card' | 'screenshot' | 'other';
+
+/** Raw source material attached to a client — the truck, the food, a
+ *  business card, a screenshot of their Google listing. Never shown to
+ *  the client; distinct from ClientReportAsset below, which IS. */
+export interface ClientMedia {
+  id: string;
+  client_id: string;
+  audit_id: string | null;
+  storage_path: string;
+  file_name: string;
+  mime_type: string | null;
+  category: ClientMediaCategory;
+  caption: string | null;
+  created_at: string;
+}
+
 export interface ClientReportAsset {
   id: string;
   report_id: string;

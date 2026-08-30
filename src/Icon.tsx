@@ -6,7 +6,7 @@ import {
   ChartLineUp, VideoCamera, Lightning, GearSix, TerminalWindow, Sparkle, List, Plus,
   CaretRight, ArrowLeft, PencilSimple, CircleDashed, X, ArrowUp, Bell, CaretDown, Flame,
   AddressBook, Clock, Barcode, Drop, Star, Wallet, Megaphone, Lock, Scales, Notepad, ChartLine, ChartScatter, Check,
-  EnvelopeSimple, LockSimple, ArrowRight, Sun, Moon, Users,
+  EnvelopeSimple, LockSimple, ArrowRight, Sun, Moon, Users, FileText,
 } from '@phosphor-icons/react';
 
 const ICONS: Record<string, PhosphorIcon> = {
@@ -63,6 +63,7 @@ const ICONS: Record<string, PhosphorIcon> = {
   sun: Sun,
   moon: Moon,
   users: Users,
+  'file-text': FileText,
 };
 
 interface Props {

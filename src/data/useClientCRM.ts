@@ -350,6 +350,24 @@ export function useClientCRM() {
     return (await res.json()) as ClientInvoice;
   };
 
+  // ── Client login (Step 1) ───────────────────────────────────────────────
+  const createClientLogin = async (clientId: string, email: string) => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) throw new Error('Not signed in.');
+
+    const res = await fetch('/api/client-crm/create-client-login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ clientId, email }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || `Could not create the login (${res.status}).`);
+    }
+    return (await res.json()) as { email: string; password: string };
+  };
+
   return {
     clients,
     questions,
@@ -389,5 +407,6 @@ export function useClientCRM() {
     removePricingItem,
     setRevealSchedule,
     createInvoice,
+    createClientLogin,
   };
 }

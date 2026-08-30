@@ -1,5 +1,69 @@
 import { requireOwner, OWNER_USER_ID } from '../lib/auth';
 
+// ── Client login (Step 1 of the client-login/audit/invoice build) ──────────
+// createClientLogin: owner-only. Creates a REAL, separate Supabase Auth
+// account via the Admin API (service-role key — there is no supabase-js
+// client here, same raw-fetch style as everything else in this file) and
+// links it to one crm_clients row via a profiles row (schema_045). No
+// email sending yet (the domain isn't purchased) — the temp password is
+// returned once in the response for the owner to hand over directly.
+function generateTempPassword(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(9));
+  return btoa(String.fromCharCode(...bytes)).replace(/[+/=]/g, '').slice(0, 12);
+}
+
+interface CreateClientLoginBody {
+  clientId?: string;
+  email?: string;
+}
+
+export async function createClientLogin(request: Request, env: ClientCrmEnv): Promise<Response> {
+  const user = await requireOwner(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+  if (user instanceof Response) return user;
+
+  let body: CreateClientLoginBody;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'Invalid request body.' }, 400);
+  }
+  const clientId = body.clientId;
+  const email = (body.email ?? '').trim().toLowerCase();
+  if (!clientId || !email) return json({ error: 'clientId and email are required.' }, 400);
+
+  const headers = supabaseHeaders(env);
+
+  const clientRes = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/crm_clients?id=eq.${clientId}&select=id`, { headers });
+  const [crmClient] = (await clientRes.json()) as { id: string }[];
+  if (!crmClient) return json({ error: 'Client not found.' }, 404);
+
+  const password = generateTempPassword();
+  const createRes = await fetch(`${env.VITE_SUPABASE_URL}/auth/v1/admin/users`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ email, password, email_confirm: true }),
+  });
+  const created = (await createRes.json()) as { id?: string; msg?: string; error_description?: string; message?: string };
+  if (!createRes.ok || !created.id) {
+    const msg = created.msg || created.error_description || created.message || 'Could not create the login.';
+    return json({ error: /already (been )?registered|already exists/i.test(msg) ? 'That email already has an account.' : msg }, 400);
+  }
+
+  const profileRes = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/profiles`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ id: created.id, role: 'client', client_id: crmClient.id }),
+  });
+  if (!profileRes.ok) {
+    // Roll back the orphaned auth user rather than leave a login that
+    // exists but isn't linked to anything.
+    await fetch(`${env.VITE_SUPABASE_URL}/auth/v1/admin/users/${created.id}`, { method: 'DELETE', headers });
+    return json({ error: 'Could not link the login to this client — try again.' }, 500);
+  }
+
+  return json({ email, password });
+}
+
 // Client Audit, Analysis & Invoicing System — Scaling → Client CRM.
 // Two Worker-native routes:
 //   - publicAuditSubmit: no auth at all (this is the public /audit page —

@@ -33,7 +33,7 @@ import { sendDeliveryEmail } from './handlers/deliver-email';
 import type { DeliverEmailEnv } from './handlers/deliver-email';
 import { supportInboxWebhook } from './handlers/support-inbox';
 import type { SupportInboxEnv } from './handlers/support-inbox';
-import { publicAuditQuestions, publicAuditSubmit, publicClientDashboard, createClientInvoice } from './handlers/client-crm';
+import { publicAuditQuestions, publicAuditSubmit, publicClientDashboard, createClientInvoice, createClientLogin } from './handlers/client-crm';
 import type { ClientCrmEnv } from './handlers/client-crm';
 import { claudeProxy } from './handlers/claude';
 import type { ClaudeEnv } from './handlers/claude';
@@ -73,6 +73,7 @@ export default {
     if (url.pathname === '/api/client-crm/public-audit') return publicAuditSubmit(request, env);
     if (url.pathname === '/api/client-crm/public-dashboard') return publicClientDashboard(request, env);
     if (url.pathname === '/api/client-crm/create-invoice') return createClientInvoice(request, env);
+    if (url.pathname === '/api/client-crm/create-client-login') return createClientLogin(request, env);
 
     if (url.pathname === '/api/claude') return claudeProxy(request, env);
     if (url.pathname === '/api/push-subscription') return pushSubscription(request, env);

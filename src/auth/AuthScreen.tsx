@@ -234,6 +234,10 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
               </div>
               <div style={{ fontSize: 13.5, color: 'var(--text-tertiary)' }}>
                 {LIVE_PLAN.price}{LIVE_PLAN.cadence} · cancel anytime, self-serve
+                {' · '}
+                <span style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-2)', cursor: 'pointer' }} onClick={() => { switchMode('login'); scrollToLogin(); }}>
+                  Client login
+                </span>
               </div>
             </div>
 

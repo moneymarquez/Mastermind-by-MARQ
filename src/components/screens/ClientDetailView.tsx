@@ -5,6 +5,7 @@ import type { ClientStage, PricingCadence } from '../../data/types';
 import { AiError } from '../../lib/ai';
 import { STAGES, cardStyle, inputStyle, selectStyle, primaryBtn, ghostBtn, tabStyle } from './ClientCRMScreen';
 import ClientReportsTab from './ClientReportsTab';
+import ClientMediaGrid from './ClientMediaGrid';
 import LiveCaptureView from './LiveCaptureView';
 import type { AnswerConfidence } from '../../data/types';
 
@@ -59,6 +60,10 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
   const [invoiceDue, setInvoiceDue] = useState('');
   const [sendingInvoice, setSendingInvoice] = useState(false);
   const [invoiceError, setInvoiceError] = useState('');
+  const [loginEmail, setLoginEmail] = useState(client.contact_email ?? '');
+  const [creatingLogin, setCreatingLogin] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [loginResult, setLoginResult] = useState<{ email: string; password: string } | null>(null);
 
   useEffect(() => {
     setAnalysisDraft(client.audit?.analysis_text ?? '');
@@ -171,6 +176,21 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
     }
   };
 
+  const createLogin = async () => {
+    const email = loginEmail.trim().toLowerCase();
+    if (!email) return;
+    setCreatingLogin(true);
+    setLoginError('');
+    try {
+      const result = await crm.createClientLogin(client.id, email);
+      setLoginResult(result);
+    } catch (err) {
+      setLoginError(err instanceof Error ? err.message : 'Could not create the login.');
+    } finally {
+      setCreatingLogin(false);
+    }
+  };
+
   if (liveCapture && client.audit) {
     return (
       <LiveCaptureView
@@ -218,6 +238,41 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         onBlur={() => notesDraft !== (client.notes ?? '') && crm.updateClient(client.id, { notes: notesDraft.trim() || null })}
       />
 
+      {/* Client login (Step 1 of the client-login/audit/invoice build) — a
+          real, separate account scoped to just this client via RLS (see
+          schema_045_client_login.sql), not the token-based Reports link
+          below. The temp password is shown exactly once; there's nowhere
+          it's stored to look up again later. */}
+      <div style={{ ...cardStyle, marginTop: 16, maxWidth: 640 }}>
+        {loginResult ? (
+          <>
+            <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Login created — hand this over now</div>
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 4 }}>This password won't be shown again.</div>
+            <div style={{ marginTop: 10, padding: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-4)', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-body)' }}>
+              <div>{loginResult.email}</div>
+              <div style={{ marginTop: 4, color: 'var(--text-secondary)' }}>{loginResult.password}</div>
+            </div>
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 8 }}>
+              They log in at the "Client login" link on the homepage with this email and password.
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Give this client a login</div>
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 4 }}>
+              A real, separate account — their own audit and invoices, nothing else.
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+              <input style={{ ...inputStyle, flex: '1 1 220px' }} placeholder="Login email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} />
+              <div style={{ ...primaryBtn, pointerEvents: creatingLogin || !loginEmail.trim() ? 'none' : 'auto', opacity: creatingLogin || !loginEmail.trim() ? 0.6 : 1 }} onClick={createLogin}>
+                {creatingLogin ? 'Creating…' : 'Create login'}
+              </div>
+            </div>
+            {loginError && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginTop: 8 }}>{loginError}</div>}
+          </>
+        )}
+      </div>
+
       <div style={{ display: 'flex', gap: 8, marginTop: 20, flexWrap: 'wrap' }}>
         <div style={tabStyle(tab === 'audit')} onClick={() => setTab('audit')}>Audit</div>
         <div style={tabStyle(tab === 'analysis')} onClick={() => setTab('analysis')}>Analysis</div>
@@ -246,6 +301,8 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                 </div>
                 <div style={primaryBtn} onClick={() => setLiveCapture(true)}>Live capture</div>
               </div>
+
+              <ClientMediaGrid clientId={client.id} auditId={client.audit.id} />
 
               {activeQuestions.map((q) => (
                 <div key={q.id} style={cardStyle}>
@@ -523,10 +580,12 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                     )}
                   </div>
                 </div>
+                {/* Draft grey, paid green, anything unpaid (sent/overdue) red —
+                    per the build prompt's status-color convention. */}
                 <span style={{
                   fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', borderRadius: 'var(--radius-pill)', padding: '3px 9px',
-                  color: inv.status === 'paid' ? 'var(--success)' : inv.status === 'overdue' ? 'var(--danger)' : 'var(--text-tertiary)',
-                  border: `1px solid ${inv.status === 'paid' ? 'color-mix(in srgb, var(--success) 40%, transparent)' : inv.status === 'overdue' ? 'color-mix(in srgb, var(--danger) 40%, transparent)' : 'var(--border)'}`,
+                  color: inv.status === 'paid' ? 'var(--success)' : inv.status === 'draft' ? 'var(--text-tertiary)' : 'var(--danger)',
+                  border: `1px solid ${inv.status === 'paid' ? 'color-mix(in srgb, var(--success) 40%, transparent)' : inv.status === 'draft' ? 'var(--border)' : 'color-mix(in srgb, var(--danger) 40%, transparent)'}`,
                 }}>
                   {inv.status}
                 </span>
