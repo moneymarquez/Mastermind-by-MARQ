@@ -26,6 +26,19 @@ createRoot(document.getElementById('root')!).render(
 )
 
 if ('serviceWorker' in navigator) {
+  // sw-src/sw.ts calls skipWaiting()+clients.claim() so a new deploy's
+  // worker activates and takes control immediately — but without this
+  // listener, the page already open in the tab keeps running on the old
+  // cached JS/HTML until some *later* navigation happens to land after
+  // that takeover. This reload (once per takeover, guarded below) is what
+  // actually makes a fresh deploy show up without the user needing to
+  // reload twice.
+  let reloadedForNewWorker = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloadedForNewWorker) return;
+    reloadedForNewWorker = true;
+    window.location.reload();
+  });
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js');
   });
