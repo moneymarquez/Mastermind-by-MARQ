@@ -133,7 +133,12 @@ export function useMastermindState() {
   const toggleDrawer = () => patch((s) => ({ navDrawerOpen: !s.navDrawerOpen }));
   const closeDrawer = () => patch({ navDrawerOpen: false });
 
-  const directScreens: Screen[] = ['home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'scaling-planner', 'audits', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing', 'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings', 'call-recordings', 'website', 'invoicing', 'manage-modules', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'scaling-start', 'delivery', 'support-inbox', 'legal'];
+  // Every real Screen value except 'placeholder' itself — anything missing
+  // here silently falls through to the generic "coming soon" placeholder
+  // below even once its screen and nav entry are fully built (bit both
+  // 'client-crm' and 'grant-access' this way: wired into types.ts,
+  // modules.config.ts, and Stage.tsx, but never added here).
+  const directScreens: Screen[] = ['home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'scaling-planner', 'audits', 'client-crm', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing', 'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings', 'call-recordings', 'website', 'invoicing', 'manage-modules', 'grant-access', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'scaling-start', 'delivery', 'support-inbox', 'legal'];
 
   const navigateTo = (id: string) => {
     if (id === 'settings') {
