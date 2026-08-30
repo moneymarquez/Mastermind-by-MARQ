@@ -831,6 +831,11 @@ export interface ClientInvoice {
   stripe_customer_id: string | null;
   stripe_invoice_id: string | null;
   stripe_invoice_url: string | null;
+  /** Stable display label — generated once at insert, never changes even
+   *  if the row is later edited (see schema_047_invoice_management.sql). */
+  invoice_number: number;
+  /** Set only when status is 'void' — required at void time. */
+  void_reason: string | null;
   created_at: string;
   updated_at: string;
   sent_at: string | null;

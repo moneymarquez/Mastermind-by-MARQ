@@ -424,3 +424,72 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
     return json({ error: err instanceof Error ? err.message : 'Could not send the invoice.' }, 500);
   }
 }
+
+// ── Void / reopen a sent invoice (Step 3 invoice management) ───────────────
+// The one Stripe operation this needs a Worker for: voiding a finalized
+// invoice requires the secret key. Two distinct outcomes share this one
+// call because they're the same Stripe action underneath —
+//   - Void (revertToDraft: false): permanent, requires a reason. Ends at
+//     status 'void'.
+//   - "Edit a sent invoice" (revertToDraft: true): Stripe finalized
+//     invoices can't have their line items changed in place, so editing
+//     really means voiding the old one and reopening this row as a draft
+//     — the owner edits it and hits Send again, which is what actually
+//     "regenerates the payment link" per the build prompt. No separate
+//     Stripe call needed beyond the void itself.
+interface VoidInvoiceBody {
+  invoiceId?: string;
+  reason?: string;
+  revertToDraft?: boolean;
+}
+
+export async function voidClientInvoice(request: Request, env: ClientCrmEnv): Promise<Response> {
+  const user = await requireOwner(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+  if (user instanceof Response) return user;
+  if (!env.STRIPE_SECRET_KEY) return json({ error: 'Billing is not configured yet — STRIPE_SECRET_KEY not set.' }, 503);
+
+  let body: VoidInvoiceBody;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'Invalid request body.' }, 400);
+  }
+  const { invoiceId, revertToDraft } = body;
+  const reason = (body.reason ?? '').trim();
+  if (!invoiceId) return json({ error: 'invoiceId is required.' }, 400);
+  if (!revertToDraft && !reason) return json({ error: 'A reason is required to void an invoice.' }, 400);
+
+  const headers = supabaseHeaders(env);
+
+  try {
+    const invRes = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/client_invoices?id=eq.${invoiceId}&select=id,status,stripe_invoice_id`, { headers });
+    const [inv] = (await invRes.json()) as { id: string; status: string; stripe_invoice_id: string | null }[];
+    if (!inv) return json({ error: 'Invoice not found.' }, 404);
+    if (inv.status === 'paid') return json({ error: 'A paid invoice can\'t be voided or reopened.' }, 400);
+    if (inv.status === 'void') return json({ error: 'This invoice is already void.' }, 400);
+
+    if (inv.stripe_invoice_id) {
+      try {
+        await stripeRequest(env, `/invoices/${inv.stripe_invoice_id}/void`, {});
+      } catch (err) {
+        // Already void/uncollectible on Stripe's side (e.g. a retry after
+        // a partial failure) shouldn't block reflecting that locally.
+        if (!(err instanceof Error && /void|uncollectible/i.test(err.message))) throw err;
+      }
+    }
+
+    const patch = revertToDraft
+      ? { status: 'draft', stripe_invoice_id: null, stripe_invoice_url: null, sent_at: null, void_reason: null, updated_at: new Date().toISOString() }
+      : { status: 'void', void_reason: reason, updated_at: new Date().toISOString() };
+
+    const updRes = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/client_invoices?id=eq.${invoiceId}`, {
+      method: 'PATCH',
+      headers: { ...headers, Prefer: 'return=representation' },
+      body: JSON.stringify(patch),
+    });
+    const [row] = (await updRes.json()) as unknown[];
+    return json(row);
+  } catch (err) {
+    return json({ error: err instanceof Error ? err.message : 'Could not void the invoice.' }, 500);
+  }
+}

@@ -395,6 +395,49 @@ export function useClientCRM() {
     return (await res.json()) as ClientInvoice;
   };
 
+  /** Copies an invoice (any status) into a brand-new draft — never
+   *  touches the original. Due date isn't carried over since "month two"
+   *  is due on its own schedule, not the source invoice's date. */
+  const duplicateInvoice = async (inv: ClientInvoice) => {
+    return createDraftInvoice({
+      clientId: inv.client_id,
+      pricingItemId: inv.pricing_item_id,
+      sequenceIndex: inv.sequence_index + 1,
+      description: inv.description,
+      amount: inv.amount,
+    });
+  };
+
+  /** For payment collected outside Stripe (cash, Venmo, etc.) on an
+   *  invoice that was already sent. Direct table write — RLS (owner-only)
+   *  is the only enforcement needed, no Stripe call involved since
+   *  nothing about the Stripe invoice itself changes. */
+  const markInvoicePaidManually = async (id: string) => {
+    await supabase.from('client_invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', id);
+    await load();
+  };
+
+  /** Void (permanent, requires a reason) or reopen-as-draft (the "Edit a
+   *  sent invoice" flow — see the worker's voidClientInvoice for why
+   *  these share one Stripe call). */
+  const voidInvoice = async (invoiceId: string, opts: { reason?: string; revertToDraft?: boolean } = {}) => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) throw new Error('Not signed in.');
+
+    const res = await fetch('/api/client-crm/void-invoice', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ invoiceId, reason: opts.reason, revertToDraft: opts.revertToDraft ?? false }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || `Could not void the invoice (${res.status}).`);
+    }
+    await load();
+    return (await res.json()) as ClientInvoice;
+  };
+
   // ── Client login (Step 1) ───────────────────────────────────────────────
   const createClientLogin = async (clientId: string, email: string) => {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -455,6 +498,9 @@ export function useClientCRM() {
     updateDraftInvoice,
     removeDraftInvoice,
     sendInvoice,
+    duplicateInvoice,
+    markInvoicePaidManually,
+    voidInvoice,
     createClientLogin,
   };
 }

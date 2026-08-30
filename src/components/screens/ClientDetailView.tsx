@@ -6,6 +6,7 @@ import { AiError } from '../../lib/ai';
 import { STAGES, cardStyle, inputStyle, selectStyle, primaryBtn, ghostBtn, tabStyle } from './ClientCRMScreen';
 import ClientReportsTab from './ClientReportsTab';
 import ClientMediaGrid from './ClientMediaGrid';
+import InvoiceDetailView from './InvoiceDetailView';
 import LiveCaptureView from './LiveCaptureView';
 import type { AnswerConfidence } from '../../data/types';
 
@@ -60,9 +61,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
   const [invoiceDue, setInvoiceDue] = useState('');
   const [creatingDraft, setCreatingDraft] = useState(false);
   const [draftError, setDraftError] = useState('');
-  const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
-  const [sendingDraftId, setSendingDraftId] = useState<string | null>(null);
-  const [sendErrors, setSendErrors] = useState<Record<string, string>>({});
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [loginEmail, setLoginEmail] = useState(client.contact_email ?? '');
   const [creatingLogin, setCreatingLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -159,8 +158,8 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
   };
 
   // Creates a draft row only — no Stripe call yet. Everything about it
-  // (description, amount, due date) stays freely editable until sendDraft
-  // below actually promotes it.
+  // (description, amount, due date) stays freely editable in
+  // InvoiceDetailView, which is also where it's actually sent.
   const createDraft = async () => {
     const item = client.pricingItems.find((p) => p.id === invoiceItemId);
     const description = invoiceDesc.trim() || item?.label || '';
@@ -178,32 +177,6 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
       setDraftError(err instanceof Error ? err.message : 'Could not create the draft.');
     } finally {
       setCreatingDraft(false);
-    }
-  };
-
-  // The one moment a draft actually touches Stripe. sequence_index still
-  // only counts already-sent invoices for the same pricing item, matching
-  // the original quick-send behavior.
-  const sendDraft = async (inv: (typeof client.invoices)[number]) => {
-    setSendingDraftId(inv.id);
-    setSendErrors((e) => ({ ...e, [inv.id]: '' }));
-    try {
-      const sequenceIndex = inv.pricing_item_id
-        ? client.invoices.filter((i) => i.pricing_item_id === inv.pricing_item_id && i.status !== 'draft').length + 1
-        : 1;
-      await crm.sendInvoice({
-        clientId: client.id,
-        pricingItemId: inv.pricing_item_id,
-        sequenceIndex,
-        description: inv.description,
-        amount: inv.amount,
-        dueDate: inv.due_date,
-        invoiceId: inv.id,
-      });
-    } catch (err) {
-      setSendErrors((e) => ({ ...e, [inv.id]: err instanceof Error ? err.message : 'Could not send the invoice.' }));
-    } finally {
-      setSendingDraftId(null);
     }
   };
 
@@ -597,87 +570,35 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         </div>
       )}
 
-      {tab === 'invoices' && (
+      {tab === 'invoices' && selectedInvoiceId && (() => {
+        const inv = client.invoices.find((i) => i.id === selectedInvoiceId);
+        if (!inv) { setSelectedInvoiceId(null); return null; }
+        return <InvoiceDetailView invoice={inv} clientBusinessName={client.business_name} crm={crm} onClose={() => setSelectedInvoiceId(null)} />;
+      })()}
+
+      {tab === 'invoices' && !selectedInvoiceId && (
         <div style={{ marginTop: 18, maxWidth: 680 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
             {client.invoices.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No invoices yet.</div>}
             {client.invoices.map((inv) => {
               const isDraft = inv.status === 'draft';
-              const expanded = expandedInvoiceId === inv.id;
               return (
-                <div key={inv.id} style={{ ...cardStyle, padding: 14 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => setExpandedInvoiceId(expanded ? null : inv.id)}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>{inv.description}</div>
-                      <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 2 }}>
-                        {money(inv.amount)} {inv.due_date ? `· due ${inv.due_date}` : ''}
-                      </div>
+                <div key={inv.id} style={{ ...cardStyle, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => setSelectedInvoiceId(inv.id)}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>#{inv.invoice_number} · {inv.description}</div>
+                    <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 2 }}>
+                      {money(inv.amount)} {inv.due_date ? `· due ${inv.due_date}` : ''}
                     </div>
-                    {/* Draft grey, paid green, anything unpaid (sent/overdue) red —
-                        per the build prompt's status-color convention. */}
-                    <span style={{
-                      fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', borderRadius: 'var(--radius-pill)', padding: '3px 9px', flexShrink: 0,
-                      color: inv.status === 'paid' ? 'var(--success)' : isDraft ? 'var(--text-tertiary)' : 'var(--danger)',
-                      border: `1px solid ${inv.status === 'paid' ? 'color-mix(in srgb, var(--success) 40%, transparent)' : isDraft ? 'var(--border)' : 'color-mix(in srgb, var(--danger) 40%, transparent)'}`,
-                    }}>
-                      {inv.status}
-                    </span>
                   </div>
-
-                  {expanded && (
-                    <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--surface-3)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {isDraft ? (
-                        <>
-                          <input
-                            key={`desc-${inv.id}-${inv.description}`}
-                            style={inputStyle}
-                            defaultValue={inv.description}
-                            placeholder="Description"
-                            onBlur={(e) => e.target.value.trim() && e.target.value !== inv.description && crm.updateDraftInvoice(inv.id, { description: e.target.value.trim() })}
-                          />
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <input
-                              key={`amt-${inv.id}-${inv.amount}`}
-                              style={inputStyle}
-                              defaultValue={String(inv.amount)}
-                              placeholder="Amount"
-                              onBlur={(e) => {
-                                const n = Number(e.target.value);
-                                if (Number.isFinite(n) && n > 0 && n !== inv.amount) crm.updateDraftInvoice(inv.id, { amount: n });
-                              }}
-                            />
-                            <input
-                              key={`due-${inv.id}-${inv.due_date}`}
-                              style={inputStyle}
-                              type="date"
-                              defaultValue={inv.due_date ?? ''}
-                              onBlur={(e) => e.target.value !== (inv.due_date ?? '') && crm.updateDraftInvoice(inv.id, { due_date: e.target.value || null })}
-                            />
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                            <div style={{ ...primaryBtn, pointerEvents: sendingDraftId === inv.id ? 'none' : 'auto', opacity: sendingDraftId === inv.id ? 0.6 : 1 }} onClick={() => sendDraft(inv)}>
-                              {sendingDraftId === inv.id ? 'Sending…' : 'Send invoice'}
-                            </div>
-                            <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.removeDraftInvoice(inv.id)}>Delete draft</span>
-                          </div>
-                          {sendErrors[inv.id] && <span style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)' }}>{sendErrors[inv.id]}</span>}
-                          <div style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)' }}>Nothing is sent to Stripe until you hit Send — edit anything above first.</div>
-                        </>
-                      ) : (
-                        <>
-                          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)' }}>
-                            {inv.sent_at && <div>Sent {new Date(inv.sent_at).toLocaleDateString()}</div>}
-                            {inv.paid_at && <div style={{ color: 'var(--success)', marginTop: 4 }}>Paid {new Date(inv.paid_at).toLocaleDateString()}</div>}
-                          </div>
-                          {inv.stripe_invoice_url && (
-                            <a href={inv.stripe_invoice_url} target="_blank" rel="noreferrer" className="ap-btn ap-btn-secondary" style={{ width: 'max-content', padding: '8px 16px', fontSize: 'var(--text-body-sm)' }}>
-                              View / pay invoice ↗
-                            </a>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
+                  {/* Draft/void grey, paid green, anything unpaid (sent/overdue)
+                      red — per the build prompt's status-color convention. */}
+                  <span style={{
+                    fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', borderRadius: 'var(--radius-pill)', padding: '3px 9px', flexShrink: 0,
+                    color: inv.status === 'paid' ? 'var(--success)' : isDraft || inv.status === 'void' ? 'var(--text-tertiary)' : 'var(--danger)',
+                    border: `1px solid ${inv.status === 'paid' ? 'color-mix(in srgb, var(--success) 40%, transparent)' : isDraft || inv.status === 'void' ? 'var(--border)' : 'color-mix(in srgb, var(--danger) 40%, transparent)'}`,
+                  }}>
+                    {inv.status}
+                  </span>
                 </div>
               );
             })}

@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { useClientCRM } from '../../data/useClientCRM';
 import type { ClientStage } from '../../data/types';
 import ClientDetailView from './ClientDetailView';
+import AllInvoicesView from './AllInvoicesView';
 import { AuditQuestionsAdmin, PricingTemplateAdmin, ServiceCatalogAdmin } from './ClientCRMAdmin';
 
 interface Props {
@@ -79,8 +80,20 @@ export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle }: Props) 
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [stageFilter, setStageFilter] = useState<ClientStage | 'all'>('all');
+  const [view, setView] = useState<'board' | 'invoices'>('board');
 
   if (crm.loading) return <div style={homeSubStyle}>Loading…</div>;
+
+  if (view === 'invoices') {
+    return (
+      <div>
+        <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 'var(--text-body)', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 14 }} onClick={() => setView('board')}>
+          ← Client board
+        </div>
+        <AllInvoicesView crm={crm} homeHeadStyle={homeHeadStyle} homeSubStyle={homeSubStyle} />
+      </div>
+    );
+  }
 
   if (showQuestionAdmin) {
     return <AuditQuestionsAdmin crm={crm} onClose={() => setShowQuestionAdmin(false)} homeHeadStyle={homeHeadStyle} homeSubStyle={homeSubStyle} />;
@@ -117,6 +130,7 @@ export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle }: Props) 
           <div style={homeSubStyle}>Discovery → Analysis → Package/Pricing → Invoice → Payment → Active Client.</div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div style={ghostBtn} onClick={() => setView('invoices')}>All invoices</div>
           <div style={ghostBtn} onClick={() => setShowCatalogAdmin(true)}>Service catalog</div>
           <div style={ghostBtn} onClick={() => setShowTemplateAdmin(true)}>Default pricing template</div>
           <div style={ghostBtn} onClick={() => setShowQuestionAdmin(true)}>Manage audit questions</div>
