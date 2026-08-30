@@ -47,6 +47,7 @@ import CashFlowScreen from './components/screens/CashFlowScreen';
 import PatternDetectionScreen from './components/screens/PatternDetectionScreen';
 import VoiceCaptureScreen from './components/screens/VoiceCaptureScreen';
 import ManageModulesScreen from './components/screens/ManageModulesScreen';
+import GrantAccessScreen from './components/screens/GrantAccessScreen';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
 import ProductTour, { filterTourSteps } from './components/ProductTour';
 import { buildViewModel } from './viewModel';
@@ -58,7 +59,7 @@ const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
   'scaling-start', 'delivery', 'support-inbox', 'legal', 'scaling-planner', 'audits', 'client-crm', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings',
-  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules',
+  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'grant-access',
 ];
 
 interface Props {
@@ -75,7 +76,7 @@ interface Props {
 }
 
 export default function Stage({ state, actions, assistantName, canAccess, onSignOut, currentUserId, userEmail, isOwner, theme, onThemeChange }: Props) {
-  const vm = buildViewModel(state, actions.navigateTo, onSignOut, canAccess);
+  const vm = buildViewModel(state, actions.navigateTo, onSignOut, canAccess, isOwner);
   const { isMobile } = vm;
   const bender = useBender();
 
@@ -365,6 +366,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'manage-modules' && (
           <ManageModulesScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} currentUserId={currentUserId} isOwner={isOwner} />
+        )}
+
+        {state.screen === 'grant-access' && isOwner && (
+          <GrantAccessScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {(state.screen === 'placeholder' || !BUILT_SCREENS.includes(state.screen)) && (

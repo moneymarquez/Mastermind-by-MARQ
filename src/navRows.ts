@@ -16,6 +16,7 @@ const SUB_SCREEN_BY_LABEL: Record<string, string> = {
   Account: 'account-settings',
   'Prompt & Voice': 'prompt-voice-settings',
   'Manage modules': 'manage-modules',
+  'Grant Access': 'grant-access',
   'Legal & FAQ': 'legal',
 };
 
@@ -24,10 +25,11 @@ export function buildNavRows(
   settingsExpanded: boolean,
   navigateTo: (id: string) => void,
   onSignOut: () => void,
-  canAccess: (moduleKey: string) => boolean
+  canAccess: (moduleKey: string) => boolean,
+  isOwner: boolean
 ): NavRow[] {
   const rows: NavRow[] = [];
-  buildNavData(canAccess).forEach((g) => {
+  buildNavData(canAccess, isOwner).forEach((g) => {
     if (g.group) {
       rows.push({ kind: 'header', key: `header-${g.group}`, label: g.group });
     }

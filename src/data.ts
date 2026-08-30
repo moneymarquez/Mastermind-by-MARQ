@@ -48,6 +48,7 @@ export const NAV_DATA: NavGroup[] = [
       { id: 'support-inbox', label: 'Support Inbox', icon: 'ph-address-book' },
       { id: 'leadflow', label: 'LeadFlow', icon: 'ph-users-three' },
       { id: 'website', label: 'Website/App Builder', icon: 'ph-code' },
+      { id: 'client-crm', label: 'Client CRM', icon: 'ph-users' },
       { id: 'scaling-planner', label: 'Scaling Planner', icon: 'ph-rocket-launch' },
       { id: 'audits', label: 'Business Audits', icon: 'ph-clipboard-text' },
       { id: 'brand-lab', label: 'Brand Lab', icon: 'ph-flask' },
@@ -76,7 +77,7 @@ export const NAV_DATA: NavGroup[] = [
         label: 'Settings',
         icon: 'ph-gear-six',
         collapsible: true,
-        sub: ['Account', 'Prompt & Voice', 'Notifications', 'Manage modules', 'Legal & FAQ', 'Sign Out'],
+        sub: ['Account', 'Prompt & Voice', 'Notifications', 'Manage modules', 'Grant Access', 'Legal & FAQ', 'Sign Out'],
       },
       { id: 'codelab', label: 'Code Lab', icon: 'ph-terminal-window' },
     ],
@@ -95,13 +96,18 @@ export const PLACEHOLDER_NOTES: Record<string, string> = {};
 // NAV_ITEM_TO_MODULE (home, settings, codelab) are system-level and always
 // pass through untouched. A group whose items are entirely filtered out is
 // dropped too, so a fully-disabled category doesn't leave a bare header.
-export function buildNavData(canAccess: (moduleKey: string) => boolean): NavGroup[] {
+export function buildNavData(canAccess: (moduleKey: string) => boolean, isOwner: boolean): NavGroup[] {
   return NAV_DATA.map((g) => ({
     ...g,
-    items: g.items.filter((it) => {
-      const moduleKey = NAV_ITEM_TO_MODULE[it.id];
-      return !moduleKey || canAccess(moduleKey);
-    }),
+    items: g.items
+      .filter((it) => {
+        const moduleKey = NAV_ITEM_TO_MODULE[it.id];
+        return !moduleKey || canAccess(moduleKey);
+      })
+      // Grant Access administers comped accounts for the whole app — the
+      // owner-only screen it opens already enforces this server-side, but
+      // a non-owner shouldn't see the entry in their own Settings at all.
+      .map((it) => (it.sub ? { ...it, sub: it.sub.filter((label) => label !== 'Grant Access' || isOwner) } : it)),
   })).filter((g) => g.items.length > 0);
 }
 

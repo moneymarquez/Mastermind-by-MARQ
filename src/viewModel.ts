@@ -11,14 +11,15 @@ export function buildViewModel(
   state: AppState,
   navigateTo: (id: string) => void,
   onSignOut: () => void,
-  canAccess: (moduleKey: string) => boolean
+  canAccess: (moduleKey: string) => boolean,
+  isOwner: boolean
 ) {
   const s = state;
   const isMobile = s.isMobile;
   const geo = computeGeometry(s, isMobile);
   const { circleSize, stageWidth, stageHeight, cx, cy } = geo;
 
-  const navRows = buildNavRows(s.screen, s.settingsExpanded, navigateTo, onSignOut, canAccess);
+  const navRows = buildNavRows(s.screen, s.settingsExpanded, navigateTo, onSignOut, canAccess, isOwner);
 
   // Both mobile and desktop now have real, in-flow chrome (MobileHeader +
   // MobileTabBar, or Sidebar + TopHeader) fixed to the stage rather than

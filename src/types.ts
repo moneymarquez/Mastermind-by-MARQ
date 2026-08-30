@@ -37,6 +37,7 @@ export type Screen =
   | 'patterns'
   | 'voice-capture'
   | 'manage-modules'
+  | 'grant-access'
   | 'placeholder';
 
 export interface StickyIdea {
