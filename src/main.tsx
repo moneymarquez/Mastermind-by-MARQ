@@ -4,8 +4,13 @@ import './index.css'
 import App from './App.tsx'
 import PublicAuditScreen from './PublicAuditScreen.tsx'
 import PublicClientDashboard from './PublicClientDashboard.tsx'
-import OrientationGuard from './components/OrientationGuard.tsx'
 import { isStandalone } from './lib/pwa'
+import { initOrientationLock } from './lib/orientationLock'
+
+// Applies the data-force-portrait attribute index.css's rotate-lock keys
+// off of — called before the first render so there's no flash of
+// sideways content if the tab happens to open already in landscape.
+initOrientationLock();
 
 // The two genuinely public routes in the app — /audit (Part 1b: a prospect
 // filling out the lead-gen questionnaire) and /client/<token> (Part 7: a
@@ -24,16 +29,15 @@ createRoot(document.getElementById('root')!).render(
       : clientToken
         ? <PublicClientDashboard token={clientToken} />
         : <App />}
-    <OrientationGuard />
   </StrictMode>,
 )
 
-// Best-effort real lock, on top of OrientationGuard's CSS block — only
-// takes effect where the Screen Orientation Lock API actually exists,
-// which today means an installed (standalone) PWA on Android Chrome.
-// iOS Safari has never implemented this API at all, in-tab or installed,
-// so this silently no-ops there and the CSS overlay is doing all the
-// real work on this app's actual iPhone/iPad audience.
+// Best-effort real lock, on top of the CSS rotate-compensation above —
+// only takes effect where the Screen Orientation Lock API actually
+// exists, which today means an installed (standalone) PWA on Android
+// Chrome. iOS Safari has never implemented this API at all, in-tab or
+// installed, so this silently no-ops there and the CSS handles it
+// instead on this app's actual iPhone/iPad audience.
 if (isStandalone()) {
   const orientation = screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> };
   orientation.lock?.('portrait')?.catch(() => {});

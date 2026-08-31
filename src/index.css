@@ -182,28 +182,39 @@ body {
   background: color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
-/* Practical portrait lock — see OrientationGuard.tsx for why this is CSS
-   rather than the Screen Orientation Lock API (no iOS Safari support at
-   all, in-tab or installed). Hidden by default; the media query below is
-   the only thing that ever shows it. max-height (not max-width) targets
-   phones specifically: in landscape a phone's HEIGHT is its short/native
-   dimension, so a landscape laptop (tall enough) never matches this. */
-.orientation-guard {
-  display: none;
+/* Practical portrait lock — the app stays visually portrait even when the
+   phone is physically turned sideways, by rendering it into a
+   still-portrait-shaped box and rotating that box 90deg to fill the now-
+   landscape screen. Real hardware orientation lock (screen.orientation.
+   lock) has no iOS Safari support at all, in-tab or installed — this CSS
+   is the only thing that reliably does the job there (see
+   src/lib/orientationLock.ts, which sets data-force-portrait on <html>
+   and feeds src/state.ts the matching swapped viewport dimensions so the
+   app's own mobile/desktop breakpoint logic isn't fooled by the raw,
+   still-landscape window.innerWidth).
+
+   Two branches, not one, because a phone can be rotated into landscape
+   two different ways (landscape-primary vs -secondary) — a single fixed
+   rotation would render the app upside down for whichever direction it
+   didn't account for. Each branch's rotate direction + top/left offset
+   is derived so the rotated box exactly tiles the physical viewport with
+   no gap and no overflow; do not tweak one value without the other. */
+html[data-force-portrait] #root {
+  position: absolute;
+  width: 100vh;
+  height: 100vw;
 }
-@media (orientation: landscape) and (max-height: 768px) {
-  .orientation-guard {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    background: var(--bg);
-    padding: 32px;
-  }
+html[data-force-portrait="primary"] #root {
+  top: 0;
+  left: 100%;
+  transform: rotate(90deg);
+  transform-origin: top left;
+}
+html[data-force-portrait="secondary"] #root {
+  top: 100%;
+  left: 0;
+  transform: rotate(-90deg);
+  transform-origin: top left;
 }
 
 @keyframes bloomPop {

@@ -6,6 +6,7 @@ import { supabase } from './lib/supabase';
 import { useNovaPreferences } from './data/useNovaPreferences';
 import { startListening } from './lib/speech';
 import type { SpeechRecognizerHandle } from './lib/speech';
+import { getForcePortraitDirection } from './lib/orientationLock';
 
 const TONE_INSTRUCTIONS: Record<string, string> = {
   direct: 'Be blunt and to the point — skip the cushioning, say the real thing.',
@@ -33,7 +34,17 @@ const CIRCLE_SCALE = 0.85; // mirrors geometry.ts's CIRCLE_SCALE
 function currentViewport(): { width: number; height: number } {
   if (typeof window === 'undefined') return { width: 1440, height: 900 };
   const vv = window.visualViewport;
-  return { width: vv?.width ?? window.innerWidth, height: vv?.height ?? window.innerHeight };
+  const width = vv?.width ?? window.innerWidth;
+  const height = vv?.height ?? window.innerHeight;
+  // index.css's data-force-portrait rotates the rendered app 90deg to
+  // compensate for a landscape-rotated phone — but the raw physical
+  // viewport (what's read above) is still landscape-shaped. Without this
+  // swap, Stage would size itself to that raw landscape box and
+  // isMobile would flip false (width >= 768), handing back the desktop
+  // sidebar layout instead of staying in the portrait mobile one that's
+  // actually being displayed, rotated, on screen.
+  if (getForcePortraitDirection()) return { width: height, height: width };
+  return { width, height };
 }
 
 function defaultCirclePos(viewportWidth: number, isMobile: boolean): Point {
