@@ -203,7 +203,16 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         </>
       )}
 
-      <div id="tour-content-panel" style={vm.contentStyle}>
+      {/* vm.contentStyle's own bottom padding only clears MobileTabBar —
+          RemindersBox floats further up still (tabBarHeight + 20 + its own
+          height), so long-scrolling screens (Schedule's month grid, e.g.)
+          could run underneath it. Pad the extra measured height in here on
+          mobile so content always clears the actual box, not just the tab
+          bar beneath it. */}
+      <div
+        id="tour-content-panel"
+        style={isMobile ? { ...vm.contentStyle, paddingBottom: `calc(${vm.tabBarHeight + 20 + remindersBox.height + 20}px + env(safe-area-inset-bottom))` } : vm.contentStyle}
+      >
         {screenBlocked ? (
           <PlaceholderScreen isMobile={isMobile} label="Not available" note="This section isn't available on your account." />
         ) : (
