@@ -11,7 +11,7 @@ import BrandLabIntakeForm from './BrandLabIntakeForm';
 import type { IntakePayload } from './BrandLabIntakeForm';
 import BrandLabSpecReview from './BrandLabSpecReview';
 import { generateFunctionalSpec } from '../../data/brandLabSpec';
-import { buildPrompts, buildFablePrompt } from '../../data/brandLabPrompts';
+import { buildPrompts, buildFablePrompt, draftImagery } from '../../data/brandLabPrompts';
 import PromptBox from '../PromptBox';
 import { useBrandLabRounds } from '../../data/useBrandLabRounds';
 import BrandLabRounds from './BrandLabRounds';
@@ -387,7 +387,10 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
                   setPromptsBusy(true);
                   setPromptsError('');
                   try {
-                    const prompts = await buildPrompts(active, nichesApi.bySlug(active.niche_slug), { design: lockedRound?.pasted_html ?? null });
+                    // Rebuild re-assembles from the current spec/niche and keeps
+                    // an existing imagery block (edited or not) — redrafting it
+                    // is Box 3's own button, so a rebuild is instant.
+                    const prompts = await buildPrompts(active, nichesApi.bySlug(active.niche_slug), { imagery: active.prompts?.imagery, design: lockedRound?.pasted_html ?? null });
                     await updateBrief(active.id, { prompts });
                   } catch (err) {
                     setPromptsError(err instanceof AiError ? err.message : 'Could not build the prompts — try again.');
@@ -416,7 +419,39 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
                   hint={lockedRound?.pasted_html ? `Slot 6 carries the locked design (round ${lockedRound.round_number}).` : 'Slot 6 is a paste marker until a round is approved below.'}
                   text={active.prompts.fable}
                 />
-                <PromptBox title="Box 3 — Higgsfield (standalone, optional)" hint="Only if you're generating imagery outside Claude Design." text={active.prompts.imagery} />
+                {/* Step 7 — the imagery block is the one model-drafted part, so
+                    it's the one that most needs to stay editable: edits re-assemble
+                    the Design prompt (no model call); Redraft re-runs only the
+                    imagery call and keeps the locked design + everything else. */}
+                <PromptBox
+                  title="Box 3 — Higgsfield imagery (editable)"
+                  hint="Also embedded in Box 1. Edit here and Box 1 updates; Redraft rewrites only this block."
+                  text={active.prompts.imagery}
+                  onChange={async (imagery) => {
+                    const prompts = await buildPrompts(active, nichesApi.bySlug(active.niche_slug), { imagery, design: lockedRound?.pasted_html ?? null });
+                    await updateBrief(active.id, { prompts });
+                  }}
+                  actions={(
+                    <span
+                      style={{ ...ghostBtn, opacity: promptsBusy ? 0.6 : 1, pointerEvents: promptsBusy ? 'none' : 'auto' }}
+                      onClick={async () => {
+                        setPromptsBusy(true);
+                        setPromptsError('');
+                        try {
+                          const imagery = await draftImagery(active, active.functional_spec!, nichesApi.bySlug(active.niche_slug));
+                          const prompts = await buildPrompts(active, nichesApi.bySlug(active.niche_slug), { imagery, design: lockedRound?.pasted_html ?? null });
+                          await updateBrief(active.id, { prompts });
+                        } catch (err) {
+                          setPromptsError(err instanceof AiError ? err.message : 'Could not redraft the imagery — try again.');
+                        } finally {
+                          setPromptsBusy(false);
+                        }
+                      }}
+                    >
+                      {promptsBusy ? 'Working…' : 'Redraft'}
+                    </span>
+                  )}
+                />
               </>
             )}
           </div>
