@@ -27,8 +27,8 @@ interface Props {
   onNavigate: (screen: string) => void;
 }
 
-const tile: CSSProperties = { padding: 17, borderRadius: 16, background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 9, position: 'relative', minWidth: 0 };
-const cardShell: CSSProperties = { borderRadius: 18, background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', minHeight: 0 };
+const tile: CSSProperties = { padding: 17, borderRadius: 16, background: 'var(--mm-panel-solid)', border: '1px solid var(--mm-line)', display: 'flex', flexDirection: 'column', gap: 9, position: 'relative', minWidth: 0 };
+const cardShell: CSSProperties = { borderRadius: 18, background: 'var(--mm-panel-solid)', border: '1px solid var(--mm-line)', display: 'flex', flexDirection: 'column', minHeight: 0 };
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -124,13 +124,13 @@ export default function HomeScreen({ isMobile, homeHeadStyle, homeSubStyle, stat
         return (
           <div key={i} style={tile}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 10.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>{card.caption}</div>
-              <Icon name={card.icon} size={15} color="var(--text-tertiary)" />
+              <div style={{ fontSize: 10.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--mm-faint)' }}>{card.caption}</div>
+              <Icon name={card.icon} size={15} color="var(--mm-faint)" />
             </div>
             <div style={card.valueStyle}>{card.value}</div>
             {pct !== null && (
-              <div style={{ height: 4, borderRadius: 4, background: 'var(--surface-4)' }}>
-                <div style={{ width: `${Math.max(0, Math.min(100, pct))}%`, height: '100%', borderRadius: 4, background: 'var(--text)' }} />
+              <div style={{ height: 4, borderRadius: 4, background: 'var(--mm-track)' }}>
+                <div style={{ width: `${Math.max(0, Math.min(100, pct))}%`, height: '100%', borderRadius: 4, background: 'var(--mm-text)' }} />
               </div>
             )}
           </div>
@@ -143,29 +143,29 @@ export default function HomeScreen({ isMobile, homeHeadStyle, homeSubStyle, stat
     <div style={{ ...cardShell, padding: 20, gap: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontSize: 15.5, fontWeight: 600, letterSpacing: '-0.015em' }}>Macros today</div>
-        <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+        <div style={{ fontSize: 12, color: 'var(--mm-faint)' }}>
           {macrosLoading ? '—' : caloriesTarget ? `${totals.calories} / ${caloriesTarget} kcal` : `${totals.calories} kcal`}
         </div>
       </div>
       <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
-        <div style={{ position: 'relative', width: 96, height: 96, flexShrink: 0, borderRadius: '50%', background: caloriesPct !== null ? `conic-gradient(var(--text) ${caloriesPct}%, var(--surface-4) 0)` : 'var(--surface-4)' }}>
-          <div style={{ position: 'absolute', inset: 11, borderRadius: '50%', background: 'var(--surface)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'relative', width: 96, height: 96, flexShrink: 0, borderRadius: '50%', background: caloriesPct !== null ? `conic-gradient(var(--mm-text) ${caloriesPct}%, var(--mm-track) 0)` : 'var(--mm-track)' }}>
+          <div style={{ position: 'absolute', inset: 11, borderRadius: '50%', background: 'var(--mm-panel-solid)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-0.03em' }}>{caloriesPct !== null ? `${caloriesPct}%` : '—'}</div>
-            <div style={{ fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>of target</div>
+            <div style={{ fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--mm-faint)' }}>of target</div>
           </div>
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 11, minWidth: 0 }}>
           {macroBars.length === 0 ? (
-            <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>No active nutrition target set.</div>
+            <div style={{ fontSize: 12.5, color: 'var(--mm-faint)' }}>No active nutrition target set.</div>
           ) : (
             macroBars.map((b) => (
               <div key={b.label} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                   <span>{b.label}</span>
-                  <span style={{ color: 'var(--text-tertiary)' }}>{Math.round(b.have)} / {b.of}g</span>
+                  <span style={{ color: 'var(--mm-faint)' }}>{Math.round(b.have)} / {b.of}g</span>
                 </div>
-                <div style={{ height: 5, borderRadius: 5, background: 'var(--surface-4)' }}>
-                  <div style={{ width: `${Math.min(100, Math.round((b.have / b.of) * 100))}%`, height: '100%', borderRadius: 5, background: 'var(--text)' }} />
+                <div style={{ height: 5, borderRadius: 5, background: 'var(--mm-track)' }}>
+                  <div style={{ width: `${Math.min(100, Math.round((b.have / b.of) * 100))}%`, height: '100%', borderRadius: 5, background: 'var(--mm-text)' }} />
                 </div>
               </div>
             ))
@@ -174,13 +174,13 @@ export default function HomeScreen({ isMobile, homeHeadStyle, homeSubStyle, stat
       </div>
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 7 }}>
         {todayMeals.slice(0, 2).map((m) => (
-          <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 12, background: 'var(--surface-3)', fontSize: 12.5 }}>
-            <Icon name="fork-knife" size={15} color="var(--text-tertiary)" />
+          <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 12, background: 'var(--mm-tile)', fontSize: 12.5 }}>
+            <Icon name="fork-knife" size={15} color="var(--mm-faint)" />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.meal_type} — {m.restaurant_name || m.note || 'logged'}</span>
-            <span style={{ marginLeft: 'auto', color: 'var(--text-tertiary)', flexShrink: 0 }}>{m.calories ?? '—'}</span>
+            <span style={{ marginLeft: 'auto', color: 'var(--mm-faint)', flexShrink: 0 }}>{m.calories ?? '—'}</span>
           </div>
         ))}
-        <div onClick={() => onNavigate('macros')} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 12, border: '1px dashed var(--border-2)', fontSize: 12.5, color: 'var(--text-tertiary)', cursor: 'pointer' }}>
+        <div onClick={() => onNavigate('macros')} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 12, border: '1px dashed var(--mm-line2)', fontSize: 12.5, color: 'var(--mm-faint)', cursor: 'pointer' }}>
           <Icon name="plus" size={15} />Log a meal
         </div>
       </div>
@@ -192,15 +192,15 @@ export default function HomeScreen({ isMobile, homeHeadStyle, homeSubStyle, stat
       <div style={{ ...cardShell, padding: 20, gap: 10, flex: 1 }}>
         <div style={{ fontSize: 15.5, fontWeight: 600, letterSpacing: '-0.015em' }}>Today</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13 }}>
-          {eventsLoading && <div style={{ color: 'var(--text-tertiary)' }}>Loading…</div>}
-          {!eventsLoading && todayEvents.length === 0 && <div style={{ color: 'var(--text-tertiary)' }}>Nothing on the calendar today.</div>}
+          {eventsLoading && <div style={{ color: 'var(--mm-faint)' }}>Loading…</div>}
+          {!eventsLoading && todayEvents.length === 0 && <div style={{ color: 'var(--mm-faint)' }}>Nothing on the calendar today.</div>}
           {todayEvents.map((e) => (
             <div
               key={e.id}
               onClick={() => onNavigate('schedule')}
-              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 13px', borderRadius: 12, background: 'var(--surface-3)', cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 13px', borderRadius: 12, background: 'var(--mm-tile)', cursor: 'pointer' }}
             >
-              <span style={{ fontFamily: 'var(--font-mono)', width: 46, flexShrink: 0, color: 'var(--text-tertiary)' }}>{formatTimeLabel(e.start_time)}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', width: 46, flexShrink: 0, color: 'var(--mm-faint)' }}>{formatTimeLabel(e.start_time)}</span>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.notes || e.type}</span>
             </div>
           ))}
@@ -209,19 +209,19 @@ export default function HomeScreen({ isMobile, homeHeadStyle, homeSubStyle, stat
       <div style={{ ...cardShell, padding: '18px 20px', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 15.5, fontWeight: 600, letterSpacing: '-0.015em' }}>Dial pace</div>
-          <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>
+          <div style={{ fontSize: 11.5, color: 'var(--mm-faint)' }}>
             {outcomesLoading || contactsLoading ? '—' : `${todayCount}/${DAILY_CALL_GOAL} today`}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 5, alignItems: 'flex-end', height: 52 }}>
           {dialBars.length === 0 && !outcomesLoading && (
-            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>No calls logged yet.</div>
+            <div style={{ fontSize: 12, color: 'var(--mm-faint)' }}>No calls logged yet.</div>
           )}
           {dialBars.map((d) => (
             <div
               key={d.date}
               title={`${d.date}: ${d.total} calls`}
-              style={{ flex: 1, height: `${Math.max(6, Math.round((d.total / dialBarMax) * 100))}%`, borderRadius: 3, background: d.total >= DAILY_CALL_GOAL ? 'var(--text)' : 'var(--surface-4)' }}
+              style={{ flex: 1, height: `${Math.max(6, Math.round((d.total / dialBarMax) * 100))}%`, borderRadius: 3, background: d.total >= DAILY_CALL_GOAL ? 'var(--mm-text)' : 'var(--mm-track)' }}
             />
           ))}
         </div>
@@ -230,25 +230,25 @@ export default function HomeScreen({ isMobile, homeHeadStyle, homeSubStyle, stat
   );
 
   const novaCard = (
-    <div style={{ ...cardShell, background: 'var(--accent-soft)', border: 'none', padding: 20, gap: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 10.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--accent)' }}>
+    <div style={{ ...cardShell, background: 'var(--mm-ink)', color: 'var(--mm-ink-text)', border: 'none', padding: 20, gap: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 10.5, letterSpacing: '0.2em', textTransform: 'uppercase', opacity: 0.66 }}>
         <Icon name="sparkle" size={16} />Nova
       </div>
-      <div style={{ fontSize: 15, lineHeight: 1.5, color: 'var(--text)' }}>
+      <div style={{ fontSize: 15, lineHeight: 1.5 }}>
         Ask {assistantName} anything about today, or across any module you've turned on.
       </div>
 
       {nudges.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {nudges.slice(0, 3).map((n) => (
-            <div key={n.id} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, padding: '10px 12px', borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--border)' }}>
+            <div key={n.id} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, padding: '10px 12px', borderRadius: 12, background: 'var(--mm-ink-soft)', border: '1px solid var(--mm-ink-line)' }}>
               <div
-                style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.45, cursor: n.target_screen ? 'pointer' : 'default' }}
+                style={{ fontSize: 12.5, opacity: 0.8, lineHeight: 1.45, cursor: n.target_screen ? 'pointer' : 'default' }}
                 onClick={() => n.target_screen && onNavigate(n.target_screen)}
               >
                 {n.message}
               </div>
-              <span style={{ fontSize: 10.5, color: 'var(--text-tertiary)', cursor: 'pointer', flexShrink: 0 }} onClick={(e) => { e.stopPropagation(); dismissNudge(n.id); }}>✕</span>
+              <span style={{ fontSize: 10.5, opacity: 0.6, cursor: 'pointer', flexShrink: 0 }} onClick={(e) => { e.stopPropagation(); dismissNudge(n.id); }}>✕</span>
             </div>
           ))}
         </div>
@@ -256,7 +256,7 @@ export default function HomeScreen({ isMobile, homeHeadStyle, homeSubStyle, stat
 
       <div
         onClick={onOpenNova}
-        style={{ marginTop: isMobile ? 0 : 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px', borderRadius: 12, background: 'var(--text)', color: 'var(--bg)', fontSize: 13.5, fontWeight: 600, cursor: 'pointer' }}
+        style={{ marginTop: isMobile ? 0 : 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px', borderRadius: 12, background: 'var(--mm-ink-text)', color: 'var(--mm-ink)', fontSize: 13.5, fontWeight: 600, cursor: 'pointer' }}
       >
         Open Nova<Icon name="arrow-right" size={16} />
       </div>

@@ -353,13 +353,13 @@ input, textarea, [contenteditable="true"] {
 }
 
 /* Nav drawer top-level items — the app's only "accent" is
-   background-vs-text inverted, so the hover glow uses --text rather than
+   background-vs-text inverted, so the hover glow uses --mm-text rather than
    introducing a new color. */
 .nav-row {
   transition: box-shadow 180ms ease, transform 180ms ease, filter 180ms ease;
 }
 .nav-row:hover {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 14%, transparent), 0 0 20px color-mix(in srgb, var(--text) 18%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mm-text) 14%, transparent), 0 0 20px color-mix(in srgb, var(--mm-text) 18%, transparent);
   transform: scale(1.015);
   filter: brightness(1.1);
 }

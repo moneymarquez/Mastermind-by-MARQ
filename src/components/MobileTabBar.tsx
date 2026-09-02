@@ -30,7 +30,7 @@ export default function MobileTabBar({ screen, novaOpen, onNavigate, onToggleNov
       <div
         key={item.screen}
         onClick={() => onNavigate(item.screen)}
-        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 52, color: active ? 'var(--text)' : 'var(--text-tertiary)', cursor: 'pointer' }}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 52, color: active ? 'var(--mm-text)' : 'var(--mm-faint)', cursor: 'pointer' }}
       >
         <Icon name={item.icon} size={22} />
         <div style={{ fontSize: 9.5, letterSpacing: '0.06em' }}>{item.label}</div>
@@ -43,7 +43,7 @@ export default function MobileTabBar({ screen, novaOpen, onNavigate, onToggleNov
       style={{
         position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 30, height: TAB_BAR_HEIGHT,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 22px calc(10px + env(safe-area-inset-bottom))',
-        borderTop: '1px solid var(--border)', background: 'color-mix(in srgb, var(--bg) 85%, transparent)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+        borderTop: '1px solid var(--mm-line)', background: 'var(--mm-bg-blur)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
       }}
     >
       {items.map(tab)}
@@ -51,8 +51,8 @@ export default function MobileTabBar({ screen, novaOpen, onNavigate, onToggleNov
         onClick={onToggleNova}
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', width: 54, height: 54, borderRadius: '50%', marginTop: -18,
-          background: 'var(--text)', color: 'var(--bg)', boxShadow: '0 8px 24px rgba(0,0,0,0.35)', cursor: 'pointer',
-          outline: novaOpen ? '2px solid var(--accent)' : 'none', outlineOffset: 2,
+          background: 'var(--mm-ink)', color: 'var(--mm-ink-text)', boxShadow: '0 8px 24px rgba(0,0,0,0.35)', cursor: 'pointer',
+          outline: novaOpen ? '2px solid var(--mm-line-strong)' : 'none', outlineOffset: 2,
         }}
       >
         <Icon name="sparkle" size={24} />

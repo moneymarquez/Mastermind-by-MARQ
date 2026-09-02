@@ -155,8 +155,6 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             rows={vm.navRows}
             ownerName={ownerDisplayName}
             isOwner={isOwner}
-            theme={theme}
-            onThemeChange={onThemeChange}
             onClose={actions.closeDrawer}
             onOpenSettings={() => actions.navigateTo('account-settings')}
             onOpenTour={startTour}
@@ -181,8 +179,6 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             left={vm.sidebarWidth}
             screenLabel={activeNavLabel}
             activeModuleCount={activeModuleCount}
-            theme={theme}
-            onThemeChange={onThemeChange}
             onOpenTour={startTour}
             onOpenNotifications={() => actions.navigateTo('notification-settings')}
           />
