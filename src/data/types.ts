@@ -550,20 +550,49 @@ export interface BrandLabSteps {
   assetPrep?: BrandLabStepState;
 }
 
-export interface BrandLabBrief {
+export type BrandLabIntakeSource = 'transcript' | 'idea' | 'client';
+
+/** The intake fields (schema_051) — everything the transcript/idea/client
+ *  step lands in. Kept as its own type so the extraction call, the form,
+ *  and the row all agree on the shape. Every value is nullable on purpose:
+ *  null means "wasn't said", never "guess". */
+export interface BrandLabIntake {
+  business: string | null;
+  audience: string | null;
+  niche_slug: string | null;
+  niche_custom: string | null;
+  bottleneck_verbatim: string | null;
+  budget: string | null;
+  services: string | null;
+  geography: string | null;
+  wants: string | null;
+  dont_wants: string | null;
+  competitors: string | null;
+  quotes: string[];
+}
+
+export const BRAND_LAB_INTAKE_KEYS: (keyof BrandLabIntake)[] = [
+  'business', 'audience', 'niche_slug', 'niche_custom', 'bottleneck_verbatim', 'budget', 'services',
+  'geography', 'wants', 'dont_wants', 'competitors', 'quotes',
+];
+
+export interface BrandLabBrief extends BrandLabIntake {
   id: string;
   direction: string;
   reference_url_1: string | null;
   reference_url_2: string | null;
   reference_url_3: string | null;
   ai_copy: BrandLabCopy | null;
-  business: string | null;
-  audience: string | null;
   tone: string | null;
   color_pref: string | null;
   concepts: BrandConcept[];
   pinned_concept_id: string | null;
   steps: BrandLabSteps;
+  intake_source: BrandLabIntakeSource;
+  transcript: string | null;
+  client_id: string | null;
+  /** Which BrandLabIntake keys the model filled from the transcript. */
+  extracted_fields: string[];
   created_at: string;
 }
 

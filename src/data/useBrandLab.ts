@@ -25,10 +25,20 @@ export function useBrandLab() {
     audience?: string | null;
     tone?: string | null;
     color_pref?: string | null;
-  }) => {
+  } & Partial<Pick<BrandLabBrief,
+    'intake_source' | 'transcript' | 'client_id' | 'niche_slug' | 'niche_custom' | 'bottleneck_verbatim' | 'budget' |
+    'services' | 'geography' | 'wants' | 'dont_wants' | 'competitors' | 'quotes' | 'extracted_fields'
+  >>) => {
     const { data } = await supabase.from('brand_lab_briefs').insert(b).select().single();
     await load();
     return data as BrandLabBrief | null;
+  };
+
+  /** Any brief column — the intake fields are all editable after the fact
+   *  (an extracted value is a fast first draft, never a lock). */
+  const updateBrief = async (id: string, patch: Partial<Omit<BrandLabBrief, 'id' | 'created_at'>>) => {
+    await supabase.from('brand_lab_briefs').update(patch).eq('id', id);
+    await load();
   };
 
   const removeBrief = async (id: string) => {
@@ -58,5 +68,5 @@ export function useBrandLab() {
     await load();
   };
 
-  return { briefs, loading, addBrief, removeBrief, saveAiCopy, saveConcepts, pinConcept, saveStep };
+  return { briefs, loading, addBrief, updateBrief, removeBrief, saveAiCopy, saveConcepts, pinConcept, saveStep };
 }

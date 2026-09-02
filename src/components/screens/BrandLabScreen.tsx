@@ -3,9 +3,12 @@ import type { CSSProperties } from 'react';
 import { useBrandLab } from '../../data/useBrandLab';
 import { useScalingProjects } from '../../data/useScalingProjects';
 import { useNiches } from '../../data/useNiches';
+import { useClientCRM } from '../../data/useClientCRM';
 import type { BrandConcept, BrandLabBrief } from '../../data/types';
 import { askClaude, AiError } from '../../lib/ai';
 import NichesAdmin from './NichesAdmin';
+import BrandLabIntakeForm from './BrandLabIntakeForm';
+import type { IntakePayload } from './BrandLabIntakeForm';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -18,8 +21,6 @@ const ARCHETYPES = [
 ] as const;
 
 const FONT_OPTIONS = ['Inter', 'Playfair Display', 'Space Grotesk', 'DM Sans'];
-
-const TONE_OPTIONS = ['Minimal & calm', 'Bold & energetic', 'Editorial & narrative', 'Playful', 'Luxury / premium', 'Technical / precise'];
 
 async function generateConcepts(
   input: { business: string; audience: string; tone: string; colorPref: string; refs: (string | null)[] },
@@ -171,16 +172,10 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const { briefs, loading, addBrief, removeBrief, saveConcepts, pinConcept, saveStep } = useBrandLab();
   const { projects, patch: patchProject } = useScalingProjects();
   const nichesApi = useNiches();
+  const crm = useClientCRM();
 
   const [showForm, setShowForm] = useState(false);
   const [showNiches, setShowNiches] = useState(false);
-  const [business, setBusiness] = useState('');
-  const [audience, setAudience] = useState('');
-  const [url1, setUrl1] = useState('');
-  const [url2, setUrl2] = useState('');
-  const [url3, setUrl3] = useState('');
-  const [tone, setTone] = useState(TONE_OPTIONS[0]);
-  const [colorPref, setColorPref] = useState('');
   const [count, setCount] = useState<3 | 4 | 5>(3);
 
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -192,28 +187,24 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
 
   const active = briefs.find((b) => b.id === activeId) ?? null;
 
-  const submitNewBrief = async () => {
-    if (!business.trim() || !audience.trim()) return;
-    const refs = [url1.trim() || null, url2.trim() || null, url3.trim() || null];
+  // The intake step (BrandLabIntakeForm) lands here — transcript, idea, or
+  // client, same brief row. Concepts are no longer generated on save: the
+  // spec → prompts path is the product now, and the concept generator is
+  // an optional side-step on the brief page ("Generate concepts").
+  const submitNewBrief = async (p: IntakePayload) => {
+    const business = p.intake.business?.trim() ?? '';
     const brief = await addBrief({
-      direction: `${business.trim()} — ${tone}`,
-      reference_url_1: refs[0], reference_url_2: refs[1], reference_url_3: refs[2],
-      business: business.trim(), audience: audience.trim(), tone, color_pref: colorPref.trim() || null,
+      direction: `${business} — ${p.tone}`,
+      reference_url_1: p.refs[0], reference_url_2: p.refs[1], reference_url_3: p.refs[2],
+      business, audience: p.intake.audience?.trim() ?? '', tone: p.tone, color_pref: p.color_pref,
+      intake_source: p.intake_source, transcript: p.transcript, client_id: p.client_id,
+      niche_slug: p.intake.niche_slug, niche_custom: p.intake.niche_custom,
+      bottleneck_verbatim: p.intake.bottleneck_verbatim, budget: p.intake.budget, services: p.intake.services,
+      geography: p.intake.geography, wants: p.intake.wants, dont_wants: p.intake.dont_wants,
+      competitors: p.intake.competitors, quotes: p.intake.quotes, extracted_fields: p.extracted_fields,
     });
     setShowForm(false);
-    setBusiness(''); setAudience(''); setUrl1(''); setUrl2(''); setUrl3(''); setColorPref('');
-    if (!brief) return;
-    setActiveId(brief.id);
-    setGenerating(true);
-    setAiError('');
-    try {
-      const concepts = await generateConcepts({ business: brief.business ?? '', audience: brief.audience ?? '', tone: brief.tone ?? tone, colorPref: brief.color_pref ?? '', refs }, count);
-      await saveConcepts(brief.id, concepts);
-    } catch (err) {
-      setAiError(err instanceof AiError ? err.message : 'Could not generate concepts — try again.');
-    } finally {
-      setGenerating(false);
-    }
+    if (brief) setActiveId(brief.id);
   };
 
   const regenerate = async (brief: BrandLabBrief) => {
@@ -303,16 +294,52 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
         {generating && <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 12 }}>Nova is working on it…</div>}
         {aiError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 12 }}>{aiError}</div>}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 20 }}>
-          <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Concepts</div>
-          <span style={ghostBtn} onClick={() => regenerate(active)}>Regenerate</span>
+        {/* What the intake step captured — the brief's foundation, shown
+            plainly so nothing downstream is a black box. Blank fields are
+            omitted rather than shown as "—": a blank means it wasn't said. */}
+        <div style={{ marginTop: 18, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 16, maxWidth: 620, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Brief</div>
+            <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)' }}>
+              {active.intake_source === 'transcript' ? 'from a call transcript' : active.intake_source === 'client' ? 'from an existing client' : 'from an idea'}
+              {active.niche_slug ? ` · ${nichesApi.bySlug(active.niche_slug)?.name ?? active.niche_slug}${active.niche_slug === 'other' && active.niche_custom ? ` (${active.niche_custom})` : ''}` : ''}
+            </span>
+          </div>
+          {([
+            ['Bottleneck, in their words', active.bottleneck_verbatim],
+            ['Services', active.services],
+            ['Service area', active.geography],
+            ['Budget', active.budget],
+            ['They want', active.wants],
+            ["They don't want", active.dont_wants],
+            ['Competitors / references', active.competitors],
+          ] as [string, string | null][]).filter(([, v]) => !!v).map(([k, v]) => (
+            <div key={k} style={{ fontSize: 'var(--text-body-sm)', lineHeight: 1.5 }}>
+              <span style={{ color: 'var(--text-tertiary)' }}>{k}: </span>
+              <span style={{ color: 'var(--text)' }}>{v}</span>
+            </div>
+          ))}
+          {active.quotes.length > 0 && (
+            <div style={{ fontSize: 'var(--text-body-sm)', lineHeight: 1.5 }}>
+              <span style={{ color: 'var(--text-tertiary)' }}>Quotes: </span>
+              {active.quotes.map((q, i) => <span key={i} style={{ color: 'var(--text)' }}>“{q}”{i < active.quotes.length - 1 ? ' · ' : ''}</span>)}
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 20, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Visual concepts</div>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {([3, 4, 5] as const).map((n) => <div key={n} style={{ ...chipStyle(count === n), padding: '5px 10px' }} onClick={() => setCount(n)}>{n}</div>)}
+          </div>
+          <span style={ghostBtn} onClick={() => regenerate(active)}>{active.concepts.length ? 'Regenerate' : `Generate ${count} concepts`}</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginTop: 12, maxWidth: 900 }}>
           {active.concepts.map((c) => (
             <ConceptCard key={c.id} concept={c} pinned={active.pinned_concept_id === c.id} onPin={() => pinConcept(active.id, c.id)} />
           ))}
           {active.concepts.length === 0 && !generating && (
-            <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No concepts yet — try regenerating.</div>
+            <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>Optional — distinct layout directions to react to. The spec and prompts below don't need them.</div>
           )}
         </div>
 
@@ -417,27 +444,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
       </div>
 
       {showForm && (
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 20, marginTop: 20, maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <input style={inputStyle} placeholder="What's the business?" value={business} onChange={(e) => setBusiness(e.target.value)} />
-          <input style={inputStyle} placeholder="Who's the audience?" value={audience} onChange={(e) => setAudience(e.target.value)} />
-          <input style={inputStyle} placeholder="Reference site 1 (optional)" value={url1} onChange={(e) => setUrl1(e.target.value)} />
-          <input style={inputStyle} placeholder="Reference site 2 (optional)" value={url2} onChange={(e) => setUrl2(e.target.value)} />
-          <input style={inputStyle} placeholder="Reference site 3 (optional)" value={url3} onChange={(e) => setUrl3(e.target.value)} />
-          <div>
-            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 8 }}>Tone</div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {TONE_OPTIONS.map((t) => <div key={t} style={chipStyle(tone === t)} onClick={() => setTone(t)}>{t}</div>)}
-            </div>
-          </div>
-          <input style={inputStyle} placeholder="Color preference (optional — leave blank for AI's judgment)" value={colorPref} onChange={(e) => setColorPref(e.target.value)} />
-          <div>
-            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 8 }}>How many concepts?</div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {([3, 4, 5] as const).map((n) => <div key={n} style={chipStyle(count === n)} onClick={() => setCount(n)}>{n}</div>)}
-            </div>
-          </div>
-          <div style={primaryBtn} onClick={submitNewBrief}>Generate {count} concepts</div>
-        </div>
+        <BrandLabIntakeForm niches={nichesApi.niches} clients={crm.clients} onSubmit={submitNewBrief} onCancel={() => setShowForm(false)} />
       )}
 
       <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', maxWidth: 640 }}>
