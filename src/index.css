@@ -56,6 +56,46 @@
   --danger: #d98a95;
   --success: #7fb894;
   --warning: #d9b061;
+
+  /* ── Aperture (2026 reference) — supersedes the --accent/--bg blurple
+     system above for anything actually migrated to it. Values are taken
+     verbatim from aperture-reference.html's THEMES.dark — a near-black,
+     accent-free ground with an inverted "ink" pill instead of a colored
+     button. NOT a replacement of the tokens above (nothing currently
+     consuming --accent/--bg breaks) — introduced additively per the
+     build prompt, migrated screen by screen starting with the landing
+     page. Two systems will coexist for a while; that's expected. */
+  --mm-canvas: #08090c;
+  --mm-bg: #0b0c11;
+  --mm-bg-blur: rgba(11,12,17,.78);
+  --mm-bg2: #0f1016;
+  --mm-panel: rgba(255,255,255,.05);
+  --mm-panel-solid: #12141b;
+  --mm-tile: rgba(255,255,255,.045);
+  --mm-field: rgba(255,255,255,.035);
+  --mm-line: rgba(255,255,255,.09);
+  --mm-line2: rgba(255,255,255,.16);
+  --mm-line-strong: rgba(255,255,255,.34);
+  --mm-track: rgba(255,255,255,.12);
+  --mm-grid: rgba(255,255,255,.04);
+  --mm-bloom: rgba(255,255,255,.17);
+  --mm-text: #f2f2f6;
+  --mm-dim: #a4a6b0;
+  --mm-faint: #7b7d87;
+  --mm-accent-text: #ffffff;
+  --mm-ink: #f2f2f6;
+  --mm-ink-text: #0b0c11;
+  --mm-ink-soft: rgba(11,12,17,.09);
+  --mm-ink-line: rgba(11,12,17,.16);
+  --mm-code-bg: #15171f;
+  --mm-code-text: #e6e7ec;
+  --mm-code-line: rgba(255,255,255,.13);
+  --mm-logo-filter: none;
+  --mm-logo-blend: screen;
+  --mm-scrim: rgba(6,7,10,.66);
+  --mm-shadow: 0 30px 70px rgba(0,0,0,.55);
+  --mm-shadow-lift: 0 30px 70px -18px rgba(0,0,0,.7);
+  --mm-shadow-btn: 0 10px 28px rgba(0,0,0,.5);
 }
 
 :root[data-theme="light"] {
@@ -87,6 +127,40 @@
   --danger: #a34d5c;
   --success: #3f7a58;
   --warning: #8a6a1f;
+
+  /* Aperture (2026 reference), light — THEMES.light verbatim. Warm
+     off-white, not cold white — do not substitute #ffffff for --mm-bg. */
+  --mm-canvas: #eeece7;
+  --mm-bg: #faf9f7;
+  --mm-bg-blur: rgba(250,249,247,.82);
+  --mm-bg2: #f4f2ee;
+  --mm-panel: #ffffff;
+  --mm-panel-solid: #ffffff;
+  --mm-tile: #f5f3ef;
+  --mm-field: #fbfaf8;
+  --mm-line: #ece9e4;
+  --mm-line2: #ddd9d3;
+  --mm-line-strong: #b6b1a8;
+  --mm-track: #e8e4dd;
+  --mm-grid: rgba(21,22,27,.045);
+  --mm-bloom: rgba(21,22,27,.075);
+  --mm-text: #15161b;
+  --mm-dim: #54555f;
+  --mm-faint: #8b8c93;
+  --mm-accent-text: #000000;
+  --mm-ink: #15161b;
+  --mm-ink-text: #faf9f7;
+  --mm-ink-soft: rgba(250,249,247,.15);
+  --mm-ink-line: rgba(250,249,247,.16);
+  --mm-code-bg: #15161b;
+  --mm-code-text: #f2f2f6;
+  --mm-code-line: rgba(250,249,247,.13);
+  --mm-logo-filter: invert(1);
+  --mm-logo-blend: multiply;
+  --mm-scrim: rgba(250,249,247,.72);
+  --mm-shadow: 0 24px 60px rgba(21,22,27,.12);
+  --mm-shadow-lift: 0 34px 70px -22px rgba(21,22,27,.26);
+  --mm-shadow-btn: 0 10px 28px rgba(21,22,27,.2);
 }
 
 /* ── Type scale, radii, and font ─────────────────────────────────────────
