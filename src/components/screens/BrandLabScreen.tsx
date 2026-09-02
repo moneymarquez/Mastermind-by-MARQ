@@ -11,8 +11,10 @@ import BrandLabIntakeForm from './BrandLabIntakeForm';
 import type { IntakePayload } from './BrandLabIntakeForm';
 import BrandLabSpecReview from './BrandLabSpecReview';
 import { generateFunctionalSpec } from '../../data/brandLabSpec';
-import { buildPrompts } from '../../data/brandLabPrompts';
+import { buildPrompts, buildFablePrompt } from '../../data/brandLabPrompts';
 import PromptBox from '../PromptBox';
+import { useBrandLabRounds } from '../../data/useBrandLabRounds';
+import BrandLabRounds from './BrandLabRounds';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -194,6 +196,8 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const [attachProjectId, setAttachProjectId] = useState('');
 
   const active = briefs.find((b) => b.id === activeId) ?? null;
+  const roundsApi = useBrandLabRounds(active?.id ?? null);
+  const lockedRound = active ? roundsApi.rounds.find((r) => r.id === active.design_locked_round_id) ?? null : null;
 
   // The intake step (BrandLabIntakeForm) lands here — transcript, idea, or
   // client, same brief row. Concepts are no longer generated on save: the
@@ -383,7 +387,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
                   setPromptsBusy(true);
                   setPromptsError('');
                   try {
-                    const prompts = await buildPrompts(active, nichesApi.bySlug(active.niche_slug));
+                    const prompts = await buildPrompts(active, nichesApi.bySlug(active.niche_slug), { design: lockedRound?.pasted_html ?? null });
                     await updateBrief(active.id, { prompts });
                   } catch (err) {
                     setPromptsError(err instanceof AiError ? err.message : 'Could not build the prompts — try again.');
@@ -407,10 +411,52 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
             {active.prompts && (
               <>
                 <PromptBox title="Box 1 — Claude Design" hint="Paste into Claude Design. Includes the Higgsfield imagery block." text={active.prompts.design} />
-                <PromptBox title="Box 2 — Claude Fable" hint="Paste the locked design into slot 6 first, then give Fable the whole thing." text={active.prompts.fable} />
+                <PromptBox
+                  title="Box 2 — Claude Fable"
+                  hint={lockedRound?.pasted_html ? `Slot 6 carries the locked design (round ${lockedRound.round_number}).` : 'Slot 6 is a paste marker until a round is approved below.'}
+                  text={active.prompts.fable}
+                />
                 <PromptBox title="Box 3 — Higgsfield (standalone, optional)" hint="Only if you're generating imagery outside Claude Design." text={active.prompts.imagery} />
               </>
             )}
+          </div>
+        )}
+
+        {/* Step 6 — the judgment loop. Only once the Design prompt exists,
+            since a round is "what Claude Design gave back for it". Approving
+            a round locks the design and rebuilds the Fable prompt with the
+            HTML in slot 6 — no model call, it's an assembly. */}
+        {active.spec_approved_at && active.functional_spec && active.prompts && (
+          <div style={{ marginTop: 24 }}>
+            <BrandLabRounds
+              brief={active}
+              spec={active.functional_spec}
+              niche={nichesApi.bySlug(active.niche_slug)}
+              rounds={roundsApi.rounds}
+              onAdd={roundsApi.addRound}
+              onUpdate={roundsApi.updateRound}
+              onRemove={roundsApi.removeRound}
+              onLock={async (round) => {
+                const spec = active.functional_spec!;
+                await roundsApi.updateRound(round.id, { approved_at: new Date().toISOString() });
+                await updateBrief(active.id, {
+                  design_locked_round_id: round.id,
+                  design_locked_at: new Date().toISOString(),
+                  rounds_to_approval: round.round_number,
+                  prompts: active.prompts ? { ...active.prompts, fable: buildFablePrompt(active, spec, round.pasted_html) } : null,
+                });
+              }}
+              onUnlock={async () => {
+                const spec = active.functional_spec!;
+                if (lockedRound) await roundsApi.updateRound(lockedRound.id, { approved_at: null });
+                await updateBrief(active.id, {
+                  design_locked_round_id: null,
+                  design_locked_at: null,
+                  rounds_to_approval: null,
+                  prompts: active.prompts ? { ...active.prompts, fable: buildFablePrompt(active, spec, null) } : null,
+                });
+              }}
+            />
           </div>
         )}
 

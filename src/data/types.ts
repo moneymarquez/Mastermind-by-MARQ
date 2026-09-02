@@ -621,10 +621,75 @@ export interface BrandLabPrompts {
   generated_at: string;
 }
 
+// ── Brand Lab Factory (rounds + scoring + learning loop) ─────────────────
+
+export type RoundCriterionKey =
+  | 'brief_match' | 'niche_fit' | 'audience_fit' | 'tone_match' | 'structure' | 'scope' | 'mobile' | 'content_honesty';
+
+/** Fixed, named criteria so the judgment is consistent round over round
+ *  instead of vibes. Order here is display order everywhere. */
+export const ROUND_CRITERIA: { key: RoundCriterionKey; label: string; question: string }[] = [
+  { key: 'brief_match', label: 'Brief match', question: 'Does it do what the spec said?' },
+  { key: 'niche_fit', label: 'Niche fit', question: 'Right conventions, right trust signals for this niche?' },
+  { key: 'audience_fit', label: 'Audience fit', question: 'Would the actual buyer trust this?' },
+  { key: 'tone_match', label: 'Tone match', question: 'Does it match the selected tone?' },
+  { key: 'structure', label: 'Structure', question: 'All approved pages and sections, in order?' },
+  { key: 'scope', label: 'Scope', question: 'Did it invent unauthorized functionality?' },
+  { key: 'mobile', label: 'Mobile', question: 'Does it hold up at 375px?' },
+  { key: 'content_honesty', label: 'Content honesty', question: 'Any placeholder or invented content?' },
+];
+
+export interface RoundCriterionScore {
+  key: RoundCriterionKey;
+  /** 1 (fails) to 5 (fully). */
+  score: number;
+  note: string;
+}
+
+export interface RoundScore {
+  criteria: RoundCriterionScore[];
+  matches: string[];
+  drifted: string[];
+  missing: string[];
+  /** Paste-ready prompt for the next Claude Design round. */
+  revision_prompt: string;
+  /** Mean of the criterion scores, one decimal. */
+  overall: number;
+  scored_at: string;
+}
+
+export interface BrandLabRound {
+  id: string;
+  brief_id: string;
+  round_number: number;
+  pasted_html: string | null;
+  /** JPEG data URL, downscaled client-side. */
+  screenshot_data: string | null;
+  notes: string | null;
+  score: RoundScore | null;
+  approved_at: string | null;
+  created_at: string;
+}
+
+export interface BenchmarkFeedback {
+  url: string;
+  helpful: boolean;
+}
+
 export interface BrandLabBrief extends BrandLabIntake {
   functional_spec: FunctionalSpec | null;
   spec_approved_at: string | null;
   prompts: BrandLabPrompts | null;
+  /** Set when a round is approved — the design is locked and its HTML
+   *  rides in slot 6 of the Fable prompt. */
+  design_locked_round_id: string | null;
+  design_locked_at: string | null;
+  rounds_to_approval: number | null;
+  /** Niche benchmarks at the moment the prompts were built. */
+  benchmarks_used: BenchmarkSite[];
+  benchmark_feedback: BenchmarkFeedback[];
+  approval_notes: string | null;
+  niche_feedback: string | null;
   id: string;
   direction: string;
   reference_url_1: string | null;

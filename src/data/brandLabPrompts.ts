@@ -111,7 +111,10 @@ export function buildDesignPrompt(brief: BrandLabBrief, spec: FunctionalSpec, ni
   ].filter((l) => l !== null && l !== undefined).join('\n');
 }
 
-export function buildFablePrompt(brief: BrandLabBrief, spec: FunctionalSpec): string {
+/** `design` is the locked Claude Design HTML (step 6) — when present it
+ *  rides in slot 6 verbatim; when absent slot 6 is an explicit paste
+ *  marker so the prompt is never silently missing its design. */
+export function buildFablePrompt(brief: BrandLabBrief, spec: FunctionalSpec, design?: string | null): string {
   const { functionality } = enabledSpec(spec);
   const forms = functionality.filter((f) => f.kind === 'form');
   const integrations = functionality.filter((f) => f.kind === 'integration');
@@ -156,7 +159,9 @@ export function buildFablePrompt(brief: BrandLabBrief, spec: FunctionalSpec): st
       : '- None.',
     '',
     '## 6. The design',
-    '>>> PASTE THE APPROVED CLAUDE DESIGN OUTPUT HERE (the HTML export). Implement it faithfully; where the design and the spec disagree, the spec wins and you note the conflict. <<<',
+    design
+      ? `The approved Claude Design output (locked in Brand Lab). Implement it faithfully; where the design and the spec disagree, the spec wins and you note the conflict.\n\n\`\`\`html\n${design.trim()}\n\`\`\``
+      : '>>> PASTE THE APPROVED CLAUDE DESIGN OUTPUT HERE (the HTML export). Implement it faithfully; where the design and the spec disagree, the spec wins and you note the conflict. <<<',
     '',
     '## 7. Acceptance criteria — numbered, testable',
     criteria.map((c, i) => `${i + 1}. ${c}`).join('\n'),
@@ -204,13 +209,22 @@ export async function draftImagery(brief: BrandLabBrief, spec: FunctionalSpec, n
   return text.trim();
 }
 
-export async function buildPrompts(brief: BrandLabBrief, niche: Niche | null): Promise<BrandLabPrompts> {
+export interface BuildPromptsOptions {
+  /** Reuse an existing (possibly operator-edited) imagery block instead
+   *  of re-drafting it — the only model call in here, so skipping it
+   *  makes a rebuild instant. */
+  imagery?: string;
+  /** Locked design HTML for Fable's slot 6. */
+  design?: string | null;
+}
+
+export async function buildPrompts(brief: BrandLabBrief, niche: Niche | null, opts: BuildPromptsOptions = {}): Promise<BrandLabPrompts> {
   if (!brief.functional_spec) throw new Error('No functional spec.');
   const spec = brief.functional_spec;
-  const imagery = await draftImagery(brief, spec, niche);
+  const imagery = opts.imagery ?? await draftImagery(brief, spec, niche);
   return {
     design: buildDesignPrompt(brief, spec, niche, imagery),
-    fable: buildFablePrompt(brief, spec),
+    fable: buildFablePrompt(brief, spec, opts.design),
     imagery,
     scope_flags: scopeFlags(spec, niche),
     generated_at: new Date().toISOString(),
