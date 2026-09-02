@@ -5,6 +5,7 @@ import type { ClientStage, PricingCadence } from '../../data/types';
 import { AiError } from '../../lib/ai';
 import { STAGES, cardStyle, inputStyle, selectStyle, primaryBtn, ghostBtn, tabStyle } from './ClientCRMScreen';
 import ClientReportsTab from './ClientReportsTab';
+import ClientPortalAdmin from './ClientPortalAdmin';
 import ClientMediaGrid from './ClientMediaGrid';
 import InvoiceDetailView from './InvoiceDetailView';
 import LiveCaptureView from './LiveCaptureView';
@@ -18,7 +19,7 @@ interface Props {
   homeSubStyle: CSSProperties;
 }
 
-type Tab = 'audit' | 'analysis' | 'pricing' | 'invoices' | 'reports';
+type Tab = 'audit' | 'analysis' | 'pricing' | 'invoices' | 'reports' | 'portal';
 
 const textareaStyle: CSSProperties = {
   width: '100%', minHeight: 70, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)',
@@ -315,9 +316,11 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         <div style={tabStyle(tab === 'pricing')} onClick={() => setTab('pricing')}>Pricing</div>
         <div style={tabStyle(tab === 'invoices')} onClick={() => setTab('invoices')}>Invoices ({client.invoices.length})</div>
         <div style={tabStyle(tab === 'reports')} onClick={() => setTab('reports')}>Reports</div>
+        <div style={tabStyle(tab === 'portal')} onClick={() => setTab('portal')}>Portal</div>
       </div>
 
       {tab === 'reports' && <ClientReportsTab clientId={client.id} publicToken={client.public_token} />}
+      {tab === 'portal' && <ClientPortalAdmin client={client} />}
 
       {tab === 'audit' && (
         <div style={{ marginTop: 18, maxWidth: 640 }}>

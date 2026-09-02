@@ -737,6 +737,92 @@ export interface Niche {
   updated_at: string;
 }
 
+// ── Client Delivery Portal (Part 2, schema_054) ───────────────────────────
+
+export interface PortalTimelineItem {
+  label: string;
+  date: string | null;
+  done: boolean;
+}
+
+export interface ClientPortalSettings {
+  id: string;
+  client_id: string;
+  welcome_text: string | null;
+  logo_url: string | null;
+  timeline: PortalTimelineItem[];
+  next_steps: string | null;
+  handoff_mode: boolean;
+  handoff_started_at: string | null;
+  handoff_checkin_on: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type DeliverableKind = 'website' | 'brand' | 'gbp' | 'social' | 'payments' | 'content' | 'other';
+export const DELIVERABLE_KINDS: { key: DeliverableKind; label: string }[] = [
+  { key: 'website', label: 'Website' },
+  { key: 'brand', label: 'Brand' },
+  { key: 'gbp', label: 'Google Business Profile' },
+  { key: 'social', label: 'Social' },
+  { key: 'payments', label: 'Payments' },
+  { key: 'content', label: 'Content' },
+  { key: 'other', label: 'Other' },
+];
+
+export type DeliverableStatus = 'in_progress' | 'review' | 'live';
+
+export interface ClientDeliverable {
+  id: string;
+  client_id: string;
+  brief_id: string | null;
+  kind: DeliverableKind;
+  title: string;
+  what_it_is: string | null;
+  why_it_matters: string | null;
+  link_url: string | null;
+  status: DeliverableStatus;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** One operating-manual module. applies_to lists deliverable kinds; empty
+ *  means it applies to every client. */
+export interface PortalModule {
+  id: string;
+  slug: string;
+  title: string;
+  applies_to: DeliverableKind[];
+  what_it_is: string;
+  why_it_matters: string;
+  steps: string[];
+  done_when: string;
+  video_url: string | null;
+  sort_order: number;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClientModuleAssignment {
+  id: string;
+  client_id: string;
+  module_id: string;
+  assigned_at: string;
+  opened_at: string | null;
+  completed_at: string | null;
+}
+
+export interface ClientMessage {
+  id: string;
+  client_id: string;
+  sender: 'owner' | 'client';
+  body: string;
+  read_at: string | null;
+  created_at: string;
+}
+
 // ── Stocks bot ────────────────────────────────────────────────────────────
 
 export interface BotConfig {

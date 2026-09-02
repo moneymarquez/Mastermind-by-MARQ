@@ -751,10 +751,23 @@ done and matched what the new prompt asked for, so it wasn't rebuilt).
   approved spec + niche + brief — deterministic, instant, and the lever that makes them better per client is the niche
   data; only the imagery block is model-drafted. The Design prompt may only ask for UI the spec authorized: any niche
   "required functionality" the spec omits is surfaced as a flag above Box 1, never quietly added. `worker/handlers/claude.ts`
-  gained an optional `effort` passthrough (allowlisted, default `low`) so the spec call runs at `medium`. **Stopped
-  after step 5 on purpose** — the round/scoring loop (step 6) waits until this has run on a real client, so the criteria
-  are built once against real output. The original concept generator + 4-step handoff are untouched, now an optional
-  side-step on the brief page.
+  gained an optional `effort` passthrough (allowlisted, default `low`) so the spec call runs at `medium`. The original
+  concept generator + 4-step handoff are untouched, now an optional side-step on the brief page.
+  - **Step 6 — rounds + Nova scoring** (`brandLabScoring.ts`, `useBrandLabRounds.ts`, `BrandLabRounds.tsx`; schema 053,
+    applied): Claude Design has no API, so each round is a paste-back — HTML export and/or a phone screenshot
+    (downscaled client-side via `fileToJpegDataUrl`) — that Nova scores 1–5 on eight fixed criteria (brief match,
+    niche fit, audience fit, tone, structure, scope, mobile, content honesty), each backed by one observation, plus
+    matches / drifted / missing and a paste-ready revision prompt. A criteria×rounds grid shows deltas so drift is a
+    column that got worse, not a paragraph. Approving a round locks the design and rebuilds the Fable prompt with the
+    HTML in slot 6 (an assembly, no model call); Unlock reverses it.
+  - **Step 7 — imagery block editable** (`PromptBox` `onChange`/`actions`): edits to Box 3 re-assemble Box 1 instantly;
+    Redraft re-runs only the imagery call. Rebuild prompts keeps the current imagery.
+  - **Step 8 — learning loop** (`brandLabLearning.ts`, `BrandLabApprovalNotes.tsx`, `BrandLabLearning.tsx`): nothing
+    stored beyond what an approved brief already carries — rounds to approval, the benchmarks that were in its prompt
+    (snapshotted at build time as `benchmarks_used`), a helped / didn't verdict per benchmark, what made it land, what
+    the niche research got wrong. Aggregated per niche into the "What's working" panel on the Brand Lab list
+    ("Plumbing briefs average N rounds; the ones that approved in 2 used…") and, in the Niche library, per-benchmark
+    usage/helped counts plus past projects' research gaps next to the fields to fix.
 - **Brand Lab redesign** (`src/components/screens/BrandLabScreen.tsx`) — replaced the old fixed
   Minimal/Bold/Editorial templates with a real question flow (business, audience, reference sites, tone, color
   preference) and a user-chosen count of 3, 4, or 5 concepts. Each concept picks a genuinely different layout
@@ -959,6 +972,34 @@ configured for the Masterminds subscription billing.
   Invoice Sent → Active (Paid) → Retainer`), each card showing business name, stage, next payment due, the
   reveal-schedule state, and last activity. Clicking a card opens `ClientDetailView.tsx` — audit answers, analysis,
   pricing, invoices, and reports in one place, plus a stage dropdown for manual overrides.
+
+### Client Delivery Portal (Part 2 of the Brand Lab Factory spec)
+
+The client-role login (schema_045) now lands on a real portal (`src/client-portal/ClientPortal.tsx`, data via
+`src/data/useClientPortalData.ts`; the address bar reads `/portal`). Four bottom tabs, mobile first, content padded
+past the tab bar + safe-area inset, 16px inputs: **Home** (welcome note, logo, timeline, what happens next; **What we
+built** as one card per deliverable with "why it matters for you"; **Your numbers** — baseline = first *published*
+monthly report, current = latest, deltas per metric, and an honest empty state naming what's needed when there is no
+report — nothing is ever estimated), **Guides** (the operating manual: what it is · why it matters · steps · a video
+link if one exists · "you're done when", with opened/done tracking the client writes itself), **Invoices** (list →
+the shared `InvoiceDocument` + Pay now; drafts never show), **Messages** (one thread with the owner, unread badges
+both ways). The teach-operations / keep-strategy frame from the spec is the module library's content.
+
+Owner side is a **Portal** tab on every client (`ClientPortalAdmin.tsx`, `useClientPortalAdmin.ts`): welcome/timeline/
+next-steps copy, deliverables (prefill what/why from that client's Brand Lab brief — spec summary + their own
+bottleneck, only real text), guide assignment ("Assign all relevant" matches `portal_modules.applies_to` to the
+deliverable kinds on the client; manual assign/unassign never gets undone by auto), the message thread, and
+**Handoff mode** — a per-client toggle that leads the portal with the guides, shows a completion checklist, tracks
+opens, and drops a dated check-in into the owner's reminders.
+
+Schema (`supabase/schema_054_client_portal.sql`, applied live): `client_portal`, `client_deliverables`,
+`portal_modules` (10 seeded: Stripe payments, GBP posting, reviews, hours, social scheduling, reading the numbers,
+photos, website content, inbound leads, when something breaks), `client_module_assignments`, `client_messages`, plus a
+client-role read policy on published `client_reports`. Every client policy is SELECT-only except its own messages
+(insert) and its own module progress / read receipts (update). `InvoiceDocument` (`src/components/InvoiceDocument.tsx`)
+is the one invoice component in all three contexts (owner draft preview, owner detail, client portal).
+**Deliberately not built:** the onboarding email (no domain yet) — the seam is `sendClientLoginEmail` in
+`worker/handlers/billing.ts`; hand the login over from the client's page until then.
 
 ### Client dashboard (Part 7)
 
