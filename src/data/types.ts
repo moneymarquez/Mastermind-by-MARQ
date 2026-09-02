@@ -576,7 +576,55 @@ export const BRAND_LAB_INTAKE_KEYS: (keyof BrandLabIntake)[] = [
   'geography', 'wants', 'dont_wants', 'competitors', 'quotes',
 ];
 
+// ── Brand Lab Factory (functional spec + prompts) ─────────────────────────
+
+/** static — no backend. form — collects data, needs storage + notify.
+ *  integration — Stripe, calendar, maps, reviews. dynamic — needs a
+ *  database and an admin surface. The tag is what keeps Claude Design
+ *  from committing backend scope Fable then has to make real. */
+export type SpecFunctionalityKind = 'static' | 'form' | 'integration' | 'dynamic';
+
+export interface SpecPage {
+  id: string;
+  name: string;
+  purpose: string;
+  sections: string[];
+  enabled: boolean;
+}
+
+export interface SpecFunctionality {
+  id: string;
+  label: string;
+  kind: SpecFunctionalityKind;
+  /** Which page it lives on (SpecPage.id) or null for site-wide. */
+  page_id: string | null;
+  enabled: boolean;
+}
+
+export interface FunctionalSpec {
+  summary: string;
+  pages: SpecPage[];
+  functionality: SpecFunctionality[];
+  data_model: string[];
+  admin_needs: string[];
+  out_of_scope: string[];
+  generated_at: string;
+}
+
+export interface BrandLabPrompts {
+  design: string;
+  fable: string;
+  imagery: string;
+  /** Functionality the Design prompt refused to include because the spec
+   *  didn't authorize it — surfaced above Box 1, never silently dropped. */
+  scope_flags: string[];
+  generated_at: string;
+}
+
 export interface BrandLabBrief extends BrandLabIntake {
+  functional_spec: FunctionalSpec | null;
+  spec_approved_at: string | null;
+  prompts: BrandLabPrompts | null;
   id: string;
   direction: string;
   reference_url_1: string | null;

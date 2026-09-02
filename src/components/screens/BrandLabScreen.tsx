@@ -9,6 +9,8 @@ import { askClaude, AiError } from '../../lib/ai';
 import NichesAdmin from './NichesAdmin';
 import BrandLabIntakeForm from './BrandLabIntakeForm';
 import type { IntakePayload } from './BrandLabIntakeForm';
+import BrandLabSpecReview from './BrandLabSpecReview';
+import { generateFunctionalSpec } from '../../data/brandLabSpec';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -169,7 +171,7 @@ function StepCard({
 }
 
 export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
-  const { briefs, loading, addBrief, removeBrief, saveConcepts, pinConcept, saveStep } = useBrandLab();
+  const { briefs, loading, addBrief, updateBrief, removeBrief, saveConcepts, pinConcept, saveStep } = useBrandLab();
   const { projects, patch: patchProject } = useScalingProjects();
   const nichesApi = useNiches();
   const crm = useClientCRM();
@@ -177,6 +179,8 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [showNiches, setShowNiches] = useState(false);
   const [count, setCount] = useState<3 | 4 | 5>(3);
+  const [specBusy, setSpecBusy] = useState(false);
+  const [specError, setSpecError] = useState('');
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -325,6 +329,34 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
               {active.quotes.map((q, i) => <span key={i} style={{ color: 'var(--text)' }}>“{q}”{i < active.quotes.length - 1 ? ' · ' : ''}</span>)}
             </div>
           )}
+        </div>
+
+        {/* Step 4 — the functional spec. Generated once from brief + niche,
+            then edited and approved here before any prompt exists. Approving
+            locks it; unlocking clears any prompts generated from the old
+            version so a stale prompt can never ship. */}
+        <div style={{ marginTop: 18 }}>
+          <BrandLabSpecReview
+            spec={active.functional_spec}
+            approvedAt={active.spec_approved_at}
+            busy={specBusy}
+            error={specError}
+            onGenerate={async () => {
+              setSpecBusy(true);
+              setSpecError('');
+              try {
+                const spec = await generateFunctionalSpec(active, nichesApi.bySlug(active.niche_slug));
+                await updateBrief(active.id, { functional_spec: spec, spec_approved_at: null, prompts: null });
+              } catch (err) {
+                setSpecError(err instanceof AiError ? err.message : 'Could not draft the spec — try again.');
+              } finally {
+                setSpecBusy(false);
+              }
+            }}
+            onChange={(next) => updateBrief(active.id, { functional_spec: next })}
+            onApprove={() => updateBrief(active.id, { spec_approved_at: new Date().toISOString() })}
+            onUnlock={() => updateBrief(active.id, { spec_approved_at: null, prompts: null })}
+          />
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 20, flexWrap: 'wrap' }}>

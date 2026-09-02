@@ -38,6 +38,11 @@ interface RequestBody {
   messages: ClaudeMessage[];
   image?: { mediaType: string; data: string };
   maxTokens?: number;
+  /** Optional reasoning effort. Defaults to 'low' (every existing caller's
+   *  behaviour, unchanged). Brand Lab's functional-spec generation asks for
+   *  'medium' — it's the one call whose output fixes project scope and is
+   *  human-reviewed before anything else runs, so a slower answer is cheap. */
+  effort?: 'low' | 'medium' | 'high';
 }
 
 function json(body: unknown, status = 200): Response {
@@ -93,7 +98,7 @@ export async function claudeProxy(request: Request, env: ClaudeEnv): Promise<Res
       model: MODEL,
       max_tokens: body.maxTokens ?? 1200,
       thinking: { type: 'disabled' },
-      output_config: { effort: 'low' },
+      output_config: { effort: body.effort === 'medium' || body.effort === 'high' ? body.effort : 'low' },
       system: body.system,
       messages: anthropicMessages,
     });

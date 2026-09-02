@@ -5,6 +5,10 @@ export interface AskClaudeOptions {
   messages: { role: 'user' | 'assistant'; content: string }[];
   image?: { mediaType: string; data: string };
   maxTokens?: number;
+  /** Reasoning effort passed through to worker/handlers/claude.ts. Omit for
+   *  the default ('low'); only the calls whose output is human-reviewed
+   *  before it matters (Brand Lab's functional spec) ask for more. */
+  effort?: 'low' | 'medium' | 'high';
 }
 
 export class AiError extends Error {}
