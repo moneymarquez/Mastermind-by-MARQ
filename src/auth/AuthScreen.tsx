@@ -115,7 +115,7 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
     if (!email.trim() || !password) return;
     setError(null);
     setSubmitting(true);
-    const err = await onSignIn(email.trim(), password);
+    const err = await onSignIn(email.trim().toLowerCase(), password);
     setSubmitting(false);
     if (err) setError(err);
   };
@@ -140,7 +140,7 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
         return;
       }
       setSubmitting(true);
-      const result = await onSignUp(email.trim(), password);
+      const result = await onSignUp(email.trim().toLowerCase(), password);
       setSubmitting(false);
       if (result.error) {
         setError(result.error);
@@ -157,7 +157,7 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
     }
 
     setSubmitting(true);
-    const err = await onSignIn(email.trim(), password);
+    const err = await onSignIn(email.trim().toLowerCase(), password);
     setSubmitting(false);
     if (err) setError(err);
   };
@@ -192,11 +192,11 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
           >
             <div style={clientFieldStyle}>
               <Icon name="envelope-simple" size={17} color="var(--client-accent)" />
-              <input type="email" autoFocus placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...inputStyle, color: 'var(--text)' }} />
+              <input type="email" autoFocus autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...inputStyle, color: 'var(--text)' }} />
             </div>
             <div style={clientFieldStyle}>
               <Icon name="lock-simple" size={17} color="var(--client-accent)" />
-              <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ ...inputStyle, color: 'var(--text)' }} />
+              <input type="password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ ...inputStyle, color: 'var(--text)' }} />
             </div>
             {error && <div style={{ fontSize: 13, color: 'var(--danger)' }}>{error}</div>}
             <button
@@ -344,16 +344,16 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={fieldStyle}>
                   <Icon name="envelope-simple" size={17} color="var(--mm-faint)" />
-                  <input type="email" autoFocus placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
+                  <input type="email" autoFocus autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
                 </div>
                 <div style={fieldStyle}>
                   <Icon name="lock-simple" size={17} color="var(--mm-faint)" />
-                  <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
+                  <input type="password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
                 </div>
                 {mode === 'signup' && (
                   <div style={fieldStyle}>
                     <Icon name="lock-simple" size={17} color="var(--mm-faint)" />
-                    <input type="password" placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={inputStyle} />
+                    <input type="password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={inputStyle} />
                   </div>
                 )}
 

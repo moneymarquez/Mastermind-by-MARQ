@@ -10,9 +10,15 @@ import { requireOwner, OWNER_USER_ID } from '../lib/auth';
 // there is no supabase-js client here, same raw-fetch style as everything
 // else in this file) and links it to one crm_clients row via a profiles
 // row (schema_045).
+// Excludes 0/O/1/l/I — a real client hand-typing this off a screen or a
+// text message is the normal path (no copy-paste, no password manager),
+// and those pairs are indistinguishable in most UI fonts. 14 chars from
+// this 57-char alphabet is ~82 bits of entropy, comfortably more than the
+// 12-char base64 password this replaced (~70 bits).
+const PASSWORD_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
 function generateTempPassword(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(9));
-  return btoa(String.fromCharCode(...bytes)).replace(/[+/=]/g, '').slice(0, 12);
+  const bytes = crypto.getRandomValues(new Uint8Array(14));
+  return Array.from(bytes, (b) => PASSWORD_ALPHABET[b % PASSWORD_ALPHABET.length]).join('');
 }
 
 export async function provisionClientLogin(
