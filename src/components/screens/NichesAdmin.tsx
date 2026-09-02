@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { useNiches } from '../../data/useNiches';
-import type { Niche } from '../../data/types';
+import type { BrandLabBrief, Niche } from '../../data/types';
+import { benchmarkStats } from '../../data/brandLabLearning';
 
 interface Props {
+  /** All briefs — only used to show, per benchmark, how often it was
+   *  referenced and whether it helped (step 8 write-backs). */
+  briefs?: BrandLabBrief[];
   nichesApi: ReturnType<typeof useNiches>;
   onClose: () => void;
   homeHeadStyle: CSSProperties;
@@ -40,7 +44,7 @@ function fromLines(s: string): string[] { return s.split('\n').map((l) => l.trim
 /** The niche library editor. Benchmark-site paste is the first thing on a
  *  niche's page, on purpose — it's the field that gets touched from a phone
  *  mid-week ("found a good one"), everything else is set-and-forget. */
-export default function NichesAdmin({ nichesApi, onClose, homeHeadStyle, homeSubStyle }: Props) {
+export default function NichesAdmin({ nichesApi, onClose, homeHeadStyle, homeSubStyle, briefs = [] }: Props) {
   const { niches, loading, addNiche, updateNiche, removeNiche, addBenchmark, removeBenchmark } = nichesApi;
   const [openId, setOpenId] = useState<string | null>(null);
   const [benchUrl, setBenchUrl] = useState('');
@@ -50,6 +54,10 @@ export default function NichesAdmin({ nichesApi, onClose, homeHeadStyle, homeSub
   const [savedFlash, setSavedFlash] = useState<string | null>(null);
 
   const open = niches.find((n) => n.id === openId) ?? null;
+  const openBriefs = open ? briefs.filter((b) => b.niche_slug === open.slug) : [];
+  const stats = benchmarkStats(openBriefs);
+  const statFor = (url: string) => stats.find((s) => s.url.trim().toLowerCase() === url.trim().toLowerCase()) ?? null;
+  const gaps = openBriefs.filter((b) => b.niche_feedback?.trim());
 
   const draftFor = (n: Niche, field: string, fallback: string) => drafts[n.id]?.[field] ?? fallback;
   const setDraft = (id: string, field: string, value: string) =>
@@ -119,6 +127,11 @@ export default function NichesAdmin({ nichesApi, onClose, homeHeadStyle, homeSub
                     <div style={{ minWidth: 0 }}>
                       <a href={b.url} target="_blank" rel="noreferrer" style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text)', fontWeight: 600, wordBreak: 'break-all' }}>{b.url.replace(/^https?:\/\//, '')}</a>
                       {b.note && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 3, lineHeight: 1.45 }}>{b.note}</div>}
+                      {(() => { const st = statFor(b.url); return st ? (
+                        <div style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', marginTop: 3 }}>
+                          In {st.used} prompt{st.used === 1 ? '' : 's'}{st.helpful ? ` · helped ${st.helpful}×` : ''}{st.unhelpful ? ` · didn't help ${st.unhelpful}×` : ''}
+                        </div>
+                      ) : null; })()}
                     </div>
                     <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', cursor: 'pointer', flexShrink: 0 }} onClick={() => removeBenchmark(open.id, b.url)}>Remove</span>
                   </div>
@@ -126,6 +139,20 @@ export default function NichesAdmin({ nichesApi, onClose, homeHeadStyle, homeSub
               </div>
             )}
           </div>
+
+          {gaps.length > 0 && (
+            <div style={{ ...card, borderColor: 'color-mix(in srgb, var(--danger) 35%, var(--border))' }}>
+              <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>What past projects said this research got wrong</div>
+              <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 4 }}>Written at approval time. Fold the fixes into the fields below, then the note has done its job.</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+                {gaps.map((b) => (
+                  <div key={b.id} style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    <span style={{ color: 'var(--text-tertiary)' }}>{b.business || b.direction}: </span>{b.niche_feedback}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div style={card}>
             <div style={label}>Name</div>

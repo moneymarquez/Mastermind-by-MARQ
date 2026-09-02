@@ -15,6 +15,8 @@ import { buildPrompts, buildFablePrompt, draftImagery } from '../../data/brandLa
 import PromptBox from '../PromptBox';
 import { useBrandLabRounds } from '../../data/useBrandLabRounds';
 import BrandLabRounds from './BrandLabRounds';
+import BrandLabApprovalNotes from './BrandLabApprovalNotes';
+import BrandLabLearning from './BrandLabLearning';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -291,7 +293,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
     : '';
 
   if (showNiches) {
-    return <NichesAdmin nichesApi={nichesApi} onClose={() => setShowNiches(false)} homeHeadStyle={homeHeadStyle} homeSubStyle={homeSubStyle} />;
+    return <NichesAdmin nichesApi={nichesApi} briefs={briefs} onClose={() => setShowNiches(false)} homeHeadStyle={homeHeadStyle} homeSubStyle={homeSubStyle} />;
   }
 
   if (active) {
@@ -390,8 +392,11 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
                     // Rebuild re-assembles from the current spec/niche and keeps
                     // an existing imagery block (edited or not) — redrafting it
                     // is Box 3's own button, so a rebuild is instant.
-                    const prompts = await buildPrompts(active, nichesApi.bySlug(active.niche_slug), { imagery: active.prompts?.imagery, design: lockedRound?.pasted_html ?? null });
-                    await updateBrief(active.id, { prompts });
+                    const niche = nichesApi.bySlug(active.niche_slug);
+                    const prompts = await buildPrompts(active, niche, { imagery: active.prompts?.imagery, design: lockedRound?.pasted_html ?? null });
+                    // Snapshot the benchmarks that went into this prompt so the
+                    // learning loop can credit them even if the niche is edited later.
+                    await updateBrief(active.id, { prompts, benchmarks_used: niche?.benchmark_sites ?? [] });
                   } catch (err) {
                     setPromptsError(err instanceof AiError ? err.message : 'Could not build the prompts — try again.');
                   } finally {
@@ -438,9 +443,10 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
                         setPromptsBusy(true);
                         setPromptsError('');
                         try {
-                          const imagery = await draftImagery(active, active.functional_spec!, nichesApi.bySlug(active.niche_slug));
-                          const prompts = await buildPrompts(active, nichesApi.bySlug(active.niche_slug), { imagery, design: lockedRound?.pasted_html ?? null });
-                          await updateBrief(active.id, { prompts });
+                          const niche = nichesApi.bySlug(active.niche_slug);
+                          const imagery = await draftImagery(active, active.functional_spec!, niche);
+                          const prompts = await buildPrompts(active, niche, { imagery, design: lockedRound?.pasted_html ?? null });
+                          await updateBrief(active.id, { prompts, benchmarks_used: niche?.benchmark_sites ?? [] });
                         } catch (err) {
                           setPromptsError(err instanceof AiError ? err.message : 'Could not redraft the imagery — try again.');
                         } finally {
@@ -492,6 +498,12 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
                 });
               }}
             />
+            {/* Step 8 — what this project writes back, once it's approved. */}
+            {active.design_locked_at && (
+              <div style={{ marginTop: 12 }}>
+                <BrandLabApprovalNotes brief={active} onSave={(patch) => updateBrief(active.id, patch)} />
+              </div>
+            )}
           </div>
         )}
 
@@ -624,6 +636,8 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
           >
             <div>
               <span style={{ fontSize: 'var(--text-body-lg)', color: 'var(--text-quaternary)' }}>{b.business || b.direction}</span>
+              {b.design_locked_at && <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--success)', marginLeft: 10 }}>design locked · {b.rounds_to_approval} round{b.rounds_to_approval === 1 ? '' : 's'}</span>}
+              {!b.design_locked_at && b.spec_approved_at && <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', marginLeft: 10 }}>spec approved</span>}
               {b.pinned_concept_id && <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--warning)', marginLeft: 10 }}>★ pinned</span>}
             </div>
             <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }} onClick={(e) => { e.stopPropagation(); removeBrief(b.id); }}>Delete</span>
@@ -633,6 +647,8 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
           <div style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No briefs yet.</div>
         )}
       </div>
+
+      <BrandLabLearning briefs={briefs} niches={nichesApi.niches} />
     </div>
   );
 }
