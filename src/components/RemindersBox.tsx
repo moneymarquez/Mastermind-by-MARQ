@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, useState } from 'react';
 import Icon from '../Icon';
 import { useReminders } from '../data/useReminders';
 import { dateStr } from '../data/time';
@@ -23,6 +23,39 @@ function dueLabel(dueDate: string): string {
 const RemindersBox = forwardRef<HTMLDivElement, Props>(function RemindersBox({ isMobile, bottomOffset = 20 }, ref) {
   const { reminders, loading } = useReminders();
   const visible = reminders.slice(0, 4);
+  // Mobile only: collapsed by default. RemindersBox is position:absolute
+  // pinned to the whole Stage, not the scrollable content panel beneath
+  // it — so on a phone it permanently parks on top of whatever's in that
+  // corner of the current screen, not just the very bottom of a long
+  // scroll (that's what the content panel's extra bottom padding already
+  // handles). A screen whose actions happen to land there — e.g. an
+  // invoice's Send/Duplicate row — gets covered outright. Desktop has the
+  // room to leave it open; only mobile needs the collapse.
+  const [expanded, setExpanded] = useState(false);
+
+  if (isMobile && !expanded) {
+    return (
+      <div
+        ref={ref}
+        onClick={() => setExpanded(true)}
+        style={{
+          position: 'absolute', right: 20, bottom: bottomOffset, width: 44, height: 44, borderRadius: '50%',
+          background: 'var(--surface)', border: '1px solid var(--border)', zIndex: 20,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+        }}
+      >
+        <Icon name="bell" color="var(--text-secondary)" />
+        {!loading && reminders.length > 0 && (
+          <div style={{
+            position: 'absolute', top: -3, right: -3, minWidth: 16, height: 16, borderRadius: 8, padding: '0 4px',
+            background: 'var(--danger)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {reminders.length > 9 ? '9+' : reminders.length}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -32,9 +65,14 @@ const RemindersBox = forwardRef<HTMLDivElement, Props>(function RemindersBox({ i
         background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '14px 16px', zIndex: 20,
       }}
     >
-      <div style={{ fontSize: 'var(--text-caption)', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}>
-        <Icon name="bell" style={{ marginRight: 6 }} color="var(--text-secondary)" />
-        Reminders
+      <div style={{ fontSize: 'var(--text-caption)', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ display: 'flex', alignItems: 'center' }}>
+          <Icon name="bell" style={{ marginRight: 6 }} color="var(--text-secondary)" />
+          Reminders
+        </span>
+        {isMobile && (
+          <span onClick={() => setExpanded(false)} style={{ cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: 'var(--text-body)', lineHeight: 1 }}>✕</span>
+        )}
       </div>
       {visible.map((r) => (
         <div key={r.id} style={{ fontSize: 'var(--text-small)', color: 'var(--text-quaternary)', padding: '6px 0', borderTop: '1px solid var(--surface-3)' }}>

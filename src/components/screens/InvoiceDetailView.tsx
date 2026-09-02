@@ -152,7 +152,36 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
         </span>
       </div>
 
-      <div style={{ ...cardStyle, marginTop: 20, maxWidth: 560 }}>
+      {/* Draft preview — what actually goes out, rendered as a real
+          invoice rather than left implicit in a row of input boxes. Sits
+          above the edit form so "see it, then send it" doesn't require
+          leaving the screen or guessing from raw field values. */}
+      {(isDraft || editingSent) && (
+        <div style={{ ...cardStyle, marginTop: 20, maxWidth: 560, padding: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+            <div>
+              <div style={{ fontSize: 'var(--text-micro)', letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>From</div>
+              <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginTop: 2 }}>Made by MARQ</div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 'var(--text-micro)', letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>Bill to</div>
+              <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginTop: 2 }}>{clientBusinessName}</div>
+            </div>
+          </div>
+          <div style={{ padding: '16px 0', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+              <span style={{ fontSize: 'var(--text-body)', color: 'var(--text)', flex: 1 }}>{desc || 'Untitled line item'}</span>
+              <span style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>{Number(amount) > 0 ? money(Number(amount)) : '—'}</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 16 }}>
+            <span style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>{dueDate ? `Due ${dueDate}` : 'Due on receipt'}</span>
+            <span style={{ fontSize: 'var(--text-title)', fontWeight: 700, color: 'var(--text)' }}>{Number(amount) > 0 ? money(Number(amount)) : '—'}</span>
+          </div>
+        </div>
+      )}
+
+      <div style={{ ...cardStyle, marginTop: 16, maxWidth: 560 }}>
         {isDraft || editingSent ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {editingSent && (
