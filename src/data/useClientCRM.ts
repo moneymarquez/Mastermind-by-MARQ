@@ -408,6 +408,62 @@ export function useClientCRM() {
     });
   };
 
+  /** One click to lay out a client's ENTIRE pricing plan as staggered
+   *  draft invoices — the $1,000-upfront-then-$1,500/mo-x3 case that used
+   *  to mean clicking "Create a draft invoice" once per month by hand.
+   *  Still lands as drafts only (same as createDraftInvoice) — nothing
+   *  reaches Stripe or the client until each one is opened and sent.
+   *
+   *  Occurrence i of a pricing item is due at startDate + (i-1) calendar
+   *  months — a one-time/upfront item has exactly one occurrence, due on
+   *  startDate itself. Idempotent: an occurrence already represented by
+   *  an existing client_invoices row (any status — draft, sent, void…)
+   *  for that (pricing_item_id, sequence_index) pair is skipped, so
+   *  running this twice, or after hand-creating one month already,
+   *  never double-bills. TBD (null-amount) items are skipped entirely —
+   *  same invoice guard as everywhere else. */
+  const generateInvoiceSchedule = async (clientId: string, startDate: string) => {
+    const client = clients.find((c) => c.id === clientId);
+    if (!client) return { created: 0 };
+
+    const existing = new Set(client.invoices.map((inv) => `${inv.pricing_item_id ?? ''}:${inv.sequence_index}`));
+    const start = new Date(`${startDate}T00:00:00`);
+    const rows: {
+      client_id: string;
+      pricing_item_id: string;
+      sequence_index: number;
+      description: string;
+      amount: number;
+      due_date: string;
+      status: 'draft';
+    }[] = [];
+
+    for (const item of client.pricingItems) {
+      if (item.amount === null) continue;
+      const occurrences = item.cadence === 'monthly' ? Math.max(1, item.repeat_count) : 1;
+      for (let i = 1; i <= occurrences; i++) {
+        if (existing.has(`${item.id}:${i}`)) continue;
+        const due = new Date(start);
+        due.setMonth(due.getMonth() + (i - 1));
+        rows.push({
+          client_id: clientId,
+          pricing_item_id: item.id,
+          sequence_index: i,
+          description: occurrences > 1 ? `${item.label} (${i} of ${occurrences})` : item.label,
+          amount: item.amount,
+          due_date: due.toISOString().slice(0, 10),
+          status: 'draft',
+        });
+      }
+    }
+
+    if (rows.length > 0) {
+      await supabase.from('client_invoices').insert(rows);
+      await load();
+    }
+    return { created: rows.length };
+  };
+
   /** For payment collected outside Stripe (cash, Venmo, etc.) on an
    *  invoice that was already sent. Direct table write — RLS (owner-only)
    *  is the only enforcement needed, no Stripe call involved since
@@ -497,6 +553,7 @@ export function useClientCRM() {
     createDraftInvoice,
     updateDraftInvoice,
     removeDraftInvoice,
+    generateInvoiceSchedule,
     sendInvoice,
     duplicateInvoice,
     markInvoicePaidManually,

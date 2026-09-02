@@ -61,6 +61,9 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
   const [invoiceDue, setInvoiceDue] = useState('');
   const [creatingDraft, setCreatingDraft] = useState(false);
   const [draftError, setDraftError] = useState('');
+  const [scheduleStart, setScheduleStart] = useState(() => new Date().toISOString().slice(0, 10));
+  const [generatingSchedule, setGeneratingSchedule] = useState(false);
+  const [scheduleResult, setScheduleResult] = useState('');
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [loginEmail, setLoginEmail] = useState(client.contact_email ?? '');
   const [creatingLogin, setCreatingLogin] = useState(false);
@@ -177,6 +180,35 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
       setDraftError(err instanceof Error ? err.message : 'Could not create the draft.');
     } finally {
       setCreatingDraft(false);
+    }
+  };
+
+  // Preview-only count/total for the "Generate schedule" button — same
+  // (pricing_item_id, sequence_index) coverage check crm.generateInvoiceSchedule
+  // itself does, just without computing due dates, so the button can say
+  // what it's about to create before the click.
+  const existingOccurrences = new Set(client.invoices.map((inv) => `${inv.pricing_item_id ?? ''}:${inv.sequence_index}`));
+  const pendingOccurrences = client.pricingItems.flatMap((item) => {
+    if (item.amount === null) return [];
+    const occurrences = item.cadence === 'monthly' ? Math.max(1, item.repeat_count) : 1;
+    return Array.from({ length: occurrences }, (_, i) => i + 1).filter((i) => !existingOccurrences.has(`${item.id}:${i}`));
+  });
+  const pendingTotal = client.pricingItems.reduce((sum, item) => {
+    if (item.amount === null) return sum;
+    const occurrences = item.cadence === 'monthly' ? Math.max(1, item.repeat_count) : 1;
+    const missing = Array.from({ length: occurrences }, (_, i) => i + 1).filter((i) => !existingOccurrences.has(`${item.id}:${i}`));
+    return sum + missing.length * item.amount;
+  }, 0);
+
+  const generateSchedule = async () => {
+    if (!scheduleStart) return;
+    setGeneratingSchedule(true);
+    setScheduleResult('');
+    try {
+      const { created } = await crm.generateInvoiceSchedule(client.id, scheduleStart);
+      setScheduleResult(created > 0 ? `Created ${created} draft invoice${created === 1 ? '' : 's'}.` : 'Nothing to generate — every line item already has an invoice.');
+    } finally {
+      setGeneratingSchedule(false);
     }
   };
 
@@ -603,6 +635,22 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
               );
             })}
           </div>
+
+          {pendingOccurrences.length > 0 && (
+            <div style={{ ...cardStyle, marginBottom: 16 }}>
+              <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Generate payment schedule</div>
+              <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>
+                Lays out the whole plan at once — {pendingOccurrences.length} draft invoice{pendingOccurrences.length === 1 ? '' : 's'} totaling {money(pendingTotal)}, upfront due on the start date below and each monthly installment one calendar month after the last. Still just drafts — nothing sends until you open one and hit Send.
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 12, flexWrap: 'wrap' }}>
+                <input style={inputStyle} type="date" value={scheduleStart} onChange={(e) => setScheduleStart(e.target.value)} />
+                <div style={{ ...primaryBtn, pointerEvents: generatingSchedule ? 'none' : 'auto', opacity: generatingSchedule ? 0.6 : 1 }} onClick={generateSchedule}>
+                  {generatingSchedule ? 'Generating…' : `Generate ${pendingOccurrences.length} draft${pendingOccurrences.length === 1 ? '' : 's'}`}
+                </div>
+              </div>
+              {scheduleResult && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 8 }}>{scheduleResult}</div>}
+            </div>
+          )}
 
           <div style={cardStyle}>
             <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Create a draft invoice</div>
