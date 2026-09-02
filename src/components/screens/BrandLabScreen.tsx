@@ -2,8 +2,10 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useBrandLab } from '../../data/useBrandLab';
 import { useScalingProjects } from '../../data/useScalingProjects';
+import { useNiches } from '../../data/useNiches';
 import type { BrandConcept, BrandLabBrief } from '../../data/types';
 import { askClaude, AiError } from '../../lib/ai';
+import NichesAdmin from './NichesAdmin';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -168,8 +170,10 @@ function StepCard({
 export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const { briefs, loading, addBrief, removeBrief, saveConcepts, pinConcept, saveStep } = useBrandLab();
   const { projects, patch: patchProject } = useScalingProjects();
+  const nichesApi = useNiches();
 
   const [showForm, setShowForm] = useState(false);
+  const [showNiches, setShowNiches] = useState(false);
   const [business, setBusiness] = useState('');
   const [audience, setAudience] = useState('');
   const [url1, setUrl1] = useState('');
@@ -282,6 +286,10 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
         `Voice & messaging: ${active.steps.voiceMessaging?.text ?? '(not yet confirmed)'}`,
       ].join('\n\n')
     : '';
+
+  if (showNiches) {
+    return <NichesAdmin nichesApi={nichesApi} onClose={() => setShowNiches(false)} homeHeadStyle={homeHeadStyle} homeSubStyle={homeSubStyle} />;
+  }
 
   if (active) {
     return (
@@ -402,7 +410,10 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
           <div style={homeHeadStyle}>Brand Lab</div>
           <div style={homeSubStyle}>A visual design-direction generator — not a site builder. Distinct layout concepts, pick a favorite, prep it for handoff.</div>
         </div>
-        <div style={primaryBtn} onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : '+ New brief'}</div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={ghostBtn} onClick={() => setShowNiches(true)}>Niche library{nichesApi.niches.length ? ` (${nichesApi.niches.length})` : ''}</span>
+          <div style={primaryBtn} onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : '+ New brief'}</div>
+        </div>
       </div>
 
       {showForm && (

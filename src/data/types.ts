@@ -567,6 +567,34 @@ export interface BrandLabBrief {
   created_at: string;
 }
 
+// ── Brand Lab Factory (niche presets) ────────────────────────────────────
+
+/** One entry in a niche's benchmark list — the operator's own "this site
+ *  is crushing it, here's why" note. The highest-value field in the whole
+ *  factory: it compounds across clients. */
+export interface BenchmarkSite {
+  url: string;
+  note: string;
+}
+
+export interface Niche {
+  id: string;
+  slug: string;
+  name: string;
+  buyer_context: string;
+  standard_sections: string[];
+  required_functionality: string[];
+  trust_signals: string[];
+  common_mistakes: string[];
+  visual_conventions: string;
+  benchmark_sites: BenchmarkSite[];
+  keywords: string[];
+  active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 // ── Stocks bot ────────────────────────────────────────────────────────────
 
 export interface BotConfig {
