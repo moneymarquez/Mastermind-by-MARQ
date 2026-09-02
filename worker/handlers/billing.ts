@@ -1,4 +1,5 @@
-import { requireUser } from '../lib/auth';
+import { requireUser, OWNER_USER_ID } from '../lib/auth';
+import { provisionClientLogin } from './client-crm';
 
 // Stripe embedded billing — $19.99/mo, Payment Element mounted client-side
 // (BillingGateScreen.tsx), never a hosted Stripe Checkout redirect. Talks
@@ -19,6 +20,8 @@ export interface BillingEnv {
   STRIPE_SECRET_KEY?: string;
   STRIPE_PRICE_ID?: string;
   STRIPE_WEBHOOK_SECRET?: string;
+  RESEND_API_KEY?: string;
+  RESEND_FROM_EMAIL?: string;
 }
 
 function notConfigured(): Response {
@@ -34,6 +37,88 @@ function supabaseHeaders(env: BillingEnv): Record<string, string> {
     Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
     'content-type': 'application/json',
   };
+}
+
+async function leaveOwnerReminder(env: BillingEnv, title: string): Promise<void> {
+  await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/reminders`, {
+    method: 'POST',
+    headers: supabaseHeaders(env),
+    body: JSON.stringify({ user_id: OWNER_USER_ID, title, due_date: new Date().toISOString().slice(0, 10) }),
+  });
+}
+
+// Same Resend HTTP pattern as deliver-email.ts's sendDeliveryEmail — no
+// SDK, a plain fetch. Returns whether the email actually went out so the
+// caller can fall back to an in-app reminder with the password when it
+// didn't (unconfigured Resend, or the send itself failing).
+async function sendClientLoginEmail(env: BillingEnv, to: string, businessName: string, password: string): Promise<boolean> {
+  if (!env.RESEND_API_KEY || !env.RESEND_FROM_EMAIL) return false;
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        from: env.RESEND_FROM_EMAIL,
+        to: [to],
+        subject: 'Your Masterminds client login',
+        html: [
+          `<p>Hi there,</p>`,
+          `<p>Your first payment for <strong>${businessName}</strong> just went through — your client login is ready.</p>`,
+          `<p><strong>Email:</strong> ${to}<br/><strong>Temporary password:</strong> ${password}</p>`,
+          `<p>Sign in any time to see your audit, invoices, and reports.</p>`,
+          `<p>Thanks,<br/>Made by MARQ</p>`,
+        ].join(''),
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+// Auto-provisions a client login the moment a client's invoice is paid —
+// "as soon as that turns green, send them an automatically created
+// login" per the build prompt. Only fires once per client: skipped
+// entirely if a profiles row already links a login to this client_id,
+// so a second/third invoice being paid later never tries again. Never
+// blocks or fails the webhook response — every branch below is a
+// best-effort side effect logged via an owner reminder either way.
+async function autoProvisionClientLogin(env: BillingEnv, clientId: string): Promise<void> {
+  const headers = supabaseHeaders(env);
+
+  const existingRes = await fetch(
+    `${env.VITE_SUPABASE_URL}/rest/v1/profiles?role=eq.client&client_id=eq.${clientId}&select=id`,
+    { headers },
+  );
+  const existing = (await existingRes.json()) as { id: string }[];
+  if (existing.length > 0) return;
+
+  const clientRes = await fetch(
+    `${env.VITE_SUPABASE_URL}/rest/v1/crm_clients?id=eq.${clientId}&select=business_name,contact_email`,
+    { headers },
+  );
+  const [client] = (await clientRes.json()) as { business_name: string; contact_email: string | null }[];
+  if (!client) return;
+
+  const email = client.contact_email?.trim().toLowerCase();
+  if (!email) {
+    await leaveOwnerReminder(env, `${client.business_name} just paid but has no email on file — add one and create their client login manually.`);
+    return;
+  }
+
+  const result = await provisionClientLogin(env, clientId, email);
+  if ('error' in result) {
+    await leaveOwnerReminder(env, `${client.business_name} just paid — couldn't auto-create their client login (${result.error}). Create it manually from the client's page.`);
+    return;
+  }
+
+  const emailed = await sendClientLoginEmail(env, result.email, client.business_name, result.password);
+  await leaveOwnerReminder(
+    env,
+    emailed
+      ? `Auto-created and emailed ${client.business_name}'s client login (${result.email}).`
+      : `Auto-created ${client.business_name}'s client login (${result.email}) — email wasn't sent (Resend not configured), so relay it yourself. Temp password: ${result.password}`,
+  );
 }
 
 async function stripeRequest(env: BillingEnv, path: string, body: Record<string, string>): Promise<Record<string, unknown>> {
@@ -202,6 +287,7 @@ export async function stripeWebhook(request: Request, env: BillingEnv): Promise<
           headers: supabaseHeaders(env),
           body: JSON.stringify({ stage: 'active', last_activity_at: new Date().toISOString() }),
         });
+        await autoProvisionClientLogin(env, crmInvoice.client_id);
         return new Response('ok', { status: 200 });
       }
     }

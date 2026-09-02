@@ -887,7 +887,7 @@ configured for the Masterminds subscription billing.
   (`ClientDetailView`'s Analysis tab) before anything is sent, and "Regenerate" re-runs from whatever the current
   answers are.
 - **Package & Pricing Builder** — `pricing_template_items` is the editable default (seeded: Month 1 $1,000 upfront,
-  Months 2-4 $1,000/mo × 3), edited from "Default pricing template" in Client CRM. A client's own plan
+  Months 2-4 $1,500/mo × 3, extendable to × 6 per client), edited from "Default pricing template" in Client CRM. A client's own plan
   (`client_pricing_items`) is a one-time copy made when "Use default template" is clicked, then fully independent —
   editing the template afterward never touches an already-finalized client plan. Add/remove line items freely per
   client. The per-client **"Reveal full payment schedule"** toggle (default OFF) lives on `crm_clients` and is
@@ -907,13 +907,19 @@ configured for the Masterminds subscription billing.
   due" — so no figure exists anywhere until it's actually committed. "Mark TBD" and an inline "Set $ → Confirm"
   flip a line between states at any time, which is what lets a Month 1 invoice go out without ever having put a
   3-month number in writing.
-- **Stripe invoicing — manual trigger only** (`worker/handlers/client-crm.ts`'s `createClientInvoice`, routed at
-  `/api/client-crm/create-invoice`) — same raw-fetch-against-Stripe's-REST-API pattern as `billing.ts` (no `stripe`
-  npm SDK). "Send invoice" on a client's Invoices tab creates (or reuses) a Stripe Customer for that client, adds an
-  Invoice Item, creates the Invoice with `collection_method: send_invoice`, finalizes, and sends it — Stripe emails
-  the client directly. Nothing auto-charges and nothing auto-generates; every invoice is a deliberate click.
-  `client_invoices.status` goes `draft` → `sent` the instant this returns, then → `paid` via the webhook below —
-  the client's stage also advances to `Invoice Sent` automatically (unless it's already further along).
+- **Stripe invoicing — manual send, but one-click schedule generation** (`worker/handlers/client-crm.ts`'s
+  `createClientInvoice`, routed at `/api/client-crm/create-invoice`) — same raw-fetch-against-Stripe's-REST-API
+  pattern as `billing.ts` (no `stripe` npm SDK). "Send invoice" on a client's Invoices tab creates (or reuses) a
+  Stripe Customer for that client, adds an Invoice Item, creates the Invoice with `collection_method: send_invoice`,
+  finalizes, and sends it — Stripe emails the client directly. Nothing auto-charges and nothing auto-*sends*; every
+  invoice still needs a deliberate click to actually reach Stripe/the client. What IS one click now is laying out the
+  whole staggered plan as drafts: `useClientCRM.ts`'s `generateInvoiceSchedule` + the "Generate payment schedule"
+  card on the Invoices tab reads a client's `client_pricing_items` (upfront + monthly × repeat_count) and creates
+  every draft `client_invoices` row at once — upfront due on a chosen start date, each monthly installment one
+  calendar month later — instead of clicking "Create a draft invoice" once per period by hand. Idempotent (an
+  occurrence that already has an invoice, any status, is skipped), so it's safe to run again after hand-editing one
+  month. `client_invoices.status` goes `draft` → `sent` the instant Send returns, then → `paid` via the webhook
+  below — the client's stage also advances to `Invoice Sent` automatically (unless it's already further along).
 - **Payment webhook — rides the existing endpoint** — rather than have Cristopher configure a second Stripe webhook,
   `invoice.paid` handling was added directly to the existing `stripeWebhook` in `billing.ts` (`/api/billing/webhook`,
   already configured for subscription billing). It looks up `client_invoices` by `stripe_invoice_id` first — if
@@ -921,6 +927,16 @@ configured for the Masterminds subscription billing.
   "red switch to green" moment. If not found, it falls through to the existing subscription-sync logic untouched.
   **Action needed:** make sure the `invoice.paid` event type is enabled on that existing webhook endpoint in the
   Stripe dashboard (Developers → Webhooks) — it may already be if the endpoint is subscribed to all events.
+- **Auto-created client login on first payment** — the same `invoice.paid` handler also calls
+  `autoProvisionClientLogin` (`billing.ts`), which reuses `provisionClientLogin` (refactored out of
+  `worker/handlers/client-crm.ts`'s `createClientLogin` so the manual "Give this client a login" button and this
+  automatic path share one implementation). Fires once per client — a no-op if a `profiles` row already links a
+  login to that `client_id`, so a second or third invoice being paid later never tries again. If the client has no
+  `contact_email` on file, or the login creation itself fails, it leaves an in-app reminder for Cristopher instead of
+  silently doing nothing. On success it emails the new login (address + temp password) via the same Resend setup as
+  the delivery pipeline above (`RESEND_API_KEY`/`RESEND_FROM_EMAIL` — reused, not a second integration) if those
+  secrets are set; if not, it leaves a reminder with the temp password in it so Cristopher can relay it by hand,
+  same graceful-degradation pattern as everywhere else Resend is optional in this codebase.
 - **CRM board** (`ClientCRMScreen.tsx`) — filterable by stage (`New Lead → Discovery Complete → Analysis Sent →
   Invoice Sent → Active (Paid) → Retainer`), each card showing business name, stage, next payment due, the
   reveal-schedule state, and last activity. Clicking a card opens `ClientDetailView.tsx` — audit answers, analysis,
