@@ -171,26 +171,47 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
   // for. Same onSignIn call underneath (AuthedGate routes to ClientPortal
   // by role), just a different, quieter surface to land on.
   if (view === 'client-login') {
+    // A dedicated teal (--client-accent, index.css) instead of the brand
+    // blurple (--accent) everywhere a color shows up here — border,
+    // background wash, icons, the submit button — so the whole square
+    // reads as visibly different at a glance, not just differently
+    // worded. Same onSignIn() underneath either way.
+    const clientFieldStyle: React.CSSProperties = { ...fieldStyle, borderColor: 'color-mix(in srgb, var(--client-accent) 35%, var(--border))' };
     return (
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'var(--bg)', color: 'var(--text)' }}>
+      <div
+        style={{
+          height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, color: 'var(--text)',
+          background: 'radial-gradient(circle at 50% 0%, var(--client-accent-soft), var(--bg) 60%)',
+        }}
+      >
         <div style={{ width: '100%', maxWidth: 380, display: 'flex', flexDirection: 'column', gap: 22 }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center' }}>
-            <img src="/icons/icon-192.png" alt="MARQ" style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'contain' }} />
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--client-accent-soft)', border: '1px solid color-mix(in srgb, var(--client-accent) 45%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="users" size={22} color="var(--client-accent)" />
+            </div>
             <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em' }}>Client login</div>
             <div style={{ fontSize: 13.5, color: 'var(--text-tertiary)' }}>See your project's progress, updates, and invoices.</div>
           </div>
 
-          <form onSubmit={submitClientLogin} style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 24, borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', background: 'var(--surface)' }}>
-            <div style={fieldStyle}>
-              <Icon name="envelope-simple" size={17} color="var(--text-tertiary)" />
+          <form
+            onSubmit={submitClientLogin}
+            style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 24, borderRadius: 'var(--radius-xl)', border: '1px solid color-mix(in srgb, var(--client-accent) 30%, var(--border))', background: 'var(--surface)', boxShadow: '0 20px 60px color-mix(in srgb, var(--client-accent) 10%, transparent)' }}
+          >
+            <div style={clientFieldStyle}>
+              <Icon name="envelope-simple" size={17} color="var(--client-accent)" />
               <input type="email" autoFocus placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
             </div>
-            <div style={fieldStyle}>
-              <Icon name="lock-simple" size={17} color="var(--text-tertiary)" />
+            <div style={clientFieldStyle}>
+              <Icon name="lock-simple" size={17} color="var(--client-accent)" />
               <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
             </div>
             {error && <div style={{ fontSize: 13, color: 'var(--danger)' }}>{error}</div>}
-            <button type="submit" disabled={submitting} className="ap-btn ap-btn-primary ap-btn-block" style={{ height: 48, marginTop: 4 }}>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="ap-btn ap-btn-block"
+              style={{ height: 48, marginTop: 4, background: 'var(--client-accent)', color: '#fff', border: 'none' }}
+            >
               {submitting ? 'Signing in…' : 'Log in'}
             </button>
           </form>
@@ -269,7 +290,7 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
             <span onClick={scrollToLogin} style={{ fontSize: 14, color: 'var(--text-secondary)', cursor: 'pointer' }}>Log in</span>
             <div
               onClick={openClientLogin}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-2)', fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 'var(--radius-pill)', border: '1px solid color-mix(in srgb, var(--client-accent) 40%, transparent)', fontSize: 13, color: 'var(--client-accent)', cursor: 'pointer' }}
             >
               <Icon name="users" size={15} />Client login
             </div>

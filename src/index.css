@@ -40,6 +40,13 @@
   --accent-strong: #796cbf;   /* accent-600 */
   --accent-soft: #2b2741;     /* accent-900 */
 
+  /* Deliberately NOT the blurple above — the client-login screen
+     (AuthScreen.tsx) uses this instead of --accent specifically so it
+     reads as a different login at a glance, not just different copy. A
+     teal complements the blurple rather than competing with it. */
+  --client-accent: #4fb3ac;
+  --client-accent-soft: #1c3634;
+
   /* Status. Aperture defines no status palette — it's a marketing/deck
      system and never needed one — so these are chosen to sit with it
      rather than lifted from it: each is pulled toward the ground's blue
@@ -71,6 +78,9 @@
   --accent-2: #796cbf;
   --accent-strong: #423a6a;
   --accent-soft: #e7e5fe;
+
+  --client-accent: #2f7d76;   /* teal, darkened for a light ground */
+  --client-accent-soft: #dcf1ef;
 
   /* Darkened for contrast against the light ground — the dark-mode values
      above would fail legibility here. */
