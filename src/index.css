@@ -246,6 +246,16 @@ body {
   font-family: var(--font-sans);
 }
 
+/* #root has no height of its own otherwise, so any screen that sizes
+   itself off a percentage (e.g. AuthScreen.tsx's height: '100%' scroll
+   wrapper) resolves against an indefinite ancestor and never actually
+   scrolls — body's overflow: hidden above just clips the overflow
+   instead. Stage.tsx (the authenticated app) sizes off JS-measured
+   visualViewport px values, not percentages, so this doesn't affect it. */
+#root {
+  height: 100%;
+}
+
 * {
   box-sizing: border-box;
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { SignUpResult } from './useAuth';
 import { PLANS, LIVE_PLAN } from '../billing/plans';
@@ -8,21 +8,6 @@ import Icon from '../Icon';
 interface Props {
   onSignIn: (email: string, password: string) => Promise<string | null>;
   onSignUp: (email: string, password: string) => Promise<SignUpResult>;
-}
-
-const THEME_KEY = 'mastermind-theme';
-
-function currentTheme(): 'dark' | 'light' {
-  return (document.documentElement.getAttribute('data-theme') as 'dark' | 'light' | null) ?? 'dark';
-}
-
-// Same mechanism useTheme.ts uses post-login (attribute + localStorage) so
-// a choice made here survives into the authenticated app without a second
-// write path, and a saved server-side preference just overwrites it the
-// first time useTheme() loads after sign-in.
-function applyTheme(next: 'dark' | 'light') {
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem(THEME_KEY, next);
 }
 
 const fieldStyle: React.CSSProperties = {
@@ -92,12 +77,18 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [theme, setTheme] = useState<'dark' | 'light'>(currentTheme());
 
-  const toggleTheme = (next: 'dark' | 'light') => {
-    setTheme(next);
-    applyTheme(next);
-  };
+  // The public site always renders light — dark/light is a preference for
+  // the authenticated app only (Settings, via useTheme.ts), never exposed
+  // here. Forcing the attribute on mount (rather than leaving whatever a
+  // previous session cached) is what makes that true regardless of what
+  // data-theme happened to be set to before this screen mounted; the
+  // authenticated app re-applies the real saved preference the moment
+  // AuthedGate mounts (useTheme's own load effect), so this never leaks
+  // past login.
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }, []);
 
   const switchMode = (next: 'login' | 'signup') => {
     setMode(next);
@@ -285,7 +276,7 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
       `}</style>
 
       {/* Nav — sticky, blurred, Menu pill + section links on the left,
-          theme toggle + Log in + brand mark on the right. */}
+          Log in + brand mark on the right. */}
       <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'var(--mm-bg-blur)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--mm-line)' }}>
         <div className="ap-land" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 28px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -299,12 +290,6 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div
-              onClick={() => toggleTheme(theme === 'light' ? 'dark' : 'light')}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 999, border: '1px solid var(--mm-line2)', fontSize: 13, color: 'var(--mm-dim)', cursor: 'pointer' }}
-            >
-              <Icon name={theme === 'light' ? 'sun' : 'moon'} size={16} />{theme === 'light' ? 'Light' : 'Dark'}
-            </div>
             <span onClick={scrollToLogin} style={{ fontSize: 14, color: 'var(--mm-dim)', cursor: 'pointer' }}>Log in</span>
             <div
               onClick={openClientLogin}
