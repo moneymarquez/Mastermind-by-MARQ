@@ -73,14 +73,14 @@ const comingSoonPlan = PLANS.find((p) => !p.live) ?? null;
  *  register the reference uses (a browser-chrome preview, an example
  *  terminal query), not asserted as a claim about the viewer's own data. */
 export default function AuthScreen({ onSignIn, onSignUp }: Props) {
+  // Separate from the owner/subscriber landing entirely — a client gets
+  // its own button in the nav, its own minimal screen (no hero, no
+  // pricing, no module grid), not a copy-swap inside the sales page's
+  // login card. The underlying sign-in call is identical either way
+  // (onSignIn) — AuthedGate routes by role after; only the surface a
+  // client actually sees differs.
+  const [view, setView] = useState<'main' | 'client-login'>('main');
   const [mode, setMode] = useState<'login' | 'signup'>('login');
-  // Purely a label/copy switch on the login card — a client signs in
-  // through the exact same email/password form as everyone else;
-  // AuthedGate routes them to ClientPortal by role after. This just
-  // confirms to a client landing here that they're in the right spot,
-  // instead of "Client login" silently doing nothing when the card is
-  // already showing the login form.
-  const [loginContext, setLoginContext] = useState<'owner' | 'client'>('owner');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -98,7 +98,30 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
     setMode(next);
     setError(null);
     setNotice(null);
-    if (next === 'signup') setLoginContext('owner');
+  };
+
+  const openClientLogin = () => {
+    setView('client-login');
+    setError(null);
+    setNotice(null);
+    setEmail('');
+    setPassword('');
+  };
+
+  const backToMain = () => {
+    setView('main');
+    setError(null);
+    setNotice(null);
+  };
+
+  const submitClientLogin = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !password) return;
+    setError(null);
+    setSubmitting(true);
+    const err = await onSignIn(email.trim(), password);
+    setSubmitting(false);
+    if (err) setError(err);
   };
 
   const scrollToLogin = () => {
@@ -142,6 +165,43 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
     setSubmitting(false);
     if (err) setError(err);
   };
+
+  // A genuinely separate, minimal screen — no hero copy, no pricing, no
+  // module grid, nothing selling the product a client is already paying
+  // for. Same onSignIn call underneath (AuthedGate routes to ClientPortal
+  // by role), just a different, quieter surface to land on.
+  if (view === 'client-login') {
+    return (
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'var(--bg)', color: 'var(--text)' }}>
+        <div style={{ width: '100%', maxWidth: 380, display: 'flex', flexDirection: 'column', gap: 22 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center' }}>
+            <img src="/icons/icon-192.png" alt="MARQ" style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'contain' }} />
+            <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em' }}>Client login</div>
+            <div style={{ fontSize: 13.5, color: 'var(--text-tertiary)' }}>See your project's progress, updates, and invoices.</div>
+          </div>
+
+          <form onSubmit={submitClientLogin} style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 24, borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', background: 'var(--surface)' }}>
+            <div style={fieldStyle}>
+              <Icon name="envelope-simple" size={17} color="var(--text-tertiary)" />
+              <input type="email" autoFocus placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
+            </div>
+            <div style={fieldStyle}>
+              <Icon name="lock-simple" size={17} color="var(--text-tertiary)" />
+              <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
+            </div>
+            {error && <div style={{ fontSize: 13, color: 'var(--danger)' }}>{error}</div>}
+            <button type="submit" disabled={submitting} className="ap-btn ap-btn-primary ap-btn-block" style={{ height: 48, marginTop: 4 }}>
+              {submitting ? 'Signing in…' : 'Log in'}
+            </button>
+          </form>
+
+          <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={backToMain}>
+            ← Not a client? Back to Masterminds
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--bg)', color: 'var(--text)' } as React.CSSProperties}>
@@ -207,6 +267,12 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
               <Icon name={theme === 'light' ? 'sun' : 'moon'} size={16} />{theme === 'light' ? 'Light' : 'Dark'}
             </div>
             <span onClick={scrollToLogin} style={{ fontSize: 14, color: 'var(--text-secondary)', cursor: 'pointer' }}>Log in</span>
+            <div
+              onClick={openClientLogin}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-2)', fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer' }}
+            >
+              <Icon name="users" size={15} />Client login
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 16, borderLeft: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.05, textAlign: 'right' }}>
                 <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.02em' }}>Masterminds</div>
@@ -247,12 +313,8 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
 
             <div id="login-card" style={{ padding: 26, borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', background: 'var(--surface)', boxShadow: 'var(--shadow-lg, 0 20px 60px rgba(0,0,0,0.25))', display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div>
-                <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em' }}>
-                  {mode === 'signup' ? 'Create your account' : loginContext === 'client' ? 'Client login' : 'Log in'}
-                </div>
-                <div style={{ fontSize: 13.5, color: 'var(--text-tertiary)', marginTop: 4 }}>
-                  {mode === 'signup' ? 'Takes about a minute.' : loginContext === 'client' ? "See your project's progress." : 'Nova has your morning ready.'}
-                </div>
+                <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em' }}>{mode === 'login' ? 'Log in' : 'Create your account'}</div>
+                <div style={{ fontSize: 13.5, color: 'var(--text-tertiary)', marginTop: 4 }}>{mode === 'login' ? 'Nova has your morning ready.' : 'Takes about a minute.'}</div>
               </div>
 
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -283,8 +345,6 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
                 {mode === 'login' ? (
                   <>No account?{' '}
                     <span style={{ color: 'var(--text)', borderBottom: '1px solid var(--border-2)', cursor: 'pointer' }} onClick={() => switchMode('signup')}>Start free</span>
-                    {' · '}
-                    <span style={{ color: 'var(--text)', borderBottom: '1px solid var(--border-2)', cursor: 'pointer' }} onClick={() => setLoginContext('client')}>Client login</span>
                   </>
                 ) : (
                   <>Already have an account?{' '}
