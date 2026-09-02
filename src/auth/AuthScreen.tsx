@@ -317,7 +317,7 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
                 <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.02em' }}>Masterminds</div>
                 <div style={{ fontSize: 8, letterSpacing: '0.3em', color: 'var(--mm-faint)', textTransform: 'uppercase' }}>by marq</div>
               </div>
-              <img src="/icons/icon-192.png" alt="MARQ" style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'contain' }} />
+              <img src="/marq-wordmark.png" alt="MARQ" style={{ height: 46, width: 'auto', objectFit: 'contain', filter: 'var(--mm-logo-filter)', mixBlendMode: 'var(--mm-logo-blend)' as React.CSSProperties['mixBlendMode'] }} />
             </div>
           </div>
         </div>
@@ -716,7 +716,7 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
 
         <footer style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '32px 0 44px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src="/icons/icon-192.png" alt="MARQ" style={{ width: 28, height: 28, borderRadius: 7, objectFit: 'contain' }} />
+            <img src="/marq-wordmark.png" alt="MARQ" style={{ height: 34, width: 'auto', objectFit: 'contain', filter: 'var(--mm-logo-filter)', mixBlendMode: 'var(--mm-logo-blend)' as React.CSSProperties['mixBlendMode'] }} />
             <div style={{ lineHeight: 1.05 }}>
               <div style={{ fontWeight: 600, fontSize: 14, letterSpacing: '-0.02em' }}>Masterminds</div>
               <div style={{ fontSize: 8, fontWeight: 700, color: 'var(--mm-faint)', letterSpacing: '0.3em', textTransform: 'uppercase' }}>by marq</div>

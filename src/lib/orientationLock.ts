@@ -3,15 +3,23 @@ const MOBILE_BREAKPOINT = 768;
 export type ForcePortraitDirection = 'primary' | 'secondary' | null;
 
 /** Whether the current physical viewport is a phone/small-tablet in
- *  landscape — the only case any of this kicks in. Checks the SHORT axis
- *  (min of width/height) against the breakpoint, since that's the axis
- *  that stays constant across a rotation — a landscape laptop has a short
- *  axis well above this, so it's never affected. */
+ *  landscape — the only case any of this kicks in. Uses matchMedia's own
+ *  `(orientation: landscape)` as the authoritative signal — the same
+ *  thing the CSS in index.css evaluates — rather than comparing
+ *  innerWidth/innerHeight directly: those two can read momentarily
+ *  inconsistent with each other during/right after a rotation or a cold
+ *  page load, which previously meant this could occasionally decide
+ *  "landscape" while the device was actually still in portrait, then
+ *  never get a further resize event to correct itself — the exact bug
+ *  that broke scrolling on a plain portrait load once already. Checks
+ *  the SHORT axis (min of width/height) against the breakpoint, since
+ *  that stays constant across a rotation — a landscape laptop's short
+ *  axis is well above this, so it's never affected. */
 function isPhoneLandscape(): boolean {
   if (typeof window === 'undefined') return false;
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  return w > h && Math.min(w, h) < MOBILE_BREAKPOINT;
+  const landscape = window.matchMedia?.('(orientation: landscape)').matches ?? (window.innerWidth > window.innerHeight);
+  if (!landscape) return false;
+  return Math.min(window.innerWidth, window.innerHeight) < MOBILE_BREAKPOINT;
 }
 
 /** Which way to rotate the rendered app to compensate, or null if no
@@ -57,4 +65,8 @@ export function initOrientationLock(): void {
   window.addEventListener('resize', apply);
   window.addEventListener('orientationchange', apply);
   screen.orientation?.addEventListener?.('change', apply);
+  // Belt and suspenders: react directly to the same media query
+  // isPhoneLandscape() reads, independent of whether resize/
+  // orientationchange happen to fire in a given browser/situation.
+  window.matchMedia?.('(orientation: landscape)').addEventListener?.('change', apply);
 }
