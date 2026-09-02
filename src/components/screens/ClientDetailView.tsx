@@ -244,9 +244,9 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
 
   return (
     <div>
-      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 'var(--text-body)', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 14 }} onClick={onBack}>
+      <span style={{ ...ghostBtn, display: 'inline-flex', alignItems: 'center', marginBottom: 14 }} onClick={onBack}>
         ← All clients
-      </div>
+      </span>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <input

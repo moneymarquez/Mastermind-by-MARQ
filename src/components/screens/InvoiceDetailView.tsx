@@ -134,9 +134,9 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
 
   return (
     <div>
-      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 'var(--text-body)', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 14 }} onClick={onClose}>
+      <span style={{ ...ghostBtn, display: 'inline-flex', alignItems: 'center', marginBottom: 14 }} onClick={onClose}>
         ← Back
-      </div>
+      </span>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
         <div>

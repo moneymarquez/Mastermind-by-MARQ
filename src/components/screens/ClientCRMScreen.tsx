@@ -87,9 +87,9 @@ export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle }: Props) 
   if (view === 'invoices') {
     return (
       <div>
-        <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 'var(--text-body)', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 14 }} onClick={() => setView('board')}>
+        <span style={{ ...ghostBtn, display: 'inline-flex', alignItems: 'center', marginBottom: 14 }} onClick={() => setView('board')}>
           ← Client board
-        </div>
+        </span>
         <AllInvoicesView crm={crm} homeHeadStyle={homeHeadStyle} homeSubStyle={homeSubStyle} />
       </div>
     );

@@ -41,9 +41,9 @@ export function AuditQuestionsAdmin({ crm, onClose, homeHeadStyle, homeSubStyle 
 
   return (
     <div>
-      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 'var(--text-body)', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 14 }} onClick={onClose}>
+      <span style={{ ...ghostBtn, display: 'inline-flex', alignItems: 'center', marginBottom: 14 }} onClick={onClose}>
         ← Back to Client CRM
-      </div>
+      </span>
       <div style={homeHeadStyle}>Audit Questions</div>
       <div style={homeSubStyle}>The shared question bank both the internal form and the public questionnaire pull from. Add, retire, or reorder freely.</div>
 
@@ -102,9 +102,9 @@ export function PricingTemplateAdmin({ crm, onClose, homeHeadStyle, homeSubStyle
 
   return (
     <div>
-      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 'var(--text-body)', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 14 }} onClick={onClose}>
+      <span style={{ ...ghostBtn, display: 'inline-flex', alignItems: 'center', marginBottom: 14 }} onClick={onClose}>
         ← Back to Client CRM
-      </div>
+      </span>
       <div style={homeHeadStyle}>Default Pricing Template</div>
       <div style={homeSubStyle}>Pre-fills every new client's pricing plan. Editing this never changes a client's already-finalized plan.</div>
 
@@ -167,9 +167,9 @@ export function ServiceCatalogAdmin({ crm, onClose, homeHeadStyle, homeSubStyle 
 
   return (
     <div>
-      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 'var(--text-body)', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 14 }} onClick={onClose}>
+      <span style={{ ...ghostBtn, display: 'inline-flex', alignItems: 'center', marginBottom: 14 }} onClick={onClose}>
         ← Back to Client CRM
-      </div>
+      </span>
       <div style={homeHeadStyle}>Service Catalog</div>
       <div style={homeSubStyle}>
         The priced menu the package builder pulls from. Prices here are your client-facing numbers — what lands on an invoice.
