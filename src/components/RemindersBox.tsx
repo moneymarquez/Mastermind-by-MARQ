@@ -5,9 +5,13 @@ import { dateStr } from '../data/time';
 
 interface Props {
   isMobile: boolean;
-  /** Clears the fixed mobile tab bar (MobileTabBar.tsx) on mobile; 20 (the
-   *  plain corner margin) everywhere else, including desktop. */
-  bottomOffset?: number;
+  /** Clears the fixed mobile tab bar (MobileTabBar.tsx) on mobile — a full
+   *  CSS value (usually a calc() with env(safe-area-inset-bottom)) rather
+   *  than a bare number, since the tab bar's own height grows by that same
+   *  safe-area inset on notched devices; a plain px number here would sit
+   *  the box too low, overlapping the tab bar. '20px' (the plain corner
+   *  margin) everywhere else, including desktop. */
+  bottomOffset?: string;
 }
 
 function dueLabel(dueDate: string): string {
@@ -20,7 +24,7 @@ function dueLabel(dueDate: string): string {
   return `due ${new Date(`${dueDate}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
 }
 
-const RemindersBox = forwardRef<HTMLDivElement, Props>(function RemindersBox({ isMobile, bottomOffset = 20 }, ref) {
+const RemindersBox = forwardRef<HTMLDivElement, Props>(function RemindersBox({ isMobile, bottomOffset = '20px' }, ref) {
   const { reminders, loading } = useReminders();
   const visible = reminders.slice(0, 4);
   // Mobile only: collapsed by default. RemindersBox is position:absolute

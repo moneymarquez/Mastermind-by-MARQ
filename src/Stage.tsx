@@ -402,7 +402,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         />
       )}
 
-      <RemindersBox ref={remindersRef} isMobile={isMobile} bottomOffset={isMobile ? vm.tabBarHeight + 20 : 20} />
+      <RemindersBox ref={remindersRef} isMobile={isMobile} bottomOffset={isMobile ? `calc(${vm.tabBarHeight + 20}px + env(safe-area-inset-bottom))` : '20px'} />
 
       <ProductTour
         active={tourActive}

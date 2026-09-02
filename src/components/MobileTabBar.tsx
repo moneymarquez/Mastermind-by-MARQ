@@ -1,5 +1,11 @@
 import Icon from '../Icon';
 
+// Content-zone height only — the safe-area inset is added on top of this
+// (not carved out of it) by the calc() in the component's own height
+// below, same pattern as MobileHeader.tsx's height. Every other consumer
+// of this constant (Stage.tsx's content bottom-padding, RemindersBox's
+// offset) independently appends env(safe-area-inset-bottom) in its own
+// calc(), so nothing double-counts it.
 export const TAB_BAR_HEIGHT = 78;
 
 interface Props {
@@ -41,7 +47,7 @@ export default function MobileTabBar({ screen, novaOpen, onNavigate, onToggleNov
   return (
     <div
       style={{
-        position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 30, height: TAB_BAR_HEIGHT,
+        position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 30, height: `calc(${TAB_BAR_HEIGHT}px + env(safe-area-inset-bottom))`,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 22px calc(10px + env(safe-area-inset-bottom))',
         borderTop: '1px solid var(--mm-line)', background: 'var(--mm-bg-blur)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
       }}
