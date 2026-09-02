@@ -24,7 +24,7 @@ export const TOUR_STEPS: TourStep[] = [
   { id: 'fitness', title: 'Fitness', body: 'A full workout library plus a custom plan generated from a short questionnaire, with live workout mode built in.', screen: 'fitness', target: 'content' },
   { id: 'budgeting', title: 'Budgeting', body: 'Real categories, subscriptions tracked automatically, and cash-flow forecasting instead of a static spreadsheet.', screen: 'budgeting', target: 'content' },
   { id: 'scaling-start', title: 'Scaling — Start', body: 'The guided entry point for a new client project — Idea Maker, Brand Lab, Website Builder, and Scaling Planner, chained together with a persistent trail.', screen: 'scaling-start', target: 'content' },
-  { id: 'brand-lab', title: 'Brand Lab', body: 'A visual design-direction generator — distinct concepts to react to and refine. Not a site builder.', screen: 'brand-lab', target: 'content' },
+  { id: 'brand-lab', title: 'Brand Lab', body: 'Call transcript in, two ready-to-paste prompts out. Niche research, a functional spec you approve first, then the Claude Design and Claude Fable prompts with copy buttons.', screen: 'brand-lab', target: 'content' },
   { id: 'website', title: 'Website & App Builder', body: "Where a project's live build happens. Currently in active development — its roadmap is shown here.", screen: 'website', target: 'content' },
   { id: 'invoicing', title: 'Invoicing', body: 'A real nine-document client system — agreements, invoices, briefs, and more — generated and tracked in one place.', screen: 'invoicing', target: 'content' },
   { id: 'nova', title: 'Nova', body: "This is Nova — full read/write access across every module, and the thing that actually ties this whole system together.", target: 'nova' },

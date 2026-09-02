@@ -737,6 +737,24 @@ done and matched what the new prompt asked for, so it wasn't rebuilt).
   Once anything's linked, Nova drafts a starter invoice from the assembled context straight into Invoicing. All four
   linked modules remain fully usable on their own — Start only adds a trail connecting them, never replaces direct
   access.
+- **Brand Lab Factory** (`src/components/screens/BrandLabScreen.tsx`, `BrandLabIntakeForm.tsx`, `BrandLabSpecReview.tsx`,
+  `NichesAdmin.tsx`, `src/components/PromptBox.tsx`, `src/data/useNiches.ts`, `brandLabIntake.ts`, `brandLabSpec.ts`,
+  `brandLabPrompts.ts`; schemas 050–052, all applied live) — a call transcript (or an idea, or an existing CRM client's
+  audit) becomes two ready-to-paste prompts. The order is the point: **niche presets** (`niches`, 14 seeded + freeform
+  "other"; benchmark sites are the operator's own list, added one paste at a time from the Niche library) → **intake**
+  (one extraction call, null-means-not-said, every extracted field tagged and editable, raw transcript stored) →
+  **functional spec** (pages, sections in order, every interactive thing tagged static / form / integration / dynamic,
+  data model, admin needs, out of scope — an editable checklist approved *before* any prompt exists, so a design tool
+  can never commit backend scope) → **prompts** (Box 1 Claude Design with a Higgsfield imagery block, Box 2 Claude Fable
+  with the spec verbatim + numbered acceptance criteria + a self-verification requirement + a hard no-fake-content
+  rule, Box 3 standalone imagery; each with its own copy button). Design and Fable prompts are *assembled* from the
+  approved spec + niche + brief — deterministic, instant, and the lever that makes them better per client is the niche
+  data; only the imagery block is model-drafted. The Design prompt may only ask for UI the spec authorized: any niche
+  "required functionality" the spec omits is surfaced as a flag above Box 1, never quietly added. `worker/handlers/claude.ts`
+  gained an optional `effort` passthrough (allowlisted, default `low`) so the spec call runs at `medium`. **Stopped
+  after step 5 on purpose** — the round/scoring loop (step 6) waits until this has run on a real client, so the criteria
+  are built once against real output. The original concept generator + 4-step handoff are untouched, now an optional
+  side-step on the brief page.
 - **Brand Lab redesign** (`src/components/screens/BrandLabScreen.tsx`) — replaced the old fixed
   Minimal/Bold/Editorial templates with a real question flow (business, audience, reference sites, tone, color
   preference) and a user-chosen count of 3, 4, or 5 concepts. Each concept picks a genuinely different layout

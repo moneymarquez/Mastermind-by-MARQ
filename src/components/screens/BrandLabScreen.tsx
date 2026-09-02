@@ -11,6 +11,8 @@ import BrandLabIntakeForm from './BrandLabIntakeForm';
 import type { IntakePayload } from './BrandLabIntakeForm';
 import BrandLabSpecReview from './BrandLabSpecReview';
 import { generateFunctionalSpec } from '../../data/brandLabSpec';
+import { buildPrompts } from '../../data/brandLabPrompts';
+import PromptBox from '../PromptBox';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -181,6 +183,8 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const [count, setCount] = useState<3 | 4 | 5>(3);
   const [specBusy, setSpecBusy] = useState(false);
   const [specError, setSpecError] = useState('');
+  const [promptsBusy, setPromptsBusy] = useState(false);
+  const [promptsError, setPromptsError] = useState('');
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -358,6 +362,57 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
             onUnlock={() => updateBrief(active.id, { spec_approved_at: null, prompts: null })}
           />
         </div>
+
+        {/* Step 5 — the prompts. Only from an approved spec. Design and
+            Fable are assembled deterministically from spec + niche + brief;
+            the imagery block is the one model-drafted part. Each box has
+            its own copy button because the workflow is copy → switch app →
+            paste, from a phone. */}
+        {active.spec_approved_at && active.functional_spec && (
+          <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 680 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Prompts</div>
+                <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 2 }}>
+                  {active.prompts ? `Generated ${new Date(active.prompts.generated_at).toLocaleString()} from the approved spec.` : 'Generated from the approved spec — Design first, then Fable once the design is locked.'}
+                </div>
+              </div>
+              <span
+                style={{ ...(active.prompts ? ghostBtn : primaryBtn), opacity: promptsBusy ? 0.6 : 1, pointerEvents: promptsBusy ? 'none' : 'auto' }}
+                onClick={async () => {
+                  setPromptsBusy(true);
+                  setPromptsError('');
+                  try {
+                    const prompts = await buildPrompts(active, nichesApi.bySlug(active.niche_slug));
+                    await updateBrief(active.id, { prompts });
+                  } catch (err) {
+                    setPromptsError(err instanceof AiError ? err.message : 'Could not build the prompts — try again.');
+                  } finally {
+                    setPromptsBusy(false);
+                  }
+                }}
+              >
+                {promptsBusy ? 'Building…' : active.prompts ? 'Rebuild prompts' : 'Build prompts'}
+              </span>
+            </div>
+            {promptsError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)' }}>{promptsError}</div>}
+
+            {active.prompts && active.prompts.scope_flags.length > 0 && (
+              <div style={{ padding: '12px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid color-mix(in srgb, var(--warning) 45%, transparent)', background: 'color-mix(in srgb, var(--warning) 8%, transparent)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ fontSize: 'var(--text-caption)', fontWeight: 700, color: 'var(--warning)', letterSpacing: 0.3, textTransform: 'uppercase' }}>Left out of the Design prompt</div>
+                {active.prompts.scope_flags.map((f, i) => <div key={i} style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{f}</div>)}
+              </div>
+            )}
+
+            {active.prompts && (
+              <>
+                <PromptBox title="Box 1 — Claude Design" hint="Paste into Claude Design. Includes the Higgsfield imagery block." text={active.prompts.design} />
+                <PromptBox title="Box 2 — Claude Fable" hint="Paste the locked design into slot 6 first, then give Fable the whole thing." text={active.prompts.fable} />
+                <PromptBox title="Box 3 — Higgsfield (standalone, optional)" hint="Only if you're generating imagery outside Claude Design." text={active.prompts.imagery} />
+              </>
+            )}
+          </div>
+        )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 20, flexWrap: 'wrap' }}>
           <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Visual concepts</div>
