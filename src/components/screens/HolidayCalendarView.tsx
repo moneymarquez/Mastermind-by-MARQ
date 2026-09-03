@@ -37,19 +37,20 @@ const inputStyle: CSSProperties = {
 };
 
 export default function HolidayCalendarView() {
-  const { shifts, loading, addShift, addShifts, removeShift } = useHolidayShifts();
+  const { shifts, loading, addShift, addShifts, removeShift, updateShift } = useHolidayShifts();
   const [monthAnchor, setMonthAnchor] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const [parsing, setParsing] = useState(false);
   const [parseError, setParseError] = useState('');
-  const [reviewShifts, setReviewShifts] = useState<ParsedShift[] | null>(null);
+  const [reviewShifts, setReviewShifts] = useState<(ParsedShift & { is_self: boolean })[] | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const [manualName, setManualName] = useState('');
   const [manualDate, setManualDate] = useState(() => dateStr(new Date()));
   const [manualStart, setManualStart] = useState('09:00');
   const [manualEnd, setManualEnd] = useState('17:00');
+  const [manualIsSelf, setManualIsSelf] = useState(false);
 
   const onPhotoSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -61,7 +62,7 @@ export default function HolidayCalendarView() {
       const image = await fileToBase64(file);
       const parsed = await parseSchedulePhoto(image, monthAnchor.getFullYear());
       if (parsed.length === 0) setParseError('Could not find any shifts in that photo — try a clearer image, or add shifts manually below.');
-      setReviewShifts(parsed);
+      setReviewShifts(parsed.map((s) => ({ ...s, is_self: false })));
     } catch (err) {
       setParseError(err instanceof AiError ? err.message : 'Could not read that schedule photo — try again.');
     } finally {
@@ -69,7 +70,7 @@ export default function HolidayCalendarView() {
     }
   };
 
-  const updateReviewShift = (i: number, patch: Partial<ParsedShift>) => {
+  const updateReviewShift = (i: number, patch: Partial<ParsedShift & { is_self: boolean }>) => {
     setReviewShifts((prev) => prev && prev.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
   };
   const removeReviewShift = (i: number) => {
@@ -77,14 +78,15 @@ export default function HolidayCalendarView() {
   };
   const confirmReview = async () => {
     if (!reviewShifts || reviewShifts.length === 0) return;
-    await addShifts(reviewShifts.map((s) => ({ ...s, is_self: false })));
+    await addShifts(reviewShifts);
     setReviewShifts(null);
   };
 
   const submitManual = async () => {
     if (!manualName.trim()) return;
-    await addShift({ person_name: manualName.trim(), shift_date: manualDate, start_time: manualStart, end_time: manualEnd, is_self: false, source: 'manual' });
+    await addShift({ person_name: manualName.trim(), shift_date: manualDate, start_time: manualStart, end_time: manualEnd, is_self: manualIsSelf, source: 'manual' });
     setManualName('');
+    setManualIsSelf(false);
   };
 
   const shiftsByDate = new Map<string, typeof shifts>();
@@ -128,6 +130,10 @@ export default function HolidayCalendarView() {
               <input type="date" style={{ ...inputStyle, width: 130 }} value={s.shift_date} onChange={(e) => updateReviewShift(i, { shift_date: e.target.value })} />
               <input type="time" style={{ ...inputStyle, width: 100 }} value={s.start_time} onChange={(e) => updateReviewShift(i, { start_time: e.target.value })} />
               <input type="time" style={{ ...inputStyle, width: 100 }} value={s.end_time} onChange={(e) => updateReviewShift(i, { end_time: e.target.value })} />
+              <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 'var(--text-small)', color: s.is_self ? 'var(--text)' : 'var(--text-tertiary)', fontWeight: s.is_self ? 600 : 400, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                <input type="checkbox" checked={s.is_self} onChange={(e) => updateReviewShift(i, { is_self: e.target.checked })} />
+                Mine
+              </label>
               <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => removeReviewShift(i)}>✕</span>
             </div>
           ))}
@@ -145,7 +151,17 @@ export default function HolidayCalendarView() {
         <input type="date" style={{ ...inputStyle, width: 140 }} value={manualDate} onChange={(e) => setManualDate(e.target.value)} />
         <input type="time" style={{ ...inputStyle, width: 100 }} value={manualStart} onChange={(e) => setManualStart(e.target.value)} />
         <input type="time" style={{ ...inputStyle, width: 100 }} value={manualEnd} onChange={(e) => setManualEnd(e.target.value)} />
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--text-body-sm)', color: manualIsSelf ? 'var(--text)' : 'var(--text-secondary)', fontWeight: manualIsSelf ? 600 : 400, cursor: 'pointer' }}>
+          <input type="checkbox" checked={manualIsSelf} onChange={(e) => setManualIsSelf(e.target.checked)} />
+          This is my shift
+        </label>
         <div style={{ padding: '9px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--text)', color: 'var(--text)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer' }} onClick={submitManual}>Add shift</div>
+      </div>
+      {/* This is the one flag Opening/Closing actually reads — a shift with
+          the right name and date but is_self left off never triggers the
+          checklist, which is exactly what silently broke it before this. */}
+      <div style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', marginTop: 4 }}>
+        Check "This is my shift" for your own entries — that's what makes Opening/Closing's checklist show up for that day.
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16, marginBottom: 8 }}>
@@ -194,12 +210,17 @@ export default function HolidayCalendarView() {
             <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>{new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
               {dayShifts.map((s) => (
-                <div key={s.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)', border: `1px solid ${colorForName(s.person_name)}44` }}>
+                <div key={s.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)', border: `1px solid ${s.is_self ? 'var(--text)' : `${colorForName(s.person_name)}44`}` }}>
                   <div>
-                    <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: colorForName(s.person_name) }}>{s.person_name}</div>
+                    <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: colorForName(s.person_name) }}>{s.person_name}{s.is_self && <span style={{ marginLeft: 6, fontSize: 'var(--text-nano)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--text)' }}>you</span>}</div>
                     <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>{formatTimeLabel(s.start_time)} – {formatTimeLabel(s.end_time)}</div>
                   </div>
-                  <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => removeShift(s.id)}>Remove</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ fontSize: 'var(--text-small)', color: s.is_self ? 'var(--text)' : 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => updateShift(s.id, { is_self: !s.is_self })}>
+                      {s.is_self ? '✓ This is me' : 'Mark as me'}
+                    </span>
+                    <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => removeShift(s.id)}>Remove</span>
+                  </div>
                 </div>
               ))}
               {dayShifts.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No shifts logged for this day.</div>}

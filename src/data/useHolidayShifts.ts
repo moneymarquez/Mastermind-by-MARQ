@@ -32,5 +32,13 @@ export function useHolidayShifts() {
     await load();
   };
 
-  return { shifts, loading, addShift, addShifts, removeShift };
+  /** The only field worth editing after the fact — which shift (if any) on
+   *  a given day is actually yours. Everything else about a wrong entry is
+   *  cheaper to delete and re-add than to edit in place. */
+  const updateShift = async (id: string, patch: Partial<Pick<HolidayShift, 'is_self'>>) => {
+    await supabase.from('holiday_shifts').update(patch).eq('id', id);
+    await load();
+  };
+
+  return { shifts, loading, addShift, addShifts, removeShift, updateShift };
 }
