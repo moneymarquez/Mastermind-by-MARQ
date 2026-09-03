@@ -1020,8 +1020,10 @@ photos, website content, inbound leads, when something breaks), `client_module_a
 client-role read policy on published `client_reports`. Every client policy is SELECT-only except its own messages
 (insert) and its own module progress / read receipts (update). `InvoiceDocument` (`src/components/InvoiceDocument.tsx`)
 is the one invoice component in all three contexts (owner draft preview, owner detail, client portal).
-**Deliberately not built:** the onboarding email (no domain yet) — the seam is `sendClientLoginEmail` in
-`worker/handlers/billing.ts`; hand the login over from the client's page until then.
+**Onboarding email** sends automatically the moment a client's first invoice is paid (`sendClientLoginEmail` in
+`worker/handlers/billing.ts`, from `RESEND_FROM_EMAIL` — mastermindsbymarq.com). If Resend isn't configured at that
+moment it degrades to an owner reminder carrying the temp password instead of failing silently. Use the client's page
+to hand a login over manually/early regardless.
 
 ### Client dashboard (Part 7)
 

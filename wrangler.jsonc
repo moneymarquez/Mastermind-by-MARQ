@@ -24,6 +24,15 @@
   // SUPABASE_SERVICE_ROLE_KEY, and VITE_STRIPE_PUBLISHABLE_KEY via
   // `wrangler secret bulk` (sourced from Cloudflare's own Build variables,
   // so nothing sensitive touches this repo) before every `wrangler deploy`.
+  // ANTHROPIC_API_KEY was set by hand in the dashboard instead of being on
+  // that list and got silently wiped on the next deploy (confirmed live —
+  // "missing ANTHROPIC_API_KEY" errors from claude.ts). RESEND_API_KEY and
+  // VAPID_PRIVATE_KEY are secrets in the exact same position right now —
+  // required below, genuinely sensitive so they can't be committed here,
+  // but ALSO NOT on the Deploy command's re-upload list — so client-login
+  // emails (billing.ts), delivery emails (deliver-email.ts), the support
+  // inbox's draft replies, and Opening/Closing push are all one deploy away
+  // from silently going dark the same way. Add both to that list.
   // VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, and STRIPE_PRICE_ID are not
   // sensitive (the first two are already shipped in the built frontend
   // bundle, readable by anyone; a Stripe Price ID doesn't let anyone

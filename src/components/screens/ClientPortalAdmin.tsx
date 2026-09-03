@@ -266,9 +266,9 @@ export default function ClientPortalAdmin({ client }: Props) {
         )}
       </div>
 
-      {/* 2.3 Onboarding email — deliberately not sent from here. */}
+      {/* 2.3 Onboarding email — sent automatically on first paid invoice, not from here. */}
       <div style={{ ...cardStyle, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
-        Onboarding email is not wired yet (no domain). Hand over the login from the “Give this client a login” card above; when the domain is live, the seam is <code>sendClientLoginEmail</code> in <code>worker/handlers/billing.ts</code>.
+        The login itself is sent automatically the moment a client's first invoice is paid (<code>sendClientLoginEmail</code> in <code>worker/handlers/billing.ts</code>, via mastermindsbymarq.com). If Resend isn't configured when that happens, it falls back to an owner reminder with the temp password so you can relay it yourself. Use “Give this client a login” above for a manual/early login instead.
       </div>
     </div>
   );
