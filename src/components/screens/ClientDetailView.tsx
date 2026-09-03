@@ -70,6 +70,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
   const [creatingLogin, setCreatingLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [loginResult, setLoginResult] = useState<{ email: string; password: string } | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   useEffect(() => {
     setAnalysisDraft(client.audit?.analysis_text ?? '');
@@ -698,10 +699,32 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         </div>
       )}
 
-      <div style={{ marginTop: 24 }}>
-        <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => { crm.removeClient(client.id); onBack(); }}>
-          Delete client
-        </span>
+      {/* A proper padded row rather than a bare text span, both so it has
+          a real hit target (the old version was a few pixels of text at
+          the exact bottom edge of a long scroll) and so an accidental
+          click can't delete a client and everything under it outright —
+          it now takes a second, explicit tap to confirm. marginBottom
+          gives it breathing room from the scroll container's own edge
+          rather than sitting flush against it. */}
+      <div style={{ marginTop: 24, marginBottom: 24, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+        {confirmingDelete ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)' }}>Delete {client.business_name} — this removes their audit, pricing, and invoices too. Sure?</span>
+            <span
+              style={{ fontSize: 'var(--text-small)', fontWeight: 600, color: 'var(--danger)', cursor: 'pointer', padding: '8px 4px' }}
+              onClick={() => { crm.removeClient(client.id); onBack(); }}
+            >
+              Yes, delete
+            </span>
+            <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer', padding: '8px 4px' }} onClick={() => setConfirmingDelete(false)}>
+              Cancel
+            </span>
+          </div>
+        ) : (
+          <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer', padding: '8px 4px', display: 'inline-block' }} onClick={() => setConfirmingDelete(true)}>
+            Delete client
+          </span>
+        )}
       </div>
     </div>
   );

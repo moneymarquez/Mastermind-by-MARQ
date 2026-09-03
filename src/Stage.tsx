@@ -211,15 +211,28 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         </>
       )}
 
-      {/* vm.contentStyle's own bottom padding only clears MobileTabBar —
-          RemindersBox floats further up still (tabBarHeight + 20 + its own
-          height), so long-scrolling screens (Schedule's month grid, e.g.)
-          could run underneath it. Pad the extra measured height in here on
-          mobile so content always clears the actual box, not just the tab
-          bar beneath it. */}
+      {/* vm.contentStyle's own bottom padding only clears the chrome fixed
+          beneath the content pane on each platform (MobileTabBar on
+          mobile; nothing baked in for desktop). RemindersBox is a
+          SEPARATE floating overlay on top of that, at bottom-right of the
+          whole Stage regardless of scroll position — so long-scrolling
+          screens (Schedule's month grid, a client's audit tab with many
+          questions, etc.) could still end up running underneath it even
+          after clearing the tab bar. Pad the extra measured height in
+          here on BOTH platforms so content always clears the actual box,
+          not just whatever's fixed beneath it — this used to be
+          mobile-only, which is exactly why a desktop screen's last
+          element (e.g. ClientDetailView's "Delete client") could render
+          right where RemindersBox sits and become unreachable by
+          scrolling any further. */}
       <div
         id="tour-content-panel"
-        style={isMobile ? { ...vm.contentStyle, paddingBottom: `calc(${vm.tabBarHeight + 20 + remindersBox.height + 20}px + env(safe-area-inset-bottom))` } : vm.contentStyle}
+        style={{
+          ...vm.contentStyle,
+          paddingBottom: isMobile
+            ? `calc(${vm.tabBarHeight + 20 + remindersBox.height + 20}px + env(safe-area-inset-bottom))`
+            : `${48 + remindersBox.height + 20}px`,
+        }}
       >
         {screenBlocked ? (
           <PlaceholderScreen isMobile={isMobile} label="Not available" note="This section isn't available on your account." />
