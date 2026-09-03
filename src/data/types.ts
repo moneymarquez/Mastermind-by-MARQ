@@ -755,9 +755,15 @@ export interface ClientPortalSettings {
   handoff_mode: boolean;
   handoff_started_at: string | null;
   handoff_checkin_on: string | null;
+  /** Escape hatch for the derived progress spine (src/data/clientSpine.ts):
+   *  station key → forced state, for the cases the record can't see. */
+  spine_overrides: Partial<Record<SpineStationKey, SpineState>>;
   created_at: string;
   updated_at: string;
 }
+
+export type SpineStationKey = 'intake' | 'call' | 'brand_site' | 'systems' | 'marketing' | 'teach_back';
+export type SpineState = 'done' | 'active' | 'next';
 
 export type DeliverableKind = 'website' | 'brand' | 'gbp' | 'social' | 'payments' | 'content' | 'other';
 export const DELIVERABLE_KINDS: { key: DeliverableKind; label: string }[] = [
@@ -783,6 +789,10 @@ export interface ClientDeliverable {
   link_url: string | null;
   status: DeliverableStatus;
   sort_order: number;
+  /** Set when the owner puts a 'review' deliverable in front of the client;
+   *  approved_at is the client's one write on this table. */
+  approval_requested_at: string | null;
+  approved_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -812,6 +822,7 @@ export interface ClientModuleAssignment {
   assigned_at: string;
   opened_at: string | null;
   completed_at: string | null;
+  sort_order: number;
 }
 
 export interface ClientMessage {
@@ -821,6 +832,56 @@ export interface ClientMessage {
   body: string;
   read_at: string | null;
   created_at: string;
+}
+
+// ── Client Portal v2 (schema_057): tickets, approvals, change log ─────────
+
+export type ClientTicketKind = 'design' | 'marketing' | 'system';
+export type ClientTicketStatus = 'open' | 'options_sent' | 'resolved';
+export const TICKET_KINDS: { key: ClientTicketKind; label: string }[] = [
+  { key: 'design', label: 'Design' },
+  { key: 'marketing', label: 'Marketing' },
+  { key: 'system', label: 'System change' },
+];
+
+/** Structured feedback. Both `avoid` and `prefer` are NOT NULL and
+ *  non-blank at the database (schema_057's CHECK) — a complaint alone
+ *  cannot become a ticket. */
+export interface ClientTicket {
+  id: string;
+  client_id: string;
+  deliverable_id: string | null;
+  kind: ClientTicketKind;
+  title: string;
+  avoid: string;
+  prefer: string;
+  status: ClientTicketStatus;
+  owner_note: string | null;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
+}
+
+export interface ClientTicketOption {
+  id: string;
+  ticket_id: string;
+  body: string;
+  link_url: string | null;
+  sort_order: number;
+  chosen_at: string | null;
+  created_at: string;
+}
+
+export interface ClientChangelogEntry {
+  id: string;
+  client_id: string;
+  deliverable_id: string | null;
+  what: string;
+  why: string | null;
+  happened_on: string;
+  visible_to_client: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 // ── Stocks bot ────────────────────────────────────────────────────────────
