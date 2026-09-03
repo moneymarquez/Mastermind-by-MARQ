@@ -155,6 +155,8 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             rows={vm.navRows}
             ownerName={ownerDisplayName}
             isOwner={isOwner}
+            theme={theme}
+            onThemeChange={onThemeChange}
             onClose={actions.closeDrawer}
             onOpenSettings={() => actions.navigateTo('account-settings')}
             onOpenTour={startTour}
