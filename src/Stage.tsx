@@ -165,8 +165,6 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
     observer.observe(el);
     return () => observer.disconnect();
   }, [isMobile]);
-  const novaStackLeft = isMobile ? remindersBox.left : null;
-  const novaStackBottomOffset = isMobile ? remindersBox.height + 16 : 0;
 
   // Fills the real viewport edge-to-edge — no more fixed-size device-mockup
   // box (border/rounded corners/shadow) floating on a page background. The
@@ -465,8 +463,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
       {state.novaOpen && (
         <NovaPanel
           isMobile={isMobile}
-          stackBottomOffset={novaStackBottomOffset}
-          stackLeft={novaStackLeft}
+          anchor={isMobile ? null : { cx: vm.cx, cy: vm.cy, circleSize: vm.circleSize, stageWidth: vm.stageWidth, stageHeight: vm.stageHeight }}
           assistantName={assistantName}
           messages={state.novaMessages}
           input={state.novaInput}

@@ -7,14 +7,11 @@ const SPACING = 20;
 
 interface Props {
   isMobile: boolean;
-  /** Extra bottom offset (px) to stack above RemindersBox on mobile when
-   *  they'd otherwise collide side by side. 0 on desktop, where they sit in
-   *  opposite corners with room to spare. */
-  stackBottomOffset: number;
-  /** On mobile, Nova aligns to RemindersBox's actual left edge instead of
-   *  the default corner spacing, per the "same left edge" stacking spec.
-   *  null on desktop, where Nova keeps its own bottom-left corner. */
-  stackLeft: number | null;
+  /** Desktop only — the trigger circle's live position/size and the
+   *  stage's dimensions, so the panel can anchor itself right next to
+   *  wherever the (draggable) circle actually is instead of a fixed
+   *  corner. null on mobile, which keeps its own full-width bottom sheet. */
+  anchor: { cx: number; cy: number; circleSize: number; stageWidth: number; stageHeight: number } | null;
   assistantName: string;
   messages: NovaMessage[];
   input: string;
@@ -27,18 +24,32 @@ interface Props {
   onMicClick: () => void;
 }
 
+const PANEL_W = 320;
+const PANEL_H = 400;
+
+/** Where the panel sits relative to the (draggable) trigger circle:
+ *  immediately to its left, top-aligned with it, clamped so it never runs
+ *  off any edge of the stage — including flipping to the circle's RIGHT
+ *  if it's been dragged too close to the left edge for the panel to fit. */
+function anchoredPanelStyle(a: { cx: number; cy: number; circleSize: number; stageWidth: number; stageHeight: number }): CSSProperties {
+  const gap = 14;
+  const fitsLeft = a.cx - gap - PANEL_W >= 0;
+  const left = fitsLeft ? a.cx - gap - PANEL_W : Math.min(a.cx + a.circleSize + gap, a.stageWidth - PANEL_W - SPACING);
+  const top = Math.min(Math.max(a.cy, SPACING), a.stageHeight - PANEL_H - SPACING);
+  return { left, top };
+}
+
 export default function NovaPanel({
-  isMobile, stackBottomOffset, stackLeft, assistantName, messages, input, thinking, listening,
+  isMobile, anchor, assistantName, messages, input, thinking, listening,
   onClose, onInputChange, onKeyDown, onSend, onMicClick,
 }: Props) {
   const micSupported = isSpeechRecognitionSupported();
 
   // Mobile gets a real bottom sheet, fixed to the true viewport edges (not
   // absolute within Stage, which is what let it float over stat cards at
-  // whatever scroll position the page happened to be at) and full-width
-  // (not anchored to RemindersBox's narrow left edge, which is what pushed
-  // a 270px-wide panel past the right edge of the screen). Desktop keeps
-  // its original corner-stacked absolute positioning untouched.
+  // whatever scroll position the page happened to be at) and full-width.
+  // Desktop pops up right next to the trigger circle wherever it's been
+  // dragged, rather than a fixed corner disconnected from it.
   const panelStyle: CSSProperties = isMobile
     ? {
         position: 'fixed',
@@ -50,13 +61,9 @@ export default function NovaPanel({
         boxShadow: '0 -12px 40px rgba(0,0,0,0.55)', animation: 'sheetSlideUp 0.2s ease', zIndex: 60, overflow: 'hidden',
       }
     : {
-        // Fixed to Stage's bottom-left corner — no longer anchored to the
-        // draggable trigger circle's position. `env(safe-area-inset-*)` keeps
-        // it clear of notches/home indicators when running as an installed PWA.
         position: 'absolute',
-        left: stackLeft != null ? stackLeft : `calc(${SPACING}px + env(safe-area-inset-left))`,
-        bottom: `calc(${SPACING + stackBottomOffset}px + env(safe-area-inset-bottom))`,
-        width: 320, height: 400,
+        ...(anchor ? anchoredPanelStyle(anchor) : { left: SPACING, top: SPACING }),
+        width: PANEL_W, height: PANEL_H,
         background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-2xl)', display: 'flex', flexDirection: 'column',
         boxShadow: '0 20px 50px rgba(0,0,0,0.5)', animation: 'bubbleFade 0.18s ease', zIndex: 45, overflow: 'hidden',
       };
