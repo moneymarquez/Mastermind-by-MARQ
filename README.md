@@ -807,8 +807,10 @@ done and matched what the new prompt asked for, so it wasn't rebuilt).
   codebase before this** — Resend was chosen specifically because it's a plain API-key + `fetch` call, matching every
   other Worker handler, rather than a real OAuth "connected email" (Gmail/Outlook) integration, which isn't
   buildable in this environment (no domain, no OAuth consent screen, no client credentials). Needs Cloudflare Worker
-  secrets `RESEND_API_KEY` and `RESEND_FROM_EMAIL` (a sender address verified in your Resend account) — without
-  them, sending returns a clear "not configured yet" error instead of failing silently. Every other part of the
+  secret `RESEND_API_KEY` plus a sender address — `MADEBYMARQUEZ_FROM_EMAIL` if that domain is verified in Resend
+  (this email carries an invoice total, so it belongs on the client-facing Made by Marquez domain), falling back to
+  `RESEND_FROM_EMAIL` (mastermindsbymarq.com) until then. Without either sender configured, sending returns a clear
+  "not configured yet" error instead of failing silently. Every other part of the
   pipeline (assembling the package, writing to the new `delivery_log` table, flipping project status) runs
   client-side through the caller's own Supabase session, same as every other module.
 - **Curated onboarding rework** (`src/onboarding/OnboardingFlow.tsx` and siblings) — new users now go through 3

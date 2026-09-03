@@ -70,7 +70,10 @@
   //   STRIPE_WEBHOOK_SECRET      (secret — from a webhook endpoint pointed at /api/billing/webhook)
   //   VITE_STRIPE_PUBLISHABLE_KEY (plain variable — used client-side to mount the Payment Element)
   //   RESEND_API_KEY             (secret — optional; "Send to client" shows "not configured" without it)
-  //   RESEND_FROM_EMAIL          (plain variable — a sender address verified in your Resend account)
+  //   RESEND_FROM_EMAIL          (plain variable — mastermindsbymarq.com sender, e.g. the client-login welcome email)
+  //   MADEBYMARQUEZ_FROM_EMAIL   (plain variable — optional; madebymarquez.com sender for the client delivery/
+  //                              invoice-summary email once that domain is verified in Resend — falls back to
+  //                              RESEND_FROM_EMAIL until set, so nothing breaks in the meantime)
   //   RESEND_WEBHOOK_SECRET      (secret — optional; from Resend's Webhooks page, the email.received subscription)
   //   VITE_VAPID_PUBLIC_KEY      (plain variable — already public; same key the client already subscribes with,
   //                              needed here too since the Worker's own runtime env is separate from what Vite

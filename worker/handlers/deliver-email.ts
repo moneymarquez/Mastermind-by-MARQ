@@ -17,6 +17,13 @@ export interface DeliverEmailEnv {
   VITE_SUPABASE_ANON_KEY: string;
   RESEND_API_KEY?: string;
   RESEND_FROM_EMAIL?: string;
+  // The delivery email carries an invoice summary and is client-facing
+  // agency work, not app/portal admin — it belongs on the Made by Marquez
+  // domain once that's verified in Resend, distinct from RESEND_FROM_EMAIL
+  // (mastermindsbymarq.com — the client-login welcome email in billing.ts
+  // stays on that one). Falls back to RESEND_FROM_EMAIL until then, so
+  // nothing breaks in the gap before madebymarquez.com is set up.
+  MADEBYMARQUEZ_FROM_EMAIL?: string;
 }
 
 interface DeliverEmailBody {
@@ -30,7 +37,7 @@ interface DeliverEmailBody {
 
 function notConfigured(): Response {
   return new Response(
-    JSON.stringify({ error: 'Email delivery is not configured yet — RESEND_API_KEY/RESEND_FROM_EMAIL not set.' }),
+    JSON.stringify({ error: 'Email delivery is not configured yet — RESEND_API_KEY and MADEBYMARQUEZ_FROM_EMAIL (or RESEND_FROM_EMAIL) not set.' }),
     { status: 503, headers: { 'content-type': 'application/json' } },
   );
 }
@@ -38,7 +45,8 @@ function notConfigured(): Response {
 export async function sendDeliveryEmail(request: Request, env: DeliverEmailEnv): Promise<Response> {
   const user = await requireUser(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
   if (user instanceof Response) return user;
-  if (!env.RESEND_API_KEY || !env.RESEND_FROM_EMAIL) return notConfigured();
+  const fromEmail = env.MADEBYMARQUEZ_FROM_EMAIL || env.RESEND_FROM_EMAIL;
+  if (!env.RESEND_API_KEY || !fromEmail) return notConfigured();
 
   let body: DeliverEmailBody;
   try {
@@ -66,7 +74,7 @@ export async function sendDeliveryEmail(request: Request, env: DeliverEmailEnv):
       method: 'POST',
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
       body: JSON.stringify({
-        from: env.RESEND_FROM_EMAIL,
+        from: fromEmail,
         to: [body.to],
         subject: `${body.projectName} — ready for you`,
         html: parts.join(''),
