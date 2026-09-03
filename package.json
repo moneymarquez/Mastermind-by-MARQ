@@ -17,6 +17,7 @@
     "@stripe/react-stripe-js": "^6.8.1",
     "@stripe/stripe-js": "^9.13.0",
     "@supabase/supabase-js": "^2.112.2",
+    "postal-mime": "^2.4.3",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "recharts": "^3.10.1",

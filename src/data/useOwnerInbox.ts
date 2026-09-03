@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { inboxBucket } from './inboxAddresses';
+import type { InboxBucket } from './inboxAddresses';
 
 export type InboxItemKind = 'mail' | 'ticket' | 'message';
 
@@ -18,11 +20,13 @@ export interface InboxItem {
   unread: boolean;
   /** Set for ticket/message so opening it can land on that client. */
   clientId: string | null;
+  /** Mail only: which address (and domain) it came in on. */
+  bucket: InboxBucket | null;
 }
 
 interface TicketRow { id: string; title: string; status: string; created_at: string; client_id: string; crm_clients: { business_name: string } | null }
 interface MessageRow { id: string; body: string; created_at: string; client_id: string; crm_clients: { business_name: string } | null }
-interface MailRow { id: string; from_email: string; subject: string | null; status: string; created_at: string }
+interface MailRow { id: string; from_email: string; to_email: string; subject: string | null; status: string; created_at: string }
 
 export function useOwnerInbox() {
   const [items, setItems] = useState<InboxItem[]>([]);
@@ -30,19 +34,19 @@ export function useOwnerInbox() {
 
   const load = useCallback(async () => {
     const [mail, tickets, msgs] = await Promise.all([
-      supabase.from('support_inbox').select('id, from_email, subject, status, created_at').order('created_at', { ascending: false }).limit(30),
+      supabase.from('support_inbox').select('id, from_email, to_email, subject, status, created_at').order('created_at', { ascending: false }).limit(30),
       supabase.from('client_tickets').select('id, title, status, created_at, client_id, crm_clients(business_name)').neq('status', 'resolved').order('created_at', { ascending: false }),
       supabase.from('client_messages').select('id, body, created_at, client_id, crm_clients(business_name)').eq('sender', 'client').is('read_at', null).order('created_at', { ascending: false }),
     ]);
     const out: InboxItem[] = [];
     for (const m of (mail.data ?? []) as MailRow[]) {
-      out.push({ id: `mail-${m.id}`, kind: 'mail', from: m.from_email.split('@')[0] || m.from_email, title: m.subject || '(no subject)', at: m.created_at, unread: m.status === 'new', clientId: null });
+      out.push({ id: `mail-${m.id}`, kind: 'mail', from: m.from_email.split('@')[0] || m.from_email, title: m.subject || '(no subject)', at: m.created_at, unread: m.status === 'new', clientId: null, bucket: inboxBucket(m.to_email) });
     }
     for (const t of (tickets.data ?? []) as unknown as TicketRow[]) {
-      out.push({ id: `ticket-${t.id}`, kind: 'ticket', from: t.crm_clients?.business_name ?? 'Client', title: t.title, at: t.created_at, unread: t.status === 'open', clientId: t.client_id });
+      out.push({ id: `ticket-${t.id}`, kind: 'ticket', from: t.crm_clients?.business_name ?? 'Client', title: t.title, at: t.created_at, unread: t.status === 'open', clientId: t.client_id, bucket: null });
     }
     for (const m of (msgs.data ?? []) as unknown as MessageRow[]) {
-      out.push({ id: `msg-${m.id}`, kind: 'message', from: m.crm_clients?.business_name ?? 'Client', title: m.body, at: m.created_at, unread: true, clientId: m.client_id });
+      out.push({ id: `msg-${m.id}`, kind: 'message', from: m.crm_clients?.business_name ?? 'Client', title: m.body, at: m.created_at, unread: true, clientId: m.client_id, bucket: null });
     }
     out.sort((a, b) => b.at.localeCompare(a.at));
     setItems(out);

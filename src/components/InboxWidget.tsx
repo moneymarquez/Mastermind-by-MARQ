@@ -53,9 +53,9 @@ export default function InboxWidget({ items, loading, onOpen, compact }: Props) 
       )}
       {preview.map((e) => (
         <div key={e.id} onClick={() => onOpen(e)} style={{ display: 'flex', alignItems: 'baseline', gap: 6, minWidth: 0, cursor: 'pointer' }}>
-          {e.kind !== 'mail' && (
-            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--mm-dim)', border: '1px solid var(--mm-line)', borderRadius: 6, padding: '1px 4px', flexShrink: 0 }}>{KIND_TAG[e.kind]}</span>
-          )}
+          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--mm-dim)', border: '1px solid var(--mm-line)', borderRadius: 6, padding: '1px 4px', flexShrink: 0 }}>
+            {e.kind === 'mail' && e.bucket ? `${e.bucket.domainShort} · ${e.bucket.local}` : KIND_TAG[e.kind]}
+          </span>
           <span style={{ fontSize: size, fontWeight: e.unread ? 700 : 500, color: e.unread ? 'var(--mm-text)' : 'var(--mm-faint)', flexShrink: 0, maxWidth: 74, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {e.from}
           </span>

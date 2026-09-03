@@ -830,14 +830,22 @@ done and matched what the new prompt asked for, so it wasn't rebuilt).
 ## Support Inbox and Legal/FAQ
 
 - **Support Inbox** (`support-inbox`, owner-only, `worker/handlers/support-inbox.ts` +
-  `src/components/screens/SupportInboxScreen.tsx`) — the narrow first version of "AI auto-support." Mail sent to
-  any address on a domain with Resend's inbound receiving configured (once its webhook points at
-  `/api/support-inbox-webhook`) gets AI-categorized (billing/support/bug/general/spam) and drafted a reply by
-  Claude, stored in a new `support_inbox` table for review — **never auto-sent**. The handler is domain-agnostic on
-  purpose: it processes whatever `email.received` payload Resend hands it, so adding a second domain (e.g.
-  `madebymarquez.com`, for client requests submitted there) is a Resend-side step — verify the domain, turn on
-  inbound receiving, point its webhook at the same endpoint — not a code change. Every message lands in the one
-  `support_inbox` table regardless of which domain it arrived on, and a compact **Inbox widget** (`InboxWidget.tsx`)
+  `src/components/screens/SupportInboxScreen.tsx`) — the narrow first version of "AI auto-support." Inbound mail
+  gets AI-categorized (lead/billing/support/bug/general/spam) and drafted a reply by Claude, stored in the
+  `support_inbox` table for review — **never auto-sent**. Two doors feed that table with the same shape:
+  1. **Cloudflare Email Routing → the Worker's `email()` export** (the live path). Both domains' addresses
+     (`hello@`, `contact@`, `support@`, `billing@`, `invoice@`, `privacy@` on mastermindsbymarq.com, and the
+     madebymarquez.com set) are Email Routing rules. With the rule action set to **Send to a Worker → mastermind-by-marq**,
+     `handleInboundEmail` parses the raw message with `postal-mime`, stores + triages it, then **forwards it to
+     `INBOX_FORWARD_TO`** (a committed var in `wrangler.jsonc` — the same iCloud address the rules forwarded to
+     directly before, so nothing changes about where mail is read; the app just gets a copy). A plain "forward to
+     iCloud" action never reaches the app, which is why the inbox showed nothing for those addresses. Parse/store
+     failures are logged and the forward still happens — mail reaching neither place is the one unacceptable outcome.
+  2. **Resend's `email.received` webhook** at `/api/support-inbox-webhook`, for a domain whose MX is on Resend.
+  `to_email` is stored exactly as received and `src/data/inboxAddresses.ts` is the one place the addresses per
+  domain (and what each is for) are listed: the Support Inbox screen filters by domain → address with live counts
+  (an unlisted address still shows under its raw local part), every card carries an `MM · support@`-style tag and a
+  "Reply from support@" mailto, and the **Inbox widget** (`InboxWidget.tsx`)
   pinned above the Personal category in both Sidebar.tsx and MobileMenuSheet.tsx shows the unread count and the two
   most recent messages, so a client request is visible without opening the full screen. The webhook's signature is
   verified by hand via Web Crypto (Resend signs the same way Svix does: `svix-id`/`svix-timestamp`/

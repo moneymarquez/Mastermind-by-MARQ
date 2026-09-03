@@ -35,8 +35,8 @@ import { novaChat } from './handlers/nova-chat';
 import type { NovaChatEnv } from './handlers/nova-chat';
 import { sendDeliveryEmail } from './handlers/deliver-email';
 import type { DeliverEmailEnv } from './handlers/deliver-email';
-import { supportInboxWebhook } from './handlers/support-inbox';
-import type { SupportInboxEnv } from './handlers/support-inbox';
+import { supportInboxWebhook, handleInboundEmail } from './handlers/support-inbox';
+import type { SupportInboxEnv, InboundEmailMessage } from './handlers/support-inbox';
 import { publicAuditQuestions, publicAuditSubmit, publicClientDashboard, createClientInvoice, createClientLogin, voidClientInvoice } from './handlers/client-crm';
 import type { ClientCrmEnv } from './handlers/client-crm';
 import { claudeProxy } from './handlers/claude';
@@ -123,5 +123,16 @@ export default {
       return;
     }
     ctx.waitUntil(runStocksBot(env));
+  },
+
+  // Cloudflare Email Routing → this Worker. Each address on
+  // mastermindsbymarq.com / madebymarquez.com is a routing rule whose
+  // action is "Send to a Worker" → this one; the handler stores + triages
+  // the message into support_inbox (so the app's Inbox sees it, tagged by
+  // the address it came in on) and then forwards it to INBOX_FORWARD_TO,
+  // the personal mailbox those rules used to forward to directly. See
+  // worker/handlers/support-inbox.ts.
+  async email(message: InboundEmailMessage, env: Env, ctx: { waitUntil: (promise: Promise<unknown>) => void }): Promise<void> {
+    await handleInboundEmail(message, env, ctx);
   },
 };

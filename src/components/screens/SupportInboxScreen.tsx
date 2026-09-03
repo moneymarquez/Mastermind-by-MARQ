@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useSupportInbox } from '../../data/useSupportInbox';
 import type { SupportInboxEntry } from '../../data/useSupportInbox';
+import { INBOX_DOMAINS, inboxBucket } from '../../data/inboxAddresses';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -13,9 +14,11 @@ const ghostBtn: CSSProperties = {
   padding: '7px 13px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-2)', background: 'transparent',
   color: 'var(--text-quaternary)', fontSize: 'var(--text-small)', fontWeight: 600, cursor: 'pointer',
 };
+const activeChip: CSSProperties = { background: 'var(--text)', color: 'var(--bg)', border: 'none' };
+const addrTag: CSSProperties = { fontSize: 'var(--text-nano)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)', padding: '2px 7px', whiteSpace: 'nowrap' };
 
 const CATEGORY_COLOR: Record<string, string> = {
-  billing: 'var(--warning)', support: 'var(--success)', bug: 'var(--danger)', general: 'var(--text-secondary)', spam: 'var(--text-tertiary)',
+  lead: 'var(--success)', billing: 'var(--warning)', support: 'var(--success)', bug: 'var(--danger)', general: 'var(--text-secondary)', spam: 'var(--text-tertiary)',
 };
 
 function StatusPill({ status }: { status: SupportInboxEntry['status'] }) {
@@ -28,12 +31,32 @@ function StatusPill({ status }: { status: SupportInboxEntry['status'] }) {
   );
 }
 
+/** Mail from both domains, categorized by the address it came in on
+ *  (src/data/inboxAddresses.ts) on top of the status filter. Domain chips
+ *  first, then that domain's addresses with live counts — an address that
+ *  isn't in the list still appears under its raw local part, so nothing
+ *  routed to an address you haven't listed yet gets hidden. */
 export default function SupportInboxScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const { entries, loading, setStatus } = useSupportInbox();
   const [filter, setFilter] = useState<'all' | SupportInboxEntry['status']>('new');
+  const [domainKey, setDomainKey] = useState<string>('all');
+  const [local, setLocal] = useState<string>('all');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const filtered = filter === 'all' ? entries : entries.filter((e) => e.status === filter);
+  const bucketed = useMemo(() => entries.map((e) => ({ e, b: inboxBucket(e.to_email) })), [entries]);
+  const byStatus = bucketed.filter(({ e }) => filter === 'all' || e.status === filter);
+  const byDomain = byStatus.filter(({ b }) => domainKey === 'all' || b.domainKey === domainKey);
+  const filtered = byDomain.filter(({ b }) => local === 'all' || b.local === local).map(({ e }) => e);
+
+  // Address chips for the chosen domain: the configured list (even at 0)
+  // plus any unlisted local parts that have actually received mail.
+  const domain = INBOX_DOMAINS.find((d) => d.key === domainKey) ?? null;
+  const addressChips: { local: string; label: string; purpose: string; count: number }[] = domain
+    ? [
+        ...domain.addresses.map((a) => ({ local: a.local, label: a.label, purpose: a.purpose, count: byDomain.filter(({ b }) => b.local === a.local).length })),
+        ...[...new Set(byDomain.filter(({ b }) => !b.known).map(({ b }) => b.local))].map((l) => ({ local: l, label: l, purpose: 'Not in the address list yet', count: byDomain.filter(({ b }) => b.local === l).length })),
+      ]
+    : [];
 
   const copyDraft = async (entry: SupportInboxEntry) => {
     if (!entry.ai_draft_reply) return;
@@ -51,64 +74,99 @@ export default function SupportInboxScreen({ homeHeadStyle, homeSubStyle }: Prop
     <div>
       <div style={homeHeadStyle}>Support Inbox</div>
       <div style={homeSubStyle}>
-        Mail sent to any @mastermindsbymarq.com address, auto-categorized with a drafted reply — nothing here is
-        ever sent without you reviewing and sending it yourself.
+        Mail sent to any address on mastermindsbymarq.com or madebymarquez.com, tagged by the address it came in on and
+        auto-categorized with a drafted reply — nothing here is ever sent without you reviewing and sending it yourself.
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginTop: 20, flexWrap: 'wrap' }}>
         {(['new', 'reviewed', 'replied', 'ignored', 'all'] as const).map((f) => (
-          <div
-            key={f}
-            style={{ ...ghostBtn, ...(filter === f ? { background: 'var(--text)', color: 'var(--bg)', border: 'none' } : {}) }}
-            onClick={() => setFilter(f)}
-          >
+          <div key={f} style={{ ...ghostBtn, ...(filter === f ? activeChip : {}) }} onClick={() => setFilter(f)}>
             {f === 'all' ? 'All' : f[0].toUpperCase() + f.slice(1)} ({f === 'all' ? entries.length : entries.filter((e) => e.status === f).length})
           </div>
         ))}
       </div>
 
+      <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginRight: 2 }}>Sent to</span>
+        <div style={{ ...ghostBtn, ...(domainKey === 'all' ? activeChip : {}) }} onClick={() => { setDomainKey('all'); setLocal('all'); }}>Both domains ({byStatus.length})</div>
+        {INBOX_DOMAINS.map((d) => (
+          <div key={d.key} style={{ ...ghostBtn, ...(domainKey === d.key ? activeChip : {}) }} onClick={() => { setDomainKey(d.key); setLocal('all'); }}>
+            {d.label} ({byStatus.filter(({ b }) => b.domainKey === d.key).length})
+          </div>
+        ))}
+        {byStatus.some(({ b }) => b.domainKey === 'other') && (
+          <div style={{ ...ghostBtn, ...(domainKey === 'other' ? activeChip : {}) }} onClick={() => { setDomainKey('other'); setLocal('all'); }}>
+            Other ({byStatus.filter(({ b }) => b.domainKey === 'other').length})
+          </div>
+        )}
+      </div>
+
+      {domain && (
+        <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ ...ghostBtn, ...(local === 'all' ? activeChip : {}) }} onClick={() => setLocal('all')}>Every address ({byDomain.length})</div>
+          {addressChips.map((a) => (
+            <div key={a.local} title={a.purpose} style={{ ...ghostBtn, ...(local === a.local ? activeChip : {}), opacity: a.count || local === a.local ? 1 : 0.55 }} onClick={() => setLocal(a.local)}>
+              {a.local}@ ({a.count})
+            </div>
+          ))}
+          {domain.addresses.length === 0 && (
+            <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>No addresses listed for {domain.domain} yet — add them in src/data/inboxAddresses.ts.</span>
+          )}
+        </div>
+      )}
+      {domain && local !== 'all' && (
+        <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 6 }}>
+          {local}@{domain.domain} — {addressChips.find((a) => a.local === local)?.purpose}
+        </div>
+      )}
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 20, maxWidth: 680 }}>
         {!loading && filtered.length === 0 && (
           <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>Nothing here.</div>
         )}
-        {filtered.map((e) => (
-          <div key={e.id} style={cardStyle}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
-              <div>
-                <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)' }}>{e.subject || '(no subject)'}</div>
-                <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 3 }}>{e.from_email} → {e.to_email}</div>
+        {filtered.map((e) => {
+          const b = inboxBucket(e.to_email);
+          return (
+            <div key={e.id} style={cardStyle}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)' }}>{e.subject || '(no subject)'}</div>
+                  <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 3, overflowWrap: 'anywhere' }}>{e.from_email} → {e.to_email}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={addrTag} title={b.domainLabel}>{b.domainShort} · {b.local}@</span>
+                  {e.category && (
+                    <span style={{ fontSize: 'var(--text-micro)', color: CATEGORY_COLOR[e.category] ?? 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.3 }}>
+                      {e.category}
+                    </span>
+                  )}
+                  <StatusPill status={e.status} />
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                {e.category && (
-                  <span style={{ fontSize: 'var(--text-micro)', color: CATEGORY_COLOR[e.category] ?? 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.3 }}>
-                    {e.category}
-                  </span>
-                )}
-                <StatusPill status={e.status} />
+
+              {e.body_text && (
+                <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.5, maxHeight: 100, overflow: 'auto', whiteSpace: 'pre-wrap' }}>
+                  {e.body_text}
+                </div>
+              )}
+
+              {e.ai_draft_reply && (
+                <div style={{ marginTop: 14, padding: 14, background: 'var(--surface-2)', border: '1px solid var(--surface-3)', borderRadius: 'var(--radius-md)' }}>
+                  <div style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 8 }}>Drafted reply</div>
+                  <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-quaternary)', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{e.ai_draft_reply}</div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+                {e.ai_draft_reply && <div style={ghostBtn} onClick={() => copyDraft(e)}>{copiedId === e.id ? 'Copied ✓' : 'Copy draft'}</div>}
+                <a href={`mailto:${e.from_email}?subject=${encodeURIComponent(`Re: ${e.subject || ''}`)}`} style={{ ...ghostBtn, textDecoration: 'none' }}>Reply from {b.local}@</a>
+                {e.status !== 'reviewed' && <div style={ghostBtn} onClick={() => setStatus(e.id, 'reviewed')}>Mark reviewed</div>}
+                {e.status !== 'replied' && <div style={ghostBtn} onClick={() => setStatus(e.id, 'replied')}>Mark replied</div>}
+                {e.status !== 'ignored' && <div style={ghostBtn} onClick={() => setStatus(e.id, 'ignored')}>Ignore</div>}
               </div>
             </div>
-
-            {e.body_text && (
-              <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.5, maxHeight: 100, overflow: 'auto' }}>
-                {e.body_text}
-              </div>
-            )}
-
-            {e.ai_draft_reply && (
-              <div style={{ marginTop: 14, padding: 14, background: 'var(--surface-2)', border: '1px solid var(--surface-3)', borderRadius: 'var(--radius-md)' }}>
-                <div style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 8 }}>Drafted reply</div>
-                <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-quaternary)', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{e.ai_draft_reply}</div>
-              </div>
-            )}
-
-            <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
-              {e.ai_draft_reply && <div style={ghostBtn} onClick={() => copyDraft(e)}>{copiedId === e.id ? 'Copied ✓' : 'Copy draft'}</div>}
-              {e.status !== 'reviewed' && <div style={ghostBtn} onClick={() => setStatus(e.id, 'reviewed')}>Mark reviewed</div>}
-              {e.status !== 'replied' && <div style={ghostBtn} onClick={() => setStatus(e.id, 'replied')}>Mark replied</div>}
-              {e.status !== 'ignored' && <div style={ghostBtn} onClick={() => setStatus(e.id, 'ignored')}>Ignore</div>}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

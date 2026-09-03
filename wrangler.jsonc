@@ -46,6 +46,16 @@
   // and the remaining Stripe/Resend keys stay dashboard-only (Secrets) per
   // the note at the bottom of this file — those are genuinely sensitive.
   "vars": {
+    // Where the email() handler forwards every inbound message after
+    // storing it in the app's inbox — the same iCloud address the
+    // Cloudflare Email Routing rules were forwarding to directly before
+    // their action was switched to "Send to a Worker". Committed here
+    // (not dashboard-only) on purpose: if this ever went missing, mail
+    // would land in the app but stop reaching the mailbox, and the
+    // dashboard-wipe-on-deploy behavior documented above would make that
+    // happen silently. Must stay a verified Destination Address in
+    // Cloudflare Email Routing.
+    "INBOX_FORWARD_TO": "madebymarquez@icloud.com",
     "VITE_SUPABASE_URL": "https://jqkxaxjuvurciqmvnsbw.supabase.co",
     "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impxa3hheGp1dnVyY2lxbXZuc2J3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNDE1ODAsImV4cCI6MjEwMTYxNzU4MH0.TjKqBJCBlqVQLXnQZIL6tyyGE3KEIdCdaa7FySOfOHA",
     "STRIPE_PRICE_ID": "price_1U6YjXRyuG1KPb7GE5a7AamS"
