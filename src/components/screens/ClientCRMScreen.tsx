@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useClientCRM } from '../../data/useClientCRM';
-import type { ClientStage } from '../../data/types';
+import type { ClientInvoiceStatus, ClientStage } from '../../data/types';
 import ClientDetailView from './ClientDetailView';
 import AllInvoicesView from './AllInvoicesView';
 import { AuditQuestionsAdmin, PricingTemplateAdmin, ServiceCatalogAdmin } from './ClientCRMAdmin';
@@ -67,6 +67,46 @@ function nextPaymentDue(client: ReturnType<typeof useClientCRM>['clients'][numbe
   if (nextItem && client.invoices.length === 0) return `$${(nextItem.amount as number).toLocaleString()} not yet sent`;
   if (client.pricingItems.some((p) => p.amount === null)) return 'TBD';
   return '—';
+}
+
+function invoiceStatusColor(status: ClientInvoiceStatus): string {
+  if (status === 'paid') return 'var(--success)';
+  if (status === 'draft' || status === 'void') return 'var(--text-tertiary)';
+  return 'var(--danger)'; // sent / overdue
+}
+
+/** A per-client at-a-glance breakdown, right on the board card — before
+ *  this the only invoice signal on a card was the single derived
+ *  "next payment due" line, so seeing what had actually been created for
+ *  a client meant opening its Invoices tab one at a time. Groups by
+ *  status (same color convention as the Invoices tab and All Invoices)
+ *  and totals what's been invoiced versus collected, skipping void
+ *  amounts on both since they were never really billed. */
+function InvoiceSummary({ client }: { client: ReturnType<typeof useClientCRM>['clients'][number] }) {
+  if (client.invoices.length === 0) return null;
+  const counts = {} as Record<ClientInvoiceStatus, number>;
+  for (const inv of client.invoices) counts[inv.status] = (counts[inv.status] ?? 0) + 1;
+  const billed = client.invoices.filter((i) => i.status !== 'void').reduce((s, i) => s + i.amount, 0);
+  const paid = client.invoices.filter((i) => i.status === 'paid').reduce((s, i) => s + i.amount, 0);
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+      {(['paid', 'sent', 'overdue', 'draft', 'void'] as ClientInvoiceStatus[]).map((s) => counts[s] && (
+        <span
+          key={s}
+          style={{
+            fontSize: 'var(--text-micro)', fontWeight: 700, color: invoiceStatusColor(s),
+            border: `1px solid color-mix(in srgb, ${invoiceStatusColor(s)} 40%, transparent)`,
+            borderRadius: 'var(--radius-pill)', padding: '2px 8px',
+          }}
+        >
+          {counts[s]} {s}
+        </span>
+      ))}
+      <span style={{ fontSize: 'var(--text-nano)', color: 'var(--text-tertiary)' }}>
+        ${billed.toLocaleString()} invoiced{paid > 0 ? ` · $${paid.toLocaleString()} paid` : ''}
+      </span>
+    </div>
+  );
 }
 
 export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle }: Props) {
@@ -174,6 +214,7 @@ export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle }: Props) 
               <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 4 }}>
                 {nextPaymentDue(c)} · {c.reveal_full_schedule ? 'Full schedule visible' : 'Current payment only'} · Last activity {new Date(c.last_activity_at).toLocaleDateString()}
               </div>
+              <InvoiceSummary client={c} />
             </div>
             <span style={{ fontSize: 'var(--text-head)', color: 'var(--text-tertiary)', flexShrink: 0 }}>→</span>
           </div>
