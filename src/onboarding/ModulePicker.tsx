@@ -8,10 +8,11 @@ interface Props {
   onToggle: (key: string) => void;
 }
 
-const CATEGORY_ORDER: ModuleCategory[] = ['Personal', 'Cold Calling', 'Scaling', 'Side Hustles', null];
+const CATEGORY_ORDER: ModuleCategory[] = ['Personal', 'Cold Calling', 'Clients', 'Scaling', 'Side Hustles', null];
 const CATEGORY_LABEL: Record<string, string> = {
   Personal: 'Personal',
   'Cold Calling': 'Cold Calling',
+  Clients: 'Clients',
   Scaling: 'Scaling',
   'Side Hustles': 'Side Hustles',
 };

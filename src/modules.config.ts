@@ -1,6 +1,9 @@
 import type { Screen } from './types';
 
-export type ModuleCategory = 'Personal' | 'Cold Calling' | 'Scaling' | 'Side Hustles' | null;
+// 'Clients' sits between Cold Calling and Scaling — where a Systems
+// section will eventually land too. It's the operator's side of the
+// client portal (Client Modules), owner-only like all of Scaling.
+export type ModuleCategory = 'Personal' | 'Cold Calling' | 'Clients' | 'Scaling' | 'Side Hustles' | null;
 
 export interface ModuleDef {
   key: string;
@@ -48,6 +51,7 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { key: 'fitness', label: 'Fitness', category: 'Personal', description: 'AI-generated workout/diet plans, full workout library, live workout mode.', icon: 'ph-barbell', routes: ['fitness'], requiresAI: true },
   { key: 'dialing', label: 'Dialing/Contacts', category: 'Cold Calling', description: 'Cold-calling queue, outcome tracking, and your Dialing/Scaling contacts.', icon: 'ph-phone-call', routes: ['dialing', 'contacts'], requiresAI: false },
   { key: 'call-recordings', label: 'Call Recordings', category: 'Cold Calling', description: 'Upload and organize call recordings, linked to contacts.', icon: 'ph-microphone', routes: ['call-recordings'], requiresAI: false },
+  { key: 'client-modules', label: 'Client Modules', category: 'Clients', description: "Every client's portal from your side — progress spine, tickets, change log, guides, handoff, and a preview of exactly what they see.", icon: 'ph-users-three', routes: ['client-modules'], requiresAI: false, ownerOnly: true },
   // The entire Scaling category is owner-only, not just Marketing —
   // ownerOnly: true on every entry below is deliberate, per the explicit
   // "entire Scaling section is owner-only" requirement, not an oversight.

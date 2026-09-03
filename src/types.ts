@@ -15,6 +15,7 @@ export type Screen =
   | 'scaling-planner'
   | 'audits'
   | 'client-crm'
+  | 'client-modules'
   | 'brand-lab'
   | 'idea-maker'
   | 'schedule'

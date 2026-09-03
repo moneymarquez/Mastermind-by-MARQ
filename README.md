@@ -1025,6 +1025,54 @@ is the one invoice component in all three contexts (owner draft preview, owner d
 moment it degrades to an owner reminder carrying the temp password instead of failing silently. Use the client's page
 to hand a login over manually/early regardless.
 
+#### Client Portal v2 — spine, tickets, approvals, change log, Client Modules (schema_057)
+
+The portal's job, in order: make the client certain something is happening, prove the work continuously, let them
+push back without wrecking the process, teach them on purpose, never lie. `supabase/schema_057_client_portal_v2.sql`
+(applied live) adds what that takes:
+
+- **Progress spine** — `src/data/clientSpine.ts`, a pure function both views call with the same inputs. Six stations
+  (intake → discovery call → brand & site → systems → marketing → teach-back), each state AND its one-line copy
+  **derived** from the record: the CRM row, the audit, the newest Brand Lab brief's milestone fields (the client reads
+  exactly five of them through the security-definer `client_brief_summary()`; `brand_lab_briefs` itself stays
+  owner-only), deliverables by kind, published reports, guide completion, handoff. Nothing is typed twice. The one
+  lever is `client_portal.spine_overrides` (station → done/active/next) for what data can't see, and the operator
+  screen labels an override "set by hand" so it's never mistaken for something the data proved. The old hand-typed
+  `timeline` jsonb is no longer rendered. Rendered by `src/components/ProgressSpine.tsx` on both sides.
+- **Tickets** — `client_tickets` + `client_ticket_options`. A ticket cannot exist without both `avoid` and `prefer`:
+  the form won't send, the hook refuses, and the table's CHECK rejects it. The owner answers with 2–3 options (the
+  hook refuses fewer than two or more than three); the client picks one, which resolves it. A trigger
+  (`notify_owner_of_ticket`, security definer) drops a reminder for the owner the moment a ticket is filed, so it
+  reaches the bell without the client needing any access to `reminders`. Quick questions stay in `client_messages`.
+- **Approvals** — `client_deliverables.approval_requested_at / approved_at`. Moving a deliverable to `review` stamps
+  the request; the client's one write on that table is `approved_at` ("Looks good — approve"); "Ask for changes"
+  files a ticket pre-linked to the deliverable with the kind inferred from it. "Ship it" (`shipDeliverable`) flips it
+  live and writes the change-log line in one move.
+- **Change log** — `client_changelog` (`what`, `why`, `happened_on`, `visible_to_client`): the running proof of work,
+  reverse-chronological, its own tab in the portal.
+- **Per-client guide order** — `client_module_assignments.sort_order`, ▲▼ on the operator side.
+- **Operator side** — a new `Clients` nav category (between Cold Calling and Scaling, owner-only) holding **Client
+  Modules** (`ClientModulesScreen.tsx` + `useClientModulesOverview.ts`): every client with stage, current station,
+  open tickets / awaiting-pick / unread / awaiting-OK counts, last activity, login state — sorted needs-you-first. The
+  per-client detail is the **same** `ClientPortalAdmin` component the Client CRM's Portal tab renders (one screen, two
+  doors), extended with the spine + override chips, the ticket answer form, the change-log editor, guide reorder, and
+  **Preview as them**, which mounts the real `ClientPortal` with `previewClientId` — same hook, same component, every
+  write a no-op, a banner saying so.
+- **Unified Inbox** — `useOwnerInbox.ts` feeds the widget pinned above every nav category with mail from either
+  domain (`support_inbox`), open tickets, and unread client messages in one list; tapping a ticket/message lands on
+  that client in Client Modules, mail lands in the Support Inbox.
+- **Layout bug fixed** — `RemindersBox` rendered its collapsed bell and expanded panel as two different DOM nodes, so
+  `Stage.tsx`'s `ResizeObserver` (attached once) kept measuring the dead node after a tap and the content pane's
+  bottom padding never grew: long screens (Brand Lab's New Brief first) sat under the open panel. One persistent node
+  now. The portal has its own shell (position:relative page, absolute tab bar, padding past it + safe-area) and never
+  renders the bell.
+
+Verification: RLS on the new tables was checked by impersonating the client role in SQL (own-client insert OK, blank
+`prefer` rejected by the CHECK, another client's id rejected by RLS, trigger fired for the owner). The UI was driven in
+Chromium at 375×812 against the built app with an in-memory PostgREST stand-in (this sandbox's egress policy blocks
+the Supabase host from the browser): login → spine → required-field gate → file ticket → approve → guides → change
+log → invoice Pay link → message → owner options → client pick → resolved → sign out, plus a full-scroll clipping probe.
+
 ### Client dashboard (Part 7)
 
 A read-only, per-client progress dashboard at `/client/<token>`, fed by a manual monthly report the owner fills in.

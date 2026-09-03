@@ -41,6 +41,12 @@ export const NAV_DATA: NavGroup[] = [
     ],
   },
   {
+    group: 'Clients',
+    items: [
+      { id: 'client-modules', label: 'Client Modules', icon: 'ph-users-three' },
+    ],
+  },
+  {
     group: 'Scaling',
     items: [
       { id: 'scaling-start', label: 'Start', icon: 'ph-lightning' },

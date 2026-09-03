@@ -10,7 +10,9 @@ import NovaPanel from './components/NovaPanel';
 import RemindersBox from './components/RemindersBox';
 import { useBender } from './data/useBender';
 import { useNavModulePrefs } from './data/useNavModulePrefs';
-import { useSupportInbox } from './data/useSupportInbox';
+import { useOwnerInbox } from './data/useOwnerInbox';
+import type { InboxItem } from './data/useOwnerInbox';
+import ClientModulesScreen from './components/screens/ClientModulesScreen';
 import HomeScreen from './components/screens/HomeScreen';
 import DailyPlanScreen from './components/screens/DailyPlanScreen';
 import DialingScreen from './components/screens/DialingScreen';
@@ -59,7 +61,7 @@ import type { Theme } from './data/useTheme';
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
-  'scaling-start', 'delivery', 'support-inbox', 'legal', 'scaling-planner', 'audits', 'client-crm', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
+  'scaling-start', 'delivery', 'support-inbox', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings',
   'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'grant-access',
 ];
@@ -89,7 +91,19 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // Owner-only data (support_inbox's RLS already scopes it), so this is a
   // harmless empty read for a non-owner account — called unconditionally
   // rather than guarded, same as useModuleAccess elsewhere in this file.
-  const supportInbox = useSupportInbox();
+  const ownerInbox = useOwnerInbox();
+  // A ticket or client message tapped in the Inbox widget lands on THAT
+  // client in Client Modules, not on a list; mail goes to the Support
+  // Inbox. Cleared once the screen has consumed it.
+  const [clientFocus, setClientFocus] = useState<string | null>(null);
+  const openInbox = (item?: InboxItem) => {
+    if (item && item.kind !== 'mail' && item.clientId) {
+      setClientFocus(item.clientId);
+      actions.navigateTo('client-modules');
+      return;
+    }
+    actions.navigateTo('support-inbox');
+  };
   const navAccess = (moduleKey: string) => canAccess(moduleKey) && !navPrefs.hidden.has(moduleKey);
   const vm = buildViewModel(state, actions.navigateTo, onSignOut, navAccess, isOwner, navPrefs.order);
   const { isMobile } = vm;
@@ -175,9 +189,9 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             onClose={actions.closeDrawer}
             onOpenSettings={() => actions.navigateTo('account-settings')}
             onOpenTour={startTour}
-            inboxEntries={supportInbox.entries}
-            inboxLoading={supportInbox.loading}
-            onOpenInbox={() => actions.navigateTo('support-inbox')}
+            inboxItems={ownerInbox.items}
+            inboxLoading={ownerInbox.loading}
+            onOpenInbox={openInbox}
           />
 
           <MobileTabBar
@@ -194,9 +208,9 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             ownerName={ownerDisplayName}
             isOwner={isOwner}
             onOpenSettings={() => actions.navigateTo('account-settings')}
-            inboxEntries={supportInbox.entries}
-            inboxLoading={supportInbox.loading}
-            onOpenInbox={() => actions.navigateTo('support-inbox')}
+            inboxItems={ownerInbox.items}
+            inboxLoading={ownerInbox.loading}
+            onOpenInbox={openInbox}
           />
           <TopHeader
             left={vm.sidebarWidth}
@@ -315,6 +329,16 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'client-crm' && (
           <ClientCRMScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'client-modules' && (
+          <ClientModulesScreen
+            homeHeadStyle={vm.homeHeadStyle}
+            homeSubStyle={vm.homeSubStyle}
+            focusClientId={clientFocus}
+            onClearFocus={() => setClientFocus(null)}
+            onChanged={ownerInbox.reload}
+          />
         )}
 
         {state.screen === 'audits' && (

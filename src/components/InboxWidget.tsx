@@ -1,43 +1,40 @@
 import Icon from '../Icon';
-import type { SupportInboxEntry } from '../data/useSupportInbox';
+import type { InboxItem } from '../data/useOwnerInbox';
 
 interface Props {
-  entries: SupportInboxEntry[];
+  items: InboxItem[];
   loading: boolean;
-  onOpen: () => void;
+  /** Tapping a row hands that row over so the shell can land on the
+   *  right place (a ticket → that client in Client Modules; mail → the
+   *  Support Inbox). Tapping the header opens the inbox generally. */
+  onOpen: (item?: InboxItem) => void;
   /** Sidebar's rows are 13.5px / MobileMenuSheet's are 15px — match
    *  whichever shell is rendering this so it doesn't look like a
    *  transplant from the other one. */
   compact?: boolean;
 }
 
-function senderLabel(entry: SupportInboxEntry): string {
-  const name = entry.from_email.split('@')[0];
-  return name || entry.from_email;
-}
+const KIND_TAG: Record<InboxItem['kind'], string> = { mail: 'Mail', ticket: 'Ticket', message: 'Msg' };
 
-/** The one thing both madebymarquez.com and mastermindsbymarq.com mail
- *  lands in — support-inbox.ts's webhook is already domain-agnostic (it
- *  just processes whatever Resend hands it), so pointing a second
- *  verified domain's inbound routing at the same webhook is all a second
- *  brand needs; nothing here cares which domain a message arrived on.
- *  Pinned above every nav category so client requests are the first
- *  thing visible, not something buried under Scaling. Owner-only, same
- *  as the Support Inbox screen itself. */
-export default function InboxWidget({ entries, loading, onOpen, compact }: Props) {
-  const unread = entries.filter((e) => e.status === 'new');
-  const preview = entries.slice(0, 2);
+/** The one place client stuff lands — mail on either domain
+ *  (madebymarquez.com / mastermindsbymarq.com, both through the same
+ *  Resend webhook), a client's ticket, a client's unread message. Pinned
+ *  above every nav category so a 2am ticket is the first thing visible
+ *  on the phone, not something buried under Scaling. Owner-only. */
+export default function InboxWidget({ items, loading, onOpen, compact }: Props) {
+  const unread = items.filter((e) => e.unread);
+  const preview = items.slice(0, 2);
+  const size = compact ? 11 : 12;
 
   return (
     <div
-      onClick={onOpen}
       style={{
-        display: 'flex', flexDirection: 'column', gap: compact ? 6 : 8, cursor: 'pointer',
+        display: 'flex', flexDirection: 'column', gap: compact ? 6 : 8,
         padding: compact ? '10px 12px' : '12px 14px', borderRadius: compact ? 14 : 16,
         background: 'var(--mm-panel-solid)', border: '1px solid var(--mm-line)', flexShrink: 0,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={() => onOpen()}>
         <Icon name="envelope-simple" size={compact ? 15 : 17} color="var(--mm-dim)" />
         <div style={{ fontSize: compact ? 12.5 : 13.5, fontWeight: 600, color: 'var(--mm-text)' }}>Inbox</div>
         {unread.length > 0 && (
@@ -52,15 +49,18 @@ export default function InboxWidget({ entries, loading, onOpen, compact }: Props
       </div>
 
       {!loading && preview.length === 0 && (
-        <div style={{ fontSize: compact ? 11 : 12, color: 'var(--mm-faint)' }}>No messages</div>
+        <div style={{ fontSize: size, color: 'var(--mm-faint)' }}>No messages</div>
       )}
       {preview.map((e) => (
-        <div key={e.id} style={{ display: 'flex', alignItems: 'baseline', gap: 6, minWidth: 0 }}>
-          <span style={{ fontSize: compact ? 11 : 12, fontWeight: e.status === 'new' ? 700 : 500, color: e.status === 'new' ? 'var(--mm-text)' : 'var(--mm-faint)', flexShrink: 0, maxWidth: 74, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {senderLabel(e)}
+        <div key={e.id} onClick={() => onOpen(e)} style={{ display: 'flex', alignItems: 'baseline', gap: 6, minWidth: 0, cursor: 'pointer' }}>
+          {e.kind !== 'mail' && (
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--mm-dim)', border: '1px solid var(--mm-line)', borderRadius: 6, padding: '1px 4px', flexShrink: 0 }}>{KIND_TAG[e.kind]}</span>
+          )}
+          <span style={{ fontSize: size, fontWeight: e.unread ? 700 : 500, color: e.unread ? 'var(--mm-text)' : 'var(--mm-faint)', flexShrink: 0, maxWidth: 74, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {e.from}
           </span>
-          <span style={{ fontSize: compact ? 11 : 12, color: 'var(--mm-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
-            {e.subject || '(no subject)'}
+          <span style={{ fontSize: size, color: 'var(--mm-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+            {e.title}
           </span>
         </div>
       ))}
