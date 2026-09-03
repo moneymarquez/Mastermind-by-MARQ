@@ -11,11 +11,13 @@
 // so this feature was stuck behind that until moved here.
 //
 // Everything else under /api/* (claude.ts, push-subscription.ts) still
-// reverse-proxies to Netlify, and the three push-notification Scheduled
-// Functions (send-shift-reminders, send-reminders, generate-daily-plan)
-// stay on Netlify unchanged — they use the `web-push` package (Node crypto
-// + https-proxy-agent under the hood), which doesn't reliably run in the
-// Workers runtime even with nodejs_compat.
+// reverse-proxies to Netlify. Opening/Closing's push reminders (this file's
+// other Cron Trigger, below) used to be one of the ones stuck on Netlify
+// too — see runShiftReminders' own comment for why, and why that's what
+// silently stopped the notifications when Netlify's deploys went stale.
+// send-reminders.ts (Shift/Event/Meal) and generate-daily-plan.ts have the
+// exact same dependency and are equally at risk; they haven't been ported
+// yet.
 //
 // The LeadFlow endpoints below are the same story as Stocks: no web-push
 // dependency, no reason to route through Netlify at all, native here.
@@ -23,6 +25,8 @@ import { saveBrokerKeys, brokerKeysStatus } from './handlers/broker-keys';
 import { stocksAccount } from './handlers/stocks-account';
 import { runStocksBot } from './handlers/stocks-bot';
 import type { StocksEnv } from './handlers/broker-keys';
+import { runShiftReminders } from './handlers/shift-reminders';
+import type { ShiftReminderEnv } from './handlers/shift-reminders';
 import { leadflowLeads, leadflowLeadUpdate, leadflowHistory, leadflowMessages, leadflowAiReport } from './handlers/leadflow';
 import type { LeadflowEnv } from './handlers/leadflow';
 import { createSubscriptionIntent, stripeWebhook, createPortalSession } from './handlers/billing';
@@ -40,7 +44,7 @@ import type { ClaudeEnv } from './handlers/claude';
 import { pushSubscription } from './handlers/push-subscription';
 import type { PushSubscriptionEnv } from './handlers/push-subscription';
 
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
@@ -86,14 +90,14 @@ export default {
     // was an unexplained error inside a healthy-looking Cloudflare
     // deploy. Failing loudly here is worth more than a broken proxy hop.
     //
-    // Still on Netlify, deliberately: the three Scheduled Functions that
-    // send push (send-reminders, send-shift-reminders,
-    // generate-daily-plan). They depend on `web-push`, which needs Node
-    // crypto and doesn't run reliably in the Workers runtime. Nothing in
-    // the app's request path calls them — the scheduler does — so they
-    // don't belong on this route either way. If Netlify is fully retired,
-    // those need porting to WebCrypto VAPID or moving to another runner,
-    // and push notifications stop until that happens.
+    // Still on Netlify, deliberately: send-reminders.ts (Shift/Event/Meal)
+    // and generate-daily-plan.ts. They depend on `web-push`, which needs
+    // Node crypto and doesn't run reliably in the Workers runtime — the
+    // same reason Opening/Closing's reminders were stuck there too, before
+    // this file's Cron Trigger took that over using WebCrypto instead (see
+    // runShiftReminders). Nothing in the app's request path calls any of
+    // these — the scheduler does — so they don't belong on this route
+    // either way.
     if (url.pathname.startsWith('/api/')) {
       return new Response(
         JSON.stringify({ error: `Unknown API route: ${url.pathname}` }),
@@ -107,7 +111,17 @@ export default {
   // project dependency) — the real runtime object satisfies this shape,
   // and esbuild (what Cloudflare Workers Builds bundles with) only
   // transpiles, it doesn't type-check, so this is safe either way.
-  async scheduled(_event: unknown, env: Env, ctx: { waitUntil: (promise: Promise<unknown>) => void }): Promise<void> {
+  //
+  // Two Cron Triggers share this one export (wrangler.jsonc's
+  // triggers.crons) — event.cron tells them apart. The stocks bot's own
+  // gating (market hours, the 4:15pm summary window) still lives inside
+  // runStocksBot itself; this only decides which handler a given firing
+  // belongs to.
+  async scheduled(event: { cron: string }, env: Env, ctx: { waitUntil: (promise: Promise<unknown>) => void }): Promise<void> {
+    if (event.cron === '*/5 * * * *') {
+      ctx.waitUntil(runShiftReminders(env));
+      return;
+    }
     ctx.waitUntil(runStocksBot(env));
   },
 };

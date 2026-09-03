@@ -52,7 +52,7 @@ After that one-time link, add the same three environment variables from `.env.lo
 
 The site is also connected to Cloudflare Workers (git-integrated, auto-builds on push to `main`) as a second host — mainly to sidestep Netlify's free-tier build-minute cap (which, notably, is what pushed the Stocks bot's endpoints here in the first place — see below). `wrangler.jsonc` + `worker/index.ts` define the deploy: Cloudflare serves the built `dist/` as static assets, and `worker/index.ts` routes `/api/*` one of two ways:
 
-- **`claude.ts`, `push-subscription.ts`** (and anything else not listed below) still reverse-proxy server-side to the Netlify Functions above (`https://mastermindbymarq.netlify.app/api/...`), which stay their real backend. That avoids browser CORS (the proxy call is server-to-server, not subject to it) and having to port `send-shift-reminders.ts`/`send-reminders.ts`/`generate-daily-plan.ts` to Workers, where the `web-push` package's Node `crypto`/`https-proxy-agent` dependencies don't reliably run even with `nodejs_compat` on.
+- **`claude.ts`, `push-subscription.ts`, and every request-time `/api/*` route** now run natively on the Worker too (`worker/handlers/claude.ts`, `worker/handlers/push-subscription.ts`) — nothing left proxies to Netlify at request time. `worker/index.ts` returns a 404 for anything unmatched rather than falling through to a Netlify hop, on purpose: a silent proxy failure when Netlify goes stale is worse than a loud 404. Two Cron Triggers (`worker/index.ts`'s `scheduled()`, told apart by `event.cron`) run on a schedule instead of at request time: the Stocks bot engine, and Opening/Closing's push reminders (`worker/handlers/shift-reminders.ts`, using `@block65/webcrypto-web-push` — see "Web Push" below for why that one moved). `send-reminders.ts` (Shift/Event/Meal) and `generate-daily-plan.ts` are the two scheduled functions still actually on Netlify, both for the same `web-push` Node-dependency reason `send-shift-reminders.ts` used to be — Workers' `nodejs_compat` flag doesn't make the `web-push` package's Node `crypto`/`https-proxy-agent` internals reliable, which is why porting used a pure-WebCrypto library instead of trying to force the Node one to run.
 - **The Stocks bot's four endpoints** (`save-broker-keys`, `broker-keys-status`, `stocks-account`, and the trading engine itself) run **natively in this Worker** — `worker/handlers/*.ts`, ported from their `netlify/functions/*.ts` originals — rather than proxying to Netlify. They have no `web-push` dependency, so the Workers-runtime limitation above doesn't apply to them. This split exists because Netlify's production deploys got paused mid-build (team billing/operational-credits limit) right as the Stocks bot was built, so anything depending on a fresh Netlify deploy was stuck; moving these four here removed that dependency entirely rather than waiting on a billing fix. The trading engine runs as a Cron Trigger (`triggers.crons` in `wrangler.jsonc`, `*/15 * * * *`) via the Worker's `scheduled()` export, instead of a Netlify Scheduled Function.
 - **LeadFlow's five endpoints** (`worker/handlers/leadflow.ts`) run natively here too, same reasoning — no `web-push` dependency, no need to touch Netlify at all.
 
@@ -73,7 +73,7 @@ If Netlify's Functions URL ever changes (custom domain, site rename), update `NE
   - **Dialing**: a pinned, persisted "Current Pitch" script; a live X/100 daily call counter; a "Today's Calls" queue auto-built from Dialing contacts (excludes anyone marked Not Qualified/DNC, defers Call Back Later contacts until their callback date or the next business day); 7 quick-tap outcome buttons per contact that log with a timestamp and move them to an undoable "Completed Today" list; a simple day-by-day history log. The 100 target never auto-fills — it only moves via real logged outcomes, and stays "X / 100" even if the actual queue is smaller or larger than 100.
 - **Event Adder** (opened from Schedule): one modal, 3 tabs — HOLIDAY (multi-day shift scheduling, auto-computed hours), DIALING (lead appointments, feeds Contacts), SCALEZ (business-audit/scaling client appointments, feeds Contacts) — all three write to one `events` table and render on the same color-coded calendar. DIALING/SCALEZ dedupe against Contacts by phone or email before creating a new record.
 - **Installable PWA**: has a web app manifest + service worker (`public/manifest.json`, `sw-src/sw.ts`), so "Add to Home Screen" on iOS/Android installs it standalone with the app's own icon and no Safari/Chrome UI. The service worker precaches the app shell for offline load and handles incoming push notifications.
-- **Opening/Closing**: reads the device clock on load and every 60s after, no date entry needed. Store hours (`src/data/shiftChecklist.ts` → `STORE_HOURS`) and the opening/closing task lists are plain editable config, not hardcoded logic. Opening tasks start 60 min before open; closing tasks are backed off from close time so the last one lands exactly at close; a few randomized "stay busy" nudges fill the gap between them; a final till-count/clock-out task anchors to close time. Current task is highlighted, checked-off state persists per day. Notifications (opt-in via "Enable task alerts") fire as each task's time is crossed, plus three shift-progress alerts on shifts over 6 hours (halfway, 2 hours left, final task) — both while the app is open (instant, client-side) and while fully closed (real web push, checked server-side every 5 minutes) — see "Web Push" setup below. **Gated on an actual scheduled shift**: `STORE_HOURS` covers every day of the week, but `buildSchedule()` has no idea whether you're actually working today — both the client (`OpeningClosingScreen.tsx`) and the server-side push function (`send-shift-reminders.ts`) now check for a real holiday-type shift on today's date (same `events` rows the Schedule calendar writes) before showing the checklist or sending any of its notifications. No shift today → a plain "No shift today" card instead of the checklist, and zero pushes, rather than assuming every day is a workday.
+- **Opening/Closing**: reads the device clock on load and every 60s after, no date entry needed. Store hours (`src/data/shiftChecklist.ts` → `STORE_HOURS`) and the opening/closing task lists are plain editable config, not hardcoded logic. Opening tasks start 60 min before open; closing tasks are backed off from close time so the last one lands exactly at close; a few randomized "stay busy" nudges fill the gap between them; a final till-count/clock-out task anchors to close time. Current task is highlighted, checked-off state persists per day. Notifications (opt-in via "Enable task alerts") fire as each task's time is crossed, plus three shift-progress alerts on shifts over 6 hours (halfway, 2 hours left, final task) — both while the app is open (instant, client-side) and while fully closed (real web push, checked server-side every 5 minutes) — see "Web Push" setup below. **Gated on an actual scheduled shift**: `STORE_HOURS` covers every day of the week, but `buildSchedule()` has no idea whether you're actually working today — both the client (`OpeningClosingScreen.tsx`) and the server-side push handler (`worker/handlers/shift-reminders.ts`) check for a real holiday-type shift on today's date (same `events` rows the Schedule calendar writes) before showing the checklist or sending any of its notifications. No shift today → a plain "No shift today" card instead of the checklist, and zero pushes, rather than assuming every day is a workday.
 - **Notifications (Settings → Notifications)**: per-category on/off toggles (Shifts, Events, Meals, Opening/Closing tasks) plus editable meal reminder times, all real push via the same backend — Shifts (evening-before + 60-min-before, pulled from Schedule's HOLIDAY events and labeled Opening/Closing/Shift by proximity to store open/close time), Events (24h + 1h before Dialing/Scaling appointments and any dated Reminder, or a single morning-of alert for undated/all-day reminders), Meals (breakfast/lunch/dinner nudges that skip themselves if that meal's already logged). The home screen's Reminders panel is now real data (add/complete/delete from the Notifications settings screen) instead of two hardcoded strings.
 - **Scaling**: LeadFlow (Cristopher's own CRM, ported in full with live data — Dashboard/War Room/Lead Pool/Lead Finder/Pitch Playbook/AI Sales Report/History/Messages, see below), Website/App Builder (placeholder), Scaling Planner (guided questionnaire → real Claude-generated plan doc), Business Audits (16 questions grounded in the Scaling 101 curriculum, one per diagnosable CRITICAL/HIGH topic across its 7 phases → real Claude-scored, phase-grouped summary), Brand Lab (input brief → 3 template directions with real Claude-written headline copy per direction), Idea Maker (real back-and-forth conversation with Claude, not scripted replies), Invoicing (real 9-document Made by Marq client document system, see below)
 - Sticky Spot — editable fast-cash idea list
@@ -113,35 +113,48 @@ preferred look, so that crop step was dropped.)
 
 ## One-time backend setup (Web Push — real closed-app notifications)
 
-Opening/Closing's reminders now fire as real push notifications even with the app fully closed, not just while a
-tab is open — checked server-side every 5 minutes by a Netlify Scheduled Function
-(`netlify/functions/send-shift-reminders.ts`) that calls the browser's push service directly. Nothing here needs a
-paid plan; it's the standard free web-push protocol.
+Opening/Closing's reminders fire as real push notifications even with the app fully closed, not just while a
+tab is open — checked every 5 minutes by a Cloudflare Cron Trigger (`worker/handlers/shift-reminders.ts`,
+`runShiftReminders`, wired in `worker/index.ts`'s `scheduled()` alongside the Stocks bot's own trigger) that calls
+the browser's push service directly, using `@block65/webcrypto-web-push` for the RFC 8291/8292 encryption and VAPID
+signing. Nothing here needs a paid plan; it's the standard free web-push protocol.
+
+**This used to run as a Netlify Scheduled Function** (`netlify/functions/send-shift-reminders.ts`, kept in the repo
+for reference but no longer what's live) — it depended on the `web-push` npm package, which needs Node crypto and
+doesn't run reliably in the Workers runtime, so it stayed on Netlify through the rest of the Cloudflare migration.
+When Netlify's deploys went stale, this silently stopped firing: nothing else in the app's request path touches
+Netlify anymore, so there was no error anywhere to notice — the reminders just quietly stopped. `@block65/webcrypto-
+web-push` implements the same protocol with pure WebCrypto, which Workers does support, removing the dependency
+for good. `send-reminders.ts` (Shift/Event/Meal, step 6 below) and `generate-daily-plan.ts` have the exact same
+`web-push` dependency and haven't been ported yet — they're equally at risk of the same silent failure.
 
 1. **Run `supabase/schema_006_push.sql`** (after `schema_005_shift_checklist.sql`) — adds the `push_subscriptions`
    table and a `notified_task_ids` tracking column.
 2. **Get your Supabase service role key** — Project Settings → API → **service_role** secret (NOT the anon key;
    this one bypasses row-level security, since the scheduled function has no per-user login session to authenticate
-   as — it's a trusted system cron, not a user request). Add it to Netlify as `SUPABASE_SERVICE_ROLE_KEY`. Treat it
-   like a master password: it's never sent to the browser, only read inside this one server-side function.
+   as — it's a trusted system cron, not a user request). Almost certainly already set as a Cloudflare secret
+   (`SUPABASE_SERVICE_ROLE_KEY`) for the Stocks bot and other native handlers — no new step if so. Treat it like a
+   master password: it's never sent to the browser, only read server-side.
 3. **VAPID keys** — a self-generated keypair identifying this app to the push services (Apple/Google/Mozilla), not
-   an account you sign up for anywhere. Generate once with `npx web-push generate-vapid-keys`, or reuse the pair
-   already generated for this project (ask Claude — they were generated during this build and shared in chat, not
-   committed to the repo). Add three env vars in Netlify:
-   - `VITE_VAPID_PUBLIC_KEY` — the public key (safe to expose; also read client-side to subscribe the browser)
+   an account you sign up for anywhere. **Reuse the exact same pair that was already in use** — generating a new
+   one invalidates every device that's already subscribed and forces everyone to re-enable notifications. Add to
+   the Cloudflare Worker's environment (dashboard → Workers & Pages → mastermind-by-marq → Settings → Variables and
+   Secrets — see the comment block at the bottom of `wrangler.jsonc` for the full list):
+   - `VITE_VAPID_PUBLIC_KEY` — the public key (safe to expose; also read client-side to subscribe the browser, and
+     needed here too since the Worker's own runtime env is separate from what Vite bakes into the built bundle)
    - `VAPID_PRIVATE_KEY` — the private key (server-only secret, never exposed)
    - `VAPID_SUBJECT` — `mailto:your@email.com`, required by the push spec so push services can contact you if
      something's misbehaving
-4. **Set your store's timezone** — add `STORE_TIMEZONE` in Netlify env vars as an IANA name (e.g.
-   `America/Chicago`, `America/New_York`). This matters: the scheduled function runs on Netlify's own clock (UTC),
-   not your device's — without the right timezone, reminders fire at the wrong wall-clock time. The in-app
-   foreground polling doesn't have this problem since it already uses your device's local time correctly.
-5. Redeploy (Trigger deploy) so the new env vars take effect, then open Opening/Closing (or Settings → Notifications)
-   and click **Enable task alerts** / **Enable alerts** — either one requests notification permission and registers
-   this device for push; it's the same underlying subscription either way, not two separate systems.
+4. **Set your store's timezone** — add `STORE_TIMEZONE` as a Cloudflare env var, an IANA name (e.g.
+   `America/Chicago`, `America/Denver`). This matters: the Cron Trigger runs on UTC, not your device's clock —
+   without the right timezone, reminders fire at the wrong wall-clock time. The in-app foreground polling doesn't
+   have this problem since it already uses your device's local time correctly.
+5. Redeploy so the new env vars take effect, then open Opening/Closing (or Settings → Notifications) and click
+   **Enable task alerts** / **Enable alerts** — either one requests notification permission and registers this
+   device for push; it's the same underlying subscription either way, not two separate systems.
 6. Run `supabase/schema_008_notifications.sql` (after `schema_007_cold_calling.sql`) to unlock the expanded scope —
    Shift/Event/Meal reminders, sent by a second Scheduled Function, `netlify/functions/send-reminders.ts` (every 15
-   min, same VAPID/service-role env vars as above, no new ones needed).
+   min, same VAPID/service-role env vars as above, no new ones needed) — **still on Netlify**, not yet ported.
 
 **What still doesn't work**: the Notification Triggers API (schedule one exact future notification client-side, no
 server involved) — it never shipped in any real browser including iOS, feature-detected in `src/lib/pwa.ts` in
@@ -696,7 +709,8 @@ across 81 components. Two things to know before doing that:
 - `src/lib/pwa.ts` — standalone-mode detection + Notification Triggers feature-detect
 - `src/lib/push.ts` — subscribes/unsubscribes this device for web push
 - `netlify/functions/push-subscription.ts` — stores/removes a device's push subscription (JWT-gated)
-- `netlify/functions/send-shift-reminders.ts` — Scheduled Function (every 5 min) that sends real push notifications for due Opening/Closing tasks, using the Supabase service role key + VAPID keys
+- `netlify/functions/send-shift-reminders.ts` — the original Netlify Scheduled Function this replaced (kept for reference, not what's live — see `worker/handlers/shift-reminders.ts` below)
+- `worker/handlers/shift-reminders.ts` — `runShiftReminders`, a Cloudflare Cron Trigger (every 5 min, `worker/index.ts`'s `scheduled()`) that sends real push notifications for due Opening/Closing tasks, using `@block65/webcrypto-web-push` (pure WebCrypto, RFC 8291/8292 — no Node `web-push` dependency) plus the Supabase service role key + VAPID keys
 - `netlify/functions/send-reminders.ts` — Scheduled Function (every 15 min) for the expanded scope: Shift/Event/Meal reminders, gated per-category by `notification_settings` and deduped via the generic `notification_log` table
 - `src/data/useReminders.ts`, `src/data/useNotificationSettings.ts` — the Reminders panel's real data and the per-category notification toggles/meal times
 - `src/data/useCallOutcomes.ts` — Dialing's daily queue/counter/history logic (given the caller's already-loaded Dialing contacts)

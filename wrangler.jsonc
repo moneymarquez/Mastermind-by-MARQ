@@ -46,11 +46,17 @@
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   },
-  // Stocks bot engine (worker/handlers/stocks-bot.ts) — same cadence as it
-  // ran on Netlify; the handler itself gates real work to market hours and
-  // the 4:15pm ET summary window.
+  // Two Cron Triggers, told apart by event.cron in worker/index.ts's
+  // scheduled() export:
+  //   */15 * * * * — Stocks bot engine (worker/handlers/stocks-bot.ts),
+  //                  same cadence as it ran on Netlify; the handler itself
+  //                  gates real work to market hours and the 4:15pm ET
+  //                  summary window.
+  //   */5  * * * * — Opening/Closing push reminders
+  //                  (worker/handlers/shift-reminders.ts), same cadence as
+  //                  the Netlify Scheduled Function it replaces.
   "triggers": {
-    "crons": ["*/15 * * * *"]
+    "crons": ["*/15 * * * *", "*/5 * * * *"]
   }
   // Required environment variables/secrets — set these in the Cloudflare
   // dashboard (Workers & Pages → mastermind-by-marq → Settings →
@@ -66,4 +72,11 @@
   //   RESEND_API_KEY             (secret — optional; "Send to client" shows "not configured" without it)
   //   RESEND_FROM_EMAIL          (plain variable — a sender address verified in your Resend account)
   //   RESEND_WEBHOOK_SECRET      (secret — optional; from Resend's Webhooks page, the email.received subscription)
+  //   VITE_VAPID_PUBLIC_KEY      (plain variable — already public; same key the client already subscribes with,
+  //                              needed here too since the Worker's own runtime env is separate from what Vite
+  //                              baked into the built bundle at build time)
+  //   VAPID_PRIVATE_KEY          (secret — signs the push JWT; reuse the SAME key pair Netlify already had, a new
+  //                              one invalidates every existing subscription and forces everyone to re-subscribe)
+  //   VAPID_SUBJECT              (plain variable — e.g. "mailto:you@yourdomain.com")
+  //   STORE_TIMEZONE             (plain variable — IANA name, e.g. "America/Denver")
 }
