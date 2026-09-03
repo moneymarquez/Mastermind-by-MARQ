@@ -2,6 +2,8 @@ import type { NavRow } from '../navRows';
 import Icon from '../Icon';
 import { LIVE_PLAN } from '../billing/plans';
 import type { Theme } from '../data/useTheme';
+import InboxWidget from './InboxWidget';
+import type { SupportInboxEntry } from '../data/useSupportInbox';
 
 interface Props {
   open: boolean;
@@ -13,6 +15,9 @@ interface Props {
   onClose: () => void;
   onOpenSettings: () => void;
   onOpenTour: () => void;
+  inboxEntries: SupportInboxEntry[];
+  inboxLoading: boolean;
+  onOpenInbox: () => void;
 }
 
 /** Mobile's nav surface — the "02 — Menu sheet" artboard: a scrim, a
@@ -31,7 +36,7 @@ interface Props {
  *  its parent's maxHeight and just grows past it — which is what was
  *  clipping the footer and the last few rows off the bottom of the
  *  screen before this fix. */
-export default function MobileMenuSheet({ open, rows, ownerName, isOwner, theme, onThemeChange, onClose, onOpenSettings, onOpenTour }: Props) {
+export default function MobileMenuSheet({ open, rows, ownerName, isOwner, theme, onThemeChange, onClose, onOpenSettings, onOpenTour, inboxEntries, inboxLoading, onOpenInbox }: Props) {
   if (!open) return null;
   return (
     <>
@@ -59,6 +64,8 @@ export default function MobileMenuSheet({ open, rows, ownerName, isOwner, theme,
             <div title="Take the product tour" onClick={() => { onOpenTour(); onClose(); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: '50%', border: '1px solid var(--mm-line2)', fontSize: 13, fontWeight: 700, color: 'var(--mm-dim)', cursor: 'pointer', flexShrink: 0 }}>?</div>
           </div>
         </div>
+
+        {isOwner && <InboxWidget entries={inboxEntries} loading={inboxLoading} onOpen={() => { onOpenInbox(); onClose(); }} compact />}
 
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {rows.map((row) => {

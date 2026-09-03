@@ -1,6 +1,8 @@
 import type { NavRow } from '../navRows';
 import Icon from '../Icon';
 import { LIVE_PLAN } from '../billing/plans';
+import InboxWidget from './InboxWidget';
+import type { SupportInboxEntry } from '../data/useSupportInbox';
 
 export const SIDEBAR_WIDTH = 250;
 
@@ -9,6 +11,9 @@ interface Props {
   ownerName: string | null;
   isOwner: boolean;
   onOpenSettings: () => void;
+  inboxEntries: SupportInboxEntry[];
+  inboxLoading: boolean;
+  onOpenInbox: () => void;
 }
 
 /** The desktop persistent sidebar from the Aperture "App Overview" artboard
@@ -23,7 +28,7 @@ interface Props {
  *  runs on — this brings the authenticated app shell onto the same design
  *  language as the landing page instead of the older --bg/--surface/--accent
  *  set. */
-export default function Sidebar({ rows, ownerName, isOwner, onOpenSettings }: Props) {
+export default function Sidebar({ rows, ownerName, isOwner, onOpenSettings, inboxEntries, inboxLoading, onOpenInbox }: Props) {
   return (
     <div
       style={{
@@ -37,6 +42,8 @@ export default function Sidebar({ rows, ownerName, isOwner, onOpenSettings }: Pr
           <Icon name="list" size={18} />Menu
         </div>
       </div>
+
+      {isOwner && <InboxWidget entries={inboxEntries} loading={inboxLoading} onOpen={onOpenInbox} />}
 
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2, fontSize: 13.5 }}>
         {rows.map((row) => {

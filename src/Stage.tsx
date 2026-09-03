@@ -10,6 +10,7 @@ import NovaPanel from './components/NovaPanel';
 import RemindersBox from './components/RemindersBox';
 import { useBender } from './data/useBender';
 import { useNavModulePrefs } from './data/useNavModulePrefs';
+import { useSupportInbox } from './data/useSupportInbox';
 import HomeScreen from './components/screens/HomeScreen';
 import DailyPlanScreen from './components/screens/DailyPlanScreen';
 import DialingScreen from './components/screens/DialingScreen';
@@ -85,6 +86,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // tourSteps) so a hidden/reordered module's screen, data, and reachability
   // from a stat card or Nova action are completely unaffected.
   const navPrefs = useNavModulePrefs();
+  // Owner-only data (support_inbox's RLS already scopes it), so this is a
+  // harmless empty read for a non-owner account — called unconditionally
+  // rather than guarded, same as useModuleAccess elsewhere in this file.
+  const supportInbox = useSupportInbox();
   const navAccess = (moduleKey: string) => canAccess(moduleKey) && !navPrefs.hidden.has(moduleKey);
   const vm = buildViewModel(state, actions.navigateTo, onSignOut, navAccess, isOwner, navPrefs.order);
   const { isMobile } = vm;
@@ -170,6 +175,9 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             onClose={actions.closeDrawer}
             onOpenSettings={() => actions.navigateTo('account-settings')}
             onOpenTour={startTour}
+            inboxEntries={supportInbox.entries}
+            inboxLoading={supportInbox.loading}
+            onOpenInbox={() => actions.navigateTo('support-inbox')}
           />
 
           <MobileTabBar
@@ -186,6 +194,9 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             ownerName={ownerDisplayName}
             isOwner={isOwner}
             onOpenSettings={() => actions.navigateTo('account-settings')}
+            inboxEntries={supportInbox.entries}
+            inboxLoading={supportInbox.loading}
+            onOpenInbox={() => actions.navigateTo('support-inbox')}
           />
           <TopHeader
             left={vm.sidebarWidth}

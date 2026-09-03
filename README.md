@@ -829,9 +829,15 @@ done and matched what the new prompt asked for, so it wasn't rebuilt).
 
 - **Support Inbox** (`support-inbox`, owner-only, `worker/handlers/support-inbox.ts` +
   `src/components/screens/SupportInboxScreen.tsx`) — the narrow first version of "AI auto-support." Mail sent to
-  any `@mastermindsbymarq.com` address (once Resend's inbound receiving is configured and its webhook points at
+  any address on a domain with Resend's inbound receiving configured (once its webhook points at
   `/api/support-inbox-webhook`) gets AI-categorized (billing/support/bug/general/spam) and drafted a reply by
-  Claude, stored in a new `support_inbox` table for review — **never auto-sent**. The webhook's signature is
+  Claude, stored in a new `support_inbox` table for review — **never auto-sent**. The handler is domain-agnostic on
+  purpose: it processes whatever `email.received` payload Resend hands it, so adding a second domain (e.g.
+  `madebymarquez.com`, for client requests submitted there) is a Resend-side step — verify the domain, turn on
+  inbound receiving, point its webhook at the same endpoint — not a code change. Every message lands in the one
+  `support_inbox` table regardless of which domain it arrived on, and a compact **Inbox widget** (`InboxWidget.tsx`)
+  pinned above the Personal category in both Sidebar.tsx and MobileMenuSheet.tsx shows the unread count and the two
+  most recent messages, so a client request is visible without opening the full screen. The webhook's signature is
   verified by hand via Web Crypto (Resend signs the same way Svix does: `svix-id`/`svix-timestamp`/
   `svix-signature` headers, HMAC-SHA256 over `{id}.{timestamp}.{body}`), matching the Stripe webhook's approach —
   no Node-oriented SDK dependency in the Workers runtime. Needs `RESEND_WEBHOOK_SECRET` as a Worker secret; without
