@@ -9,6 +9,7 @@ import NovaTrigger from './components/NovaTrigger';
 import NovaPanel from './components/NovaPanel';
 import RemindersBox from './components/RemindersBox';
 import { useBender } from './data/useBender';
+import { useHiddenNavModules } from './data/useHiddenNavModules';
 import HomeScreen from './components/screens/HomeScreen';
 import DailyPlanScreen from './components/screens/DailyPlanScreen';
 import DialingScreen from './components/screens/DialingScreen';
@@ -76,7 +77,16 @@ interface Props {
 }
 
 export default function Stage({ state, actions, assistantName, canAccess, onSignOut, currentUserId, userEmail, isOwner, theme, onThemeChange }: Props) {
-  const vm = buildViewModel(state, actions.navigateTo, onSignOut, canAccess, isOwner);
+  // Modules hidden from this account's own nav (schema_055) — a pure
+  // display preference, layered on top of real access rather than
+  // touching it. navAccess is what actually builds the nav rows below;
+  // canAccess itself stays untouched everywhere else in this file
+  // (screenBlocked, activeModuleCount, tourSteps) so a hidden module's
+  // screen, data, and reachability from a stat card or Nova action are
+  // completely unaffected by hiding it from the menu.
+  const hiddenNav = useHiddenNavModules();
+  const navAccess = (moduleKey: string) => canAccess(moduleKey) && !hiddenNav.hidden.has(moduleKey);
+  const vm = buildViewModel(state, actions.navigateTo, onSignOut, navAccess, isOwner);
   const { isMobile } = vm;
   const bender = useBender();
 
@@ -372,7 +382,15 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'manage-modules' && (
-          <ManageModulesScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} currentUserId={currentUserId} isOwner={isOwner} />
+          <ManageModulesScreen
+            homeHeadStyle={vm.homeHeadStyle}
+            homeSubStyle={vm.homeSubStyle}
+            currentUserId={currentUserId}
+            isOwner={isOwner}
+            canAccess={canAccess}
+            hiddenModules={hiddenNav.hidden}
+            onToggleHidden={hiddenNav.setModuleHidden}
+          />
         )}
 
         {state.screen === 'grant-access' && isOwner && (
