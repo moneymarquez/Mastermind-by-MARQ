@@ -9,7 +9,7 @@ import NovaTrigger from './components/NovaTrigger';
 import NovaPanel from './components/NovaPanel';
 import RemindersBox from './components/RemindersBox';
 import { useBender } from './data/useBender';
-import { useHiddenNavModules } from './data/useHiddenNavModules';
+import { useNavModulePrefs } from './data/useNavModulePrefs';
 import HomeScreen from './components/screens/HomeScreen';
 import DailyPlanScreen from './components/screens/DailyPlanScreen';
 import DialingScreen from './components/screens/DialingScreen';
@@ -77,16 +77,16 @@ interface Props {
 }
 
 export default function Stage({ state, actions, assistantName, canAccess, onSignOut, currentUserId, userEmail, isOwner, theme, onThemeChange }: Props) {
-  // Modules hidden from this account's own nav (schema_055) — a pure
-  // display preference, layered on top of real access rather than
-  // touching it. navAccess is what actually builds the nav rows below;
-  // canAccess itself stays untouched everywhere else in this file
-  // (screenBlocked, activeModuleCount, tourSteps) so a hidden module's
-  // screen, data, and reachability from a stat card or Nova action are
-  // completely unaffected by hiding it from the menu.
-  const hiddenNav = useHiddenNavModules();
-  const navAccess = (moduleKey: string) => canAccess(moduleKey) && !hiddenNav.hidden.has(moduleKey);
-  const vm = buildViewModel(state, actions.navigateTo, onSignOut, navAccess, isOwner);
+  // This account's own nav preferences (schema_056) — which modules are
+  // hidden, and their custom order within each category. Both are a pure
+  // display layer on top of real access rather than touching it: navAccess
+  // is what actually builds the nav rows below; canAccess itself stays
+  // untouched everywhere else in this file (screenBlocked, activeModuleCount,
+  // tourSteps) so a hidden/reordered module's screen, data, and reachability
+  // from a stat card or Nova action are completely unaffected.
+  const navPrefs = useNavModulePrefs();
+  const navAccess = (moduleKey: string) => canAccess(moduleKey) && !navPrefs.hidden.has(moduleKey);
+  const vm = buildViewModel(state, actions.navigateTo, onSignOut, navAccess, isOwner, navPrefs.order);
   const { isMobile } = vm;
   const bender = useBender();
 
@@ -388,8 +388,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             currentUserId={currentUserId}
             isOwner={isOwner}
             canAccess={canAccess}
-            hiddenModules={hiddenNav.hidden}
-            onToggleHidden={hiddenNav.setModuleHidden}
+            hiddenModules={navPrefs.hidden}
+            order={navPrefs.order}
+            onToggleHidden={navPrefs.setModuleHidden}
+            onReorderCategory={navPrefs.reorderCategory}
           />
         )}
 

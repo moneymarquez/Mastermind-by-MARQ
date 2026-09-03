@@ -11,11 +11,13 @@ interface Props {
   currentUserId: string;
   isOwner: boolean;
   /** Real access — same function Stage.tsx uses for screen-level gating.
-   *  Used here only to decide which modules are even eligible to hide
-   *  (no point offering a toggle for something you can't open anyway). */
+   *  Used here only to decide which modules are even eligible to hide or
+   *  reorder (no point offering either for something you can't open). */
   canAccess: (moduleKey: string) => boolean;
   hiddenModules: Set<string>;
+  order: Record<string, number>;
   onToggleHidden: (moduleKey: string, hide: boolean) => void;
+  onReorderCategory: (orderedModuleKeys: string[]) => void;
 }
 
 const card: CSSProperties = { background: 'var(--mm-panel-solid)', border: '1px solid var(--mm-line)', borderRadius: 'var(--radius-xl)', padding: 4 };
@@ -28,29 +30,48 @@ const toggleTrack = (on: boolean): CSSProperties => ({
 const toggleDot = (on: boolean): CSSProperties => ({
   position: 'absolute', top: 2, left: on ? 19 : 2, width: 21, height: 21, borderRadius: '50%', background: 'var(--mm-bg)', boxShadow: '0 1px 3px rgba(0,0,0,0.3)', transition: 'left 0.15s ease',
 });
+const moveBtn = (disabled: boolean): CSSProperties => ({
+  width: 22, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12,
+  color: disabled ? 'var(--mm-line2)' : 'var(--mm-faint)', cursor: disabled ? 'default' : 'pointer',
+});
 
-/** Hide/show — a purely cosmetic layer on top of real access
- *  (schema_055_hidden_nav_modules.sql). Hiding a module never touches
- *  user_modules or any of its data; it only drops the row from
- *  Sidebar/MobileMenuSheet's list. Lists every module the account can
- *  currently open, grouped by category, each with a toggle. */
-function HideFromMenu({ canAccess, hiddenModules, onToggleHidden }: Pick<Props, 'canAccess' | 'hiddenModules' | 'onToggleHidden'>) {
+/** Hide/show and reorder — a purely cosmetic layer on top of real access
+ *  (schema_056_nav_module_order.sql). Neither hiding nor reordering ever
+ *  touches user_modules or a module's own data; both only change how
+ *  Sidebar/MobileMenuSheet lay the module out. Lists every module the
+ *  account can currently open, grouped by category and sorted in the
+ *  same order the real nav renders them, each with up/down arrows and a
+ *  show/hide toggle. */
+function HideFromMenu({ canAccess, hiddenModules, order, onToggleHidden, onReorderCategory }: Pick<Props, 'canAccess' | 'hiddenModules' | 'order' | 'onToggleHidden' | 'onReorderCategory'>) {
   const visible = MODULE_REGISTRY.filter((m) => canAccess(m.key));
   const categories = [...new Set(visible.map((m) => m.category))];
   const hiddenCount = visible.filter((m) => hiddenModules.has(m.key)).length;
 
+  const move = (categoryItems: typeof visible, key: string, dir: -1 | 1) => {
+    const idx = categoryItems.findIndex((m) => m.key === key);
+    const swapIdx = idx + dir;
+    if (swapIdx < 0 || swapIdx >= categoryItems.length) return;
+    const keys = categoryItems.map((m) => m.key);
+    [keys[idx], keys[swapIdx]] = [keys[swapIdx], keys[idx]];
+    onReorderCategory(keys);
+  };
+
   return (
     <div style={{ marginTop: 28, maxWidth: 640 }}>
-      <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--mm-text)' }}>Hide from menu</div>
+      <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--mm-text)' }}>Hide & reorder</div>
       <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--mm-dim)', marginTop: 4, lineHeight: 1.5 }}>
-        Declutter your Sidebar/Menu without losing anything — a hidden module keeps every bit of its data and stays
-        reachable from Home or Nova. Flip it back on any time and it's exactly as you left it.
+        Declutter or rearrange your Sidebar/Menu without losing anything — hiding or moving a module never touches
+        its data, and a hidden one stays reachable from Home or Nova. Flip it back on or move it back any time.
         {hiddenCount > 0 && <span style={{ color: 'var(--mm-faint)' }}> {hiddenCount} hidden right now.</span>}
       </div>
 
       <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 18 }}>
         {categories.map((cat) => {
-          const items = visible.filter((m) => m.category === cat);
+          const items = visible
+            .filter((m) => m.category === cat)
+            .map((m, i) => ({ m, natural: i }))
+            .sort((a, b) => (order[a.m.key] ?? a.natural) - (order[b.m.key] ?? b.natural))
+            .map(({ m }) => m);
           return (
             <div key={cat ?? 'other'}>
               <div style={{ fontSize: 'var(--text-caption)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mm-faint)', marginBottom: 8 }}>
@@ -61,6 +82,10 @@ function HideFromMenu({ canAccess, hiddenModules, onToggleHidden }: Pick<Props, 
                   const hidden = hiddenModules.has(m.key);
                   return (
                     <div key={m.key} style={row(i === items.length - 1)}>
+                      <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+                        <div style={moveBtn(i === 0)} onClick={() => i > 0 && move(items, m.key, -1)}>▲</div>
+                        <div style={moveBtn(i === items.length - 1)} onClick={() => i < items.length - 1 && move(items, m.key, 1)}>▼</div>
+                      </div>
                       <Icon name={m.icon} size={19} color="var(--mm-dim)" />
                       <div style={{ flex: 1, minWidth: 0, fontSize: 'var(--text-body)', color: hidden ? 'var(--mm-faint)' : 'var(--mm-text)' }}>
                         {m.label}
@@ -83,7 +108,7 @@ function HideFromMenu({ canAccess, hiddenModules, onToggleHidden }: Pick<Props, 
   );
 }
 
-export default function ManageModulesScreen({ homeHeadStyle, homeSubStyle, currentUserId, isOwner, canAccess, hiddenModules, onToggleHidden }: Props) {
+export default function ManageModulesScreen({ homeHeadStyle, homeSubStyle, currentUserId, isOwner, canAccess, hiddenModules, order, onToggleHidden, onReorderCategory }: Props) {
   const { loading, enabledKeys, saveModuleSelections } = useModuleAccess(currentUserId, isOwner);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
@@ -120,7 +145,7 @@ export default function ManageModulesScreen({ homeHeadStyle, homeSubStyle, curre
           Your account always has everything on — this screen doesn't apply to you. Looking to give someone else free
           access? That moved to Settings → Grant Access.
         </div>
-        <HideFromMenu canAccess={canAccess} hiddenModules={hiddenModules} onToggleHidden={onToggleHidden} />
+        <HideFromMenu canAccess={canAccess} hiddenModules={hiddenModules} order={order} onToggleHidden={onToggleHidden} onReorderCategory={onReorderCategory} />
       </div>
     );
   }
@@ -148,7 +173,7 @@ export default function ManageModulesScreen({ homeHeadStyle, homeSubStyle, curre
         {saved && <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }}>Saved.</span>}
       </div>
 
-      <HideFromMenu canAccess={canAccess} hiddenModules={hiddenModules} onToggleHidden={onToggleHidden} />
+      <HideFromMenu canAccess={canAccess} hiddenModules={hiddenModules} order={order} onToggleHidden={onToggleHidden} onReorderCategory={onReorderCategory} />
     </div>
   );
 }

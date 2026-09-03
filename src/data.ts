@@ -89,25 +89,57 @@ export const NAV_DATA: NavGroup[] = [
 // isn't listed here.
 export const PLACEHOLDER_NOTES: Record<string, string> = {};
 
-// Filters NAV_DATA down to what a given account can actually see.
-// `canAccess` should always return true for the owner account (see
-// useModuleAccess.ts) — this function has no owner-awareness of its own,
-// it just applies whatever predicate it's given. Items with no entry in
-// NAV_ITEM_TO_MODULE (home, settings, codelab) are system-level and always
-// pass through untouched. A group whose items are entirely filtered out is
-// dropped too, so a fully-disabled category doesn't leave a bare header.
-export function buildNavData(canAccess: (moduleKey: string) => boolean, isOwner: boolean): NavGroup[] {
+/** Reorders one group's items by the account's own saved preference
+ *  (nav_module_prefs.sort_order, keyed by module), falling back to the
+ *  registry's default order for anything untouched. Items with no
+ *  module key (Overview, Settings, Code Lab) are system-level and never
+ *  move — they're kept first, in their authored order, same as before
+ *  this existed. A module gating more than one nav row (Dialing's also
+ *  gates Contacts) reorders as one block; the rows inside it never split
+ *  apart, only the block as a whole moves. */
+function applyOrder(items: NavGroup['items'], orderOverride: Record<string, number>): NavGroup['items'] {
+  const anchored = items.filter((it) => !NAV_ITEM_TO_MODULE[it.id]);
+  const blocks = new Map<string, { naturalIndex: number; items: NavGroup['items'] }>();
+  let i = 0;
+  for (const it of items) {
+    const key = NAV_ITEM_TO_MODULE[it.id];
+    if (!key) continue;
+    const block = blocks.get(key);
+    if (block) block.items.push(it);
+    else blocks.set(key, { naturalIndex: i, items: [it] });
+    i += 1;
+  }
+  const ordered = [...blocks.entries()].sort(([keyA, a], [keyB, b]) => {
+    const oa = orderOverride[keyA] ?? a.naturalIndex;
+    const ob = orderOverride[keyB] ?? b.naturalIndex;
+    return oa - ob;
+  });
+  return [...anchored, ...ordered.flatMap(([, b]) => b.items)];
+}
+
+// Filters NAV_DATA down to what a given account can actually see, then
+// applies its own custom order on top. `canAccess` should always return
+// true for the owner account (see useModuleAccess.ts) — this function has
+// no owner-awareness of its own, it just applies whatever predicate it's
+// given. Items with no entry in NAV_ITEM_TO_MODULE (home, settings,
+// codelab) are system-level and always pass through untouched. A group
+// whose items are entirely filtered out is dropped too, so a
+// fully-disabled category doesn't leave a bare header.
+export function buildNavData(canAccess: (moduleKey: string) => boolean, isOwner: boolean, orderOverride: Record<string, number> = {}): NavGroup[] {
   return NAV_DATA.map((g) => ({
     ...g,
-    items: g.items
-      .filter((it) => {
-        const moduleKey = NAV_ITEM_TO_MODULE[it.id];
-        return !moduleKey || canAccess(moduleKey);
-      })
-      // Grant Access administers comped accounts for the whole app — the
-      // owner-only screen it opens already enforces this server-side, but
-      // a non-owner shouldn't see the entry in their own Settings at all.
-      .map((it) => (it.sub ? { ...it, sub: it.sub.filter((label) => label !== 'Grant Access' || isOwner) } : it)),
+    items: applyOrder(
+      g.items
+        .filter((it) => {
+          const moduleKey = NAV_ITEM_TO_MODULE[it.id];
+          return !moduleKey || canAccess(moduleKey);
+        })
+        // Grant Access administers comped accounts for the whole app — the
+        // owner-only screen it opens already enforces this server-side, but
+        // a non-owner shouldn't see the entry in their own Settings at all.
+        .map((it) => (it.sub ? { ...it, sub: it.sub.filter((label) => label !== 'Grant Access' || isOwner) } : it)),
+      orderOverride,
+    ),
   })).filter((g) => g.items.length > 0);
 }
 

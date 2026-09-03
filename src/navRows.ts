@@ -26,10 +26,11 @@ export function buildNavRows(
   navigateTo: (id: string) => void,
   onSignOut: () => void,
   canAccess: (moduleKey: string) => boolean,
-  isOwner: boolean
+  isOwner: boolean,
+  orderOverride: Record<string, number> = {}
 ): NavRow[] {
   const rows: NavRow[] = [];
-  buildNavData(canAccess, isOwner).forEach((g) => {
+  buildNavData(canAccess, isOwner, orderOverride).forEach((g) => {
     if (g.group) {
       rows.push({ kind: 'header', key: `header-${g.group}`, label: g.group });
     }
