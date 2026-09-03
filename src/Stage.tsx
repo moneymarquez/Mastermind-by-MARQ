@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import Sidebar from './components/Sidebar';
+import Sidebar, { SIDEBAR_COLLAPSED_WIDTH } from './components/Sidebar';
 import TopHeader from './components/TopHeader';
 import MobileHeader from './components/MobileHeader';
 import MobileMenuSheet from './components/MobileMenuSheet';
@@ -80,6 +80,10 @@ interface Props {
 }
 
 export default function Stage({ state, actions, assistantName, canAccess, onSignOut, currentUserId, userEmail, isOwner, theme, onThemeChange }: Props) {
+  // Desktop-only: the persistent Sidebar's own Menu toggle collapses it to
+  // a slim icon-only rail and back — previously a dead button (no onClick
+  // at all). Mobile is unaffected; it keeps MobileMenuSheet's overlay.
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   // This account's own nav preferences (schema_056) — which modules are
   // hidden, and their custom order within each category. Both are a pure
   // display layer on top of real access rather than touching it: navAccess
@@ -211,9 +215,11 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             inboxItems={ownerInbox.items}
             inboxLoading={ownerInbox.loading}
             onOpenInbox={openInbox}
+            open={sidebarOpen}
+            onToggle={() => setSidebarOpen((v) => !v)}
           />
           <TopHeader
-            left={vm.sidebarWidth}
+            left={sidebarOpen ? vm.sidebarWidth : SIDEBAR_COLLAPSED_WIDTH}
             screenLabel={activeNavLabel}
             activeModuleCount={activeModuleCount}
             onOpenTour={startTour}
@@ -254,6 +260,8 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         id="tour-content-panel"
         style={{
           ...vm.contentStyle,
+          left: isMobile ? 0 : (sidebarOpen ? vm.sidebarWidth : SIDEBAR_COLLAPSED_WIDTH),
+          transition: isMobile ? undefined : 'left 0.18s ease',
           paddingBottom: isMobile
             ? `calc(${vm.tabBarHeight + 20 + remindersBox.height + 20}px + env(safe-area-inset-bottom))`
             : `${48 + remindersBox.height + 20}px`,
