@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useClientCRM } from '../../data/useClientCRM';
 import type { ClientInvoiceStatus, ClientStage } from '../../data/types';
@@ -9,6 +9,11 @@ import { AuditQuestionsAdmin, PricingTemplateAdmin, ServiceCatalogAdmin } from '
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
+  /** Set when a lead was just transferred (or a ticket/message pointed
+   *  here) — jumps straight to that client instead of the board. Cleared
+   *  once consumed, same pattern as ClientModulesScreen. */
+  focusClientId?: string | null;
+  onClearFocus?: () => void;
 }
 
 export const STAGES: { key: ClientStage; label: string }[] = [
@@ -122,9 +127,17 @@ function InvoiceSummary({ client }: { client: ReturnType<typeof useClientCRM>['c
   );
 }
 
-export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle }: Props) {
+export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle, focusClientId, onClearFocus }: Props) {
   const crm = useClientCRM();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (focusClientId) {
+      setSelectedId(focusClientId);
+      onClearFocus?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusClientId]);
   const [showNewClient, setShowNewClient] = useState(false);
   const [showQuestionAdmin, setShowQuestionAdmin] = useState(false);
   const [showTemplateAdmin, setShowTemplateAdmin] = useState(false);

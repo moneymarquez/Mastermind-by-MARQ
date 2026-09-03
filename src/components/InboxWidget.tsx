@@ -14,13 +14,12 @@ interface Props {
   compact?: boolean;
 }
 
-const KIND_TAG: Record<InboxItem['kind'], string> = { mail: 'Mail', ticket: 'Ticket', message: 'Msg' };
+const KIND_TAG: Record<InboxItem['kind'], string> = { mail: 'Mail', message: 'Msg' };
 
-/** The one place client stuff lands — mail on either domain
- *  (madebymarquez.com / mastermindsbymarq.com, both through the same
- *  Resend webhook), a client's ticket, a client's unread message. Pinned
- *  above every nav category so a 2am ticket is the first thing visible
- *  on the phone, not something buried under Scaling. Owner-only. */
+/** Mail on either domain (madebymarquez.com / mastermindsbymarq.com, both
+ *  through the same Resend webhook) plus a client's unread portal
+ *  message. Tickets have their own widget now (TicketsWidget) so they
+ *  don't crowd this one. Pinned above every nav category. Owner-only. */
 export default function InboxWidget({ items, loading, onOpen, compact }: Props) {
   const unread = items.filter((e) => e.unread);
   const preview = items.slice(0, 2);

@@ -12,6 +12,10 @@ import { useBender } from './data/useBender';
 import { useNavModulePrefs } from './data/useNavModulePrefs';
 import { useOwnerInbox } from './data/useOwnerInbox';
 import type { InboxItem } from './data/useOwnerInbox';
+import { useOwnerTickets } from './data/useOwnerTickets';
+import type { OwnerTicket } from './data/useOwnerTickets';
+import { useLeads } from './data/useLeads';
+import type { LeadItem } from './data/useLeads';
 import ClientModulesScreen from './components/screens/ClientModulesScreen';
 import HomeScreen from './components/screens/HomeScreen';
 import DailyPlanScreen from './components/screens/DailyPlanScreen';
@@ -25,6 +29,8 @@ import MentalHealthScreen from './components/screens/MentalHealthScreen';
 import ScalingStartScreen from './components/screens/ScalingStartScreen';
 import ClientDeliveryScreen from './components/screens/ClientDeliveryScreen';
 import SupportInboxScreen from './components/screens/SupportInboxScreen';
+import LeadsScreen from './components/screens/LeadsScreen';
+import TicketsScreen from './components/screens/TicketsScreen';
 import LegalScreen from './components/screens/LegalScreen';
 import ScalingPlannerScreen from './components/screens/ScalingPlannerScreen';
 import BusinessAuditsScreen from './components/screens/BusinessAuditsScreen';
@@ -61,7 +67,7 @@ import type { Theme } from './data/useTheme';
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
-  'scaling-start', 'delivery', 'support-inbox', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
+  'scaling-start', 'delivery', 'support-inbox', 'leads', 'tickets', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings',
   'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'grant-access',
 ];
@@ -96,9 +102,15 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // harmless empty read for a non-owner account — called unconditionally
   // rather than guarded, same as useModuleAccess elsewhere in this file.
   const ownerInbox = useOwnerInbox();
-  // A ticket or client message tapped in the Inbox widget lands on THAT
-  // client in Client Modules, not on a list; mail goes to the Support
-  // Inbox. Cleared once the screen has consumed it.
+  const ownerTickets = useOwnerTickets();
+  const leads = useLeads();
+  // A client message tapped in the Inbox widget, a ticket tapped in the
+  // Tickets widget, or a transferred lead all land on THAT client — in
+  // Client Modules for the first two, in Client CRM for a lead (since
+  // that's where its freshly-generated analysis lives). Mail goes to the
+  // Support Inbox instead. clientFocus is shared across both target
+  // screens (only one is ever mounted at a time) and cleared once
+  // whichever one consumed it.
   const [clientFocus, setClientFocus] = useState<string | null>(null);
   const openInbox = (item?: InboxItem) => {
     if (item && item.kind !== 'mail' && item.clientId) {
@@ -107,6 +119,26 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
       return;
     }
     actions.navigateTo('support-inbox');
+  };
+  const openTicket = (ticket?: OwnerTicket) => {
+    if (ticket) {
+      setClientFocus(ticket.clientId);
+      actions.navigateTo('client-modules');
+      return;
+    }
+    actions.navigateTo('tickets');
+  };
+  // Tapping a lead row transfers it into Client CRM (generating its
+  // analysis if this is its first time out of new_lead) and lands on that
+  // profile; tapping the header just browses the full list.
+  const openLead = async (lead?: LeadItem) => {
+    if (lead) {
+      if (lead.stage === 'new_lead') await leads.transferLead(lead);
+      setClientFocus(lead.id);
+      actions.navigateTo('client-crm');
+      return;
+    }
+    actions.navigateTo('leads');
   };
   const navAccess = (moduleKey: string) => canAccess(moduleKey) && !navPrefs.hidden.has(moduleKey);
   const vm = buildViewModel(state, actions.navigateTo, onSignOut, navAccess, isOwner, navPrefs.order);
@@ -191,6 +223,13 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             onClose={actions.closeDrawer}
             onOpenSettings={() => actions.navigateTo('account-settings')}
             onOpenTour={startTour}
+            leads={leads.leads}
+            leadsNewCount={leads.newLeads.length}
+            leadsLoading={leads.loading}
+            onOpenLead={openLead}
+            tickets={ownerTickets.tickets}
+            ticketsLoading={ownerTickets.loading}
+            onOpenTicket={openTicket}
             inboxItems={ownerInbox.items}
             inboxLoading={ownerInbox.loading}
             onOpenInbox={openInbox}
@@ -210,6 +249,13 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             ownerName={ownerDisplayName}
             isOwner={isOwner}
             onOpenSettings={() => actions.navigateTo('account-settings')}
+            leads={leads.leads}
+            leadsNewCount={leads.newLeads.length}
+            leadsLoading={leads.loading}
+            onOpenLead={openLead}
+            tickets={ownerTickets.tickets}
+            ticketsLoading={ownerTickets.loading}
+            onOpenTicket={openTicket}
             inboxItems={ownerInbox.items}
             inboxLoading={ownerInbox.loading}
             onOpenInbox={openInbox}
@@ -325,6 +371,28 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <SupportInboxScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
+        {state.screen === 'leads' && (
+          <LeadsScreen
+            homeHeadStyle={vm.homeHeadStyle}
+            homeSubStyle={vm.homeSubStyle}
+            onOpenClient={(clientId) => {
+              setClientFocus(clientId);
+              actions.navigateTo('client-crm');
+            }}
+          />
+        )}
+
+        {state.screen === 'tickets' && (
+          <TicketsScreen
+            homeHeadStyle={vm.homeHeadStyle}
+            homeSubStyle={vm.homeSubStyle}
+            onOpenClient={(clientId) => {
+              setClientFocus(clientId);
+              actions.navigateTo('client-modules');
+            }}
+          />
+        )}
+
         {state.screen === 'legal' && (
           <LegalScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
@@ -334,7 +402,12 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'client-crm' && (
-          <ClientCRMScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          <ClientCRMScreen
+            homeHeadStyle={vm.homeHeadStyle}
+            homeSubStyle={vm.homeSubStyle}
+            focusClientId={clientFocus}
+            onClearFocus={() => setClientFocus(null)}
+          />
         )}
 
         {state.screen === 'client-modules' && (

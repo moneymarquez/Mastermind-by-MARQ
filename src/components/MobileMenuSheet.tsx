@@ -4,6 +4,10 @@ import { LIVE_PLAN } from '../billing/plans';
 import type { Theme } from '../data/useTheme';
 import InboxWidget from './InboxWidget';
 import type { InboxItem } from '../data/useOwnerInbox';
+import LeadsWidget from './LeadsWidget';
+import type { LeadItem } from '../data/useLeads';
+import TicketsWidget from './TicketsWidget';
+import type { OwnerTicket } from '../data/useOwnerTickets';
 
 interface Props {
   open: boolean;
@@ -15,6 +19,13 @@ interface Props {
   onClose: () => void;
   onOpenSettings: () => void;
   onOpenTour: () => void;
+  leads: LeadItem[];
+  leadsNewCount: number;
+  leadsLoading: boolean;
+  onOpenLead: (lead?: LeadItem) => void;
+  tickets: OwnerTicket[];
+  ticketsLoading: boolean;
+  onOpenTicket: (ticket?: OwnerTicket) => void;
   inboxItems: InboxItem[];
   inboxLoading: boolean;
   onOpenInbox: (item?: InboxItem) => void;
@@ -36,7 +47,12 @@ interface Props {
  *  its parent's maxHeight and just grows past it — which is what was
  *  clipping the footer and the last few rows off the bottom of the
  *  screen before this fix. */
-export default function MobileMenuSheet({ open, rows, ownerName, isOwner, theme, onThemeChange, onClose, onOpenSettings, onOpenTour, inboxItems, inboxLoading, onOpenInbox }: Props) {
+export default function MobileMenuSheet({
+  open, rows, ownerName, isOwner, theme, onThemeChange, onClose, onOpenSettings, onOpenTour,
+  leads, leadsNewCount, leadsLoading, onOpenLead,
+  tickets, ticketsLoading, onOpenTicket,
+  inboxItems, inboxLoading, onOpenInbox,
+}: Props) {
   if (!open) return null;
   return (
     <>
@@ -65,6 +81,8 @@ export default function MobileMenuSheet({ open, rows, ownerName, isOwner, theme,
           </div>
         </div>
 
+        {isOwner && <LeadsWidget leads={leads} newCount={leadsNewCount} loading={leadsLoading} onOpen={(lead) => { onOpenLead(lead); onClose(); }} compact />}
+        {isOwner && <TicketsWidget tickets={tickets} loading={ticketsLoading} onOpen={(ticket) => { onOpenTicket(ticket); onClose(); }} compact />}
         {isOwner && <InboxWidget items={inboxItems} loading={inboxLoading} onOpen={(item) => { onOpenInbox(item); onClose(); }} compact />}
 
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column', gap: 2 }}>

@@ -11,6 +11,8 @@ export type Screen =
   | 'scaling-start'
   | 'delivery'
   | 'support-inbox'
+  | 'leads'
+  | 'tickets'
   | 'legal'
   | 'scaling-planner'
   | 'audits'
