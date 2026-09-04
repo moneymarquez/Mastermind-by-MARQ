@@ -22,13 +22,6 @@ export interface BillingEnv {
   STRIPE_WEBHOOK_SECRET?: string;
   RESEND_API_KEY?: string;
   RESEND_FROM_EMAIL?: string;
-  // Same reasoning as deliver-email.ts's MADEBYMARQUEZ_FROM_EMAIL: a paid-
-  // invoice receipt is client-facing agency work carrying an invoice, so
-  // it belongs on the Made by Marquez domain once verified in Resend —
-  // distinct from RESEND_FROM_EMAIL (mastermindsbymarq.com), which stays
-  // reserved for app/login mail like sendClientLoginEmail below. Falls
-  // back to RESEND_FROM_EMAIL until madebymarquez.com is set up.
-  MADEBYMARQUEZ_FROM_EMAIL?: string;
 }
 
 function notConfigured(): Response {
@@ -84,11 +77,17 @@ async function sendClientLoginEmail(env: BillingEnv, to: string, businessName: s
 }
 
 // Same Resend HTTP pattern again, this time for the client's own receipt
-// once their Client CRM invoice is actually paid — sent from the Made by
-// Marquez domain (client-facing agency work carrying an invoice, per
-// MADEBYMARQUEZ_FROM_EMAIL's comment above), not Stripe's generic one.
-// Best-effort like every other email here: a failed/unconfigured send
-// never blocks the webhook, it just means no receipt went out this time.
+// once their Client CRM invoice is actually paid — sent from
+// invoice@madebymarquez.com specifically (the same "invoice@" address
+// src/data/inboxAddresses.ts already lists, on both domains, as the one
+// for "Invoice replies + receipts"), not Stripe's generic one and not
+// whatever MADEBYMARQUEZ_FROM_EMAIL happens to be set to for the
+// delivery-pipeline email (deliver-email.ts) — that's a different
+// mailbox for a different kind of client-facing mail. Requires
+// madebymarquez.com to actually be verified in Resend; until then this
+// send just fails and the receipt silently doesn't go out, same
+// best-effort behavior as every other email here — a failed/unconfigured
+// send never blocks the webhook.
 async function sendPaidReceiptEmail(
   env: BillingEnv,
   to: string,
@@ -97,8 +96,8 @@ async function sendPaidReceiptEmail(
   description: string,
   amount: number,
 ): Promise<boolean> {
-  const fromEmail = env.MADEBYMARQUEZ_FROM_EMAIL || env.RESEND_FROM_EMAIL;
-  if (!env.RESEND_API_KEY || !fromEmail) return false;
+  const fromEmail = 'Made by MARQ <invoice@madebymarquez.com>';
+  if (!env.RESEND_API_KEY) return false;
   const amt = `$${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
   try {
     const res = await fetch('https://api.resend.com/emails', {
