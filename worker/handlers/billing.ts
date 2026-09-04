@@ -22,6 +22,13 @@ export interface BillingEnv {
   STRIPE_WEBHOOK_SECRET?: string;
   RESEND_API_KEY?: string;
   RESEND_FROM_EMAIL?: string;
+  // Same reasoning as deliver-email.ts's MADEBYMARQUEZ_FROM_EMAIL: a paid-
+  // invoice receipt is client-facing agency work carrying an invoice, so
+  // it belongs on the Made by Marquez domain once verified in Resend —
+  // distinct from RESEND_FROM_EMAIL (mastermindsbymarq.com), which stays
+  // reserved for app/login mail like sendClientLoginEmail below. Falls
+  // back to RESEND_FROM_EMAIL until madebymarquez.com is set up.
+  MADEBYMARQUEZ_FROM_EMAIL?: string;
 }
 
 function notConfigured(): Response {
@@ -66,6 +73,45 @@ async function sendClientLoginEmail(env: BillingEnv, to: string, businessName: s
           `<p>Your first payment for <strong>${businessName}</strong> just went through — your client login is ready.</p>`,
           `<p><strong>Email:</strong> ${to}<br/><strong>Temporary password:</strong> ${password}</p>`,
           `<p>Sign in any time to see your audit, invoices, and reports.</p>`,
+          `<p>Thanks,<br/>Made by MARQ</p>`,
+        ].join(''),
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+// Same Resend HTTP pattern again, this time for the client's own receipt
+// once their Client CRM invoice is actually paid — sent from the Made by
+// Marquez domain (client-facing agency work carrying an invoice, per
+// MADEBYMARQUEZ_FROM_EMAIL's comment above), not Stripe's generic one.
+// Best-effort like every other email here: a failed/unconfigured send
+// never blocks the webhook, it just means no receipt went out this time.
+async function sendPaidReceiptEmail(
+  env: BillingEnv,
+  to: string,
+  businessName: string,
+  invoiceNumber: number,
+  description: string,
+  amount: number,
+): Promise<boolean> {
+  const fromEmail = env.MADEBYMARQUEZ_FROM_EMAIL || env.RESEND_FROM_EMAIL;
+  if (!env.RESEND_API_KEY || !fromEmail) return false;
+  const amt = `$${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: [to],
+        subject: `Payment received — Invoice #${invoiceNumber}`,
+        html: [
+          `<p>Hi there,</p>`,
+          `<p>This confirms your payment for <strong>${businessName}</strong> — Invoice #${invoiceNumber}.</p>`,
+          `<p><strong>${description}</strong><br/>${amt} paid in full</p>`,
           `<p>Thanks,<br/>Made by MARQ</p>`,
         ].join(''),
       }),
@@ -272,21 +318,29 @@ export async function stripeWebhook(request: Request, env: BillingEnv): Promise<
     const invoiceId = obj.id as string | undefined;
     if (invoiceId) {
       const lookupRes = await fetch(
-        `${env.VITE_SUPABASE_URL}/rest/v1/client_invoices?stripe_invoice_id=eq.${invoiceId}&select=id,client_id`,
+        `${env.VITE_SUPABASE_URL}/rest/v1/client_invoices?stripe_invoice_id=eq.${invoiceId}&select=id,client_id,invoice_number,description,amount`,
         { headers: supabaseHeaders(env) },
       );
-      const [crmInvoice] = (await lookupRes.json()) as { id: string; client_id: string }[];
+      const [crmInvoice] = (await lookupRes.json()) as { id: string; client_id: string; invoice_number: number; description: string; amount: number }[];
       if (crmInvoice) {
         await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/client_invoices?id=eq.${crmInvoice.id}`, {
           method: 'PATCH',
           headers: supabaseHeaders(env),
           body: JSON.stringify({ status: 'paid', paid_at: new Date().toISOString(), updated_at: new Date().toISOString() }),
         });
+        const clientRes = await fetch(
+          `${env.VITE_SUPABASE_URL}/rest/v1/crm_clients?id=eq.${crmInvoice.client_id}&select=business_name,contact_email`,
+          { headers: supabaseHeaders(env) },
+        );
+        const [paidClient] = (await clientRes.json()) as { business_name: string; contact_email: string | null }[];
         await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/crm_clients?id=eq.${crmInvoice.client_id}`, {
           method: 'PATCH',
           headers: supabaseHeaders(env),
           body: JSON.stringify({ stage: 'active', last_activity_at: new Date().toISOString() }),
         });
+        if (paidClient?.contact_email) {
+          await sendPaidReceiptEmail(env, paidClient.contact_email, paidClient.business_name, crmInvoice.invoice_number, crmInvoice.description, crmInvoice.amount);
+        }
         await autoProvisionClientLogin(env, crmInvoice.client_id);
         return new Response('ok', { status: 200 });
       }
