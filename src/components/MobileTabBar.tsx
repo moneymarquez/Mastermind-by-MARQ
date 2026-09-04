@@ -6,7 +6,13 @@ import Icon from '../Icon';
 // of this constant (Stage.tsx's content bottom-padding, RemindersBox's
 // offset) independently appends env(safe-area-inset-bottom) in its own
 // calc(), so nothing double-counts it.
-export const TAB_BAR_HEIGHT = 78;
+//
+// Sized explicitly for its actual content stack — 22px icon + 4px gap +
+// a label whose line-height needs headroom beyond its 9.5px font-size —
+// plus 12px top/bottom padding each. Bumped from 78 (14+22+4+~12+14 was
+// tight enough that a label could visually clip on devices that round
+// the safe-area inset up) to a value with real breathing room.
+export const TAB_BAR_HEIGHT = 84;
 
 interface Props {
   screen: string;
@@ -39,7 +45,7 @@ export default function MobileTabBar({ screen, novaOpen, onNavigate, onToggleNov
         style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 52, color: active ? 'var(--mm-text)' : 'var(--mm-faint)', cursor: 'pointer' }}
       >
         <Icon name={item.icon} size={22} />
-        <div style={{ fontSize: 9.5, letterSpacing: '0.06em' }}>{item.label}</div>
+        <div style={{ fontSize: 9.5, lineHeight: 1.3, letterSpacing: '0.06em' }}>{item.label}</div>
       </div>
     );
   };
@@ -47,8 +53,9 @@ export default function MobileTabBar({ screen, novaOpen, onNavigate, onToggleNov
   return (
     <div
       style={{
-        position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 30, height: `calc(${TAB_BAR_HEIGHT}px + env(safe-area-inset-bottom))`,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 22px calc(10px + env(safe-area-inset-bottom))',
+        position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 30, boxSizing: 'border-box',
+        height: `calc(${TAB_BAR_HEIGHT}px + env(safe-area-inset-bottom))`,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 22px calc(12px + env(safe-area-inset-bottom))',
         borderTop: '1px solid var(--mm-line)', background: 'var(--mm-bg-blur)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
       }}
     >

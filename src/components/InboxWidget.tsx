@@ -31,6 +31,12 @@ export default function InboxWidget({ items, loading, onOpen, compact }: Props) 
         display: 'flex', flexDirection: 'column', gap: compact ? 6 : 8,
         padding: compact ? '10px 12px' : '12px 14px', borderRadius: compact ? 14 : 16,
         background: 'var(--mm-panel-solid)', border: '1px solid var(--mm-line)', flexShrink: 0,
+        // Same minHeight as LeadsWidget/TicketsWidget's compact mode — so
+        // the three status cards read as one consistent row of equal-
+        // height tiles regardless of which one happens to have less
+        // content (an empty "No messages" card next to a 2-row Leads
+        // preview otherwise looked visibly shorter).
+        minHeight: compact ? 90 : undefined,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={() => onOpen()}>

@@ -308,7 +308,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           left: isMobile ? 0 : (sidebarOpen ? vm.sidebarWidth : SIDEBAR_COLLAPSED_WIDTH),
           transition: isMobile ? undefined : 'left 0.18s ease',
           paddingBottom: isMobile
-            ? `calc(${vm.tabBarHeight + 20 + remindersBox.height + 20}px + env(safe-area-inset-bottom))`
+            ? `calc(${vm.tabBarHeight + 28 + remindersBox.height + 28}px + env(safe-area-inset-bottom))`
             : `${48 + remindersBox.height + 20}px`,
         }}
       >

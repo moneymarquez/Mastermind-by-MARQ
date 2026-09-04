@@ -27,6 +27,7 @@ export default function LeadsWidget({ leads, newCount, loading, onOpen, compact 
         display: 'flex', flexDirection: 'column', gap: compact ? 6 : 8,
         padding: compact ? '10px 12px' : '12px 14px', borderRadius: compact ? 14 : 16,
         background: 'var(--mm-panel-solid)', border: `1px solid color-mix(in srgb, ${green} 35%, var(--mm-line))`, flexShrink: 0,
+        minHeight: compact ? 90 : undefined,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={() => onOpen()}>
