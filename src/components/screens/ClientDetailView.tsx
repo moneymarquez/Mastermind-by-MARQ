@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { useClientCRM, CrmClientWithChildren } from '../../data/useClientCRM';
-import type { ClientStage, PricingCadence } from '../../data/types';
+import type { ClientStage, PricingCadence, ClientInvoice } from '../../data/types';
 import { AiError } from '../../lib/ai';
 import { STAGES, cardStyle, inputStyle, selectStyle, primaryBtn, ghostBtn, tabStyle } from './ClientCRMScreen';
 import ClientReportsTab from './ClientReportsTab';
@@ -19,7 +19,7 @@ interface Props {
   homeSubStyle: CSSProperties;
 }
 
-type Tab = 'audit' | 'analysis' | 'pricing' | 'invoices' | 'reports' | 'portal';
+type Tab = 'audit' | 'analysis' | 'pricing' | 'invoices' | 'reports' | 'portal' | 'sent';
 
 const textareaStyle: CSSProperties = {
   width: '100%', minHeight: 70, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)',
@@ -202,6 +202,32 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
     return sum + missing.length * item.amount;
   }, 0);
 
+  // Everything that's actually gone out — sent, paid, overdue, or voided —
+  // as opposed to a draft still sitting unsent. Same rows as the Invoices
+  // tab's full list, just pre-filtered, for "what have I actually billed"
+  // without scanning past every draft to find it.
+  const sentInvoices = client.invoices.filter((inv) => inv.status !== 'draft');
+
+  const invoiceRow = (inv: ClientInvoice) => (
+    <div key={inv.id} style={{ ...cardStyle, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => setSelectedInvoiceId(inv.id)}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>#{inv.invoice_number} · {inv.description}</div>
+        <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 2 }}>
+          {money(inv.amount)} {inv.due_date ? `· due ${inv.due_date}` : ''}
+        </div>
+      </div>
+      {/* Draft/void grey, paid green, anything unpaid (sent/overdue)
+          red — per the build prompt's status-color convention. */}
+      <span style={{
+        fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', borderRadius: 'var(--radius-pill)', padding: '3px 9px', flexShrink: 0,
+        color: inv.status === 'paid' ? 'var(--success)' : inv.status === 'draft' || inv.status === 'void' ? 'var(--text-tertiary)' : 'var(--danger)',
+        border: `1px solid ${inv.status === 'paid' ? 'color-mix(in srgb, var(--success) 40%, transparent)' : inv.status === 'draft' || inv.status === 'void' ? 'var(--border)' : 'color-mix(in srgb, var(--danger) 40%, transparent)'}`,
+      }}>
+        {inv.status}
+      </span>
+    </div>
+  );
+
   const generateSchedule = async () => {
     if (!scheduleStart) return;
     setGeneratingSchedule(true);
@@ -318,6 +344,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         <div style={tabStyle(tab === 'invoices')} onClick={() => setTab('invoices')}>Invoices ({client.invoices.length})</div>
         <div style={tabStyle(tab === 'reports')} onClick={() => setTab('reports')}>Reports</div>
         <div style={tabStyle(tab === 'portal')} onClick={() => setTab('portal')}>Portal</div>
+        <div style={tabStyle(tab === 'sent')} onClick={() => setTab('sent')}>Sent ({sentInvoices.length})</div>
       </div>
 
       {tab === 'reports' && <ClientReportsTab clientId={client.id} publicToken={client.public_token} />}
@@ -606,38 +633,28 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         </div>
       )}
 
-      {tab === 'invoices' && selectedInvoiceId && (() => {
+      {(tab === 'invoices' || tab === 'sent') && selectedInvoiceId && (() => {
         const inv = client.invoices.find((i) => i.id === selectedInvoiceId);
         if (!inv) { setSelectedInvoiceId(null); return null; }
-        return <InvoiceDetailView invoice={inv} clientBusinessName={client.business_name} crm={crm} onClose={() => setSelectedInvoiceId(null)} />;
+        return (
+          <div style={{ marginTop: 18 }}>
+            <InvoiceDetailView invoice={inv} clientBusinessName={client.business_name} crm={crm} onClose={() => setSelectedInvoiceId(null)} />
+          </div>
+        );
       })()}
+
+      {tab === 'sent' && !selectedInvoiceId && (
+        <div style={{ marginTop: 18, maxWidth: 680, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {sentInvoices.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>Nothing sent yet — invoices show up here once they leave draft.</div>}
+          {sentInvoices.map(invoiceRow)}
+        </div>
+      )}
 
       {tab === 'invoices' && !selectedInvoiceId && (
         <div style={{ marginTop: 18, maxWidth: 680 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
             {client.invoices.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No invoices yet.</div>}
-            {client.invoices.map((inv) => {
-              const isDraft = inv.status === 'draft';
-              return (
-                <div key={inv.id} style={{ ...cardStyle, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => setSelectedInvoiceId(inv.id)}>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>#{inv.invoice_number} · {inv.description}</div>
-                    <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 2 }}>
-                      {money(inv.amount)} {inv.due_date ? `· due ${inv.due_date}` : ''}
-                    </div>
-                  </div>
-                  {/* Draft/void grey, paid green, anything unpaid (sent/overdue)
-                      red — per the build prompt's status-color convention. */}
-                  <span style={{
-                    fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', borderRadius: 'var(--radius-pill)', padding: '3px 9px', flexShrink: 0,
-                    color: inv.status === 'paid' ? 'var(--success)' : isDraft || inv.status === 'void' ? 'var(--text-tertiary)' : 'var(--danger)',
-                    border: `1px solid ${inv.status === 'paid' ? 'color-mix(in srgb, var(--success) 40%, transparent)' : isDraft || inv.status === 'void' ? 'var(--border)' : 'color-mix(in srgb, var(--danger) 40%, transparent)'}`,
-                  }}>
-                    {inv.status}
-                  </span>
-                </div>
-              );
-            })}
+            {client.invoices.map(invoiceRow)}
           </div>
 
           {pendingOccurrences.length > 0 && (

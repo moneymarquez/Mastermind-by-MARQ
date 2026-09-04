@@ -153,20 +153,21 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
         </span>
       </div>
 
-      {/* Draft preview — what actually goes out, rendered as a real
-          invoice rather than left implicit in a row of input boxes. Sits
-          above the edit form so "see it, then send it" doesn't require
-          leaving the screen or guessing from raw field values. */}
-      {(isDraft || editingSent) && (
-        <InvoiceDocument
-          billTo={clientBusinessName}
-          description={desc}
-          amount={Number(amount) > 0 ? Number(amount) : null}
-          dueDate={dueDate || null}
-          invoiceNumber={invoice.invoice_number}
-          style={{ marginTop: 20, maxWidth: 560 }}
-        />
-      )}
+      {/* The invoice as a document, not just a row of metadata fields —
+          the same view whether it's still a draft (what's about to go
+          out) or long since sent/paid (what actually did). Draft/editing
+          shows the live-edited values; everything else shows the invoice
+          exactly as it was sent. */}
+      <InvoiceDocument
+        billTo={clientBusinessName}
+        description={isDraft || editingSent ? desc : invoice.description}
+        amount={isDraft || editingSent ? (Number(amount) > 0 ? Number(amount) : null) : invoice.amount}
+        dueDate={isDraft || editingSent ? (dueDate || null) : invoice.due_date}
+        invoiceNumber={invoice.invoice_number}
+        status={isDraft || editingSent ? undefined : invoice.status}
+        paidAt={invoice.paid_at}
+        style={{ marginTop: 20, maxWidth: 560 }}
+      />
 
       <div style={{ ...cardStyle, marginTop: 16, maxWidth: 560 }}>
         {isDraft || editingSent ? (
