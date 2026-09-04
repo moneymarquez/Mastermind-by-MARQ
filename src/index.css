@@ -383,13 +383,29 @@ input, textarea, [contenteditable="true"] {
      settled) renders this box taller than the real screen. Since body/
      html have overflow: hidden with nothing to scroll it into view, that
      excess just pushes content — including the fixed-to-this-box tab bar
-     — off the bottom edge, invisible. Clamping both ends to 100vh means
-     the box is always exactly the real screen height no matter what the
-     JS number says; the inline height only matters for a browser old
+     — off the bottom edge, invisible. Clamping both ends means the box
+     is always exactly the real screen height no matter what the JS
+     number says; the inline height only matters for a browser old
      enough to ignore max-height, which isn't a real case on this app's
-     iOS-only mobile audience. */
+     iOS-only mobile audience.
+
+     100vh alone isn't enough for a plain Safari tab (as opposed to the
+     installed home-screen app, which has no browser chrome at all) —
+     iOS Safari famously pins 100vh to the height with its own toolbar
+     HIDDEN, and does not shrink it back down when that toolbar is
+     actually showing. Clamped to that too-tall 100vh while the toolbar
+     eats real screen space at the bottom, this box (and everything
+     anchored to its bottom edge, like the tab bar and the menu sheet)
+     renders partly behind/under Safari's own chrome — cut off, exactly
+     like a too-tall JS reading would do, just from the browser instead
+     of our own state. 100dvh is the fix Safari itself shipped for this
+     — it tracks the CURRENTLY visible area live, toolbar included — so
+     it's declared second to override the 100vh fallback wherever it's
+     supported (every iOS version new enough to matter here). */
   min-height: 100vh;
   max-height: 100vh;
+  min-height: 100dvh;
+  max-height: 100dvh;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
