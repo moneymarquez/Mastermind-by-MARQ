@@ -38,6 +38,7 @@ export const NAV_DATA: NavGroup[] = [
       { id: 'dialing', label: 'Dialing', icon: 'ph-phone-call' },
       { id: 'contacts', label: 'Contacts', icon: 'ph-address-book' },
       { id: 'call-recordings', label: 'Call Recordings', icon: 'ph-microphone' },
+      { id: 'leadflow', label: 'LeadFlow', icon: 'ph-users-three' },
     ],
   },
   {
@@ -52,7 +53,6 @@ export const NAV_DATA: NavGroup[] = [
       { id: 'scaling-start', label: 'Start', icon: 'ph-lightning' },
       { id: 'delivery', label: 'Show Your Work', icon: 'ph-video-camera' },
       { id: 'support-inbox', label: 'Support Inbox', icon: 'ph-address-book' },
-      { id: 'leadflow', label: 'LeadFlow', icon: 'ph-users-three' },
       { id: 'website', label: 'Website/App Builder', icon: 'ph-code' },
       { id: 'client-crm', label: 'Client CRM', icon: 'ph-users' },
       { id: 'scaling-planner', label: 'Scaling Planner', icon: 'ph-rocket-launch' },
