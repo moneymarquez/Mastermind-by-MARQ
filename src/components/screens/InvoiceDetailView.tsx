@@ -4,6 +4,7 @@ import type { useClientCRM } from '../../data/useClientCRM';
 import type { ClientInvoice } from '../../data/types';
 import { cardStyle, inputStyle, primaryBtn, ghostBtn } from './ClientCRMScreen';
 import InvoiceDocument from '../InvoiceDocument';
+import { useBusinessProfile } from '../../data/useBusinessProfile';
 
 interface Props {
   invoice: ClientInvoice;
@@ -29,6 +30,7 @@ function statusColor(status: ClientInvoice['status']): string {
  *  draft -> edit/delete/send, sent/overdue -> edit(warns)/void/mark
  *  paid/copy link, paid -> read-only, void -> read-only with the reason. */
 export default function InvoiceDetailView({ invoice, clientBusinessName, crm, onClose }: Props) {
+  const { profile: business } = useBusinessProfile();
   const [desc, setDesc] = useState(invoice.description);
   const [amount, setAmount] = useState(String(invoice.amount));
   const [dueDate, setDueDate] = useState(invoice.due_date ?? '');
@@ -159,6 +161,10 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
           shows the live-edited values; everything else shows the invoice
           exactly as it was sent. */}
       <InvoiceDocument
+        businessAddress={business.business_address || undefined}
+        businessEmail={business.business_email || undefined}
+        businessPhone={business.business_phone || undefined}
+        businessWebsite={business.website || undefined}
         billTo={clientBusinessName}
         description={isDraft || editingSent ? desc : invoice.description}
         amount={isDraft || editingSent ? (Number(amount) > 0 ? Number(amount) : null) : invoice.amount}
