@@ -376,7 +376,20 @@ input, textarea, [contenteditable="true"] {
    lines below. */
 .app-shine-bg {
   background-color: var(--bg);
+  /* Stage.tsx also sets an inline height from state.viewportHeight (a JS
+     measurement of window.visualViewport) — usually right, but a stale or
+     momentarily-too-large reading (e.g. caught mid-transition around a
+     Dynamic Island Live Activity, or before the browser chrome has
+     settled) renders this box taller than the real screen. Since body/
+     html have overflow: hidden with nothing to scroll it into view, that
+     excess just pushes content — including the fixed-to-this-box tab bar
+     — off the bottom edge, invisible. Clamping both ends to 100vh means
+     the box is always exactly the real screen height no matter what the
+     JS number says; the inline height only matters for a browser old
+     enough to ignore max-height, which isn't a real case on this app's
+     iOS-only mobile audience. */
   min-height: 100vh;
+  max-height: 100vh;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
