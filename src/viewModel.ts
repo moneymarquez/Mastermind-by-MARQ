@@ -4,7 +4,7 @@ import { buildNavRows } from './navRows';
 import { SIDEBAR_WIDTH } from './components/Sidebar';
 import { HEADER_HEIGHT } from './components/TopHeader';
 import { MOBILE_HEADER_HEIGHT } from './components/MobileHeader';
-import { TAB_BAR_HEIGHT } from './components/MobileTabBar';
+import { TAB_BAR_HEIGHT, SAFE_BOTTOM } from './components/MobileTabBar';
 import type { AppState } from './state';
 
 export function buildViewModel(
@@ -33,7 +33,7 @@ export function buildViewModel(
     overscrollBehaviorY: 'contain',
     WebkitOverflowScrolling: 'touch',
     padding: isMobile
-      ? `calc(${MOBILE_HEADER_HEIGHT + 16}px + env(safe-area-inset-top)) 20px calc(${TAB_BAR_HEIGHT + 24}px + env(safe-area-inset-bottom))`
+      ? `calc(${MOBILE_HEADER_HEIGHT + 16}px + env(safe-area-inset-top)) 20px calc(${TAB_BAR_HEIGHT + 24}px + ${SAFE_BOTTOM})`
       : `${HEADER_HEIGHT + 32}px 32px 48px`,
   };
 

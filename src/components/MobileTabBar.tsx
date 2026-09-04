@@ -14,6 +14,15 @@ import Icon from '../Icon';
 // the safe-area inset up) to a value with real breathing room.
 export const TAB_BAR_HEIGHT = 84;
 
+// A bare env(safe-area-inset-bottom) is 0 on any context that doesn't
+// report a real inset (most non-Safari mobile browsers, some in-app
+// webviews) — on a phone with a home-indicator gesture bar, that leaves
+// the tab bar's labels sitting right at the physical bottom edge with
+// only the 12px base padding between them and it, which reads as cut
+// off. Flooring it at 20px guarantees real clearance everywhere while
+// still using the actual (larger) inset on devices that report one.
+export const SAFE_BOTTOM = 'max(env(safe-area-inset-bottom), 20px)';
+
 interface Props {
   screen: string;
   novaOpen: boolean;
@@ -54,8 +63,8 @@ export default function MobileTabBar({ screen, novaOpen, onNavigate, onToggleNov
     <div
       style={{
         position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 30, boxSizing: 'border-box',
-        height: `calc(${TAB_BAR_HEIGHT}px + env(safe-area-inset-bottom))`,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 22px calc(12px + env(safe-area-inset-bottom))',
+        height: `calc(${TAB_BAR_HEIGHT}px + ${SAFE_BOTTOM})`,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `12px 22px calc(12px + ${SAFE_BOTTOM})`,
         borderTop: '1px solid var(--mm-line)', background: 'var(--mm-bg-blur)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
       }}
     >

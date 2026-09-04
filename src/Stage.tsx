@@ -4,7 +4,7 @@ import Sidebar, { SIDEBAR_COLLAPSED_WIDTH } from './components/Sidebar';
 import TopHeader from './components/TopHeader';
 import MobileHeader from './components/MobileHeader';
 import MobileMenuSheet from './components/MobileMenuSheet';
-import MobileTabBar from './components/MobileTabBar';
+import MobileTabBar, { SAFE_BOTTOM } from './components/MobileTabBar';
 import NovaTrigger from './components/NovaTrigger';
 import NovaPanel from './components/NovaPanel';
 import RemindersBox from './components/RemindersBox';
@@ -289,7 +289,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           left: isMobile ? 0 : (sidebarOpen ? vm.sidebarWidth : SIDEBAR_COLLAPSED_WIDTH),
           transition: isMobile ? undefined : 'left 0.18s ease',
           paddingBottom: isMobile
-            ? `calc(${vm.tabBarHeight + 28 + remindersBox.height + 28}px + env(safe-area-inset-bottom))`
+            ? `calc(${vm.tabBarHeight + 28 + remindersBox.height + 28}px + ${SAFE_BOTTOM})`
             : `${48 + remindersBox.height + 20}px`,
         }}
       >
@@ -532,7 +532,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         />
       )}
 
-      <RemindersBox ref={remindersRef} isMobile={isMobile} bottomOffset={isMobile ? `calc(${vm.tabBarHeight + 20}px + env(safe-area-inset-bottom))` : '20px'} />
+      <RemindersBox ref={remindersRef} isMobile={isMobile} bottomOffset={isMobile ? `calc(${vm.tabBarHeight + 20}px + ${SAFE_BOTTOM})` : '20px'} />
 
       <ProductTour
         active={tourActive}

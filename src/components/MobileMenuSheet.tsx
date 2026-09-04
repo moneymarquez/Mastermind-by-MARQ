@@ -8,6 +8,7 @@ import InboxWidget from './InboxWidget';
 import type { InboxItem } from '../data/useOwnerInbox';
 import LeadsWidget from './LeadsWidget';
 import type { LeadItem } from '../data/useLeads';
+import { SAFE_BOTTOM } from './MobileTabBar';
 
 interface Props {
   open: boolean;
@@ -119,7 +120,7 @@ export default function MobileMenuSheet({
           position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 49, maxHeight: '94%', overflow: 'hidden',
           borderRadius: '28px 28px 0 0', background: 'var(--mm-panel-solid)', border: '1px solid var(--mm-line)', borderBottom: 'none',
           boxShadow: '0 -20px 50px rgba(0,0,0,0.4)',
-          padding: '8px 18px calc(18px + env(safe-area-inset-bottom))',
+          padding: `8px 18px calc(18px + ${SAFE_BOTTOM})`,
           display: 'flex', flexDirection: 'column',
           transform: `translateY(${dragY}px)`,
           // Always transitioned except mid-drag (where it must follow the
