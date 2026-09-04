@@ -44,14 +44,26 @@ export const INBOX_DOMAINS: InboxDomain[] = [
     ],
   },
   {
-    // The Made by Marquez agency-side addresses get listed here once they
-    // exist in Cloudflare Email Routing for that domain. Until then, any
-    // mail arriving on this domain still lands, tagged as its local part.
+    // Same address set as the Masterminds domain — mirrors it once the
+    // matching Cloudflare Email Routing rules exist for this domain (see
+    // README's Support Inbox section for the exact steps: Email Routing →
+    // Send to a Worker → mastermind-by-marq, one rule per address below).
+    // Until those rules are live, mail to this domain either doesn't
+    // arrive here at all, or — if it's still forwarding straight to the
+    // personal inbox the old way — never reaches the app either way, so
+    // there's nothing this list can break by existing early.
     key: 'madeby',
     domain: 'madebymarquez.com',
     label: 'Made by Marquez',
     short: 'MB',
-    addresses: [],
+    addresses: [
+      { local: 'hello', label: 'Hello', purpose: 'General / first contact' },
+      { local: 'contact', label: 'Contact', purpose: 'Contact form + inquiries' },
+      { local: 'support', label: 'Support', purpose: 'Product help, bugs, account issues' },
+      { local: 'billing', label: 'Billing', purpose: 'Subscription + payment questions' },
+      { local: 'invoice', label: 'Invoice', purpose: 'Invoice replies + receipts' },
+      { local: 'privacy', label: 'Privacy', purpose: 'Privacy / data requests' },
+    ],
   },
 ];
 
