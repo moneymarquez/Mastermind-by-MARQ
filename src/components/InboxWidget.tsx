@@ -14,12 +14,13 @@ interface Props {
   compact?: boolean;
 }
 
-const KIND_TAG: Record<InboxItem['kind'], string> = { mail: 'Mail', message: 'Msg' };
+const KIND_TAG: Record<InboxItem['kind'], string> = { mail: 'Mail', ticket: 'Ticket', message: 'Msg' };
 
-/** Mail on either domain (madebymarquez.com / mastermindsbymarq.com, both
- *  through the same Resend webhook) plus a client's unread portal
- *  message. Tickets have their own widget now (TicketsWidget) so they
- *  don't crowd this one. Pinned above every nav category. Owner-only. */
+/** The one place client stuff lands — mail on either domain
+ *  (madebymarquez.com / mastermindsbymarq.com, both through the same
+ *  Resend webhook), a client's ticket, a client's unread message.
+ *  Pinned above every nav category so a 2am ticket is the first thing
+ *  visible on the phone, not something buried under Scaling. Owner-only. */
 export default function InboxWidget({ items, loading, onOpen, compact }: Props) {
   const unread = items.filter((e) => e.unread);
   const preview = items.slice(0, 2);
@@ -31,11 +32,10 @@ export default function InboxWidget({ items, loading, onOpen, compact }: Props) 
         display: 'flex', flexDirection: 'column', gap: compact ? 6 : 8,
         padding: compact ? '10px 12px' : '12px 14px', borderRadius: compact ? 14 : 16,
         background: 'var(--mm-panel-solid)', border: '1px solid var(--mm-line)', flexShrink: 0,
-        // Same minHeight as LeadsWidget/TicketsWidget's compact mode — so
-        // the three status cards read as one consistent row of equal-
-        // height tiles regardless of which one happens to have less
-        // content (an empty "No messages" card next to a 2-row Leads
-        // preview otherwise looked visibly shorter).
+        // Same minHeight as LeadsWidget's compact mode — so the two status
+        // cards read as a consistent pair regardless of which one happens
+        // to have less content (an empty "No messages" card next to a
+        // 2-row Leads preview otherwise looked visibly shorter).
         minHeight: compact ? 90 : undefined,
       }}
     >

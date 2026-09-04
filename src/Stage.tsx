@@ -12,8 +12,6 @@ import { useBender } from './data/useBender';
 import { useNavModulePrefs } from './data/useNavModulePrefs';
 import { useOwnerInbox } from './data/useOwnerInbox';
 import type { InboxItem } from './data/useOwnerInbox';
-import { useOwnerTickets } from './data/useOwnerTickets';
-import type { OwnerTicket } from './data/useOwnerTickets';
 import { useLeads } from './data/useLeads';
 import type { LeadItem } from './data/useLeads';
 import ClientModulesScreen from './components/screens/ClientModulesScreen';
@@ -30,7 +28,6 @@ import ScalingStartScreen from './components/screens/ScalingStartScreen';
 import ClientDeliveryScreen from './components/screens/ClientDeliveryScreen';
 import SupportInboxScreen from './components/screens/SupportInboxScreen';
 import LeadsScreen from './components/screens/LeadsScreen';
-import TicketsScreen from './components/screens/TicketsScreen';
 import LegalScreen from './components/screens/LegalScreen';
 import ScalingPlannerScreen from './components/screens/ScalingPlannerScreen';
 import BusinessAuditsScreen from './components/screens/BusinessAuditsScreen';
@@ -68,7 +65,7 @@ import type { Theme } from './data/useTheme';
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
-  'scaling-start', 'delivery', 'support-inbox', 'leads', 'tickets', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
+  'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings',
   'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access',
 ];
@@ -103,15 +100,13 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // harmless empty read for a non-owner account — called unconditionally
   // rather than guarded, same as useModuleAccess elsewhere in this file.
   const ownerInbox = useOwnerInbox();
-  const ownerTickets = useOwnerTickets();
   const leads = useLeads();
-  // A client message tapped in the Inbox widget, a ticket tapped in the
-  // Tickets widget, or a transferred lead all land on THAT client — in
-  // Client Modules for the first two, in Client CRM for a lead (since
-  // that's where its freshly-generated analysis lives). Mail goes to the
-  // Support Inbox instead. clientFocus is shared across both target
-  // screens (only one is ever mounted at a time) and cleared once
-  // whichever one consumed it.
+  // A client message or ticket tapped in the Inbox widget, or a
+  // transferred lead, all land on THAT client — in Client Modules for
+  // the first two, in Client CRM for a lead (since that's where its
+  // freshly-generated analysis lives). Mail goes to the Support Inbox
+  // instead. clientFocus is shared across both target screens (only one
+  // is ever mounted at a time) and cleared once whichever one consumed it.
   const [clientFocus, setClientFocus] = useState<string | null>(null);
   const openInbox = (item?: InboxItem) => {
     if (item && item.kind !== 'mail' && item.clientId) {
@@ -120,14 +115,6 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
       return;
     }
     actions.navigateTo('support-inbox');
-  };
-  const openTicket = (ticket?: OwnerTicket) => {
-    if (ticket) {
-      setClientFocus(ticket.clientId);
-      actions.navigateTo('client-modules');
-      return;
-    }
-    actions.navigateTo('tickets');
   };
   // Tapping a lead row transfers it into Client CRM (generating its
   // analysis if this is its first time out of new_lead) and lands on that
@@ -228,9 +215,6 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             leadsNewCount={leads.newLeads.length}
             leadsLoading={leads.loading}
             onOpenLead={openLead}
-            tickets={ownerTickets.tickets}
-            ticketsLoading={ownerTickets.loading}
-            onOpenTicket={openTicket}
             inboxItems={ownerInbox.items}
             inboxLoading={ownerInbox.loading}
             onOpenInbox={openInbox}
@@ -254,9 +238,6 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             leadsNewCount={leads.newLeads.length}
             leadsLoading={leads.loading}
             onOpenLead={openLead}
-            tickets={ownerTickets.tickets}
-            ticketsLoading={ownerTickets.loading}
-            onOpenTicket={openTicket}
             inboxItems={ownerInbox.items}
             inboxLoading={ownerInbox.loading}
             onOpenInbox={openInbox}
@@ -369,7 +350,14 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'support-inbox' && (
-          <SupportInboxScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          <SupportInboxScreen
+            homeHeadStyle={vm.homeHeadStyle}
+            homeSubStyle={vm.homeSubStyle}
+            onOpenClient={(clientId) => {
+              setClientFocus(clientId);
+              actions.navigateTo('client-modules');
+            }}
+          />
         )}
 
         {state.screen === 'leads' && (
@@ -379,17 +367,6 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             onOpenClient={(clientId) => {
               setClientFocus(clientId);
               actions.navigateTo('client-crm');
-            }}
-          />
-        )}
-
-        {state.screen === 'tickets' && (
-          <TicketsScreen
-            homeHeadStyle={vm.homeHeadStyle}
-            homeSubStyle={vm.homeSubStyle}
-            onOpenClient={(clientId) => {
-              setClientFocus(clientId);
-              actions.navigateTo('client-modules');
             }}
           />
         )}

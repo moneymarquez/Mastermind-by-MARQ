@@ -5,8 +5,6 @@ import InboxWidget from './InboxWidget';
 import type { InboxItem } from '../data/useOwnerInbox';
 import LeadsWidget from './LeadsWidget';
 import type { LeadItem } from '../data/useLeads';
-import TicketsWidget from './TicketsWidget';
-import type { OwnerTicket } from '../data/useOwnerTickets';
 
 export const SIDEBAR_WIDTH = 250;
 // The collapsed rail: just the Menu toggle, nothing else — clicking it
@@ -22,9 +20,6 @@ interface Props {
   leadsNewCount: number;
   leadsLoading: boolean;
   onOpenLead: (lead?: LeadItem) => void;
-  tickets: OwnerTicket[];
-  ticketsLoading: boolean;
-  onOpenTicket: (ticket?: OwnerTicket) => void;
   inboxItems: InboxItem[];
   inboxLoading: boolean;
   onOpenInbox: (item?: InboxItem) => void;
@@ -47,7 +42,6 @@ interface Props {
 export default function Sidebar({
   rows, ownerName, isOwner, onOpenSettings,
   leads, leadsNewCount, leadsLoading, onOpenLead,
-  tickets, ticketsLoading, onOpenTicket,
   inboxItems, inboxLoading, onOpenInbox,
   open, onToggle,
 }: Props) {
@@ -73,7 +67,6 @@ export default function Sidebar({
       </div>
 
       {open && isOwner && <LeadsWidget leads={leads} newCount={leadsNewCount} loading={leadsLoading} onOpen={onOpenLead} />}
-      {open && isOwner && <TicketsWidget tickets={tickets} loading={ticketsLoading} onOpen={onOpenTicket} />}
       {open && isOwner && <InboxWidget items={inboxItems} loading={inboxLoading} onOpen={onOpenInbox} />}
 
       {open && (

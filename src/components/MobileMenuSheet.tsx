@@ -8,8 +8,6 @@ import InboxWidget from './InboxWidget';
 import type { InboxItem } from '../data/useOwnerInbox';
 import LeadsWidget from './LeadsWidget';
 import type { LeadItem } from '../data/useLeads';
-import TicketsWidget from './TicketsWidget';
-import type { OwnerTicket } from '../data/useOwnerTickets';
 
 interface Props {
   open: boolean;
@@ -25,9 +23,6 @@ interface Props {
   leadsNewCount: number;
   leadsLoading: boolean;
   onOpenLead: (lead?: LeadItem) => void;
-  tickets: OwnerTicket[];
-  ticketsLoading: boolean;
-  onOpenTicket: (ticket?: OwnerTicket) => void;
   inboxItems: InboxItem[];
   inboxLoading: boolean;
   onOpenInbox: (item?: InboxItem) => void;
@@ -74,7 +69,6 @@ const DISMISS_DURATION_MS = 220;
 export default function MobileMenuSheet({
   open, rows, ownerName, isOwner, theme, onThemeChange, onClose, onOpenSettings, onOpenTour,
   leads, leadsNewCount, leadsLoading, onOpenLead,
-  tickets, ticketsLoading, onOpenTicket,
   inboxItems, inboxLoading, onOpenInbox,
 }: Props) {
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -176,7 +170,6 @@ export default function MobileMenuSheet({
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16, flexShrink: 0 }}>
           {isOwner && <LeadsWidget leads={leads} newCount={leadsNewCount} loading={leadsLoading} onOpen={(lead) => { onOpenLead(lead); onClose(); }} compact />}
-          {isOwner && <TicketsWidget tickets={tickets} loading={ticketsLoading} onOpen={(ticket) => { onOpenTicket(ticket); onClose(); }} compact />}
           {isOwner && <InboxWidget items={inboxItems} loading={inboxLoading} onOpen={(item) => { onOpenInbox(item); onClose(); }} compact />}
         </div>
 
