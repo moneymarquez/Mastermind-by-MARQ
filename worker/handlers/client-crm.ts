@@ -357,13 +357,6 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
     }
 
     const amountCents = Math.round(amount * 100);
-    await stripeRequest(env, '/invoiceitems', {
-      customer: customerId,
-      amount: String(amountCents),
-      currency: 'usd',
-      description,
-    });
-
     const dueDate = body.dueDate ? new Date(body.dueDate) : null;
     const daysUntilDue = dueDate ? Math.max(1, Math.ceil((dueDate.getTime() - Date.now()) / 86_400_000)) : 14;
 
@@ -373,6 +366,13 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
     // hosted payment page.
     const dashboardUrl = `${new URL(request.url).origin}/client/${client.public_token}`;
 
+    // Invoice created first, then the line item explicitly attached to it
+    // via `invoice: invoice.id` — an invoiceitem created with only
+    // `customer` is "pending" and only gets pulled onto a later invoice if
+    // Stripe's pending_invoice_items_behavior says so, which isn't
+    // guaranteed. Relying on that silently produced a finalized invoice
+    // with zero line items and a $0 total; setting `invoice` directly
+    // attaches it unconditionally, no auto-collection behavior involved.
     const invoice = await stripeRequest(env, '/invoices', {
       customer: customerId,
       collection_method: 'send_invoice',
@@ -380,6 +380,14 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
       footer: `Your live progress dashboard: ${dashboardUrl}`,
       'metadata[mastermind_crm_client_id]': client.id,
       'metadata[mastermind_dashboard_url]': dashboardUrl,
+    });
+
+    await stripeRequest(env, '/invoiceitems', {
+      customer: customerId,
+      invoice: invoice.id as string,
+      amount: String(amountCents),
+      currency: 'usd',
+      description,
     });
 
     const finalized = await stripeRequest(env, `/invoices/${invoice.id}/finalize`, {});
