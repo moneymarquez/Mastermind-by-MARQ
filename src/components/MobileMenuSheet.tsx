@@ -116,10 +116,10 @@ export default function MobileMenuSheet({
       <div
         ref={sheetRef}
         style={{
-          position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 49, maxHeight: '82%', overflow: 'hidden',
+          position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 49, maxHeight: '94%', overflow: 'hidden',
           borderRadius: '28px 28px 0 0', background: 'var(--mm-panel-solid)', border: '1px solid var(--mm-line)', borderBottom: 'none',
           boxShadow: '0 -20px 50px rgba(0,0,0,0.4)',
-          padding: '10px 18px calc(18px + env(safe-area-inset-bottom))',
+          padding: '8px 18px calc(18px + env(safe-area-inset-bottom))',
           display: 'flex', flexDirection: 'column',
           transform: `translateY(${dragY}px)`,
           // Always transitioned except mid-drag (where it must follow the
@@ -141,7 +141,7 @@ export default function MobileMenuSheet({
           onPointerMove={onDragMove}
           onPointerUp={onDragEnd}
           onPointerCancel={onDragEnd}
-          style={{ display: 'flex', flexDirection: 'column', gap: 14, flexShrink: 0, cursor: 'grab', touchAction: 'none' }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0, cursor: 'grab', touchAction: 'none' }}
         >
           <div style={{ width: 44, height: 4, borderRadius: 4, background: 'var(--mm-line2)', alignSelf: 'center' }} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
@@ -168,12 +168,12 @@ export default function MobileMenuSheet({
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16, flexShrink: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10, flexShrink: 0 }}>
           {isOwner && <LeadsWidget leads={leads} newCount={leadsNewCount} loading={leadsLoading} onOpen={(lead) => { onOpenLead(lead); onClose(); }} compact />}
           {isOwner && <InboxWidget items={inboxItems} loading={inboxLoading} onOpen={(item) => { onOpenInbox(item); onClose(); }} compact />}
         </div>
 
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column', gap: 3, marginTop: 6 }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column', gap: 3, marginTop: 4 }}>
           {rows.map((row, i) => {
             if (row.kind === 'header') {
               return (
