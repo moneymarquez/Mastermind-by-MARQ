@@ -40,6 +40,7 @@ export type Screen =
   | 'patterns'
   | 'voice-capture'
   | 'manage-modules'
+  | 'edit-home-widgets'
   | 'grant-access'
   | 'placeholder';
 

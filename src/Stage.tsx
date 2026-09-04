@@ -57,6 +57,7 @@ import CashFlowScreen from './components/screens/CashFlowScreen';
 import PatternDetectionScreen from './components/screens/PatternDetectionScreen';
 import VoiceCaptureScreen from './components/screens/VoiceCaptureScreen';
 import ManageModulesScreen from './components/screens/ManageModulesScreen';
+import EditHomeWidgetsScreen from './components/screens/EditHomeWidgetsScreen';
 import GrantAccessScreen from './components/screens/GrantAccessScreen';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
 import ProductTour, { filterTourSteps } from './components/ProductTour';
@@ -69,7 +70,7 @@ const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'tickets', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings',
-  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'grant-access',
+  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access',
 ];
 
 interface Props {
@@ -316,7 +317,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         ) : (
           <>
         {state.screen === 'home' && (
-          <HomeScreen isMobile={isMobile} homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} statGridStyle={vm.statGridStyle} statCards={vm.statCards} onOpenNova={actions.openNova} assistantName={assistantName} onNavigate={actions.navigateTo} />
+          <HomeScreen isMobile={isMobile} isOwner={isOwner} homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onOpenNova={actions.openNova} assistantName={assistantName} onNavigate={actions.navigateTo} />
         )}
 
         {state.screen === 'daily-plan' && (
@@ -520,6 +521,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             onToggleHidden={navPrefs.setModuleHidden}
             onReorderCategory={navPrefs.reorderCategory}
           />
+        )}
+
+        {state.screen === 'edit-home-widgets' && (
+          <EditHomeWidgetsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} isOwner={isOwner} />
         )}
 
         {state.screen === 'grant-access' && isOwner && (

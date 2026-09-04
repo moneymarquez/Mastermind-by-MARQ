@@ -40,39 +40,11 @@ export function buildViewModel(
   const homeHeadStyle: CSSProperties = { fontSize: isMobile ? 24 : 32, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em' };
   const homeSubStyle: CSSProperties = { fontSize: 14, color: 'var(--text-secondary)', marginTop: 6 };
 
-  const statDefs = [
-    { icon: 'ph-phone-call', value: '0 / 100', caption: "Today's call goal" },
-    { icon: 'ph-heart', value: '128 days', caption: 'Sobriety streak' },
-    { icon: 'ph-barbell', value: '0', caption: 'Workouts this week' },
-    { icon: 'ph-fork-knife', value: '1,840 kcal', caption: "Today's macros" },
-    { icon: 'ph-users-three', value: '0', caption: 'Leads in pipeline' },
-    { icon: 'ph-calendar-blank', value: '2:30 PM', caption: 'Next on schedule' },
-  ];
-  const statCards = statDefs.map((d) => ({
-    icon: d.icon,
-    value: d.value,
-    caption: d.caption,
-    valueStyle: {
-      fontFamily: "'JetBrains Mono', monospace",
-      fontSize: d.value.length > 10 ? 20 : 26,
-      fontWeight: 600,
-      color: 'var(--text)',
-      marginTop: 8,
-    } as CSSProperties,
-  }));
-  const statGridStyle: CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(220px, 1fr))',
-    gap: 16,
-    marginTop: 28,
-  };
-
   return {
     isMobile, geo,
     navRows,
     contentStyle,
     homeHeadStyle, homeSubStyle,
-    statCards, statGridStyle,
     stageWidth, stageHeight, circleSize,
     cx, cy,
     sidebarWidth: SIDEBAR_WIDTH, headerHeight: HEADER_HEIGHT,
