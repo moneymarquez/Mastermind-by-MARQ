@@ -5,7 +5,6 @@ import TopHeader from './components/TopHeader';
 import MobileHeader from './components/MobileHeader';
 import MobileMenuSheet from './components/MobileMenuSheet';
 import MobileTabBar, { SAFE_BOTTOM } from './components/MobileTabBar';
-import DebugOverlay from './components/DebugOverlay';
 import NovaTrigger from './components/NovaTrigger';
 import NovaPanel from './components/NovaPanel';
 import RemindersBox from './components/RemindersBox';
@@ -198,7 +197,6 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
   return (
     <div className="app-shine-bg" style={stageStyle}>
-      {isMobile && isOwner && <DebugOverlay />}
       {isMobile ? (
         <>
           <MobileHeader onOpenMenu={actions.toggleDrawer} />
