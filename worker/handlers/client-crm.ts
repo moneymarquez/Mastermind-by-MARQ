@@ -354,6 +354,18 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
         headers,
         body: JSON.stringify({ stripe_customer_id: customerId }),
       });
+    } else {
+      // Keep the Stripe customer's name/email current on every invoice —
+      // it's only set once at creation otherwise, so renaming a client in
+      // the CRM later (e.g. fixing a placeholder test name) silently never
+      // reaches Stripe and every future invoice keeps showing the old
+      // "Bill to" name. A finalized invoice still snapshots whatever the
+      // customer's name was at that moment, so this only fixes invoices
+      // created from here on, not ones already sent.
+      await stripeRequest(env, `/customers/${customerId}`, {
+        email: client.contact_email,
+        name: client.business_name,
+      });
     }
 
     const amountCents = Math.round(amount * 100);
