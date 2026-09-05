@@ -108,13 +108,20 @@ export async function runShiftReminders(env: ShiftReminderEnv): Promise<void> {
   // Store hours span every day of the week, but that doesn't mean any given
   // user is actually working today — buildSchedule() has no concept of
   // that. Only send Opening/Closing task alerts to users who have a real
-  // holiday-type shift on today's date, same source of truth as the
-  // Schedule calendar's client-side gate in OpeningClosingScreen.tsx.
-  const todaysShiftsRes = await fetch(
-    `${supabaseUrl}/rest/v1/events?type=eq.holiday&event_date=eq.${today}&select=user_id`,
-    { headers },
-  );
-  const usersWorkingToday = new Set(((await todaysShiftsRes.json()) as { user_id: string }[]).map((r) => r.user_id));
+  // shift on today's date. Two sources, same as OpeningClosingScreen.tsx's
+  // client-side gate: the personal Schedule calendar's Holiday event type
+  // (events), or the team Holiday Calendar's holiday_shifts with is_self
+  // true. This used to check `events` alone — since every real shift now
+  // comes through holiday_shifts (events.type=holiday has stayed empty),
+  // that left this cron permanently a no-op for everyone, every day.
+  const [eventsRes, holidayShiftsRes] = await Promise.all([
+    fetch(`${supabaseUrl}/rest/v1/events?type=eq.holiday&event_date=eq.${today}&select=user_id`, { headers }),
+    fetch(`${supabaseUrl}/rest/v1/holiday_shifts?is_self=eq.true&shift_date=eq.${today}&select=user_id`, { headers }),
+  ]);
+  const usersWorkingToday = new Set([
+    ...((await eventsRes.json()) as { user_id: string }[]).map((r) => r.user_id),
+    ...((await holidayShiftsRes.json()) as { user_id: string }[]).map((r) => r.user_id),
+  ]);
 
   const userIds = [...new Set(subs.map((s) => s.user_id))];
 

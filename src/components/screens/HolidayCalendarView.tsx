@@ -22,6 +22,18 @@ function monthGrid(anchor: Date): Date[] {
   return days;
 }
 
+// The account holder's name as it actually appears on the posted schedule
+// ("Cristopher Marquez") — matched case-insensitively against whatever the
+// photo parse OCR'd, so a freshly-imported schedule pre-checks the right
+// row instead of defaulting every row to someone else's shift and quietly
+// breaking Opening/Closing until a human remembers to check a box. Single-
+// owner app (see ownerDisplayName in Stage.tsx), so a plain substring match
+// is enough — still editable in review if a name ever collides or OCRs oddly.
+const OWNER_NAME_MATCH = 'cristopher';
+function looksLikeOwner(personName: string): boolean {
+  return personName.toLowerCase().includes(OWNER_NAME_MATCH);
+}
+
 // Deterministic color per person so the same coworker reads consistently
 // across the calendar without maintaining a manual color map.
 function colorForName(name: string): string {
@@ -62,7 +74,12 @@ export default function HolidayCalendarView() {
       const image = await fileToBase64(file);
       const parsed = await parseSchedulePhoto(image, monthAnchor.getFullYear());
       if (parsed.length === 0) setParseError('Could not find any shifts in that photo — try a clearer image, or add shifts manually below.');
-      setReviewShifts(parsed.map((s) => ({ ...s, is_self: false })));
+      // Pre-check "Mine" for whichever row is the account holder's, instead
+      // of defaulting every row to false — the actual root cause of
+      // Opening/Closing going dark for days at a time was this defaulting
+      // to false on every import, relying on someone remembering to
+      // manually check the right box among a full roster's worth of rows.
+      setReviewShifts(parsed.map((s) => ({ ...s, is_self: looksLikeOwner(s.person_name) })));
     } catch (err) {
       setParseError(err instanceof AiError ? err.message : 'Could not read that schedule photo — try again.');
     } finally {
