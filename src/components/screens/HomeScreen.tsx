@@ -51,7 +51,18 @@ export default function HomeScreen({ isMobile, isOwner, homeHeadStyle, homeSubSt
   if (prefsLoading) return <div style={homeSubStyle}>Loading…</div>;
 
   return (
-    <div>
+    // On mobile, the widgets an account has on today (often just Nova +
+    // the KPI row) rarely fill the available height above the tab bar —
+    // top-anchoring them the way a normal document flows then leaves a
+    // large, unexplained blank stretch at the bottom. minHeight: '100%'
+    // (resolving against #tour-content-panel's own padded box in
+    // Stage.tsx, which has a definite height) + justifyContent: 'flex-end'
+    // instead groups the greeting + widgets together and settles that
+    // whole block toward the bottom, so it reads as filling the screen
+    // rather than floating in its top third. Desktop's multi-column
+    // layout doesn't have this problem (it's wide, not tall-and-sparse),
+    // so it keeps the normal top-anchored flow.
+    <div style={isMobile ? { display: 'flex', flexDirection: 'column', minHeight: '100%', justifyContent: 'flex-end' } : undefined}>
       <div style={homeHeadStyle}>{greeting()}.</div>
       <div style={homeSubStyle}>{nudgeSummary}</div>
 
