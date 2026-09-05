@@ -65,7 +65,14 @@ export default function MobileTabBar({ screen, novaOpen, onNavigate, onToggleNov
         position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 30, boxSizing: 'border-box',
         height: `calc(${TAB_BAR_HEIGHT}px + ${SAFE_BOTTOM})`,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `12px 22px calc(12px + ${SAFE_BOTTOM})`,
-        borderTop: '1px solid var(--mm-line)', background: 'var(--mm-bg-blur)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+        // borderTop alone reads as a hairline floating over an identical-
+        // colored page below (the blur tint is only a couple percent off
+        // --bg) — the safe-area cushion under the icons then looks like
+        // blank page, not part of the bar. The upward shadow gives the
+        // whole box (icons + cushion) a visible edge so it reads as one
+        // lifted surface all the way to the true bottom, in both themes.
+        borderTop: '1px solid var(--mm-line-strong)', background: 'var(--mm-bg-blur)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+        boxShadow: '0 -6px 20px rgba(0,0,0,0.10)',
       }}
     >
       {items.map(tab)}
