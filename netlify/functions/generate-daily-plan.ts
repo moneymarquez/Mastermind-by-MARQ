@@ -2,6 +2,12 @@ import type { Config } from '@netlify/functions';
 import Anthropic from '@anthropic-ai/sdk';
 import webpush from 'web-push';
 
+// SUPERSEDED — this stopped actually running once Netlify's deploys went
+// stale (same root cause as send-shift-reminders.ts, which is why Daily
+// Plan showed "No plans for today yet" indefinitely). The live version is
+// now worker/handlers/daily-plan.ts, on this app's Cloudflare Worker Cron
+// Trigger. Left here for reference, not deleted, but not wired to anything.
+//
 // Same store-clock caveat as the other Scheduled Functions — this runs on
 // Netlify's own clock (UTC), not the store's. See send-shift-reminders.ts
 // for the fuller explanation.

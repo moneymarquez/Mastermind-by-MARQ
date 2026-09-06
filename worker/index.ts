@@ -15,9 +15,11 @@
 // other Cron Trigger, below) used to be one of the ones stuck on Netlify
 // too — see runShiftReminders' own comment for why, and why that's what
 // silently stopped the notifications when Netlify's deploys went stale.
-// send-reminders.ts (Shift/Event/Meal) and generate-daily-plan.ts have the
-// exact same dependency and are equally at risk; they haven't been ported
-// yet.
+// generate-daily-plan.ts had the exact same dependency and the exact same
+// symptom (Daily Plan always empty) — see runDailyPlan's own comment; it's
+// now ported too, sharing this Worker's */15 tick with the stocks bot.
+// send-reminders.ts (Shift/Event/Meal reminders) has the same dependency
+// and is equally at risk; it hasn't been ported yet.
 //
 // The LeadFlow endpoints below are the same story as Stocks: no web-push
 // dependency, no reason to route through Netlify at all, native here.
@@ -27,6 +29,8 @@ import { runStocksBot } from './handlers/stocks-bot';
 import type { StocksEnv } from './handlers/broker-keys';
 import { runShiftReminders } from './handlers/shift-reminders';
 import type { ShiftReminderEnv } from './handlers/shift-reminders';
+import { runDailyPlan } from './handlers/daily-plan';
+import type { DailyPlanEnv } from './handlers/daily-plan';
 import { leadflowLeads, leadflowLeadUpdate, leadflowHistory, leadflowMessages, leadflowAiReport } from './handlers/leadflow';
 import type { LeadflowEnv } from './handlers/leadflow';
 import { createSubscriptionIntent, stripeWebhook, createPortalSession } from './handlers/billing';
@@ -44,7 +48,7 @@ import type { ClaudeEnv } from './handlers/claude';
 import { pushSubscription } from './handlers/push-subscription';
 import type { PushSubscriptionEnv } from './handlers/push-subscription';
 
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
@@ -123,6 +127,7 @@ export default {
       return;
     }
     ctx.waitUntil(runStocksBot(env));
+    ctx.waitUntil(runDailyPlan(env));
   },
 
   // Cloudflare Email Routing → this Worker. Each address on

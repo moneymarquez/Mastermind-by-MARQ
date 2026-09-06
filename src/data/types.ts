@@ -171,13 +171,24 @@ export interface SymptomLog {
   created_at: string;
 }
 
-export type DailyPlanBlockType = 'fixed' | 'goal' | 'fitness' | 'macros' | 'ai_suggested';
+export type DailyPlanBlockType = 'fixed' | 'goal' | 'fitness' | 'macros' | 'dialing' | 'ai_suggested';
+
+/** What real part of the app a block is actually about — shown in the
+ *  hourly view's detail pane. Distinct from `type` (which is about how the
+ *  block was decided/categorized); this is about where it lives. 'manual'
+ *  covers a block added directly on the hour with no specific module tie. */
+export type DailyPlanModule = 'dialing' | 'fitness' | 'work-shift' | 'client-work' | 'goal' | 'manual';
 
 export interface DailyPlanBlock {
   time: string;
+  /** Minutes the block occupies, starting at `time`. Purely informational
+   *  for the hourly view — blocks aren't currently allowed to span across
+   *  an hour boundary's row assignment, which is keyed on `time` alone. */
+  duration: number;
   title: string;
   detail: string;
   type: DailyPlanBlockType;
+  module: DailyPlanModule;
   source: string | null;
 }
 
