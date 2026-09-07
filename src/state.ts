@@ -8,6 +8,7 @@ import { startListening } from './lib/speech';
 import type { SpeechRecognizerHandle } from './lib/speech';
 import { getForcePortraitDirection } from './lib/orientationLock';
 import { MARKETING_101 } from './data/marketing101';
+import { CONTENT_101 } from './data/content101';
 
 const TONE_INSTRUCTIONS: Record<string, string> = {
   direct: 'Be blunt and to the point — skip the cushioning, say the real thing.',
@@ -238,6 +239,10 @@ export function useMastermindState() {
     // Content Creation is included alongside Marketing since it's the same
     // campaign work, per the Marketing rebuild's own framing of the two.
     const onMarketingScreen = state.screen === 'marketing' || state.screen === 'content';
+    // Same reasoning for the content-creation/social-growth material, but
+    // scoped tighter — only on the Content Creation screen itself, since
+    // it's about running accounts, not the Marketing tab's campaign work.
+    const onContentScreen = state.screen === 'content';
 
     let reply: string;
     try {
@@ -259,6 +264,11 @@ export function useMastermindState() {
             ? '\n\n--- His own marketing training material — use this as your grounding for any marketing question, ' +
               'it is not generic advice, it is the standard he built and expects answers to follow ---\n\n' +
               MARKETING_101.fundamentals + '\n\n' + MARKETING_101.plays
+            : '') +
+          (onContentScreen
+            ? '\n\n--- His own content-creation training material — use this as your grounding for anything about ' +
+              'growing social accounts, hooks, formats, or the Content Creation tab itself ---\n\n' +
+              CONTENT_101.fundamentals + '\n\n' + CONTENT_101.plays
             : '') +
           '\n\n' + (TONE_INSTRUCTIONS[tone] ?? TONE_INSTRUCTIONS.direct) +
           '\n\nIf anything he says suggests he may be in crisis or thinking about harming himself, set everything ' +
