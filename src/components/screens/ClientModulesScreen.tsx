@@ -15,6 +15,13 @@ interface Props {
   onClearFocus: () => void;
   /** Bubbles up after any write so the Inbox widget's counts refresh. */
   onChanged?: () => void;
+  /** The sticky client-selector pick shared across every client-facing
+   *  module (Stage.tsx). This screen's own triage list stays as the
+   *  "nothing selected" browse view — no second dropdown — but opening a
+   *  client here updates the shared pick, landing with one already set
+   *  opens it, and backing out clears it. */
+  selectedClientId?: string | null;
+  onSelectClient?: (id: string | null) => void;
 }
 
 const count = (n: number, color: string): CSSProperties => ({
@@ -37,17 +44,26 @@ function ago(iso: string | null): string {
  *  me" in one glance — open tickets first, then unread messages, then
  *  recency — and the detail is the same ClientPortalAdmin the Client CRM's
  *  Portal tab renders, so there is exactly one screen to maintain. */
-export default function ClientModulesScreen({ homeHeadStyle, homeSubStyle, focusClientId, onClearFocus, onChanged }: Props) {
+export default function ClientModulesScreen({ homeHeadStyle, homeSubStyle, focusClientId, onClearFocus, onChanged, selectedClientId, onSelectClient }: Props) {
   const overview = useClientModulesOverview();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  const selectClient = (id: string | null) => {
+    setSelectedId(id);
+    onSelectClient?.(id);
+  };
+
   useEffect(() => {
     if (focusClientId) {
-      setSelectedId(focusClientId);
+      selectClient(focusClientId);
       onClearFocus();
+      return;
+    }
+    if (selectedClientId && selectedClientId !== selectedId) {
+      setSelectedId(selectedClientId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusClientId]);
+  }, [focusClientId, selectedClientId]);
 
   const selected = overview.rows.find((r) => r.client.id === selectedId) ?? null;
   const changed = () => { overview.reload(); onChanged?.(); };
@@ -56,7 +72,7 @@ export default function ClientModulesScreen({ homeHeadStyle, homeSubStyle, focus
     const station = currentStation(selected.spine);
     return (
       <div>
-        <span style={{ ...ghostBtn, marginBottom: 14 }} onClick={() => setSelectedId(null)}>← All clients</span>
+        <span style={{ ...ghostBtn, marginBottom: 14 }} onClick={() => selectClient(null)}>← All clients</span>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
           <div style={homeHeadStyle}>{selected.client.business_name}</div>
           <span style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>{STAGES.find((s) => s.key === selected.client.stage)?.label}{station ? ` · ${station.label}` : ''}{selected.hasLogin ? ' · has login' : ' · no login yet'}</span>
@@ -78,7 +94,7 @@ export default function ClientModulesScreen({ homeHeadStyle, homeSubStyle, focus
         {overview.rows.map((r: ClientOverviewRow) => {
           const station = currentStation(r.spine);
           return (
-            <div key={r.client.id} style={{ ...cardStyle, padding: 16, cursor: 'pointer', borderColor: r.openTickets ? 'color-mix(in srgb, var(--danger) 40%, var(--border))' : 'var(--border)' }} onClick={() => setSelectedId(r.client.id)}>
+            <div key={r.client.id} style={{ ...cardStyle, padding: 16, cursor: 'pointer', borderColor: r.openTickets ? 'color-mix(in srgb, var(--danger) 40%, var(--border))' : 'var(--border)' }} onClick={() => selectClient(r.client.id)}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>

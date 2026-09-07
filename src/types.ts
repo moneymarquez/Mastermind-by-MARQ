@@ -33,6 +33,7 @@ export type Screen =
   | 'invoicing'
   | 'budgeting'
   | 'marketing'
+  | 'content'
   | 'decisions'
   | 'weekly-review'
   | 'cashflow'

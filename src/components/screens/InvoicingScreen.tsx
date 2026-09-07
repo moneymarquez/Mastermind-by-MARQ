@@ -8,10 +8,14 @@ import { DOC_TYPE_LABELS, QUICK_START_FIELDS } from '../../data/documentSchemas'
 import type { DocType } from '../../data/documentSchemas';
 import DocumentEditForm from './DocumentEditForm';
 import DocumentPreview from './DocumentPreview';
+import { useClients } from '../../data/useClients';
+import ClientSelector from '../ClientSelector';
 
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
+  selectedClientId: string | null;
+  onSelectClient: (id: string | null) => void;
 }
 
 const ALL_TYPES = Object.keys(DOC_TYPE_LABELS) as DocType[];
@@ -286,9 +290,10 @@ function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack
   );
 }
 
-export default function InvoicingScreen({ homeHeadStyle, homeSubStyle }: Props) {
+export default function InvoicingScreen({ homeHeadStyle, homeSubStyle, selectedClientId, onSelectClient }: Props) {
   const { documents, loading } = useClientDocuments();
   const { contacts } = useContacts();
+  const clientsApi = useClients();
   const [filter, setFilter] = useState<DocType | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [openedFromCreate, setOpenedFromCreate] = useState(false);
@@ -305,6 +310,18 @@ export default function InvoicingScreen({ homeHeadStyle, homeSubStyle }: Props) 
     <div>
       <div style={homeHeadStyle}>Invoicing</div>
       <div style={homeSubStyle}>The real Made by Marq client document set — create, edit, and preview.</div>
+
+      <div style={{ marginTop: 20 }}>
+        <ClientSelector
+          clients={clientsApi.clients}
+          loading={clientsApi.loading}
+          error={clientsApi.error}
+          selectedId={selectedClientId}
+          onSelect={onSelectClient}
+          onCreate={clientsApi.createClient}
+          emptyHint="This 9-document system uses its own contacts, separate from clients — this selector isn't wired into it yet."
+        />
+      </div>
 
       <div style={{ marginTop: 20 }}>
         <NewDocumentPanel onCreated={(id) => { setOpenedFromCreate(true); setSelectedId(id); }} />

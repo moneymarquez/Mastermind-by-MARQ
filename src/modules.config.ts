@@ -67,8 +67,12 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { key: 'idea-maker', label: 'Idea Maker', category: 'Scaling', description: 'Real back-and-forth AI conversation to pressure-test a business idea.', icon: 'ph-lightbulb', routes: ['idea-maker'], requiresAI: true, ownerOnly: true },
   { key: 'invoicing', label: 'Invoicing', category: 'Scaling', description: 'The Made by Marq 9-document client invoicing system.', icon: 'ph-receipt', routes: ['invoicing'], requiresAI: false, ownerOnly: true },
   { key: 'marketing', label: 'Marketing', category: 'Scaling', description: 'Asset storage, campaign tracking, and content pipeline.', icon: 'ph-megaphone', routes: ['marketing'], requiresAI: true, ownerOnly: true },
+  // Recategorized from Side Hustles (a subscriber-facing, unbuilt
+  // placeholder) — the Marketing rebuild's social-profile-build tooling
+  // lives here, client-scoped like everything else in Scaling, with
+  // Marketing linking to it rather than duplicating it.
+  { key: 'content', label: 'Content Creation', category: 'Scaling', description: 'Per-client social profile build and launch kits, congruent with the Marketing campaign driving them.', icon: 'ph-video-camera', routes: ['content'], requiresAI: true, ownerOnly: true },
   { key: 'stocks', label: 'Stocks', category: 'Side Hustles', description: 'Paper-trading bot on Alpaca with AI daily commentary.', icon: 'ph-chart-line-up', routes: ['stocks'], requiresAI: true },
-  { key: 'content', label: 'Content Creation', category: 'Side Hustles', description: 'Content planning (placeholder for now).', icon: 'ph-video-camera', routes: [], requiresAI: false },
   { key: 'streaming', label: 'Streaming', category: 'Side Hustles', description: 'Streaming idea bank and calendar.', icon: 'ph-video-camera', routes: ['streaming'], requiresAI: false },
   { key: 'sticky-spot', label: 'Sticky Spot', category: null, description: 'Quick fast-cash idea list.', icon: 'ph-lightning', routes: ['sticky-spot'], requiresAI: false },
 ];

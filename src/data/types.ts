@@ -972,12 +972,19 @@ export interface BrokerKeyStatus {
 
 export type ClientStage = 'new_lead' | 'discovery_complete' | 'analysis_sent' | 'invoice_sent' | 'active' | 'retainer';
 
+export type ClientType = 'client' | 'self' | 'internal';
+
 export interface CrmClient {
   id: string;
   business_name: string;
   contact_name: string | null;
   contact_email: string | null;
   contact_phone: string | null;
+  /** 'client' (default) vs 'self' (the account's own business) vs
+   *  'internal' — a label only, doesn't change access or behavior; lets
+   *  the client selector and reports distinguish "a real client" from
+   *  "my own stuff" later. */
+  client_type: ClientType;
   stage: ClientStage;
   reveal_full_schedule: boolean;
   source: 'internal' | 'public';

@@ -48,6 +48,7 @@ import WebsiteBuilderRoadmapScreen from './components/screens/WebsiteBuilderRoad
 import InvoicingScreen from './components/screens/InvoicingScreen';
 import BudgetingScreen from './components/screens/BudgetingScreen';
 import MarketingScreen from './components/screens/MarketingScreen';
+import ContentCreationScreen from './components/screens/ContentCreationScreen';
 import DecisionLogScreen from './components/screens/DecisionLogScreen';
 import WeeklyReviewScreen from './components/screens/WeeklyReviewScreen';
 import CashFlowScreen from './components/screens/CashFlowScreen';
@@ -67,7 +68,7 @@ const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings',
-  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access',
+  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access',
 ];
 
 interface Props {
@@ -108,6 +109,13 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // instead. clientFocus is shared across both target screens (only one
   // is ever mounted at a time) and cleared once whichever one consumed it.
   const [clientFocus, setClientFocus] = useState<string | null>(null);
+  // The client-selector's own sticky pick — distinct from clientFocus
+  // above (that's a one-shot "jump to and consume" transfer, cleared the
+  // moment a screen reads it; this persists across navigation between
+  // every client-facing module until something explicitly changes or
+  // clears it). Lives here, not in a per-screen hook, since surviving an
+  // unmount/remount as the user switches modules is the entire point.
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const openInbox = (item?: InboxItem) => {
     if (item && item.kind !== 'mail' && item.clientId) {
       setClientFocus(item.clientId);
@@ -346,7 +354,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'delivery' && (
-          <ClientDeliveryScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onNavigate={actions.navigateTo} />
+          <ClientDeliveryScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onNavigate={actions.navigateTo} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} />
         )}
 
         {state.screen === 'support-inbox' && (
@@ -385,6 +393,8 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             homeSubStyle={vm.homeSubStyle}
             focusClientId={clientFocus}
             onClearFocus={() => setClientFocus(null)}
+            selectedClientId={selectedClientId}
+            onSelectClient={setSelectedClientId}
           />
         )}
 
@@ -395,6 +405,8 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             focusClientId={clientFocus}
             onClearFocus={() => setClientFocus(null)}
             onChanged={ownerInbox.reload}
+            selectedClientId={selectedClientId}
+            onSelectClient={setSelectedClientId}
           />
         )}
 
@@ -403,7 +415,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'brand-lab' && (
-          <BrandLabScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          <BrandLabScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} />
         )}
 
         {state.screen === 'idea-maker' && (
@@ -455,7 +467,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'invoicing' && (
-          <InvoicingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          <InvoicingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} />
         )}
 
         {state.screen === 'budgeting' && (
@@ -463,7 +475,11 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'marketing' && (
-          <MarketingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          <MarketingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} />
+        )}
+
+        {state.screen === 'content' && (
+          <ContentCreationScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} />
         )}
 
         {state.screen === 'decisions' && (

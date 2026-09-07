@@ -6,7 +6,7 @@ import { MODULE_REGISTRY } from './modules.config';
 // to the single 'dialing' module (Contacts is Dialing's supporting data,
 // not a separately-toggleable thing). Items with no entry here (home,
 // settings, codelab) are system-level and never gated.
-const NAV_ITEM_TO_MODULE: Record<string, string> = { content: 'content' };
+const NAV_ITEM_TO_MODULE: Record<string, string> = {};
 for (const m of MODULE_REGISTRY) {
   for (const route of m.routes) NAV_ITEM_TO_MODULE[route] = m.key;
 }
@@ -61,13 +61,13 @@ export const NAV_DATA: NavGroup[] = [
       { id: 'idea-maker', label: 'Idea Maker', icon: 'ph-lightbulb' },
       { id: 'invoicing', label: 'Invoicing', icon: 'ph-receipt' },
       { id: 'marketing', label: 'Marketing', icon: 'ph-megaphone' },
+      { id: 'content', label: 'Content Creation', icon: 'ph-video-camera' },
     ],
   },
   {
     group: 'Side Hustles',
     items: [
       { id: 'stocks', label: 'Stocks', icon: 'ph-chart-line-up' },
-      { id: 'content', label: 'Content Creation', icon: 'ph-video-camera' },
       { id: 'streaming', label: 'Streaming', icon: 'ph-video-camera' },
     ],
   },

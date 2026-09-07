@@ -3,10 +3,14 @@ import type { CSSProperties } from 'react';
 import { useMarketing } from '../../data/useMarketing';
 import type { AssetType, CampaignStatus, PipelineStage } from '../../data/useMarketing';
 import { askClaude, AiError } from '../../lib/ai';
+import { useClients } from '../../data/useClients';
+import ClientSelector from '../ClientSelector';
 
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
+  selectedClientId: string | null;
+  onSelectClient: (id: string | null) => void;
 }
 
 const inputStyle: CSSProperties = {
@@ -82,8 +86,9 @@ function AssetCard({ asset, onUpdate, onDelete }: { asset: { id: string; name: s
   );
 }
 
-export default function MarketingScreen({ homeHeadStyle, homeSubStyle }: Props) {
+export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedClientId, onSelectClient }: Props) {
   const m = useMarketing();
+  const clientsApi = useClients();
   const [assetFilter, setAssetFilter] = useState<AssetType | null>(null);
   const [newAssetName, setNewAssetName] = useState('');
   const [newAssetType, setNewAssetType] = useState<AssetType>('copy');
@@ -96,6 +101,18 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle }: Props) 
     <div>
       <div style={homeHeadStyle}>Marketing</div>
       <div style={homeSubStyle}>Assets, campaigns, and the content pipeline — owner-only.</div>
+
+      <div style={{ marginTop: 20 }}>
+        <ClientSelector
+          clients={clientsApi.clients}
+          loading={clientsApi.loading}
+          error={clientsApi.error}
+          selectedId={selectedClientId}
+          onSelect={onSelectClient}
+          onCreate={clientsApi.createClient}
+          emptyHint="Assets and campaigns below aren't scoped to a client yet — picking one here gets you set up for that."
+        />
+      </div>
 
       <div style={sectionTitle}>Assets</div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>

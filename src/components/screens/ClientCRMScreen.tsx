@@ -14,6 +14,13 @@ interface Props {
    *  once consumed, same pattern as ClientModulesScreen. */
   focusClientId?: string | null;
   onClearFocus?: () => void;
+  /** The sticky client-selector pick shared across every client-facing
+   *  module (Stage.tsx). This screen is "already scoped" per the rebuild
+   *  spec, so it doesn't render a second dropdown — it just stays in sync:
+   *  picking a client here updates the shared pick, landing with one
+   *  already set opens it, and backing out clears it. */
+  selectedClientId?: string | null;
+  onSelectClient?: (id: string | null) => void;
 }
 
 export const STAGES: { key: ClientStage; label: string }[] = [
@@ -127,17 +134,29 @@ function InvoiceSummary({ client }: { client: ReturnType<typeof useClientCRM>['c
   );
 }
 
-export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle, focusClientId, onClearFocus }: Props) {
+export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle, focusClientId, onClearFocus, selectedClientId, onSelectClient }: Props) {
   const crm = useClientCRM();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  // A single wrapper so every "open this client" spot (row click, new-client
+  // creation, transfer focus) also pushes the pick into the shared
+  // selector state — and "← All clients" (below) clears both.
+  const selectClient = (id: string | null) => {
+    setSelectedId(id);
+    onSelectClient?.(id);
+  };
+
   useEffect(() => {
     if (focusClientId) {
-      setSelectedId(focusClientId);
+      selectClient(focusClientId);
       onClearFocus?.();
+      return;
+    }
+    if (selectedClientId && selectedClientId !== selectedId) {
+      setSelectedId(selectedClientId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusClientId]);
+  }, [focusClientId, selectedClientId]);
   const [showNewClient, setShowNewClient] = useState(false);
   const [showQuestionAdmin, setShowQuestionAdmin] = useState(false);
   const [showTemplateAdmin, setShowTemplateAdmin] = useState(false);
@@ -173,7 +192,7 @@ export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle, focusClie
 
   const selected = crm.clients.find((c) => c.id === selectedId) ?? null;
   if (selected) {
-    return <ClientDetailView client={selected} crm={crm} onBack={() => setSelectedId(null)} homeHeadStyle={homeHeadStyle} homeSubStyle={homeSubStyle} />;
+    return <ClientDetailView client={selected} crm={crm} onBack={() => selectClient(null)} homeHeadStyle={homeHeadStyle} homeSubStyle={homeSubStyle} />;
   }
 
   const submitNewClient = async () => {
@@ -183,7 +202,7 @@ export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle, focusClie
     setEmail('');
     setPhone('');
     setShowNewClient(false);
-    if (c) setSelectedId(c.id);
+    if (c) selectClient(c.id);
   };
 
   const visible = stageFilter === 'all' ? crm.clients : crm.clients.filter((c) => c.stage === stageFilter);
@@ -228,7 +247,7 @@ export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle, focusClie
       <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 720 }}>
         {visible.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No clients in this stage yet.</div>}
         {visible.map((c) => (
-          <div key={c.id} style={{ ...cardStyle, padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, cursor: 'pointer' }} onClick={() => setSelectedId(c.id)}>
+          <div key={c.id} style={{ ...cardStyle, padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, cursor: 'pointer' }} onClick={() => selectClient(c.id)}>
             <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>{c.business_name}</div>
