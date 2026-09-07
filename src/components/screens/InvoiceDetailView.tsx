@@ -42,9 +42,13 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [sendProductSheet, setSendProductSheet] = useState(true);
-  const [showProductSheet, setShowProductSheet] = useState(false);
-
   const hasLineItems = !!invoice.line_items && invoice.line_items.length > 0;
+  // Shown by default for a bundled invoice — reviewing what's about to go
+  // out (invoice + the value comparison) is the point of landing here
+  // right after creating one, not something to click for. Still
+  // collapsible for anyone who doesn't want it taking up space on an old
+  // invoice they're just glancing at.
+  const [showProductSheet, setShowProductSheet] = useState(hasLineItems);
 
   const isDraft = invoice.status === 'draft';
   const isVoid = invoice.status === 'void';
