@@ -319,6 +319,9 @@ interface CreateInvoiceBody {
    *  client-side before send and just carried through here for the
    *  emailed copy. Null until "Generate personalized write-up" has run. */
   productSheetIntro?: string | null;
+  /** The Recurring Plan section's closing paragraph — same "carried
+   *  through for the emailed copy" reasoning as productSheetIntro above. */
+  recurringPlanOutro?: string | null;
   /** Best-effort — a failed product-sheet email never fails the invoice
    *  send itself, since the invoice is the part that actually matters. */
   sendProductSheet?: boolean;
@@ -341,7 +344,7 @@ function stripOngoingSuffix(label: string): string {
  *  than sent separately, so "here's what we're doing" and "here's what
  *  you'll also owe monthly going forward" arrive as one package. Returns
  *  '' when nothing on this invoice is actually recurring. */
-function buildRecurringPlanSection(clientName: string, lineItems: InvoiceLineItemInput[]): string {
+function buildRecurringPlanSection(clientName: string, lineItems: InvoiceLineItemInput[], outro: string | null): string {
   const recurring = lineItems.filter((li) => li.cadence === 'monthly' && li.ongoing_amount);
   if (recurring.length === 0) return '';
   const rows = recurring
@@ -354,6 +357,9 @@ function buildRecurringPlanSection(clientName: string, lineItems: InvoiceLineIte
     })
     .join('');
   const totalMonthly = recurring.reduce((sum, l) => sum + (l.ongoing_amount as number), 0);
+  const outroHtml = outro && outro.trim()
+    ? `<p style="margin-top:20px;line-height:1.6;color:#374151;white-space:pre-wrap">${outro.trim()}</p>`
+    : '';
   return [
     `<h3 style="margin-top:28px">What ${clientName} pays going forward</h3>`,
     // The headline number up top, before any explanation — same ordering
@@ -361,6 +367,7 @@ function buildRecurringPlanSection(clientName: string, lineItems: InvoiceLineIte
     `<p style="font-size:22px;font-weight:700;margin-top:8px">${money(totalMonthly)}<span style="font-size:15px;font-weight:600;color:#6b7280">/mo</span></p>`,
     `<p style="line-height:1.6">Today's invoice covers the upfront work. Starting next month, on top of that, you'll be billed monthly for:</p>`,
     rows,
+    outroHtml,
   ].join('');
 }
 
@@ -369,7 +376,7 @@ function buildRecurringPlanSection(clientName: string, lineItems: InvoiceLineIte
  *  ProductSheetDocument.tsx): what's being done and why it's a good deal,
  *  then how the owner works while teaching the client to eventually run
  *  it themselves. */
-function buildProductSheetHtml(businessName: string, clientName: string, lineItems: InvoiceLineItemInput[], teachingPhilosophy: string, productSheetIntro: string | null): string {
+function buildProductSheetHtml(businessName: string, clientName: string, lineItems: InvoiceLineItemInput[], teachingPhilosophy: string, productSheetIntro: string | null, recurringPlanOutro: string | null): string {
   // One-time/upfront items only — a monthly item is explained in the
   // recurring section below instead (alongside its real price), so
   // nothing's ever explained twice. No dollar amounts here at all: the
@@ -390,7 +397,7 @@ function buildProductSheetHtml(businessName: string, clientName: string, lineIte
   const intro = productSheetIntro && productSheetIntro.trim()
     ? `<p style="line-height:1.6;color:#374151">${productSheetIntro.trim()}</p>`
     : '';
-  const recurringSection = buildRecurringPlanSection(clientName, lineItems);
+  const recurringSection = buildRecurringPlanSection(clientName, lineItems, recurringPlanOutro);
   return [
     `<h2>What ${businessName} is doing for ${clientName}</h2>`,
     intro,
@@ -400,7 +407,7 @@ function buildProductSheetHtml(businessName: string, clientName: string, lineIte
   ].join('');
 }
 
-async function sendProductSheetEmail(env: ClientCrmEnv, to: string, businessName: string, clientName: string, lineItems: InvoiceLineItemInput[], teachingPhilosophy: string, productSheetIntro: string | null): Promise<boolean> {
+async function sendProductSheetEmail(env: ClientCrmEnv, to: string, businessName: string, clientName: string, lineItems: InvoiceLineItemInput[], teachingPhilosophy: string, productSheetIntro: string | null, recurringPlanOutro: string | null): Promise<boolean> {
   const fromEmail = env.MADEBYMARQUEZ_FROM_EMAIL || env.RESEND_FROM_EMAIL;
   if (!env.RESEND_API_KEY || !fromEmail) return false;
   try {
@@ -411,7 +418,7 @@ async function sendProductSheetEmail(env: ClientCrmEnv, to: string, businessName
         from: fromEmail,
         to: [to],
         subject: `What ${businessName} is doing for you`,
-        html: buildProductSheetHtml(businessName, clientName, lineItems, teachingPhilosophy, productSheetIntro),
+        html: buildProductSheetHtml(businessName, clientName, lineItems, teachingPhilosophy, productSheetIntro, recurringPlanOutro),
       }),
     });
     return res.ok;
@@ -653,7 +660,7 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
     if (body.sendProductSheet && body.lineItems && body.lineItems.length > 0) {
       const profileRes = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/business_profile?user_id=eq.${user.id}&select=business_name,teaching_philosophy`, { headers });
       const [profileRow] = (await profileRes.json().catch(() => [])) as { business_name: string | null; teaching_philosophy: string | null }[];
-      await sendProductSheetEmail(env, client.contact_email, profileRow?.business_name || 'Made by MARQ', client.business_name, body.lineItems, profileRow?.teaching_philosophy ?? '', body.productSheetIntro ?? null);
+      await sendProductSheetEmail(env, client.contact_email, profileRow?.business_name || 'Made by MARQ', client.business_name, body.lineItems, profileRow?.teaching_philosophy ?? '', body.productSheetIntro ?? null, body.recurringPlanOutro ?? null);
     }
 
     // Always, independent of the optional product-sheet email above — a

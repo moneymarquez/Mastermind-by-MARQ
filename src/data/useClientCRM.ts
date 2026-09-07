@@ -472,15 +472,14 @@ export function useClientCRM() {
    *  this app being reviewable, just extended to being directly editable
    *  too. `narratives` is keyed by line item index, only the indices
    *  actually being changed. */
-  const saveInvoiceWriteup = async (invoiceId: string, intro: string | null, narratives: Record<number, string | null>): Promise<boolean> => {
+  const saveInvoiceWriteup = async (invoiceId: string, intro: string | null, narratives: Record<number, string | null>, recurringOutro?: string | null): Promise<boolean> => {
     const client = clients.find((c) => c.invoices.some((i) => i.id === invoiceId));
     const invoice = client?.invoices.find((i) => i.id === invoiceId);
     if (!invoice || !invoice.line_items) return false;
     const lineItems = invoice.line_items.map((li, i) => (i in narratives ? { ...li, narrative: narratives[i] } : li));
-    const { error } = await supabase
-      .from('client_invoices')
-      .update({ product_sheet_intro: intro, line_items: lineItems, updated_at: new Date().toISOString() })
-      .eq('id', invoiceId);
+    const patch: Record<string, unknown> = { product_sheet_intro: intro, line_items: lineItems, updated_at: new Date().toISOString() };
+    if (recurringOutro !== undefined) patch.recurring_plan_outro = recurringOutro;
+    const { error } = await supabase.from('client_invoices').update(patch).eq('id', invoiceId);
     await load();
     return !error;
   };
@@ -509,6 +508,7 @@ export function useClientCRM() {
     invoiceId?: string;
     lineItems?: InvoiceLineItem[] | null;
     productSheetIntro?: string | null;
+    recurringPlanOutro?: string | null;
     sendProductSheet?: boolean;
   }) => {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -528,6 +528,7 @@ export function useClientCRM() {
         invoiceId: input.invoiceId,
         lineItems: input.lineItems ?? null,
         productSheetIntro: input.productSheetIntro ?? null,
+        recurringPlanOutro: input.recurringPlanOutro ?? null,
         sendProductSheet: !!input.sendProductSheet,
       }),
     });

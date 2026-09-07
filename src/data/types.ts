@@ -1211,6 +1211,11 @@ export interface ClientInvoice {
    *  discovery-audit answers. Null until generated; the sheet still reads
    *  fine without it (falls back to the per-item generic text only). */
   product_sheet_intro: string | null;
+  /** The Recurring Plan document's closing paragraph — how the engagement
+   *  winds down (e.g. a teaching-out timeline, when it becomes call-me-
+   *  if-anything-comes-up). Null until written; the doc still reads fine
+   *  without it. */
+  recurring_plan_outro: string | null;
   due_date: string | null;
   status: ClientInvoiceStatus;
   stripe_customer_id: string | null;

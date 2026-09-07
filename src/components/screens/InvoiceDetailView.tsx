@@ -56,6 +56,7 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
   const [editingWriteup, setEditingWriteup] = useState(false);
   const [introDraft, setIntroDraft] = useState('');
   const [narrativeDrafts, setNarrativeDrafts] = useState<Record<number, string>>({});
+  const [outroDraft, setOutroDraft] = useState('');
   const [savingWriteup, setSavingWriteup] = useState(false);
   const hasLineItems = !!invoice.line_items && invoice.line_items.length > 0;
   const hasNarrative = !!invoice.product_sheet_intro || !!invoice.line_items?.some((li) => li.narrative);
@@ -100,6 +101,7 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
         invoiceId: invoice.id,
         lineItems: invoice.line_items,
         productSheetIntro: invoice.product_sheet_intro,
+        recurringPlanOutro: invoice.recurring_plan_outro,
         sendProductSheet: hasLineItems && sendProductSheet,
       });
       onClose();
@@ -129,6 +131,7 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
     const drafts: Record<number, string> = {};
     (invoice.line_items ?? []).forEach((li, i) => { drafts[i] = li.narrative || li.description || ''; });
     setNarrativeDrafts(drafts);
+    setOutroDraft(invoice.recurring_plan_outro ?? '');
     setEditingWriteup(true);
   };
 
@@ -138,7 +141,7 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
     try {
       const narratives: Record<number, string | null> = {};
       for (const [i, text] of Object.entries(narrativeDrafts)) narratives[Number(i)] = text.trim() || null;
-      const ok = await crm.saveInvoiceWriteup(invoice.id, introDraft.trim() || null, narratives);
+      const ok = await crm.saveInvoiceWriteup(invoice.id, introDraft.trim() || null, narratives, outroDraft.trim() || null);
       if (!ok) { setNarrativeError('Could not save — try again.'); return; }
       setEditingWriteup(false);
     } catch {
@@ -299,6 +302,19 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
                   </div>
                 ))}
               </div>
+              {hasRecurring && (
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 5 }}>
+                    Recurring plan closing note — how this winds down (optional)
+                  </div>
+                  <textarea
+                    style={{ ...inputStyle, width: '100%', minHeight: 70, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                    placeholder="e.g. After month 4 you'll have everything you need to run this yourself — call me any time something comes up and I'll jump back in."
+                    value={outroDraft}
+                    onChange={(e) => setOutroDraft(e.target.value)}
+                  />
+                </div>
+              )}
               <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
                 <div style={{ ...primaryBtn, opacity: savingWriteup ? 0.6 : 1, pointerEvents: savingWriteup ? 'none' : 'auto' }} onClick={saveWriteup}>
                   {savingWriteup ? 'Saving…' : 'Save'}
@@ -335,6 +351,7 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
                 description: li.description,
                 narrative: li.narrative,
               }))}
+              outro={invoice.recurring_plan_outro}
               style={{ marginTop: 12 }}
             />
           )}

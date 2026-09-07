@@ -14,6 +14,10 @@ interface Item {
 interface Props {
   clientName: string;
   items: Item[];
+  /** How the engagement winds down — a teaching-out timeline, when it
+   *  becomes call-me-if-anything-comes-up, etc. Shown after the line
+   *  items when present; the doc reads fine without it. */
+  outro?: string | null;
   style?: CSSProperties;
 }
 
@@ -26,7 +30,7 @@ const micro: CSSProperties = { fontSize: 'var(--text-micro)', fontWeight: 700, l
  *  Built from the same bundled line items the invoice and Product Sheet
  *  use (InvoiceLineItem's cadence/ongoing_amount), filtered to the
  *  monthly ones — never a separate, invented number. */
-export default function RecurringPlanDocument({ clientName, items, style }: Props) {
+export default function RecurringPlanDocument({ clientName, items, outro, style }: Props) {
   const totalMonthly = items.reduce((sum, i) => sum + i.ongoingAmount, 0);
 
   return (
@@ -66,6 +70,12 @@ export default function RecurringPlanDocument({ clientName, items, style }: Prop
           );
         })}
       </div>
+
+      {outro && outro.trim() && (
+        <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 20, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+          {outro}
+        </div>
+      )}
     </div>
   );
 }
