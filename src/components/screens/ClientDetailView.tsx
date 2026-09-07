@@ -17,6 +17,9 @@ interface Props {
   onBack: () => void;
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
+  /** "Push to Marketing" entry point (schema_069) — jumps to Marketing with
+   *  this client selected and a fresh brief already open there. */
+  onPushToMarketing?: (clientId: string) => void;
 }
 
 type Tab = 'audit' | 'analysis' | 'pricing' | 'invoices' | 'reports' | 'portal' | 'sent';
@@ -37,7 +40,7 @@ function amountLabel(amount: number | null): string {
   return amount === null ? 'TBD' : money(amount);
 }
 
-export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, homeSubStyle }: Props) {
+export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, homeSubStyle, onPushToMarketing }: Props) {
   const [tab, setTab] = useState<Tab>(client.audit?.status === 'complete' ? 'analysis' : 'audit');
   const [nameDraft, setNameDraft] = useState(client.business_name);
   const [emailDraft, setEmailDraft] = useState(client.contact_email ?? '');
@@ -367,9 +370,14 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
           />
           <div style={homeSubStyle}>Stage: {STAGES.find((s) => s.key === client.stage)?.label}</div>
         </div>
-        <select style={{ ...selectStyle, width: 'auto' }} value={client.stage} onChange={(e) => crm.setStage(client.id, e.target.value as ClientStage)}>
-          {STAGES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
-        </select>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          {onPushToMarketing && (
+            <span style={ghostBtn} onClick={() => onPushToMarketing(client.id)}>Push to Marketing →</span>
+          )}
+          <select style={{ ...selectStyle, width: 'auto' }} value={client.stage} onChange={(e) => crm.setStage(client.id, e.target.value as ClientStage)}>
+            {STAGES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+          </select>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap', maxWidth: 640 }}>

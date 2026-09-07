@@ -116,6 +116,15 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // clears it). Lives here, not in a per-screen hook, since surviving an
   // unmount/remount as the user switches modules is the entire point.
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  // Entry point 2 of the brief (schema_069) — Client CRM's "Push to
+  // Marketing" button. One-shot like clientFocus: MarketingScreen creates
+  // the brief and clears this the moment it reads it.
+  const [pendingBriefClientId, setPendingBriefClientId] = useState<string | null>(null);
+  const pushToMarketing = (clientId: string) => {
+    setSelectedClientId(clientId);
+    setPendingBriefClientId(clientId);
+    actions.navigateTo('marketing');
+  };
   const openInbox = (item?: InboxItem) => {
     if (item && item.kind !== 'mail' && item.clientId) {
       setClientFocus(item.clientId);
@@ -395,6 +404,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             onClearFocus={() => setClientFocus(null)}
             selectedClientId={selectedClientId}
             onSelectClient={setSelectedClientId}
+            onPushToMarketing={pushToMarketing}
           />
         )}
 
@@ -475,7 +485,14 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'marketing' && (
-          <MarketingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} />
+          <MarketingScreen
+            homeHeadStyle={vm.homeHeadStyle}
+            homeSubStyle={vm.homeSubStyle}
+            selectedClientId={selectedClientId}
+            onSelectClient={setSelectedClientId}
+            pendingBriefClientId={pendingBriefClientId}
+            onConsumePendingBrief={() => setPendingBriefClientId(null)}
+          />
         )}
 
         {state.screen === 'content' && (

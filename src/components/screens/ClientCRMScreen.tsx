@@ -21,6 +21,9 @@ interface Props {
    *  already set opens it, and backing out clears it. */
   selectedClientId?: string | null;
   onSelectClient?: (id: string | null) => void;
+  /** "Push to Marketing" entry point (schema_069) — jumps to Marketing
+   *  with this client selected and a fresh brief already open. */
+  onPushToMarketing?: (clientId: string) => void;
 }
 
 export const STAGES: { key: ClientStage; label: string }[] = [
@@ -134,7 +137,7 @@ function InvoiceSummary({ client }: { client: ReturnType<typeof useClientCRM>['c
   );
 }
 
-export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle, focusClientId, onClearFocus, selectedClientId, onSelectClient }: Props) {
+export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle, focusClientId, onClearFocus, selectedClientId, onSelectClient, onPushToMarketing }: Props) {
   const crm = useClientCRM();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -192,7 +195,16 @@ export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle, focusClie
 
   const selected = crm.clients.find((c) => c.id === selectedId) ?? null;
   if (selected) {
-    return <ClientDetailView client={selected} crm={crm} onBack={() => selectClient(null)} homeHeadStyle={homeHeadStyle} homeSubStyle={homeSubStyle} />;
+    return (
+      <ClientDetailView
+        client={selected}
+        crm={crm}
+        onBack={() => selectClient(null)}
+        homeHeadStyle={homeHeadStyle}
+        homeSubStyle={homeSubStyle}
+        onPushToMarketing={onPushToMarketing}
+      />
+    );
   }
 
   const submitNewClient = async () => {

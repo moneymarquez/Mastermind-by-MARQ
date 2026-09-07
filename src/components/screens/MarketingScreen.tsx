@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useMarketing } from '../../data/useMarketing';
 import type { AssetType, CampaignStatus, PipelineStage } from '../../data/useMarketing';
+import { useMarketingBriefs } from '../../data/useMarketingBriefs';
+import MarketingBriefForm from './MarketingBriefForm';
 import { askClaude, AiError } from '../../lib/ai';
 import { useClients } from '../../data/useClients';
 import ClientSelector from '../ClientSelector';
@@ -13,6 +15,12 @@ interface Props {
   homeSubStyle: CSSProperties;
   selectedClientId: string | null;
   onSelectClient: (id: string | null) => void;
+  /** Set by Client CRM's "Push to Marketing" button (schema_069's second
+   *  entry point) — a client id whose first brief should be created and
+   *  opened immediately on arrival. One-shot: consumed and cleared the
+   *  moment this screen reads it, same pattern as Stage.tsx's clientFocus. */
+  pendingBriefClientId?: string | null;
+  onConsumePendingBrief?: () => void;
 }
 
 const inputStyle: CSSProperties = {
@@ -88,9 +96,10 @@ function AssetCard({ asset, onUpdate, onDelete }: { asset: { id: string; name: s
   );
 }
 
-export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedClientId, onSelectClient }: Props) {
+export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedClientId, onSelectClient, pendingBriefClientId, onConsumePendingBrief }: Props) {
   const m = useMarketing();
   const clientsApi = useClients();
+  const briefsApi = useMarketingBriefs();
   const [assetFilter, setAssetFilter] = useState<AssetType | null>(null);
   const [newAssetName, setNewAssetName] = useState('');
   const [newAssetType, setNewAssetType] = useState<AssetType>('copy');
@@ -98,8 +107,31 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
   const [newPipelineTitle, setNewPipelineTitle] = useState('');
   const [showReference, setShowReference] = useState(false);
   const [referenceTab, setReferenceTab] = useState<'fundamentals' | 'plays'>('fundamentals');
+  const [activeBriefId, setActiveBriefId] = useState<string | null>(null);
+  const [creatingBrief, setCreatingBrief] = useState(false);
 
   const filteredAssets = assetFilter ? m.assets.filter((a) => a.asset_type === assetFilter) : m.assets;
+  const clientBriefs = selectedClientId ? briefsApi.briefs.filter((b) => b.client_id === selectedClientId) : [];
+  const activeBrief = briefsApi.briefs.find((b) => b.id === activeBriefId) ?? null;
+
+  // Entry point 2 — Client CRM's "Push to Marketing" button. Fires once
+  // per push: create a fresh brief for that client, open it, then consume
+  // the pending flag so a later re-render (or navigating away and back)
+  // doesn't create a second one.
+  useEffect(() => {
+    if (!pendingBriefClientId) return;
+    onConsumePendingBrief?.();
+    briefsApi.createBrief(pendingBriefClientId).then((b) => { if (b) setActiveBriefId(b.id); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingBriefClientId]);
+
+  const startNewBrief = async () => {
+    if (!selectedClientId) return;
+    setCreatingBrief(true);
+    const b = await briefsApi.createBrief(selectedClientId);
+    setCreatingBrief(false);
+    if (b) setActiveBriefId(b.id);
+  };
 
   return (
     <div>
@@ -117,6 +149,54 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
           emptyHint="Assets and campaigns below aren't scoped to a client yet — picking one here gets you set up for that."
         />
       </div>
+
+      {selectedClientId && (
+        <>
+          <div style={sectionTitle}>Brief</div>
+          {activeBrief ? (
+            <MarketingBriefForm
+              brief={activeBrief}
+              onUpdate={(patch) => briefsApi.updateBrief(activeBrief.id, patch)}
+              onDelete={() => { briefsApi.removeBrief(activeBrief.id); setActiveBriefId(null); }}
+              onClose={() => setActiveBriefId(null)}
+            />
+          ) : (
+            <>
+              {briefsApi.error && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginBottom: 10 }}>{briefsApi.error}</div>}
+              {clientBriefs.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+                  {clientBriefs.map((b) => (
+                    <div key={b.id} style={{ ...cardStyle, padding: 14, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }} onClick={() => setActiveBriefId(b.id)}>
+                      <div>
+                        <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: 'var(--text)' }}>
+                          {b.goal || (b.primary_leak ? `${b.primary_leak[0].toUpperCase()}${b.primary_leak.slice(1)} leak` : 'Untitled brief')}
+                        </div>
+                        <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 3 }}>
+                          Updated {new Date(b.updated_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 'var(--text-micro)', fontWeight: 700, textTransform: 'uppercase', color: b.status === 'ready' ? 'var(--success)' : 'var(--text-tertiary)', border: `1px solid ${b.status === 'ready' ? 'var(--success)' : 'var(--border)'}`, borderRadius: 'var(--radius-pill)', padding: '3px 9px', flexShrink: 0 }}>
+                        {b.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {!briefsApi.loading && clientBriefs.length === 0 && (
+                <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', marginBottom: 14 }}>
+                  No brief yet for this client — nothing downstream (campaigns, assets, content) can be generated until one exists.
+                </div>
+              )}
+              <div
+                style={{ display: 'inline-block', padding: '9px 18px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: creatingBrief ? 'default' : 'pointer', opacity: creatingBrief ? 0.6 : 1 }}
+                onClick={() => !creatingBrief && startNewBrief()}
+              >
+                {creatingBrief ? 'Creating…' : '+ New brief'}
+              </div>
+            </>
+          )}
+        </>
+      )}
 
       <div style={sectionTitle}>Assets</div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
