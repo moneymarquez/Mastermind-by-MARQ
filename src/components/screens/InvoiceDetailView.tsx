@@ -53,6 +53,10 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
   const [sendProductSheet, setSendProductSheet] = useState(true);
   const [generatingNarrative, setGeneratingNarrative] = useState(false);
   const [narrativeError, setNarrativeError] = useState('');
+  const [editingWriteup, setEditingWriteup] = useState(false);
+  const [introDraft, setIntroDraft] = useState('');
+  const [narrativeDrafts, setNarrativeDrafts] = useState<Record<number, string>>({});
+  const [savingWriteup, setSavingWriteup] = useState(false);
   const hasLineItems = !!invoice.line_items && invoice.line_items.length > 0;
   const hasNarrative = !!invoice.product_sheet_intro || !!invoice.line_items?.some((li) => li.narrative);
   // The Product Sheet explains the one-time/upfront work only — a monthly
@@ -117,6 +121,30 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
       setNarrativeError('Could not generate a write-up — try again.');
     } finally {
       setGeneratingNarrative(false);
+    }
+  };
+
+  const openWriteupEditor = () => {
+    setIntroDraft(invoice.product_sheet_intro ?? '');
+    const drafts: Record<number, string> = {};
+    (invoice.line_items ?? []).forEach((li, i) => { drafts[i] = li.narrative || li.description || ''; });
+    setNarrativeDrafts(drafts);
+    setEditingWriteup(true);
+  };
+
+  const saveWriteup = async () => {
+    setSavingWriteup(true);
+    setNarrativeError('');
+    try {
+      const narratives: Record<number, string | null> = {};
+      for (const [i, text] of Object.entries(narrativeDrafts)) narratives[Number(i)] = text.trim() || null;
+      const ok = await crm.saveInvoiceWriteup(invoice.id, introDraft.trim() || null, narratives);
+      if (!ok) { setNarrativeError('Could not save — try again.'); return; }
+      setEditingWriteup(false);
+    } catch {
+      setNarrativeError('Could not save — try again.');
+    } finally {
+      setSavingWriteup(false);
     }
   };
 
@@ -226,35 +254,74 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
       {hasLineItems && (
         <div style={{ marginTop: 10, maxWidth: 560 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-            {hasProductSheetItems && (
+            {hasProductSheetItems && !editingWriteup && (
               <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }} onClick={() => setShowProductSheet((v) => !v)}>
                 {showProductSheet ? 'Hide product sheet' : 'View product sheet'}
               </span>
             )}
-            {isDraft && (
-              <span
-                style={{ fontSize: 'var(--text-small)', color: generatingNarrative ? 'var(--text-tertiary)' : 'var(--text-secondary)', cursor: generatingNarrative ? 'default' : 'pointer' }}
-                onClick={() => !generatingNarrative && generateNarrative()}
-              >
-                {generatingNarrative ? 'Writing…' : hasNarrative ? '✨ Regenerate personalized write-up' : '✨ Generate personalized write-up'}
-              </span>
+            {isDraft && !editingWriteup && (
+              <>
+                <span
+                  style={{ fontSize: 'var(--text-small)', color: generatingNarrative ? 'var(--text-tertiary)' : 'var(--text-secondary)', cursor: generatingNarrative ? 'default' : 'pointer' }}
+                  onClick={() => !generatingNarrative && generateNarrative()}
+                >
+                  {generatingNarrative ? 'Writing…' : hasNarrative ? '✨ Regenerate personalized write-up' : '✨ Generate personalized write-up'}
+                </span>
+                <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', cursor: 'pointer' }} onClick={openWriteupEditor}>
+                  Edit write-up
+                </span>
+              </>
             )}
           </div>
           {narrativeError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 6 }}>{narrativeError}</div>}
-          {hasProductSheetItems && showProductSheet && (
-            <ProductSheetDocument
-              from={business.business_name || undefined}
-              clientName={clientBusinessName}
-              intro={invoice.product_sheet_intro}
-              items={productSheetItems.map((li) => ({ label: li.label, description: li.description, narrative: li.narrative }))}
-              teachingPhilosophy={business.teaching_philosophy}
-              style={{ marginTop: 12 }}
-            />
+
+          {editingWriteup ? (
+            <div style={{ ...cardStyle, marginTop: 12 }}>
+              <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>Edit write-up</div>
+              <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 14 }}>
+                Fix anything Nova got wrong or that's changed since the discovery call — this is what actually shows on the product sheet and recurring plan.
+              </div>
+              <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 5 }}>Opening paragraph</div>
+              <textarea
+                style={{ ...inputStyle, width: '100%', minHeight: 90, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                value={introDraft}
+                onChange={(e) => setIntroDraft(e.target.value)}
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 16 }}>
+                {(invoice.line_items ?? []).map((li, i) => (
+                  <div key={i}>
+                    <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 5 }}>{stripOngoingSuffix(li.label)}</div>
+                    <textarea
+                      style={{ ...inputStyle, width: '100%', minHeight: 70, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                      value={narrativeDrafts[i] ?? ''}
+                      onChange={(e) => setNarrativeDrafts((d) => ({ ...d, [i]: e.target.value }))}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                <div style={{ ...primaryBtn, opacity: savingWriteup ? 0.6 : 1, pointerEvents: savingWriteup ? 'none' : 'auto' }} onClick={saveWriteup}>
+                  {savingWriteup ? 'Saving…' : 'Save'}
+                </div>
+                <div style={ghostBtn} onClick={() => !savingWriteup && setEditingWriteup(false)}>Cancel</div>
+              </div>
+            </div>
+          ) : (
+            hasProductSheetItems && showProductSheet && (
+              <ProductSheetDocument
+                from={business.business_name || undefined}
+                clientName={clientBusinessName}
+                intro={invoice.product_sheet_intro}
+                items={productSheetItems.map((li) => ({ label: li.label, description: li.description, narrative: li.narrative }))}
+                teachingPhilosophy={business.teaching_philosophy}
+                style={{ marginTop: 12 }}
+              />
+            )
           )}
         </div>
       )}
 
-      {hasRecurring && (
+      {hasRecurring && !editingWriteup && (
         <div style={{ marginTop: 10, maxWidth: 560 }}>
           <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }} onClick={() => setShowRecurringPlan((v) => !v)}>
             {showRecurringPlan ? 'Hide recurring plan' : 'View recurring plan'}

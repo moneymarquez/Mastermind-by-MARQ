@@ -464,6 +464,27 @@ export function useClientCRM() {
     return true;
   };
 
+  /** Hand-edits the write-up — the intro paragraph and/or any line item's
+   *  narrative — whether it was AI-generated or never touched at all.
+   *  Nova can get specifics wrong (stale audit answers, a detail that's
+   *  changed since the discovery call); this is the fix, not just
+   *  "regenerate and hope" — same reasoning as every other AI text in
+   *  this app being reviewable, just extended to being directly editable
+   *  too. `narratives` is keyed by line item index, only the indices
+   *  actually being changed. */
+  const saveInvoiceWriteup = async (invoiceId: string, intro: string | null, narratives: Record<number, string | null>): Promise<boolean> => {
+    const client = clients.find((c) => c.invoices.some((i) => i.id === invoiceId));
+    const invoice = client?.invoices.find((i) => i.id === invoiceId);
+    if (!invoice || !invoice.line_items) return false;
+    const lineItems = invoice.line_items.map((li, i) => (i in narratives ? { ...li, narrative: narratives[i] } : li));
+    const { error } = await supabase
+      .from('client_invoices')
+      .update({ product_sheet_intro: intro, line_items: lineItems, updated_at: new Date().toISOString() })
+      .eq('id', invoiceId);
+    await load();
+    return !error;
+  };
+
   const updateDraftInvoice = async (id: string, patch: Partial<Pick<ClientInvoice, 'description' | 'amount' | 'due_date'>>) => {
     await supabase.from('client_invoices').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id);
     await load();
@@ -677,6 +698,7 @@ export function useClientCRM() {
     createDraftInvoice,
     createBundledDraftInvoice,
     generateInvoiceNarrative,
+    saveInvoiceWriteup,
     updateDraftInvoice,
     removeDraftInvoice,
     generateInvoiceSchedule,
