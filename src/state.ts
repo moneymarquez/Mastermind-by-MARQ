@@ -7,6 +7,7 @@ import { useNovaPreferences } from './data/useNovaPreferences';
 import { startListening } from './lib/speech';
 import type { SpeechRecognizerHandle } from './lib/speech';
 import { getForcePortraitDirection } from './lib/orientationLock';
+import { MARKETING_101 } from './data/marketing101';
 
 const TONE_INSTRUCTIONS: Record<string, string> = {
   direct: 'Be blunt and to the point — skip the cushioning, say the real thing.',
@@ -232,6 +233,12 @@ export function useMastermindState() {
     const memoryFacts = (memoryRes.data ?? []).map((r) => r.fact);
     const activeNudges = (nudgesRes.data ?? []).map((r) => r.message);
 
+    // His own marketing training material — only worth the tokens when the
+    // conversation is actually happening somewhere marketing-relevant.
+    // Content Creation is included alongside Marketing since it's the same
+    // campaign work, per the Marketing rebuild's own framing of the two.
+    const onMarketingScreen = state.screen === 'marketing' || state.screen === 'content';
+
     let reply: string;
     try {
       reply = await askNova({
@@ -248,6 +255,11 @@ export function useMastermindState() {
           `He is currently on the "${state.screen}" screen — factor that in if relevant. ` +
           (memoryFacts.length ? `\n\nWhat you've learned about him so far:\n${memoryFacts.map((f) => `- ${f}`).join('\n')}` : '') +
           (activeNudges.length ? `\n\nActive nudges he hasn't dismissed (mention proactively if relevant to what he's asking):\n${activeNudges.map((n) => `- ${n}`).join('\n')}` : '') +
+          (onMarketingScreen
+            ? '\n\n--- His own marketing training material — use this as your grounding for any marketing question, ' +
+              'it is not generic advice, it is the standard he built and expects answers to follow ---\n\n' +
+              MARKETING_101.fundamentals + '\n\n' + MARKETING_101.plays
+            : '') +
           '\n\n' + (TONE_INSTRUCTIONS[tone] ?? TONE_INSTRUCTIONS.direct) +
           '\n\nIf anything he says suggests he may be in crisis or thinking about harming himself, set everything ' +
           'else in this conversation aside: say so directly, and give him the 988 Suicide & Crisis Lifeline (call ' +

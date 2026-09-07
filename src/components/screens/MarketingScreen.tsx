@@ -5,6 +5,8 @@ import type { AssetType, CampaignStatus, PipelineStage } from '../../data/useMar
 import { askClaude, AiError } from '../../lib/ai';
 import { useClients } from '../../data/useClients';
 import ClientSelector from '../ClientSelector';
+import { MARKETING_101 } from '../../data/marketing101';
+import MiniMarkdown from '../MiniMarkdown';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -94,6 +96,8 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
   const [newAssetType, setNewAssetType] = useState<AssetType>('copy');
   const [newCampaignName, setNewCampaignName] = useState('');
   const [newPipelineTitle, setNewPipelineTitle] = useState('');
+  const [showReference, setShowReference] = useState(false);
+  const [referenceTab, setReferenceTab] = useState<'fundamentals' | 'plays'>('fundamentals');
 
   const filteredAssets = assetFilter ? m.assets.filter((a) => a.asset_type === assetFilter) : m.assets;
 
@@ -217,6 +221,42 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
           </div>
         ))}
       </div>
+
+      <div style={sectionTitle}>Marketing 101</div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div
+          style={{ padding: '7px 14px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-small)', cursor: 'pointer', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+          onClick={() => setShowReference((v) => !v)}
+        >
+          {showReference ? 'Hide' : 'Show'} reference
+        </div>
+        {showReference && (
+          <>
+            <div
+              style={{ padding: '7px 14px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-small)', cursor: 'pointer', border: `1px solid ${referenceTab === 'fundamentals' ? 'var(--text)' : 'var(--border)'}`, color: referenceTab === 'fundamentals' ? 'var(--text)' : 'var(--text-secondary)' }}
+              onClick={() => setReferenceTab('fundamentals')}
+            >
+              Fundamentals
+            </div>
+            <div
+              style={{ padding: '7px 14px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-small)', cursor: 'pointer', border: `1px solid ${referenceTab === 'plays' ? 'var(--text)' : 'var(--border)'}`, color: referenceTab === 'plays' ? 'var(--text)' : 'var(--text-secondary)' }}
+              onClick={() => setReferenceTab('plays')}
+            >
+              The Plays
+            </div>
+          </>
+        )}
+      </div>
+      {!showReference && (
+        <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>
+          Your own marketing training material — diagnosis, offer, positioning, and channel playbooks. Nova can also draw on this here and in Content Creation.
+        </div>
+      )}
+      {showReference && (
+        <div style={{ ...cardStyle, maxWidth: 760 }}>
+          <MiniMarkdown text={referenceTab === 'fundamentals' ? MARKETING_101.fundamentals : MARKETING_101.plays} />
+        </div>
+      )}
     </div>
   );
 }
