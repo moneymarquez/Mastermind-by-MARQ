@@ -82,7 +82,11 @@ export async function leadflowLeads(request: Request, env: LeadflowEnv): Promise
 
     const params = url.searchParams;
     const qs = new URLSearchParams();
-    qs.set('select', '*');
+    // Overridable (default '*') so the bulk-import dedup pass can ask for
+    // just id,phone across the whole ~58k-row table without pulling every
+    // column — the same request 1000x over with select=* would be a lot
+    // of otherwise-unused bytes for a check that only needs one field.
+    qs.set('select', params.get('select') || '*');
     qs.set('order', 'id.desc');
     qs.set('limit', params.get('limit') ?? '50');
     qs.set('offset', params.get('offset') ?? '0');

@@ -8,13 +8,14 @@ import LeadFlowPlaybook from './leadflow/LeadFlowPlaybook';
 import LeadFlowReport from './leadflow/LeadFlowReport';
 import LeadFlowHistory from './leadflow/LeadFlowHistory';
 import LeadFlowMessages from './leadflow/LeadFlowMessages';
+import LeadFlowImport from './leadflow/LeadFlowImport';
 
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
 }
 
-type Tab = 'dashboard' | 'warroom' | 'leadpool' | 'leads' | 'playbook' | 'report' | 'history' | 'messages';
+type Tab = 'dashboard' | 'warroom' | 'leadpool' | 'leads' | 'playbook' | 'report' | 'history' | 'messages' | 'import';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊' },
@@ -25,6 +26,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'report', label: 'AI Sales Report', icon: '🤖' },
   { id: 'history', label: 'History', icon: '🕐' },
   { id: 'messages', label: 'Messages', icon: '💬' },
+  { id: 'import', label: 'Import', icon: '📥' },
 ];
 
 const GREEN = '#16a34a';
@@ -92,6 +94,7 @@ export default function LeadFlowScreen({ homeHeadStyle, homeSubStyle }: Props) {
           {tab === 'report' && <LeadFlowReport />}
           {tab === 'history' && <LeadFlowHistory />}
           {tab === 'messages' && <LeadFlowMessages />}
+          {tab === 'import' && <LeadFlowImport />}
         </div>
       </div>
     </div>

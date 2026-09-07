@@ -187,6 +187,111 @@ export function useLeadflowIndustryPool(industry: string) {
   return { pool, loading, notConnected, reload: load };
 }
 
+// Columns whose CSV text needs coercing before they'll actually match the
+// leads table's real column types — everything else passes through as a
+// trimmed string (or null if blank).
+const BOOL_COLUMNS = new Set(['social_media', 'pooled', 'in_pool', 'open_now']);
+const NUM_COLUMNS = new Set(['rating', 'review_count', 'price_level', 'yelp_rating', 'yelp_review_count', 'yelp_price']);
+
+function normalizePhone(phone: string): string {
+  return phone.replace(/\D/g, '');
+}
+
+/** Strips `id` (letting the table assign a fresh one — the source file's
+ *  ids are the *existing* table's own primary keys, not safe to replay)
+ *  and coerces known boolean/numeric columns out of their CSV string
+ *  form. Everything else passes through as-is (or null if blank). */
+function coerceRow(row: Record<string, string>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, raw] of Object.entries(row)) {
+    if (key === 'id') continue;
+    const value = raw.trim();
+    if (value === '') { out[key] = null; continue; }
+    if (BOOL_COLUMNS.has(key)) { out[key] = value.toLowerCase() === 'true'; continue; }
+    if (NUM_COLUMNS.has(key)) { const n = Number(value); out[key] = Number.isFinite(n) ? n : null; continue; }
+    out[key] = value;
+  }
+  return out;
+}
+
+export type ImportPhase = 'idle' | 'checking' | 'importing' | 'done' | 'error';
+
+export interface ImportProgress {
+  phase: ImportPhase;
+  existingChecked: number;
+  totalRows: number;
+  importedCount: number;
+  skippedCount: number;
+  noPhoneCount: number;
+  error: string;
+}
+
+const IMPORT_BATCH_SIZE = 300;
+const EXISTING_PAGE_SIZE = 1000;
+
+/** Bulk-imports a master CSV export into the shared LeadFlow pool.
+ *  Dedupes by phone number against the ENTIRE existing table (not just
+ *  what's loaded client-side) — there's no unique constraint on phone in
+ *  that table to lean on for a server-side upsert, so this fetches every
+ *  existing phone once, then only inserts rows whose normalized number
+ *  isn't already present (also deduping within the file itself, in case
+ *  the same lead appears twice in the export). A row with no phone at all
+ *  can't be deduped or usefully worked in Dialing, so it's skipped and
+ *  counted separately rather than imported un-dedupable. */
+export function useLeadflowImport() {
+  const [progress, setProgress] = useState<ImportProgress>({
+    phase: 'idle', existingChecked: 0, totalRows: 0, importedCount: 0, skippedCount: 0, noPhoneCount: 0, error: '',
+  });
+
+  const run = async (rows: Record<string, string>[]) => {
+    setProgress({ phase: 'checking', existingChecked: 0, totalRows: rows.length, importedCount: 0, skippedCount: 0, noPhoneCount: 0, error: '' });
+    try {
+      const existingPhones = new Set<string>();
+      for (let offset = 0; ; offset += EXISTING_PAGE_SIZE) {
+        const qs = new URLSearchParams({ select: 'phone', limit: String(EXISTING_PAGE_SIZE), offset: String(offset) });
+        const res = await authedFetch(`/api/leadflow/leads?${qs}`);
+        if (!res.ok) throw new Error(`Could not check existing leads (${res.status}).`);
+        const page = (await res.json()) as { phone: string | null }[];
+        for (const r of page) if (r.phone) existingPhones.add(normalizePhone(r.phone));
+        setProgress((p) => ({ ...p, existingChecked: p.existingChecked + page.length }));
+        if (page.length < EXISTING_PAGE_SIZE) break;
+      }
+
+      const toImport: Record<string, unknown>[] = [];
+      let skipped = 0;
+      let noPhone = 0;
+      for (const row of rows) {
+        const phoneDigits = row.phone ? normalizePhone(row.phone) : '';
+        if (!phoneDigits) { noPhone++; continue; }
+        if (existingPhones.has(phoneDigits)) { skipped++; continue; }
+        existingPhones.add(phoneDigits); // dedupe within the file too
+        toImport.push(coerceRow(row));
+      }
+
+      setProgress((p) => ({ ...p, phase: 'importing', skippedCount: skipped, noPhoneCount: noPhone }));
+
+      let imported = 0;
+      for (let i = 0; i < toImport.length; i += IMPORT_BATCH_SIZE) {
+        const batch = toImport.slice(i, i + IMPORT_BATCH_SIZE);
+        const res = await authedFetch('/api/leadflow/leads', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(batch),
+        });
+        if (!res.ok) throw new Error(`Import failed partway through, at row ${i} of ${toImport.length} (${res.status}). ${imported} leads were already saved before this.`);
+        imported += batch.length;
+        setProgress((p) => ({ ...p, importedCount: imported }));
+      }
+
+      setProgress((p) => ({ ...p, phase: 'done' }));
+    } catch (err) {
+      setProgress((p) => ({ ...p, phase: 'error', error: err instanceof Error ? err.message : 'Import failed.' }));
+    }
+  };
+
+  return { progress, run };
+}
+
 export function useLeadflowHistory() {
   const [history, setHistory] = useState<LeadflowHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
