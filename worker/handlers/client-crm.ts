@@ -290,6 +290,7 @@ interface InvoiceLineItemInput {
   amount: number;
   pricing_item_id: string | null;
   market_price: number | null;
+  description: string | null;
 }
 
 interface CreateInvoiceBody {
@@ -331,7 +332,10 @@ function buildProductSheetHtml(businessName: string, clientName: string, lineIte
       const compare = savings !== null
         ? `<div style="color:#6b7280;font-size:13px;margin-top:3px">Typically ${money(li.market_price as number)} elsewhere — you're paying ${money(li.amount)}, saving ${money(savings)}.</div>`
         : '';
-      return `<div style="padding:14px 0;border-bottom:1px solid #e5e7eb"><div style="display:flex;justify-content:space-between;gap:12px"><strong>${li.label}</strong><span>${money(li.amount)}</span></div>${compare}</div>`;
+      const description = li.description
+        ? `<div style="color:#374151;font-size:14px;margin-top:6px;line-height:1.5">${li.description}</div>`
+        : '';
+      return `<div style="padding:14px 0;border-bottom:1px solid #e5e7eb"><div style="display:flex;justify-content:space-between;gap:12px"><strong>${li.label}</strong><span>${money(li.amount)}</span></div>${description}${compare}</div>`;
     })
     .join('');
   const totalCharged = lineItems.reduce((sum, l) => sum + l.amount, 0);

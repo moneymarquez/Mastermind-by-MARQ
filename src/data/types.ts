@@ -1039,6 +1039,10 @@ export interface Service {
   /** What this typically costs from someone else — the Product Sheet's
    *  value-comparison line. Null means no comparison shown for it. */
   market_price: number | null;
+  /** Client-facing explanation of what this service is and why it
+   *  matters — the Product Sheet's per-item body text. Null means no
+   *  explanation shown for it. */
+  client_description: string | null;
   notes: string | null;
   sort_order: number;
   active: boolean;
@@ -1159,6 +1163,9 @@ export interface InvoiceLineItem {
   amount: number;
   pricing_item_id: string | null;
   market_price: number | null;
+  /** Client-facing explanation, snapshotted from the service catalog at
+   *  invoice-creation time — same reasoning as market_price. */
+  description: string | null;
 }
 
 export interface ClientInvoice {

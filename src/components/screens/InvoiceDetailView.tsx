@@ -195,7 +195,7 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
           {showProductSheet && (
             <ProductSheetDocument
               clientName={clientBusinessName}
-              items={invoice.line_items!.map((li) => ({ label: li.label, amount: li.amount, marketPrice: li.market_price }))}
+              items={invoice.line_items!.map((li) => ({ label: li.label, amount: li.amount, marketPrice: li.market_price, description: li.description }))}
               teachingPhilosophy={business.teaching_philosophy}
               style={{ marginTop: 12 }}
             />

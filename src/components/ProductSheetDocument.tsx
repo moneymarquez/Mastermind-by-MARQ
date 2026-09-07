@@ -5,6 +5,7 @@ interface Item {
   label: string;
   amount: number;
   marketPrice: number | null;
+  description: string | null;
 }
 
 interface Props {
@@ -47,6 +48,9 @@ export default function ProductSheetDocument({ from = 'Made by MARQ', clientName
                 <span style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>{item.label}</span>
                 <span style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>{money(item.amount)}</span>
               </div>
+              {item.description && (
+                <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>{item.description}</div>
+              )}
               {savings !== null && (
                 <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 4 }}>
                   Typically {money(item.marketPrice as number)} elsewhere — you're saving {money(savings)}.
