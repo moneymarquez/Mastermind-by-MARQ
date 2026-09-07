@@ -55,6 +55,11 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
   const [narrativeError, setNarrativeError] = useState('');
   const hasLineItems = !!invoice.line_items && invoice.line_items.length > 0;
   const hasNarrative = !!invoice.product_sheet_intro || !!invoice.line_items?.some((li) => li.narrative);
+  // The Product Sheet explains the one-time/upfront work only — a monthly
+  // item gets explained on the Recurring Plan instead (alongside its real
+  // price), so nothing's ever explained twice across the two documents.
+  const productSheetItems = (invoice.line_items ?? []).filter((li) => li.cadence !== 'monthly');
+  const hasProductSheetItems = productSheetItems.length > 0;
   const recurringItems = (invoice.line_items ?? []).filter((li) => li.cadence === 'monthly' && li.ongoing_amount);
   const hasRecurring = recurringItems.length > 0;
   // Shown by default for a bundled invoice — reviewing what's about to go
@@ -62,7 +67,7 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
   // right after creating one, not something to click for. Still
   // collapsible for anyone who doesn't want it taking up space on an old
   // invoice they're just glancing at.
-  const [showProductSheet, setShowProductSheet] = useState(hasLineItems);
+  const [showProductSheet, setShowProductSheet] = useState(hasProductSheetItems);
   const [showRecurringPlan, setShowRecurringPlan] = useState(hasRecurring);
 
   const isDraft = invoice.status === 'draft';
@@ -221,9 +226,11 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
       {hasLineItems && (
         <div style={{ marginTop: 10, maxWidth: 560 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }} onClick={() => setShowProductSheet((v) => !v)}>
-              {showProductSheet ? 'Hide product sheet' : 'View product sheet'}
-            </span>
+            {hasProductSheetItems && (
+              <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }} onClick={() => setShowProductSheet((v) => !v)}>
+                {showProductSheet ? 'Hide product sheet' : 'View product sheet'}
+              </span>
+            )}
             {isDraft && (
               <span
                 style={{ fontSize: 'var(--text-small)', color: generatingNarrative ? 'var(--text-tertiary)' : 'var(--text-secondary)', cursor: generatingNarrative ? 'default' : 'pointer' }}
@@ -234,12 +241,12 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
             )}
           </div>
           {narrativeError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 6 }}>{narrativeError}</div>}
-          {showProductSheet && (
+          {hasProductSheetItems && showProductSheet && (
             <ProductSheetDocument
               from={business.business_name || undefined}
               clientName={clientBusinessName}
               intro={invoice.product_sheet_intro}
-              items={invoice.line_items!.map((li) => ({ label: li.label, amount: li.amount, marketPrice: li.market_price, description: li.description, narrative: li.narrative }))}
+              items={productSheetItems.map((li) => ({ label: li.label, description: li.description, narrative: li.narrative }))}
               teachingPhilosophy={business.teaching_philosophy}
               style={{ marginTop: 12 }}
             />

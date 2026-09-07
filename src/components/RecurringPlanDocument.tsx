@@ -34,7 +34,15 @@ export default function RecurringPlanDocument({ clientName, items, style }: Prop
       <div style={{ fontSize: 'var(--text-display)', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--text)' }}>
         What {clientName} pays going forward
       </div>
-      <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.6 }}>
+
+      {/* The headline number up top, before any explanation — "here's the
+          monthly amount," then "here's why," not the other way around. */}
+      <div style={{ marginTop: 16, padding: '18px 20px', borderRadius: 'var(--radius-md)', background: 'var(--surface-4)' }}>
+        <div style={micro}>Total going forward</div>
+        <div style={{ fontSize: 'var(--text-display)', fontWeight: 700, color: 'var(--text)', marginTop: 4 }}>{money(totalMonthly)}<span style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text-tertiary)' }}>/mo</span></div>
+      </div>
+
+      <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)', marginTop: 16, lineHeight: 1.6 }}>
         Today's invoice covers the upfront work. Starting next month, on top of that, you'll be billed monthly for:
       </div>
 
@@ -57,11 +65,6 @@ export default function RecurringPlanDocument({ clientName, items, style }: Prop
             </div>
           );
         })}
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16, padding: '14px 16px', borderRadius: 'var(--radius-md)', background: 'var(--surface-4)' }}>
-        <span style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Total going forward</span>
-        <span style={{ fontSize: 'var(--text-body)', fontWeight: 700, color: 'var(--text)' }}>{money(totalMonthly)}/mo</span>
       </div>
     </div>
   );

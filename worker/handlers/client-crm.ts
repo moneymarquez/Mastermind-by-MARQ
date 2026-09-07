@@ -356,9 +356,11 @@ function buildRecurringPlanSection(clientName: string, lineItems: InvoiceLineIte
   const totalMonthly = recurring.reduce((sum, l) => sum + (l.ongoing_amount as number), 0);
   return [
     `<h3 style="margin-top:28px">What ${clientName} pays going forward</h3>`,
+    // The headline number up top, before any explanation — same ordering
+    // as the in-app RecurringPlanDocument.
+    `<p style="font-size:22px;font-weight:700;margin-top:8px">${money(totalMonthly)}<span style="font-size:15px;font-weight:600;color:#6b7280">/mo</span></p>`,
     `<p style="line-height:1.6">Today's invoice covers the upfront work. Starting next month, on top of that, you'll be billed monthly for:</p>`,
     rows,
-    `<p style="margin-top:16px"><strong>Total going forward: ${money(totalMonthly)}/mo</strong></p>`,
   ].join('');
 }
 
@@ -368,25 +370,20 @@ function buildRecurringPlanSection(clientName: string, lineItems: InvoiceLineIte
  *  then how the owner works while teaching the client to eventually run
  *  it themselves. */
 function buildProductSheetHtml(businessName: string, clientName: string, lineItems: InvoiceLineItemInput[], teachingPhilosophy: string, productSheetIntro: string | null): string {
+  // One-time/upfront items only — a monthly item is explained in the
+  // recurring section below instead (alongside its real price), so
+  // nothing's ever explained twice. No dollar amounts here at all: the
+  // price is already on the invoice itself.
   const rows = lineItems
+    .filter((li) => li.cadence !== 'monthly')
     .map((li) => {
-      const savings = li.market_price !== null && li.market_price > li.amount ? li.market_price - li.amount : null;
-      const compare = savings !== null
-        ? `<div style="color:#6b7280;font-size:13px;margin-top:3px">Typically ${money(li.market_price as number)} elsewhere — you're paying ${money(li.amount)}, saving ${money(savings)}.</div>`
-        : '';
       const bodyText = li.narrative || li.description;
       const description = bodyText
         ? `<div style="color:#374151;font-size:14px;margin-top:6px;line-height:1.5">${bodyText}</div>`
         : '';
-      return `<div style="padding:14px 0;border-bottom:1px solid #e5e7eb"><div style="display:flex;justify-content:space-between;gap:12px"><strong>${li.label}</strong><span>${money(li.amount)}</span></div>${description}${compare}</div>`;
+      return `<div style="padding:14px 0;border-bottom:1px solid #e5e7eb"><strong>${li.label}</strong>${description}</div>`;
     })
     .join('');
-  const totalCharged = lineItems.reduce((sum, l) => sum + l.amount, 0);
-  const totalMarket = lineItems.reduce((sum, l) => sum + (l.market_price ?? l.amount), 0);
-  const totalSavings = totalMarket - totalCharged;
-  const savingsLine = totalSavings > 0
-    ? `<p style="margin-top:16px"><strong>Total value: ${money(totalMarket)} — you're paying ${money(totalCharged)}, a savings of ${money(totalSavings)}.</strong></p>`
-    : '';
   const philosophy = teachingPhilosophy.trim()
     ? `<h3 style="margin-top:28px">How I work</h3><p style="line-height:1.6">${teachingPhilosophy.trim().replace(/\n/g, '<br/>')}</p>`
     : '';
@@ -398,7 +395,6 @@ function buildProductSheetHtml(businessName: string, clientName: string, lineIte
     `<h2>What ${businessName} is doing for ${clientName}</h2>`,
     intro,
     rows,
-    savingsLine,
     recurringSection,
     philosophy,
   ].join('');
