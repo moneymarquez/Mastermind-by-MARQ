@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { useMarketing } from '../../data/useMarketing';
 import type { AssetType, CampaignStatus, PipelineStage } from '../../data/useMarketing';
 import { useMarketingBriefs } from '../../data/useMarketingBriefs';
+import type { MarketingBrief } from '../../data/useMarketingBriefs';
 import MarketingBriefForm from './MarketingBriefForm';
 import { askClaude, AiError } from '../../lib/ai';
 import { useClients } from '../../data/useClients';
@@ -21,6 +22,8 @@ interface Props {
    *  moment this screen reads it, same pattern as Stage.tsx's clientFocus. */
   pendingBriefClientId?: string | null;
   onConsumePendingBrief?: () => void;
+  /** Opens the Nova panel and sends it a pre-composed prompt (Stage.tsx). */
+  onAskNova?: (promptText: string) => void;
 }
 
 const inputStyle: CSSProperties = {
@@ -96,7 +99,41 @@ function AssetCard({ asset, onUpdate, onDelete }: { asset: { id: string; name: s
   );
 }
 
-export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedClientId, onSelectClient, pendingBriefClientId, onConsumePendingBrief }: Props) {
+// Every real field from the brief, handed to Nova as plain facts — not a
+// summary it has to infer from. The client_id/brief_id are spelled out
+// explicitly so a write_data call it makes afterward can stamp them
+// exactly, rather than guessing or looking them up itself.
+function composeBriefPrompt(brief: MarketingBrief, clientName: string): string {
+  const lines: string[] = [];
+  lines.push(`Build a marketing campaign for ${clientName} from this brief. (client_id: ${brief.client_id}, brief_id: ${brief.id})`);
+  if (brief.primary_leak) lines.push(`Leak we're fixing: ${brief.primary_leak}`);
+  if (brief.goal) lines.push(`Goal: ${brief.goal}`);
+  if (brief.budget_amount != null) lines.push(`Budget: $${brief.budget_amount}${brief.budget_period ? ` / ${brief.budget_period}` : ''}`);
+  if (brief.budget_notes) lines.push(`Budget notes: ${brief.budget_notes}`);
+  if (brief.timeline) lines.push(`Timeline: ${brief.timeline}`);
+  if (brief.target_audience) lines.push(`Audience: ${brief.target_audience}`);
+  if (brief.positioning_statement) lines.push(`Positioning: ${brief.positioning_statement}`);
+  if (brief.must_avoid) lines.push(`Must avoid: ${brief.must_avoid}`);
+  if (brief.avg_transaction_value != null) lines.push(`Avg transaction value: $${brief.avg_transaction_value}`);
+  if (brief.repeat_customer_pct != null) lines.push(`Repeat customers: ${brief.repeat_customer_pct}%`);
+  if (brief.customer_ltv_notes) lines.push(`Customer LTV: ${brief.customer_ltv_notes}`);
+  if (brief.revenue_sources) lines.push(`Current sources of business: ${brief.revenue_sources}`);
+  if (brief.last_price_change) lines.push(`Pricing: ${brief.last_price_change}`);
+  if (brief.gross_margin) lines.push(`Gross margin: ${brief.gross_margin}`);
+  if (brief.competitor_diff) lines.push(`Vs. competitor: ${brief.competitor_diff}`);
+  if (brief.contact_to_customer_rate) lines.push(`Contact-to-customer rate: ${brief.contact_to_customer_rate}`);
+  if (brief.capacity_constraint) lines.push(`Capacity: ${brief.capacity_constraint}`);
+  if (brief.biggest_constraint) lines.push(`Biggest constraint: ${brief.biggest_constraint}`);
+  lines.push('');
+  lines.push(
+    "Using Marketing 101, diagnose whether the leak above is really the right one to fix first, recommend channels that fit it and the budget, " +
+    'then walk me through the plan. Once I say go, create a marketing_campaigns row (with this client_id and brief_id, a real name, and notes) ' +
+    'and a few marketing_content_pipeline ideas (same client_id and brief_id) to kick it off.',
+  );
+  return lines.join('\n');
+}
+
+export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedClientId, onSelectClient, pendingBriefClientId, onConsumePendingBrief, onAskNova }: Props) {
   const m = useMarketing();
   const clientsApi = useClients();
   const briefsApi = useMarketingBriefs();
@@ -110,9 +147,17 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
   const [activeBriefId, setActiveBriefId] = useState<string | null>(null);
   const [creatingBrief, setCreatingBrief] = useState(false);
 
-  const filteredAssets = assetFilter ? m.assets.filter((a) => a.asset_type === assetFilter) : m.assets;
+  // Scoped to the selected client when one's picked; otherwise the
+  // pre-client-selector "unscoped" bucket (client_id null) — see
+  // schema_070. Never a mix of the two, so picking a client actually
+  // means something here now instead of being a no-op shell.
+  const scopedAssets = m.assets.filter((a) => a.client_id === selectedClientId);
+  const filteredAssets = assetFilter ? scopedAssets.filter((a) => a.asset_type === assetFilter) : scopedAssets;
+  const scopedCampaigns = m.campaigns.filter((c) => c.client_id === selectedClientId);
+  const scopedPipeline = m.pipeline.filter((p) => p.client_id === selectedClientId);
   const clientBriefs = selectedClientId ? briefsApi.briefs.filter((b) => b.client_id === selectedClientId) : [];
   const activeBrief = briefsApi.briefs.find((b) => b.id === activeBriefId) ?? null;
+  const selectedClientName = clientsApi.clients.find((c) => c.id === selectedClientId)?.business_name ?? '';
 
   // Entry point 2 — Client CRM's "Push to Marketing" button. Fires once
   // per push: create a fresh brief for that client, open it, then consume
@@ -146,7 +191,7 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
           selectedId={selectedClientId}
           onSelect={onSelectClient}
           onCreate={clientsApi.createClient}
-          emptyHint="Assets and campaigns below aren't scoped to a client yet — picking one here gets you set up for that."
+          emptyHint="Assets, campaigns, and the pipeline below are scoped to whichever client is picked here."
         />
       </div>
 
@@ -159,6 +204,7 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
               onUpdate={(patch) => briefsApi.updateBrief(activeBrief.id, patch)}
               onDelete={() => { briefsApi.removeBrief(activeBrief.id); setActiveBriefId(null); }}
               onClose={() => setActiveBriefId(null)}
+              onBuildWithNova={onAskNova ? () => onAskNova(composeBriefPrompt(activeBrief, selectedClientName)) : undefined}
             />
           ) : (
             <>
@@ -214,7 +260,7 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
         </select>
         <div
           style={{ padding: '9px 18px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer' }}
-          onClick={async () => { if (!newAssetName.trim()) return; await m.addAsset({ name: newAssetName.trim(), asset_type: newAssetType }); setNewAssetName(''); }}
+          onClick={async () => { if (!newAssetName.trim()) return; await m.addAsset({ name: newAssetName.trim(), asset_type: newAssetType, client_id: selectedClientId }); setNewAssetName(''); }}
         >
           Add asset
         </div>
@@ -231,13 +277,13 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
         <input style={{ ...inputStyle, flex: 1, minWidth: 160 }} placeholder="Campaign name" value={newCampaignName} onChange={(e) => setNewCampaignName(e.target.value)} />
         <div
           style={{ padding: '9px 18px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer' }}
-          onClick={async () => { if (!newCampaignName.trim()) return; await m.addCampaign({ name: newCampaignName.trim(), status: 'planned' }); setNewCampaignName(''); }}
+          onClick={async () => { if (!newCampaignName.trim()) return; await m.addCampaign({ name: newCampaignName.trim(), status: 'planned', client_id: selectedClientId }); setNewCampaignName(''); }}
         >
           Add campaign
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {m.campaigns.map((c) => (
+        {scopedCampaigns.map((c) => (
           <div key={c.id} style={cardStyle}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
               <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)' }}>{c.name}</div>
@@ -266,7 +312,7 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
             />
           </div>
         ))}
-        {!m.loading && m.campaigns.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No campaigns yet.</div>}
+        {!m.loading && scopedCampaigns.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No campaigns yet.</div>}
       </div>
 
       <div style={sectionTitle}>Content pipeline</div>
@@ -274,7 +320,7 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
         <input style={{ ...inputStyle, flex: 1 }} placeholder="New content idea" value={newPipelineTitle} onChange={(e) => setNewPipelineTitle(e.target.value)} />
         <div
           style={{ padding: '9px 18px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer' }}
-          onClick={async () => { if (!newPipelineTitle.trim()) return; await m.addPipelineItem(newPipelineTitle.trim()); setNewPipelineTitle(''); }}
+          onClick={async () => { if (!newPipelineTitle.trim()) return; await m.addPipelineItem(newPipelineTitle.trim(), selectedClientId); setNewPipelineTitle(''); }}
         >
           Add idea
         </div>
@@ -284,7 +330,7 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
           <div key={stage}>
             <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: 8 }}>{STAGE_LABEL[stage]}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {m.pipeline.filter((p) => p.stage === stage).map((p) => (
+              {scopedPipeline.filter((p) => p.stage === stage).map((p) => (
                 <div key={p.id} style={{ ...cardStyle, padding: 12 }}>
                   <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: 'var(--text)' }}>{p.title}</div>
                   <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>

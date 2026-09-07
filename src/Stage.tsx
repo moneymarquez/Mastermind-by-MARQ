@@ -125,6 +125,15 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
     setPendingBriefClientId(clientId);
     actions.navigateTo('marketing');
   };
+  // "Build this with Nova" (Marketing) / "Ask Nova for next steps"
+  // (Content Creation) — opens the panel and sends the pre-composed
+  // prompt as if the user typed it, same real send path sendNova always
+  // uses, so Nova's tool access and Marketing/Content 101 grounding
+  // (state.ts's onMarketingScreen/onContentScreen) apply exactly as normal.
+  const askNovaWithPrompt = (promptText: string) => {
+    actions.openNova();
+    actions.sendNova(promptText);
+  };
   const openInbox = (item?: InboxItem) => {
     if (item && item.kind !== 'mail' && item.clientId) {
       setClientFocus(item.clientId);
@@ -492,11 +501,18 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             onSelectClient={setSelectedClientId}
             pendingBriefClientId={pendingBriefClientId}
             onConsumePendingBrief={() => setPendingBriefClientId(null)}
+            onAskNova={askNovaWithPrompt}
           />
         )}
 
         {state.screen === 'content' && (
-          <ContentCreationScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} />
+          <ContentCreationScreen
+            homeHeadStyle={vm.homeHeadStyle}
+            homeSubStyle={vm.homeSubStyle}
+            selectedClientId={selectedClientId}
+            onSelectClient={setSelectedClientId}
+            onAskNova={askNovaWithPrompt}
+          />
         )}
 
         {state.screen === 'decisions' && (

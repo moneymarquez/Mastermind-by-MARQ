@@ -7,6 +7,10 @@ interface Props {
   onUpdate: (patch: MarketingBriefPatch) => void;
   onDelete: () => void;
   onClose: () => void;
+  /** Opens Nova with this brief's data already handed to it — undefined
+   *  when the caller has no way to reach Nova (shouldn't normally happen,
+   *  but the button just doesn't render rather than no-op). */
+  onBuildWithNova?: () => void;
 }
 
 const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 20 };
@@ -55,7 +59,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
  *  diagnostic questions or a direct campaign-framing need, not an invented
  *  shape. Saves per-field on blur (same pattern as the rest of this app's
  *  forms), so there's no separate "save" step to forget. */
-export default function MarketingBriefForm({ brief, onUpdate, onDelete, onClose }: Props) {
+export default function MarketingBriefForm({ brief, onUpdate, onDelete, onClose, onBuildWithNova }: Props) {
   const [draft, setDraft] = useState(brief);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
@@ -93,6 +97,10 @@ export default function MarketingBriefForm({ brief, onUpdate, onDelete, onClose 
           )}
         </div>
       </div>
+
+      {onBuildWithNova && (
+        <div style={{ ...primaryBtn, marginTop: 16, display: 'inline-block' }} onClick={onBuildWithNova}>Build this with Nova</div>
+      )}
 
       <div style={subhead}>Which leak is this fixing?</div>
       <div style={subheadNote}>Diagnose first — the doc's own rule. Pick the one whose test actually matches this client.</div>

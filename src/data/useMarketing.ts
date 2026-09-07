@@ -12,6 +12,7 @@ export interface MarketingAsset {
   content: string | null;
   external_url: string | null;
   tags: string[];
+  client_id: string | null;
   updated_at: string;
 }
 
@@ -23,6 +24,12 @@ export interface MarketingCampaign {
   metrics: Record<string, number>;
   start_date: string | null;
   end_date: string | null;
+  /** Which client this campaign is for, and the brief it was built from —
+   *  both nullable (schema_070) since campaigns predate the client
+   *  selector and could still be added unscoped from a screen with no
+   *  client picked. */
+  client_id: string | null;
+  brief_id: string | null;
 }
 
 export interface PipelineItem {
@@ -32,6 +39,8 @@ export interface PipelineItem {
   content: string | null;
   scheduled_date: string | null;
   notes: string | null;
+  client_id: string | null;
+  brief_id: string | null;
 }
 
 // Every table here is RLS-locked to is_owner(auth.uid()) as well as
@@ -63,7 +72,7 @@ export function useMarketing() {
     load();
   }, [load]);
 
-  const addAsset = async (input: { name: string; asset_type: AssetType; content?: string; external_url?: string; tags?: string[] }) => {
+  const addAsset = async (input: { name: string; asset_type: AssetType; content?: string; external_url?: string; tags?: string[]; client_id?: string | null }) => {
     await supabase.from('marketing_assets').insert({ ...input, updated_at: new Date().toISOString() });
     await load();
   };
@@ -76,7 +85,7 @@ export function useMarketing() {
     await load();
   };
 
-  const addCampaign = async (input: { name: string; status: CampaignStatus; notes?: string; start_date?: string | null; end_date?: string | null }) => {
+  const addCampaign = async (input: { name: string; status: CampaignStatus; notes?: string; start_date?: string | null; end_date?: string | null; client_id?: string | null; brief_id?: string | null }) => {
     await supabase.from('marketing_campaigns').insert(input);
     await load();
   };
@@ -89,8 +98,8 @@ export function useMarketing() {
     await load();
   };
 
-  const addPipelineItem = async (title: string) => {
-    await supabase.from('marketing_content_pipeline').insert({ title, stage: 'idea' });
+  const addPipelineItem = async (title: string, clientId?: string | null) => {
+    await supabase.from('marketing_content_pipeline').insert({ title, stage: 'idea', client_id: clientId ?? null });
     await load();
   };
   const updatePipelineItem = async (id: string, patch: Partial<Pick<PipelineItem, 'stage' | 'content' | 'notes' | 'scheduled_date'>>) => {
