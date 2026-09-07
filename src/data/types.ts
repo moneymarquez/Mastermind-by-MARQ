@@ -1173,6 +1173,18 @@ export interface InvoiceLineItem {
    *  Product Sheet, since it says the same kind of thing but grounded in
    *  their actual situation. */
   narrative: string | null;
+  /** Snapshotted from the pricing item at invoice-creation time — which
+   *  kind of charge this line actually is, independent of what got typed
+   *  into `amount` for this specific invoice. */
+  cadence: PricingCadence;
+  /** The pricing item's real ongoing monthly rate at creation time —
+   *  distinct from `amount` (what THIS invoice charges), since a monthly
+   *  item can be charged a one-off lump sum on its first invoice (see
+   *  the "(ongoing $X/mo after this)" label disclosure). Null for a
+   *  one_time item. Powers the Recurring Plan document: "starting next
+   *  month you'll also be billed monthly for X" — read from here, never
+   *  re-derived from the label text. */
+  ongoing_amount: number | null;
 }
 
 export interface ClientInvoice {

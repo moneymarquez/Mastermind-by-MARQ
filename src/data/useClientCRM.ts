@@ -407,7 +407,11 @@ export function useClientCRM() {
       const svc = p.service_id ? services.find((s) => s.id === p.service_id) : undefined;
       const discloseOngoing = p.cadence === 'monthly' && p.amount !== null && chargeAmount !== p.amount;
       const label = discloseOngoing ? `${p.label} (ongoing $${p.amount}/mo after this)` : p.label;
-      return { label, amount: chargeAmount, pricing_item_id: p.id, market_price: svc?.market_price ?? null, description: svc?.client_description ?? null, narrative: null };
+      return {
+        label, amount: chargeAmount, pricing_item_id: p.id,
+        market_price: svc?.market_price ?? null, description: svc?.client_description ?? null, narrative: null,
+        cadence: p.cadence, ongoing_amount: p.cadence === 'monthly' ? p.amount : null,
+      };
     });
     const description = lineItems.map((l) => l.label).join(' + ');
     const amount = lineItems.reduce((sum, l) => sum + l.amount, 0);

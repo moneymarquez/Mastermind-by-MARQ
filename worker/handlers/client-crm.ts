@@ -292,6 +292,8 @@ interface InvoiceLineItemInput {
   market_price: number | null;
   description: string | null;
   narrative: string | null;
+  cadence: 'one_time' | 'monthly';
+  ongoing_amount: number | null;
 }
 
 interface CreateInvoiceBody {
@@ -326,6 +328,40 @@ function money(n: number): string {
   return `$${n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
+// Mirrors src/components/screens/InvoiceDetailView.tsx's stripOngoingSuffix
+// — the recurring-plan section below IS that disclosure, spelled out with
+// its own $/mo column, so repeating it inline on every row is redundant.
+function stripOngoingSuffix(label: string): string {
+  return label.replace(/\s*\(ongoing \$[\d,.]+\/mo after this\)$/, '');
+}
+
+/** The emailed twin of src/components/RecurringPlanDocument.tsx — same
+ *  data (the invoice's own line items, filtered to monthly cadence with a
+ *  real ongoing rate), appended into the same product-sheet email rather
+ *  than sent separately, so "here's what we're doing" and "here's what
+ *  you'll also owe monthly going forward" arrive as one package. Returns
+ *  '' when nothing on this invoice is actually recurring. */
+function buildRecurringPlanSection(clientName: string, lineItems: InvoiceLineItemInput[]): string {
+  const recurring = lineItems.filter((li) => li.cadence === 'monthly' && li.ongoing_amount);
+  if (recurring.length === 0) return '';
+  const rows = recurring
+    .map((li) => {
+      const bodyText = li.narrative || li.description;
+      const description = bodyText
+        ? `<div style="color:#374151;font-size:14px;margin-top:6px;line-height:1.5">${bodyText}</div>`
+        : '';
+      return `<div style="padding:14px 0;border-bottom:1px solid #e5e7eb"><div style="display:flex;justify-content:space-between;gap:12px"><strong>${stripOngoingSuffix(li.label)}</strong><span>${money(li.ongoing_amount as number)}/mo</span></div>${description}</div>`;
+    })
+    .join('');
+  const totalMonthly = recurring.reduce((sum, l) => sum + (l.ongoing_amount as number), 0);
+  return [
+    `<h3 style="margin-top:28px">What ${clientName} pays going forward</h3>`,
+    `<p style="line-height:1.6">Today's invoice covers the upfront work. Starting next month, on top of that, you'll be billed monthly for:</p>`,
+    rows,
+    `<p style="margin-top:16px"><strong>Total going forward: ${money(totalMonthly)}/mo</strong></p>`,
+  ].join('');
+}
+
 /** Plain HTML, no React — this runs in the Worker, not the browser. Same
  *  content shape as the in-app ProductSheetDocument (src/components/
  *  ProductSheetDocument.tsx): what's being done and why it's a good deal,
@@ -357,11 +393,13 @@ function buildProductSheetHtml(businessName: string, clientName: string, lineIte
   const intro = productSheetIntro && productSheetIntro.trim()
     ? `<p style="line-height:1.6;color:#374151">${productSheetIntro.trim()}</p>`
     : '';
+  const recurringSection = buildRecurringPlanSection(clientName, lineItems);
   return [
     `<h2>What ${businessName} is doing for ${clientName}</h2>`,
     intro,
     rows,
     savingsLine,
+    recurringSection,
     philosophy,
   ].join('');
 }

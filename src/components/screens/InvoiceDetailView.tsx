@@ -5,6 +5,7 @@ import type { ClientInvoice } from '../../data/types';
 import { cardStyle, inputStyle, primaryBtn, ghostBtn } from './ClientCRMScreen';
 import InvoiceDocument from '../InvoiceDocument';
 import ProductSheetDocument from '../ProductSheetDocument';
+import RecurringPlanDocument from '../RecurringPlanDocument';
 import { useBusinessProfile } from '../../data/useBusinessProfile';
 
 interface Props {
@@ -16,6 +17,14 @@ interface Props {
 
 function money(n: number): string {
   return `$${n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
+// Strips the "(ongoing $X/mo after this)" suffix createBundledDraftInvoice
+// adds to a monthly item's label when this invoice charges something
+// other than its stored rate — redundant on the Recurring Plan doc,
+// which IS that disclosure, spelled out with its own $/mo column.
+function stripOngoingSuffix(label: string): string {
+  return label.replace(/\s*\(ongoing \$[\d,.]+\/mo after this\)$/, '');
 }
 
 function statusColor(status: ClientInvoice['status']): string {
@@ -46,12 +55,15 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
   const [narrativeError, setNarrativeError] = useState('');
   const hasLineItems = !!invoice.line_items && invoice.line_items.length > 0;
   const hasNarrative = !!invoice.product_sheet_intro || !!invoice.line_items?.some((li) => li.narrative);
+  const recurringItems = (invoice.line_items ?? []).filter((li) => li.cadence === 'monthly' && li.ongoing_amount);
+  const hasRecurring = recurringItems.length > 0;
   // Shown by default for a bundled invoice — reviewing what's about to go
   // out (invoice + the value comparison) is the point of landing here
   // right after creating one, not something to click for. Still
   // collapsible for anyone who doesn't want it taking up space on an old
   // invoice they're just glancing at.
   const [showProductSheet, setShowProductSheet] = useState(hasLineItems);
+  const [showRecurringPlan, setShowRecurringPlan] = useState(hasRecurring);
 
   const isDraft = invoice.status === 'draft';
   const isVoid = invoice.status === 'void';
@@ -235,6 +247,26 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
         </div>
       )}
 
+      {hasRecurring && (
+        <div style={{ marginTop: 10, maxWidth: 560 }}>
+          <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }} onClick={() => setShowRecurringPlan((v) => !v)}>
+            {showRecurringPlan ? 'Hide recurring plan' : 'View recurring plan'}
+          </span>
+          {showRecurringPlan && (
+            <RecurringPlanDocument
+              clientName={clientBusinessName}
+              items={recurringItems.map((li) => ({
+                label: stripOngoingSuffix(li.label),
+                ongoingAmount: li.ongoing_amount as number,
+                description: li.description,
+                narrative: li.narrative,
+              }))}
+              style={{ marginTop: 12 }}
+            />
+          )}
+        </div>
+      )}
+
       <div style={{ ...cardStyle, marginTop: 16, maxWidth: 560 }}>
         {isDraft || editingSent ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -253,7 +285,7 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
             {hasLineItems && isDraft && (
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                 <input type="checkbox" checked={sendProductSheet} onChange={(e) => setSendProductSheet(e.target.checked)} />
-                Also email the product sheet to {clientBusinessName}
+                Also email {hasRecurring ? 'the product sheet & recurring plan' : 'the product sheet'} to {clientBusinessName}
               </label>
             )}
 
