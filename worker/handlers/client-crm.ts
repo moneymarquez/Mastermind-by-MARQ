@@ -420,6 +420,52 @@ async function sendProductSheetEmail(env: ClientCrmEnv, to: string, businessName
   }
 }
 
+// Sent to his own inbox (invoice@madebymarquez.com — the address already
+// established above for "Invoice replies + receipts", see
+// src/data/inboxAddresses.ts) the moment Stripe confirms the send, so
+// every real invoice send gets a visible copy in the app's own Support
+// Inbox to check against — a second, independent notification, not a
+// change to how Stripe emails the client. Best-effort exactly like
+// sendProductSheetEmail: never blocks the invoice response, silently
+// no-ops if Resend or madebymarquez.com aren't configured yet.
+async function sendInvoiceCopyEmail(
+  env: ClientCrmEnv,
+  businessName: string,
+  description: string,
+  amount: number,
+  dueDate: string | null,
+  hostedInvoiceUrl: string | null,
+  invoiceNumber: string | null,
+  lineItems: InvoiceLineItemInput[] | null,
+): Promise<boolean> {
+  const fromEmail = env.MADEBYMARQUEZ_FROM_EMAIL || env.RESEND_FROM_EMAIL;
+  if (!env.RESEND_API_KEY || !fromEmail) return false;
+  const money = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  const lines = lineItems && lineItems.length > 0
+    ? `<ul>${lineItems.map((li) => `<li>${li.label} — ${money(li.amount)}</li>`).join('')}</ul>`
+    : `<p>${description} — ${money(amount)}</p>`;
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: ['invoice@madebymarquez.com'],
+        subject: `Invoice sent — ${businessName}${invoiceNumber ? ` #${invoiceNumber}` : ''} — ${money(amount)}`,
+        html: [
+          `<p>Just sent to <strong>${businessName}</strong>:</p>`,
+          lines,
+          `<p>Total: <strong>${money(amount)}</strong>${dueDate ? ` — due ${dueDate}` : ''}</p>`,
+          hostedInvoiceUrl ? `<p><a href="${hostedInvoiceUrl}">View the invoice Stripe sent them</a></p>` : '',
+        ].join(''),
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 async function stripeRequest(env: ClientCrmEnv, path: string, body: Record<string, string>): Promise<Record<string, unknown>> {
   const params = new URLSearchParams(body);
   const res = await fetch(`${STRIPE_API}${path}`, {
@@ -609,6 +655,20 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
       const [profileRow] = (await profileRes.json().catch(() => [])) as { business_name: string | null; teaching_philosophy: string | null }[];
       await sendProductSheetEmail(env, client.contact_email, profileRow?.business_name || 'Made by MARQ', client.business_name, body.lineItems, profileRow?.teaching_philosophy ?? '', body.productSheetIntro ?? null);
     }
+
+    // Always, independent of the optional product-sheet email above — a
+    // copy of every real invoice send, so it's checkable in the Support
+    // Inbox right after going out.
+    await sendInvoiceCopyEmail(
+      env,
+      client.business_name,
+      description,
+      amount,
+      body.dueDate ?? null,
+      (sent.hosted_invoice_url as string | undefined) ?? null,
+      (sent.number as string | undefined) ?? null,
+      body.lineItems ?? null,
+    );
 
     return json(row);
   } catch (err) {
