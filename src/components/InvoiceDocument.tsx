@@ -13,6 +13,10 @@ interface Props {
   billTo: string;
   description: string;
   amount: number | null;
+  /** Present for a bundled invoice — renders one row per item instead of
+   *  the single description/amount row. Total still comes from `amount`
+   *  (the summed total), not re-derived here. */
+  lineItems?: { label: string; amount: number }[] | null;
   dueDate: string | null;
   invoiceNumber?: number;
   status?: ClientInvoiceStatus;
@@ -50,7 +54,7 @@ function statusStyle(status: ClientInvoiceStatus): CSSProperties {
  *  closing note — versus the single low-contrast card this used to be. */
 export default function InvoiceDocument({
   from = 'Made by MARQ', businessAddress, businessEmail, businessPhone, businessWebsite,
-  billTo, description, amount, dueDate, invoiceNumber, status, paidAt, style,
+  billTo, description, amount, lineItems, dueDate, invoiceNumber, status, paidAt, style,
 }: Props) {
   const amt = amount !== null && amount > 0 ? money(amount) : '—';
   const hasContact = businessAddress || businessEmail || businessPhone || businessWebsite;
@@ -91,10 +95,19 @@ export default function InvoiceDocument({
           <span style={micro}>Description</span>
           <span style={micro}>Amount</span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
-          <span style={{ fontSize: 'var(--text-body)', color: 'var(--text)', flex: 1 }}>{description || 'Untitled line item'}</span>
-          <span style={{ fontSize: 'var(--text-body)', color: 'var(--text)' }}>{amt}</span>
-        </div>
+        {lineItems && lineItems.length > 0 ? (
+          lineItems.map((li, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+              <span style={{ fontSize: 'var(--text-body)', color: 'var(--text)', flex: 1 }}>{li.label || 'Untitled line item'}</span>
+              <span style={{ fontSize: 'var(--text-body)', color: 'var(--text)' }}>{money(li.amount)}</span>
+            </div>
+          ))
+        ) : (
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+            <span style={{ fontSize: 'var(--text-body)', color: 'var(--text)', flex: 1 }}>{description || 'Untitled line item'}</span>
+            <span style={{ fontSize: 'var(--text-body)', color: 'var(--text)' }}>{amt}</span>
+          </div>
+        )}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>

@@ -68,6 +68,15 @@ function BusinessProfilePanel() {
           <input style={inputStyle} placeholder="Business email" value={draft.business_email} onChange={(e) => { setDraft({ ...draft, business_email: e.target.value }); setSaved(false); }} />
           <input style={inputStyle} placeholder="Business phone" value={draft.business_phone} onChange={(e) => { setDraft({ ...draft, business_phone: e.target.value }); setSaved(false); }} />
           <input style={inputStyle} placeholder="Website" value={draft.website} onChange={(e) => { setDraft({ ...draft, website: e.target.value }); setSaved(false); }} />
+          <div>
+            <div style={fieldLabel}>Teaching philosophy — how you work while teaching a client to eventually run it themselves. Reused on every Product Sheet.</div>
+            <textarea
+              style={{ ...inputStyle, width: '100%', minHeight: 90, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+              placeholder="e.g. I don't just run your marketing — every month I walk you through what worked and why, so..."
+              value={draft.teaching_philosophy}
+              onChange={(e) => { setDraft({ ...draft, teaching_philosophy: e.target.value }); setSaved(false); }}
+            />
+          </div>
           {error && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--danger)' }}>Couldn't save: {error}</div>}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ ...primaryBtn, opacity: saving ? 0.6 : 1 }} onClick={() => !saving && doSave()}>{saving ? 'Saving…' : 'Save'}</div>

@@ -67,6 +67,10 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
   const [invoiceDue, setInvoiceDue] = useState('');
   const [creatingDraft, setCreatingDraft] = useState(false);
   const [draftError, setDraftError] = useState('');
+  const [bundleSelected, setBundleSelected] = useState<Set<string>>(new Set());
+  const [bundleDue, setBundleDue] = useState('');
+  const [creatingBundle, setCreatingBundle] = useState(false);
+  const [bundleError, setBundleError] = useState('');
   const [scheduleStart, setScheduleStart] = useState(() => new Date().toISOString().slice(0, 10));
   const [generatingSchedule, setGeneratingSchedule] = useState(false);
   const [scheduleResult, setScheduleResult] = useState('');
@@ -203,6 +207,36 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
       setDraftError(err instanceof Error ? err.message : 'Could not create the draft.');
     } finally {
       setCreatingDraft(false);
+    }
+  };
+
+  const toggleBundleItem = (id: string) => {
+    setBundleSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const bundleItems = client.pricingItems.filter((p) => bundleSelected.has(p.id) && p.amount !== null);
+  const bundleTotal = bundleItems.reduce((sum, p) => sum + (p.amount as number), 0);
+
+  const createBundle = async () => {
+    if (bundleItems.length === 0) return;
+    setCreatingBundle(true);
+    setBundleError('');
+    try {
+      const created = await crm.createBundledDraftInvoice(client.id, [...bundleSelected], bundleDue || null);
+      if (!created) throw new Error('Could not create the bundled draft.');
+      setBundleSelected(new Set());
+      setBundleDue('');
+      setSelectedInvoiceId(created.id);
+      setTab('invoices');
+    } catch (err) {
+      setBundleError(err instanceof Error ? err.message : 'Could not create the bundled draft.');
+    } finally {
+      setCreatingBundle(false);
     }
   };
 
@@ -722,6 +756,34 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                 </div>
               </div>
               {scheduleResult && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 8 }}>{scheduleResult}</div>}
+            </div>
+          )}
+
+          {client.pricingItems.some((p) => p.amount !== null) && (
+            <div style={{ ...cardStyle, marginBottom: 16 }}>
+              <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Create a bundled invoice</div>
+              <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>
+                Check off everything you'll be doing for him and it all lands on one invoice, itemized — plus a Product Sheet showing what each piece is worth.
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
+                {client.pricingItems.filter((p) => p.amount !== null).map((p) => (
+                  <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-body-sm)', color: 'var(--text)', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={bundleSelected.has(p.id)} onChange={() => toggleBundleItem(p.id)} />
+                    <span style={{ flex: 1 }}>{p.label}</span>
+                    <span style={{ color: 'var(--text-tertiary)' }}>{money(p.amount as number)}</span>
+                  </label>
+                ))}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
+                <input style={inputStyle} type="date" value={bundleDue} onChange={(e) => setBundleDue(e.target.value)} />
+                <div
+                  style={{ ...primaryBtn, pointerEvents: creatingBundle || bundleItems.length === 0 ? 'none' : 'auto', opacity: creatingBundle || bundleItems.length === 0 ? 0.5 : 1 }}
+                  onClick={createBundle}
+                >
+                  {creatingBundle ? 'Creating…' : bundleItems.length > 0 ? `Create invoice — ${bundleItems.length} item${bundleItems.length === 1 ? '' : 's'}, ${money(bundleTotal)}` : 'Select items above'}
+                </div>
+              </div>
+              {bundleError && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginTop: 8 }}>{bundleError}</div>}
             </div>
           )}
 

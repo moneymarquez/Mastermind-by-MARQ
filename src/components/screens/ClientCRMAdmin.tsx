@@ -154,6 +154,7 @@ export function ServiceCatalogAdmin({ crm, onClose, homeHeadStyle, homeSubStyle 
   const [priceType, setPriceType] = useState<PricingCadence>('one_time');
   const [price, setPrice] = useState('');
   const [priceDraft, setPriceDraft] = useState<Record<string, string>>({});
+  const [marketPriceDraft, setMarketPriceDraft] = useState<Record<string, string>>({});
 
   const categories = [...new Set(crm.services.map((s) => s.category))];
 
@@ -198,6 +199,20 @@ export function ServiceCatalogAdmin({ crm, onClose, homeHeadStyle, homeSubStyle 
                         if (priceDraft[s.id] !== undefined && Number.isFinite(n) && n >= 0 && n !== s.default_price) {
                           crm.updateService(s.id, { default_price: n });
                         }
+                      }}
+                    />
+                    {/* Elsewhere-price for the Product Sheet's value comparison — blank means no comparison shown for this line. */}
+                    <input
+                      style={{ ...inputStyle, width: 82, padding: '6px 9px', fontSize: 'var(--text-small)' }}
+                      placeholder="Elsewhere $"
+                      value={marketPriceDraft[s.id] ?? (s.market_price !== null ? String(s.market_price) : '')}
+                      onChange={(e) => setMarketPriceDraft((d) => ({ ...d, [s.id]: e.target.value }))}
+                      onBlur={() => {
+                        const raw = marketPriceDraft[s.id];
+                        if (raw === undefined) return;
+                        if (raw.trim() === '') { if (s.market_price !== null) crm.updateService(s.id, { market_price: null }); return; }
+                        const n = Number(raw);
+                        if (Number.isFinite(n) && n >= 0 && n !== s.market_price) crm.updateService(s.id, { market_price: n });
                       }}
                     />
                     <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.updateService(s.id, { active: !s.active })}>

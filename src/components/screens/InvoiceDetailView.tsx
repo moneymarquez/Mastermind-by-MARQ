@@ -4,6 +4,7 @@ import type { useClientCRM } from '../../data/useClientCRM';
 import type { ClientInvoice } from '../../data/types';
 import { cardStyle, inputStyle, primaryBtn, ghostBtn } from './ClientCRMScreen';
 import InvoiceDocument from '../InvoiceDocument';
+import ProductSheetDocument from '../ProductSheetDocument';
 import { useBusinessProfile } from '../../data/useBusinessProfile';
 
 interface Props {
@@ -40,6 +41,10 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [sendProductSheet, setSendProductSheet] = useState(true);
+  const [showProductSheet, setShowProductSheet] = useState(false);
+
+  const hasLineItems = !!invoice.line_items && invoice.line_items.length > 0;
 
   const isDraft = invoice.status === 'draft';
   const isVoid = invoice.status === 'void';
@@ -65,6 +70,8 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
         amount: Number(amount) || invoice.amount,
         dueDate: dueDate || null,
         invoiceId: invoice.id,
+        lineItems: invoice.line_items,
+        sendProductSheet: hasLineItems && sendProductSheet,
       });
       onClose();
     } catch (err) {
@@ -168,12 +175,29 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
         billTo={clientBusinessName}
         description={isDraft || editingSent ? desc : invoice.description}
         amount={isDraft || editingSent ? (Number(amount) > 0 ? Number(amount) : null) : invoice.amount}
+        lineItems={invoice.line_items}
         dueDate={isDraft || editingSent ? (dueDate || null) : invoice.due_date}
         invoiceNumber={invoice.invoice_number}
         status={isDraft || editingSent ? undefined : invoice.status}
         paidAt={invoice.paid_at}
         style={{ marginTop: 20, maxWidth: 560 }}
       />
+
+      {hasLineItems && (
+        <div style={{ marginTop: 10, maxWidth: 560 }}>
+          <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }} onClick={() => setShowProductSheet((v) => !v)}>
+            {showProductSheet ? 'Hide product sheet' : 'View product sheet'}
+          </span>
+          {showProductSheet && (
+            <ProductSheetDocument
+              clientName={clientBusinessName}
+              items={invoice.line_items!.map((li) => ({ label: li.label, amount: li.amount, marketPrice: li.market_price }))}
+              teachingPhilosophy={business.teaching_philosophy}
+              style={{ marginTop: 12 }}
+            />
+          )}
+        </div>
+      )}
 
       <div style={{ ...cardStyle, marginTop: 16, maxWidth: 560 }}>
         {isDraft || editingSent ? (
@@ -189,6 +213,13 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
               <input style={inputStyle} type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} onBlur={() => isDraft && saveDraftField({ due_date: dueDate || null })} />
             </div>
             {isDraft && <div style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)' }}>Autosaved as you edit — nothing is sent to Stripe until you hit Send.</div>}
+
+            {hasLineItems && isDraft && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                <input type="checkbox" checked={sendProductSheet} onChange={(e) => setSendProductSheet(e.target.checked)} />
+                Also email the product sheet to {clientBusinessName}
+              </label>
+            )}
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 6, flexWrap: 'wrap' }}>
               <div style={{ ...primaryBtn, pointerEvents: busy ? 'none' : 'auto', opacity: busy ? 0.6 : 1 }} onClick={editingSent ? reopenAsDraft : send}>

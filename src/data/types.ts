@@ -1036,6 +1036,9 @@ export interface Service {
   name: string;
   price_type: PricingCadence;
   default_price: number;
+  /** What this typically costs from someone else — the Product Sheet's
+   *  value-comparison line. Null means no comparison shown for it. */
+  market_price: number | null;
   notes: string | null;
   sort_order: number;
   active: boolean;
@@ -1147,6 +1150,17 @@ export interface ClientReportNote {
 
 export type ClientInvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'void';
 
+/** One priced line on a bundled invoice — `market_price` is snapshotted
+ *  from the catalog at invoice-creation time, not read live, so a later
+ *  catalog price change never retroactively changes what an already-sent
+ *  invoice or Product Sheet shows. */
+export interface InvoiceLineItem {
+  label: string;
+  amount: number;
+  pricing_item_id: string | null;
+  market_price: number | null;
+}
+
 export interface ClientInvoice {
   id: string;
   client_id: string;
@@ -1154,6 +1168,11 @@ export interface ClientInvoice {
   sequence_index: number;
   description: string;
   amount: number;
+  /** Present only for an invoice created by bundling multiple pricing
+   *  items into one — null for the plain single-item invoices this app
+   *  has always made, which still render fine off description/amount
+   *  alone. */
+  line_items: InvoiceLineItem[] | null;
   due_date: string | null;
   status: ClientInvoiceStatus;
   stripe_customer_id: string | null;

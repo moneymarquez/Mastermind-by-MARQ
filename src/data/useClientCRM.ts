@@ -9,6 +9,7 @@ import type {
   ClientPricingItem,
   ClientStage,
   CrmClient,
+  InvoiceLineItem,
   PricingCadence,
   PricingTemplateItem,
   Service,
@@ -249,7 +250,7 @@ export function useClientCRM() {
 
   const updateService = async (
     id: string,
-    patch: Partial<Pick<Service, 'category' | 'name' | 'price_type' | 'default_price' | 'notes' | 'active'>>,
+    patch: Partial<Pick<Service, 'category' | 'name' | 'price_type' | 'default_price' | 'market_price' | 'notes' | 'active'>>,
   ) => {
     await supabase.from('services').update(patch).eq('id', id);
     await load();
@@ -372,6 +373,44 @@ export function useClientCRM() {
     return data as ClientInvoice | null;
   };
 
+  /** Bundles several pricing items (the checkboxes on the Invoices tab)
+   *  into ONE draft invoice instead of one-at-a-time. `description`/
+   *  `amount` become the joined-labels summary every existing list/
+   *  schedule view already reads; `line_items` carries the real
+   *  breakdown for the actual document and the Product Sheet. Each
+   *  line's market_price is looked up from the catalog via the pricing
+   *  item's service_id, snapshotted now rather than read live later. */
+  const createBundledDraftInvoice = async (clientId: string, pricingItemIds: string[], dueDate?: string | null) => {
+    const client = clients.find((c) => c.id === clientId);
+    if (!client) return null;
+    const items = client.pricingItems.filter((p) => pricingItemIds.includes(p.id) && p.amount !== null);
+    if (items.length === 0) return null;
+
+    const lineItems: InvoiceLineItem[] = items.map((p) => {
+      const svc = p.service_id ? services.find((s) => s.id === p.service_id) : undefined;
+      return { label: p.label, amount: p.amount as number, pricing_item_id: p.id, market_price: svc?.market_price ?? null };
+    });
+    const description = lineItems.map((l) => l.label).join(' + ');
+    const amount = lineItems.reduce((sum, l) => sum + l.amount, 0);
+
+    const { data } = await supabase
+      .from('client_invoices')
+      .insert({
+        client_id: clientId,
+        pricing_item_id: null,
+        sequence_index: 1,
+        description,
+        amount,
+        line_items: lineItems,
+        due_date: dueDate ?? null,
+        status: 'draft',
+      })
+      .select()
+      .single();
+    await load();
+    return data as ClientInvoice | null;
+  };
+
   const updateDraftInvoice = async (id: string, patch: Partial<Pick<ClientInvoice, 'description' | 'amount' | 'due_date'>>) => {
     await supabase.from('client_invoices').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id);
     await load();
@@ -394,6 +433,8 @@ export function useClientCRM() {
     amount: number;
     dueDate?: string | null;
     invoiceId?: string;
+    lineItems?: InvoiceLineItem[] | null;
+    sendProductSheet?: boolean;
   }) => {
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
@@ -410,6 +451,8 @@ export function useClientCRM() {
         amount: input.amount,
         dueDate: input.dueDate ?? null,
         invoiceId: input.invoiceId,
+        lineItems: input.lineItems ?? null,
+        sendProductSheet: !!input.sendProductSheet,
       }),
     });
     if (!res.ok) {
@@ -577,6 +620,7 @@ export function useClientCRM() {
     removePricingItem,
     setRevealSchedule,
     createDraftInvoice,
+    createBundledDraftInvoice,
     updateDraftInvoice,
     removeDraftInvoice,
     generateInvoiceSchedule,

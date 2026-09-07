@@ -105,6 +105,9 @@ export interface ClientCrmEnv {
   VITE_SUPABASE_ANON_KEY: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   STRIPE_SECRET_KEY?: string;
+  RESEND_API_KEY?: string;
+  MADEBYMARQUEZ_FROM_EMAIL?: string;
+  RESEND_FROM_EMAIL?: string;
 }
 
 function supabaseHeaders(env: ClientCrmEnv): Record<string, string> {
@@ -282,6 +285,13 @@ export async function publicClientDashboard(request: Request, env: ClientCrmEnv)
 }
 
 // ── Invoice creation (Part 4 — manual trigger only) ────────────────────────
+interface InvoiceLineItemInput {
+  label: string;
+  amount: number;
+  pricing_item_id: string | null;
+  market_price: number | null;
+}
+
 interface CreateInvoiceBody {
   clientId?: string;
   pricingItemId?: string | null;
@@ -294,6 +304,71 @@ interface CreateInvoiceBody {
    *  into two rows. Omitted entirely by the original quick-send flow,
    *  which is unchanged. */
   invoiceId?: string;
+  /** Present for a bundled invoice (several pricing items on one
+   *  invoice) — one Stripe invoiceitem gets created per entry, all
+   *  attached to the same invoice.id, instead of the single-item path
+   *  below. Absent/empty falls back to the original description/amount
+   *  single-line behavior untouched. */
+  lineItems?: InvoiceLineItemInput[] | null;
+  /** Best-effort — a failed product-sheet email never fails the invoice
+   *  send itself, since the invoice is the part that actually matters. */
+  sendProductSheet?: boolean;
+}
+
+function money(n: number): string {
+  return `$${n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
+/** Plain HTML, no React — this runs in the Worker, not the browser. Same
+ *  content shape as the in-app ProductSheetDocument (src/components/
+ *  ProductSheetDocument.tsx): what's being done and why it's a good deal,
+ *  then how the owner works while teaching the client to eventually run
+ *  it themselves. */
+function buildProductSheetHtml(businessName: string, clientName: string, lineItems: InvoiceLineItemInput[], teachingPhilosophy: string): string {
+  const rows = lineItems
+    .map((li) => {
+      const savings = li.market_price !== null && li.market_price > li.amount ? li.market_price - li.amount : null;
+      const compare = savings !== null
+        ? `<div style="color:#6b7280;font-size:13px;margin-top:3px">Typically ${money(li.market_price as number)} elsewhere — you're paying ${money(li.amount)}, saving ${money(savings)}.</div>`
+        : '';
+      return `<div style="padding:14px 0;border-bottom:1px solid #e5e7eb"><div style="display:flex;justify-content:space-between;gap:12px"><strong>${li.label}</strong><span>${money(li.amount)}</span></div>${compare}</div>`;
+    })
+    .join('');
+  const totalCharged = lineItems.reduce((sum, l) => sum + l.amount, 0);
+  const totalMarket = lineItems.reduce((sum, l) => sum + (l.market_price ?? l.amount), 0);
+  const totalSavings = totalMarket - totalCharged;
+  const savingsLine = totalSavings > 0
+    ? `<p style="margin-top:16px"><strong>Total value: ${money(totalMarket)} — you're paying ${money(totalCharged)}, a savings of ${money(totalSavings)}.</strong></p>`
+    : '';
+  const philosophy = teachingPhilosophy.trim()
+    ? `<h3 style="margin-top:28px">How I work</h3><p style="line-height:1.6">${teachingPhilosophy.trim().replace(/\n/g, '<br/>')}</p>`
+    : '';
+  return [
+    `<h2>What ${businessName} is doing for ${clientName}</h2>`,
+    rows,
+    savingsLine,
+    philosophy,
+  ].join('');
+}
+
+async function sendProductSheetEmail(env: ClientCrmEnv, to: string, businessName: string, clientName: string, lineItems: InvoiceLineItemInput[], teachingPhilosophy: string): Promise<boolean> {
+  const fromEmail = env.MADEBYMARQUEZ_FROM_EMAIL || env.RESEND_FROM_EMAIL;
+  if (!env.RESEND_API_KEY || !fromEmail) return false;
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: [to],
+        subject: `What ${businessName} is doing for you`,
+        html: buildProductSheetHtml(businessName, clientName, lineItems, teachingPhilosophy),
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 async function stripeRequest(env: ClientCrmEnv, path: string, body: Record<string, string>): Promise<Record<string, unknown>> {
@@ -394,13 +469,30 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
       'metadata[mastermind_dashboard_url]': dashboardUrl,
     });
 
-    await stripeRequest(env, '/invoiceitems', {
-      customer: customerId,
-      invoice: invoice.id as string,
-      amount: String(amountCents),
-      currency: 'usd',
-      description,
-    });
+    // A bundled invoice creates one invoiceitem per line, all attached to
+    // the same invoice.id — Stripe has no problem with multiple items on
+    // one invoice, this just wasn't exercised until bundling existed.
+    // Falls back to the original single description/amount item when
+    // lineItems is absent, unchanged from before.
+    if (body.lineItems && body.lineItems.length > 0) {
+      for (const li of body.lineItems) {
+        await stripeRequest(env, '/invoiceitems', {
+          customer: customerId,
+          invoice: invoice.id as string,
+          amount: String(Math.round(li.amount * 100)),
+          currency: 'usd',
+          description: li.label,
+        });
+      }
+    } else {
+      await stripeRequest(env, '/invoiceitems', {
+        customer: customerId,
+        invoice: invoice.id as string,
+        amount: String(amountCents),
+        currency: 'usd',
+        description,
+      });
+    }
 
     const finalized = await stripeRequest(env, `/invoices/${invoice.id}/finalize`, {});
     const sent = await stripeRequest(env, `/invoices/${finalized.id}/send`, {});
@@ -408,6 +500,7 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
     const sentFields = {
       description,
       amount,
+      line_items: body.lineItems ?? null,
       due_date: body.dueDate ?? null,
       status: 'sent',
       stripe_customer_id: customerId,
@@ -456,6 +549,16 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
         headers,
         body: JSON.stringify({ stage: 'invoice_sent', last_activity_at: new Date().toISOString() }),
       });
+    }
+
+    // Best-effort, never blocks the invoice response — the invoice going
+    // out is what actually matters. Only makes sense with a real
+    // itemized breakdown to show; a single free-form line item has
+    // nothing worth a separate value comparison.
+    if (body.sendProductSheet && body.lineItems && body.lineItems.length > 0) {
+      const profileRes = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/business_profile?user_id=eq.${user.id}&select=teaching_philosophy`, { headers });
+      const [profileRow] = (await profileRes.json().catch(() => [])) as { teaching_philosophy: string | null }[];
+      await sendProductSheetEmail(env, client.contact_email, 'Made by MARQ', client.business_name, body.lineItems, profileRow?.teaching_philosophy ?? '');
     }
 
     return json(row);
