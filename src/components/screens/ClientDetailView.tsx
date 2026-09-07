@@ -68,6 +68,14 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
   const [creatingDraft, setCreatingDraft] = useState(false);
   const [draftError, setDraftError] = useState('');
   const [bundleSelected, setBundleSelected] = useState<Set<string>>(new Set());
+  // What THIS invoice charges for each item — defaults to the item's own
+  // rate but freely overridable (e.g. a $2,000 lump sum for something
+  // that's normally $1,000/mo). Separate from the item's stored rate.
+  const [bundleChargeDraft, setBundleChargeDraft] = useState<Record<string, string>>({});
+  // Editing a monthly item's actual ongoing rate (persists via
+  // crm.setItemAmount, same field the Pricing tab edits) — distinct from
+  // the charge-now override above.
+  const [bundleRecurringDraft, setBundleRecurringDraft] = useState<Record<string, string>>({});
   const [bundleDue, setBundleDue] = useState('');
   const [creatingBundle, setCreatingBundle] = useState(false);
   const [bundleError, setBundleError] = useState('');
@@ -219,17 +227,36 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
     });
   };
 
+  // The amount that will actually be charged for one selected item on
+  // this invoice — the override draft if it's a valid number, else the
+  // item's own current rate.
+  const bundleChargeFor = (p: (typeof client.pricingItems)[number]): number => {
+    const draft = bundleChargeDraft[p.id];
+    if (draft === undefined || draft.trim() === '') return p.amount as number;
+    const n = Number(draft);
+    return Number.isFinite(n) && n >= 0 ? n : (p.amount as number);
+  };
+
   const bundleItems = client.pricingItems.filter((p) => bundleSelected.has(p.id) && p.amount !== null);
-  const bundleTotal = bundleItems.reduce((sum, p) => sum + (p.amount as number), 0);
+  const bundleTotal = bundleItems.reduce((sum, p) => sum + bundleChargeFor(p), 0);
+
+  const confirmRecurringRate = (itemId: string) => {
+    const raw = bundleRecurringDraft[itemId];
+    const n = Number(raw);
+    if (raw !== undefined && Number.isFinite(n) && n >= 0) crm.setItemAmount(itemId, n);
+    setBundleRecurringDraft((d) => { const next = { ...d }; delete next[itemId]; return next; });
+  };
 
   const createBundle = async () => {
     if (bundleItems.length === 0) return;
     setCreatingBundle(true);
     setBundleError('');
     try {
-      const created = await crm.createBundledDraftInvoice(client.id, [...bundleSelected], bundleDue || null);
+      const charges = bundleItems.map((p) => ({ pricingItemId: p.id, amount: bundleChargeFor(p) }));
+      const created = await crm.createBundledDraftInvoice(client.id, charges, bundleDue || null);
       if (!created) throw new Error('Could not create the bundled draft.');
       setBundleSelected(new Set());
+      setBundleChargeDraft({});
       setBundleDue('');
       setSelectedInvoiceId(created.id);
       setTab('invoices');
@@ -766,13 +793,41 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                 Check off everything you'll be doing for him and it all lands on one invoice, itemized — plus a Product Sheet showing what each piece is worth.
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
-                {client.pricingItems.filter((p) => p.amount !== null).map((p) => (
-                  <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-body-sm)', color: 'var(--text)', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={bundleSelected.has(p.id)} onChange={() => toggleBundleItem(p.id)} />
-                    <span style={{ flex: 1 }}>{p.label}</span>
-                    <span style={{ color: 'var(--text-tertiary)' }}>{money(p.amount as number)}</span>
-                  </label>
-                ))}
+                {client.pricingItems.filter((p) => p.amount !== null).map((p) => {
+                  const isSelected = bundleSelected.has(p.id);
+                  const chargeValue = bundleChargeDraft[p.id] ?? String(p.amount);
+                  const overridden = Number(chargeValue) !== p.amount;
+                  return (
+                    <div key={p.id} style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '4px 0' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-body-sm)', color: 'var(--text)' }}>
+                        <input type="checkbox" checked={isSelected} onChange={() => toggleBundleItem(p.id)} style={{ cursor: 'pointer' }} />
+                        <span style={{ flex: 1, cursor: 'pointer' }} onClick={() => toggleBundleItem(p.id)}>
+                          {p.label}{p.cadence === 'monthly' ? ` (rate: $${p.amount}/mo)` : ''}
+                        </span>
+                        <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>Charge:</span>
+                        <input
+                          style={{ ...inputStyle, width: 90, padding: '5px 8px', fontSize: 'var(--text-small)', borderColor: overridden ? 'var(--warning)' : undefined }}
+                          value={chargeValue}
+                          onChange={(e) => setBundleChargeDraft((d) => ({ ...d, [p.id]: e.target.value }))}
+                        />
+                      </div>
+                      {p.cadence === 'monthly' && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 26, fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)' }}>
+                          {overridden && <span style={{ color: 'var(--warning)' }}>Ongoing rate will still show as ${p.amount}/mo on the invoice.</span>}
+                          <span>Adjust the ongoing rate itself:</span>
+                          <input
+                            style={{ ...inputStyle, width: 80, padding: '4px 7px', fontSize: 'var(--text-tiny)' }}
+                            placeholder={String(p.amount)}
+                            value={bundleRecurringDraft[p.id] ?? ''}
+                            onChange={(e) => setBundleRecurringDraft((d) => ({ ...d, [p.id]: e.target.value }))}
+                            onBlur={() => confirmRecurringRate(p.id)}
+                          />
+                          <span>/mo</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
                 <input style={inputStyle} type="date" value={bundleDue} onChange={(e) => setBundleDue(e.target.value)} />

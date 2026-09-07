@@ -379,16 +379,35 @@ export function useClientCRM() {
    *  schedule view already reads; `line_items` carries the real
    *  breakdown for the actual document and the Product Sheet. Each
    *  line's market_price is looked up from the catalog via the pricing
-   *  item's service_id, snapshotted now rather than read live later. */
-  const createBundledDraftInvoice = async (clientId: string, pricingItemIds: string[], dueDate?: string | null) => {
+   *  item's service_id, snapshotted now rather than read live later.
+   *
+   *  `charges` lets THIS invoice bill a different amount than the pricing
+   *  item's own stored rate — e.g. a $2,000 lump-sum prepay on an item
+   *  whose ongoing rate is $1,000/mo. That doesn't change the item's real
+   *  rate (use setItemAmount for that, which persists); it only changes
+   *  what this one invoice charges. When a monthly item's charge differs
+   *  from its stored rate, the line label discloses the ongoing rate
+   *  alongside what's being charged now, so the client sees both. */
+  const createBundledDraftInvoice = async (
+    clientId: string,
+    charges: { pricingItemId: string; amount: number }[],
+    dueDate?: string | null,
+  ) => {
     const client = clients.find((c) => c.id === clientId);
     if (!client) return null;
-    const items = client.pricingItems.filter((p) => pricingItemIds.includes(p.id) && p.amount !== null);
+    const items = charges
+      .map((c) => {
+        const p = client.pricingItems.find((x) => x.id === c.pricingItemId);
+        return p ? { p, chargeAmount: c.amount } : null;
+      })
+      .filter((x): x is { p: ClientPricingItem; chargeAmount: number } => x !== null && Number.isFinite(x.chargeAmount) && x.chargeAmount >= 0);
     if (items.length === 0) return null;
 
-    const lineItems: InvoiceLineItem[] = items.map((p) => {
+    const lineItems: InvoiceLineItem[] = items.map(({ p, chargeAmount }) => {
       const svc = p.service_id ? services.find((s) => s.id === p.service_id) : undefined;
-      return { label: p.label, amount: p.amount as number, pricing_item_id: p.id, market_price: svc?.market_price ?? null };
+      const discloseOngoing = p.cadence === 'monthly' && p.amount !== null && chargeAmount !== p.amount;
+      const label = discloseOngoing ? `${p.label} (ongoing $${p.amount}/mo after this)` : p.label;
+      return { label, amount: chargeAmount, pricing_item_id: p.id, market_price: svc?.market_price ?? null };
     });
     const description = lineItems.map((l) => l.label).join(' + ');
     const amount = lineItems.reduce((sum, l) => sum + l.amount, 0);
