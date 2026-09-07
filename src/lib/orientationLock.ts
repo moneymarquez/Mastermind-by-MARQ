@@ -1,25 +1,38 @@
-const MOBILE_BREAKPOINT = 768;
+// Comfortably above the physical short edge of even the largest phones
+// (~430-480 CSS px) and comfortably below the smallest iPad's (744) or
+// any desktop display — see isPhoneLandscape() for why this has to be a
+// PHONE-specific threshold now, not the general ~768 "mobile" breakpoint
+// state.ts uses for its own, unrelated, window-width layout decision.
+const PHONE_SHORT_EDGE_BREAKPOINT = 500;
 
 export type ForcePortraitDirection = 'primary' | 'secondary' | null;
 
-/** Whether the current physical viewport is a phone/small-tablet in
- *  landscape — the only case any of this kicks in. Uses matchMedia's own
- *  `(orientation: landscape)` as the authoritative signal — the same
- *  thing the CSS in index.css evaluates — rather than comparing
- *  innerWidth/innerHeight directly: those two can read momentarily
- *  inconsistent with each other during/right after a rotation or a cold
- *  page load, which previously meant this could occasionally decide
- *  "landscape" while the device was actually still in portrait, then
- *  never get a further resize event to correct itself — the exact bug
- *  that broke scrolling on a plain portrait load once already. Checks
- *  the SHORT axis (min of width/height) against the breakpoint, since
- *  that stays constant across a rotation — a landscape laptop's short
- *  axis is well above this, so it's never affected. */
+/** Whether the device is a phone that's physically rotated to landscape —
+ *  the only case any of this kicks in. Deliberately reads `screen.width`/
+ *  `screen.height` (the physical display) rather than `window.innerWidth`/
+ *  `innerHeight` or matchMedia's `(orientation: landscape)` (both of
+ *  which describe the browser window/viewport, not the hardware): an
+ *  iPad or desktop running in a resizable window — Split View, Stage
+ *  Manager, or just a manually narrowed browser window — can easily end
+ *  up window-shaped like "a phone lying sideways" (wide relative to its
+ *  height, short axis under a phone-ish threshold) with no rotation and
+ *  no phone involved at all. That previously force-rotated the whole app
+ *  sideways the moment someone resized the browser window down for
+ *  multitasking. screen.width/height describe the actual hardware and
+ *  don't change no matter how any app window is sized within it, so this
+ *  can only ever fire on real phone-class hardware. */
 function isPhoneLandscape(): boolean {
-  if (typeof window === 'undefined') return false;
-  const landscape = window.matchMedia?.('(orientation: landscape)').matches ?? (window.innerWidth > window.innerHeight);
-  if (!landscape) return false;
-  return Math.min(window.innerWidth, window.innerHeight) < MOBILE_BREAKPOINT;
+  if (typeof window === 'undefined' || typeof screen === 'undefined') return false;
+  const shortEdge = Math.min(screen.width, screen.height);
+  if (shortEdge >= PHONE_SHORT_EDGE_BREAKPOINT) return false;
+
+  const so = (screen as Screen & { orientation?: { type?: string } }).orientation;
+  if (so?.type) return so.type.startsWith('landscape');
+  const legacy = (window as Window & { orientation?: number }).orientation;
+  if (legacy !== undefined) return legacy === 90 || legacy === -90 || legacy === 270;
+  // No orientation signal at all (very old/unusual browser) — fall back
+  // to the window's own shape, the best remaining guess.
+  return window.innerWidth > window.innerHeight;
 }
 
 /** Which way to rotate the rendered app to compensate, or null if no
@@ -65,8 +78,11 @@ export function initOrientationLock(): void {
   window.addEventListener('resize', apply);
   window.addEventListener('orientationchange', apply);
   screen.orientation?.addEventListener?.('change', apply);
-  // Belt and suspenders: react directly to the same media query
-  // isPhoneLandscape() reads, independent of whether resize/
-  // orientationchange happen to fire in a given browser/situation.
+  // Belt and suspenders: react to the viewport's own orientation flip too
+  // (a plain window resize, e.g. multitasking, no longer changes
+  // isPhoneLandscape()'s answer at all — see its comment — but a real
+  // device rotation should still be caught even in a browser/situation
+  // where resize/orientationchange/screen.orientation's own listener
+  // doesn't happen to fire).
   window.matchMedia?.('(orientation: landscape)').addEventListener?.('change', apply);
 }
