@@ -54,6 +54,11 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
   const [catalogCategory, setCatalogCategory] = useState('');
   const [tbdDraft, setTbdDraft] = useState<Record<string, string>>({});
   const [liveCapture, setLiveCapture] = useState(false);
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
+  const [transcriptText, setTranscriptText] = useState('');
+  const [extracting, setExtracting] = useState(false);
+  const [extractError, setExtractError] = useState('');
+  const [extractResult, setExtractResult] = useState<number | null>(null);
   const [matching, setMatching] = useState(false);
   const [matchError, setMatchError] = useState('');
   const [invoiceItemId, setInvoiceItemId] = useState('');
@@ -115,6 +120,22 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
       setGenError(err instanceof AiError ? err.message : 'Could not generate the analysis — try again.');
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const runExtractTranscript = async () => {
+    if (!client.audit || !transcriptText.trim()) return;
+    setExtracting(true);
+    setExtractError('');
+    setExtractResult(null);
+    try {
+      const filled = await crm.extractFromTranscript(client.audit.id, client.business_name, answers, confidence, transcriptText.trim());
+      setExtractResult(filled);
+      setTranscriptText('');
+    } catch (err) {
+      setExtractError(err instanceof AiError ? err.message : 'Could not read that transcript — try again.');
+    } finally {
+      setExtracting(false);
     }
   };
 
@@ -366,8 +387,39 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                     One question at a time, big fields, autosaves as you type.
                   </div>
                 </div>
-                <div style={primaryBtn} onClick={() => setLiveCapture(true)}>Live capture</div>
+                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                  <div style={ghostBtn} onClick={() => { setTranscriptOpen((v) => !v); setExtractError(''); setExtractResult(null); }}>Insert transcript</div>
+                  <div style={primaryBtn} onClick={() => setLiveCapture(true)}>Live capture</div>
+                </div>
               </div>
+
+              {transcriptOpen && (
+                <div style={cardStyle}>
+                  <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Insert transcribed version</div>
+                  <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 3, marginBottom: 10 }}>
+                    Paste a call transcript (e.g. from Call Recordings) — Nova pulls out an answer for every question it
+                    actually addresses and fills in only the ones still blank. Answers already on record are never overwritten.
+                  </div>
+                  <textarea
+                    style={{ ...textareaStyle, minHeight: 140 }}
+                    value={transcriptText}
+                    onChange={(e) => setTranscriptText(e.target.value)}
+                    placeholder="Paste the transcript here…"
+                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
+                    <div style={{ ...primaryBtn, opacity: extracting || !transcriptText.trim() ? 0.5 : 1, pointerEvents: extracting || !transcriptText.trim() ? 'none' : 'auto' }} onClick={runExtractTranscript}>
+                      {extracting ? 'Reading…' : 'Extract answers'}
+                    </div>
+                    <div style={ghostBtn} onClick={() => setTranscriptOpen(false)}>Close</div>
+                  </div>
+                  {extractError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 8 }}>{extractError}</div>}
+                  {extractResult !== null && !extractError && (
+                    <div style={{ fontSize: 'var(--text-small)', color: 'var(--success)', marginTop: 8 }}>
+                      {extractResult === 0 ? "Didn't find an answer for any blank question in that transcript." : `Filled in ${extractResult} question${extractResult === 1 ? '' : 's'}.`}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <ClientMediaGrid clientId={client.id} auditId={client.audit.id} />
 

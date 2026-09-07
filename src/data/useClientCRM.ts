@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { generateClientAnalysis, matchServices } from './clientAnalysis';
+import { generateClientAnalysis, matchServices, extractAnswersFromTranscript } from './clientAnalysis';
 import type {
   AnswerConfidence,
   AuditQuestion,
@@ -150,6 +150,31 @@ export function useClientCRM() {
   const setAnswerConfidence = async (auditId: string, confidence: Record<string, AnswerConfidence>, quiet = false) => {
     await supabase.from('client_audits').update({ answer_confidence: confidence, updated_at: new Date().toISOString() }).eq('id', auditId);
     if (!quiet) await load();
+  };
+
+  /** Pulls answers out of a pasted call transcript and merges them into
+   *  blank questions only — never overwrites an answer already on record,
+   *  since that may have come from Live Capture or a manual edit Cristopher
+   *  trusts more than an inference off a transcript. Returns how many
+   *  fields actually got filled so the UI can report something concrete. */
+  const extractFromTranscript = async (
+    auditId: string,
+    businessName: string,
+    currentAnswers: Record<string, string>,
+    currentConfidence: Record<string, AnswerConfidence>,
+    transcript: string,
+  ): Promise<number> => {
+    const active = questions.filter((q) => q.active);
+    const extracted = await extractAnswersFromTranscript(businessName, active, transcript);
+    const toFill = Object.entries(extracted.answers).filter(([key]) => !currentAnswers[key]?.trim());
+    if (toFill.length === 0) return 0;
+
+    const answers = { ...currentAnswers, ...Object.fromEntries(toFill) };
+    const confidence = { ...currentConfidence };
+    for (const [key] of toFill) confidence[key] = extracted.confidence[key];
+    await supabase.from('client_audits').update({ answers, answer_confidence: confidence, updated_at: new Date().toISOString() }).eq('id', auditId);
+    await load();
+    return toFill.length;
   };
 
   const completeAudit = async (
@@ -530,6 +555,7 @@ export function useClientCRM() {
     saveAnswer,
     saveAnswerQuiet,
     setAnswerConfidence,
+    extractFromTranscript,
     completeAudit,
     regenerateAnalysis,
     runServiceMatch,
