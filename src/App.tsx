@@ -1,6 +1,7 @@
 import AuthedGate from './AuthedGate';
 import { useAuth } from './auth/useAuth';
 import AuthScreen from './auth/AuthScreen';
+import SetNewPasswordScreen from './auth/SetNewPasswordScreen';
 import { isOwnerIdentity } from './auth/ownerIdentity';
 import { useUserRole } from './data/useUserRole';
 import ClientPortal from './client-portal/ClientPortal';
@@ -30,14 +31,21 @@ function Gated({ userId, userEmail, onSignOut }: GatedProps) {
 }
 
 export default function App() {
-  const { session, loading, signIn, signUp, signOut } = useAuth();
+  const { session, loading, signIn, signUp, signOut, passwordRecovery, resetPassword, completePasswordReset } = useAuth();
 
   if (loading) {
     return <div style={{ minHeight: '100vh', background: 'var(--bg)' }} />;
   }
 
+  // Takes priority over the session check below — clicking a reset-
+  // password email link hands Supabase a real session, but one that's
+  // only good for setting a new password, not for using the app.
+  if (passwordRecovery) {
+    return <SetNewPasswordScreen onComplete={completePasswordReset} />;
+  }
+
   if (!session) {
-    return <AuthScreen onSignIn={signIn} onSignUp={signUp} />;
+    return <AuthScreen onSignIn={signIn} onSignUp={signUp} onResetPassword={resetPassword} />;
   }
 
   // Keyed on the user id so a sign-out/sign-in as a different account
