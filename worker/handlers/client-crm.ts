@@ -291,6 +291,7 @@ interface InvoiceLineItemInput {
   pricing_item_id: string | null;
   market_price: number | null;
   description: string | null;
+  narrative: string | null;
 }
 
 interface CreateInvoiceBody {
@@ -311,6 +312,11 @@ interface CreateInvoiceBody {
    *  below. Absent/empty falls back to the original description/amount
    *  single-line behavior untouched. */
   lineItems?: InvoiceLineItemInput[] | null;
+  /** This client's specific situation and why this plan addresses it —
+   *  the Product Sheet's personalized opening paragraph, generated
+   *  client-side before send and just carried through here for the
+   *  emailed copy. Null until "Generate personalized write-up" has run. */
+  productSheetIntro?: string | null;
   /** Best-effort — a failed product-sheet email never fails the invoice
    *  send itself, since the invoice is the part that actually matters. */
   sendProductSheet?: boolean;
@@ -325,15 +331,16 @@ function money(n: number): string {
  *  ProductSheetDocument.tsx): what's being done and why it's a good deal,
  *  then how the owner works while teaching the client to eventually run
  *  it themselves. */
-function buildProductSheetHtml(businessName: string, clientName: string, lineItems: InvoiceLineItemInput[], teachingPhilosophy: string): string {
+function buildProductSheetHtml(businessName: string, clientName: string, lineItems: InvoiceLineItemInput[], teachingPhilosophy: string, productSheetIntro: string | null): string {
   const rows = lineItems
     .map((li) => {
       const savings = li.market_price !== null && li.market_price > li.amount ? li.market_price - li.amount : null;
       const compare = savings !== null
         ? `<div style="color:#6b7280;font-size:13px;margin-top:3px">Typically ${money(li.market_price as number)} elsewhere — you're paying ${money(li.amount)}, saving ${money(savings)}.</div>`
         : '';
-      const description = li.description
-        ? `<div style="color:#374151;font-size:14px;margin-top:6px;line-height:1.5">${li.description}</div>`
+      const bodyText = li.narrative || li.description;
+      const description = bodyText
+        ? `<div style="color:#374151;font-size:14px;margin-top:6px;line-height:1.5">${bodyText}</div>`
         : '';
       return `<div style="padding:14px 0;border-bottom:1px solid #e5e7eb"><div style="display:flex;justify-content:space-between;gap:12px"><strong>${li.label}</strong><span>${money(li.amount)}</span></div>${description}${compare}</div>`;
     })
@@ -347,15 +354,19 @@ function buildProductSheetHtml(businessName: string, clientName: string, lineIte
   const philosophy = teachingPhilosophy.trim()
     ? `<h3 style="margin-top:28px">How I work</h3><p style="line-height:1.6">${teachingPhilosophy.trim().replace(/\n/g, '<br/>')}</p>`
     : '';
+  const intro = productSheetIntro && productSheetIntro.trim()
+    ? `<p style="line-height:1.6;color:#374151">${productSheetIntro.trim()}</p>`
+    : '';
   return [
     `<h2>What ${businessName} is doing for ${clientName}</h2>`,
+    intro,
     rows,
     savingsLine,
     philosophy,
   ].join('');
 }
 
-async function sendProductSheetEmail(env: ClientCrmEnv, to: string, businessName: string, clientName: string, lineItems: InvoiceLineItemInput[], teachingPhilosophy: string): Promise<boolean> {
+async function sendProductSheetEmail(env: ClientCrmEnv, to: string, businessName: string, clientName: string, lineItems: InvoiceLineItemInput[], teachingPhilosophy: string, productSheetIntro: string | null): Promise<boolean> {
   const fromEmail = env.MADEBYMARQUEZ_FROM_EMAIL || env.RESEND_FROM_EMAIL;
   if (!env.RESEND_API_KEY || !fromEmail) return false;
   try {
@@ -366,7 +377,7 @@ async function sendProductSheetEmail(env: ClientCrmEnv, to: string, businessName
         from: fromEmail,
         to: [to],
         subject: `What ${businessName} is doing for you`,
-        html: buildProductSheetHtml(businessName, clientName, lineItems, teachingPhilosophy),
+        html: buildProductSheetHtml(businessName, clientName, lineItems, teachingPhilosophy, productSheetIntro),
       }),
     });
     return res.ok;
@@ -562,7 +573,7 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
     if (body.sendProductSheet && body.lineItems && body.lineItems.length > 0) {
       const profileRes = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/business_profile?user_id=eq.${user.id}&select=business_name,teaching_philosophy`, { headers });
       const [profileRow] = (await profileRes.json().catch(() => [])) as { business_name: string | null; teaching_philosophy: string | null }[];
-      await sendProductSheetEmail(env, client.contact_email, profileRow?.business_name || 'Made by MARQ', client.business_name, body.lineItems, profileRow?.teaching_philosophy ?? '');
+      await sendProductSheetEmail(env, client.contact_email, profileRow?.business_name || 'Made by MARQ', client.business_name, body.lineItems, profileRow?.teaching_philosophy ?? '', body.productSheetIntro ?? null);
     }
 
     return json(row);

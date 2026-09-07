@@ -127,6 +127,70 @@ export async function extractAnswersFromTranscript(
   return { answers, confidence };
 }
 
+export interface ProductSheetNarrative {
+  intro: string;
+  /** Same length and order as the items passed in — index i here
+   *  explains items[i]. */
+  items: string[];
+}
+
+/** The Product Sheet's personalized write-up — the difference between
+ *  "here's what this costs" and "here's why this is right for you." Takes
+ *  the same discovery-audit answers generateClientAnalysis uses, plus the
+ *  actual line items being billed, and writes an opening paragraph on
+ *  this client's specific situation plus one paragraph per item on why it
+ *  addresses that situation and how it helps them — never generic
+ *  marketing copy, always tied to what they actually said. Run manually
+ *  (a "Generate personalized write-up" button), never automatically, so
+ *  Cristopher reviews/edits it before a client ever sees it — same
+ *  convention as every other AI-written text in this app. */
+export async function generateProductSheetNarrative(
+  businessName: string,
+  questions: AuditQuestion[],
+  answers: Record<string, string>,
+  confidence: Record<string, string>,
+  items: { label: string }[],
+): Promise<ProductSheetNarrative> {
+  const qa = buildQA(questions, answers, confidence);
+  const itemList = items.map((it, i) => `${i}. ${it.label}`).join('\n');
+
+  const raw = await askClaude({
+    system:
+      `You are Nova, writing the personalized section of a Product Sheet for Cristopher (Made by Marq) to hand ` +
+      `"${businessName}" alongside their invoice. Below are his discovery-call answers about this specific business, ` +
+      'then the exact line items being billed on this invoice. Write two things: ' +
+      '(1) "intro" — one short paragraph naming their specific situation and bottleneck (from what they actually ' +
+      'said) and framing why this plan addresses it. ' +
+      '(2) "items" — one paragraph per line item, in the same order given, each explaining why THIS item matters ' +
+      'for THEIR specific situation and how it helps them, not a generic description of the service. ' +
+      'Ground every claim only in the answers given — never invent facts, numbers, or details they did not provide. ' +
+      'Answers tagged ESTIMATED/UNVERIFIED are rough guesses — you may reason from them but do not state them as ' +
+      'settled fact. Direct, specific, no marketing fluff or generic filler — write like someone who was actually ' +
+      'on the call, not a template. ' +
+      'Respond with ONLY a JSON object, no prose and no markdown fence, shaped exactly: ' +
+      `{"intro": "<paragraph>", "items": [<one string per item, ${items.length} total, same order>]}`,
+    messages: [{ role: 'user', content: `${qa}\n\n### Line items on this invoice\n${itemList}` }],
+    maxTokens: 1800,
+  });
+
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  const fallback: ProductSheetNarrative = { intro: '', items: items.map(() => '') };
+  if (start === -1 || end === -1) return fallback;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw.slice(start, end + 1));
+  } catch {
+    return fallback;
+  }
+  if (!parsed || typeof parsed !== 'object') return fallback;
+  const obj = parsed as Record<string, unknown>;
+  const intro = typeof obj.intro === 'string' ? obj.intro : '';
+  const rawItems = Array.isArray(obj.items) ? obj.items : [];
+  const narrativeItems = items.map((_, i) => (typeof rawItems[i] === 'string' ? (rawItems[i] as string) : ''));
+  return { intro, items: narrativeItems };
+}
+
 /** The Service Matcher — the branch that runs alongside the written
  *  analysis in the system flow. Given the same audit answers plus the
  *  master catalog, Claude flags which services this business actually

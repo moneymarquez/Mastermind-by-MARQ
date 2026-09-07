@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { generateClientAnalysis, matchServices, extractAnswersFromTranscript } from './clientAnalysis';
+import { generateClientAnalysis, matchServices, extractAnswersFromTranscript, generateProductSheetNarrative } from './clientAnalysis';
 import type {
   AnswerConfidence,
   AuditQuestion,
@@ -407,7 +407,7 @@ export function useClientCRM() {
       const svc = p.service_id ? services.find((s) => s.id === p.service_id) : undefined;
       const discloseOngoing = p.cadence === 'monthly' && p.amount !== null && chargeAmount !== p.amount;
       const label = discloseOngoing ? `${p.label} (ongoing $${p.amount}/mo after this)` : p.label;
-      return { label, amount: chargeAmount, pricing_item_id: p.id, market_price: svc?.market_price ?? null, description: svc?.client_description ?? null };
+      return { label, amount: chargeAmount, pricing_item_id: p.id, market_price: svc?.market_price ?? null, description: svc?.client_description ?? null, narrative: null };
     });
     const description = lineItems.map((l) => l.label).join(' + ');
     const amount = lineItems.reduce((sum, l) => sum + l.amount, 0);
@@ -428,6 +428,36 @@ export function useClientCRM() {
       .single();
     await load();
     return data as ClientInvoice | null;
+  };
+
+  /** "Generate personalized write-up" — replaces the generic per-service
+   *  description with a paragraph grounded in this specific client's
+   *  discovery-audit answers, for the invoice's Product Sheet. Manual
+   *  only (never runs on its own), and overwrites any previous narrative
+   *  on this invoice — same "Regenerate" convention as everywhere else
+   *  Nova writes something reviewable. Requires the invoice to already
+   *  have line_items (a bundled invoice) and does nothing useful without
+   *  a client audit on file (falls back to empty strings, which the UI
+   *  then falls back from to the generic per-service text). */
+  const generateInvoiceNarrative = async (invoiceId: string): Promise<boolean> => {
+    const client = clients.find((c) => c.invoices.some((i) => i.id === invoiceId));
+    const invoice = client?.invoices.find((i) => i.id === invoiceId);
+    if (!client || !invoice || !invoice.line_items || invoice.line_items.length === 0) return false;
+
+    const narrative = await generateProductSheetNarrative(
+      client.business_name,
+      questions,
+      client.audit?.answers ?? {},
+      client.audit?.answer_confidence ?? {},
+      invoice.line_items.map((li) => ({ label: li.label })),
+    );
+    const lineItems: InvoiceLineItem[] = invoice.line_items.map((li, i) => ({ ...li, narrative: narrative.items[i] || null }));
+    await supabase
+      .from('client_invoices')
+      .update({ product_sheet_intro: narrative.intro || null, line_items: lineItems, updated_at: new Date().toISOString() })
+      .eq('id', invoiceId);
+    await load();
+    return true;
   };
 
   const updateDraftInvoice = async (id: string, patch: Partial<Pick<ClientInvoice, 'description' | 'amount' | 'due_date'>>) => {
@@ -453,6 +483,7 @@ export function useClientCRM() {
     dueDate?: string | null;
     invoiceId?: string;
     lineItems?: InvoiceLineItem[] | null;
+    productSheetIntro?: string | null;
     sendProductSheet?: boolean;
   }) => {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -471,6 +502,7 @@ export function useClientCRM() {
         dueDate: input.dueDate ?? null,
         invoiceId: input.invoiceId,
         lineItems: input.lineItems ?? null,
+        productSheetIntro: input.productSheetIntro ?? null,
         sendProductSheet: !!input.sendProductSheet,
       }),
     });
@@ -640,6 +672,7 @@ export function useClientCRM() {
     setRevealSchedule,
     createDraftInvoice,
     createBundledDraftInvoice,
+    generateInvoiceNarrative,
     updateDraftInvoice,
     removeDraftInvoice,
     generateInvoiceSchedule,

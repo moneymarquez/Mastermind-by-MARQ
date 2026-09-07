@@ -6,11 +6,19 @@ interface Item {
   amount: number;
   marketPrice: number | null;
   description: string | null;
+  /** A personalized "why this helps you" paragraph for this client,
+   *  written from their own discovery-audit answers. Takes priority over
+   *  `description` (the generic catalog text) when present. */
+  narrative: string | null;
 }
 
 interface Props {
   from?: string;
   clientName: string;
+  /** This client's specific situation and why this plan addresses it —
+   *  the personalized opening paragraph. Absent until "Generate
+   *  personalized write-up" has been run for this invoice. */
+  intro?: string | null;
   items: Item[];
   teachingPhilosophy: string;
   style?: CSSProperties;
@@ -24,7 +32,7 @@ const micro: CSSProperties = { fontSize: 'var(--text-micro)', fontWeight: 700, l
  *  the same bundled line items an invoice carries (InvoiceLineItem),
  *  never invented separately — this only ever shows work that's actually
  *  being billed. */
-export default function ProductSheetDocument({ from = 'Made by MARQ', clientName, items, teachingPhilosophy, style }: Props) {
+export default function ProductSheetDocument({ from = 'Made by MARQ', clientName, intro, items, teachingPhilosophy, style }: Props) {
   const totalCharged = items.reduce((sum, i) => sum + i.amount, 0);
   const totalMarket = items.reduce((sum, i) => sum + (i.marketPrice ?? i.amount), 0);
   const totalSavings = totalMarket - totalCharged;
@@ -35,6 +43,10 @@ export default function ProductSheetDocument({ from = 'Made by MARQ', clientName
         What {from} is doing for {clientName}
       </div>
 
+      {intro && intro.trim() && (
+        <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.6 }}>{intro}</div>
+      )}
+
       <div style={{ marginTop: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, paddingBottom: 8, borderBottom: '1px solid var(--border)' }}>
           <span style={micro}>Service</span>
@@ -42,14 +54,15 @@ export default function ProductSheetDocument({ from = 'Made by MARQ', clientName
         </div>
         {items.map((item, i) => {
           const savings = item.marketPrice !== null && item.marketPrice > item.amount ? item.marketPrice - item.amount : null;
+          const bodyText = item.narrative || item.description;
           return (
             <div key={i} style={{ padding: '14px 0', borderBottom: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
                 <span style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>{item.label}</span>
                 <span style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>{money(item.amount)}</span>
               </div>
-              {item.description && (
-                <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>{item.description}</div>
+              {bodyText && (
+                <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>{bodyText}</div>
               )}
               {savings !== null && (
                 <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 4 }}>

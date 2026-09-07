@@ -1166,6 +1166,13 @@ export interface InvoiceLineItem {
   /** Client-facing explanation, snapshotted from the service catalog at
    *  invoice-creation time — same reasoning as market_price. */
   description: string | null;
+  /** A personalized "why this helps you" paragraph, written by Nova from
+   *  this specific client's discovery-audit answers — not the generic
+   *  catalog description. Null until "Generate personalized write-up" is
+   *  run; when present it's shown instead of `description` on the
+   *  Product Sheet, since it says the same kind of thing but grounded in
+   *  their actual situation. */
+  narrative: string | null;
 }
 
 export interface ClientInvoice {
@@ -1180,6 +1187,11 @@ export interface ClientInvoice {
    *  has always made, which still render fine off description/amount
    *  alone. */
   line_items: InvoiceLineItem[] | null;
+  /** The Product Sheet's opening paragraph — this client's specific
+   *  situation and why this plan addresses it, written by Nova from their
+   *  discovery-audit answers. Null until generated; the sheet still reads
+   *  fine without it (falls back to the per-item generic text only). */
+  product_sheet_intro: string | null;
   due_date: string | null;
   status: ClientInvoiceStatus;
   stripe_customer_id: string | null;

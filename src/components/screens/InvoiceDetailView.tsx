@@ -42,7 +42,10 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [sendProductSheet, setSendProductSheet] = useState(true);
+  const [generatingNarrative, setGeneratingNarrative] = useState(false);
+  const [narrativeError, setNarrativeError] = useState('');
   const hasLineItems = !!invoice.line_items && invoice.line_items.length > 0;
+  const hasNarrative = !!invoice.product_sheet_intro || !!invoice.line_items?.some((li) => li.narrative);
   // Shown by default for a bundled invoice — reviewing what's about to go
   // out (invoice + the value comparison) is the point of landing here
   // right after creating one, not something to click for. Still
@@ -75,6 +78,7 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
         dueDate: dueDate || null,
         invoiceId: invoice.id,
         lineItems: invoice.line_items,
+        productSheetIntro: invoice.product_sheet_intro,
         sendProductSheet: hasLineItems && sendProductSheet,
       });
       onClose();
@@ -82,6 +86,20 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
       setError(err instanceof Error ? err.message : 'Could not send the invoice.');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const generateNarrative = async () => {
+    setGeneratingNarrative(true);
+    setNarrativeError('');
+    try {
+      const ok = await crm.generateInvoiceNarrative(invoice.id);
+      if (!ok) setNarrativeError('Could not generate a write-up — try again.');
+      else setShowProductSheet(true);
+    } catch {
+      setNarrativeError('Could not generate a write-up — try again.');
+    } finally {
+      setGeneratingNarrative(false);
     }
   };
 
@@ -190,14 +208,26 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
 
       {hasLineItems && (
         <div style={{ marginTop: 10, maxWidth: 560 }}>
-          <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }} onClick={() => setShowProductSheet((v) => !v)}>
-            {showProductSheet ? 'Hide product sheet' : 'View product sheet'}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }} onClick={() => setShowProductSheet((v) => !v)}>
+              {showProductSheet ? 'Hide product sheet' : 'View product sheet'}
+            </span>
+            {isDraft && (
+              <span
+                style={{ fontSize: 'var(--text-small)', color: generatingNarrative ? 'var(--text-tertiary)' : 'var(--text-secondary)', cursor: generatingNarrative ? 'default' : 'pointer' }}
+                onClick={() => !generatingNarrative && generateNarrative()}
+              >
+                {generatingNarrative ? 'Writing…' : hasNarrative ? '✨ Regenerate personalized write-up' : '✨ Generate personalized write-up'}
+              </span>
+            )}
+          </div>
+          {narrativeError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 6 }}>{narrativeError}</div>}
           {showProductSheet && (
             <ProductSheetDocument
               from={business.business_name || undefined}
               clientName={clientBusinessName}
-              items={invoice.line_items!.map((li) => ({ label: li.label, amount: li.amount, marketPrice: li.market_price, description: li.description }))}
+              intro={invoice.product_sheet_intro}
+              items={invoice.line_items!.map((li) => ({ label: li.label, amount: li.amount, marketPrice: li.market_price, description: li.description, narrative: li.narrative }))}
               teachingPhilosophy={business.teaching_philosophy}
               style={{ marginTop: 12 }}
             />
