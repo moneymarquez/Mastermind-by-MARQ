@@ -31,7 +31,7 @@ const moveBtn = (disabled: boolean): CSSProperties => ({
  *  (Macros/Schedule/etc. are all still fully reachable from their own
  *  nav entries), so it's always fully reversible. */
 export default function EditHomeWidgetsScreen({ homeHeadStyle, homeSubStyle, isOwner }: Props) {
-  const { hidden, order, known, loading, setWidgetHidden, reorderWidgets } = useHomeWidgetPrefs();
+  const { hidden, order, known, loading, saveError, setWidgetHidden, reorderWidgets } = useHomeWidgetPrefs();
 
   const items = HOME_WIDGET_REGISTRY
     .filter((w) => !w.ownerOnly || isOwner)
@@ -69,6 +69,8 @@ export default function EditHomeWidgetsScreen({ homeHeadStyle, homeSubStyle, isO
         data, everything stays reachable from its own section. Changes apply the next time you open Overview.
         {hiddenCount > 0 && <span style={{ color: 'var(--mm-faint)' }}> {hiddenCount} hidden right now.</span>}
       </div>
+
+      {saveError && <div style={{ marginTop: 10, fontSize: 'var(--text-caption)', color: 'var(--danger)' }}>{saveError}</div>}
 
       {!loading && (
         <div style={{ marginTop: 24, maxWidth: 640 }}>

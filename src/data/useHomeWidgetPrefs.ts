@@ -25,6 +25,11 @@ export function useHomeWidgetPrefs() {
   // collapse to "not in the hidden set" on their own.
   const [known, setKnown] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  // Surfaced when a save actually fails — previously a failed upsert had
+  // nowhere to go: no error state, nothing logged, nothing shown, so a
+  // toggle that silently didn't persist looked identical to one that did
+  // until the account reloaded and found every widget back on.
+  const [saveError, setSaveError] = useState('');
 
   const load = useCallback(async () => {
     const { data } = await supabase.from('home_widget_prefs').select('widget_key, hidden, sort_order');
@@ -51,7 +56,13 @@ export function useHomeWidgetPrefs() {
       return next;
     });
     setKnown((prev) => new Set(prev).add(widgetKey));
-    await supabase.from('home_widget_prefs').upsert({ widget_key: widgetKey, hidden: hide }, { onConflict: 'user_id,widget_key' });
+    setSaveError('');
+    const { error } = await supabase.from('home_widget_prefs').upsert({ widget_key: widgetKey, hidden: hide }, { onConflict: 'user_id,widget_key' });
+    if (error) {
+      console.error('setWidgetHidden failed to save:', error);
+      setSaveError("Couldn't save that change — try again.");
+      await load(); // roll the optimistic update back to whatever's actually saved
+    }
   };
 
   /** Persists a full custom order at once — every widget key currently
@@ -63,12 +74,19 @@ export function useHomeWidgetPrefs() {
    *  whether anything is hidden. */
   const reorderWidgets = async (orderedWidgetKeys: string[]) => {
     setOrder((prev) => ({ ...prev, ...Object.fromEntries(orderedWidgetKeys.map((key, i) => [key, i])) }));
-    await Promise.all(
+    setSaveError('');
+    const results = await Promise.all(
       orderedWidgetKeys.map((widget_key, i) =>
         supabase.from('home_widget_prefs').upsert({ widget_key, sort_order: i }, { onConflict: 'user_id,widget_key' }),
       ),
     );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) {
+      console.error('reorderWidgets failed to save:', failed.error);
+      setSaveError("Couldn't save that order — try again.");
+      await load();
+    }
   };
 
-  return { hidden, order, known, loading, setWidgetHidden, reorderWidgets, reload: load };
+  return { hidden, order, known, loading, saveError, setWidgetHidden, reorderWidgets, reload: load };
 }
