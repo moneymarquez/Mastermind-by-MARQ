@@ -560,9 +560,9 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
     // itemized breakdown to show; a single free-form line item has
     // nothing worth a separate value comparison.
     if (body.sendProductSheet && body.lineItems && body.lineItems.length > 0) {
-      const profileRes = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/business_profile?user_id=eq.${user.id}&select=teaching_philosophy`, { headers });
-      const [profileRow] = (await profileRes.json().catch(() => [])) as { teaching_philosophy: string | null }[];
-      await sendProductSheetEmail(env, client.contact_email, 'Made by MARQ', client.business_name, body.lineItems, profileRow?.teaching_philosophy ?? '');
+      const profileRes = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/business_profile?user_id=eq.${user.id}&select=business_name,teaching_philosophy`, { headers });
+      const [profileRow] = (await profileRes.json().catch(() => [])) as { business_name: string | null; teaching_philosophy: string | null }[];
+      await sendProductSheetEmail(env, client.contact_email, profileRow?.business_name || 'Made by MARQ', client.business_name, body.lineItems, profileRow?.teaching_philosophy ?? '');
     }
 
     return json(row);

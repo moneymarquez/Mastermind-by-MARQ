@@ -27,6 +27,18 @@ export interface TicketWithOptions extends ClientTicket {
 
 const BRIEF_COLS = 'business, bottleneck_verbatim, spec_approved_at, design_locked_at, created_at';
 
+/** The letterhead info shown on the invoice this client is handed —
+ *  fetched here (not the owner-only useBusinessProfile hook) because a
+ *  client session reads it through its own narrow RLS policy (schema_064),
+ *  scoped to just their assigned provider's row. */
+export interface ProviderProfile {
+  business_name: string | null;
+  business_address: string | null;
+  business_email: string | null;
+  business_phone: string | null;
+  website: string | null;
+}
+
 /** Client side of the portal. Every query is unfiltered on purpose —
  *  RLS's `my_client_id()` policies (schema_045 / 054 / 057) do the
  *  scoping, so there is no client-side id to get wrong. The only writes a
@@ -52,13 +64,14 @@ export function useClientPortalData(previewClientId: string | null = null) {
   const [changelog, setChangelog] = useState<ClientChangelogEntry[]>([]);
   const [audit, setAudit] = useState<SpineAuditInput | null>(null);
   const [brief, setBrief] = useState<SpineBriefInput | null>(null);
+  const [providerProfile, setProviderProfile] = useState<ProviderProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     // .match({}) is a no-op filter — RLS scopes the real client; the
     // owner's preview pins one client explicitly.
     const scope = previewClientId ? { client_id: previewClientId } : {};
-    const [c, s, d, a, msg, inv, rep, t, log, au, br] = await Promise.all([
+    const [c, s, d, a, msg, inv, rep, t, log, au, br, prof] = await Promise.all([
       supabase.from('crm_clients').select('*').match(previewClientId ? { id: previewClientId } : {}).maybeSingle(),
       supabase.from('client_portal').select('*').match(scope).maybeSingle(),
       supabase.from('client_deliverables').select('*').match(scope).order('sort_order').order('created_at'),
@@ -74,9 +87,13 @@ export function useClientPortalData(previewClientId: string | null = null) {
       previewClientId
         ? supabase.from('brand_lab_briefs').select(BRIEF_COLS).eq('client_id', previewClientId).order('created_at', { ascending: false }).limit(1).maybeSingle()
         : supabase.rpc('client_brief_summary').maybeSingle(),
+      // Unfiltered — RLS (schema_064) scopes this to the client's own
+      // assigned provider's single row, same reasoning as everything else.
+      supabase.from('business_profile').select('business_name, business_address, business_email, business_phone, website').maybeSingle(),
     ]);
     setClient((c.data as CrmClient) ?? null);
     setSettings((s.data as ClientPortalSettings) ?? null);
+    setProviderProfile((prof.data as ProviderProfile) ?? null);
     setDeliverables((d.data ?? []) as ClientDeliverable[]);
     const rows = (a.data ?? []) as unknown as (ClientModuleAssignment & { portal_modules: PortalModule | null })[];
     setModules(
@@ -167,7 +184,7 @@ export function useClientPortalData(previewClientId: string | null = null) {
   };
 
   return {
-    loading, readOnly, client, settings, deliverables, modules, messages, invoices, reports, tickets, changelog, spine,
+    loading, readOnly, client, settings, deliverables, modules, messages, invoices, reports, tickets, changelog, spine, providerProfile,
     reload: load, markOpened, setCompleted, sendMessage, markOwnerMessagesRead, approveDeliverable, fileTicket, chooseOption,
   };
 }

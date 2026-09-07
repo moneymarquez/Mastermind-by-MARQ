@@ -518,7 +518,20 @@ export default function ClientPortal({ onSignOut, previewClientId = null }: Prop
       return (
         <div style={container}>
           <span style={{ ...ghostBtn, alignSelf: 'flex-start' }} onClick={() => setInvoiceId(null)}>← All invoices</span>
-          <InvoiceDocument billTo={client.business_name} description={openInvoice.description} amount={openInvoice.amount} dueDate={openInvoice.due_date} invoiceNumber={openInvoice.invoice_number} status={openInvoice.status} paidAt={openInvoice.paid_at} />
+          <InvoiceDocument
+            from={data.providerProfile?.business_name || undefined}
+            businessAddress={data.providerProfile?.business_address || undefined}
+            businessEmail={data.providerProfile?.business_email || undefined}
+            businessPhone={data.providerProfile?.business_phone || undefined}
+            businessWebsite={data.providerProfile?.website || undefined}
+            billTo={client.business_name}
+            description={openInvoice.description}
+            amount={openInvoice.amount}
+            dueDate={openInvoice.due_date}
+            invoiceNumber={openInvoice.invoice_number}
+            status={openInvoice.status}
+            paidAt={openInvoice.paid_at}
+          />
           {openInvoice.status !== 'paid' && openInvoice.status !== 'void' && openInvoice.stripe_invoice_url && (
             <a href={openInvoice.stripe_invoice_url} target="_blank" rel="noreferrer" style={{ ...primaryBtn, alignSelf: 'flex-start' }}>Pay now</a>
           )}

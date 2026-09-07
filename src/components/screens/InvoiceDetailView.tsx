@@ -172,6 +172,7 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
           shows the live-edited values; everything else shows the invoice
           exactly as it was sent. */}
       <InvoiceDocument
+        from={business.business_name || undefined}
         businessAddress={business.business_address || undefined}
         businessEmail={business.business_email || undefined}
         businessPhone={business.business_phone || undefined}
@@ -194,6 +195,7 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
           </span>
           {showProductSheet && (
             <ProductSheetDocument
+              from={business.business_name || undefined}
               clientName={clientBusinessName}
               items={invoice.line_items!.map((li) => ({ label: li.label, amount: li.amount, marketPrice: li.market_price, description: li.description }))}
               teachingPhilosophy={business.teaching_philosophy}

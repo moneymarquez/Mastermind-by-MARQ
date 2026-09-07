@@ -64,6 +64,7 @@ function BusinessProfilePanel() {
       <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 4 }}>Shows up in every document's header/footer — set once here.</div>
       {open && (
         <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 420 }}>
+          <input style={inputStyle} placeholder="Business or your name — shown as the sender on every document" value={draft.business_name} onChange={(e) => { setDraft({ ...draft, business_name: e.target.value }); setSaved(false); }} />
           <input style={inputStyle} placeholder="Business address" value={draft.business_address} onChange={(e) => { setDraft({ ...draft, business_address: e.target.value }); setSaved(false); }} />
           <input style={inputStyle} placeholder="Business email" value={draft.business_email} onChange={(e) => { setDraft({ ...draft, business_email: e.target.value }); setSaved(false); }} />
           <input style={inputStyle} placeholder="Business phone" value={draft.business_phone} onChange={(e) => { setDraft({ ...draft, business_phone: e.target.value }); setSaved(false); }} />
