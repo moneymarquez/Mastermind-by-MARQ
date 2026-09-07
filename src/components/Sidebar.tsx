@@ -5,6 +5,7 @@ import InboxWidget from './InboxWidget';
 import type { InboxItem } from '../data/useOwnerInbox';
 import LeadsWidget from './LeadsWidget';
 import type { LeadItem } from '../data/useLeads';
+import { useAvatar } from '../data/useAvatar';
 
 export const SIDEBAR_WIDTH = 250;
 // The collapsed rail: just the Menu toggle, nothing else — clicking it
@@ -45,6 +46,7 @@ export default function Sidebar({
   inboxItems, inboxLoading, onOpenInbox,
   open, onToggle,
 }: Props) {
+  const { avatarUrl } = useAvatar();
   return (
     <div
       style={{
@@ -113,7 +115,11 @@ export default function Sidebar({
         onClick={onOpenSettings}
         style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 10, padding: 11, borderRadius: 14, background: 'var(--mm-panel-solid)', border: '1px solid var(--mm-line)', cursor: 'pointer' }}
       >
-        <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--mm-track)', flexShrink: 0 }} />
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+        ) : (
+          <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--mm-track)', flexShrink: 0 }} />
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2, minWidth: 0 }}>
           <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--mm-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ownerName ?? 'Account'}</div>
           <div style={{ fontSize: 10.5, color: 'var(--mm-faint)' }}>{isOwner ? 'Owner' : `${LIVE_PLAN.name} plan`}</div>

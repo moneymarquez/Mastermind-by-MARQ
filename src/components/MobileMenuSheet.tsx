@@ -9,6 +9,7 @@ import type { InboxItem } from '../data/useOwnerInbox';
 import LeadsWidget from './LeadsWidget';
 import type { LeadItem } from '../data/useLeads';
 import { SAFE_BOTTOM } from './MobileTabBar';
+import { useAvatar } from '../data/useAvatar';
 
 interface Props {
   open: boolean;
@@ -72,6 +73,7 @@ export default function MobileMenuSheet({
   leads, leadsNewCount, leadsLoading, onOpenLead,
   inboxItems, inboxLoading, onOpenInbox,
 }: Props) {
+  const { avatarUrl } = useAvatar();
   const sheetRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ startY: number; lastY: number; lastT: number; velocity: number } | null>(null);
   const [dragY, setDragY] = useState(0);
@@ -219,7 +221,11 @@ export default function MobileMenuSheet({
             borderTop: '1px solid var(--mm-line)',
           }}
         >
-          <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--mm-track)', flexShrink: 0 }} />
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+          ) : (
+            <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--mm-track)', flexShrink: 0 }} />
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.25, minWidth: 0 }}>
             <div style={{ fontSize: 13.5, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ownerName ?? 'Account'}</div>
             <div style={{ fontSize: 11, color: 'var(--mm-faint)' }}>{isOwner ? 'Owner' : `${LIVE_PLAN.name} plan`}</div>
