@@ -11,8 +11,11 @@ import FreePlaysChecklist from './FreePlaysChecklist';
 import MarketingBuildOut from './MarketingBuildOut';
 import MarketingLaunchPanel from './MarketingLaunchPanel';
 import MarketingCheckpointPanel, { KilledPlayAlternates } from './MarketingCheckpointPanel';
+import MarketingOutcomeLog from './MarketingOutcomeLog';
+import MarketingTrackRecord from './MarketingTrackRecord';
 import { isLaunchComplete, isCheckpointDue } from '../../data/marketingLaunchEngine';
 import { useMarketingPlays, isFreePlaysResolved } from '../../data/useMarketingPlays';
+import { usePlayOutcomes } from '../../data/usePlayOutcomes';
 import type { BuildOutResult } from '../../lib/marketingBuildOut';
 import { useClientMedia } from '../../data/useClientMedia';
 import { askClaude, AiError } from '../../lib/ai';
@@ -188,6 +191,9 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
   const clientMediaApi = useClientMedia(selectedClientId);
   const buildOutAssets = activePlay ? m.assets.filter((a) => a.play_id === activePlay.id) : [];
   const buildOutMedia = activePlay ? clientMediaApi.media.filter((med) => med.play_id === activePlay.id) : [];
+  const outcomesApi = usePlayOutcomes();
+  const [loggingWin, setLoggingWin] = useState(false);
+  const killedNeedsOutcome = !!recentlyKilled && !outcomesApi.outcomes.some((o) => o.play_id === recentlyKilled.id);
 
   /** Saves a generated build-out as tagged marketing_assets rows — one for
    *  the three variants (stored as JSON so export blocks can rebuild the
@@ -237,6 +243,8 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
           emptyHint="Assets, campaigns, and the pipeline below are scoped to whichever client is picked here."
         />
       </div>
+
+      <MarketingTrackRecord outcomes={outcomesApi.outcomes} loading={outcomesApi.loading} />
 
       {selectedClientId && currentBrief && (
         <div style={{ marginTop: 20 }}>
@@ -315,6 +323,24 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
                       />
                     </>
                   )}
+                  {isLaunchComplete(activePlay) && !loggingWin && (
+                    <div style={{ marginTop: 12 }}>
+                      <span
+                        style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', textDecoration: 'underline', cursor: 'pointer' }}
+                        onClick={() => setLoggingWin(true)}
+                      >
+                        It's proven itself — log it as a win
+                      </span>
+                    </div>
+                  )}
+                  {loggingWin && (
+                    <div style={{ marginTop: 12 }}>
+                      <MarketingOutcomeLog
+                        play={activePlay}
+                        onLog={(play, input) => { outcomesApi.logOutcome(play, input); setLoggingWin(false); }}
+                      />
+                    </div>
+                  )}
                 </>
               )}
               {recentlyKilled && (
@@ -325,6 +351,11 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
                     parkedAlternates={parkedChannelAlternates}
                     onPickAlternate={(id) => playsApi.pickPlay(id)}
                   />
+                  {killedNeedsOutcome && (
+                    <div style={{ marginTop: 12 }}>
+                      <MarketingOutcomeLog play={recentlyKilled} onLog={(play, input) => outcomesApi.logOutcome(play, input)} />
+                    </div>
+                  )}
                 </>
               )}
             </>
