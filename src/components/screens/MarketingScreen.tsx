@@ -6,6 +6,8 @@ import { useMarketingBriefs } from '../../data/useMarketingBriefs';
 import type { MarketingBrief } from '../../data/useMarketingBriefs';
 import MarketingBriefForm from './MarketingBriefForm';
 import MarketingDiagnosisHeader from './MarketingDiagnosisHeader';
+import MarketingPlaysSlate from './MarketingPlaysSlate';
+import { useMarketingPlays } from '../../data/useMarketingPlays';
 import { askClaude, AiError } from '../../lib/ai';
 import { useClients } from '../../data/useClients';
 import ClientSelector from '../ClientSelector';
@@ -159,6 +161,11 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
   const clientBriefs = selectedClientId ? briefsApi.briefs.filter((b) => b.client_id === selectedClientId) : [];
   const activeBrief = briefsApi.briefs.find((b) => b.id === activeBriefId) ?? null;
   const selectedClientName = clientsApi.clients.find((c) => c.id === selectedClientId)?.business_name ?? '';
+  // Diagnosis header and the plays slate both hang off the same "current"
+  // brief for the client — the most recently updated one — not whichever
+  // brief happens to be open for editing below.
+  const currentBrief = clientBriefs[0] ?? null;
+  const playsApi = useMarketingPlays(currentBrief?.id ?? null);
 
   // Entry point 2 — Client CRM's "Push to Marketing" button. Fires once
   // per push: create a fresh brief for that client, open it, then consume
@@ -196,14 +203,29 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
         />
       </div>
 
-      {selectedClientId && clientBriefs.length > 0 && (
+      {selectedClientId && currentBrief && (
         <div style={{ marginTop: 20 }}>
           <MarketingDiagnosisHeader
-            brief={clientBriefs[0]}
+            brief={currentBrief}
             clientName={selectedClientName}
-            onSetLeak={(leak, note) => briefsApi.updateBrief(clientBriefs[0].id, { primary_leak: leak, leak_note: note })}
+            onSetLeak={(leak, note) => briefsApi.updateBrief(currentBrief.id, { primary_leak: leak, leak_note: note })}
           />
         </div>
+      )}
+
+      {selectedClientId && currentBrief && currentBrief.primary_leak && (
+        <>
+          <div style={sectionTitle}>Plays</div>
+          <MarketingPlaysSlate
+            brief={currentBrief}
+            clientName={selectedClientName}
+            plays={playsApi.plays}
+            loading={playsApi.loading}
+            onSetBusinessModel={(model) => briefsApi.updateBrief(currentBrief.id, { business_model: model })}
+            onGenerateSlate={(drafts) => playsApi.saveSlate(currentBrief.client_id, currentBrief.id, drafts)}
+            onPick={(id) => playsApi.pickPlay(id)}
+          />
+        </>
       )}
 
       {selectedClientId && (

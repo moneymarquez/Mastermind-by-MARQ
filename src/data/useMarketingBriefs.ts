@@ -34,6 +34,10 @@ export interface MarketingBrief {
   /** Why this leak, in the operator's own words — required whenever they
    *  set or override the diagnosis from the header (schema_073). */
   leak_note: string | null;
+  /** What the play/channel slate branches on — never industry
+   *  (schema_074). Null until the operator sets it; slate generation
+   *  refuses to run without it. */
+  business_model: 'local_service' | 'local_retail' | 'ecommerce' | 'online_service' | 'wholesale' | null;
   goal: string | null;
   budget_amount: number | null;
   budget_period: BudgetPeriod | null;
