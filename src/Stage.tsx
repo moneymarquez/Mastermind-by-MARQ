@@ -79,12 +79,13 @@ interface Props {
   onSignOut: () => void;
   currentUserId: string;
   userEmail: string | null | undefined;
+  userDisplayName: string | null;
   isOwner: boolean;
   theme: Theme;
   onThemeChange: (next: Theme) => void;
 }
 
-export default function Stage({ state, actions, assistantName, canAccess, onSignOut, currentUserId, userEmail, isOwner, theme, onThemeChange }: Props) {
+export default function Stage({ state, actions, assistantName, canAccess, onSignOut, currentUserId, userEmail, userDisplayName, isOwner, theme, onThemeChange }: Props) {
   // Desktop-only: the persistent Sidebar's own Menu toggle collapses it to
   // a slim icon-only rail and back — previously a dead button (no onClick
   // at all). Mobile is unaffected; it keeps MobileMenuSheet's overlay.
@@ -164,7 +165,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // canAccess={() => true} for the owner, same as AuthedGate does).
   const activeModuleCount = MODULE_REGISTRY.filter((m) => canAccess(m.key)).length;
   const activeNavLabel = vm.navRows.find((r) => r.kind === 'item' && r.active)?.label ?? 'Overview';
-  const ownerDisplayName = isOwner ? 'Cristopher' : userEmail ?? 'Account';
+  // A real set name always wins, regardless of owner status — per-account
+  // display, not a hardcoded "Cristopher" for one account and everyone
+  // else's raw email as a fallback.
+  const ownerDisplayName = userDisplayName || (isOwner ? 'Cristopher' : userEmail ?? 'Account');
 
   // Second, screen-level access check — buildNavData only ever filters
   // which rows the nav *drawer* shows; it doesn't stop state.screen from

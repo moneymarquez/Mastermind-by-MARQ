@@ -59,16 +59,21 @@ export function useModuleAccess(userId: string, isOwner: boolean): ModuleAccess 
       supabase.from('owner_only_grants').select('module_key'),
     ]);
     setGrantedKeys(new Set((grants ?? []).map((r) => r.module_key)));
+    const rows = data ?? [];
     // A comped (owner-granted, no real subscription) account skips the
     // module picker entirely — same as an owner minus the owner-only
-    // keys, which canAccess() below still blocks unless separately granted.
+    // keys, which canAccess() below still blocks unless separately
+    // granted. Defaults to everything on, but still honors an explicit
+    // enabled:false row — otherwise a comped account could never actually
+    // turn a module off from Manage Modules; the account-wide default
+    // would silently override it back on every load.
     if (comped) {
       setHasOnboarded(true);
-      setEnabledKeys(new Set(SELECTABLE_MODULE_KEYS));
+      const explicitlyOff = new Set(rows.filter((r) => !r.enabled).map((r) => r.module_key));
+      setEnabledKeys(new Set(SELECTABLE_MODULE_KEYS.filter((k) => !explicitlyOff.has(k))));
       setLoading(false);
       return;
     }
-    const rows = data ?? [];
     setHasOnboarded(rows.length > 0);
     setEnabledKeys(new Set(rows.filter((r) => r.enabled).map((r) => r.module_key)));
     setLoading(false);
@@ -89,7 +94,14 @@ export function useModuleAccess(userId: string, isOwner: boolean): ModuleAccess 
     // key through (the picker itself never lets a non-owner select one),
     // it's dropped here before it ever reaches the database.
     const filtered = isOwner ? keys : keys.filter((k) => !OWNER_ONLY_KEYS.has(k));
-    const rows = filtered.map((module_key) => ({ user_id: userId, module_key, enabled: true }));
+    const selected = new Set(filtered);
+    // Write true/false for every selectable key, not just the ones being
+    // turned on — writing only the "on" set left a deselected key with
+    // either no row at all (comped account: read side just re-defaulted
+    // it back on) or a stale enabled:true row (regular account), so
+    // unchecking a module and saving never actually turned it off.
+    const keysToWrite = isOwner ? MODULE_KEYS : SELECTABLE_MODULE_KEYS;
+    const rows = keysToWrite.map((module_key) => ({ user_id: userId, module_key, enabled: selected.has(module_key) }));
     await supabase.from('user_modules').upsert(rows, { onConflict: 'user_id,module_key' });
     await load();
   };

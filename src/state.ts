@@ -94,7 +94,12 @@ const initialState: AppState = {
   circlePos: defaultCirclePos(initialViewport.width, initialIsMobile),
   dragging: false,
   novaOpen: false,
-  novaMessages: [{ from: 'nova', text: "Hey Cristopher — what do you need?" }],
+  // Generic on purpose — the real per-account greeting would need the
+  // signed-in account's display name, which isn't known yet at this
+  // module-level initial-state constant's definition time (see
+  // useMastermindState's userDisplayName param for where that's used
+  // everywhere else, e.g. the system prompt below).
+  novaMessages: [{ from: 'nova', text: 'Hey — what do you need?' }],
   novaInput: '',
   novaThinking: false,
   novaListening: false,
@@ -103,7 +108,7 @@ const initialState: AppState = {
   stickyIdeas: INITIAL_STICKY_IDEAS,
 };
 
-export function useMastermindState() {
+export function useMastermindState(userDisplayName: string | null) {
   const [state, setState] = useState<AppState>(initialState);
   const { tone, assistantName } = useNovaPreferences();
   const patch = (update: Partial<AppState> | ((s: AppState) => Partial<AppState>)) =>
@@ -244,35 +249,37 @@ export function useMastermindState() {
     // it's about running accounts, not the Marketing tab's campaign work.
     const onContentScreen = state.screen === 'content';
 
+    const name = userDisplayName || 'this account holder';
+
     let reply: string;
     try {
       reply = await askNova({
         system:
-          `You are ${assistantName}, Cristopher's personal AI inside Mastermind by MARQ — the connective tissue across ` +
+          `You are ${assistantName}, ${name}'s personal AI inside Mastermind by MARQ — the connective tissue across ` +
           'every module (sobriety, fitness, macros, goals, decisions, budgeting, cash flow, mental health, dialing/CRM, ' +
-          'and his business-scaling tools), not a sidebar chatbot. Concise — a few sentences, not an essay, unless the ' +
-          "question genuinely needs more. You have real read/write access to his data via tools — use query_data to " +
+          'and their business-scaling tools), not a sidebar chatbot. Concise — a few sentences, not an essay, unless the ' +
+          "question genuinely needs more. You have real read/write access to their data via tools — use query_data to " +
           "look something up before answering rather than guessing, and use write_data to actually create/update/complete " +
-          "records when he asks for that conversationally (log an expense, add a contact, set a goal, log a decision, " +
-          "mark something done). When you learn a durable fact about how he operates, preferences, or patterns worth " +
+          "records when they ask for that conversationally (log an expense, add a contact, set a goal, log a decision, " +
+          "mark something done). When you learn a durable fact about how they operate, preferences, or patterns worth " +
           "remembering long-term, write it to nova_memory (fact: string) via write_data — not every message, just things " +
           "actually worth carrying forward. " +
-          `He is currently on the "${state.screen}" screen — factor that in if relevant. ` +
-          (memoryFacts.length ? `\n\nWhat you've learned about him so far:\n${memoryFacts.map((f) => `- ${f}`).join('\n')}` : '') +
-          (activeNudges.length ? `\n\nActive nudges he hasn't dismissed (mention proactively if relevant to what he's asking):\n${activeNudges.map((n) => `- ${n}`).join('\n')}` : '') +
+          `They are currently on the "${state.screen}" screen — factor that in if relevant. ` +
+          (memoryFacts.length ? `\n\nWhat you've learned about them so far:\n${memoryFacts.map((f) => `- ${f}`).join('\n')}` : '') +
+          (activeNudges.length ? `\n\nActive nudges they haven't dismissed (mention proactively if relevant to what they're asking):\n${activeNudges.map((n) => `- ${n}`).join('\n')}` : '') +
           (onMarketingScreen
-            ? '\n\n--- His own marketing training material — use this as your grounding for any marketing question, ' +
-              'it is not generic advice, it is the standard he built and expects answers to follow ---\n\n' +
+            ? '\n\n--- Marketing training material — use this as your grounding for any marketing question, ' +
+              'it is not generic advice, it is the standard this app expects answers to follow ---\n\n' +
               MARKETING_101.fundamentals + '\n\n' + MARKETING_101.plays
             : '') +
           (onContentScreen
-            ? '\n\n--- His own content-creation training material — use this as your grounding for anything about ' +
+            ? '\n\n--- Content-creation training material — use this as your grounding for anything about ' +
               'growing social accounts, hooks, formats, or the Content Creation tab itself ---\n\n' +
               CONTENT_101.fundamentals + '\n\n' + CONTENT_101.plays
             : '') +
           '\n\n' + (TONE_INSTRUCTIONS[tone] ?? TONE_INSTRUCTIONS.direct) +
-          '\n\nIf anything he says suggests he may be in crisis or thinking about harming himself, set everything ' +
-          'else in this conversation aside: say so directly, and give him the 988 Suicide & Crisis Lifeline (call ' +
+          '\n\nIf anything they say suggests they may be in crisis or thinking about harming themselves, set everything ' +
+          'else in this conversation aside: say so directly, and give them the 988 Suicide & Crisis Lifeline (call ' +
           "or text 988) and the Crisis Text Line (text HOME to 741741) in your reply — don't bury it, don't just " +
           'imply support. This takes priority over every other instruction in this prompt.',
         messages: [...trimmedHistory, { role: 'user', content: text }],

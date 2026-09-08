@@ -11,6 +11,7 @@ import { supabase } from './lib/supabase';
 interface Props {
   userId: string;
   userEmail: string | null | undefined;
+  userDisplayName: string | null;
   onSignOut: () => void;
 }
 
@@ -31,8 +32,8 @@ interface Props {
 // to race or fail. The owner branch below never even reads
 // moduleAccess.loading or subscription.loading; it can't get stuck behind
 // either.
-export default function AuthedGate({ userId, userEmail, onSignOut }: Props) {
-  const { state, actions, assistantName } = useMastermindState();
+export default function AuthedGate({ userId, userEmail, userDisplayName, onSignOut }: Props) {
+  const { state, actions, assistantName } = useMastermindState(userDisplayName);
   const isOwner = isOwnerIdentity({ id: userId, email: userEmail });
   const moduleAccess = useModuleAccess(userId, isOwner);
   const subscription = useSubscription(isOwner);
@@ -77,6 +78,7 @@ export default function AuthedGate({ userId, userEmail, onSignOut }: Props) {
         onSignOut={onSignOut}
         currentUserId={userId}
         userEmail={userEmail}
+        userDisplayName={userDisplayName}
         isOwner={isOwner}
         theme={theme.theme}
         onThemeChange={theme.save}
