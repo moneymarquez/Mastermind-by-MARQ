@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import type { MarketingBrief, MarketingBriefPatch, PrimaryLeak } from '../../data/useMarketingBriefs';
+import type { MarketingBrief, MarketingBriefPatch } from '../../data/useMarketingBriefs';
 
 interface Props {
   brief: MarketingBrief;
@@ -30,21 +30,6 @@ const primaryBtn: CSSProperties = {
 };
 const subhead: CSSProperties = { fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginTop: 26, marginBottom: 4 };
 const subheadNote: CSSProperties = { fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 14, lineHeight: 1.5 };
-
-// Ordered exactly as Marketing 101 Fundamentals Part 1's own diagnostic
-// order — positioning and pricing before conversion, conversion before
-// retention, awareness last — because "fixing a later leak while an
-// earlier one is open wastes money, but fixing an earlier one while a
-// later one is open wastes more." The "test" text is the doc's own
-// diagnostic test for that leak, not a paraphrase, so picking one here is
-// actually running the diagnosis, not just labeling it after the fact.
-const LEAKS: { key: PrimaryLeak; label: string; test: string }[] = [
-  { key: 'positioning', label: 'Positioning', test: 'Can they say in one sentence why someone picks them over the place down the street — without saying "quality" or "service"? If no, this is it.' },
-  { key: 'pricing', label: 'Pricing', test: 'Busy but broke? If a 10% price increase would lose fewer than 10% of customers — and it almost always would — they\'re underpriced.' },
-  { key: 'conversion', label: 'Conversion', test: 'Decent traffic or foot traffic, weak sales — "lookers, not buyers"? Check what % of contacts become customers.' },
-  { key: 'retention', label: 'Retention', test: 'Under 30% of this month\'s revenue from someone who bought before? They buy once and never come back.' },
-  { key: 'awareness', label: 'Awareness', test: 'If 100 ideal customers showed up tomorrow, would they convert? If yes — and reach is genuinely the gap — it\'s this one.' },
-];
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
@@ -101,25 +86,6 @@ export default function MarketingBriefForm({ brief, onUpdate, onDelete, onClose,
       {onBuildWithNova && (
         <div style={{ ...primaryBtn, marginTop: 16, display: 'inline-block' }} onClick={onBuildWithNova}>Build this with Nova</div>
       )}
-
-      <div style={subhead}>Which leak is this fixing?</div>
-      <div style={subheadNote}>Diagnose first — the doc's own rule. Pick the one whose test actually matches this client.</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 4 }}>
-        {LEAKS.map((l) => (
-          <div
-            key={l.key}
-            onClick={() => { set('primary_leak', l.key); onUpdate({ primary_leak: l.key }); }}
-            style={{
-              padding: '10px 14px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-              border: `1px solid ${draft.primary_leak === l.key ? 'var(--text)' : 'var(--border)'}`,
-              background: draft.primary_leak === l.key ? '#F5F6F71a' : 'transparent',
-            }}
-          >
-            <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: draft.primary_leak === l.key ? 'var(--text)' : 'var(--text-secondary)' }}>{l.label}</div>
-            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 3, lineHeight: 1.4 }}>{l.test}</div>
-          </div>
-        ))}
-      </div>
 
       <div style={subhead}>Campaign</div>
       <Field label="Goal" hint="specific, not vague — '15 more catering bookings a month,' not 'more customers'">

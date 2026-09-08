@@ -5,6 +5,23 @@ import { supabase } from '../lib/supabase';
  *  the brief's own diagnosis, not a guess made downstream. Asked before
  *  anything else per the doc's own "diagnose, then prescribe" rule. */
 export type PrimaryLeak = 'positioning' | 'pricing' | 'conversion' | 'retention' | 'awareness';
+
+// Ordered exactly as Marketing 101 Fundamentals Part 1's own diagnostic
+// order — positioning and pricing before conversion, conversion before
+// retention, awareness last — because "fixing a later leak while an
+// earlier one is open wastes money, but fixing an earlier one while a
+// later one is open wastes more." The "test" text is the doc's own
+// diagnostic test for that leak, not a paraphrase, so picking one is
+// actually running the diagnosis, not just labeling it after the fact.
+// Single source of truth — both the diagnosis header (setting/overriding
+// the leak) and anything else that needs the five options read from here.
+export const LEAKS: { key: PrimaryLeak; label: string; test: string }[] = [
+  { key: 'positioning', label: 'Positioning', test: 'Can they say in one sentence why someone picks them over the place down the street — without saying "quality" or "service"? If no, this is it.' },
+  { key: 'pricing', label: 'Pricing', test: 'Busy but broke? If a 10% price increase would lose fewer than 10% of customers — and it almost always would — they\'re underpriced.' },
+  { key: 'conversion', label: 'Conversion', test: 'Decent traffic or foot traffic, weak sales — "lookers, not buyers"? Check what % of contacts become customers.' },
+  { key: 'retention', label: 'Retention', test: 'Under 30% of this month\'s revenue from someone who bought before? They buy once and never come back.' },
+  { key: 'awareness', label: 'Awareness', test: 'If 100 ideal customers showed up tomorrow, would they convert? If yes — and reach is genuinely the gap — it\'s this one.' },
+];
 export type BudgetPeriod = 'one_time' | 'monthly';
 export type BriefStatus = 'draft' | 'ready';
 
@@ -14,6 +31,9 @@ export interface MarketingBrief {
   status: BriefStatus;
 
   primary_leak: PrimaryLeak | null;
+  /** Why this leak, in the operator's own words — required whenever they
+   *  set or override the diagnosis from the header (schema_073). */
+  leak_note: string | null;
   goal: string | null;
   budget_amount: number | null;
   budget_period: BudgetPeriod | null;

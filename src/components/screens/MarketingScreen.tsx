@@ -5,6 +5,7 @@ import type { AssetType, CampaignStatus, PipelineStage } from '../../data/useMar
 import { useMarketingBriefs } from '../../data/useMarketingBriefs';
 import type { MarketingBrief } from '../../data/useMarketingBriefs';
 import MarketingBriefForm from './MarketingBriefForm';
+import MarketingDiagnosisHeader from './MarketingDiagnosisHeader';
 import { askClaude, AiError } from '../../lib/ai';
 import { useClients } from '../../data/useClients';
 import ClientSelector from '../ClientSelector';
@@ -194,6 +195,16 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
           emptyHint="Assets, campaigns, and the pipeline below are scoped to whichever client is picked here."
         />
       </div>
+
+      {selectedClientId && clientBriefs.length > 0 && (
+        <div style={{ marginTop: 20 }}>
+          <MarketingDiagnosisHeader
+            brief={clientBriefs[0]}
+            clientName={selectedClientName}
+            onSetLeak={(leak, note) => briefsApi.updateBrief(clientBriefs[0].id, { primary_leak: leak, leak_note: note })}
+          />
+        </div>
+      )}
 
       {selectedClientId && (
         <>
