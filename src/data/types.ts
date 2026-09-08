@@ -1112,7 +1112,7 @@ export interface ClientReport {
 export type ReportAssetKind = 'content' | 'proof';
 export type ReportAssetStatus = 'draft' | 'approved' | 'live';
 
-export type ClientMediaCategory = 'truck' | 'food' | 'business_card' | 'screenshot' | 'other';
+export type ClientMediaCategory = 'truck' | 'food' | 'business_card' | 'screenshot' | 'other' | 'marketing';
 
 /** Raw source material attached to a client — the truck, the food, a
  *  business card, a screenshot of their Google listing. Never shown to
@@ -1121,6 +1121,9 @@ export interface ClientMedia {
   id: string;
   client_id: string;
   audit_id: string | null;
+  /** Which play this photo/video was shot for (schema_076) — set when
+   *  uploaded from the build-out screen's shot list, null otherwise. */
+  play_id: string | null;
   storage_path: string;
   file_name: string;
   mime_type: string | null;

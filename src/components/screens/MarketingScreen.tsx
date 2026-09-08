@@ -8,7 +8,10 @@ import MarketingBriefForm from './MarketingBriefForm';
 import MarketingDiagnosisHeader from './MarketingDiagnosisHeader';
 import MarketingPlaysSlate from './MarketingPlaysSlate';
 import FreePlaysChecklist from './FreePlaysChecklist';
+import MarketingBuildOut from './MarketingBuildOut';
 import { useMarketingPlays, isFreePlaysResolved } from '../../data/useMarketingPlays';
+import type { BuildOutResult } from '../../lib/marketingBuildOut';
+import { useClientMedia } from '../../data/useClientMedia';
 import { askClaude, AiError } from '../../lib/ai';
 import { useClients } from '../../data/useClients';
 import ClientSelector from '../ClientSelector';
@@ -167,6 +170,23 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
   // brief happens to be open for editing below.
   const currentBrief = clientBriefs[0] ?? null;
   const playsApi = useMarketingPlays(currentBrief?.id ?? null);
+  const activePlay = playsApi.plays.find((p) => (p.category === 'paid' || p.category === 'offline') && p.status === 'active') ?? null;
+  const clientMediaApi = useClientMedia(selectedClientId);
+  const buildOutAssets = activePlay ? m.assets.filter((a) => a.play_id === activePlay.id) : [];
+  const buildOutMedia = activePlay ? clientMediaApi.media.filter((med) => med.play_id === activePlay.id) : [];
+
+  /** Saves a generated build-out as tagged marketing_assets rows — one for
+   *  the three variants (stored as JSON so export blocks can rebuild the
+   *  structured headline/body pairs later), one each for caption/GBP
+   *  description when the model produced them, and one for creative
+   *  direction + the shot list together. */
+  const saveBuildOut = async (play: (typeof playsApi.plays)[number], result: BuildOutResult) => {
+    await m.addAsset({ name: `${play.title} — 3 variants`, asset_type: 'copy', content: JSON.stringify(result.variants), tags: ['build-out', 'variants'], client_id: play.client_id, play_id: play.id });
+    if (result.caption) await m.addAsset({ name: `${play.title} — caption`, asset_type: 'copy', content: result.caption, tags: ['build-out', 'caption'], client_id: play.client_id, play_id: play.id });
+    if (result.gbp_description) await m.addAsset({ name: `${play.title} — GBP description`, asset_type: 'copy', content: result.gbp_description, tags: ['build-out', 'gbp'], client_id: play.client_id, play_id: play.id });
+    const shotList = result.shot_list.map((s) => `- ${s}`).join('\n');
+    await m.addAsset({ name: `${play.title} — creative direction & shot list`, asset_type: 'creative', content: `${result.creative_direction}\n\nShot list:\n${shotList}`, tags: ['build-out', 'creative'], client_id: play.client_id, play_id: play.id });
+  };
 
   // Entry point 2 — Client CRM's "Push to Marketing" button. Fires once
   // per push: create a fresh brief for that client, open it, then consume
@@ -252,6 +272,23 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
                   onPick={(id) => playsApi.pickPlay(id)}
                 />
               </div>
+              {activePlay && (
+                <>
+                  <div style={sectionTitle}>Build out</div>
+                  <MarketingBuildOut
+                    brief={currentBrief}
+                    clientName={selectedClientName}
+                    activePlay={activePlay}
+                    assets={buildOutAssets}
+                    media={buildOutMedia}
+                    mediaLoading={clientMediaApi.loading}
+                    onSave={saveBuildOut}
+                    onUploadMedia={(file) => clientMediaApi.uploadMedia(file, 'marketing', null, undefined, activePlay.id)}
+                    onRemoveMedia={(id, path) => clientMediaApi.removeMedia(id, path)}
+                    mediaUrl={clientMediaApi.mediaUrl}
+                  />
+                </>
+              )}
             </>
           )}
         </>

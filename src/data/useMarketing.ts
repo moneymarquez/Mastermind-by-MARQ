@@ -13,6 +13,9 @@ export interface MarketingAsset {
   external_url: string | null;
   tags: string[];
   client_id: string | null;
+  /** Which play this asset was built out for (schema_076) — null for
+   *  anything added the old way, before a play existed to tie it to. */
+  play_id: string | null;
   updated_at: string;
 }
 
@@ -72,7 +75,7 @@ export function useMarketing() {
     load();
   }, [load]);
 
-  const addAsset = async (input: { name: string; asset_type: AssetType; content?: string; external_url?: string; tags?: string[]; client_id?: string | null }) => {
+  const addAsset = async (input: { name: string; asset_type: AssetType; content?: string; external_url?: string; tags?: string[]; client_id?: string | null; play_id?: string | null }) => {
     await supabase.from('marketing_assets').insert({ ...input, updated_at: new Date().toISOString() });
     await load();
   };
