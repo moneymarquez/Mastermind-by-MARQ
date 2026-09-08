@@ -25,6 +25,11 @@ export interface MarketingPlay {
   kill_threshold: string | null;
   checkpoint_date: string | null;
   expected_result: string | null;
+  /** Why a checkpoint decision was a kill or a change-one-variable pivot
+   *  (schema_077) — "pivot requires a reason_code." Null for a play
+   *  that's still running as launched, or one confirmed as a winner
+   *  (leaving it alone isn't a pivot, so it needs no reason). */
+  checkpoint_reason_code: 'wrong_channel' | 'weak_offer' | 'bad_creative' | 'too_early' | null;
   created_at: string;
   updated_at: string;
 }

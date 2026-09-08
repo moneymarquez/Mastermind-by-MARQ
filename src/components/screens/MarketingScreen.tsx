@@ -10,6 +10,8 @@ import MarketingPlaysSlate from './MarketingPlaysSlate';
 import FreePlaysChecklist from './FreePlaysChecklist';
 import MarketingBuildOut from './MarketingBuildOut';
 import MarketingLaunchPanel from './MarketingLaunchPanel';
+import MarketingCheckpointPanel, { KilledPlayAlternates } from './MarketingCheckpointPanel';
+import { isLaunchComplete, isCheckpointDue } from '../../data/marketingLaunchEngine';
 import { useMarketingPlays, isFreePlaysResolved } from '../../data/useMarketingPlays';
 import type { BuildOutResult } from '../../lib/marketingBuildOut';
 import { useClientMedia } from '../../data/useClientMedia';
@@ -172,6 +174,17 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
   const currentBrief = clientBriefs[0] ?? null;
   const playsApi = useMarketingPlays(currentBrief?.id ?? null);
   const activePlay = playsApi.plays.find((p) => (p.category === 'paid' || p.category === 'offline') && p.status === 'active') ?? null;
+  const parkedChannelAlternates = playsApi.plays
+    .filter((p) => (p.category === 'paid' || p.category === 'offline') && p.status === 'parked')
+    .sort((a, b) => a.rank - b.rank);
+  // Nothing currently active but something was just killed — show the
+  // alternates for THAT play rather than losing the moment once
+  // activePlay goes null.
+  const recentlyKilled = !activePlay
+    ? [...playsApi.plays]
+        .filter((p) => (p.category === 'paid' || p.category === 'offline') && p.status === 'killed')
+        .sort((a, b) => b.updated_at.localeCompare(a.updated_at))[0] ?? null
+    : null;
   const clientMediaApi = useClientMedia(selectedClientId);
   const buildOutAssets = activePlay ? m.assets.filter((a) => a.play_id === activePlay.id) : [];
   const buildOutMedia = activePlay ? clientMediaApi.media.filter((med) => med.play_id === activePlay.id) : [];
@@ -292,6 +305,25 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
                   <MarketingLaunchPanel
                     play={activePlay}
                     onUpdate={(patch) => playsApi.updatePlay(activePlay.id, patch)}
+                  />
+                  {isLaunchComplete(activePlay) && isCheckpointDue(activePlay.checkpoint_date) && (
+                    <>
+                      <div style={sectionTitle}>Checkpoint</div>
+                      <MarketingCheckpointPanel
+                        play={activePlay}
+                        onUpdate={(patch) => playsApi.updatePlay(activePlay.id, patch)}
+                      />
+                    </>
+                  )}
+                </>
+              )}
+              {recentlyKilled && (
+                <>
+                  <div style={sectionTitle}>Checkpoint</div>
+                  <KilledPlayAlternates
+                    play={recentlyKilled}
+                    parkedAlternates={parkedChannelAlternates}
+                    onPickAlternate={(id) => playsApi.pickPlay(id)}
                   />
                 </>
               )}

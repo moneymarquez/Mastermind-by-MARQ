@@ -120,3 +120,31 @@ export function suggestedCheckpointDate(checkpointDays: number): string {
 export function isLaunchComplete(play: Pick<MarketingPlay, 'primary_metric' | 'kill_threshold' | 'checkpoint_date' | 'expected_result'>): boolean {
   return !!(play.primary_metric && play.kill_threshold && play.checkpoint_date && play.expected_result);
 }
+
+/** True once a launched play's own checkpoint date has arrived — the
+ *  trigger for showing the checkpoint decision instead of the "launched"
+ *  summary. Compares dates only (not time-of-day), so the checkpoint
+ *  shows up first thing on the day itself, not at midnight exactly. */
+export function isCheckpointDue(checkpointDate: string | null): boolean {
+  if (!checkpointDate) return false;
+  const today = new Date().toISOString().slice(0, 10);
+  return checkpointDate <= today;
+}
+
+/** "The engine reads the one number against threshold, makes the call
+ *  (double)" — doubles the numeric part of a budget string when one is
+ *  findable. Handles a "$X-Y" range by doubling both ends (so it stays a
+ *  real range, not "$600-500"), a single "$25/day" by doubling the one
+ *  number, and leaves anything without a dollar amount untouched rather
+ *  than fabricating a number that was never there. */
+export function doubleBudget(costEstimate: string | null): string {
+  if (!costEstimate) return 'Set a real number when doubling down.';
+  const range = costEstimate.match(/\$(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)/);
+  if (range) {
+    const [whole, lo, hi] = range;
+    return costEstimate.replace(whole, `$${Number(lo) * 2}-${Number(hi) * 2}`);
+  }
+  const single = costEstimate.match(/\$(\d+(?:\.\d+)?)/);
+  if (!single) return costEstimate;
+  return costEstimate.replace(single[0], `$${Number(single[1]) * 2}`);
+}
