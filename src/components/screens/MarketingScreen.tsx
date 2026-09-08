@@ -7,7 +7,8 @@ import type { MarketingBrief } from '../../data/useMarketingBriefs';
 import MarketingBriefForm from './MarketingBriefForm';
 import MarketingDiagnosisHeader from './MarketingDiagnosisHeader';
 import MarketingPlaysSlate from './MarketingPlaysSlate';
-import { useMarketingPlays } from '../../data/useMarketingPlays';
+import FreePlaysChecklist from './FreePlaysChecklist';
+import { useMarketingPlays, isFreePlaysResolved } from '../../data/useMarketingPlays';
 import { askClaude, AiError } from '../../lib/ai';
 import { useClients } from '../../data/useClients';
 import ClientSelector from '../ClientSelector';
@@ -216,15 +217,43 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
       {selectedClientId && currentBrief && currentBrief.primary_leak && (
         <>
           <div style={sectionTitle}>Plays</div>
-          <MarketingPlaysSlate
-            brief={currentBrief}
-            clientName={selectedClientName}
-            plays={playsApi.plays}
-            loading={playsApi.loading}
-            onSetBusinessModel={(model) => briefsApi.updateBrief(currentBrief.id, { business_model: model })}
-            onGenerateSlate={(drafts) => playsApi.saveSlate(currentBrief.client_id, currentBrief.id, drafts)}
-            onPick={(id) => playsApi.pickPlay(id)}
-          />
+          {!currentBrief.business_model ? (
+            <MarketingPlaysSlate
+              brief={currentBrief}
+              clientName={selectedClientName}
+              plays={[]}
+              loading={false}
+              locked
+              onSetBusinessModel={(model) => briefsApi.updateBrief(currentBrief.id, { business_model: model })}
+              onGenerateSlate={() => {}}
+              onPick={() => {}}
+            />
+          ) : (
+            <>
+              <FreePlaysChecklist
+                brief={currentBrief}
+                clientName={selectedClientName}
+                plays={playsApi.plays.filter((p) => p.category === 'free')}
+                loading={playsApi.loading}
+                onGenerate={(drafts) => playsApi.saveChecklist(currentBrief.client_id, currentBrief.id, drafts)}
+                onMarkDone={(id) => playsApi.markDone(id)}
+                onSkip={(id, reason) => playsApi.skipPlay(id, reason)}
+                onReorder={(ids) => playsApi.reorderFreePlays(ids)}
+              />
+              <div style={{ marginTop: 24 }}>
+                <MarketingPlaysSlate
+                  brief={currentBrief}
+                  clientName={selectedClientName}
+                  plays={playsApi.plays.filter((p) => p.category === 'paid' || p.category === 'offline')}
+                  loading={playsApi.loading}
+                  locked={!isFreePlaysResolved(playsApi.plays)}
+                  onSetBusinessModel={(model) => briefsApi.updateBrief(currentBrief.id, { business_model: model })}
+                  onGenerateSlate={(drafts) => playsApi.saveSlate(currentBrief.client_id, currentBrief.id, drafts)}
+                  onPick={(id) => playsApi.pickPlay(id)}
+                />
+              </div>
+            </>
+          )}
         </>
       )}
 

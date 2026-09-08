@@ -8,8 +8,15 @@ import type { BusinessModel } from '../../data/marketingPlaysEngine';
 interface Props {
   brief: MarketingBrief;
   clientName: string;
+  /** Paid + offline plays only — the caller filters out free-plays
+   *  checklist rows before handing this down (they're a different
+   *  screen, FreePlaysChecklist). */
   plays: MarketingPlay[];
   loading: boolean;
+  /** True until the free-plays checklist is fully resolved (item 3's
+   *  gate) — disables picking anything here, but the reasoning still
+   *  shows so the operator can see what's waiting. */
+  locked: boolean;
   onSetBusinessModel: (model: BusinessModel) => void;
   onGenerateSlate: (drafts: ReturnType<typeof generateSlate>) => void;
   onPick: (id: string) => void;
@@ -26,10 +33,10 @@ const primaryBtn: CSSProperties = {
   fontSize: 'var(--text-small)', fontWeight: 600, cursor: 'pointer',
 };
 const metaRow: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '4px 16px', marginTop: 10, fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' };
-const CATEGORY_LABEL: Record<string, string> = { free: 'Free', paid: 'Paid', offline: 'Offline' };
+const CATEGORY_LABEL: Record<string, string> = { paid: 'Paid', offline: 'Offline' };
 const STATUS_COLOR: Record<string, string> = { active: 'var(--success)', parked: 'var(--text-tertiary)', offered: 'var(--text-secondary)', won: 'var(--success)', killed: 'var(--danger)' };
 
-function PlayCard({ play, onPick }: { play: MarketingPlay; onPick: (id: string) => void }) {
+function PlayCard({ play, locked, onPick }: { play: MarketingPlay; locked: boolean; onPick: (id: string) => void }) {
   return (
     <div style={playCard}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
@@ -47,18 +54,23 @@ function PlayCard({ play, onPick }: { play: MarketingPlay; onPick: (id: string) 
       )}
       {(play.status === 'offered' || play.status === 'parked') && (
         <div style={{ marginTop: 12 }}>
-          <span style={ghostBtn} onClick={() => onPick(play.id)}>{play.status === 'parked' ? 'Switch to this play' : 'Pick this play'}</span>
+          {locked ? (
+            <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>Locked — finish the free plays checklist first</span>
+          ) : (
+            <span style={ghostBtn} onClick={() => onPick(play.id)}>{play.status === 'parked' ? 'Switch to this play' : 'Pick this play'}</span>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-/** Screen 3 of the Marketing Plays rebuild (build order item 2) — the
- *  branch-on-business-model slate, not yet gated behind the free-plays
- *  checklist (that gate is item 3) or built out into assets (item 4).
- *  Just: generate, show the reasoning, let the operator pick one. */
-export default function MarketingPlaysSlate({ brief, clientName, plays, loading, onSetBusinessModel, onGenerateSlate, onPick }: Props) {
+/** Screen 3 of the Marketing Plays rebuild — the branch-on-business-model
+ *  paid/offline channel slate. Locked (item 3's gate) until the
+ *  free-plays checklist is resolved; not yet built out into assets
+ *  (that's item 4). Generate, show the reasoning, let the operator pick
+ *  one once it unlocks. */
+export default function MarketingPlaysSlate({ brief, clientName, plays, loading, locked, onSetBusinessModel, onGenerateSlate, onPick }: Props) {
   const [pendingModel, setPendingModel] = useState<BusinessModel | null>(null);
   const [generating, setGenerating] = useState(false);
 
@@ -99,9 +111,9 @@ export default function MarketingPlaysSlate({ brief, clientName, plays, loading,
   if (plays.length === 0) {
     return (
       <div style={cardStyle}>
-        <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>No slate yet</div>
+        <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>No channel slate yet</div>
         <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
-          Generates a set of viable plays for {clientName || 'this client'} — free, paid, and offline — each with the reasoning, cost, speed to a real signal, and honest risk. Nothing gets launched here; you pick one to build out next.
+          Generates the paid and offline channels viable for {clientName || 'this client'} — each with the reasoning, cost, speed to a real signal, and honest risk. Nothing gets launched here; you pick one to build out next.
         </div>
         <div
           style={{ ...primaryBtn, marginTop: 14, display: 'inline-block', opacity: generating ? 0.6 : 1, cursor: generating ? 'default' : 'pointer' }}
@@ -123,14 +135,19 @@ export default function MarketingPlaysSlate({ brief, clientName, plays, loading,
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {(['free', 'paid', 'offline'] as const).map((cat) => {
+      {locked && (
+        <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+          Free plays checklist isn't resolved yet — these are shown for reference, but nothing here can be picked until it is.
+        </div>
+      )}
+      {(['paid', 'offline'] as const).map((cat) => {
         const list = byCategory(cat);
         if (list.length === 0) return null;
         return (
           <div key={cat}>
             <div style={{ fontSize: 'var(--text-body)', fontWeight: 700, color: 'var(--text)', marginBottom: 10 }}>{CATEGORY_LABEL[cat]}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {list.map((p) => <PlayCard key={p.id} play={p} onPick={onPick} />)}
+              {list.map((p) => <PlayCard key={p.id} play={p} locked={locked} onPick={onPick} />)}
             </div>
           </div>
         );

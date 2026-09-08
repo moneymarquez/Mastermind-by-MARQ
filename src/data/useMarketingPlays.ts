@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { PlayCategory, EffortLevel, PlayDraft } from './marketingPlaysEngine';
 
-export type PlayStatus = 'offered' | 'parked' | 'active' | 'won' | 'killed';
+export type PlayStatus = 'offered' | 'parked' | 'active' | 'won' | 'killed' | 'done' | 'skipped';
 
 export interface MarketingPlay {
   id: string;
@@ -18,6 +18,9 @@ export interface MarketingPlay {
   speed_to_signal: string | null;
   effort_level: EffortLevel | null;
   honest_risk: string | null;
+  /** Why a free-plays checklist item was marked not applicable instead
+   *  of done (schema_075) — null for anything that isn't 'skipped'. */
+  skip_reason: string | null;
   primary_metric: string | null;
   kill_threshold: string | null;
   checkpoint_date: string | null;
@@ -27,6 +30,16 @@ export interface MarketingPlay {
 }
 
 export type MarketingPlayPatch = Partial<Omit<MarketingPlay, 'id' | 'client_id' | 'brief_id' | 'created_at' | 'updated_at'>>;
+
+/** "Free plays gate paid plays — the paid slate stays locked until free
+ *  plays are checked off or explicitly skipped with a reason." Locked
+ *  until the checklist even exists (no free rows yet) and until every
+ *  free row is resolved one way or the other. */
+export function isFreePlaysResolved(plays: MarketingPlay[]): boolean {
+  const free = plays.filter((p) => p.category === 'free');
+  if (free.length === 0) return false;
+  return free.every((p) => p.status === 'done' || (p.status === 'skipped' && !!p.skip_reason));
+}
 
 // Same per-account isolation as every other marketing_* table
 // (schema_072/074) — no client-side owner check needed, the database
@@ -58,13 +71,7 @@ export function useMarketingPlays(briefId: string | null) {
     load();
   }, [load]);
 
-  /** Writes a freshly generated slate for a brief that has none yet.
-   *  Refuses if plays already exist — regenerating over a slate the
-   *  operator has already picked from would silently discard that
-   *  choice; deleting and starting over is a deliberate separate action,
-   *  not a side effect of clicking the same button twice. */
-  const saveSlate = async (clientId: string, briefIdArg: string, drafts: PlayDraft[]) => {
-    if (plays.length > 0) return;
+  const insertDrafts = async (clientId: string, briefIdArg: string, drafts: PlayDraft[]) => {
     const rows = drafts.map((d, i) => ({
       client_id: clientId,
       brief_id: briefIdArg,
@@ -83,6 +90,23 @@ export function useMarketingPlays(briefId: string | null) {
     await load();
   };
 
+  /** Writes a freshly generated channel slate (paid/offline) for a brief
+   *  that has none yet. Refuses if paid/offline plays already exist —
+   *  regenerating over a slate the operator has already picked from
+   *  would silently discard that choice. Independent of the free-plays
+   *  checklist below — generating one never blocks the other. */
+  const saveSlate = async (clientId: string, briefIdArg: string, drafts: PlayDraft[]) => {
+    if (plays.some((p) => p.category === 'paid' || p.category === 'offline')) return;
+    await insertDrafts(clientId, briefIdArg, drafts);
+  };
+
+  /** Writes the free-plays checklist for a brief that has none yet. Same
+   *  no-clobber guard as saveSlate, scoped to category='free'. */
+  const saveChecklist = async (clientId: string, briefIdArg: string, drafts: PlayDraft[]) => {
+    if (plays.some((p) => p.category === 'free')) return;
+    await insertDrafts(clientId, briefIdArg, drafts);
+  };
+
   const updatePlay = async (id: string, patch: MarketingPlayPatch) => {
     const { error: err } = await supabase
       .from('marketing_plays')
@@ -93,12 +117,19 @@ export function useMarketingPlays(briefId: string | null) {
   };
 
   /** "Operator picks one; unpicked plays stay parked as alternates" — the
-   *  core inversion the whole rebuild is built around. Also how a pick
-   *  gets swapped later (park the current active, activate the new
-   *  pick) — never touches 'won' or 'killed' rows, so closed history
-   *  stays intact either way. */
+   *  core inversion the whole rebuild is built around. Scoped to the
+   *  picked play's own category (paid vs. offline) so picking a paid
+   *  channel never touches the free-plays checklist's rows — those are
+   *  resolved with markDone/skipPlay, not picked. Also how a pick gets
+   *  swapped later (park the current active, activate the new pick) —
+   *  never touches 'won' or 'killed' rows, so closed history stays
+   *  intact either way. */
   const pickPlay = async (id: string) => {
-    const others = plays.filter((p) => p.id !== id && (p.status === 'offered' || p.status === 'active')).map((p) => p.id);
+    const target = plays.find((p) => p.id === id);
+    if (!target) return;
+    const others = plays
+      .filter((p) => p.id !== id && p.category === target.category && (p.status === 'offered' || p.status === 'active'))
+      .map((p) => p.id);
     const { error: err1 } = await supabase.from('marketing_plays').update({ status: 'active', updated_at: new Date().toISOString() }).eq('id', id);
     const { error: err2 } = others.length > 0
       ? await supabase.from('marketing_plays').update({ status: 'parked', updated_at: new Date().toISOString() }).in('id', others)
@@ -109,11 +140,29 @@ export function useMarketingPlays(briefId: string | null) {
     await load();
   };
 
+  /** Checks off a free-plays checklist item. */
+  const markDone = async (id: string) => updatePlay(id, { status: 'done' });
+
+  /** Skips a checklist item — always requires a reason, same "always
+   *  require a note" pattern as the diagnosis header's leak_note. */
+  const skipPlay = async (id: string, reason: string) => {
+    if (!reason.trim()) return;
+    await updatePlay(id, { status: 'skipped', skip_reason: reason.trim() });
+  };
+
+  /** Hand-reordering the checklist — "re-orderable per client." Writes
+   *  every row's rank in one pass so the list's order always matches
+   *  what's on screen exactly, not just the two rows that moved. */
+  const reorderFreePlays = async (orderedIds: string[]) => {
+    await Promise.all(orderedIds.map((id, i) => supabase.from('marketing_plays').update({ rank: i, updated_at: new Date().toISOString() }).eq('id', id)));
+    await load();
+  };
+
   const removePlay = async (id: string) => {
     const { error: err } = await supabase.from('marketing_plays').delete().eq('id', id);
     if (err) setError(err.message);
     await load();
   };
 
-  return { plays, loading, error, reload: load, saveSlate, updatePlay, pickPlay, removePlay };
+  return { plays, loading, error, reload: load, saveSlate, saveChecklist, updatePlay, pickPlay, markDone, skipPlay, reorderFreePlays, removePlay };
 }
