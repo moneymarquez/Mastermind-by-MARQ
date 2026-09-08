@@ -13,6 +13,35 @@ export interface AskClaudeOptions {
 
 export class AiError extends Error {}
 
+// Both AI endpoints used to have no client-side timeout at all — if the
+// backend ever genuinely hung (a slow/overloaded model call, a dropped
+// connection the browser doesn't notice, the tab getting backgrounded on
+// mobile mid-request), the caller just sat on "thinking…" forever with no
+// error and no way to recover short of reloading. This caps it: past
+// TIMEOUT_MS the request is aborted and treated as a normal failure, same
+// message path as any other AiError. 90s covers Nova's own worst case —
+// up to 6 tool-use turns, each its own model call against a large system
+// prompt — without leaving a real hang invisible.
+const TIMEOUT_MS = 90_000;
+
+async function postJson(path: string, token: string, opts: AskClaudeOptions, timeoutMessage: string): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    return await fetch(path, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify(opts),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') throw new AiError(timeoutMessage);
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function askClaude(opts: AskClaudeOptions): Promise<string> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
@@ -20,12 +49,9 @@ export async function askClaude(opts: AskClaudeOptions): Promise<string> {
 
   let res: Response;
   try {
-    res = await fetch('/api/claude', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-      body: JSON.stringify(opts),
-    });
-  } catch {
+    res = await postJson('/api/claude', token, opts, 'That took too long and timed out — try again.');
+  } catch (err) {
+    if (err instanceof AiError) throw err;
     throw new AiError('Could not reach the AI service — this feature only works when the app is deployed on Netlify (or running via `netlify dev` locally).');
   }
 
@@ -51,12 +77,9 @@ export async function askNova(opts: AskClaudeOptions): Promise<string> {
 
   let res: Response;
   try {
-    res = await fetch('/api/nova-chat', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-      body: JSON.stringify(opts),
-    });
-  } catch {
+    res = await postJson('/api/nova-chat', token, opts, "That took too long and timed out — try again, and keep the app open while it's working.");
+  } catch (err) {
+    if (err instanceof AiError) throw err;
     throw new AiError('Could not reach Nova right now — try again in a bit.');
   }
 
