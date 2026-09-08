@@ -9,6 +9,7 @@ import MarketingDiagnosisHeader from './MarketingDiagnosisHeader';
 import MarketingPlaysSlate from './MarketingPlaysSlate';
 import FreePlaysChecklist from './FreePlaysChecklist';
 import MarketingBuildOut from './MarketingBuildOut';
+import MarketingLaunchPanel from './MarketingLaunchPanel';
 import { useMarketingPlays, isFreePlaysResolved } from '../../data/useMarketingPlays';
 import type { BuildOutResult } from '../../lib/marketingBuildOut';
 import { useClientMedia } from '../../data/useClientMedia';
@@ -286,6 +287,11 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
                     onUploadMedia={(file) => clientMediaApi.uploadMedia(file, 'marketing', null, undefined, activePlay.id)}
                     onRemoveMedia={(id, path) => clientMediaApi.removeMedia(id, path)}
                     mediaUrl={clientMediaApi.mediaUrl}
+                  />
+                  <div style={sectionTitle}>Launch</div>
+                  <MarketingLaunchPanel
+                    play={activePlay}
+                    onUpdate={(patch) => playsApi.updatePlay(activePlay.id, patch)}
                   />
                 </>
               )}
