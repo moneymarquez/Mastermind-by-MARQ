@@ -38,6 +38,12 @@ export interface MarketingBrief {
    *  (schema_074). Null until the operator sets it; slate generation
    *  refuses to run without it. */
   business_model: 'local_service' | 'local_retail' | 'ecommerce' | 'online_service' | 'wholesale' | null;
+  /** The specific industry (plumber, food truck, salon, ...) the
+   *  research panel's swap-in sources branch on (schema_079) — a finer
+   *  grain than business_model, which only describes the shape of the
+   *  business. Free text; unlisted industries still get a checklist,
+   *  generated on the fly. */
+  industry: string | null;
   goal: string | null;
   budget_amount: number | null;
   budget_period: BudgetPeriod | null;

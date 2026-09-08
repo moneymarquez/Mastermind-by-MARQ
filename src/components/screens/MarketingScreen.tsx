@@ -13,9 +13,11 @@ import MarketingLaunchPanel from './MarketingLaunchPanel';
 import MarketingCheckpointPanel, { KilledPlayAlternates } from './MarketingCheckpointPanel';
 import MarketingOutcomeLog from './MarketingOutcomeLog';
 import MarketingTrackRecord from './MarketingTrackRecord';
+import MarketingResearchPanel from './MarketingResearchPanel';
 import { isLaunchComplete, isCheckpointDue } from '../../data/marketingLaunchEngine';
 import { useMarketingPlays, isFreePlaysResolved } from '../../data/useMarketingPlays';
 import { usePlayOutcomes } from '../../data/usePlayOutcomes';
+import { useMarketResearchNotes } from '../../data/useMarketResearchNotes';
 import type { BuildOutResult } from '../../lib/marketingBuildOut';
 import { useClientMedia } from '../../data/useClientMedia';
 import { askClaude, AiError } from '../../lib/ai';
@@ -194,6 +196,7 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
   const outcomesApi = usePlayOutcomes();
   const [loggingWin, setLoggingWin] = useState(false);
   const killedNeedsOutcome = !!recentlyKilled && !outcomesApi.outcomes.some((o) => o.play_id === recentlyKilled.id);
+  const researchApi = useMarketResearchNotes(selectedClientId);
 
   /** Saves a generated build-out as tagged marketing_assets rows — one for
    *  the three variants (stored as JSON so export blocks can rebuild the
@@ -282,6 +285,17 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
                 onSkip={(id, reason) => playsApi.skipPlay(id, reason)}
                 onReorder={(ids) => playsApi.reorderFreePlays(ids)}
               />
+              <div style={{ marginTop: 24 }}>
+                <div style={sectionTitle}>Research</div>
+                <MarketingResearchPanel
+                  brief={currentBrief}
+                  clientName={selectedClientName}
+                  notes={researchApi.notes}
+                  loading={researchApi.loading}
+                  onSetIndustry={(industry) => briefsApi.updateBrief(currentBrief.id, { industry })}
+                  onSaveNote={(sourceKey, promptShown, valueEntered, interpretation) => researchApi.saveNote(sourceKey, promptShown, valueEntered, interpretation)}
+                />
+              </div>
               <div style={{ marginTop: 24 }}>
                 <MarketingPlaysSlate
                   brief={currentBrief}
