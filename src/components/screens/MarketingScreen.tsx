@@ -14,10 +14,13 @@ import MarketingCheckpointPanel, { KilledPlayAlternates } from './MarketingCheck
 import MarketingOutcomeLog from './MarketingOutcomeLog';
 import MarketingTrackRecord from './MarketingTrackRecord';
 import MarketingResearchPanel from './MarketingResearchPanel';
+import MarketingDeliverables from './MarketingDeliverables';
+import MarketingDeliverablesBadge from './MarketingDeliverablesBadge';
 import { isLaunchComplete, isCheckpointDue } from '../../data/marketingLaunchEngine';
 import { useMarketingPlays, isFreePlaysResolved } from '../../data/useMarketingPlays';
 import { usePlayOutcomes } from '../../data/usePlayOutcomes';
 import { useMarketResearchNotes } from '../../data/useMarketResearchNotes';
+import { usePlayDeliverables } from '../../data/usePlayDeliverables';
 import type { BuildOutResult } from '../../lib/marketingBuildOut';
 import { useClientMedia } from '../../data/useClientMedia';
 import { askClaude, AiError } from '../../lib/ai';
@@ -197,6 +200,9 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
   const [loggingWin, setLoggingWin] = useState(false);
   const killedNeedsOutcome = !!recentlyKilled && !outcomesApi.outcomes.some((o) => o.play_id === recentlyKilled.id);
   const researchApi = useMarketResearchNotes(selectedClientId);
+  const deliverablesApi = usePlayDeliverables();
+  const activePlayDeliverables = activePlay ? deliverablesApi.deliverables.filter((d) => d.play_id === activePlay.id) : [];
+  const clientNameById = new Map(clientsApi.clients.map((c) => [c.id, c.business_name]));
 
   /** Saves a generated build-out as tagged marketing_assets rows — one for
    *  the three variants (stored as JSON so export blocks can rebuild the
@@ -232,8 +238,18 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
 
   return (
     <div>
-      <div style={homeHeadStyle}>Marketing</div>
-      <div style={homeSubStyle}>Assets, campaigns, and the content pipeline — owner-only.</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+        <div>
+          <div style={homeHeadStyle}>Marketing</div>
+          <div style={homeSubStyle}>Assets, campaigns, and the content pipeline — owner-only.</div>
+        </div>
+        <MarketingDeliverablesBadge
+          deliverables={deliverablesApi.deliverables}
+          loading={deliverablesApi.loading}
+          clientNameById={clientNameById}
+          onMarkDone={(id) => deliverablesApi.markDone(id)}
+        />
+      </div>
 
       <div style={{ marginTop: 20 }}>
         <ClientSelector
@@ -323,6 +339,15 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
                     onRemoveMedia={(id, path) => clientMediaApi.removeMedia(id, path)}
                     mediaUrl={clientMediaApi.mediaUrl}
                   />
+                  <div style={{ marginTop: 20 }}>
+                    <MarketingDeliverables
+                      play={activePlay}
+                      deliverables={activePlayDeliverables}
+                      onAdd={(title, description, dueDate) => deliverablesApi.addDeliverable(activePlay.client_id, activePlay.id, title, description, dueDate)}
+                      onMarkDone={(id) => deliverablesApi.markDone(id)}
+                      onRemove={(id) => deliverablesApi.removeDeliverable(id)}
+                    />
+                  </div>
                   <div style={sectionTitle}>Launch</div>
                   <MarketingLaunchPanel
                     play={activePlay}
