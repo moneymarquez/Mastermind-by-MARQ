@@ -12,7 +12,7 @@ interface ParsedSchedule {
 }
 
 // Same Claude vision path Macros uses for photo meal logging (image passed
-// through the Netlify AI proxy) — here reading a posted work-schedule photo
+// through the Worker's /api/claude proxy) — here reading a posted work-schedule photo
 // covering everyone's shifts, not just Cristopher's own. year is passed in
 // since handwritten/printed schedules usually only show month + day.
 export async function parseSchedulePhoto(image: { mediaType: string; data: string }, referenceYear: number): Promise<ParsedShift[]> {

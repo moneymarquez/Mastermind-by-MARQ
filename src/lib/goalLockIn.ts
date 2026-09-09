@@ -43,7 +43,13 @@ function otherGoalsContext(otherGoals: Goal[]): string {
 // decide), pick a sensible check-in cadence for the timeline, and generate
 // 2-3 real paths (one clearly recommended) — each a full daily/weekly
 // action list, not vague advice.
-export async function generateGoalPlan(intake: GoalIntake, otherGoals: Goal[]): Promise<GoalReverseEngineering> {
+//
+// `feedback` is optional, free-typed direction on a REVISION — "these are
+// too vague, give me exact daily numbers," "I already tried cold calling,
+// suggest something else" — so a "Revise path" isn't just a blind reroll of
+// the same prompt; the model is told explicitly to address what was typed
+// rather than generating generically deeper output on its own guess.
+export async function generateGoalPlan(intake: GoalIntake, otherGoals: Goal[], feedback?: string): Promise<GoalReverseEngineering> {
   const text = await askClaude({
     system:
       "You are Nova, Cristopher's accountability coach. Every goal is a living contract — reverse-engineer it into " +
@@ -58,7 +64,9 @@ export async function generateGoalPlan(intake: GoalIntake, otherGoals: Goal[]): 
       'is_recommended: true. If one of the actions is literally making cold calls that Cristopher tracks in his ' +
       'Dialing section, set that action\'s auto_tracked_source to "dialing_calls" so its progress reads from real ' +
       'call data instead of manual checkboxes — only use that value for actual dialing/calling actions, omit the ' +
-      'field otherwise. ' +
+      'field otherwise. If he\'s given you specific feedback on a previous version of this plan, treat it as a ' +
+      'direct instruction — address it point by point in the new paths, go deeper and more specific than before, ' +
+      "don't just repeat the same recommendations with different wording. " +
       'Respond with ONLY JSON matching exactly: {"target_metric": string (unit, e.g. "dollars saved", "calls per ' +
       'day", "lbs lost"), "target_metric_value": number, "reverse_engineered_summary": string (2-4 sentences, plain ' +
       'numbers and deadline, no fluff), "conflict_notes": string | null, "check_in_cadence": "daily"|"weekly"|"monthly", ' +
@@ -70,7 +78,9 @@ export async function generateGoalPlan(intake: GoalIntake, otherGoals: Goal[]): 
         content:
           `Goal: ${intake.title}\nWhy it matters: ${intake.why || '(not given)'}\nCategory: ${intake.category || '(not given)'}\n` +
           `Target: ${intake.targetDescription || '(not given — infer something reasonable)'}\nDeadline: ${intake.deadline || '(not given — infer something reasonable)'}\n` +
-          `Constraints: ${intake.constraints || '(none given)'}\n\nHis other active goals:\n${otherGoalsContext(otherGoals)}\n\nGenerate the plan.`,
+          `Constraints: ${intake.constraints || '(none given)'}\n\nHis other active goals:\n${otherGoalsContext(otherGoals)}` +
+          (feedback?.trim() ? `\n\nHis feedback on the previous version of this plan — address this directly, go deeper:\n${feedback.trim()}` : '') +
+          '\n\nGenerate the plan.',
       },
     ],
     maxTokens: 1800,

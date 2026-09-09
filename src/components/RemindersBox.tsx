@@ -36,55 +36,64 @@ const RemindersBox = forwardRef<HTMLDivElement, Props>(function RemindersBox({ i
   // invoice's Send/Duplicate row — gets covered outright. Desktop has the
   // room to leave it open; only mobile needs the collapse.
   const [expanded, setExpanded] = useState(false);
+  const collapsed = isMobile && !expanded;
 
-  if (isMobile && !expanded) {
-    return (
-      <div
-        ref={ref}
-        onClick={() => setExpanded(true)}
-        style={{
-          position: 'absolute', right: 20, bottom: bottomOffset, width: 44, height: 44, borderRadius: '50%',
-          background: 'var(--surface)', border: '1px solid var(--border)', zIndex: 20,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-        }}
-      >
-        <Icon name="bell" color="var(--text-secondary)" />
-        {!loading && reminders.length > 0 && (
-          <div style={{
-            position: 'absolute', top: -3, right: -3, minWidth: 16, height: 16, borderRadius: 8, padding: '0 4px',
-            background: 'var(--danger)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            {reminders.length > 9 ? '9+' : reminders.length}
-          </div>
-        )}
-      </div>
-    );
-  }
-
+  // ONE outer element for both states. Stage.tsx measures this box with a
+  // ResizeObserver attached once (on mount / isMobile change) and sizes
+  // the content panel's bottom padding — and Nova's stacking offset —
+  // from it. When collapsed and expanded were two different DOM nodes,
+  // tapping the bell swapped the node out from under the observer, so
+  // the padding stayed sized for the 44px bell while the open panel was
+  // ~180px tall: the bottom of every long screen (Brand Lab's New Brief
+  // form first) sat underneath it. Same node, swapped contents, keeps
+  // the observer alive across the toggle.
   return (
     <div
       ref={ref}
-      style={{
-        position: 'absolute', right: 20, bottom: bottomOffset, width: isMobile ? 180 : 210,
-        background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '14px 16px', zIndex: 20,
-      }}
+      onClick={collapsed ? () => setExpanded(true) : undefined}
+      style={collapsed
+        ? {
+            position: 'absolute', right: 20, bottom: bottomOffset, width: 44, height: 44, borderRadius: '50%',
+            background: 'var(--surface)', border: '1px solid var(--border)', zIndex: 20, boxSizing: 'border-box',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          }
+        : {
+            position: 'absolute', right: 20, bottom: bottomOffset, width: isMobile ? 180 : 210,
+            background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '14px 16px', zIndex: 20, boxSizing: 'border-box',
+          }}
     >
-      <div style={{ fontSize: 'var(--text-caption)', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ display: 'flex', alignItems: 'center' }}>
-          <Icon name="bell" style={{ marginRight: 6 }} color="var(--text-secondary)" />
-          Reminders
-        </span>
-        {isMobile && (
-          <span onClick={() => setExpanded(false)} style={{ cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: 'var(--text-body)', lineHeight: 1 }}>✕</span>
-        )}
-      </div>
-      {visible.map((r) => (
-        <div key={r.id} style={{ fontSize: 'var(--text-small)', color: 'var(--text-quaternary)', padding: '6px 0', borderTop: '1px solid var(--surface-3)' }}>
-          {r.title} — {dueLabel(r.due_date)}
-        </div>
-      ))}
-      {!loading && visible.length === 0 && (
-        <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', padding: '6px 0', borderTop: '1px solid var(--surface-3)' }}>Nothing due.</div>
+      {collapsed ? (
+        <>
+          <Icon name="bell" color="var(--text-secondary)" />
+          {!loading && reminders.length > 0 && (
+            <div style={{
+              position: 'absolute', top: -3, right: -3, minWidth: 16, height: 16, borderRadius: 8, padding: '0 4px',
+              background: 'var(--danger)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {reminders.length > 9 ? '9+' : reminders.length}
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <div style={{ fontSize: 'var(--text-caption)', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ display: 'flex', alignItems: 'center' }}>
+              <Icon name="bell" style={{ marginRight: 6 }} color="var(--text-secondary)" />
+              Reminders
+            </span>
+            {isMobile && (
+              <span onClick={() => setExpanded(false)} style={{ cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: 'var(--text-body)', lineHeight: 1 }}>✕</span>
+            )}
+          </div>
+          {visible.map((r) => (
+            <div key={r.id} style={{ fontSize: 'var(--text-small)', color: 'var(--text-quaternary)', padding: '6px 0', borderTop: '1px solid var(--surface-3)' }}>
+              {r.title} — {dueLabel(r.due_date)}
+            </div>
+          ))}
+          {!loading && visible.length === 0 && (
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', padding: '6px 0', borderTop: '1px solid var(--surface-3)' }}>Nothing due.</div>
+          )}
+        </>
       )}
     </div>
   );

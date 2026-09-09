@@ -1,12 +1,47 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useMarketing } from '../../data/useMarketing';
 import type { AssetType, CampaignStatus, PipelineStage } from '../../data/useMarketing';
+import { useMarketingBriefs } from '../../data/useMarketingBriefs';
+import type { MarketingBrief } from '../../data/useMarketingBriefs';
+import MarketingBriefForm from './MarketingBriefForm';
+import MarketingDiagnosisHeader from './MarketingDiagnosisHeader';
+import MarketingPlaysSlate from './MarketingPlaysSlate';
+import FreePlaysChecklist from './FreePlaysChecklist';
+import MarketingBuildOut from './MarketingBuildOut';
+import MarketingLaunchPanel from './MarketingLaunchPanel';
+import MarketingCheckpointPanel, { KilledPlayAlternates } from './MarketingCheckpointPanel';
+import MarketingOutcomeLog from './MarketingOutcomeLog';
+import MarketingTrackRecord from './MarketingTrackRecord';
+import MarketingResearchPanel from './MarketingResearchPanel';
+import MarketingDeliverables from './MarketingDeliverables';
+import MarketingDeliverablesBadge from './MarketingDeliverablesBadge';
+import { isLaunchComplete, isCheckpointDue } from '../../data/marketingLaunchEngine';
+import { useMarketingPlays, isFreePlaysResolved } from '../../data/useMarketingPlays';
+import { usePlayOutcomes } from '../../data/usePlayOutcomes';
+import { useMarketResearchNotes } from '../../data/useMarketResearchNotes';
+import { usePlayDeliverables } from '../../data/usePlayDeliverables';
+import type { BuildOutResult } from '../../lib/marketingBuildOut';
+import { useClientMedia } from '../../data/useClientMedia';
 import { askClaude, AiError } from '../../lib/ai';
+import { useClients } from '../../data/useClients';
+import ClientSelector from '../ClientSelector';
+import { MARKETING_101 } from '../../data/marketing101';
+import MiniMarkdown from '../MiniMarkdown';
 
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
+  selectedClientId: string | null;
+  onSelectClient: (id: string | null) => void;
+  /** Set by Client CRM's "Push to Marketing" button (schema_069's second
+   *  entry point) — a client id whose first brief should be created and
+   *  opened immediately on arrival. One-shot: consumed and cleared the
+   *  moment this screen reads it, same pattern as Stage.tsx's clientFocus. */
+  pendingBriefClientId?: string | null;
+  onConsumePendingBrief?: () => void;
+  /** Opens the Nova panel and sends it a pre-composed prompt (Stage.tsx). */
+  onAskNova?: (promptText: string) => void;
 }
 
 const inputStyle: CSSProperties = {
@@ -18,8 +53,8 @@ const sectionTitle: CSSProperties = { fontSize: 'var(--text-head)', fontWeight: 
 const ASSET_TYPE_LABEL: Record<AssetType, string> = { copy: 'Copy', creative: 'Creative', brand: 'Brand', reference: 'Reference' };
 const STATUS_LABEL: Record<CampaignStatus, string> = { planned: 'Planned', running: 'Running', done: 'Done' };
 const STATUS_COLOR: Record<CampaignStatus, string> = { planned: 'var(--text-secondary)', running: 'var(--warning)', done: 'var(--success)' };
-const STAGE_LABEL: Record<PipelineStage, string> = { idea: 'Idea', drafted: 'Drafted', scheduled: 'Scheduled', published: 'Published' };
-const STAGES: PipelineStage[] = ['idea', 'drafted', 'scheduled', 'published'];
+const STAGE_LABEL: Record<PipelineStage, string> = { idea: 'Idea', drafted: 'Drafted', filmed: 'Filmed', scheduled: 'Scheduled', published: 'Published' };
+const STAGES: PipelineStage[] = ['idea', 'drafted', 'filmed', 'scheduled', 'published'];
 
 function AssetCard({ asset, onUpdate, onDelete }: { asset: { id: string; name: string; asset_type: AssetType; content: string | null; tags: string[] }; onUpdate: (patch: { content?: string }) => void; onDelete: () => void }) {
   const [content, setContent] = useState(asset.content ?? '');
@@ -82,20 +117,339 @@ function AssetCard({ asset, onUpdate, onDelete }: { asset: { id: string; name: s
   );
 }
 
-export default function MarketingScreen({ homeHeadStyle, homeSubStyle }: Props) {
+// Every real field from the brief, handed to Nova as plain facts — not a
+// summary it has to infer from. The client_id/brief_id are spelled out
+// explicitly so a write_data call it makes afterward can stamp them
+// exactly, rather than guessing or looking them up itself.
+function composeBriefPrompt(brief: MarketingBrief, clientName: string): string {
+  const lines: string[] = [];
+  lines.push(`Build a marketing campaign for ${clientName} from this brief. (client_id: ${brief.client_id}, brief_id: ${brief.id})`);
+  if (brief.primary_leak) lines.push(`Leak we're fixing: ${brief.primary_leak}`);
+  if (brief.goal) lines.push(`Goal: ${brief.goal}`);
+  if (brief.budget_amount != null) lines.push(`Budget: $${brief.budget_amount}${brief.budget_period ? ` / ${brief.budget_period}` : ''}`);
+  if (brief.budget_notes) lines.push(`Budget notes: ${brief.budget_notes}`);
+  if (brief.timeline) lines.push(`Timeline: ${brief.timeline}`);
+  if (brief.target_audience) lines.push(`Audience: ${brief.target_audience}`);
+  if (brief.positioning_statement) lines.push(`Positioning: ${brief.positioning_statement}`);
+  if (brief.must_avoid) lines.push(`Must avoid: ${brief.must_avoid}`);
+  if (brief.avg_transaction_value != null) lines.push(`Avg transaction value: $${brief.avg_transaction_value}`);
+  if (brief.repeat_customer_pct != null) lines.push(`Repeat customers: ${brief.repeat_customer_pct}%`);
+  if (brief.customer_ltv_notes) lines.push(`Customer LTV: ${brief.customer_ltv_notes}`);
+  if (brief.revenue_sources) lines.push(`Current sources of business: ${brief.revenue_sources}`);
+  if (brief.last_price_change) lines.push(`Pricing: ${brief.last_price_change}`);
+  if (brief.gross_margin) lines.push(`Gross margin: ${brief.gross_margin}`);
+  if (brief.competitor_diff) lines.push(`Vs. competitor: ${brief.competitor_diff}`);
+  if (brief.contact_to_customer_rate) lines.push(`Contact-to-customer rate: ${brief.contact_to_customer_rate}`);
+  if (brief.capacity_constraint) lines.push(`Capacity: ${brief.capacity_constraint}`);
+  if (brief.biggest_constraint) lines.push(`Biggest constraint: ${brief.biggest_constraint}`);
+  lines.push('');
+  lines.push(
+    "Using Marketing 101, diagnose whether the leak above is really the right one to fix first, recommend channels that fit it and the budget, " +
+    'then walk me through the plan. Once I say go, create a marketing_campaigns row (with this client_id and brief_id, a real name, and notes) ' +
+    'and a few marketing_content_pipeline ideas (same client_id and brief_id) to kick it off.',
+  );
+  return lines.join('\n');
+}
+
+export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedClientId, onSelectClient, pendingBriefClientId, onConsumePendingBrief, onAskNova }: Props) {
   const m = useMarketing();
+  const clientsApi = useClients();
+  const briefsApi = useMarketingBriefs();
   const [assetFilter, setAssetFilter] = useState<AssetType | null>(null);
   const [newAssetName, setNewAssetName] = useState('');
   const [newAssetType, setNewAssetType] = useState<AssetType>('copy');
   const [newCampaignName, setNewCampaignName] = useState('');
   const [newPipelineTitle, setNewPipelineTitle] = useState('');
+  const [showReference, setShowReference] = useState(false);
+  const [referenceTab, setReferenceTab] = useState<'fundamentals' | 'plays'>('fundamentals');
+  const [activeBriefId, setActiveBriefId] = useState<string | null>(null);
+  const [creatingBrief, setCreatingBrief] = useState(false);
 
-  const filteredAssets = assetFilter ? m.assets.filter((a) => a.asset_type === assetFilter) : m.assets;
+  // Scoped to the selected client when one's picked; otherwise the
+  // pre-client-selector "unscoped" bucket (client_id null) — see
+  // schema_070. Never a mix of the two, so picking a client actually
+  // means something here now instead of being a no-op shell.
+  const scopedAssets = m.assets.filter((a) => a.client_id === selectedClientId);
+  const filteredAssets = assetFilter ? scopedAssets.filter((a) => a.asset_type === assetFilter) : scopedAssets;
+  const scopedCampaigns = m.campaigns.filter((c) => c.client_id === selectedClientId);
+  const scopedPipeline = m.pipeline.filter((p) => p.client_id === selectedClientId);
+  const clientBriefs = selectedClientId ? briefsApi.briefs.filter((b) => b.client_id === selectedClientId) : [];
+  const activeBrief = briefsApi.briefs.find((b) => b.id === activeBriefId) ?? null;
+  const selectedClientName = clientsApi.clients.find((c) => c.id === selectedClientId)?.business_name ?? '';
+  // Diagnosis header and the plays slate both hang off the same "current"
+  // brief for the client — the most recently updated one — not whichever
+  // brief happens to be open for editing below.
+  const currentBrief = clientBriefs[0] ?? null;
+  const playsApi = useMarketingPlays(currentBrief?.id ?? null);
+  const activePlay = playsApi.plays.find((p) => (p.category === 'paid' || p.category === 'offline') && p.status === 'active') ?? null;
+  const parkedChannelAlternates = playsApi.plays
+    .filter((p) => (p.category === 'paid' || p.category === 'offline') && p.status === 'parked')
+    .sort((a, b) => a.rank - b.rank);
+  // Nothing currently active but something was just killed — show the
+  // alternates for THAT play rather than losing the moment once
+  // activePlay goes null.
+  const recentlyKilled = !activePlay
+    ? [...playsApi.plays]
+        .filter((p) => (p.category === 'paid' || p.category === 'offline') && p.status === 'killed')
+        .sort((a, b) => b.updated_at.localeCompare(a.updated_at))[0] ?? null
+    : null;
+  const clientMediaApi = useClientMedia(selectedClientId);
+  const buildOutAssets = activePlay ? m.assets.filter((a) => a.play_id === activePlay.id) : [];
+  const buildOutMedia = activePlay ? clientMediaApi.media.filter((med) => med.play_id === activePlay.id) : [];
+  const outcomesApi = usePlayOutcomes();
+  const [loggingWin, setLoggingWin] = useState(false);
+  const killedNeedsOutcome = !!recentlyKilled && !outcomesApi.outcomes.some((o) => o.play_id === recentlyKilled.id);
+  const researchApi = useMarketResearchNotes(selectedClientId);
+  const deliverablesApi = usePlayDeliverables();
+  const activePlayDeliverables = activePlay ? deliverablesApi.deliverables.filter((d) => d.play_id === activePlay.id) : [];
+  const clientNameById = new Map(clientsApi.clients.map((c) => [c.id, c.business_name]));
+
+  /** Saves a generated build-out as tagged marketing_assets rows — one for
+   *  the three variants (stored as JSON so export blocks can rebuild the
+   *  structured headline/body pairs later), one each for caption/GBP
+   *  description when the model produced them, and one for creative
+   *  direction + the shot list together. */
+  const saveBuildOut = async (play: (typeof playsApi.plays)[number], result: BuildOutResult) => {
+    await m.addAsset({ name: `${play.title} — 3 variants`, asset_type: 'copy', content: JSON.stringify(result.variants), tags: ['build-out', 'variants'], client_id: play.client_id, play_id: play.id });
+    if (result.caption) await m.addAsset({ name: `${play.title} — caption`, asset_type: 'copy', content: result.caption, tags: ['build-out', 'caption'], client_id: play.client_id, play_id: play.id });
+    if (result.gbp_description) await m.addAsset({ name: `${play.title} — GBP description`, asset_type: 'copy', content: result.gbp_description, tags: ['build-out', 'gbp'], client_id: play.client_id, play_id: play.id });
+    const shotList = result.shot_list.map((s) => `- ${s}`).join('\n');
+    await m.addAsset({ name: `${play.title} — creative direction & shot list`, asset_type: 'creative', content: `${result.creative_direction}\n\nShot list:\n${shotList}`, tags: ['build-out', 'creative'], client_id: play.client_id, play_id: play.id });
+  };
+
+  // Entry point 2 — Client CRM's "Push to Marketing" button. Fires once
+  // per push: create a fresh brief for that client, open it, then consume
+  // the pending flag so a later re-render (or navigating away and back)
+  // doesn't create a second one.
+  useEffect(() => {
+    if (!pendingBriefClientId) return;
+    onConsumePendingBrief?.();
+    briefsApi.createBrief(pendingBriefClientId).then((b) => { if (b) setActiveBriefId(b.id); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingBriefClientId]);
+
+  const startNewBrief = async () => {
+    if (!selectedClientId) return;
+    setCreatingBrief(true);
+    const b = await briefsApi.createBrief(selectedClientId);
+    setCreatingBrief(false);
+    if (b) setActiveBriefId(b.id);
+  };
 
   return (
     <div>
-      <div style={homeHeadStyle}>Marketing</div>
-      <div style={homeSubStyle}>Assets, campaigns, and the content pipeline — owner-only.</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+        <div>
+          <div style={homeHeadStyle}>Marketing</div>
+          <div style={homeSubStyle}>Assets, campaigns, and the content pipeline — owner-only.</div>
+        </div>
+        <MarketingDeliverablesBadge
+          deliverables={deliverablesApi.deliverables}
+          loading={deliverablesApi.loading}
+          clientNameById={clientNameById}
+          onMarkDone={(id) => deliverablesApi.markDone(id)}
+        />
+      </div>
+
+      <div style={{ marginTop: 20 }}>
+        <ClientSelector
+          clients={clientsApi.clients}
+          loading={clientsApi.loading}
+          error={clientsApi.error}
+          selectedId={selectedClientId}
+          onSelect={onSelectClient}
+          onCreate={clientsApi.createClient}
+          emptyHint="Assets, campaigns, and the pipeline below are scoped to whichever client is picked here."
+        />
+      </div>
+
+      <MarketingTrackRecord outcomes={outcomesApi.outcomes} loading={outcomesApi.loading} />
+
+      {selectedClientId && currentBrief && (
+        <div style={{ marginTop: 20 }}>
+          <MarketingDiagnosisHeader
+            brief={currentBrief}
+            clientName={selectedClientName}
+            onSetLeak={(leak, note) => briefsApi.updateBrief(currentBrief.id, { primary_leak: leak, leak_note: note })}
+          />
+        </div>
+      )}
+
+      {selectedClientId && currentBrief && currentBrief.primary_leak && (
+        <>
+          <div style={sectionTitle}>Plays</div>
+          {!currentBrief.business_model ? (
+            <MarketingPlaysSlate
+              brief={currentBrief}
+              clientName={selectedClientName}
+              plays={[]}
+              loading={false}
+              locked
+              onSetBusinessModel={(model) => briefsApi.updateBrief(currentBrief.id, { business_model: model })}
+              onGenerateSlate={() => {}}
+              onPick={() => {}}
+            />
+          ) : (
+            <>
+              <FreePlaysChecklist
+                brief={currentBrief}
+                clientName={selectedClientName}
+                plays={playsApi.plays.filter((p) => p.category === 'free')}
+                loading={playsApi.loading}
+                onGenerate={(drafts) => playsApi.saveChecklist(currentBrief.client_id, currentBrief.id, drafts)}
+                onMarkDone={(id) => playsApi.markDone(id)}
+                onSkip={(id, reason) => playsApi.skipPlay(id, reason)}
+                onReorder={(ids) => playsApi.reorderFreePlays(ids)}
+              />
+              <div style={{ marginTop: 24 }}>
+                <div style={sectionTitle}>Research</div>
+                <MarketingResearchPanel
+                  brief={currentBrief}
+                  clientName={selectedClientName}
+                  notes={researchApi.notes}
+                  loading={researchApi.loading}
+                  onSetIndustry={(industry) => briefsApi.updateBrief(currentBrief.id, { industry })}
+                  onSaveNote={(sourceKey, promptShown, valueEntered, interpretation) => researchApi.saveNote(sourceKey, promptShown, valueEntered, interpretation)}
+                />
+              </div>
+              <div style={{ marginTop: 24 }}>
+                <MarketingPlaysSlate
+                  brief={currentBrief}
+                  clientName={selectedClientName}
+                  plays={playsApi.plays.filter((p) => p.category === 'paid' || p.category === 'offline')}
+                  loading={playsApi.loading}
+                  locked={!isFreePlaysResolved(playsApi.plays)}
+                  onSetBusinessModel={(model) => briefsApi.updateBrief(currentBrief.id, { business_model: model })}
+                  onGenerateSlate={(drafts) => playsApi.saveSlate(currentBrief.client_id, currentBrief.id, drafts)}
+                  onPick={(id) => playsApi.pickPlay(id)}
+                />
+              </div>
+              {activePlay && (
+                <>
+                  <div style={sectionTitle}>Build out</div>
+                  <MarketingBuildOut
+                    brief={currentBrief}
+                    clientName={selectedClientName}
+                    activePlay={activePlay}
+                    assets={buildOutAssets}
+                    media={buildOutMedia}
+                    mediaLoading={clientMediaApi.loading}
+                    onSave={saveBuildOut}
+                    onUploadMedia={(file) => clientMediaApi.uploadMedia(file, 'marketing', null, undefined, activePlay.id)}
+                    onRemoveMedia={(id, path) => clientMediaApi.removeMedia(id, path)}
+                    mediaUrl={clientMediaApi.mediaUrl}
+                  />
+                  <div style={{ marginTop: 20 }}>
+                    <MarketingDeliverables
+                      play={activePlay}
+                      deliverables={activePlayDeliverables}
+                      onAdd={(title, description, dueDate) => deliverablesApi.addDeliverable(activePlay.client_id, activePlay.id, title, description, dueDate)}
+                      onMarkDone={(id) => deliverablesApi.markDone(id)}
+                      onRemove={(id) => deliverablesApi.removeDeliverable(id)}
+                    />
+                  </div>
+                  <div style={sectionTitle}>Launch</div>
+                  <MarketingLaunchPanel
+                    play={activePlay}
+                    onUpdate={(patch) => playsApi.updatePlay(activePlay.id, patch)}
+                  />
+                  {isLaunchComplete(activePlay) && isCheckpointDue(activePlay.checkpoint_date) && (
+                    <>
+                      <div style={sectionTitle}>Checkpoint</div>
+                      <MarketingCheckpointPanel
+                        play={activePlay}
+                        onUpdate={(patch) => playsApi.updatePlay(activePlay.id, patch)}
+                      />
+                    </>
+                  )}
+                  {isLaunchComplete(activePlay) && !loggingWin && (
+                    <div style={{ marginTop: 12 }}>
+                      <span
+                        style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', textDecoration: 'underline', cursor: 'pointer' }}
+                        onClick={() => setLoggingWin(true)}
+                      >
+                        It's proven itself — log it as a win
+                      </span>
+                    </div>
+                  )}
+                  {loggingWin && (
+                    <div style={{ marginTop: 12 }}>
+                      <MarketingOutcomeLog
+                        play={activePlay}
+                        onLog={(play, input) => { outcomesApi.logOutcome(play, input); setLoggingWin(false); }}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+              {recentlyKilled && (
+                <>
+                  <div style={sectionTitle}>Checkpoint</div>
+                  <KilledPlayAlternates
+                    play={recentlyKilled}
+                    parkedAlternates={parkedChannelAlternates}
+                    onPickAlternate={(id) => playsApi.pickPlay(id)}
+                  />
+                  {killedNeedsOutcome && (
+                    <div style={{ marginTop: 12 }}>
+                      <MarketingOutcomeLog play={recentlyKilled} onLog={(play, input) => outcomesApi.logOutcome(play, input)} />
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </>
+      )}
+
+      {selectedClientId && (
+        <>
+          <div style={sectionTitle}>Brief</div>
+          {activeBrief ? (
+            <MarketingBriefForm
+              brief={activeBrief}
+              onUpdate={(patch) => briefsApi.updateBrief(activeBrief.id, patch)}
+              onDelete={() => { briefsApi.removeBrief(activeBrief.id); setActiveBriefId(null); }}
+              onClose={() => setActiveBriefId(null)}
+              onBuildWithNova={onAskNova ? () => onAskNova(composeBriefPrompt(activeBrief, selectedClientName)) : undefined}
+            />
+          ) : (
+            <>
+              {briefsApi.error && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginBottom: 10 }}>{briefsApi.error}</div>}
+              {clientBriefs.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+                  {clientBriefs.map((b) => (
+                    <div key={b.id} style={{ ...cardStyle, padding: 14, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }} onClick={() => setActiveBriefId(b.id)}>
+                      <div>
+                        <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: 'var(--text)' }}>
+                          {b.goal || (b.primary_leak ? `${b.primary_leak[0].toUpperCase()}${b.primary_leak.slice(1)} leak` : 'Untitled brief')}
+                        </div>
+                        <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 3 }}>
+                          Updated {new Date(b.updated_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 'var(--text-micro)', fontWeight: 700, textTransform: 'uppercase', color: b.status === 'ready' ? 'var(--success)' : 'var(--text-tertiary)', border: `1px solid ${b.status === 'ready' ? 'var(--success)' : 'var(--border)'}`, borderRadius: 'var(--radius-pill)', padding: '3px 9px', flexShrink: 0 }}>
+                        {b.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {!briefsApi.loading && clientBriefs.length === 0 && (
+                <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', marginBottom: 14 }}>
+                  No brief yet for this client — nothing downstream (campaigns, assets, content) can be generated until one exists.
+                </div>
+              )}
+              <div
+                style={{ display: 'inline-block', padding: '9px 18px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: creatingBrief ? 'default' : 'pointer', opacity: creatingBrief ? 0.6 : 1 }}
+                onClick={() => !creatingBrief && startNewBrief()}
+              >
+                {creatingBrief ? 'Creating…' : '+ New brief'}
+              </div>
+            </>
+          )}
+        </>
+      )}
 
       <div style={sectionTitle}>Assets</div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
@@ -113,7 +467,7 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle }: Props) 
         </select>
         <div
           style={{ padding: '9px 18px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer' }}
-          onClick={async () => { if (!newAssetName.trim()) return; await m.addAsset({ name: newAssetName.trim(), asset_type: newAssetType }); setNewAssetName(''); }}
+          onClick={async () => { if (!newAssetName.trim()) return; await m.addAsset({ name: newAssetName.trim(), asset_type: newAssetType, client_id: selectedClientId }); setNewAssetName(''); }}
         >
           Add asset
         </div>
@@ -130,13 +484,13 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle }: Props) 
         <input style={{ ...inputStyle, flex: 1, minWidth: 160 }} placeholder="Campaign name" value={newCampaignName} onChange={(e) => setNewCampaignName(e.target.value)} />
         <div
           style={{ padding: '9px 18px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer' }}
-          onClick={async () => { if (!newCampaignName.trim()) return; await m.addCampaign({ name: newCampaignName.trim(), status: 'planned' }); setNewCampaignName(''); }}
+          onClick={async () => { if (!newCampaignName.trim()) return; await m.addCampaign({ name: newCampaignName.trim(), status: 'planned', client_id: selectedClientId }); setNewCampaignName(''); }}
         >
           Add campaign
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {m.campaigns.map((c) => (
+        {scopedCampaigns.map((c) => (
           <div key={c.id} style={cardStyle}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
               <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)' }}>{c.name}</div>
@@ -165,7 +519,7 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle }: Props) 
             />
           </div>
         ))}
-        {!m.loading && m.campaigns.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No campaigns yet.</div>}
+        {!m.loading && scopedCampaigns.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No campaigns yet.</div>}
       </div>
 
       <div style={sectionTitle}>Content pipeline</div>
@@ -173,7 +527,7 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle }: Props) 
         <input style={{ ...inputStyle, flex: 1 }} placeholder="New content idea" value={newPipelineTitle} onChange={(e) => setNewPipelineTitle(e.target.value)} />
         <div
           style={{ padding: '9px 18px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer' }}
-          onClick={async () => { if (!newPipelineTitle.trim()) return; await m.addPipelineItem(newPipelineTitle.trim()); setNewPipelineTitle(''); }}
+          onClick={async () => { if (!newPipelineTitle.trim()) return; await m.addPipelineItem(newPipelineTitle.trim(), selectedClientId); setNewPipelineTitle(''); }}
         >
           Add idea
         </div>
@@ -183,7 +537,7 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle }: Props) 
           <div key={stage}>
             <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: 8 }}>{STAGE_LABEL[stage]}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {m.pipeline.filter((p) => p.stage === stage).map((p) => (
+              {scopedPipeline.filter((p) => p.stage === stage).map((p) => (
                 <div key={p.id} style={{ ...cardStyle, padding: 12 }}>
                   <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: 'var(--text)' }}>{p.title}</div>
                   <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
@@ -200,6 +554,42 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle }: Props) 
           </div>
         ))}
       </div>
+
+      <div style={sectionTitle}>Marketing 101</div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div
+          style={{ padding: '7px 14px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-small)', cursor: 'pointer', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+          onClick={() => setShowReference((v) => !v)}
+        >
+          {showReference ? 'Hide' : 'Show'} reference
+        </div>
+        {showReference && (
+          <>
+            <div
+              style={{ padding: '7px 14px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-small)', cursor: 'pointer', border: `1px solid ${referenceTab === 'fundamentals' ? 'var(--text)' : 'var(--border)'}`, color: referenceTab === 'fundamentals' ? 'var(--text)' : 'var(--text-secondary)' }}
+              onClick={() => setReferenceTab('fundamentals')}
+            >
+              Fundamentals
+            </div>
+            <div
+              style={{ padding: '7px 14px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-small)', cursor: 'pointer', border: `1px solid ${referenceTab === 'plays' ? 'var(--text)' : 'var(--border)'}`, color: referenceTab === 'plays' ? 'var(--text)' : 'var(--text-secondary)' }}
+              onClick={() => setReferenceTab('plays')}
+            >
+              The Plays
+            </div>
+          </>
+        )}
+      </div>
+      {!showReference && (
+        <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>
+          Your own marketing training material — diagnosis, offer, positioning, and channel playbooks. Nova can also draw on this here and in Content Creation.
+        </div>
+      )}
+      {showReference && (
+        <div style={{ ...cardStyle, maxWidth: 760 }}>
+          <MiniMarkdown text={referenceTab === 'fundamentals' ? MARKETING_101.fundamentals : MARKETING_101.plays} />
+        </div>
+      )}
     </div>
   );
 }

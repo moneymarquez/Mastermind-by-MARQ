@@ -1,5 +1,5 @@
 import { askClaude } from '../lib/ai';
-import type { AuditQuestion, Service, SuggestedService } from './types';
+import type { AnswerConfidence, AuditQuestion, Service, SuggestedService } from './types';
 
 /** Answers carry a per-key Confirmed/Estimated tag from the discovery
  *  call. Anything untagged is treated as estimated — the cautious default,
@@ -68,6 +68,127 @@ export async function generateClientAnalysis(
     messages: [{ role: 'user', content: qa }],
     maxTokens: 2000,
   });
+}
+
+export interface TranscriptExtraction {
+  answers: Record<string, string>;
+  confidence: Record<string, AnswerConfidence>;
+}
+
+/** Alternative to Live Capture for the same audit — instead of typing
+ *  answers live during the call, paste an already-transcribed recording
+ *  (e.g. from Call Recordings) and let Nova pull each question's answer
+ *  out of it directly. Only returns keys the transcript actually answers;
+ *  the caller merges these into blanks rather than overwriting anything
+ *  already on the record — a transcript extraction is an inference, not a
+ *  replacement for something Cristopher already confirmed. Every filled
+ *  answer comes back tagged "estimated": it's the model's read of what was
+ *  said, not a value he typed himself, same convention as an untagged
+ *  Live Capture answer. */
+export async function extractAnswersFromTranscript(
+  businessName: string,
+  questions: AuditQuestion[],
+  transcript: string,
+): Promise<TranscriptExtraction> {
+  const menu = questions.map((q) => `- key: "${q.key}" — [${q.category}] ${q.prompt}`).join('\n');
+
+  const raw = await askClaude({
+    system:
+      `You are Nova, pulling structured discovery answers out of a raw call transcript for Cristopher (Made by ` +
+      `Marq)'s conversation with "${businessName}". Below is his question bank (key, category, prompt), then the ` +
+      'transcript. For every question the transcript actually answers — even partially or implied — extract the ' +
+      "answer in the client's own words, condensed to what actually matters, no filler. Skip a question entirely " +
+      "if the transcript doesn't address it at all — do not guess or invent an answer to fill a gap. " +
+      'Respond with ONLY a JSON object, no prose and no markdown fence, shaped: {"<question key>": "<extracted ' +
+      'answer>", ...} — only include keys you actually found an answer for.',
+    messages: [{ role: 'user', content: `### Question bank\n${menu}\n\n### Transcript\n${transcript}` }],
+    maxTokens: 1600,
+  });
+
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if (start === -1 || end === -1) return { answers: {}, confidence: {} };
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw.slice(start, end + 1));
+  } catch {
+    return { answers: {}, confidence: {} };
+  }
+  if (!parsed || typeof parsed !== 'object') return { answers: {}, confidence: {} };
+
+  const validKeys = new Set(questions.map((q) => q.key));
+  const answers: Record<string, string> = {};
+  const confidence: Record<string, AnswerConfidence> = {};
+  for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+    if (!validKeys.has(key) || typeof value !== 'string' || !value.trim()) continue;
+    answers[key] = value.trim();
+    confidence[key] = 'estimated';
+  }
+  return { answers, confidence };
+}
+
+export interface ProductSheetNarrative {
+  intro: string;
+  /** Same length and order as the items passed in — index i here
+   *  explains items[i]. */
+  items: string[];
+}
+
+/** The Product Sheet's personalized write-up — the difference between
+ *  "here's what this costs" and "here's why this is right for you." Takes
+ *  the same discovery-audit answers generateClientAnalysis uses, plus the
+ *  actual line items being billed, and writes an opening paragraph on
+ *  this client's specific situation plus one paragraph per item on why it
+ *  addresses that situation and how it helps them — never generic
+ *  marketing copy, always tied to what they actually said. Run manually
+ *  (a "Generate personalized write-up" button), never automatically, so
+ *  Cristopher reviews/edits it before a client ever sees it — same
+ *  convention as every other AI-written text in this app. */
+export async function generateProductSheetNarrative(
+  businessName: string,
+  questions: AuditQuestion[],
+  answers: Record<string, string>,
+  confidence: Record<string, string>,
+  items: { label: string }[],
+): Promise<ProductSheetNarrative> {
+  const qa = buildQA(questions, answers, confidence);
+  const itemList = items.map((it, i) => `${i}. ${it.label}`).join('\n');
+
+  const raw = await askClaude({
+    system:
+      `You are Nova, writing the personalized section of a Product Sheet for Cristopher (Made by Marq) to hand ` +
+      `"${businessName}" alongside their invoice. Below are his discovery-call answers about this specific business, ` +
+      'then the exact line items being billed on this invoice. Write two things: ' +
+      '(1) "intro" — one short paragraph naming their specific situation and bottleneck (from what they actually ' +
+      'said) and framing why this plan addresses it. ' +
+      '(2) "items" — one paragraph per line item, in the same order given, each explaining why THIS item matters ' +
+      'for THEIR specific situation and how it helps them, not a generic description of the service. ' +
+      'Ground every claim only in the answers given — never invent facts, numbers, or details they did not provide. ' +
+      'Answers tagged ESTIMATED/UNVERIFIED are rough guesses — you may reason from them but do not state them as ' +
+      'settled fact. Direct, specific, no marketing fluff or generic filler — write like someone who was actually ' +
+      'on the call, not a template. ' +
+      'Respond with ONLY a JSON object, no prose and no markdown fence, shaped exactly: ' +
+      `{"intro": "<paragraph>", "items": [<one string per item, ${items.length} total, same order>]}`,
+    messages: [{ role: 'user', content: `${qa}\n\n### Line items on this invoice\n${itemList}` }],
+    maxTokens: 1800,
+  });
+
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  const fallback: ProductSheetNarrative = { intro: '', items: items.map(() => '') };
+  if (start === -1 || end === -1) return fallback;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw.slice(start, end + 1));
+  } catch {
+    return fallback;
+  }
+  if (!parsed || typeof parsed !== 'object') return fallback;
+  const obj = parsed as Record<string, unknown>;
+  const intro = typeof obj.intro === 'string' ? obj.intro : '';
+  const rawItems = Array.isArray(obj.items) ? obj.items : [];
+  const narrativeItems = items.map((_, i) => (typeof rawItems[i] === 'string' ? (rawItems[i] as string) : ''));
+  return { intro, items: narrativeItems };
 }
 
 /** The Service Matcher — the branch that runs alongside the written

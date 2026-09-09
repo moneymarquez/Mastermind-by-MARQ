@@ -29,7 +29,7 @@ export default function TopHeader({ left, screenLabel, activeModuleCount, onOpen
         position: 'absolute', top: 0, left, right: 0, height: HEADER_HEIGHT, zIndex: 29,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px',
         background: 'var(--mm-bg-blur)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid var(--mm-line)',
+        borderBottom: '1px solid var(--mm-line)', transition: 'left 0.18s ease',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13, color: 'var(--mm-faint)' }}>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { useClientCRM, CrmClientWithChildren } from '../../data/useClientCRM';
-import type { ClientStage, PricingCadence } from '../../data/types';
+import type { ClientStage, PricingCadence, ClientInvoice } from '../../data/types';
 import { AiError } from '../../lib/ai';
 import { STAGES, cardStyle, inputStyle, selectStyle, primaryBtn, ghostBtn, tabStyle } from './ClientCRMScreen';
 import ClientReportsTab from './ClientReportsTab';
@@ -17,9 +17,12 @@ interface Props {
   onBack: () => void;
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
+  /** "Push to Marketing" entry point (schema_069) — jumps to Marketing with
+   *  this client selected and a fresh brief already open there. */
+  onPushToMarketing?: (clientId: string) => void;
 }
 
-type Tab = 'audit' | 'analysis' | 'pricing' | 'invoices' | 'reports' | 'portal';
+type Tab = 'audit' | 'analysis' | 'pricing' | 'invoices' | 'reports' | 'portal' | 'sent';
 
 const textareaStyle: CSSProperties = {
   width: '100%', minHeight: 70, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)',
@@ -37,7 +40,7 @@ function amountLabel(amount: number | null): string {
   return amount === null ? 'TBD' : money(amount);
 }
 
-export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, homeSubStyle }: Props) {
+export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, homeSubStyle, onPushToMarketing }: Props) {
   const [tab, setTab] = useState<Tab>(client.audit?.status === 'complete' ? 'analysis' : 'audit');
   const [nameDraft, setNameDraft] = useState(client.business_name);
   const [emailDraft, setEmailDraft] = useState(client.contact_email ?? '');
@@ -54,6 +57,11 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
   const [catalogCategory, setCatalogCategory] = useState('');
   const [tbdDraft, setTbdDraft] = useState<Record<string, string>>({});
   const [liveCapture, setLiveCapture] = useState(false);
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
+  const [transcriptText, setTranscriptText] = useState('');
+  const [extracting, setExtracting] = useState(false);
+  const [extractError, setExtractError] = useState('');
+  const [extractResult, setExtractResult] = useState<number | null>(null);
   const [matching, setMatching] = useState(false);
   const [matchError, setMatchError] = useState('');
   const [invoiceItemId, setInvoiceItemId] = useState('');
@@ -62,6 +70,18 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
   const [invoiceDue, setInvoiceDue] = useState('');
   const [creatingDraft, setCreatingDraft] = useState(false);
   const [draftError, setDraftError] = useState('');
+  const [bundleSelected, setBundleSelected] = useState<Set<string>>(new Set());
+  // What THIS invoice charges for each item — defaults to the item's own
+  // rate but freely overridable (e.g. a $2,000 lump sum for something
+  // that's normally $1,000/mo). Separate from the item's stored rate.
+  const [bundleChargeDraft, setBundleChargeDraft] = useState<Record<string, string>>({});
+  // Editing a monthly item's actual ongoing rate (persists via
+  // crm.setItemAmount, same field the Pricing tab edits) — distinct from
+  // the charge-now override above.
+  const [bundleRecurringDraft, setBundleRecurringDraft] = useState<Record<string, string>>({});
+  const [bundleDue, setBundleDue] = useState('');
+  const [creatingBundle, setCreatingBundle] = useState(false);
+  const [bundleError, setBundleError] = useState('');
   const [scheduleStart, setScheduleStart] = useState(() => new Date().toISOString().slice(0, 10));
   const [generatingSchedule, setGeneratingSchedule] = useState(false);
   const [scheduleResult, setScheduleResult] = useState('');
@@ -115,6 +135,22 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
       setGenError(err instanceof AiError ? err.message : 'Could not generate the analysis — try again.');
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const runExtractTranscript = async () => {
+    if (!client.audit || !transcriptText.trim()) return;
+    setExtracting(true);
+    setExtractError('');
+    setExtractResult(null);
+    try {
+      const filled = await crm.extractFromTranscript(client.audit.id, client.business_name, answers, confidence, transcriptText.trim());
+      setExtractResult(filled);
+      setTranscriptText('');
+    } catch (err) {
+      setExtractError(err instanceof AiError ? err.message : 'Could not read that transcript — try again.');
+    } finally {
+      setExtracting(false);
     }
   };
 
@@ -185,6 +221,55 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
     }
   };
 
+  const toggleBundleItem = (id: string) => {
+    setBundleSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  // The amount that will actually be charged for one selected item on
+  // this invoice — the override draft if it's a valid number, else the
+  // item's own current rate.
+  const bundleChargeFor = (p: (typeof client.pricingItems)[number]): number => {
+    const draft = bundleChargeDraft[p.id];
+    if (draft === undefined || draft.trim() === '') return p.amount as number;
+    const n = Number(draft);
+    return Number.isFinite(n) && n >= 0 ? n : (p.amount as number);
+  };
+
+  const bundleItems = client.pricingItems.filter((p) => bundleSelected.has(p.id) && p.amount !== null);
+  const bundleTotal = bundleItems.reduce((sum, p) => sum + bundleChargeFor(p), 0);
+
+  const confirmRecurringRate = (itemId: string) => {
+    const raw = bundleRecurringDraft[itemId];
+    const n = Number(raw);
+    if (raw !== undefined && Number.isFinite(n) && n >= 0) crm.setItemAmount(itemId, n);
+    setBundleRecurringDraft((d) => { const next = { ...d }; delete next[itemId]; return next; });
+  };
+
+  const createBundle = async () => {
+    if (bundleItems.length === 0) return;
+    setCreatingBundle(true);
+    setBundleError('');
+    try {
+      const charges = bundleItems.map((p) => ({ pricingItemId: p.id, amount: bundleChargeFor(p) }));
+      const created = await crm.createBundledDraftInvoice(client.id, charges, bundleDue || null);
+      if (!created) throw new Error('Could not create the bundled draft.');
+      setBundleSelected(new Set());
+      setBundleChargeDraft({});
+      setBundleDue('');
+      setSelectedInvoiceId(created.id);
+      setTab('invoices');
+    } catch (err) {
+      setBundleError(err instanceof Error ? err.message : 'Could not create the bundled draft.');
+    } finally {
+      setCreatingBundle(false);
+    }
+  };
+
   // Preview-only count/total for the "Generate schedule" button — same
   // (pricing_item_id, sequence_index) coverage check crm.generateInvoiceSchedule
   // itself does, just without computing due dates, so the button can say
@@ -201,6 +286,32 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
     const missing = Array.from({ length: occurrences }, (_, i) => i + 1).filter((i) => !existingOccurrences.has(`${item.id}:${i}`));
     return sum + missing.length * item.amount;
   }, 0);
+
+  // Everything that's actually gone out — sent, paid, overdue, or voided —
+  // as opposed to a draft still sitting unsent. Same rows as the Invoices
+  // tab's full list, just pre-filtered, for "what have I actually billed"
+  // without scanning past every draft to find it.
+  const sentInvoices = client.invoices.filter((inv) => inv.status !== 'draft');
+
+  const invoiceRow = (inv: ClientInvoice) => (
+    <div key={inv.id} style={{ ...cardStyle, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => setSelectedInvoiceId(inv.id)}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>#{inv.invoice_number} · {inv.description}</div>
+        <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 2 }}>
+          {money(inv.amount)} {inv.due_date ? `· due ${inv.due_date}` : ''}
+        </div>
+      </div>
+      {/* Draft/void grey, paid green, anything unpaid (sent/overdue)
+          red — per the build prompt's status-color convention. */}
+      <span style={{
+        fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', borderRadius: 'var(--radius-pill)', padding: '3px 9px', flexShrink: 0,
+        color: inv.status === 'paid' ? 'var(--success)' : inv.status === 'draft' || inv.status === 'void' ? 'var(--text-tertiary)' : 'var(--danger)',
+        border: `1px solid ${inv.status === 'paid' ? 'color-mix(in srgb, var(--success) 40%, transparent)' : inv.status === 'draft' || inv.status === 'void' ? 'var(--border)' : 'color-mix(in srgb, var(--danger) 40%, transparent)'}`,
+      }}>
+        {inv.status}
+      </span>
+    </div>
+  );
 
   const generateSchedule = async () => {
     if (!scheduleStart) return;
@@ -259,9 +370,14 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
           />
           <div style={homeSubStyle}>Stage: {STAGES.find((s) => s.key === client.stage)?.label}</div>
         </div>
-        <select style={{ ...selectStyle, width: 'auto' }} value={client.stage} onChange={(e) => crm.setStage(client.id, e.target.value as ClientStage)}>
-          {STAGES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
-        </select>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          {onPushToMarketing && (
+            <span style={ghostBtn} onClick={() => onPushToMarketing(client.id)}>Push to Marketing →</span>
+          )}
+          <select style={{ ...selectStyle, width: 'auto' }} value={client.stage} onChange={(e) => crm.setStage(client.id, e.target.value as ClientStage)}>
+            {STAGES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+          </select>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap', maxWidth: 640 }}>
@@ -318,6 +434,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         <div style={tabStyle(tab === 'invoices')} onClick={() => setTab('invoices')}>Invoices ({client.invoices.length})</div>
         <div style={tabStyle(tab === 'reports')} onClick={() => setTab('reports')}>Reports</div>
         <div style={tabStyle(tab === 'portal')} onClick={() => setTab('portal')}>Portal</div>
+        <div style={tabStyle(tab === 'sent')} onClick={() => setTab('sent')}>Sent ({sentInvoices.length})</div>
       </div>
 
       {tab === 'reports' && <ClientReportsTab clientId={client.id} publicToken={client.public_token} />}
@@ -339,8 +456,39 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                     One question at a time, big fields, autosaves as you type.
                   </div>
                 </div>
-                <div style={primaryBtn} onClick={() => setLiveCapture(true)}>Live capture</div>
+                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                  <div style={ghostBtn} onClick={() => { setTranscriptOpen((v) => !v); setExtractError(''); setExtractResult(null); }}>Insert transcript</div>
+                  <div style={primaryBtn} onClick={() => setLiveCapture(true)}>Live capture</div>
+                </div>
               </div>
+
+              {transcriptOpen && (
+                <div style={cardStyle}>
+                  <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Insert transcribed version</div>
+                  <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 3, marginBottom: 10 }}>
+                    Paste a call transcript (e.g. from Call Recordings) — Nova pulls out an answer for every question it
+                    actually addresses and fills in only the ones still blank. Answers already on record are never overwritten.
+                  </div>
+                  <textarea
+                    style={{ ...textareaStyle, minHeight: 140 }}
+                    value={transcriptText}
+                    onChange={(e) => setTranscriptText(e.target.value)}
+                    placeholder="Paste the transcript here…"
+                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
+                    <div style={{ ...primaryBtn, opacity: extracting || !transcriptText.trim() ? 0.5 : 1, pointerEvents: extracting || !transcriptText.trim() ? 'none' : 'auto' }} onClick={runExtractTranscript}>
+                      {extracting ? 'Reading…' : 'Extract answers'}
+                    </div>
+                    <div style={ghostBtn} onClick={() => setTranscriptOpen(false)}>Close</div>
+                  </div>
+                  {extractError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 8 }}>{extractError}</div>}
+                  {extractResult !== null && !extractError && (
+                    <div style={{ fontSize: 'var(--text-small)', color: 'var(--success)', marginTop: 8 }}>
+                      {extractResult === 0 ? "Didn't find an answer for any blank question in that transcript." : `Filled in ${extractResult} question${extractResult === 1 ? '' : 's'}.`}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <ClientMediaGrid clientId={client.id} auditId={client.audit.id} />
 
@@ -606,38 +754,28 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         </div>
       )}
 
-      {tab === 'invoices' && selectedInvoiceId && (() => {
+      {(tab === 'invoices' || tab === 'sent') && selectedInvoiceId && (() => {
         const inv = client.invoices.find((i) => i.id === selectedInvoiceId);
         if (!inv) { setSelectedInvoiceId(null); return null; }
-        return <InvoiceDetailView invoice={inv} clientBusinessName={client.business_name} crm={crm} onClose={() => setSelectedInvoiceId(null)} />;
+        return (
+          <div style={{ marginTop: 18 }}>
+            <InvoiceDetailView invoice={inv} clientBusinessName={client.business_name} crm={crm} onClose={() => setSelectedInvoiceId(null)} />
+          </div>
+        );
       })()}
+
+      {tab === 'sent' && !selectedInvoiceId && (
+        <div style={{ marginTop: 18, maxWidth: 680, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {sentInvoices.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>Nothing sent yet — invoices show up here once they leave draft.</div>}
+          {sentInvoices.map(invoiceRow)}
+        </div>
+      )}
 
       {tab === 'invoices' && !selectedInvoiceId && (
         <div style={{ marginTop: 18, maxWidth: 680 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
             {client.invoices.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No invoices yet.</div>}
-            {client.invoices.map((inv) => {
-              const isDraft = inv.status === 'draft';
-              return (
-                <div key={inv.id} style={{ ...cardStyle, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => setSelectedInvoiceId(inv.id)}>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>#{inv.invoice_number} · {inv.description}</div>
-                    <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 2 }}>
-                      {money(inv.amount)} {inv.due_date ? `· due ${inv.due_date}` : ''}
-                    </div>
-                  </div>
-                  {/* Draft/void grey, paid green, anything unpaid (sent/overdue)
-                      red — per the build prompt's status-color convention. */}
-                  <span style={{
-                    fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', borderRadius: 'var(--radius-pill)', padding: '3px 9px', flexShrink: 0,
-                    color: inv.status === 'paid' ? 'var(--success)' : isDraft || inv.status === 'void' ? 'var(--text-tertiary)' : 'var(--danger)',
-                    border: `1px solid ${inv.status === 'paid' ? 'color-mix(in srgb, var(--success) 40%, transparent)' : isDraft || inv.status === 'void' ? 'var(--border)' : 'color-mix(in srgb, var(--danger) 40%, transparent)'}`,
-                  }}>
-                    {inv.status}
-                  </span>
-                </div>
-              );
-            })}
+            {client.invoices.map(invoiceRow)}
           </div>
 
           {pendingOccurrences.length > 0 && (
@@ -653,6 +791,62 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                 </div>
               </div>
               {scheduleResult && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 8 }}>{scheduleResult}</div>}
+            </div>
+          )}
+
+          {client.pricingItems.some((p) => p.amount !== null) && (
+            <div style={{ ...cardStyle, marginBottom: 16 }}>
+              <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Create a bundled invoice</div>
+              <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>
+                Check off everything you'll be doing for him and it all lands on one invoice, itemized — plus a Product Sheet showing what each piece is worth.
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
+                {client.pricingItems.filter((p) => p.amount !== null).map((p) => {
+                  const isSelected = bundleSelected.has(p.id);
+                  const chargeValue = bundleChargeDraft[p.id] ?? String(p.amount);
+                  const overridden = Number(chargeValue) !== p.amount;
+                  return (
+                    <div key={p.id} style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '4px 0' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-body-sm)', color: 'var(--text)' }}>
+                        <input type="checkbox" checked={isSelected} onChange={() => toggleBundleItem(p.id)} style={{ cursor: 'pointer' }} />
+                        <span style={{ flex: 1, cursor: 'pointer' }} onClick={() => toggleBundleItem(p.id)}>
+                          {p.label}{p.cadence === 'monthly' ? ` (rate: $${p.amount}/mo)` : ''}
+                        </span>
+                        <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>Charge:</span>
+                        <input
+                          style={{ ...inputStyle, width: 90, padding: '5px 8px', fontSize: 'var(--text-small)', borderColor: overridden ? 'var(--warning)' : undefined }}
+                          value={chargeValue}
+                          onChange={(e) => setBundleChargeDraft((d) => ({ ...d, [p.id]: e.target.value }))}
+                        />
+                      </div>
+                      {p.cadence === 'monthly' && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 26, fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)' }}>
+                          {overridden && <span style={{ color: 'var(--warning)' }}>Ongoing rate will still show as ${p.amount}/mo on the invoice.</span>}
+                          <span>Adjust the ongoing rate itself:</span>
+                          <input
+                            style={{ ...inputStyle, width: 80, padding: '4px 7px', fontSize: 'var(--text-tiny)' }}
+                            placeholder={String(p.amount)}
+                            value={bundleRecurringDraft[p.id] ?? ''}
+                            onChange={(e) => setBundleRecurringDraft((d) => ({ ...d, [p.id]: e.target.value }))}
+                            onBlur={() => confirmRecurringRate(p.id)}
+                          />
+                          <span>/mo</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
+                <input style={inputStyle} type="date" value={bundleDue} onChange={(e) => setBundleDue(e.target.value)} />
+                <div
+                  style={{ ...primaryBtn, pointerEvents: creatingBundle || bundleItems.length === 0 ? 'none' : 'auto', opacity: creatingBundle || bundleItems.length === 0 ? 0.5 : 1 }}
+                  onClick={createBundle}
+                >
+                  {creatingBundle ? 'Creating…' : bundleItems.length > 0 ? `Create invoice — ${bundleItems.length} item${bundleItems.length === 1 ? '' : 's'}, ${money(bundleTotal)}` : 'Select items above'}
+                </div>
+              </div>
+              {bundleError && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginTop: 8 }}>{bundleError}</div>}
             </div>
           )}
 

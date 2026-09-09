@@ -29,7 +29,7 @@ export function useClientMedia(clientId: string | null) {
     load();
   }, [load]);
 
-  const uploadMedia = async (file: File, category: ClientMediaCategory, auditId?: string | null, caption?: string) => {
+  const uploadMedia = async (file: File, category: ClientMediaCategory, auditId?: string | null, caption?: string, playId?: string | null) => {
     if (!clientId) return;
     if (file.size > MEDIA_MAX_BYTES) throw new Error(`${file.name} is over the 10MB limit.`);
 
@@ -45,6 +45,7 @@ export function useClientMedia(clientId: string | null) {
     await supabase.from('client_media').insert({
       client_id: clientId,
       audit_id: auditId ?? null,
+      play_id: playId ?? null,
       storage_path: path,
       file_name: file.name,
       mime_type: file.type || null,

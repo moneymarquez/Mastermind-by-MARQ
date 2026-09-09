@@ -8,10 +8,14 @@ import { DOC_TYPE_LABELS, QUICK_START_FIELDS } from '../../data/documentSchemas'
 import type { DocType } from '../../data/documentSchemas';
 import DocumentEditForm from './DocumentEditForm';
 import DocumentPreview from './DocumentPreview';
+import { useClients } from '../../data/useClients';
+import ClientSelector from '../ClientSelector';
 
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
+  selectedClientId: string | null;
+  onSelectClient: (id: string | null) => void;
 }
 
 const ALL_TYPES = Object.keys(DOC_TYPE_LABELS) as DocType[];
@@ -64,10 +68,20 @@ function BusinessProfilePanel() {
       <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 4 }}>Shows up in every document's header/footer — set once here.</div>
       {open && (
         <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 420 }}>
+          <input style={inputStyle} placeholder="Business or your name — shown as the sender on every document" value={draft.business_name} onChange={(e) => { setDraft({ ...draft, business_name: e.target.value }); setSaved(false); }} />
           <input style={inputStyle} placeholder="Business address" value={draft.business_address} onChange={(e) => { setDraft({ ...draft, business_address: e.target.value }); setSaved(false); }} />
           <input style={inputStyle} placeholder="Business email" value={draft.business_email} onChange={(e) => { setDraft({ ...draft, business_email: e.target.value }); setSaved(false); }} />
           <input style={inputStyle} placeholder="Business phone" value={draft.business_phone} onChange={(e) => { setDraft({ ...draft, business_phone: e.target.value }); setSaved(false); }} />
           <input style={inputStyle} placeholder="Website" value={draft.website} onChange={(e) => { setDraft({ ...draft, website: e.target.value }); setSaved(false); }} />
+          <div>
+            <div style={fieldLabel}>Teaching philosophy — how you work while teaching a client to eventually run it themselves. Reused on every Product Sheet.</div>
+            <textarea
+              style={{ ...inputStyle, width: '100%', minHeight: 90, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+              placeholder="e.g. I don't just run your marketing — every month I walk you through what worked and why, so..."
+              value={draft.teaching_philosophy}
+              onChange={(e) => { setDraft({ ...draft, teaching_philosophy: e.target.value }); setSaved(false); }}
+            />
+          </div>
           {error && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--danger)' }}>Couldn't save: {error}</div>}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ ...primaryBtn, opacity: saving ? 0.6 : 1 }} onClick={() => !saving && doSave()}>{saving ? 'Saving…' : 'Save'}</div>
@@ -276,9 +290,10 @@ function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack
   );
 }
 
-export default function InvoicingScreen({ homeHeadStyle, homeSubStyle }: Props) {
+export default function InvoicingScreen({ homeHeadStyle, homeSubStyle, selectedClientId, onSelectClient }: Props) {
   const { documents, loading } = useClientDocuments();
   const { contacts } = useContacts();
+  const clientsApi = useClients();
   const [filter, setFilter] = useState<DocType | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [openedFromCreate, setOpenedFromCreate] = useState(false);
@@ -295,6 +310,18 @@ export default function InvoicingScreen({ homeHeadStyle, homeSubStyle }: Props) 
     <div>
       <div style={homeHeadStyle}>Invoicing</div>
       <div style={homeSubStyle}>The real Made by Marq client document set — create, edit, and preview.</div>
+
+      <div style={{ marginTop: 20 }}>
+        <ClientSelector
+          clients={clientsApi.clients}
+          loading={clientsApi.loading}
+          error={clientsApi.error}
+          selectedId={selectedClientId}
+          onSelect={onSelectClient}
+          onCreate={clientsApi.createClient}
+          emptyHint="This 9-document system uses its own contacts, separate from clients — this selector isn't wired into it yet."
+        />
+      </div>
 
       <div style={{ marginTop: 20 }}>
         <NewDocumentPanel onCreated={(id) => { setOpenedFromCreate(true); setSelectedId(id); }} />

@@ -4,6 +4,8 @@ import type { useClientCRM } from '../../data/useClientCRM';
 import type { ClientInvoice, ClientInvoiceStatus } from '../../data/types';
 import { cardStyle, selectStyle } from './ClientCRMScreen';
 import InvoiceDetailView from './InvoiceDetailView';
+import ContextMenu from '../ContextMenu';
+import type { ContextMenuItem } from '../ContextMenu';
 
 interface Props {
   crm: ReturnType<typeof useClientCRM>;
@@ -32,6 +34,7 @@ export default function AllInvoicesView({ crm, homeHeadStyle, homeSubStyle }: Pr
   const [statusFilter, setStatusFilter] = useState<ClientInvoiceStatus | 'all'>('all');
   const [sortKey, setSortKey] = useState<SortKey>('created');
   const [selected, setSelected] = useState<{ invoice: ClientInvoice; clientName: string } | null>(null);
+  const [menu, setMenu] = useState<{ x: number; y: number; invoiceId: string } | null>(null);
 
   const rows = useMemo(() => {
     let flat = crm.clients.flatMap((c) => c.invoices.map((inv) => ({ inv, clientId: c.id, clientName: c.business_name })));
@@ -79,7 +82,12 @@ export default function AllInvoicesView({ crm, homeHeadStyle, homeSubStyle }: Pr
       <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 780 }}>
         {rows.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No invoices match this filter.</div>}
         {rows.map(({ inv, clientName }) => (
-          <div key={inv.id} style={{ ...cardStyle, padding: 14, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', flexWrap: 'wrap' }} onClick={() => setSelected({ invoice: inv, clientName })}>
+          <div
+            key={inv.id}
+            style={{ ...cardStyle, padding: 14, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', flexWrap: 'wrap' }}
+            onClick={() => setSelected({ invoice: inv, clientName })}
+            onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY, invoiceId: inv.id }); }}
+          >
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', width: 64, flexShrink: 0 }}>#{inv.invoice_number}</div>
             <div style={{ flex: 1, minWidth: 140 }}>
               <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>{clientName}</div>
@@ -96,6 +104,22 @@ export default function AllInvoicesView({ crm, homeHeadStyle, homeSubStyle }: Pr
           </div>
         ))}
       </div>
+
+      {menu && (() => {
+        const row = rows.find((r) => r.inv.id === menu.invoiceId);
+        if (!row) return null;
+        const items: ContextMenuItem[] = [
+          { label: 'Open', onClick: () => setSelected({ invoice: row.inv, clientName: row.clientName }) },
+        ];
+        // Deleting is only offered for drafts, same as the single-invoice
+        // detail view's own Delete button (isDraft-gated there too) — a
+        // sent/paid/void invoice is a real record, voiding it needs a
+        // reason and belongs in that fuller flow, not a one-click menu.
+        if (row.inv.status === 'draft') {
+          items.push({ label: 'Delete draft', danger: true, onClick: () => crm.removeDraftInvoice(row.inv.id) });
+        }
+        return <ContextMenu x={menu.x} y={menu.y} items={items} onClose={() => setMenu(null)} />;
+      })()}
     </div>
   );
 }

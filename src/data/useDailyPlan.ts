@@ -28,6 +28,20 @@ export function useDailyPlan() {
     await updateBlocks(plan.blocks.filter((_, i) => i !== index));
   };
 
+  /** Adds a block to today's plan, creating the plan row itself (as a
+   *  draft) if none exists yet — the hourly view lets you click an empty
+   *  hour and add something even on a day Nova never generated a plan for
+   *  (e.g. the overnight job hasn't run yet, or the account is new). */
+  const addBlock = async (block: DailyPlanBlock) => {
+    const blocks = [...(plan?.blocks ?? []), block].sort((a, b) => a.time.localeCompare(b.time));
+    if (plan) {
+      await updateBlocks(blocks);
+      return;
+    }
+    await supabase.from('daily_plans').insert({ plan_date: todayStr(), blocks, status: 'draft' });
+    await load();
+  };
+
   const confirm = async () => {
     if (!plan) return;
     await supabase.from('daily_plans').update({ status: 'confirmed', confirmed_at: new Date().toISOString() }).eq('id', plan.id);
@@ -40,5 +54,5 @@ export function useDailyPlan() {
     await load();
   };
 
-  return { plan, loading, updateBlocks, removeBlock, confirm, skip };
+  return { plan, loading, updateBlocks, removeBlock, addBlock, confirm, skip };
 }

@@ -76,6 +76,51 @@ async function sendClientLoginEmail(env: BillingEnv, to: string, businessName: s
   }
 }
 
+// Same Resend HTTP pattern again, this time for the client's own receipt
+// once their Client CRM invoice is actually paid — sent from
+// invoice@madebymarquez.com specifically (the same "invoice@" address
+// src/data/inboxAddresses.ts already lists, on both domains, as the one
+// for "Invoice replies + receipts"), not Stripe's generic one and not
+// whatever MADEBYMARQUEZ_FROM_EMAIL happens to be set to for the
+// delivery-pipeline email (deliver-email.ts) — that's a different
+// mailbox for a different kind of client-facing mail. Requires
+// madebymarquez.com to actually be verified in Resend; until then this
+// send just fails and the receipt silently doesn't go out, same
+// best-effort behavior as every other email here — a failed/unconfigured
+// send never blocks the webhook.
+async function sendPaidReceiptEmail(
+  env: BillingEnv,
+  to: string,
+  businessName: string,
+  invoiceNumber: number,
+  description: string,
+  amount: number,
+): Promise<boolean> {
+  const fromEmail = 'Made by MARQ <invoice@madebymarquez.com>';
+  if (!env.RESEND_API_KEY) return false;
+  const amt = `$${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: [to],
+        subject: `Payment received — Invoice #${invoiceNumber}`,
+        html: [
+          `<p>Hi there,</p>`,
+          `<p>This confirms your payment for <strong>${businessName}</strong> — Invoice #${invoiceNumber}.</p>`,
+          `<p><strong>${description}</strong><br/>${amt} paid in full</p>`,
+          `<p>Thanks,<br/>Made by MARQ</p>`,
+        ].join(''),
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 // Auto-provisions a client login the moment a client's invoice is paid —
 // "as soon as that turns green, send them an automatically created
 // login" per the build prompt. Only fires once per client: skipped
@@ -272,21 +317,29 @@ export async function stripeWebhook(request: Request, env: BillingEnv): Promise<
     const invoiceId = obj.id as string | undefined;
     if (invoiceId) {
       const lookupRes = await fetch(
-        `${env.VITE_SUPABASE_URL}/rest/v1/client_invoices?stripe_invoice_id=eq.${invoiceId}&select=id,client_id`,
+        `${env.VITE_SUPABASE_URL}/rest/v1/client_invoices?stripe_invoice_id=eq.${invoiceId}&select=id,client_id,invoice_number,description,amount`,
         { headers: supabaseHeaders(env) },
       );
-      const [crmInvoice] = (await lookupRes.json()) as { id: string; client_id: string }[];
+      const [crmInvoice] = (await lookupRes.json()) as { id: string; client_id: string; invoice_number: number; description: string; amount: number }[];
       if (crmInvoice) {
         await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/client_invoices?id=eq.${crmInvoice.id}`, {
           method: 'PATCH',
           headers: supabaseHeaders(env),
           body: JSON.stringify({ status: 'paid', paid_at: new Date().toISOString(), updated_at: new Date().toISOString() }),
         });
+        const clientRes = await fetch(
+          `${env.VITE_SUPABASE_URL}/rest/v1/crm_clients?id=eq.${crmInvoice.client_id}&select=business_name,contact_email`,
+          { headers: supabaseHeaders(env) },
+        );
+        const [paidClient] = (await clientRes.json()) as { business_name: string; contact_email: string | null }[];
         await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/crm_clients?id=eq.${crmInvoice.client_id}`, {
           method: 'PATCH',
           headers: supabaseHeaders(env),
           body: JSON.stringify({ stage: 'active', last_activity_at: new Date().toISOString() }),
         });
+        if (paidClient?.contact_email) {
+          await sendPaidReceiptEmail(env, paidClient.contact_email, paidClient.business_name, crmInvoice.invoice_number, crmInvoice.description, crmInvoice.amount);
+        }
         await autoProvisionClientLogin(env, crmInvoice.client_id);
         return new Response('ok', { status: 200 });
       }

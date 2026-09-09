@@ -149,6 +149,7 @@ function GoalCard({
   const [busy, setBusy] = useState<'critique' | 'checkin' | 'revise' | null>(null);
   const [aiError, setAiError] = useState('');
   const [revising, setRevising] = useState(false);
+  const [reviseFeedback, setReviseFeedback] = useState('');
   const pct = goal.target_cost ? Math.min(100, (goal.current_saved / goal.target_cost) * 100) : goal.progress_pct;
 
   const runCritique = async () => {
@@ -187,9 +188,10 @@ function GoalCard({
         targetDescription: `${goal.target_metric_value ?? ''} ${goal.target_metric ?? ''} (previous path: ${goal.committed_path?.title ?? 'none'} — this needs revising after a setback)`,
         deadline: goal.deadline ?? '', constraints: '',
       };
-      const plan = await generateGoalPlan(intake, otherGoals.filter((g) => g.id !== goal.id));
+      const plan = await generateGoalPlan(intake, otherGoals.filter((g) => g.id !== goal.id), reviseFeedback);
       await onSaveGoalPlan(goal.id, plan);
       setRevising(false);
+      setReviseFeedback('');
     } catch (err) {
       setAiError(err instanceof AiError ? err.message : 'Could not revise the plan — try again.');
     } finally {
@@ -307,16 +309,37 @@ function GoalCard({
             Revise path
           </div>
         )}
-        {locked && revising && (
-          <div
-            style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 'var(--radius-pill)', background: busy ? 'var(--border)' : 'var(--text)', color: busy ? 'var(--text-secondary)' : 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: busy ? 'default' : 'pointer' }}
-            onClick={() => !busy && runRevise()}
-          >
-            {busy === 'revise' ? 'Revising…' : 'Confirm revise (generates new paths)'}
-          </div>
-        )}
       </div>
       {aiError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 8 }}>{aiError}</div>}
+
+      {locked && revising && (
+        <div style={{ marginTop: 14, padding: 14, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)' }}>
+          <div style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-secondary)', marginBottom: 6 }}>
+            Tell {assistantName} what to change — she'll go deeper and address this directly instead of just rerolling the same paths.
+          </div>
+          <textarea
+            style={{ ...inputStyle, width: '100%', minHeight: 70, resize: 'vertical', fontSize: 'var(--text-body-sm)', boxSizing: 'border-box' }}
+            placeholder='e.g. "these are too vague, give me exact daily numbers" or "I already tried cold calling for this, suggest something else"'
+            value={reviseFeedback}
+            onChange={(e) => setReviseFeedback(e.target.value)}
+            autoFocus
+          />
+          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+            <div
+              style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 'var(--radius-pill)', background: busy ? 'var(--border)' : 'var(--text)', color: busy ? 'var(--text-secondary)' : 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: busy ? 'default' : 'pointer' }}
+              onClick={() => !busy && runRevise()}
+            >
+              {busy === 'revise' ? 'Revising…' : 'Confirm revise (generates new paths)'}
+            </div>
+            <div
+              style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 'var(--radius-pill)', color: 'var(--text-tertiary)', fontSize: 'var(--text-body-sm)', cursor: busy ? 'default' : 'pointer' }}
+              onClick={() => { if (!busy) { setRevising(false); setReviseFeedback(''); } }}
+            >
+              Cancel
+            </div>
+          </div>
+        </div>
+      )}
 
       {goal.ai_critique && (
         <div style={{ marginTop: 14, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '12px 14px' }}>

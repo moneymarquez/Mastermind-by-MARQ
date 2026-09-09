@@ -19,6 +19,12 @@ export default defineConfig({
       injectRegister: false,
       manifest: false,
       devOptions: { enabled: false },
+      // Default precache limit is 2 MiB — the main bundle crossed that as
+      // the app grew (Marketing/Content 101 reference docs, brief/growth-
+      // plan forms). Raised with headroom rather than re-bumped every time
+      // a build item adds a few hundred KB; doesn't change what's cached,
+      // just how large a single precached file is allowed to be.
+      injectManifest: { maximumFileSizeToCacheInBytes: 6 * 1024 * 1024 },
     }),
   ],
 })

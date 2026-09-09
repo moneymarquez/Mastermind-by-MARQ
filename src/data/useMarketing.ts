@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 
 export type AssetType = 'copy' | 'creative' | 'brand' | 'reference';
 export type CampaignStatus = 'planned' | 'running' | 'done';
-export type PipelineStage = 'idea' | 'drafted' | 'scheduled' | 'published';
+export type PipelineStage = 'idea' | 'drafted' | 'filmed' | 'scheduled' | 'published';
 
 export interface MarketingAsset {
   id: string;
@@ -12,6 +12,10 @@ export interface MarketingAsset {
   content: string | null;
   external_url: string | null;
   tags: string[];
+  client_id: string | null;
+  /** Which play this asset was built out for (schema_076) — null for
+   *  anything added the old way, before a play existed to tie it to. */
+  play_id: string | null;
   updated_at: string;
 }
 
@@ -23,6 +27,12 @@ export interface MarketingCampaign {
   metrics: Record<string, number>;
   start_date: string | null;
   end_date: string | null;
+  /** Which client this campaign is for, and the brief it was built from —
+   *  both nullable (schema_070) since campaigns predate the client
+   *  selector and could still be added unscoped from a screen with no
+   *  client picked. */
+  client_id: string | null;
+  brief_id: string | null;
 }
 
 export interface PipelineItem {
@@ -32,14 +42,19 @@ export interface PipelineItem {
   content: string | null;
   scheduled_date: string | null;
   notes: string | null;
+  client_id: string | null;
+  brief_id: string | null;
+  /** Which content growth plan / idea this item came from (schema_083)
+   *  — Content Creation's own linkage, parallel to Marketing's client_id/
+   *  brief_id above. Null for anything added the Marketing way. */
+  plan_id: string | null;
+  idea_id: string | null;
 }
 
-// Every table here is RLS-locked to is_owner(auth.uid()) as well as
-// auth.uid() = user_id (see schema_025) — a non-owner account gets zero
-// rows and a rejected write from Supabase directly, regardless of
-// anything this hook or its caller does. This hook has no client-side
-// owner check of its own because it doesn't need one: the database
-// already refuses non-owner access to every query and mutation below.
+// Per-account isolation (schema_072) — plain row ownership, no
+// is_owner() gate, on every table this hook touches. No client-side
+// owner check needed: the database already scopes every query and
+// mutation below to auth.uid().
 export function useMarketing() {
   const [assets, setAssets] = useState<MarketingAsset[]>([]);
   const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
@@ -63,7 +78,7 @@ export function useMarketing() {
     load();
   }, [load]);
 
-  const addAsset = async (input: { name: string; asset_type: AssetType; content?: string; external_url?: string; tags?: string[] }) => {
+  const addAsset = async (input: { name: string; asset_type: AssetType; content?: string; external_url?: string; tags?: string[]; client_id?: string | null; play_id?: string | null }) => {
     await supabase.from('marketing_assets').insert({ ...input, updated_at: new Date().toISOString() });
     await load();
   };
@@ -76,7 +91,7 @@ export function useMarketing() {
     await load();
   };
 
-  const addCampaign = async (input: { name: string; status: CampaignStatus; notes?: string; start_date?: string | null; end_date?: string | null }) => {
+  const addCampaign = async (input: { name: string; status: CampaignStatus; notes?: string; start_date?: string | null; end_date?: string | null; client_id?: string | null; brief_id?: string | null }) => {
     await supabase.from('marketing_campaigns').insert(input);
     await load();
   };
@@ -89,8 +104,8 @@ export function useMarketing() {
     await load();
   };
 
-  const addPipelineItem = async (title: string) => {
-    await supabase.from('marketing_content_pipeline').insert({ title, stage: 'idea' });
+  const addPipelineItem = async (title: string, clientId?: string | null, planId?: string | null, ideaId?: string | null) => {
+    await supabase.from('marketing_content_pipeline').insert({ title, stage: 'idea', client_id: clientId ?? null, plan_id: planId ?? null, idea_id: ideaId ?? null });
     await load();
   };
   const updatePipelineItem = async (id: string, patch: Partial<Pick<PipelineItem, 'stage' | 'content' | 'notes' | 'scheduled_date'>>) => {

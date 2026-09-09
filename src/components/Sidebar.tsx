@@ -2,18 +2,30 @@ import type { NavRow } from '../navRows';
 import Icon from '../Icon';
 import { LIVE_PLAN } from '../billing/plans';
 import InboxWidget from './InboxWidget';
-import type { SupportInboxEntry } from '../data/useSupportInbox';
+import type { InboxItem } from '../data/useOwnerInbox';
+import LeadsWidget from './LeadsWidget';
+import type { LeadItem } from '../data/useLeads';
+import { useAvatar } from '../data/useAvatar';
 
 export const SIDEBAR_WIDTH = 250;
+// The collapsed rail: just the Menu toggle, nothing else — clicking it
+// again is what makes the full panel "pop back up."
+export const SIDEBAR_COLLAPSED_WIDTH = 68;
 
 interface Props {
   rows: NavRow[];
   ownerName: string | null;
   isOwner: boolean;
   onOpenSettings: () => void;
-  inboxEntries: SupportInboxEntry[];
+  leads: LeadItem[];
+  leadsNewCount: number;
+  leadsLoading: boolean;
+  onOpenLead: (lead?: LeadItem) => void;
+  inboxItems: InboxItem[];
   inboxLoading: boolean;
-  onOpenInbox: () => void;
+  onOpenInbox: (item?: InboxItem) => void;
+  open: boolean;
+  onToggle: () => void;
 }
 
 /** The desktop persistent sidebar from the Aperture "App Overview" artboard
@@ -28,23 +40,38 @@ interface Props {
  *  runs on — this brings the authenticated app shell onto the same design
  *  language as the landing page instead of the older --bg/--surface/--accent
  *  set. */
-export default function Sidebar({ rows, ownerName, isOwner, onOpenSettings, inboxEntries, inboxLoading, onOpenInbox }: Props) {
+export default function Sidebar({
+  rows, ownerName, isOwner, onOpenSettings,
+  leads, leadsNewCount, leadsLoading, onOpenLead,
+  inboxItems, inboxLoading, onOpenInbox,
+  open, onToggle,
+}: Props) {
+  const { avatarUrl } = useAvatar();
   return (
     <div
       style={{
-        position: 'absolute', top: 0, left: 0, bottom: 0, width: SIDEBAR_WIDTH, zIndex: 30,
-        display: 'flex', flexDirection: 'column', gap: 14, padding: '22px 14px',
+        position: 'absolute', top: 0, left: 0, bottom: 0, width: open ? SIDEBAR_WIDTH : SIDEBAR_COLLAPSED_WIDTH, zIndex: 30,
+        display: 'flex', flexDirection: 'column', gap: 14, padding: open ? '22px 14px' : '22px 12px',
         background: 'var(--mm-bg2)', borderRight: '1px solid var(--mm-line)',
+        overflow: 'hidden', transition: 'width 0.18s ease, padding 0.18s ease',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 15px', borderRadius: 'var(--radius-pill)', background: 'var(--mm-ink)', color: 'var(--mm-ink-text)', fontSize: 13, fontWeight: 500 }}>
-          <Icon name="list" size={18} />Menu
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: open ? 'space-between' : 'center', padding: '0 4px' }}>
+        {/* The one thing that's always here, open or collapsed — click to
+            pop the full panel open or collapse it back down. */}
+        <div
+          onClick={onToggle}
+          title={open ? 'Collapse menu' : 'Open menu'}
+          style={{ display: 'flex', alignItems: 'center', gap: 9, padding: open ? '9px 15px' : '11px', borderRadius: 'var(--radius-pill)', background: 'var(--mm-ink)', color: 'var(--mm-ink-text)', fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}
+        >
+          <Icon name="list" size={18} />{open && 'Menu'}
         </div>
       </div>
 
-      {isOwner && <InboxWidget entries={inboxEntries} loading={inboxLoading} onOpen={onOpenInbox} />}
+      {open && isOwner && <LeadsWidget leads={leads} newCount={leadsNewCount} loading={leadsLoading} onOpen={onOpenLead} />}
+      {open && isOwner && <InboxWidget items={inboxItems} loading={inboxLoading} onOpen={onOpenInbox} />}
 
+      {open && (
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2, fontSize: 13.5 }}>
         {rows.map((row) => {
           if (row.kind === 'header') {
@@ -81,18 +108,25 @@ export default function Sidebar({ rows, ownerName, isOwner, onOpenSettings, inbo
           );
         })}
       </div>
+      )}
 
+      {open && (
       <div
         onClick={onOpenSettings}
         style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 10, padding: 11, borderRadius: 14, background: 'var(--mm-panel-solid)', border: '1px solid var(--mm-line)', cursor: 'pointer' }}
       >
-        <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--mm-track)', flexShrink: 0 }} />
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+        ) : (
+          <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--mm-track)', flexShrink: 0 }} />
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2, minWidth: 0 }}>
           <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--mm-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ownerName ?? 'Account'}</div>
           <div style={{ fontSize: 10.5, color: 'var(--mm-faint)' }}>{isOwner ? 'Owner' : `${LIVE_PLAN.name} plan`}</div>
         </div>
         <Icon name="gear-six" size={16} color="var(--mm-faint)" style={{ marginLeft: 'auto', flexShrink: 0 }} />
       </div>
+      )}
     </div>
   );
 }

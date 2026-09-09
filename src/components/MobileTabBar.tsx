@@ -6,7 +6,22 @@ import Icon from '../Icon';
 // of this constant (Stage.tsx's content bottom-padding, RemindersBox's
 // offset) independently appends env(safe-area-inset-bottom) in its own
 // calc(), so nothing double-counts it.
-export const TAB_BAR_HEIGHT = 78;
+//
+// Sized explicitly for its actual content stack — 22px icon + 4px gap +
+// a label whose line-height needs headroom beyond its 9.5px font-size —
+// plus 12px top/bottom padding each. Bumped from 78 (14+22+4+~12+14 was
+// tight enough that a label could visually clip on devices that round
+// the safe-area inset up) to a value with real breathing room.
+export const TAB_BAR_HEIGHT = 84;
+
+// A bare env(safe-area-inset-bottom) is 0 on any context that doesn't
+// report a real inset (most non-Safari mobile browsers, some in-app
+// webviews) — on a phone with a home-indicator gesture bar, that leaves
+// the tab bar's labels sitting right at the physical bottom edge with
+// only the 12px base padding between them and it, which reads as cut
+// off. Flooring it at 20px guarantees real clearance everywhere while
+// still using the actual (larger) inset on devices that report one.
+export const SAFE_BOTTOM = 'max(env(safe-area-inset-bottom), 20px)';
 
 interface Props {
   screen: string;
@@ -39,7 +54,7 @@ export default function MobileTabBar({ screen, novaOpen, onNavigate, onToggleNov
         style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 52, color: active ? 'var(--mm-text)' : 'var(--mm-faint)', cursor: 'pointer' }}
       >
         <Icon name={item.icon} size={22} />
-        <div style={{ fontSize: 9.5, letterSpacing: '0.06em' }}>{item.label}</div>
+        <div style={{ fontSize: 9.5, lineHeight: 1.3, letterSpacing: '0.06em' }}>{item.label}</div>
       </div>
     );
   };
@@ -47,9 +62,17 @@ export default function MobileTabBar({ screen, novaOpen, onNavigate, onToggleNov
   return (
     <div
       style={{
-        position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 30, height: `calc(${TAB_BAR_HEIGHT}px + env(safe-area-inset-bottom))`,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 22px calc(10px + env(safe-area-inset-bottom))',
-        borderTop: '1px solid var(--mm-line)', background: 'var(--mm-bg-blur)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+        position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 30, boxSizing: 'border-box',
+        height: `calc(${TAB_BAR_HEIGHT}px + ${SAFE_BOTTOM})`,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `12px 22px calc(12px + ${SAFE_BOTTOM})`,
+        // borderTop alone reads as a hairline floating over an identical-
+        // colored page below (the blur tint is only a couple percent off
+        // --bg) — the safe-area cushion under the icons then looks like
+        // blank page, not part of the bar. The upward shadow gives the
+        // whole box (icons + cushion) a visible edge so it reads as one
+        // lifted surface all the way to the true bottom, in both themes.
+        borderTop: '1px solid var(--mm-line-strong)', background: 'var(--mm-bg-blur)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+        boxShadow: '0 -6px 20px rgba(0,0,0,0.10)',
       }}
     >
       {items.map(tab)}
