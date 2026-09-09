@@ -7,6 +7,8 @@ import MiniMarkdown from '../MiniMarkdown';
 import { useContentGrowth } from '../../data/useContentGrowth';
 import type { ContentGrowthPlan, GrowthPlatform } from '../../data/useContentGrowth';
 import ContentGrowthPlanView from './ContentGrowthPlanView';
+import ContentSlate from './ContentSlate';
+import { useContentIdeas } from '../../data/useContentIdeas';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -120,6 +122,7 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
 
   const clientPlans = selectedClientId ? growth.plans.filter((p) => p.client_id === selectedClientId) : [];
   const activePlan = growth.plans.find((p) => p.id === activePlanId) ?? null;
+  const ideasApi = useContentIdeas(activePlan?.id ?? null);
 
   return (
     <div>
@@ -152,7 +155,21 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
               onRemoveCheckin={growth.removeCheckin}
               onAskNova={() => onAskNova?.(composeGrowthPrompt(activePlan, selected.business_name, growth.checkins.filter((c) => c.plan_id === activePlan.id)))}
             />
-          ) : (
+          ) : null}
+          {activePlan && (
+            <>
+              <div style={sectionTitle}>Content slate</div>
+              <ContentSlate
+                plan={activePlan}
+                clientName={selected.business_name}
+                ideas={ideasApi.ideas}
+                loading={ideasApi.loading}
+                onGenerateSlate={(drafts) => ideasApi.saveSlate(activePlan.client_id, activePlan.id, drafts)}
+                onPick={(id) => ideasApi.pickIdea(id)}
+              />
+            </>
+          )}
+          {!activePlan && (
             <>
               {growth.error && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginBottom: 10 }}>{growth.error}</div>}
               {clientPlans.length > 0 && (
