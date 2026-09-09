@@ -8,6 +8,7 @@ import { useContentGrowth } from '../../data/useContentGrowth';
 import type { ContentGrowthPlan, GrowthPlatform } from '../../data/useContentGrowth';
 import ContentGrowthPlanView from './ContentGrowthPlanView';
 import ContentSlate from './ContentSlate';
+import ContentBuildOut from './ContentBuildOut';
 import { useContentIdeas } from '../../data/useContentIdeas';
 
 interface Props {
@@ -167,6 +168,17 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
                 onGenerateSlate={(drafts) => ideasApi.saveSlate(activePlan.client_id, activePlan.id, drafts)}
                 onPick={(id) => ideasApi.pickIdea(id)}
               />
+              {ideasApi.ideas.some((i) => i.status === 'picked') && (
+                <>
+                  <div style={sectionTitle}>Build out</div>
+                  <ContentBuildOut
+                    plan={activePlan}
+                    clientName={selected.business_name}
+                    pickedIdea={ideasApi.ideas.find((i) => i.status === 'picked') ?? null}
+                    onSave={(id, patch) => ideasApi.updateIdea(id, patch)}
+                  />
+                </>
+              )}
             </>
           )}
           {!activePlan && (
