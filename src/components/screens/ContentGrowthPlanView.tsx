@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
-import type { ContentCheckin, ContentGrowthPlan, GrowthPhase } from '../../data/useContentGrowth';
+import type { ContentCheckin, ContentGrowthPlan, GrowthPhase, PagePurpose } from '../../data/useContentGrowth';
+import { computePostsStreak } from '../../data/contentGrowthMetrics';
 
 interface Props {
   plan: ContentGrowthPlan;
   checkins: ContentCheckin[];
   clientName: string;
-  onUpdate: (patch: Partial<Pick<ContentGrowthPlan, 'account_handle' | 'target_followers' | 'niche_viewer' | 'pillars' | 'phase' | 'notes'>>) => void;
+  onUpdate: (patch: Partial<Pick<ContentGrowthPlan, 'account_handle' | 'target_followers' | 'niche_viewer' | 'pillars' | 'phase' | 'page_purpose' | 'notes'>>) => void;
   onDelete: () => void;
   onClose: () => void;
   onAddCheckin: (input: { follower_count: number; posts_count?: number | null; what_worked?: string | null; what_to_change?: string | null }) => void;
@@ -45,6 +46,15 @@ const PHASES: { key: GrowthPhase; label: string; days: string }[] = [
   { key: 'volume', label: 'Volume', days: 'Days 8–30' },
   { key: 'pattern_finding', label: 'Pattern finding', days: 'Days 31–60' },
   { key: 'concentration', label: 'Concentration', days: 'Days 61–90' },
+];
+
+// "Ask this before generating anything. It changes the entire slate." —
+// two genuinely different pages, not two labels for the same thing. A
+// taco truck's page and a personal brand aimed at future course buyers
+// have almost nothing in common downstream.
+const PAGE_PURPOSES: { key: PagePurpose; label: string; hint: string }[] = [
+  { key: 'audience_for_offer', label: 'My own audience', hint: 'broad entrepreneurial audience, eventually buys a course or Masterminds seat — lifestyle content is on-strategy here' },
+  { key: 'leads_for_business', label: 'Leads for this business', hint: 'narrow, local, conversion-focused — lifestyle content is noise here' },
 ];
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
@@ -121,15 +131,32 @@ export default function ContentGrowthPlanView({ plan, checkins, clientName, onUp
   const current = planCheckins[0]?.follower_count ?? plan.starting_followers ?? 0;
   const growth = plan.starting_followers != null ? current - plan.starting_followers : null;
   const pct = plan.target_followers ? Math.min(100, Math.round((current / plan.target_followers) * 100)) : null;
+  const streak = computePostsStreak(planCheckins);
 
   return (
     <div style={cardStyle}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 700, color: 'var(--text)' }}>
+          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
             {clientName} — {PLATFORM_LABEL[plan.platform]}{plan.account_handle ? ` (${plan.account_handle})` : ''}
           </div>
-          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>
+          {/* Headline metric is posts shipped, not followers — the
+              operator's actual problem is that he isn't posting, and this
+              screen is built to reward shipping, not vanity growth. */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
+            <div style={{ fontSize: 'var(--text-title)', fontWeight: 700, color: 'var(--text)' }}>
+              {streak.thisWeekPosts} post{streak.thisWeekPosts === 1 ? '' : 's'} shipped this week
+            </div>
+            {streak.streakWeeks > 0 && (
+              <span style={{ fontSize: 'var(--text-small)', fontWeight: 600, color: 'var(--success)' }}>
+                🔥 {streak.streakWeeks}-week streak
+              </span>
+            )}
+          </div>
+          {!streak.hasCheckinThisWeek && (
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 2 }}>No check-in logged yet this week.</div>
+          )}
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 8 }}>
             {current.toLocaleString()} followers
             {plan.target_followers ? ` of ${plan.target_followers.toLocaleString()} target${pct !== null ? ` (${pct}%)` : ''}` : ''}
             {growth !== null && growth !== 0 ? ` · ${growth > 0 ? '+' : ''}${growth.toLocaleString()} since start` : ''}
@@ -149,6 +176,27 @@ export default function ContentGrowthPlanView({ plan, checkins, clientName, onUp
       </div>
 
       <div style={{ ...primaryBtn, marginTop: 16, display: 'inline-block' }} onClick={onAskNova}>Ask Nova for next steps</div>
+
+      <div style={subhead}>Page purpose</div>
+      <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 10, lineHeight: 1.5 }}>
+        Changes the entire slate downstream — set this before generating any ideas.
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 4 }}>
+        {PAGE_PURPOSES.map((p) => (
+          <div
+            key={p.key}
+            onClick={() => onUpdate({ page_purpose: p.key })}
+            style={{
+              padding: '10px 14px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+              border: `1px solid ${plan.page_purpose === p.key ? 'var(--text)' : 'var(--border)'}`,
+              background: plan.page_purpose === p.key ? '#F5F6F71a' : 'transparent',
+            }}
+          >
+            <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: plan.page_purpose === p.key ? 'var(--text)' : 'var(--text-secondary)' }}>{p.label}</div>
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 3, lineHeight: 1.4 }}>{p.hint}</div>
+          </div>
+        ))}
+      </div>
 
       <div style={subhead}>Phase</div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>

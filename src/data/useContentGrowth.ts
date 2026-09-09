@@ -3,6 +3,15 @@ import { supabase } from '../lib/supabase';
 
 export type GrowthPlatform = 'instagram' | 'tiktok' | 'youtube_shorts' | 'youtube_long' | 'linkedin' | 'facebook' | 'twitter';
 export type GrowthPhase = 'setup' | 'volume' | 'pattern_finding' | 'concentration';
+/** What this page is FOR — "ask this before generating anything, it
+ *  changes the entire slate" (schema_081). 'audience_for_offer' is the
+ *  operator's own page (broad entrepreneurial audience, eventual course/
+ *  Masterminds buyers — lifestyle content is on-strategy here);
+ *  'leads_for_business' is a client's page (narrow, local, conversion-
+ *  focused — lifestyle content is noise). Nullable until the operator
+ *  confirms it; content_ideas slate generation refuses to run without
+ *  it, same gate shape as Marketing's business_model. */
+export type PagePurpose = 'audience_for_offer' | 'leads_for_business';
 
 export interface ContentGrowthPlan {
   id: string;
@@ -14,6 +23,7 @@ export interface ContentGrowthPlan {
   phase: GrowthPhase;
   niche_viewer: string | null;
   pillars: string[];
+  page_purpose: PagePurpose | null;
   started_at: string;
   notes: string | null;
   created_at: string;
@@ -31,12 +41,13 @@ export interface ContentCheckin {
   created_at: string;
 }
 
-type PlanPatch = Partial<Pick<ContentGrowthPlan, 'account_handle' | 'target_followers' | 'starting_followers' | 'phase' | 'niche_viewer' | 'pillars' | 'notes'>>;
+type PlanPatch = Partial<Pick<ContentGrowthPlan, 'account_handle' | 'target_followers' | 'starting_followers' | 'phase' | 'niche_viewer' | 'pillars' | 'page_purpose' | 'notes'>>;
 type CheckinInput = { follower_count: number; posts_count?: number | null; what_worked?: string | null; what_to_change?: string | null; checkin_date?: string };
 
-// Owner-only tables (schema_070), same lock as every other Marketing/
-// Scaling table — no client-side owner check needed for the same reason
-// useMarketing.ts has none.
+// Per-account isolation (schema_072) — plain row ownership, same as every
+// other marketing/content table in this app, no is_owner() gate. No
+// client-side owner check needed: the database already scopes every row
+// to auth.uid().
 export function useContentGrowth() {
   const [plans, setPlans] = useState<ContentGrowthPlan[]>([]);
   const [checkins, setCheckins] = useState<ContentCheckin[]>([]);
