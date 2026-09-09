@@ -53,12 +53,14 @@ export function useContentIdeas(planId: string | null) {
     load();
   }, [load]);
 
-  /** Writes a freshly generated slate for a plan that has none yet.
-   *  Refuses if ideas already exist — regenerating over a slate the
-   *  operator has already picked from would silently discard that
-   *  choice, same no-clobber rule as Marketing's saveSlate. */
+  /** Writes a freshly generated round of ideas — always appends, never
+   *  guarded to "only once" the way Marketing's channel-slate saveSlate
+   *  is. A content slate is meant to regenerate on a weekly cadence
+   *  ("the answers reshape next week's slate," build order item 6); a
+   *  one-time guard would block that entirely. Existing offered/parked/
+   *  picked/published ideas are untouched either way — this only ever
+   *  inserts new rows. */
   const saveSlate = async (clientId: string, planIdArg: string, drafts: ContentIdeaDraft[]) => {
-    if (ideas.length > 0) return;
     const rows = drafts.map((d) => ({
       client_id: clientId,
       plan_id: planIdArg,

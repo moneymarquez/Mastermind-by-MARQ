@@ -115,13 +115,37 @@ const LEADS_FOR_BUSINESS_TEMPLATES: Template[] = [
   }),
 ];
 
+export interface LastCheckinSignal {
+  what_worked: string | null;
+  what_to_change: string | null;
+}
+
+/** "The answers reshape next week's slate" (build order item 6) — a
+ *  pillar the operator flagged as working last week gets bumped to the
+ *  front of the next slate; nothing here invents a reason, it just
+ *  reorders toward the pillar the operator already said was landing.
+ *  Deliberately a reorder, not a rewrite: the underlying idea templates
+ *  stay the same, honest ones — only which one leads changes. */
+function reorderByLastCheckin(drafts: ContentIdeaDraft[], lastCheckin: LastCheckinSignal | undefined): ContentIdeaDraft[] {
+  const worked = lastCheckin?.what_worked?.toLowerCase().trim();
+  if (!worked) return drafts;
+  const matches = (d: ContentIdeaDraft) => !!d.pillar && worked.includes(d.pillar.toLowerCase());
+  const boosted = drafts.filter(matches);
+  if (boosted.length === 0) return drafts;
+  const rest = drafts.filter((d) => !matches(d));
+  return [...boosted, ...rest];
+}
+
 /** Generates the content slate for a growth plan. Requires page_purpose
  *  to be set — same hard gate as Marketing's business_model — since
  *  "do not generate one slate for both" is the build prompt's own
- *  non-negotiable framing, not a soft preference. */
-export function generateContentSlate(plan: ContentGrowthPlan, clientName: string): ContentIdeaDraft[] {
+ *  non-negotiable framing, not a soft preference. lastCheckin is
+ *  optional: the very first slate for a plan has no check-in history
+ *  yet to reshape anything from. */
+export function generateContentSlate(plan: ContentGrowthPlan, clientName: string, lastCheckin?: LastCheckinSignal): ContentIdeaDraft[] {
   if (!plan.page_purpose) return [];
   const templates = plan.page_purpose === 'audience_for_offer' ? AUDIENCE_FOR_OFFER_TEMPLATES : LEADS_FOR_BUSINESS_TEMPLATES;
   const format = FORMAT_BY_PLATFORM[plan.platform];
-  return templates.map((t, i) => t(plan, clientName || 'this business', pillarFor(plan.pillars, i), format));
+  const drafts = templates.map((t, i) => t(plan, clientName || 'this business', pillarFor(plan.pillars, i), format));
+  return reorderByLastCheckin(drafts, lastCheckin);
 }

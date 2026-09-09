@@ -170,6 +170,7 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
                 clientName={selected.business_name}
                 ideas={ideasApi.ideas}
                 loading={ideasApi.loading}
+                lastCheckin={growth.checkins.filter((c) => c.plan_id === activePlan.id)[0]}
                 onGenerateSlate={(drafts) => ideasApi.saveSlate(activePlan.client_id, activePlan.id, drafts)}
                 onPick={(id) => ideasApi.pickIdea(id)}
               />

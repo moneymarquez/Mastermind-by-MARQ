@@ -3,12 +3,17 @@ import type { CSSProperties } from 'react';
 import type { ContentGrowthPlan } from '../../data/useContentGrowth';
 import type { ContentIdea } from '../../data/useContentIdeas';
 import { generateContentSlate } from '../../data/contentIdeaEngine';
+import type { LastCheckinSignal } from '../../data/contentIdeaEngine';
 
 interface Props {
   plan: ContentGrowthPlan;
   clientName: string;
   ideas: ContentIdea[];
   loading: boolean;
+  /** The plan's most recent check-in, if any — feeds "the answers
+   *  reshape next week's slate" (build order item 6). Undefined for a
+   *  plan with no check-in history yet. */
+  lastCheckin?: LastCheckinSignal;
   onGenerateSlate: (drafts: ReturnType<typeof generateContentSlate>) => void;
   onPick: (id: string) => void;
 }
@@ -48,12 +53,14 @@ function IdeaCard({ idea, onPick }: { idea: ContentIdea; onPick: (id: string) =>
   );
 }
 
-/** Screen 2 of the Content Creation rebuild (build order item 2) —
- *  generate, show the reasoning, let the operator pick one to build out
- *  (item 3). Locked behind page_purpose the same way Marketing's slate
- *  is locked behind business_model — "do not generate one slate for
- *  both." */
-export default function ContentSlate({ plan, clientName, ideas, loading, onGenerateSlate, onPick }: Props) {
+/** Screen 2 of the Content Creation rebuild (build order item 2, with
+ *  item 6's reshaping folded in) — generate, show the reasoning, let the
+ *  operator pick one to build out (item 3). Locked behind page_purpose
+ *  the same way Marketing's slate is locked behind business_model — "do
+ *  not generate one slate for both." Unlike Marketing's one-time channel
+ *  slate, this can always generate another round — content needs a
+ *  fresh batch on a weekly cadence, informed by the latest check-in. */
+export default function ContentSlate({ plan, clientName, ideas, loading, lastCheckin, onGenerateSlate, onPick }: Props) {
   const [generating, setGenerating] = useState(false);
 
   if (!plan.page_purpose) {
@@ -69,6 +76,13 @@ export default function ContentSlate({ plan, clientName, ideas, loading, onGener
 
   if (loading) return null;
 
+  const generate = () => {
+    if (generating) return;
+    setGenerating(true);
+    onGenerateSlate(generateContentSlate(plan, clientName, lastCheckin));
+    setGenerating(false);
+  };
+
   if (ideas.length === 0) {
     return (
       <div style={cardStyle}>
@@ -76,15 +90,7 @@ export default function ContentSlate({ plan, clientName, ideas, loading, onGener
         <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
           Generates a set of ideas for {clientName || 'this account'} — each with the actual hook line and why it should land for this viewer. Nothing gets built out here; you pick one to build out next.
         </div>
-        <div
-          style={{ ...primaryBtn, marginTop: 14, display: 'inline-block', opacity: generating ? 0.6 : 1, cursor: generating ? 'default' : 'pointer' }}
-          onClick={() => {
-            if (generating) return;
-            setGenerating(true);
-            onGenerateSlate(generateContentSlate(plan, clientName));
-            setGenerating(false);
-          }}
-        >
+        <div style={{ ...primaryBtn, marginTop: 14, display: 'inline-block', opacity: generating ? 0.6 : 1, cursor: generating ? 'default' : 'pointer' }} onClick={generate}>
           {generating ? 'Generating…' : `Generate slate for ${clientName || 'this account'}`}
         </div>
       </div>
@@ -94,6 +100,9 @@ export default function ContentSlate({ plan, clientName, ideas, loading, onGener
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {ideas.map((idea) => <IdeaCard key={idea.id} idea={idea} onPick={onPick} />)}
+      <div>
+        <span style={ghostBtn} onClick={generate}>{generating ? 'Generating…' : "Generate more ideas for next week"}</span>
+      </div>
     </div>
   );
 }
