@@ -14,6 +14,9 @@ interface Props {
    *  reshape next week's slate" (build order item 6). Undefined for a
    *  plan with no check-in history yet. */
   lastCheckin?: LastCheckinSignal;
+  /** The plan's best-logged pillar from hook_log, once ~30 posts exist
+   *  (build order item 7) — takes priority over lastCheckin when set. */
+  hookLogBestPillar?: string | null;
   onGenerateSlate: (drafts: ReturnType<typeof generateContentSlate>) => void;
   onPick: (id: string) => void;
 }
@@ -60,7 +63,7 @@ function IdeaCard({ idea, onPick }: { idea: ContentIdea; onPick: (id: string) =>
  *  not generate one slate for both." Unlike Marketing's one-time channel
  *  slate, this can always generate another round — content needs a
  *  fresh batch on a weekly cadence, informed by the latest check-in. */
-export default function ContentSlate({ plan, clientName, ideas, loading, lastCheckin, onGenerateSlate, onPick }: Props) {
+export default function ContentSlate({ plan, clientName, ideas, loading, lastCheckin, hookLogBestPillar, onGenerateSlate, onPick }: Props) {
   const [generating, setGenerating] = useState(false);
 
   if (!plan.page_purpose) {
@@ -79,7 +82,7 @@ export default function ContentSlate({ plan, clientName, ideas, loading, lastChe
   const generate = () => {
     if (generating) return;
     setGenerating(true);
-    onGenerateSlate(generateContentSlate(plan, clientName, lastCheckin));
+    onGenerateSlate(generateContentSlate(plan, clientName, lastCheckin, hookLogBestPillar));
     setGenerating(false);
   };
 

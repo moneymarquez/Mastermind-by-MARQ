@@ -11,8 +11,11 @@ import ContentSlate from './ContentSlate';
 import ContentBuildOut from './ContentBuildOut';
 import ContentPipelineBoard from './ContentPipelineBoard';
 import ContentShotDayBatcher from './ContentShotDayBatcher';
+import ContentHookLogForm from './ContentHookLogForm';
+import ContentHookTrackRecord from './ContentHookTrackRecord';
 import { useContentIdeas } from '../../data/useContentIdeas';
 import { useMarketing } from '../../data/useMarketing';
+import { useHookLog, bestPillarFromHookLog } from '../../data/useHookLog';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -129,11 +132,23 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
   const ideasApi = useContentIdeas(activePlan?.id ?? null);
   const m = useMarketing();
   const planPipeline = activePlan ? m.pipeline.filter((p) => p.plan_id === activePlan.id) : [];
+  const hookLogApi = useHookLog();
+  const planIdeaIds = new Set(ideasApi.ideas.map((i) => i.id));
+  const hookLogBestPillar = bestPillarFromHookLog(hookLogApi.entries, planIdeaIds);
+  // Published pipeline items with a real idea behind them and no log yet —
+  // "prompts the hook_log entry for each published post."
+  const loggedIdeaIds = new Set(hookLogApi.entries.map((e) => e.idea_id));
+  const unloggedPublished = planPipeline
+    .filter((p) => p.stage === 'published' && p.idea_id && !loggedIdeaIds.has(p.idea_id))
+    .map((p) => ideasApi.ideas.find((i) => i.id === p.idea_id))
+    .filter((i): i is NonNullable<typeof i> => !!i);
 
   return (
     <div>
       <div style={homeHeadStyle}>Content Creation</div>
       <div style={homeSubStyle}>Per-client social growth plans — platform, target, phase, and real weekly check-ins.</div>
+
+      <ContentHookTrackRecord entries={hookLogApi.entries} loading={hookLogApi.loading} />
 
       <div style={{ marginTop: 20 }}>
         <ClientSelector
@@ -171,6 +186,7 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
                 ideas={ideasApi.ideas}
                 loading={ideasApi.loading}
                 lastCheckin={growth.checkins.filter((c) => c.plan_id === activePlan.id)[0]}
+                hookLogBestPillar={hookLogBestPillar}
                 onGenerateSlate={(drafts) => ideasApi.saveSlate(activePlan.client_id, activePlan.id, drafts)}
                 onPick={(id) => ideasApi.pickIdea(id)}
               />
@@ -200,6 +216,16 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
                 onMoveStage={(id, stage) => m.updatePipelineItem(id, { stage })}
                 onRemove={(id) => m.removePipelineItem(id)}
               />
+              {unloggedPublished.length > 0 && (
+                <>
+                  <div style={sectionTitle}>Log published posts</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {unloggedPublished.map((idea) => (
+                      <ContentHookLogForm key={idea.id} idea={idea} onLog={(i, input) => hookLogApi.logHook(i, input)} />
+                    ))}
+                  </div>
+                </>
+              )}
             </>
           )}
           {!activePlan && (

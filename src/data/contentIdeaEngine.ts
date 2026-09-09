@@ -120,6 +120,15 @@ export interface LastCheckinSignal {
   what_to_change: string | null;
 }
 
+function boostPillar(drafts: ContentIdeaDraft[], pillar: string): ContentIdeaDraft[] {
+  const norm = pillar.toLowerCase();
+  const matches = (d: ContentIdeaDraft) => !!d.pillar && d.pillar.toLowerCase() === norm;
+  const boosted = drafts.filter(matches);
+  if (boosted.length === 0) return drafts;
+  const rest = drafts.filter((d) => !matches(d));
+  return [...boosted, ...rest];
+}
+
 /** "The answers reshape next week's slate" (build order item 6) — a
  *  pillar the operator flagged as working last week gets bumped to the
  *  front of the next slate; nothing here invents a reason, it just
@@ -141,11 +150,16 @@ function reorderByLastCheckin(drafts: ContentIdeaDraft[], lastCheckin: LastCheck
  *  "do not generate one slate for both" is the build prompt's own
  *  non-negotiable framing, not a soft preference. lastCheckin is
  *  optional: the very first slate for a plan has no check-in history
- *  yet to reshape anything from. */
-export function generateContentSlate(plan: ContentGrowthPlan, clientName: string, lastCheckin?: LastCheckinSignal): ContentIdeaDraft[] {
+ *  yet to reshape anything from. hookLogBestPillar (build order item 7)
+ *  is a harder signal than the self-reported checkin text — logged,
+ *  verdict-backed outcomes, gated behind a 30-post floor — so it wins
+ *  when both are present; the checkin text is the fallback while that
+ *  floor hasn't been reached yet. */
+export function generateContentSlate(plan: ContentGrowthPlan, clientName: string, lastCheckin?: LastCheckinSignal, hookLogBestPillar?: string | null): ContentIdeaDraft[] {
   if (!plan.page_purpose) return [];
   const templates = plan.page_purpose === 'audience_for_offer' ? AUDIENCE_FOR_OFFER_TEMPLATES : LEADS_FOR_BUSINESS_TEMPLATES;
   const format = FORMAT_BY_PLATFORM[plan.platform];
   const drafts = templates.map((t, i) => t(plan, clientName || 'this business', pillarFor(plan.pillars, i), format));
+  if (hookLogBestPillar) return boostPillar(drafts, hookLogBestPillar);
   return reorderByLastCheckin(drafts, lastCheckin);
 }
