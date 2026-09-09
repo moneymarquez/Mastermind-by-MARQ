@@ -52,7 +52,7 @@ export async function askClaude(opts: AskClaudeOptions): Promise<string> {
     res = await postJson('/api/claude', token, opts, 'That took too long and timed out — try again.');
   } catch (err) {
     if (err instanceof AiError) throw err;
-    throw new AiError('Could not reach the AI service — this feature only works when the app is deployed on Netlify (or running via `netlify dev` locally).');
+    throw new AiError('Could not reach the AI service — try again in a bit.');
   }
 
   if (!res.ok) {

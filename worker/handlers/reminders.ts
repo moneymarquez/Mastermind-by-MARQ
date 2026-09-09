@@ -1,20 +1,23 @@
-import type { Config } from '@netlify/functions';
-import webpush from 'web-push';
+import { buildPushPayload } from '@block65/webcrypto-web-push';
+import type { PushMessage, PushSubscription, VapidKeys } from '@block65/webcrypto-web-push';
 import { STORE_HOURS } from '../../src/data/shiftChecklist';
 
-// Same store-clock caveat as send-shift-reminders.ts: this function runs on
-// Netlify's own clock (UTC), not the store's — STORE_TIMEZONE must be set
-// correctly in env vars or every notification below fires at the wrong
-// wall-clock time. See send-shift-reminders.ts for the fuller explanation.
-const STORE_TIMEZONE = process.env.STORE_TIMEZONE || 'America/Chicago';
-
-// Real closed-app delivery via the same web-push/VAPID backend as
-// send-shift-reminders.ts — not foreground-only. The one remaining gap is
-// iOS Safari requiring the app be installed to the home screen before it
-// allows push at all (see src/lib/pwa.ts / the "Installing as a PWA"
-// README section) — that's a platform rule, not something this function
-// can work around; if push ever needs to reach non-installed iOS Safari
-// tabs too, that's a native-app-wrapper problem, not a code fix here.
+// Shift/Event/Meal/Workout push, ported from netlify/functions/send-reminders.ts
+// (a Netlify Scheduled Function) to this Worker's shared */15 Cron Trigger —
+// same move already made for shift-reminders.ts and daily-plan.ts, and for
+// the same reason: `web-push` needs Node crypto and doesn't run reliably in
+// the Workers runtime even with nodejs_compat, while @block65/webcrypto-web-push
+// implements the same protocol (RFC 8291/8292) in pure WebCrypto. This was
+// the last handler still depending on Netlify staying deployed — porting it
+// removes that dependency for the whole app, not just this one feature.
+export interface ReminderEnv {
+  VITE_SUPABASE_URL: string;
+  SUPABASE_SERVICE_ROLE_KEY: string;
+  VITE_VAPID_PUBLIC_KEY?: string;
+  VAPID_PRIVATE_KEY?: string;
+  VAPID_SUBJECT?: string;
+  STORE_TIMEZONE?: string;
+}
 
 function nowInTimeZone(timeZone: string): Date {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -75,35 +78,38 @@ interface SettingsRow {
 }
 interface Candidate { key: string; at: Date; title: string; body: string }
 
-export default async () => {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const vapidPublic = process.env.VITE_VAPID_PUBLIC_KEY;
-  const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
-  const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:notifications@example.com';
+/** Runs on the shared every-15-minutes Cron Trigger (wrangler.jsonc), same
+ *  tick as the stocks bot and daily-plan generation. Covers Shift, Event,
+ *  Reminder, Meal, and Workout push notifications — the general-purpose
+ *  reminder sweep, distinct from Opening/Closing's own dedicated checklist
+ *  cron (shift-reminders.ts, on its own five-minute tick). */
+export async function runReminders(env: ReminderEnv): Promise<void> {
+  const supabaseUrl = env.VITE_SUPABASE_URL;
+  const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
+  const vapidPublic = env.VITE_VAPID_PUBLIC_KEY;
+  const vapidPrivate = env.VAPID_PRIVATE_KEY;
+  const vapidSubject = env.VAPID_SUBJECT || 'mailto:notifications@example.com';
+  const storeTimezone = env.STORE_TIMEZONE || 'America/Chicago';
 
   if (!supabaseUrl || !serviceRoleKey || !vapidPublic || !vapidPrivate) {
-    console.error('send-reminders: missing required env vars (Supabase service role or VAPID keys)');
-    return new Response('Server misconfigured', { status: 500 });
+    console.error('runReminders: missing required env vars (Supabase service role or VAPID keys)');
+    return;
   }
 
-  webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
+  const vapid: VapidKeys = { subject: vapidSubject, publicKey: vapidPublic, privateKey: vapidPrivate };
   const headers = { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}`, 'content-type': 'application/json' };
 
   const subsRes = await fetch(`${supabaseUrl}/rest/v1/push_subscriptions?select=*`, { headers });
   const subs = (await subsRes.json()) as PushSubRow[];
-  if (!Array.isArray(subs) || subs.length === 0) return new Response('no subscriptions', { status: 200 });
+  if (!Array.isArray(subs) || subs.length === 0) return;
 
-  const now = nowInTimeZone(STORE_TIMEZONE);
+  const now = nowInTimeZone(storeTimezone);
   const today = dateOnly(now);
   const tomorrow = dateOnly(addDays(now, 1));
   const dayAfter = dateOnly(addDays(now, 2));
 
   const [eventsRes, remindersRes, mealsRes, settingsRes, fitnessPlansRes] = await Promise.all([
     fetch(`${supabaseUrl}/rest/v1/events?event_date=gte.${today}&event_date=lte.${dayAfter}&select=*`, { headers }),
-    // Recurring rows are matched regardless of due_date (see
-    // schema_038_recurring_reminders.sql) — the or() clause pulls in both
-    // the normal date-windowed rows and every recurring row in one query.
     fetch(`${supabaseUrl}/rest/v1/reminders?done=eq.false&or=(and(due_date.gte.${today},due_date.lte.${dayAfter}),recurring.eq.true)&select=*`, { headers }),
     fetch(`${supabaseUrl}/rest/v1/meals?meal_date=eq.${today}&select=user_id,meal_type`, { headers }),
     fetch(`${supabaseUrl}/rest/v1/notification_settings?select=*`, { headers }),
@@ -154,11 +160,6 @@ export default async () => {
       const userReminders = reminders.filter((r) => r.user_id === userId);
       for (const r of userReminders) {
         if (r.recurring) {
-          // Fires once, at the reminder's own time, every day — not the
-          // 24h/1h advance-warning pair one-shot reminders get. Keying by
-          // today's date (not the row id alone) is what makes it repeat:
-          // notification_log dedupes per key, so a fresh key each day lets
-          // the same reminder fire again tomorrow.
           if (r.due_time) {
             const start = atTime(today, r.due_time);
             candidates.push({ key: `reminder-recurring-${r.id}-${today}`, at: start, title: 'Reminder', body: r.title });
@@ -214,18 +215,18 @@ export default async () => {
     const userSubs = subs.filter((s) => s.user_id === userId);
     for (const item of toSend) {
       for (const sub of userSubs) {
+        const subscription: PushSubscription = { endpoint: sub.endpoint, expirationTime: null, keys: { p256dh: sub.p256dh, auth: sub.auth } };
+        const message: PushMessage = { data: JSON.stringify({ title: item.title, body: item.body }) };
         try {
-          await webpush.sendNotification(
-            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-            JSON.stringify({ title: item.title, body: item.body })
-          );
-        } catch (err) {
-          const statusCode = (err as { statusCode?: number }).statusCode;
-          if (statusCode === 404 || statusCode === 410) {
+          const payload = await buildPushPayload(message, subscription, vapid);
+          const res = await fetch(sub.endpoint, payload);
+          if (res.status === 404 || res.status === 410) {
             await fetch(`${supabaseUrl}/rest/v1/push_subscriptions?id=eq.${sub.id}`, { method: 'DELETE', headers });
-          } else {
-            console.error('push send failed', err);
+          } else if (!res.ok) {
+            console.error('runReminders: push send failed', res.status, await res.text().catch(() => ''));
           }
+        } catch (err) {
+          console.error('runReminders: push send failed', err);
         }
       }
     }
@@ -236,10 +237,4 @@ export default async () => {
       body: JSON.stringify(toSend.map((c) => ({ user_id: userId, notif_key: c.key }))),
     });
   }
-
-  return new Response('ok', { status: 200 });
-};
-
-export const config: Config = {
-  schedule: '*/15 * * * *',
-};
+}

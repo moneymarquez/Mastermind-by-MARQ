@@ -1,33 +1,27 @@
 // Cloudflare Worker entry point for the "Workers with static assets" deploy
 // (see wrangler.jsonc). Serves the built dist/ via the ASSETS binding.
 //
-// Routing for /api/*: the Stocks bot's four endpoints (save-broker-keys,
-// broker-keys-status, stocks-account, and the stocks-bot Cron Trigger below)
-// run natively in this Worker rather than proxying to Netlify — they have no
-// web-push dependency, so unlike the reminder/push Scheduled Functions they
-// aren't subject to the Workers-runtime web-push limitation. This also means
-// they don't depend on a fresh Netlify deploy to go live, which mattered
-// directly: Netlify production deploys were paused (team billing/credits),
-// so this feature was stuck behind that until moved here.
-//
-// Everything else under /api/* (claude.ts, push-subscription.ts) still
-// reverse-proxies to Netlify. Opening/Closing's push reminders (this file's
-// other Cron Trigger, below) used to be one of the ones stuck on Netlify
-// too — see runShiftReminders' own comment for why, and why that's what
-// silently stopped the notifications when Netlify's deploys went stale.
-// generate-daily-plan.ts had the exact same dependency and the exact same
-// symptom (Daily Plan always empty) — see runDailyPlan's own comment; it's
-// now ported too, sharing this Worker's */15 tick with the stocks bot.
-// send-reminders.ts (Shift/Event/Meal reminders) has the same dependency
-// and is equally at risk; it hasn't been ported yet.
-//
-// The LeadFlow endpoints below are the same story as Stocks: no web-push
-// dependency, no reason to route through Netlify at all, native here.
+// Netlify is fully out of the request/cron path as of this file: every
+// /api/* route and every scheduled job (Stocks bot, LeadFlow, Opening/
+// Closing's checklist reminders, Daily Plan generation + its push, and the
+// general Shift/Event/Meal/Workout reminder sweep) runs natively here. The
+// last holdout was send-reminders.ts (that general reminder sweep), stuck
+// on Netlify because it used the `web-push` npm package, which needs Node
+// crypto and doesn't run reliably in the Workers runtime even with
+// nodejs_compat — the same reason shift-reminders.ts and daily-plan.ts had
+// to move first. @block65/webcrypto-web-push (pure WebCrypto) is what made
+// all three portable; see runReminders' own comment. netlify/functions/,
+// netlify.toml, and the @netlify/functions and web-push dependencies have
+// been removed from the repo — nothing in this app depends on Netlify
+// anymore. The Netlify site itself (DNS, the hosted deploy) is an
+// account-level cleanup outside this repo's scope.
 import { saveBrokerKeys, brokerKeysStatus } from './handlers/broker-keys';
 import { stocksAccount } from './handlers/stocks-account';
 import { runStocksBot } from './handlers/stocks-bot';
 import type { StocksEnv } from './handlers/broker-keys';
 import { runShiftReminders } from './handlers/shift-reminders';
+import { runReminders } from './handlers/reminders';
+import type { ReminderEnv } from './handlers/reminders';
 import type { ShiftReminderEnv } from './handlers/shift-reminders';
 import { runDailyPlan } from './handlers/daily-plan';
 import type { DailyPlanEnv } from './handlers/daily-plan';
@@ -48,7 +42,7 @@ import type { ClaudeEnv } from './handlers/claude';
 import { pushSubscription } from './handlers/push-subscription';
 import type { PushSubscriptionEnv } from './handlers/push-subscription';
 
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
@@ -94,14 +88,6 @@ export default {
     // was an unexplained error inside a healthy-looking Cloudflare
     // deploy. Failing loudly here is worth more than a broken proxy hop.
     //
-    // Still on Netlify, deliberately: send-reminders.ts (Shift/Event/Meal)
-    // and generate-daily-plan.ts. They depend on `web-push`, which needs
-    // Node crypto and doesn't run reliably in the Workers runtime — the
-    // same reason Opening/Closing's reminders were stuck there too, before
-    // this file's Cron Trigger took that over using WebCrypto instead (see
-    // runShiftReminders). Nothing in the app's request path calls any of
-    // these — the scheduler does — so they don't belong on this route
-    // either way.
     if (url.pathname.startsWith('/api/')) {
       return new Response(
         JSON.stringify({ error: `Unknown API route: ${url.pathname}` }),
@@ -128,6 +114,7 @@ export default {
     }
     ctx.waitUntil(runStocksBot(env));
     ctx.waitUntil(runDailyPlan(env));
+    ctx.waitUntil(runReminders(env));
   },
 
   // Cloudflare Email Routing → this Worker. Each address on
