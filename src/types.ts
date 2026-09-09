@@ -34,6 +34,7 @@ export type Screen =
   | 'budgeting'
   | 'marketing'
   | 'content'
+  | 'swipe-file'
   | 'decisions'
   | 'weekly-review'
   | 'cashflow'

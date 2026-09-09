@@ -71,7 +71,11 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   // placeholder) — the Marketing rebuild's social-profile-build tooling
   // lives here, client-scoped like everything else in Scaling, with
   // Marketing linking to it rather than duplicating it.
-  { key: 'content', label: 'Content Creation', category: 'Scaling', description: 'Per-client social profile build and launch kits, congruent with the Marketing campaign driving them.', icon: 'ph-video-camera', routes: ['content'], requiresAI: true, ownerOnly: true },
+  // 'swipe-file' rides the same module toggle as 'content' — "its own
+  // tab, not buried in the module," same shape as Dialing/Contacts
+  // above: a separate nav row and screen, gated by one module choice,
+  // not a second onboarding toggle of its own.
+  { key: 'content', label: 'Content Creation', category: 'Scaling', description: 'Per-client social profile build and launch kits, congruent with the Marketing campaign driving them.', icon: 'ph-video-camera', routes: ['content', 'swipe-file'], requiresAI: true, ownerOnly: true },
   { key: 'stocks', label: 'Stocks', category: 'Side Hustles', description: 'Paper-trading bot on Alpaca with AI daily commentary.', icon: 'ph-chart-line-up', routes: ['stocks'], requiresAI: true },
   { key: 'streaming', label: 'Streaming', category: 'Side Hustles', description: 'Streaming idea bank and calendar.', icon: 'ph-video-camera', routes: ['streaming'], requiresAI: false },
   { key: 'sticky-spot', label: 'Sticky Spot', category: null, description: 'Quick fast-cash idea list.', icon: 'ph-lightning', routes: ['sticky-spot'], requiresAI: false },

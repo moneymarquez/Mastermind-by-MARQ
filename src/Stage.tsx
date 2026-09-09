@@ -49,6 +49,7 @@ import InvoicingScreen from './components/screens/InvoicingScreen';
 import BudgetingScreen from './components/screens/BudgetingScreen';
 import MarketingScreen from './components/screens/MarketingScreen';
 import ContentCreationScreen from './components/screens/ContentCreationScreen';
+import SwipeFileScreen from './components/screens/SwipeFileScreen';
 import DecisionLogScreen from './components/screens/DecisionLogScreen';
 import WeeklyReviewScreen from './components/screens/WeeklyReviewScreen';
 import CashFlowScreen from './components/screens/CashFlowScreen';
@@ -68,7 +69,7 @@ const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings',
-  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access',
+  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access',
 ];
 
 interface Props {
@@ -517,6 +518,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             onSelectClient={setSelectedClientId}
             onAskNova={askNovaWithPrompt}
           />
+        )}
+
+        {state.screen === 'swipe-file' && (
+          <SwipeFileScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {state.screen === 'decisions' && (
