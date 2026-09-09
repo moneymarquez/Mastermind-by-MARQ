@@ -1,4 +1,12 @@
 import type { ContentGrowthPlan, GrowthPlatform } from './useContentGrowth';
+import type { PrimaryGap } from '../lib/accountAuditAi';
+
+const GAP_LABEL: Record<PrimaryGap, string> = {
+  no_clear_viewer: 'no clear viewer',
+  too_many_pillars: 'too many pillars',
+  weak_hooks: 'weak hooks',
+  inconsistent_posting: 'inconsistent posting',
+};
 
 export interface ContentIdeaDraft {
   title: string;
@@ -162,4 +170,25 @@ export function generateContentSlate(plan: ContentGrowthPlan, clientName: string
   const drafts = templates.map((t, i) => t(plan, clientName || 'this business', pillarFor(plan.pillars, i), format));
   if (hookLogBestPillar) return boostPillar(drafts, hookLogBestPillar);
   return reorderByLastCheckin(drafts, lastCheckin);
+}
+
+/** "The diagnosis then seeds the growth plan — the test list becomes
+ *  the first slate" (addendum, Screen 0). A direct, deterministic
+ *  mapping — each test-list line becomes the idea's own hook line
+ *  rather than being run through the template catalog again, since the
+ *  audit already did the actual thinking; templating it a second time
+ *  would just paraphrase the audit's own output. Pillar is left null —
+ *  when the diagnosed gap is itself "too many pillars," forcing a test
+ *  idea into one of the existing (suspect) pillars would undercut the
+ *  fix. Never used when the test list is empty — an audit with no test
+ *  items has nothing real to seed. */
+export function seedSlateFromAudit(testList: string[], primaryGap: PrimaryGap, plan: ContentGrowthPlan): ContentIdeaDraft[] {
+  const format = FORMAT_BY_PLATFORM[plan.platform];
+  return testList.map((line, i) => ({
+    title: `Test ${i + 1}: from the account audit`,
+    pillar: null,
+    format,
+    hook_line: line,
+    rationale: `Directly addresses this account's diagnosed gap — ${GAP_LABEL[primaryGap]} — from the account audit, not a generic template.`,
+  }));
 }

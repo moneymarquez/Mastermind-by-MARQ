@@ -2,11 +2,17 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { ContentCheckin, ContentGrowthPlan, GrowthPhase, PagePurpose } from '../../data/useContentGrowth';
 import { computePostsStreak } from '../../data/contentGrowthMetrics';
+import { GAP_LABEL } from './AccountAuditPanel';
+import type { PrimaryGap } from '../../lib/accountAuditAi';
 
 interface Props {
   plan: ContentGrowthPlan;
   checkins: ContentCheckin[];
   clientName: string;
+  /** The plan's current diagnosed gap, if an account_audits entry
+   *  exists — "the header should show the current primary_gap as a
+   *  one-line banner when an audit exists" (addendum, Screen 0). */
+  currentGap?: PrimaryGap | null;
   onUpdate: (patch: Partial<Pick<ContentGrowthPlan, 'account_handle' | 'target_followers' | 'niche_viewer' | 'pillars' | 'phase' | 'page_purpose' | 'notes'>>) => void;
   onDelete: () => void;
   onClose: () => void;
@@ -120,7 +126,7 @@ function CheckinForm({ onAdd }: { onAdd: Props['onAddCheckin'] }) {
   );
 }
 
-export default function ContentGrowthPlanView({ plan, checkins, clientName, onUpdate, onDelete, onClose, onAddCheckin, onRemoveCheckin, onAskNova }: Props) {
+export default function ContentGrowthPlanView({ plan, checkins, clientName, currentGap, onUpdate, onDelete, onClose, onAddCheckin, onRemoveCheckin, onAskNova }: Props) {
   const [handleDraft, setHandleDraft] = useState(plan.account_handle ?? '');
   const [targetDraft, setTargetDraft] = useState(plan.target_followers?.toString() ?? '');
   const [nicheDraft, setNicheDraft] = useState(plan.niche_viewer ?? '');
@@ -155,6 +161,11 @@ export default function ContentGrowthPlanView({ plan, checkins, clientName, onUp
           </div>
           {!streak.hasCheckinThisWeek && (
             <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 2 }}>No check-in logged yet this week.</div>
+          )}
+          {currentGap && (
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--warning)', fontWeight: 600, marginTop: 6 }}>
+              Diagnosed gap: {GAP_LABEL[currentGap]}
+            </div>
           )}
           <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 8 }}>
             {current.toLocaleString()} followers

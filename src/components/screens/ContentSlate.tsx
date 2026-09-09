@@ -2,14 +2,23 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { ContentGrowthPlan } from '../../data/useContentGrowth';
 import type { ContentIdea } from '../../data/useContentIdeas';
-import { generateContentSlate } from '../../data/contentIdeaEngine';
+import { generateContentSlate, seedSlateFromAudit } from '../../data/contentIdeaEngine';
 import type { LastCheckinSignal } from '../../data/contentIdeaEngine';
+import type { PrimaryGap } from '../../lib/accountAuditAi';
 
 interface Props {
   plan: ContentGrowthPlan;
   clientName: string;
   ideas: ContentIdea[];
   loading: boolean;
+  /** True when this is an 'existing' account with no completed
+   *  diagnosis yet — addendum Screen 0's gate, "before anything gets
+   *  slated." Refuses to generate anything at all until it's false. */
+  needsAudit?: boolean;
+  /** The current audit's test list, if any — "the test list becomes
+   *  the first slate." Only offered while the slate is still empty;
+   *  once ideas exist, later rounds go back to the normal generator. */
+  auditSeed?: { testList: string[]; primaryGap: PrimaryGap } | null;
   /** The plan's most recent check-in, if any — feeds "the answers
    *  reshape next week's slate" (build order item 6). Undefined for a
    *  plan with no check-in history yet. */
@@ -63,7 +72,7 @@ function IdeaCard({ idea, onPick }: { idea: ContentIdea; onPick: (id: string) =>
  *  not generate one slate for both." Unlike Marketing's one-time channel
  *  slate, this can always generate another round — content needs a
  *  fresh batch on a weekly cadence, informed by the latest check-in. */
-export default function ContentSlate({ plan, clientName, ideas, loading, lastCheckin, hookLogBestPillar, onGenerateSlate, onPick }: Props) {
+export default function ContentSlate({ plan, clientName, ideas, loading, needsAudit, auditSeed, lastCheckin, hookLogBestPillar, onGenerateSlate, onPick }: Props) {
   const [generating, setGenerating] = useState(false);
 
   if (!plan.page_purpose) {
@@ -72,6 +81,17 @@ export default function ContentSlate({ plan, clientName, ideas, loading, lastChe
         <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Set the page purpose first</div>
         <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
           Pick "My own audience" or "Leads for this business" above — it changes the entire slate, so nothing generates until it's set.
+        </div>
+      </div>
+    );
+  }
+
+  if (needsAudit) {
+    return (
+      <div style={cardStyle}>
+        <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>Diagnose the account first</div>
+        <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
+          This account already has a posting history — complete the diagnosis above before anything gets slated.
         </div>
       </div>
     );
@@ -86,15 +106,28 @@ export default function ContentSlate({ plan, clientName, ideas, loading, lastChe
     setGenerating(false);
   };
 
+  const seedFromAudit = () => {
+    if (generating || !auditSeed) return;
+    setGenerating(true);
+    onGenerateSlate(seedSlateFromAudit(auditSeed.testList, auditSeed.primaryGap, plan));
+    setGenerating(false);
+  };
+
   if (ideas.length === 0) {
+    const hasAuditSeed = !!auditSeed && auditSeed.testList.length > 0;
     return (
       <div style={cardStyle}>
         <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>No slate yet</div>
         <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
-          Generates a set of ideas for {clientName || 'this account'} — each with the actual hook line and why it should land for this viewer. Nothing gets built out here; you pick one to build out next.
+          {hasAuditSeed
+            ? "The account diagnosis already named what to test next — seed the first slate straight from it."
+            : `Generates a set of ideas for ${clientName || 'this account'} — each with the actual hook line and why it should land for this viewer. Nothing gets built out here; you pick one to build out next.`}
         </div>
-        <div style={{ ...primaryBtn, marginTop: 14, display: 'inline-block', opacity: generating ? 0.6 : 1, cursor: generating ? 'default' : 'pointer' }} onClick={generate}>
-          {generating ? 'Generating…' : `Generate slate for ${clientName || 'this account'}`}
+        <div
+          style={{ ...primaryBtn, marginTop: 14, display: 'inline-block', opacity: generating ? 0.6 : 1, cursor: generating ? 'default' : 'pointer' }}
+          onClick={hasAuditSeed ? seedFromAudit : generate}
+        >
+          {generating ? 'Generating…' : hasAuditSeed ? 'Seed slate from the audit' : `Generate slate for ${clientName || 'this account'}`}
         </div>
       </div>
     );

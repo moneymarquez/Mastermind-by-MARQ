@@ -12,6 +12,14 @@ export type GrowthPhase = 'setup' | 'volume' | 'pattern_finding' | 'concentratio
  *  confirms it; content_ideas slate generation refuses to run without
  *  it, same gate shape as Marketing's business_model. */
 export type PagePurpose = 'audience_for_offer' | 'leads_for_business';
+/** Whether this plan started from a blank account or a live one with a
+ *  real posting history (schema_086, addendum Screen 0). 'existing'
+ *  gates the content slate behind a completed account_audits entry —
+ *  "the content equivalent of Marketing's diagnosis header... before
+ *  anything gets slated." Null (a plan from before this column existed)
+ *  behaves like 'new' — ungated — rather than retroactively demanding
+ *  an audit nobody was ever asked for. */
+export type AccountState = 'new' | 'existing';
 
 export interface ContentGrowthPlan {
   id: string;
@@ -24,6 +32,7 @@ export interface ContentGrowthPlan {
   niche_viewer: string | null;
   pillars: string[];
   page_purpose: PagePurpose | null;
+  account_state: AccountState | null;
   started_at: string;
   notes: string | null;
   created_at: string;
@@ -77,6 +86,7 @@ export function useContentGrowth() {
     account_handle?: string | null;
     target_followers?: number | null;
     starting_followers?: number | null;
+    account_state?: AccountState;
   }): Promise<ContentGrowthPlan | null> => {
     const { data, error: err } = await supabase.from('content_growth_plans').insert(input).select('*').single();
     if (err) {
