@@ -9,7 +9,9 @@ import type { ContentGrowthPlan, GrowthPlatform } from '../../data/useContentGro
 import ContentGrowthPlanView from './ContentGrowthPlanView';
 import ContentSlate from './ContentSlate';
 import ContentBuildOut from './ContentBuildOut';
+import ContentPipelineBoard from './ContentPipelineBoard';
 import { useContentIdeas } from '../../data/useContentIdeas';
+import { useMarketing } from '../../data/useMarketing';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -124,6 +126,8 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
   const clientPlans = selectedClientId ? growth.plans.filter((p) => p.client_id === selectedClientId) : [];
   const activePlan = growth.plans.find((p) => p.id === activePlanId) ?? null;
   const ideasApi = useContentIdeas(activePlan?.id ?? null);
+  const m = useMarketing();
+  const planPipeline = activePlan ? m.pipeline.filter((p) => p.plan_id === activePlan.id) : [];
 
   return (
     <div>
@@ -179,6 +183,15 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
                   />
                 </>
               )}
+              <div style={sectionTitle}>Pipeline</div>
+              <ContentPipelineBoard
+                items={planPipeline}
+                loading={m.loading}
+                pickableIdeas={ideasApi.ideas.filter((i) => i.status === 'picked' || i.status === 'published')}
+                onAdd={(title, ideaId) => m.addPipelineItem(title, activePlan.client_id, activePlan.id, ideaId)}
+                onMoveStage={(id, stage) => m.updatePipelineItem(id, { stage })}
+                onRemove={(id) => m.removePipelineItem(id)}
+              />
             </>
           )}
           {!activePlan && (

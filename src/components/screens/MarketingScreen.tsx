@@ -53,8 +53,8 @@ const sectionTitle: CSSProperties = { fontSize: 'var(--text-head)', fontWeight: 
 const ASSET_TYPE_LABEL: Record<AssetType, string> = { copy: 'Copy', creative: 'Creative', brand: 'Brand', reference: 'Reference' };
 const STATUS_LABEL: Record<CampaignStatus, string> = { planned: 'Planned', running: 'Running', done: 'Done' };
 const STATUS_COLOR: Record<CampaignStatus, string> = { planned: 'var(--text-secondary)', running: 'var(--warning)', done: 'var(--success)' };
-const STAGE_LABEL: Record<PipelineStage, string> = { idea: 'Idea', drafted: 'Drafted', scheduled: 'Scheduled', published: 'Published' };
-const STAGES: PipelineStage[] = ['idea', 'drafted', 'scheduled', 'published'];
+const STAGE_LABEL: Record<PipelineStage, string> = { idea: 'Idea', drafted: 'Drafted', filmed: 'Filmed', scheduled: 'Scheduled', published: 'Published' };
+const STAGES: PipelineStage[] = ['idea', 'drafted', 'filmed', 'scheduled', 'published'];
 
 function AssetCard({ asset, onUpdate, onDelete }: { asset: { id: string; name: string; asset_type: AssetType; content: string | null; tags: string[] }; onUpdate: (patch: { content?: string }) => void; onDelete: () => void }) {
   const [content, setContent] = useState(asset.content ?? '');
