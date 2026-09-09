@@ -10,6 +10,7 @@ import ContentGrowthPlanView from './ContentGrowthPlanView';
 import ContentSlate from './ContentSlate';
 import ContentBuildOut from './ContentBuildOut';
 import ContentPipelineBoard from './ContentPipelineBoard';
+import ContentShotDayBatcher from './ContentShotDayBatcher';
 import { useContentIdeas } from '../../data/useContentIdeas';
 import { useMarketing } from '../../data/useMarketing';
 
@@ -183,6 +184,12 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
                   />
                 </>
               )}
+              <div style={sectionTitle}>Shot day</div>
+              <ContentShotDayBatcher
+                items={planPipeline.filter((p) => p.stage === 'idea' || p.stage === 'drafted')}
+                ideas={ideasApi.ideas}
+                onMarkAllFilmed={(ids) => ids.forEach((id) => m.updatePipelineItem(id, { stage: 'filmed' }))}
+              />
               <div style={sectionTitle}>Pipeline</div>
               <ContentPipelineBoard
                 items={planPipeline}
