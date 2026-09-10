@@ -3,7 +3,7 @@
 // ServiceWorkerGlobalScope, etc.), which conflicts with the DOM lib the
 // rest of the app's tsconfig uses. vite-plugin-pwa (injectManifest
 // strategy) bundles this file directly with esbuild, same pattern as
-// netlify/functions/ living outside src/'s tsconfig scope.
+// worker/ living outside src/'s tsconfig scope.
 import { precacheAndRoute } from 'workbox-precaching';
 
 declare let self: ServiceWorkerGlobalScope;
@@ -22,10 +22,10 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-// The backend that calls this — netlify/functions/send-shift-reminders.ts
-// and send-reminders.ts, Scheduled Functions using web-push + VAPID keys —
-// already exists; this is the foundation Opening/Closing, Shift, Event, and
-// Meal notifications all hook into for real closed-app delivery.
+// The backend that calls this — worker/handlers/shift-reminders.ts and
+// reminders.ts, Cron Triggers using @block65/webcrypto-web-push + VAPID
+// keys — already exists; this is the foundation Opening/Closing, Shift,
+// Event, and Meal notifications all hook into for real closed-app delivery.
 //
 // KNOWN LIMITATION (iOS): Safari only allows the Push API for web apps
 // installed to the home screen (standalone), and even then delivery is
