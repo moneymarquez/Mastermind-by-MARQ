@@ -24,6 +24,33 @@ export interface LeadflowLead {
   review_count: number | null;
   website: string | null;
   pooled: boolean | null;
+  // Written by the marqleads scraper (moneymarquez/marqleads → build_row).
+  // The module predates it and read none of these, so every lead rendered as
+  // five fields while ~25 more sat unused in the row.
+  place_id: string | null;
+  city: string | null;
+  lat: number | null;
+  lng: number | null;
+  category: string | null;
+  search_category: string | null;
+  summary: string | null;
+  days_since_last_review: number | null;
+  fizzle_score: number | null;
+  tier: string | null;
+  fizzle_reasons: string[] | null;
+  maps_url: string | null;
+  streetview_url: string | null;
+  streetview_path: string | null;
+  photo_path: string | null;
+  owner_is_agent_only: boolean | null;
+  registered_agent: string | null;
+  registry_legal_name: string | null;
+  registry_confidence: number | null;
+  registry_note: string | null;
+  registry_url: string | null;
+  status: string | null;
+  call_notes: string | null;
+  call_count: number | null;
 }
 
 export interface LeadflowHistoryItem {
