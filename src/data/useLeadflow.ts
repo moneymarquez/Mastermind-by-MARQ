@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 export interface LeadflowLead {
-  id: number;
+  id: string;
   business_name: string;
   owner_name: string | null;
   phone: string | null;
@@ -118,7 +118,7 @@ export function useLeadflowLeads() {
     return created ?? null;
   };
 
-  const updateLead = async (id: number, patch: Partial<LeadflowLead>) => {
+  const updateLead = async (id: string, patch: Partial<LeadflowLead>) => {
     const res = await authedFetch(`/api/leadflow/leads/${id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(patch) });
     if (res.ok) setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
     return res.ok;
@@ -145,7 +145,7 @@ export function useLeadflowPool() {
     load();
   }, [load]);
 
-  const removeFromPool = async (id: number) => {
+  const removeFromPool = async (id: string) => {
     const res = await authedFetch(`/api/leadflow/leads/${id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ pooled: false }) });
     if (res.ok) setPool((prev) => prev.filter((l) => l.id !== id));
     return res.ok;

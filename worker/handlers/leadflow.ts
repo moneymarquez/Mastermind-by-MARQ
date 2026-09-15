@@ -1,44 +1,50 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { requireOwner } from '../lib/auth';
 
-// LeadFlow's own Supabase project (github.com/moneymarquez/leadflow) — a
-// second project, separate from Mastermind's. Its `leads`/`history`/
-// `messages` tables have RLS enabled with no anon-readable policy (verified
-// directly — the anon key gets a flat 403), so every read/write here goes
-// through the service-role key, server-side only, same as the Alpaca keys
-// in the Stocks bot. Gating on Mastermind's own auth (requireUser, checked
-// against Mastermind's Supabase project) means only a signed-in Mastermind
-// session can reach these routes at all.
-const LEADFLOW_URL = 'https://buuntdpgiwvarvtyncfx.supabase.co';
+// LeadFlow used to live in its own separate Supabase project
+// (buuntdpgiwvarvtyncfx, github.com/moneymarquez/leadflow), reached with a
+// second service-role key. It now reads Mastermind's own project — the same
+// database the lead scraper writes into — so scraped rows feed the module
+// directly instead of having to be pushed into a second database first.
+//
+// That also removed the LEADFLOW_SUPABASE_SERVICE_ROLE_KEY dependency
+// entirely: this uses SUPABASE_SERVICE_ROLE_KEY, which the Worker already
+// has. The old project's ~58k rows are NOT carried over — they were
+// already unreachable (that key was never set, and the project sits
+// outside this account), so nothing that previously worked was lost.
+//
+// `leads`/`history`/`messages` here have RLS on with no anon-readable
+// policy, so reads/writes still go through the service-role key,
+// server-side only. requireOwner below is what gates the route itself.
+const LEADFLOW_URL = 'https://jqkxaxjuvurciqmvnsbw.supabase.co';
 
 export interface LeadflowEnv {
   VITE_SUPABASE_URL: string;
   VITE_SUPABASE_ANON_KEY: string;
-  LEADFLOW_SUPABASE_SERVICE_ROLE_KEY?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
   ANTHROPIC_API_KEY?: string;
 }
 
 function leadflowHeaders(env: LeadflowEnv): Record<string, string> {
-  const key = env.LEADFLOW_SUPABASE_SERVICE_ROLE_KEY as string;
+  const key = env.SUPABASE_SERVICE_ROLE_KEY as string;
   return { apikey: key, Authorization: `Bearer ${key}`, 'content-type': 'application/json' };
 }
 
 function notConfigured(): Response {
   return new Response(
-    JSON.stringify({ error: 'LeadFlow is not connected yet — set LEADFLOW_SUPABASE_SERVICE_ROLE_KEY.' }),
+    JSON.stringify({ error: 'LeadFlow is not connected yet — set SUPABASE_SERVICE_ROLE_KEY.' }),
     { status: 503, headers: { 'content-type': 'application/json' } },
   );
 }
 
 // requireOwner, not requireUser — LeadFlow is Scaling-category and Scaling
-// is owner-only end to end. This is the actual enforcement for it: unlike
-// every other Scaling module, LeadFlow's data lives in a wholly separate
-// Supabase project with no RLS tie to Mastermind's own auth, so nothing
-// but this check stands between a signed-in non-owner and the proxy.
+// is owner-only end to end. This is the actual enforcement for it: these
+// routes read through the service-role key, which bypasses RLS, so nothing
+// but this check stands between a signed-in non-owner and every lead row.
 async function requireLeadflowAuth(request: Request, env: LeadflowEnv): Promise<Response | null> {
   const user = await requireOwner(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
   if (user instanceof Response) return user;
-  if (!env.LEADFLOW_SUPABASE_SERVICE_ROLE_KEY) return notConfigured();
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) return notConfigured();
   return null;
 }
 
@@ -87,7 +93,10 @@ export async function leadflowLeads(request: Request, env: LeadflowEnv): Promise
     // column — the same request 1000x over with select=* would be a lot
     // of otherwise-unused bytes for a check that only needs one field.
     qs.set('select', params.get('select') || '*');
-    qs.set('order', 'id.desc');
+    // created_at, not id — id is a uuid here (it was a bigint in the old
+    // LeadFlow project, where id.desc happened to mean "newest first").
+    // Ordering uuids desc is valid SQL but effectively random.
+    qs.set('order', 'created_at.desc');
     qs.set('limit', params.get('limit') ?? '50');
     qs.set('offset', params.get('offset') ?? '0');
     const industry = params.get('industry');
@@ -186,7 +195,7 @@ export async function leadflowAiReport(request: Request, env: LeadflowEnv): Prom
     countRows(env, 'select=id&tag=eq.Hot'),
     countRows(env, 'select=id&tag=eq.Warm'),
     countRows(env, 'select=id&tag=eq.Not+Ready'),
-    fetch(`${LEADFLOW_URL}/rest/v1/leads?select=business_name,industry,tag,state&order=id.desc&limit=25`, { headers: leadflowHeaders(env) }),
+    fetch(`${LEADFLOW_URL}/rest/v1/leads?select=business_name,industry,tag,state&order=created_at.desc&limit=25`, { headers: leadflowHeaders(env) }),
     fetch(`${LEADFLOW_URL}/rest/v1/history?select=*&order=created_at.desc&limit=25`, { headers: leadflowHeaders(env) }),
   ]);
   const recentLeads = await recentLeadsRes.json();

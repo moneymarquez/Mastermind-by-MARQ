@@ -12,7 +12,7 @@ export default function LeadFlowFinder() {
   const [tag, setTag] = useState('All');
   const [state, setState] = useState('All');
   const [page, setPage] = useState(0);
-  const [expanded, setExpanded] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ business_name: '', phone: '', industry: NICHES[0], website_status: 'no_website', tag: 'Warm', state: '', pooled: false });
   const [pool, setPool] = useState<LeadflowLead[]>([]);
@@ -39,7 +39,7 @@ export default function LeadFlowFinder() {
     }
   };
 
-  const updateTag = async (id: number, newTag: string) => {
+  const updateTag = async (id: string, newTag: string) => {
     await updateLead(id, { tag: newTag });
   };
 
