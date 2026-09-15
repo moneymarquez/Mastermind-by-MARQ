@@ -4,7 +4,7 @@ import { timeToMinutes, minutesToTime } from '../../../data/time';
 import type { LeadflowLead } from '../../../data/useLeadflow';
 import { GREEN } from './shared';
 import NotConnectedBanner from './NotConnectedBanner';
-import { mapsUrl, streetViewUrl, websiteUrl, registryUrl, peopleSearchUrl, bestOwnerGuess, staleLabel, leadImagePaths } from './leadLinks';
+import { mapsUrl, streetViewUrl, websiteUrl, registryUrl, peopleSearchUrl, bestOwnerGuess, staleLabel, leadImagePaths, isTouched } from './leadLinks';
 
 /** Signed thumbnails of the storefront, menu and food.
  *
@@ -375,10 +375,16 @@ export default function LeadFlowPool() {
   const [openId, setOpenId] = useState<string | null>(null);
 
   const sorted = [...pool].sort((a, b) => {
+    // Worked leads sink, always — ahead of whichever sort is selected — so
+    // the top of the list is only ever leads nobody has touched yet.
+    const at = isTouched(a) ? 1 : 0;
+    const bt = isTouched(b) ? 1 : 0;
+    if (at !== bt) return at - bt;
     if (sortBy === 'industry') return (a.industry || '').localeCompare(b.industry || '');
     if (sortBy === 'score') return (b.fizzle_score || 0) - (a.fizzle_score || 0);
     return (b.review_count || 0) - (a.review_count || 0);
   });
+  const freshCount = pool.filter((l) => !isTouched(l)).length;
 
   const sortBtn = (key: typeof sortBy, text: string) => (
     <button onClick={() => setSortBy(key)} style={{ padding: '8px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid #e5e7eb', background: sortBy === key ? GREEN : '#fff', color: sortBy === key ? '#fff' : '#374151', cursor: 'pointer', fontWeight: 500 }}>{text}</button>
@@ -390,7 +396,7 @@ export default function LeadFlowPool() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: 4 }}>Lead Pool</h1>
-          <p style={{ color: '#9ca3af', fontSize: 'var(--text-subhead)' }}>{pool.length} leads ready to call</p>
+          <p style={{ color: '#9ca3af', fontSize: 'var(--text-subhead)' }}>{freshCount} untouched · {pool.length - freshCount} worked</p>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {sortBtn('score', 'By Score')}
@@ -411,11 +417,24 @@ export default function LeadFlowPool() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {sorted.map((lead) => {
             const open = openId === lead.id;
+            const touched = isTouched(lead);
             const stale = staleLabel(lead.days_since_last_review);
             return (
               <div key={lead.id} style={{ background: '#fff', borderRadius: 'var(--radius-lg)', padding: '1rem 1.25rem', border: '1px solid #f3f4f6', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10 }}>
-                  <div style={{ flex: '1 1 240px', cursor: 'pointer' }} onClick={() => setOpenId(open ? null : lead.id)}>
+                  <div style={{ flex: '1 1 240px', cursor: 'pointer', display: 'flex', gap: 10 }} onClick={() => setOpenId(open ? null : lead.id)}>
+                    {/* The whole point of the list: green means nobody has
+                        touched this one, blue means it's already been worked. */}
+                    <div style={{
+                      flex: '0 0 auto', alignSelf: 'flex-start', padding: '4px 9px', borderRadius: 'var(--radius-sm)',
+                      background: touched ? '#dbeafe' : '#dcfce7',
+                      color: touched ? '#1d4ed8' : '#15803d',
+                      border: `1px solid ${touched ? '#93c5fd' : '#86efac'}`,
+                      fontSize: 'var(--text-caption)', fontWeight: 800, letterSpacing: 0.3, whiteSpace: 'nowrap',
+                    }}>
+                      {touched ? 'RECYCLED' : 'GO TIME'}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       {lead.tier && (
                         <span style={{ fontSize: 'var(--text-caption)', fontWeight: 800, color: '#fff', background: TIER_COLOR[lead.tier] || '#9ca3af', borderRadius: 4, padding: '1px 6px' }}>{lead.tier}</span>
@@ -429,6 +448,19 @@ export default function LeadFlowPool() {
                       {stale ? ` · last review ${stale} ago` : ''}
                     </div>
                     {lead.phone && <a href={`tel:${lead.phone}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: 'var(--text-body)', color: GREEN, fontWeight: 600, textDecoration: 'none', marginTop: 4, display: 'inline-block' }}>📞 {lead.phone}</a>}
+                    {touched && (
+                      <div style={{ fontSize: 'var(--text-caption)', color: '#1d4ed8', marginTop: 4, fontWeight: 600 }}>
+                        {lead.status && lead.status !== 'new' ? (OUTCOME_LABEL[lead.status] ?? lead.status) : 'Worked'}
+                        {lead.call_count ? ` · ${lead.call_count} attempt${lead.call_count === 1 ? '' : 's'}` : ''}
+                        {lead.last_called_at ? ` · ${new Date(lead.last_called_at).toLocaleDateString()}` : ''}
+                      </div>
+                    )}
+                    {touched && lead.call_notes && (
+                      <div style={{ fontSize: 'var(--text-caption)', color: '#9ca3af', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 420 }}>
+                        {lead.call_notes}
+                      </div>
+                    )}
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button onClick={() => setOpenId(open ? null : lead.id)} style={{ padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid #e5e7eb', background: '#fff', color: '#374151', cursor: 'pointer', fontSize: 'var(--text-body)', fontWeight: 500 }}>{open ? 'Less' : 'Details'}</button>

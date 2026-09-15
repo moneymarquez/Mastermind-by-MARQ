@@ -97,6 +97,21 @@ export function bestOwnerGuess(lead: Pick<LeadflowLead, 'owner_name' | 'registry
     || (lead.registered_agent || '').trim();
 }
 
+/** Whether this lead has already been worked.
+ *
+ *  Three independent signals rather than status alone, because any one of
+ *  them can be the only trace of an attempt: an outcome was logged, the
+ *  attempt counter moved, or notes were written without pressing any button.
+ *  Treating a lead as fresh when it isn't is the expensive mistake here —
+ *  it means calling someone twice — so this errs toward "touched". */
+export function isTouched(lead: Pick<LeadflowLead, 'status' | 'call_count' | 'call_notes'>): boolean {
+  const status = (lead.status || '').trim();
+  if (status && status !== 'new') return true;
+  if ((lead.call_count ?? 0) > 0) return true;
+  if ((lead.call_notes || '').trim()) return true;
+  return false;
+}
+
 /** Every stored image for a lead, street view first.
  *
  *  Street view leads because it answers "what does this place look like from
