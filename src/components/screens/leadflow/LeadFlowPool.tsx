@@ -1,9 +1,45 @@
-import { useState } from 'react';
-import { useLeadflowPool } from '../../../data/useLeadflow';
+import { useEffect, useMemo, useState } from 'react';
+import { useLeadflowPool, leadMediaUrl } from '../../../data/useLeadflow';
 import type { LeadflowLead } from '../../../data/useLeadflow';
 import { GREEN } from './shared';
 import NotConnectedBanner from './NotConnectedBanner';
-import { mapsUrl, streetViewUrl, websiteUrl, registryUrl, peopleSearchUrl, bestOwnerGuess, staleLabel } from './leadLinks';
+import { mapsUrl, streetViewUrl, websiteUrl, registryUrl, peopleSearchUrl, bestOwnerGuess, staleLabel, leadImagePaths } from './leadLinks';
+
+/** Signed thumbnails of the storefront, menu and food.
+ *
+ *  Signed on expand rather than for the whole pool: the URLs expire in an
+ *  hour and most leads are never opened, so signing 353 leads' worth up
+ *  front would be wasted round-trips against a TTL that outlives nothing. */
+function LeadGallery({ paths }: { paths: string[] }) {
+  const [urls, setUrls] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const signed = await Promise.all(paths.map((p) => leadMediaUrl(p)));
+      if (!cancelled) setUrls(signed.filter((u): u is string => !!u));
+    })();
+    return () => { cancelled = true; };
+  }, [paths]);
+
+  if (paths.length === 0) return null;
+  return (
+    <div>
+      <div style={{ fontSize: 'var(--text-caption)', color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 6 }}>Photos</div>
+      {urls.length === 0 ? (
+        <div style={{ fontSize: 'var(--text-body)', color: '#9ca3af' }}>Loading photos…</div>
+      ) : (
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+          {urls.map((u) => (
+            <a key={u} href={u} target="_blank" rel="noopener noreferrer" style={{ flex: '0 0 auto' }}>
+              <img src={u} alt="" loading="lazy" style={{ height: 120, borderRadius: 'var(--radius-sm)', border: '1px solid #e5e7eb', display: 'block' }} />
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const TIER_COLOR: Record<string, string> = { A: '#16a34a', B: '#ca8a04', C: '#9ca3af' };
 
@@ -20,6 +56,10 @@ function Detail({ lead }: { lead: LeadflowLead }) {
   // lookup is currently returning nothing, so in practice this starts empty
   // and gets typed in after reading the name off the state registry.
   const [person, setPerson] = useState(owner);
+  // Memoised because LeadGallery's effect keys off this array's identity:
+  // rebuilt inline it would be a new array on every render, so every
+  // keystroke in the name field below would re-sign every image.
+  const imagePaths = useMemo(() => leadImagePaths(lead), [lead]);
 
   const sv = streetViewUrl(lead);
   const site = websiteUrl(lead.website);
@@ -29,6 +69,7 @@ function Detail({ lead }: { lead: LeadflowLead }) {
 
   return (
     <div style={{ borderTop: '1px solid #f3f4f6', marginTop: 12, paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <LeadGallery paths={imagePaths} />
       {lead.summary && <div style={{ fontSize: 'var(--text-body)', color: '#4b5563', lineHeight: 1.5 }}>{lead.summary}</div>}
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 24px', fontSize: 'var(--text-body)' }}>

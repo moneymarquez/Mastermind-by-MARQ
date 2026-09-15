@@ -97,6 +97,23 @@ export function bestOwnerGuess(lead: Pick<LeadflowLead, 'owner_name' | 'registry
     || (lead.registered_agent || '').trim();
 }
 
+/** Every stored image for a lead, street view first.
+ *
+ *  Street view leads because it answers "what does this place look like from
+ *  the road"; the place photos behind it are the menu/food/interior shots.
+ *  Reads photo_paths but falls back to the single photo_path, since rows
+ *  scraped before multi-photo support only have that one. De-duplicated,
+ *  because the fallback would otherwise repeat the first photo. */
+export function leadImagePaths(
+  lead: Pick<LeadflowLead, 'streetview_path' | 'photo_path' | 'photo_paths'>,
+): string[] {
+  const photos = (lead.photo_paths && lead.photo_paths.length > 0)
+    ? lead.photo_paths
+    : [lead.photo_path ?? ''];
+  const all = [lead.streetview_path ?? '', ...photos];
+  return [...new Set(all.map((p) => (p || '').trim()).filter(Boolean))];
+}
+
 /** "3 yrs" / "8 mo" / "24 d" — review recency is the core fizzle signal, and
  *  a raw day count buries the lede at the high end. */
 export function staleLabel(days: number | null): string | null {

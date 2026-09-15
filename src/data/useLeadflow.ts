@@ -41,7 +41,11 @@ export interface LeadflowLead {
   maps_url: string | null;
   streetview_url: string | null;
   streetview_path: string | null;
+  /** First place photo. Superseded by photo_paths, kept because rows
+   *  scraped before multi-photo support only have this one. */
   photo_path: string | null;
+  /** Every place photo the scraper stored — menu boards, food, interior. */
+  photo_paths: string[] | null;
   owner_is_agent_only: boolean | null;
   registered_agent: string | null;
   registry_legal_name: string | null;
@@ -152,6 +156,19 @@ export function useLeadflowLeads() {
   };
 
   return { leads, industries, counts, loading, hasMore, notConnected, error, fetchLeads, addLead, updateLead };
+}
+
+/** Signed URL for one lead-media object.
+ *
+ *  The bucket is private. The app reads it with the signed-in user's own JWT
+ *  through the "authenticated read lead media" storage policy — same pattern
+ *  as client-media and avatars — so no service-role key and no Worker hop is
+ *  involved. Returns null rather than throwing: a missing image should leave
+ *  a gap in the gallery, not break the lead card around it. */
+export async function leadMediaUrl(storagePath: string): Promise<string | null> {
+  if (!storagePath) return null;
+  const { data } = await supabase.storage.from('lead-media').createSignedUrl(storagePath, 3600);
+  return data?.signedUrl ?? null;
 }
 
 export function useLeadflowPool() {
