@@ -171,6 +171,99 @@ export async function leadMediaUrl(storagePath: string): Promise<string | null> 
   return data?.signedUrl ?? null;
 }
 
+export interface LeadHandoffResult {
+  clientId: string;
+  eventId: string;
+}
+
+/** Notes carried into the CRM alongside the client row.
+ *
+ *  Written out rather than left behind in LeadFlow because the CRM is where
+ *  the call actually gets prepared, and re-opening the lead to remember why
+ *  it was worth calling defeats the handoff. fizzle_reasons especially —
+ *  those are the talking points. */
+function handoffNotes(lead: LeadflowLead): string {
+  const lines = [
+    `Sourced from LeadFlow${lead.tier ? ` (tier ${lead.tier}` : ''}${lead.fizzle_score != null ? `, score ${lead.fizzle_score})` : lead.tier ? ')' : ''}`,
+    lead.address ? `Address: ${lead.address}` : '',
+    lead.phone ? `Phone: ${lead.phone}` : '',
+    lead.website ? `Website: ${lead.website}` : '',
+    lead.rating != null ? `Rating: ${lead.rating}${lead.review_count ? ` (${lead.review_count} reviews)` : ''}` : '',
+    lead.days_since_last_review != null ? `Last review: ${lead.days_since_last_review} days ago` : '',
+    lead.maps_url ? `Maps: ${lead.maps_url}` : '',
+    lead.fizzle_reasons?.length ? `\nWhy this lead:\n${lead.fizzle_reasons.map((r) => `- ${r}`).join('\n')}` : '',
+  ];
+  return lines.filter(Boolean).join('\n');
+}
+
+/** Hands a lead off to Client CRM and books the kickoff call in one step.
+ *
+ *  Two writes, deliberately not wrapped in anything transactional: PostgREST
+ *  has no cross-table transaction here, so the client is created first and
+ *  the event second. If the event insert fails the client still exists,
+ *  which is the recoverable direction — a client with no meeting can be
+ *  scheduled by hand, while a meeting pointing at no client cannot.
+ *
+ *  Both tables live in this same project, so these go through the browser's
+ *  own Supabase client under RLS rather than the LeadFlow worker proxy. The
+ *  lead's status update does go through the proxy, since leads are only
+ *  reachable that way. */
+export async function sendLeadToCrm(
+  lead: LeadflowLead,
+  date: string,
+  startTime: string,
+  endTime: string,
+): Promise<LeadHandoffResult> {
+  const { data: client, error: clientErr } = await supabase
+    .from('crm_clients')
+    .insert({
+      business_name: lead.business_name,
+      contact_name: lead.owner_name || null,
+      contact_phone: lead.phone || null,
+      notes: handoffNotes(lead),
+      // stage/source/client_type all take their column defaults
+      // ('new_lead' / 'internal' / 'client') — the right ones here.
+    })
+    .select('id')
+    .single();
+  if (clientErr || !client) throw new Error(clientErr?.message || 'Could not create the client.');
+
+  const { data: ev, error: evErr } = await supabase
+    .from('events')
+    .insert({
+      type: 'scalez',
+      event_date: date,
+      start_time: startTime,
+      end_time: endTime,
+      notes: `Kickoff call — ${lead.business_name}`,
+      // Same details shape EventAdderModal writes for a scalez event, so the
+      // calendar and Daily Plan label it the same way.
+      details: {
+        business_name: lead.business_name,
+        contact_name: lead.owner_name || '',
+        phone: lead.phone || '',
+        email: '',
+        pain_points: (lead.fizzle_reasons || []).join('; '),
+        budget_range: '',
+      },
+    })
+    .select('id')
+    .single();
+  if (evErr || !ev) throw new Error(`Client created, but the meeting failed: ${evErr?.message ?? 'unknown error'}`);
+
+  // Best-effort: marks the lead so it isn't worked twice. A failure here
+  // doesn't undo real work already done, so it must not surface as an error.
+  try {
+    await authedFetch(`/api/leadflow/leads/${lead.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ status: 'sent_to_crm' }),
+    });
+  } catch { /* handoff already succeeded; status is a convenience */ }
+
+  return { clientId: client.id as string, eventId: ev.id as string };
+}
+
 export function useLeadflowPool() {
   const [pool, setPool] = useState<LeadflowLead[]>([]);
   const [loading, setLoading] = useState(true);

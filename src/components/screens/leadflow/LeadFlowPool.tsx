@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useLeadflowPool, leadMediaUrl } from '../../../data/useLeadflow';
+import { useLeadflowPool, leadMediaUrl, sendLeadToCrm } from '../../../data/useLeadflow';
+import { timeToMinutes, minutesToTime } from '../../../data/time';
 import type { LeadflowLead } from '../../../data/useLeadflow';
 import { GREEN } from './shared';
 import NotConnectedBanner from './NotConnectedBanner';
@@ -93,6 +94,78 @@ const linkBtn: React.CSSProperties = {
   textDecoration: 'none', display: 'inline-block',
 };
 const label: React.CSSProperties = { fontSize: 'var(--text-caption)', color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.3 };
+
+/** Books the kickoff call and hands the lead to Client CRM in one step.
+ *
+ *  Pick a slot, press once: a crm_clients row is created carrying the lead's
+ *  context, and a 'scalez' calendar event is booked — the same event type and
+ *  details shape the Event Adder writes, so it renders identically on the
+ *  Schedule and in Daily Plan. The transcript gets pasted into the CRM after
+ *  the call; this only has to get the client and the meeting to exist. */
+function HandoffSection({ lead }: { lead: LeadflowLead }) {
+  const tomorrow = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }, []);
+  const [date, setDate] = useState(tomorrow);
+  const [time, setTime] = useState('10:00');
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(lead.status === 'sent_to_crm');
+  const [err, setErr] = useState('');
+
+  const send = async () => {
+    if (busy || !date || !time) return;
+    setBusy(true);
+    setErr('');
+    try {
+      // 30 minutes, matching what EventAdderModal books for an undragged
+      // scalez appointment.
+      await sendLeadToCrm(lead, date, time, minutesToTime(timeToMinutes(time) + 30));
+      setDone(true);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Could not send to CRM.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (done) {
+    return (
+      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 'var(--radius-sm)', padding: '10px 12px', fontSize: 'var(--text-body)', color: '#166534' }}>
+        ✓ Sent to Client CRM, kickoff call booked. Drop the transcript on the client's CRM page after the call.
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ ...label, marginBottom: 6 }}>Send to Client CRM</div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
+          style={{ padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid #e5e7eb', fontSize: 'var(--text-body)' }} />
+        <input type="time" value={time} onChange={(e) => setTime(e.target.value)}
+          style={{ padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid #e5e7eb', fontSize: 'var(--text-body)' }} />
+        <button
+          onClick={send}
+          disabled={busy || !date || !time}
+          style={{
+            padding: '8px 16px', borderRadius: 'var(--radius-sm)', border: 'none',
+            background: busy || !date || !time ? '#d1d5db' : GREEN, color: '#fff',
+            fontSize: 'var(--text-body)', fontWeight: 700,
+            cursor: busy || !date || !time ? 'default' : 'pointer',
+          }}
+        >
+          {busy ? 'Sending…' : '→ Create client + book call'}
+        </button>
+      </div>
+      <div style={{ fontSize: 'var(--text-caption)', color: '#9ca3af', marginTop: 6 }}>
+        Creates the client at stage “new lead” with this lead's details and notes, and books a 30-minute call on your schedule.
+      </div>
+      {err && <div style={{ fontSize: 'var(--text-body)', color: '#ef4444', marginTop: 6 }}>{err}</div>}
+    </div>
+  );
+}
 
 function Detail({ lead }: { lead: LeadflowLead }) {
   const owner = bestOwnerGuess(lead);
@@ -195,6 +268,8 @@ function Detail({ lead }: { lead: LeadflowLead }) {
           </a>
         </div>
       </div>
+
+      <HandoffSection lead={lead} />
     </div>
   );
 }
