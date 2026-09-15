@@ -82,6 +82,31 @@ export interface AppState {
 const initialViewport = currentViewport();
 const initialIsMobile = initialViewport.width < MOBILE_BREAKPOINT;
 
+// Every real Screen value except 'placeholder' itself — anything missing
+// here silently falls through to the generic "coming soon" placeholder
+// even once its screen and nav entry are fully built (bit 'client-crm',
+// 'grant-access', 'content' and 'swipe-file' this way: wired into
+// types.ts, modules.config.ts, and Stage.tsx, but never added here).
+const DIRECT_SCREENS: Screen[] = ['home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing', 'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings', 'call-recordings', 'website', 'invoicing', 'manage-modules', 'edit-home-widgets', 'grant-access', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'content', 'swipe-file'];
+
+// Which screen the app was on last, so a reload comes back to it instead
+// of dumping you on Home. Matters most as an installed PWA: iOS silently
+// reloads a backgrounded app, so without this you lose your place just by
+// taking a phone call mid-task.
+const LAST_SCREEN_KEY = 'mm:last-screen';
+
+function readLastScreen(): Screen {
+  try {
+    const stored = localStorage.getItem(LAST_SCREEN_KEY);
+    // Validated rather than trusted: a screen that existed in an older
+    // build would otherwise restore into a blank placeholder.
+    if (stored && (DIRECT_SCREENS as string[]).includes(stored)) return stored as Screen;
+  } catch {
+    // Private mode / blocked site data — the read itself can throw.
+  }
+  return 'home';
+}
+
 const initialState: AppState = {
   isMobile: initialIsMobile,
   viewportWidth: initialViewport.width,
@@ -109,7 +134,7 @@ const initialState: AppState = {
 };
 
 export function useMastermindState(userDisplayName: string | null) {
-  const [state, setState] = useState<AppState>(initialState);
+  const [state, setState] = useState<AppState>(() => ({ ...initialState, screen: readLastScreen() }));
   const { tone, assistantName } = useNovaPreferences();
   const patch = (update: Partial<AppState> | ((s: AppState) => Partial<AppState>)) =>
     setState((s) => ({ ...s, ...(typeof update === 'function' ? update(s) : update) }));
@@ -146,24 +171,30 @@ export function useMastermindState(userDisplayName: string | null) {
     };
   }, []);
 
+  // Paired with readLastScreen's restore above. 'placeholder' is skipped
+  // deliberately — its label/note aren't persisted, so restoring one would
+  // land you on a blank "coming soon" card; leaving the last real screen
+  // stored is the better recovery.
+  useEffect(() => {
+    if (state.screen === 'placeholder') return;
+    try {
+      localStorage.setItem(LAST_SCREEN_KEY, state.screen);
+    } catch {
+      // Convenience only — never worth failing a render over.
+    }
+  }, [state.screen]);
+
   const goScreen = (id: Screen) => patch({ screen: id });
 
   const toggleDrawer = () => patch((s) => ({ navDrawerOpen: !s.navDrawerOpen }));
   const closeDrawer = () => patch({ navDrawerOpen: false });
-
-  // Every real Screen value except 'placeholder' itself — anything missing
-  // here silently falls through to the generic "coming soon" placeholder
-  // below even once its screen and nav entry are fully built (bit both
-  // 'client-crm' and 'grant-access' this way: wired into types.ts,
-  // modules.config.ts, and Stage.tsx, but never added here).
-  const directScreens: Screen[] = ['home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing', 'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings', 'call-recordings', 'website', 'invoicing', 'manage-modules', 'edit-home-widgets', 'grant-access', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'content', 'swipe-file'];
 
   const navigateTo = (id: string) => {
     if (id === 'settings') {
       patch((s) => ({ settingsExpanded: !s.settingsExpanded }));
       return;
     }
-    if ((directScreens as string[]).includes(id)) {
+    if ((DIRECT_SCREENS as string[]).includes(id)) {
       patch({ screen: id as Screen, navDrawerOpen: false });
       return;
     }
