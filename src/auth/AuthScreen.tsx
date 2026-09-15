@@ -8,6 +8,7 @@ import Icon from '../Icon';
 interface Props {
   onSignIn: (email: string, password: string) => Promise<string | null>;
   onSignUp: (email: string, password: string) => Promise<SignUpResult>;
+  onResetPassword: (email: string) => Promise<string | null>;
 }
 
 const fieldStyle: React.CSSProperties = {
@@ -62,7 +63,7 @@ const REPLACES = [
  *
  *  Copy stays honest to what the product does today — see REPLACES above
  *  and the Pricing section's comment for what got left out and why. */
-export default function AuthScreen({ onSignIn, onSignUp }: Props) {
+export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Props) {
   // Separate from the owner/subscriber landing entirely — a client gets
   // its own button in the nav, its own minimal screen (no hero, no
   // pricing, no module grid), not a copy-swap inside the sales page's
@@ -70,7 +71,7 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
   // (onSignIn) — AuthedGate routes by role after; only the surface a
   // client actually sees differs.
   const [view, setView] = useState<'main' | 'client-login'>('main');
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -90,7 +91,7 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
     document.documentElement.setAttribute('data-theme', 'light');
   }, []);
 
-  const switchMode = (next: 'login' | 'signup') => {
+  const switchMode = (next: 'login' | 'signup' | 'reset') => {
     setMode(next);
     setError(null);
     setNotice(null);
@@ -126,9 +127,23 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password) return;
     setError(null);
     setNotice(null);
+
+    if (mode === 'reset') {
+      if (!email.trim()) return;
+      setSubmitting(true);
+      const err = await onResetPassword(email.trim().toLowerCase());
+      setSubmitting(false);
+      if (err) {
+        setError(err);
+        return;
+      }
+      setNotice("If that email has an account, a reset link is on its way — check your inbox.");
+      return;
+    }
+
+    if (!email.trim() || !password) return;
 
     if (mode === 'signup') {
       if (password.length < 8) {
@@ -337,8 +352,12 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
 
             <div id="login-card" style={{ padding: 26, borderRadius: 18, border: '1px solid var(--mm-line)', background: 'var(--mm-panel-solid)', boxShadow: 'var(--mm-shadow)', display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div>
-                <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em' }}>{mode === 'login' ? 'Log in' : 'Create your account'}</div>
-                <div style={{ fontSize: 13.5, color: 'var(--mm-faint)', marginTop: 4 }}>{mode === 'login' ? 'Nova has your morning ready.' : 'Takes about a minute.'}</div>
+                <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em' }}>
+                  {mode === 'login' ? 'Log in' : mode === 'signup' ? 'Create your account' : 'Reset your password'}
+                </div>
+                <div style={{ fontSize: 13.5, color: 'var(--mm-faint)', marginTop: 4 }}>
+                  {mode === 'login' ? 'Nova has your morning ready.' : mode === 'signup' ? 'Takes about a minute.' : "We'll email you a link to set a new one."}
+                </div>
               </div>
 
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -346,14 +365,21 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
                   <Icon name="envelope-simple" size={17} color="var(--mm-faint)" />
                   <input type="email" autoFocus autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
                 </div>
-                <div style={fieldStyle}>
-                  <Icon name="lock-simple" size={17} color="var(--mm-faint)" />
-                  <input type="password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
-                </div>
+                {mode !== 'reset' && (
+                  <div style={fieldStyle}>
+                    <Icon name="lock-simple" size={17} color="var(--mm-faint)" />
+                    <input type="password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
+                  </div>
+                )}
                 {mode === 'signup' && (
                   <div style={fieldStyle}>
                     <Icon name="lock-simple" size={17} color="var(--mm-faint)" />
                     <input type="password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={inputStyle} />
+                  </div>
+                )}
+                {mode === 'login' && (
+                  <div style={{ textAlign: 'right', marginTop: -2 }}>
+                    <span style={{ fontSize: 12.5, color: 'var(--mm-faint)', cursor: 'pointer' }} onClick={() => switchMode('reset')}>Forgot password?</span>
                   </div>
                 )}
 
@@ -361,19 +387,25 @@ export default function AuthScreen({ onSignIn, onSignUp }: Props) {
                 {notice && <div style={{ fontSize: 13, color: 'var(--success)' }}>{notice}</div>}
 
                 <button type="submit" disabled={submitting} className="mm-btn mm-btn-ink" style={{ height: 48, marginTop: 4, width: '100%' }}>
-                  {submitting ? (mode === 'login' ? 'Signing in…' : 'Creating account…') : mode === 'login' ? 'Continue' : 'Sign up'}
+                  {submitting
+                    ? (mode === 'login' ? 'Signing in…' : mode === 'signup' ? 'Creating account…' : 'Sending…')
+                    : (mode === 'login' ? 'Continue' : mode === 'signup' ? 'Sign up' : 'Send reset link')}
                 </button>
               </form>
 
               <div style={{ fontSize: 13, color: 'var(--mm-faint)', textAlign: 'center' }}>
-                {mode === 'login' ? (
+                {mode === 'login' && (
                   <>No account?{' '}
                     <span style={{ color: 'var(--mm-text)', borderBottom: '1px solid var(--mm-line2)', cursor: 'pointer' }} onClick={() => switchMode('signup')}>Start free</span>
                   </>
-                ) : (
+                )}
+                {mode === 'signup' && (
                   <>Already have an account?{' '}
                     <span style={{ color: 'var(--mm-text)', borderBottom: '1px solid var(--mm-line2)', cursor: 'pointer' }} onClick={() => switchMode('login')}>Log in</span>
                   </>
+                )}
+                {mode === 'reset' && (
+                  <span style={{ color: 'var(--mm-text)', borderBottom: '1px solid var(--mm-line2)', cursor: 'pointer' }} onClick={() => switchMode('login')}>← Back to log in</span>
                 )}
               </div>
             </div>

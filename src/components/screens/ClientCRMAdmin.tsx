@@ -154,6 +154,8 @@ export function ServiceCatalogAdmin({ crm, onClose, homeHeadStyle, homeSubStyle 
   const [priceType, setPriceType] = useState<PricingCadence>('one_time');
   const [price, setPrice] = useState('');
   const [priceDraft, setPriceDraft] = useState<Record<string, string>>({});
+  const [marketPriceDraft, setMarketPriceDraft] = useState<Record<string, string>>({});
+  const [descriptionDraft, setDescriptionDraft] = useState<Record<string, string>>({});
 
   const categories = [...new Set(crm.services.map((s) => s.category))];
 
@@ -181,30 +183,59 @@ export function ServiceCatalogAdmin({ crm, onClose, homeHeadStyle, homeSubStyle 
             <div style={{ fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 8 }}>{cat}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {crm.services.filter((s) => s.category === cat).map((s) => (
-                <div key={s.id} style={{ ...cardStyle, padding: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, opacity: s.active ? 1 : 0.5 }}>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text)' }}>{s.name}</div>
-                    <div style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)', marginTop: 2 }}>
-                      {s.price_type === 'monthly' ? 'Monthly' : 'One-time'}{s.notes ? ` · ${s.notes}` : ''}
+                <div key={s.id} style={{ ...cardStyle, padding: 12, display: 'flex', flexDirection: 'column', gap: 8, opacity: s.active ? 1 : 0.5 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text)' }}>{s.name}</div>
+                      <div style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)', marginTop: 2 }}>
+                        {s.price_type === 'monthly' ? 'Monthly' : 'One-time'}{s.notes ? ` · ${s.notes}` : ''}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                      <input
+                        style={{ ...inputStyle, width: 82, padding: '6px 9px', fontSize: 'var(--text-small)' }}
+                        value={priceDraft[s.id] ?? String(s.default_price)}
+                        onChange={(e) => setPriceDraft((d) => ({ ...d, [s.id]: e.target.value }))}
+                        onBlur={() => {
+                          const n = Number(priceDraft[s.id]);
+                          if (priceDraft[s.id] !== undefined && Number.isFinite(n) && n >= 0 && n !== s.default_price) {
+                            crm.updateService(s.id, { default_price: n });
+                          }
+                        }}
+                      />
+                      {/* Elsewhere-price for the Product Sheet's value comparison — blank means no comparison shown for this line. */}
+                      <input
+                        style={{ ...inputStyle, width: 82, padding: '6px 9px', fontSize: 'var(--text-small)' }}
+                        placeholder="Elsewhere $"
+                        value={marketPriceDraft[s.id] ?? (s.market_price !== null ? String(s.market_price) : '')}
+                        onChange={(e) => setMarketPriceDraft((d) => ({ ...d, [s.id]: e.target.value }))}
+                        onBlur={() => {
+                          const raw = marketPriceDraft[s.id];
+                          if (raw === undefined) return;
+                          if (raw.trim() === '') { if (s.market_price !== null) crm.updateService(s.id, { market_price: null }); return; }
+                          const n = Number(raw);
+                          if (Number.isFinite(n) && n >= 0 && n !== s.market_price) crm.updateService(s.id, { market_price: n });
+                        }}
+                      />
+                      <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.updateService(s.id, { active: !s.active })}>
+                        {s.active ? 'Retire' : 'Restore'}
+                      </span>
+                      <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.removeService(s.id)}>Delete</span>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                    <input
-                      style={{ ...inputStyle, width: 82, padding: '6px 9px', fontSize: 'var(--text-small)' }}
-                      value={priceDraft[s.id] ?? String(s.default_price)}
-                      onChange={(e) => setPriceDraft((d) => ({ ...d, [s.id]: e.target.value }))}
-                      onBlur={() => {
-                        const n = Number(priceDraft[s.id]);
-                        if (priceDraft[s.id] !== undefined && Number.isFinite(n) && n >= 0 && n !== s.default_price) {
-                          crm.updateService(s.id, { default_price: n });
-                        }
-                      }}
-                    />
-                    <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.updateService(s.id, { active: !s.active })}>
-                      {s.active ? 'Retire' : 'Restore'}
-                    </span>
-                    <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => crm.removeService(s.id)}>Delete</span>
-                  </div>
+                  {/* Client-facing explanation for the Product Sheet — what this is and why it matters, not just the price. */}
+                  <textarea
+                    style={{ ...inputStyle, width: '100%', minHeight: 44, padding: '6px 9px', fontSize: 'var(--text-small)', resize: 'vertical', fontFamily: 'inherit' }}
+                    placeholder="Explain this service for the Product Sheet (what it is, why it matters)..."
+                    value={descriptionDraft[s.id] ?? (s.client_description ?? '')}
+                    onChange={(e) => setDescriptionDraft((d) => ({ ...d, [s.id]: e.target.value }))}
+                    onBlur={() => {
+                      const raw = descriptionDraft[s.id];
+                      if (raw === undefined) return;
+                      const next = raw.trim() === '' ? null : raw;
+                      if (next !== s.client_description) crm.updateService(s.id, { client_description: next });
+                    }}
+                  />
                 </div>
               ))}
             </div>

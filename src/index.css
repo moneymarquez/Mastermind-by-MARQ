@@ -376,7 +376,36 @@ input, textarea, [contenteditable="true"] {
    lines below. */
 .app-shine-bg {
   background-color: var(--bg);
+  /* Stage.tsx also sets an inline height from state.viewportHeight (a JS
+     measurement of window.visualViewport) — usually right, but a stale or
+     momentarily-too-large reading (e.g. caught mid-transition around a
+     Dynamic Island Live Activity, or before the browser chrome has
+     settled) renders this box taller than the real screen. Since body/
+     html have overflow: hidden with nothing to scroll it into view, that
+     excess just pushes content — including the fixed-to-this-box tab bar
+     — off the bottom edge, invisible. Clamping both ends means the box
+     is always exactly the real screen height no matter what the JS
+     number says; the inline height only matters for a browser old
+     enough to ignore max-height, which isn't a real case on this app's
+     iOS-only mobile audience.
+
+     100vh alone isn't enough for a plain Safari tab (as opposed to the
+     installed home-screen app, which has no browser chrome at all) —
+     iOS Safari famously pins 100vh to the height with its own toolbar
+     HIDDEN, and does not shrink it back down when that toolbar is
+     actually showing. Clamped to that too-tall 100vh while the toolbar
+     eats real screen space at the bottom, this box (and everything
+     anchored to its bottom edge, like the tab bar and the menu sheet)
+     renders partly behind/under Safari's own chrome — cut off, exactly
+     like a too-tall JS reading would do, just from the browser instead
+     of our own state. 100dvh is the fix Safari itself shipped for this
+     — it tracks the CURRENTLY visible area live, toolbar included — so
+     it's declared second to override the 100vh fallback wherever it's
+     supported (every iOS version new enough to matter here). */
   min-height: 100vh;
+  max-height: 100vh;
+  min-height: 100dvh;
+  max-height: 100dvh;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -479,3 +508,30 @@ textarea.ap-input { min-height: 90px; resize: vertical; }
 }
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Real light-up feedback for every element styled as clickable.
+   ghostBtn/primaryBtn/tabStyle and most one-off buttons throughout the
+   app are plain style objects spread onto <span>/<div> (not classed
+   button components), so there's no single className to hang a :hover
+   rule on — this targets the one thing they all set instead: cursor:
+   pointer in the inline style. filter+transform read on top of whatever
+   background/color already exists (a transparent ghost button, a solid
+   primaryBtn fill) without fighting inline style's specificity on
+   `background` itself. .nav-row already has its own scale+glow hover
+   (Sidebar's nav rows) and is excluded so the two don't fight over
+   `transform`; native form controls are excluded so a <select>'s own
+   click behavior isn't disturbed. */
+[style*="cursor: pointer"]:not(.nav-row):not(select):not(input):not(textarea) {
+  transition: filter 120ms ease, transform 120ms ease;
+}
+[style*="cursor: pointer"]:not(.nav-row):not(select):not(input):not(textarea):hover {
+  filter: brightness(1.12);
+}
+[style*="cursor: pointer"]:not(.nav-row):not(select):not(input):not(textarea):active {
+  filter: brightness(0.9);
+  transform: scale(0.97);
+}
+@media (prefers-reduced-motion: reduce) {
+  [style*="cursor: pointer"] { transition: none !important; }
+  [style*="cursor: pointer"]:active { transform: none !important; }
+}

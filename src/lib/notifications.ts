@@ -1,10 +1,10 @@
 // This module only covers the *foreground* path: an in-page Notification
 // fired directly from JS, which only works while this tab/PWA is open and
 // in memory. For notifications while the app is closed, see src/lib/push.ts
-// (subscribes the device) + sw-src/sw.ts's 'push' handler + the Netlify
-// Scheduled Functions that actually send them (netlify/functions/
-// send-shift-reminders.ts, send-reminders.ts) — that real backend path
-// already exists, this file doesn't need to grow to cover it.
+// (subscribes the device) + sw-src/sw.ts's 'push' handler + the Worker's
+// own Cron Triggers that actually send them (worker/handlers/
+// shift-reminders.ts, reminders.ts) — that real backend path already
+// exists, this file doesn't need to grow to cover it.
 //
 // KNOWN LIMITATION (iOS): Safari does not support the Push API for web
 // apps at all unless installed to the home screen (see src/lib/pwa.ts's

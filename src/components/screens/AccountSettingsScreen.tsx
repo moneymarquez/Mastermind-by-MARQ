@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
 import type { Theme } from '../../data/useTheme';
+import { useAvatar } from '../../data/useAvatar';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -47,6 +48,7 @@ async function openBillingPortal(): Promise<string | null> {
 }
 
 export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onSignOut, onStartTour, theme, onThemeChange }: Props) {
+  const { avatarUrl, uploading, error: avatarError, upload: uploadAvatar, remove: removeAvatar } = useAvatar();
   const [user, setUser] = useState<User | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [savingName, setSavingName] = useState(false);
@@ -148,6 +150,33 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
         <div style={cardStyle}>
           <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Profile</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div>
+              <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 4 }}>Profile picture</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--surface-4)', border: '1px solid var(--border-2)', flexShrink: 0 }} />
+                )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ ...ghostBtn, alignSelf: 'flex-start', opacity: uploading ? 0.6 : 1, pointerEvents: uploading ? 'none' : 'auto' }}>
+                    {uploading ? 'Uploading…' : avatarUrl ? 'Change photo' : 'Upload photo'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = '';
+                        if (file) uploadAvatar(file);
+                      }}
+                    />
+                  </label>
+                  {avatarUrl && <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => removeAvatar()}>Remove photo</span>}
+                </div>
+              </div>
+              {avatarError && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--danger)', marginTop: 6 }}>{avatarError}</div>}
+            </div>
             <div>
               <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 4 }}>Email</div>
               <div style={{ fontSize: 'var(--text-body-lg)', color: 'var(--text-quaternary-2)' }}>{user?.email ?? '—'}</div>

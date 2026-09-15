@@ -105,6 +105,9 @@ export interface ClientCrmEnv {
   VITE_SUPABASE_ANON_KEY: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   STRIPE_SECRET_KEY?: string;
+  RESEND_API_KEY?: string;
+  MADEBYMARQUEZ_FROM_EMAIL?: string;
+  RESEND_FROM_EMAIL?: string;
 }
 
 function supabaseHeaders(env: ClientCrmEnv): Record<string, string> {
@@ -282,6 +285,17 @@ export async function publicClientDashboard(request: Request, env: ClientCrmEnv)
 }
 
 // ── Invoice creation (Part 4 — manual trigger only) ────────────────────────
+interface InvoiceLineItemInput {
+  label: string;
+  amount: number;
+  pricing_item_id: string | null;
+  market_price: number | null;
+  description: string | null;
+  narrative: string | null;
+  cadence: 'one_time' | 'monthly';
+  ongoing_amount: number | null;
+}
+
 interface CreateInvoiceBody {
   clientId?: string;
   pricingItemId?: string | null;
@@ -294,6 +308,169 @@ interface CreateInvoiceBody {
    *  into two rows. Omitted entirely by the original quick-send flow,
    *  which is unchanged. */
   invoiceId?: string;
+  /** Present for a bundled invoice (several pricing items on one
+   *  invoice) — one Stripe invoiceitem gets created per entry, all
+   *  attached to the same invoice.id, instead of the single-item path
+   *  below. Absent/empty falls back to the original description/amount
+   *  single-line behavior untouched. */
+  lineItems?: InvoiceLineItemInput[] | null;
+  /** This client's specific situation and why this plan addresses it —
+   *  the Product Sheet's personalized opening paragraph, generated
+   *  client-side before send and just carried through here for the
+   *  emailed copy. Null until "Generate personalized write-up" has run. */
+  productSheetIntro?: string | null;
+  /** The Recurring Plan section's closing paragraph — same "carried
+   *  through for the emailed copy" reasoning as productSheetIntro above. */
+  recurringPlanOutro?: string | null;
+  /** Best-effort — a failed product-sheet email never fails the invoice
+   *  send itself, since the invoice is the part that actually matters. */
+  sendProductSheet?: boolean;
+}
+
+function money(n: number): string {
+  return `$${n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
+// Mirrors src/components/screens/InvoiceDetailView.tsx's stripOngoingSuffix
+// — the recurring-plan section below IS that disclosure, spelled out with
+// its own $/mo column, so repeating it inline on every row is redundant.
+function stripOngoingSuffix(label: string): string {
+  return label.replace(/\s*\(ongoing \$[\d,.]+\/mo after this\)$/, '');
+}
+
+/** The emailed twin of src/components/RecurringPlanDocument.tsx — same
+ *  data (the invoice's own line items, filtered to monthly cadence with a
+ *  real ongoing rate), appended into the same product-sheet email rather
+ *  than sent separately, so "here's what we're doing" and "here's what
+ *  you'll also owe monthly going forward" arrive as one package. Returns
+ *  '' when nothing on this invoice is actually recurring. */
+function buildRecurringPlanSection(clientName: string, lineItems: InvoiceLineItemInput[], outro: string | null): string {
+  const recurring = lineItems.filter((li) => li.cadence === 'monthly' && li.ongoing_amount);
+  if (recurring.length === 0) return '';
+  const rows = recurring
+    .map((li) => {
+      const bodyText = li.narrative || li.description;
+      const description = bodyText
+        ? `<div style="color:#374151;font-size:14px;margin-top:6px;line-height:1.5">${bodyText}</div>`
+        : '';
+      return `<div style="padding:14px 0;border-bottom:1px solid #e5e7eb"><div style="display:flex;justify-content:space-between;gap:12px"><strong>${stripOngoingSuffix(li.label)}</strong><span>${money(li.ongoing_amount as number)}/mo</span></div>${description}</div>`;
+    })
+    .join('');
+  const totalMonthly = recurring.reduce((sum, l) => sum + (l.ongoing_amount as number), 0);
+  const outroHtml = outro && outro.trim()
+    ? `<p style="margin-top:20px;line-height:1.6;color:#374151;white-space:pre-wrap">${outro.trim()}</p>`
+    : '';
+  return [
+    `<h3 style="margin-top:28px">What ${clientName} pays going forward</h3>`,
+    // The headline number up top, before any explanation — same ordering
+    // as the in-app RecurringPlanDocument.
+    `<p style="font-size:22px;font-weight:700;margin-top:8px">${money(totalMonthly)}<span style="font-size:15px;font-weight:600;color:#6b7280">/mo</span></p>`,
+    `<p style="line-height:1.6">Today's invoice covers the upfront work. Starting next month, on top of that, you'll be billed monthly for:</p>`,
+    rows,
+    outroHtml,
+  ].join('');
+}
+
+/** Plain HTML, no React — this runs in the Worker, not the browser. Same
+ *  content shape as the in-app ProductSheetDocument (src/components/
+ *  ProductSheetDocument.tsx): what's being done and why it's a good deal,
+ *  then how the owner works while teaching the client to eventually run
+ *  it themselves. */
+function buildProductSheetHtml(businessName: string, clientName: string, lineItems: InvoiceLineItemInput[], teachingPhilosophy: string, productSheetIntro: string | null, recurringPlanOutro: string | null): string {
+  // One-time/upfront items only — a monthly item is explained in the
+  // recurring section below instead (alongside its real price), so
+  // nothing's ever explained twice. No dollar amounts here at all: the
+  // price is already on the invoice itself.
+  const rows = lineItems
+    .filter((li) => li.cadence !== 'monthly')
+    .map((li) => {
+      const bodyText = li.narrative || li.description;
+      const description = bodyText
+        ? `<div style="color:#374151;font-size:14px;margin-top:6px;line-height:1.5">${bodyText}</div>`
+        : '';
+      return `<div style="padding:14px 0;border-bottom:1px solid #e5e7eb"><strong>${li.label}</strong>${description}</div>`;
+    })
+    .join('');
+  const philosophy = teachingPhilosophy.trim()
+    ? `<h3 style="margin-top:28px">How I work</h3><p style="line-height:1.6">${teachingPhilosophy.trim().replace(/\n/g, '<br/>')}</p>`
+    : '';
+  const intro = productSheetIntro && productSheetIntro.trim()
+    ? `<p style="line-height:1.6;color:#374151">${productSheetIntro.trim()}</p>`
+    : '';
+  const recurringSection = buildRecurringPlanSection(clientName, lineItems, recurringPlanOutro);
+  return [
+    `<h2>What ${businessName} is doing for ${clientName}</h2>`,
+    intro,
+    rows,
+    recurringSection,
+    philosophy,
+  ].join('');
+}
+
+async function sendProductSheetEmail(env: ClientCrmEnv, to: string, businessName: string, clientName: string, lineItems: InvoiceLineItemInput[], teachingPhilosophy: string, productSheetIntro: string | null, recurringPlanOutro: string | null): Promise<boolean> {
+  const fromEmail = env.MADEBYMARQUEZ_FROM_EMAIL || env.RESEND_FROM_EMAIL;
+  if (!env.RESEND_API_KEY || !fromEmail) return false;
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: [to],
+        subject: `What ${businessName} is doing for you`,
+        html: buildProductSheetHtml(businessName, clientName, lineItems, teachingPhilosophy, productSheetIntro, recurringPlanOutro),
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+// Sent to his own inbox (invoice@madebymarquez.com — the address already
+// established above for "Invoice replies + receipts", see
+// src/data/inboxAddresses.ts) the moment Stripe confirms the send, so
+// every real invoice send gets a visible copy in the app's own Support
+// Inbox to check against — a second, independent notification, not a
+// change to how Stripe emails the client. Best-effort exactly like
+// sendProductSheetEmail: never blocks the invoice response, silently
+// no-ops if Resend or madebymarquez.com aren't configured yet.
+async function sendInvoiceCopyEmail(
+  env: ClientCrmEnv,
+  businessName: string,
+  description: string,
+  amount: number,
+  dueDate: string | null,
+  hostedInvoiceUrl: string | null,
+  invoiceNumber: string | null,
+  lineItems: InvoiceLineItemInput[] | null,
+): Promise<boolean> {
+  const fromEmail = env.MADEBYMARQUEZ_FROM_EMAIL || env.RESEND_FROM_EMAIL;
+  if (!env.RESEND_API_KEY || !fromEmail) return false;
+  const money = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  const lines = lineItems && lineItems.length > 0
+    ? `<ul>${lineItems.map((li) => `<li>${li.label} — ${money(li.amount)}</li>`).join('')}</ul>`
+    : `<p>${description} — ${money(amount)}</p>`;
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: ['invoice@madebymarquez.com'],
+        subject: `Invoice sent — ${businessName}${invoiceNumber ? ` #${invoiceNumber}` : ''} — ${money(amount)}`,
+        html: [
+          `<p>Just sent to <strong>${businessName}</strong>:</p>`,
+          lines,
+          `<p>Total: <strong>${money(amount)}</strong>${dueDate ? ` — due ${dueDate}` : ''}</p>`,
+          hostedInvoiceUrl ? `<p><a href="${hostedInvoiceUrl}">View the invoice Stripe sent them</a></p>` : '',
+        ].join(''),
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 async function stripeRequest(env: ClientCrmEnv, path: string, body: Record<string, string>): Promise<Record<string, unknown>> {
@@ -354,16 +531,21 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
         headers,
         body: JSON.stringify({ stripe_customer_id: customerId }),
       });
+    } else {
+      // Keep the Stripe customer's name/email current on every invoice —
+      // it's only set once at creation otherwise, so renaming a client in
+      // the CRM later (e.g. fixing a placeholder test name) silently never
+      // reaches Stripe and every future invoice keeps showing the old
+      // "Bill to" name. A finalized invoice still snapshots whatever the
+      // customer's name was at that moment, so this only fixes invoices
+      // created from here on, not ones already sent.
+      await stripeRequest(env, `/customers/${customerId}`, {
+        email: client.contact_email,
+        name: client.business_name,
+      });
     }
 
     const amountCents = Math.round(amount * 100);
-    await stripeRequest(env, '/invoiceitems', {
-      customer: customerId,
-      amount: String(amountCents),
-      currency: 'usd',
-      description,
-    });
-
     const dueDate = body.dueDate ? new Date(body.dueDate) : null;
     const daysUntilDue = dueDate ? Math.max(1, Math.ceil((dueDate.getTime() - Date.now()) / 86_400_000)) : 14;
 
@@ -373,6 +555,13 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
     // hosted payment page.
     const dashboardUrl = `${new URL(request.url).origin}/client/${client.public_token}`;
 
+    // Invoice created first, then the line item explicitly attached to it
+    // via `invoice: invoice.id` — an invoiceitem created with only
+    // `customer` is "pending" and only gets pulled onto a later invoice if
+    // Stripe's pending_invoice_items_behavior says so, which isn't
+    // guaranteed. Relying on that silently produced a finalized invoice
+    // with zero line items and a $0 total; setting `invoice` directly
+    // attaches it unconditionally, no auto-collection behavior involved.
     const invoice = await stripeRequest(env, '/invoices', {
       customer: customerId,
       collection_method: 'send_invoice',
@@ -382,12 +571,38 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
       'metadata[mastermind_dashboard_url]': dashboardUrl,
     });
 
+    // A bundled invoice creates one invoiceitem per line, all attached to
+    // the same invoice.id — Stripe has no problem with multiple items on
+    // one invoice, this just wasn't exercised until bundling existed.
+    // Falls back to the original single description/amount item when
+    // lineItems is absent, unchanged from before.
+    if (body.lineItems && body.lineItems.length > 0) {
+      for (const li of body.lineItems) {
+        await stripeRequest(env, '/invoiceitems', {
+          customer: customerId,
+          invoice: invoice.id as string,
+          amount: String(Math.round(li.amount * 100)),
+          currency: 'usd',
+          description: li.label,
+        });
+      }
+    } else {
+      await stripeRequest(env, '/invoiceitems', {
+        customer: customerId,
+        invoice: invoice.id as string,
+        amount: String(amountCents),
+        currency: 'usd',
+        description,
+      });
+    }
+
     const finalized = await stripeRequest(env, `/invoices/${invoice.id}/finalize`, {});
     const sent = await stripeRequest(env, `/invoices/${finalized.id}/send`, {});
 
     const sentFields = {
       description,
       amount,
+      line_items: body.lineItems ?? null,
       due_date: body.dueDate ?? null,
       status: 'sent',
       stripe_customer_id: customerId,
@@ -437,6 +652,30 @@ export async function createClientInvoice(request: Request, env: ClientCrmEnv): 
         body: JSON.stringify({ stage: 'invoice_sent', last_activity_at: new Date().toISOString() }),
       });
     }
+
+    // Best-effort, never blocks the invoice response — the invoice going
+    // out is what actually matters. Only makes sense with a real
+    // itemized breakdown to show; a single free-form line item has
+    // nothing worth a separate value comparison.
+    if (body.sendProductSheet && body.lineItems && body.lineItems.length > 0) {
+      const profileRes = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/business_profile?user_id=eq.${user.id}&select=business_name,teaching_philosophy`, { headers });
+      const [profileRow] = (await profileRes.json().catch(() => [])) as { business_name: string | null; teaching_philosophy: string | null }[];
+      await sendProductSheetEmail(env, client.contact_email, profileRow?.business_name || 'Made by MARQ', client.business_name, body.lineItems, profileRow?.teaching_philosophy ?? '', body.productSheetIntro ?? null, body.recurringPlanOutro ?? null);
+    }
+
+    // Always, independent of the optional product-sheet email above — a
+    // copy of every real invoice send, so it's checkable in the Support
+    // Inbox right after going out.
+    await sendInvoiceCopyEmail(
+      env,
+      client.business_name,
+      description,
+      amount,
+      body.dueDate ?? null,
+      (sent.hosted_invoice_url as string | undefined) ?? null,
+      (sent.number as string | undefined) ?? null,
+      body.lineItems ?? null,
+    );
 
     return json(row);
   } catch (err) {

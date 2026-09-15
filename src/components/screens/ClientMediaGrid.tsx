@@ -15,6 +15,7 @@ const CATEGORIES: { key: ClientMediaCategory; label: string }[] = [
   { key: 'food', label: 'Food' },
   { key: 'business_card', label: 'Business card' },
   { key: 'screenshot', label: 'Screenshot' },
+  { key: 'marketing', label: 'Marketing' },
   { key: 'other', label: 'Other' },
 ];
 

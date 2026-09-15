@@ -1,6 +1,9 @@
 import type { Screen } from './types';
 
-export type ModuleCategory = 'Personal' | 'Cold Calling' | 'Scaling' | 'Side Hustles' | null;
+// 'Clients' sits between Cold Calling and Scaling — where a Systems
+// section will eventually land too. It's the operator's side of the
+// client portal (Client Modules), owner-only like all of Scaling.
+export type ModuleCategory = 'Personal' | 'Cold Calling' | 'Clients' | 'Scaling' | 'Side Hustles' | null;
 
 export interface ModuleDef {
   key: string;
@@ -48,13 +51,14 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { key: 'fitness', label: 'Fitness', category: 'Personal', description: 'AI-generated workout/diet plans, full workout library, live workout mode.', icon: 'ph-barbell', routes: ['fitness'], requiresAI: true },
   { key: 'dialing', label: 'Dialing/Contacts', category: 'Cold Calling', description: 'Cold-calling queue, outcome tracking, and your Dialing/Scaling contacts.', icon: 'ph-phone-call', routes: ['dialing', 'contacts'], requiresAI: false },
   { key: 'call-recordings', label: 'Call Recordings', category: 'Cold Calling', description: 'Upload and organize call recordings, linked to contacts.', icon: 'ph-microphone', routes: ['call-recordings'], requiresAI: false },
+  { key: 'leadflow', label: 'LeadFlow', category: 'Cold Calling', description: 'Your LeadFlow CRM — Dashboard, War Room, Lead Pool, Lead Finder, and more.', icon: 'ph-users-three', routes: ['leadflow'], requiresAI: true, ownerOnly: true },
+  { key: 'client-modules', label: 'Client Modules', category: 'Clients', description: "Every client's portal from your side — progress spine, tickets, change log, guides, handoff, and a preview of exactly what they see.", icon: 'ph-users-three', routes: ['client-modules'], requiresAI: false, ownerOnly: true },
   // The entire Scaling category is owner-only, not just Marketing —
   // ownerOnly: true on every entry below is deliberate, per the explicit
   // "entire Scaling section is owner-only" requirement, not an oversight.
   { key: 'scaling-start', label: 'Start', category: 'Scaling', description: 'Guided entry point for a new client project — chains Idea Maker, Brand Lab, Website Builder, and Scaling Planner together.', icon: 'ph-lightning', routes: ['scaling-start'], requiresAI: true, ownerOnly: true },
   { key: 'delivery', label: 'Show Your Work', category: 'Scaling', description: 'The client delivery pipeline — assemble a package, send it to the client, and keep a running portfolio.', icon: 'ph-video-camera', routes: ['delivery'], requiresAI: false, ownerOnly: true },
   { key: 'support-inbox', label: 'Support Inbox', category: 'Scaling', description: 'Mail sent to any address on a connected domain (mastermindsbymarq.com, madebymarquez.com), AI-categorized with a drafted reply for review.', icon: 'ph-address-book', routes: ['support-inbox'], requiresAI: true, ownerOnly: true },
-  { key: 'leadflow', label: 'LeadFlow', category: 'Scaling', description: 'Your LeadFlow CRM — Dashboard, War Room, Lead Pool, Lead Finder, and more.', icon: 'ph-users-three', routes: ['leadflow'], requiresAI: true, ownerOnly: true },
   { key: 'website', label: 'Website/App Builder', category: 'Scaling', description: "Website/App Builder roadmap — what's coming.", icon: 'ph-code', routes: ['website'], requiresAI: false, ownerOnly: true },
   { key: 'scaling-planner', label: 'Scaling Planner', category: 'Scaling', description: 'Guided questionnaire, real AI-generated business scaling plan.', icon: 'ph-rocket-launch', routes: ['scaling-planner'], requiresAI: true, ownerOnly: true },
   { key: 'audits', label: 'Business Audits', category: 'Scaling', description: 'AI-scored business audit grounded in the Scaling 101 curriculum.', icon: 'ph-clipboard-text', routes: ['audits'], requiresAI: true, ownerOnly: true },
@@ -63,8 +67,16 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { key: 'idea-maker', label: 'Idea Maker', category: 'Scaling', description: 'Real back-and-forth AI conversation to pressure-test a business idea.', icon: 'ph-lightbulb', routes: ['idea-maker'], requiresAI: true, ownerOnly: true },
   { key: 'invoicing', label: 'Invoicing', category: 'Scaling', description: 'The Made by Marq 9-document client invoicing system.', icon: 'ph-receipt', routes: ['invoicing'], requiresAI: false, ownerOnly: true },
   { key: 'marketing', label: 'Marketing', category: 'Scaling', description: 'Asset storage, campaign tracking, and content pipeline.', icon: 'ph-megaphone', routes: ['marketing'], requiresAI: true, ownerOnly: true },
+  // Recategorized from Side Hustles (a subscriber-facing, unbuilt
+  // placeholder) — the Marketing rebuild's social-profile-build tooling
+  // lives here, client-scoped like everything else in Scaling, with
+  // Marketing linking to it rather than duplicating it.
+  // 'swipe-file' rides the same module toggle as 'content' — "its own
+  // tab, not buried in the module," same shape as Dialing/Contacts
+  // above: a separate nav row and screen, gated by one module choice,
+  // not a second onboarding toggle of its own.
+  { key: 'content', label: 'Content Creation', category: 'Scaling', description: 'Per-client social profile build and launch kits, congruent with the Marketing campaign driving them.', icon: 'ph-video-camera', routes: ['content', 'swipe-file'], requiresAI: true, ownerOnly: true },
   { key: 'stocks', label: 'Stocks', category: 'Side Hustles', description: 'Paper-trading bot on Alpaca with AI daily commentary.', icon: 'ph-chart-line-up', routes: ['stocks'], requiresAI: true },
-  { key: 'content', label: 'Content Creation', category: 'Side Hustles', description: 'Content planning (placeholder for now).', icon: 'ph-video-camera', routes: [], requiresAI: false },
   { key: 'streaming', label: 'Streaming', category: 'Side Hustles', description: 'Streaming idea bank and calendar.', icon: 'ph-video-camera', routes: ['streaming'], requiresAI: false },
   { key: 'sticky-spot', label: 'Sticky Spot', category: null, description: 'Quick fast-cash idea list.', icon: 'ph-lightning', routes: ['sticky-spot'], requiresAI: false },
 ];

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { generateClientAnalysis, matchServices } from './clientAnalysis';
+import { generateClientAnalysis, matchServices, extractAnswersFromTranscript, generateProductSheetNarrative } from './clientAnalysis';
 import type {
   AnswerConfidence,
   AuditQuestion,
@@ -9,6 +9,7 @@ import type {
   ClientPricingItem,
   ClientStage,
   CrmClient,
+  InvoiceLineItem,
   PricingCadence,
   PricingTemplateItem,
   Service,
@@ -152,6 +153,31 @@ export function useClientCRM() {
     if (!quiet) await load();
   };
 
+  /** Pulls answers out of a pasted call transcript and merges them into
+   *  blank questions only — never overwrites an answer already on record,
+   *  since that may have come from Live Capture or a manual edit Cristopher
+   *  trusts more than an inference off a transcript. Returns how many
+   *  fields actually got filled so the UI can report something concrete. */
+  const extractFromTranscript = async (
+    auditId: string,
+    businessName: string,
+    currentAnswers: Record<string, string>,
+    currentConfidence: Record<string, AnswerConfidence>,
+    transcript: string,
+  ): Promise<number> => {
+    const active = questions.filter((q) => q.active);
+    const extracted = await extractAnswersFromTranscript(businessName, active, transcript);
+    const toFill = Object.entries(extracted.answers).filter(([key]) => !currentAnswers[key]?.trim());
+    if (toFill.length === 0) return 0;
+
+    const answers = { ...currentAnswers, ...Object.fromEntries(toFill) };
+    const confidence = { ...currentConfidence };
+    for (const [key] of toFill) confidence[key] = extracted.confidence[key];
+    await supabase.from('client_audits').update({ answers, answer_confidence: confidence, updated_at: new Date().toISOString() }).eq('id', auditId);
+    await load();
+    return toFill.length;
+  };
+
   const completeAudit = async (
     clientId: string,
     auditId: string,
@@ -224,7 +250,7 @@ export function useClientCRM() {
 
   const updateService = async (
     id: string,
-    patch: Partial<Pick<Service, 'category' | 'name' | 'price_type' | 'default_price' | 'notes' | 'active'>>,
+    patch: Partial<Pick<Service, 'category' | 'name' | 'price_type' | 'default_price' | 'market_price' | 'client_description' | 'notes' | 'active'>>,
   ) => {
     await supabase.from('services').update(patch).eq('id', id);
     await load();
@@ -347,6 +373,117 @@ export function useClientCRM() {
     return data as ClientInvoice | null;
   };
 
+  /** Bundles several pricing items (the checkboxes on the Invoices tab)
+   *  into ONE draft invoice instead of one-at-a-time. `description`/
+   *  `amount` become the joined-labels summary every existing list/
+   *  schedule view already reads; `line_items` carries the real
+   *  breakdown for the actual document and the Product Sheet. Each
+   *  line's market_price is looked up from the catalog via the pricing
+   *  item's service_id, snapshotted now rather than read live later.
+   *
+   *  `charges` lets THIS invoice bill a different amount than the pricing
+   *  item's own stored rate — e.g. a $2,000 lump-sum prepay on an item
+   *  whose ongoing rate is $1,000/mo. That doesn't change the item's real
+   *  rate (use setItemAmount for that, which persists); it only changes
+   *  what this one invoice charges. When a monthly item's charge differs
+   *  from its stored rate, the line label discloses the ongoing rate
+   *  alongside what's being charged now, so the client sees both. */
+  const createBundledDraftInvoice = async (
+    clientId: string,
+    charges: { pricingItemId: string; amount: number }[],
+    dueDate?: string | null,
+  ) => {
+    const client = clients.find((c) => c.id === clientId);
+    if (!client) return null;
+    const items = charges
+      .map((c) => {
+        const p = client.pricingItems.find((x) => x.id === c.pricingItemId);
+        return p ? { p, chargeAmount: c.amount } : null;
+      })
+      .filter((x): x is { p: ClientPricingItem; chargeAmount: number } => x !== null && Number.isFinite(x.chargeAmount) && x.chargeAmount >= 0);
+    if (items.length === 0) return null;
+
+    const lineItems: InvoiceLineItem[] = items.map(({ p, chargeAmount }) => {
+      const svc = p.service_id ? services.find((s) => s.id === p.service_id) : undefined;
+      const discloseOngoing = p.cadence === 'monthly' && p.amount !== null && chargeAmount !== p.amount;
+      const label = discloseOngoing ? `${p.label} (ongoing $${p.amount}/mo after this)` : p.label;
+      return {
+        label, amount: chargeAmount, pricing_item_id: p.id,
+        market_price: svc?.market_price ?? null, description: svc?.client_description ?? null, narrative: null,
+        cadence: p.cadence, ongoing_amount: p.cadence === 'monthly' ? p.amount : null,
+      };
+    });
+    const description = lineItems.map((l) => l.label).join(' + ');
+    const amount = lineItems.reduce((sum, l) => sum + l.amount, 0);
+
+    const { data } = await supabase
+      .from('client_invoices')
+      .insert({
+        client_id: clientId,
+        pricing_item_id: null,
+        sequence_index: 1,
+        description,
+        amount,
+        line_items: lineItems,
+        due_date: dueDate ?? null,
+        status: 'draft',
+      })
+      .select()
+      .single();
+    await load();
+    return data as ClientInvoice | null;
+  };
+
+  /** "Generate personalized write-up" — replaces the generic per-service
+   *  description with a paragraph grounded in this specific client's
+   *  discovery-audit answers, for the invoice's Product Sheet. Manual
+   *  only (never runs on its own), and overwrites any previous narrative
+   *  on this invoice — same "Regenerate" convention as everywhere else
+   *  Nova writes something reviewable. Requires the invoice to already
+   *  have line_items (a bundled invoice) and does nothing useful without
+   *  a client audit on file (falls back to empty strings, which the UI
+   *  then falls back from to the generic per-service text). */
+  const generateInvoiceNarrative = async (invoiceId: string): Promise<boolean> => {
+    const client = clients.find((c) => c.invoices.some((i) => i.id === invoiceId));
+    const invoice = client?.invoices.find((i) => i.id === invoiceId);
+    if (!client || !invoice || !invoice.line_items || invoice.line_items.length === 0) return false;
+
+    const narrative = await generateProductSheetNarrative(
+      client.business_name,
+      questions,
+      client.audit?.answers ?? {},
+      client.audit?.answer_confidence ?? {},
+      invoice.line_items.map((li) => ({ label: li.label })),
+    );
+    const lineItems: InvoiceLineItem[] = invoice.line_items.map((li, i) => ({ ...li, narrative: narrative.items[i] || null }));
+    await supabase
+      .from('client_invoices')
+      .update({ product_sheet_intro: narrative.intro || null, line_items: lineItems, updated_at: new Date().toISOString() })
+      .eq('id', invoiceId);
+    await load();
+    return true;
+  };
+
+  /** Hand-edits the write-up — the intro paragraph and/or any line item's
+   *  narrative — whether it was AI-generated or never touched at all.
+   *  Nova can get specifics wrong (stale audit answers, a detail that's
+   *  changed since the discovery call); this is the fix, not just
+   *  "regenerate and hope" — same reasoning as every other AI text in
+   *  this app being reviewable, just extended to being directly editable
+   *  too. `narratives` is keyed by line item index, only the indices
+   *  actually being changed. */
+  const saveInvoiceWriteup = async (invoiceId: string, intro: string | null, narratives: Record<number, string | null>, recurringOutro?: string | null): Promise<boolean> => {
+    const client = clients.find((c) => c.invoices.some((i) => i.id === invoiceId));
+    const invoice = client?.invoices.find((i) => i.id === invoiceId);
+    if (!invoice || !invoice.line_items) return false;
+    const lineItems = invoice.line_items.map((li, i) => (i in narratives ? { ...li, narrative: narratives[i] } : li));
+    const patch: Record<string, unknown> = { product_sheet_intro: intro, line_items: lineItems, updated_at: new Date().toISOString() };
+    if (recurringOutro !== undefined) patch.recurring_plan_outro = recurringOutro;
+    const { error } = await supabase.from('client_invoices').update(patch).eq('id', invoiceId);
+    await load();
+    return !error;
+  };
+
   const updateDraftInvoice = async (id: string, patch: Partial<Pick<ClientInvoice, 'description' | 'amount' | 'due_date'>>) => {
     await supabase.from('client_invoices').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id);
     await load();
@@ -369,6 +506,10 @@ export function useClientCRM() {
     amount: number;
     dueDate?: string | null;
     invoiceId?: string;
+    lineItems?: InvoiceLineItem[] | null;
+    productSheetIntro?: string | null;
+    recurringPlanOutro?: string | null;
+    sendProductSheet?: boolean;
   }) => {
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
@@ -385,6 +526,10 @@ export function useClientCRM() {
         amount: input.amount,
         dueDate: input.dueDate ?? null,
         invoiceId: input.invoiceId,
+        lineItems: input.lineItems ?? null,
+        productSheetIntro: input.productSheetIntro ?? null,
+        recurringPlanOutro: input.recurringPlanOutro ?? null,
+        sendProductSheet: !!input.sendProductSheet,
       }),
     });
     if (!res.ok) {
@@ -530,6 +675,7 @@ export function useClientCRM() {
     saveAnswer,
     saveAnswerQuiet,
     setAnswerConfidence,
+    extractFromTranscript,
     completeAudit,
     regenerateAnalysis,
     runServiceMatch,
@@ -551,6 +697,9 @@ export function useClientCRM() {
     removePricingItem,
     setRevealSchedule,
     createDraftInvoice,
+    createBundledDraftInvoice,
+    generateInvoiceNarrative,
+    saveInvoiceWriteup,
     updateDraftInvoice,
     removeDraftInvoice,
     generateInvoiceSchedule,

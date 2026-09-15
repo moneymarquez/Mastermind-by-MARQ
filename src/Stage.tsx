@@ -1,16 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import Sidebar from './components/Sidebar';
+import Sidebar, { SIDEBAR_COLLAPSED_WIDTH } from './components/Sidebar';
 import TopHeader from './components/TopHeader';
 import MobileHeader from './components/MobileHeader';
 import MobileMenuSheet from './components/MobileMenuSheet';
-import MobileTabBar from './components/MobileTabBar';
+import MobileTabBar, { SAFE_BOTTOM } from './components/MobileTabBar';
 import NovaTrigger from './components/NovaTrigger';
 import NovaPanel from './components/NovaPanel';
 import RemindersBox from './components/RemindersBox';
 import { useBender } from './data/useBender';
 import { useNavModulePrefs } from './data/useNavModulePrefs';
-import { useSupportInbox } from './data/useSupportInbox';
+import { useOwnerInbox } from './data/useOwnerInbox';
+import type { InboxItem } from './data/useOwnerInbox';
+import { useLeads } from './data/useLeads';
+import type { LeadItem } from './data/useLeads';
+import ClientModulesScreen from './components/screens/ClientModulesScreen';
 import HomeScreen from './components/screens/HomeScreen';
 import DailyPlanScreen from './components/screens/DailyPlanScreen';
 import DialingScreen from './components/screens/DialingScreen';
@@ -23,6 +27,7 @@ import MentalHealthScreen from './components/screens/MentalHealthScreen';
 import ScalingStartScreen from './components/screens/ScalingStartScreen';
 import ClientDeliveryScreen from './components/screens/ClientDeliveryScreen';
 import SupportInboxScreen from './components/screens/SupportInboxScreen';
+import LeadsScreen from './components/screens/LeadsScreen';
 import LegalScreen from './components/screens/LegalScreen';
 import ScalingPlannerScreen from './components/screens/ScalingPlannerScreen';
 import BusinessAuditsScreen from './components/screens/BusinessAuditsScreen';
@@ -43,12 +48,15 @@ import WebsiteBuilderRoadmapScreen from './components/screens/WebsiteBuilderRoad
 import InvoicingScreen from './components/screens/InvoicingScreen';
 import BudgetingScreen from './components/screens/BudgetingScreen';
 import MarketingScreen from './components/screens/MarketingScreen';
+import ContentCreationScreen from './components/screens/ContentCreationScreen';
+import SwipeFileScreen from './components/screens/SwipeFileScreen';
 import DecisionLogScreen from './components/screens/DecisionLogScreen';
 import WeeklyReviewScreen from './components/screens/WeeklyReviewScreen';
 import CashFlowScreen from './components/screens/CashFlowScreen';
 import PatternDetectionScreen from './components/screens/PatternDetectionScreen';
 import VoiceCaptureScreen from './components/screens/VoiceCaptureScreen';
 import ManageModulesScreen from './components/screens/ManageModulesScreen';
+import EditHomeWidgetsScreen from './components/screens/EditHomeWidgetsScreen';
 import GrantAccessScreen from './components/screens/GrantAccessScreen';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
 import ProductTour, { filterTourSteps } from './components/ProductTour';
@@ -59,9 +67,9 @@ import type { Theme } from './data/useTheme';
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
-  'scaling-start', 'delivery', 'support-inbox', 'legal', 'scaling-planner', 'audits', 'client-crm', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
+  'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings',
-  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'grant-access',
+  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access',
 ];
 
 interface Props {
@@ -72,12 +80,17 @@ interface Props {
   onSignOut: () => void;
   currentUserId: string;
   userEmail: string | null | undefined;
+  userDisplayName: string | null;
   isOwner: boolean;
   theme: Theme;
   onThemeChange: (next: Theme) => void;
 }
 
-export default function Stage({ state, actions, assistantName, canAccess, onSignOut, currentUserId, userEmail, isOwner, theme, onThemeChange }: Props) {
+export default function Stage({ state, actions, assistantName, canAccess, onSignOut, currentUserId, userEmail, userDisplayName, isOwner, theme, onThemeChange }: Props) {
+  // Desktop-only: the persistent Sidebar's own Menu toggle collapses it to
+  // a slim icon-only rail and back — previously a dead button (no onClick
+  // at all). Mobile is unaffected; it keeps MobileMenuSheet's overlay.
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   // This account's own nav preferences (schema_056) — which modules are
   // hidden, and their custom order within each category. Both are a pure
   // display layer on top of real access rather than touching it: navAccess
@@ -89,7 +102,60 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // Owner-only data (support_inbox's RLS already scopes it), so this is a
   // harmless empty read for a non-owner account — called unconditionally
   // rather than guarded, same as useModuleAccess elsewhere in this file.
-  const supportInbox = useSupportInbox();
+  const ownerInbox = useOwnerInbox();
+  const leads = useLeads();
+  // A client message or ticket tapped in the Inbox widget, or a
+  // transferred lead, all land on THAT client — in Client Modules for
+  // the first two, in Client CRM for a lead (since that's where its
+  // freshly-generated analysis lives). Mail goes to the Support Inbox
+  // instead. clientFocus is shared across both target screens (only one
+  // is ever mounted at a time) and cleared once whichever one consumed it.
+  const [clientFocus, setClientFocus] = useState<string | null>(null);
+  // The client-selector's own sticky pick — distinct from clientFocus
+  // above (that's a one-shot "jump to and consume" transfer, cleared the
+  // moment a screen reads it; this persists across navigation between
+  // every client-facing module until something explicitly changes or
+  // clears it). Lives here, not in a per-screen hook, since surviving an
+  // unmount/remount as the user switches modules is the entire point.
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  // Entry point 2 of the brief (schema_069) — Client CRM's "Push to
+  // Marketing" button. One-shot like clientFocus: MarketingScreen creates
+  // the brief and clears this the moment it reads it.
+  const [pendingBriefClientId, setPendingBriefClientId] = useState<string | null>(null);
+  const pushToMarketing = (clientId: string) => {
+    setSelectedClientId(clientId);
+    setPendingBriefClientId(clientId);
+    actions.navigateTo('marketing');
+  };
+  // "Build this with Nova" (Marketing) / "Ask Nova for next steps"
+  // (Content Creation) — opens the panel and sends the pre-composed
+  // prompt as if the user typed it, same real send path sendNova always
+  // uses, so Nova's tool access and Marketing/Content 101 grounding
+  // (state.ts's onMarketingScreen/onContentScreen) apply exactly as normal.
+  const askNovaWithPrompt = (promptText: string) => {
+    actions.openNova();
+    actions.sendNova(promptText);
+  };
+  const openInbox = (item?: InboxItem) => {
+    if (item && item.kind !== 'mail' && item.clientId) {
+      setClientFocus(item.clientId);
+      actions.navigateTo('client-modules');
+      return;
+    }
+    actions.navigateTo('support-inbox');
+  };
+  // Tapping a lead row transfers it into Client CRM (generating its
+  // analysis if this is its first time out of new_lead) and lands on that
+  // profile; tapping the header just browses the full list.
+  const openLead = async (lead?: LeadItem) => {
+    if (lead) {
+      if (lead.stage === 'new_lead') await leads.transferLead(lead);
+      setClientFocus(lead.id);
+      actions.navigateTo('client-crm');
+      return;
+    }
+    actions.navigateTo('leads');
+  };
   const navAccess = (moduleKey: string) => canAccess(moduleKey) && !navPrefs.hidden.has(moduleKey);
   const vm = buildViewModel(state, actions.navigateTo, onSignOut, navAccess, isOwner, navPrefs.order);
   const { isMobile } = vm;
@@ -100,7 +166,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // canAccess={() => true} for the owner, same as AuthedGate does).
   const activeModuleCount = MODULE_REGISTRY.filter((m) => canAccess(m.key)).length;
   const activeNavLabel = vm.navRows.find((r) => r.kind === 'item' && r.active)?.label ?? 'Overview';
-  const ownerDisplayName = isOwner ? 'Cristopher' : userEmail ?? 'Account';
+  // A real set name always wins, regardless of owner status — per-account
+  // display, not a hardcoded "Cristopher" for one account and everyone
+  // else's raw email as a fallback.
+  const ownerDisplayName = userDisplayName || (isOwner ? 'Cristopher' : userEmail ?? 'Account');
 
   // Second, screen-level access check — buildNavData only ever filters
   // which rows the nav *drawer* shows; it doesn't stop state.screen from
@@ -147,8 +216,6 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
     observer.observe(el);
     return () => observer.disconnect();
   }, [isMobile]);
-  const novaStackLeft = isMobile ? remindersBox.left : null;
-  const novaStackBottomOffset = isMobile ? remindersBox.height + 16 : 0;
 
   // Fills the real viewport edge-to-edge — no more fixed-size device-mockup
   // box (border/rounded corners/shadow) floating on a page background. The
@@ -175,9 +242,13 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             onClose={actions.closeDrawer}
             onOpenSettings={() => actions.navigateTo('account-settings')}
             onOpenTour={startTour}
-            inboxEntries={supportInbox.entries}
-            inboxLoading={supportInbox.loading}
-            onOpenInbox={() => actions.navigateTo('support-inbox')}
+            leads={leads.leads}
+            leadsNewCount={leads.newLeads.length}
+            leadsLoading={leads.loading}
+            onOpenLead={openLead}
+            inboxItems={ownerInbox.items}
+            inboxLoading={ownerInbox.loading}
+            onOpenInbox={openInbox}
           />
 
           <MobileTabBar
@@ -194,12 +265,18 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             ownerName={ownerDisplayName}
             isOwner={isOwner}
             onOpenSettings={() => actions.navigateTo('account-settings')}
-            inboxEntries={supportInbox.entries}
-            inboxLoading={supportInbox.loading}
-            onOpenInbox={() => actions.navigateTo('support-inbox')}
+            leads={leads.leads}
+            leadsNewCount={leads.newLeads.length}
+            leadsLoading={leads.loading}
+            onOpenLead={openLead}
+            inboxItems={ownerInbox.items}
+            inboxLoading={ownerInbox.loading}
+            onOpenInbox={openInbox}
+            open={sidebarOpen}
+            onToggle={() => setSidebarOpen((v) => !v)}
           />
           <TopHeader
-            left={vm.sidebarWidth}
+            left={sidebarOpen ? vm.sidebarWidth : SIDEBAR_COLLAPSED_WIDTH}
             screenLabel={activeNavLabel}
             activeModuleCount={activeModuleCount}
             onOpenTour={startTour}
@@ -240,8 +317,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         id="tour-content-panel"
         style={{
           ...vm.contentStyle,
+          left: isMobile ? 0 : (sidebarOpen ? vm.sidebarWidth : SIDEBAR_COLLAPSED_WIDTH),
+          transition: isMobile ? undefined : 'left 0.18s ease',
           paddingBottom: isMobile
-            ? `calc(${vm.tabBarHeight + 20 + remindersBox.height + 20}px + env(safe-area-inset-bottom))`
+            ? `calc(${vm.tabBarHeight + 28 + remindersBox.height + 28}px + ${SAFE_BOTTOM})`
             : `${48 + remindersBox.height + 20}px`,
         }}
       >
@@ -250,11 +329,11 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         ) : (
           <>
         {state.screen === 'home' && (
-          <HomeScreen isMobile={isMobile} homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} statGridStyle={vm.statGridStyle} statCards={vm.statCards} onOpenNova={actions.openNova} assistantName={assistantName} onNavigate={actions.navigateTo} />
+          <HomeScreen isMobile={isMobile} isOwner={isOwner} homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onOpenNova={actions.openNova} assistantName={assistantName} onNavigate={actions.navigateTo} />
         )}
 
         {state.screen === 'daily-plan' && (
-          <DailyPlanScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          <DailyPlanScreen isMobile={isMobile} homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {state.screen === 'dialing' && (
@@ -298,11 +377,29 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'delivery' && (
-          <ClientDeliveryScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onNavigate={actions.navigateTo} />
+          <ClientDeliveryScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onNavigate={actions.navigateTo} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} />
         )}
 
         {state.screen === 'support-inbox' && (
-          <SupportInboxScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          <SupportInboxScreen
+            homeHeadStyle={vm.homeHeadStyle}
+            homeSubStyle={vm.homeSubStyle}
+            onOpenClient={(clientId) => {
+              setClientFocus(clientId);
+              actions.navigateTo('client-modules');
+            }}
+          />
+        )}
+
+        {state.screen === 'leads' && (
+          <LeadsScreen
+            homeHeadStyle={vm.homeHeadStyle}
+            homeSubStyle={vm.homeSubStyle}
+            onOpenClient={(clientId) => {
+              setClientFocus(clientId);
+              actions.navigateTo('client-crm');
+            }}
+          />
         )}
 
         {state.screen === 'legal' && (
@@ -314,7 +411,27 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'client-crm' && (
-          <ClientCRMScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          <ClientCRMScreen
+            homeHeadStyle={vm.homeHeadStyle}
+            homeSubStyle={vm.homeSubStyle}
+            focusClientId={clientFocus}
+            onClearFocus={() => setClientFocus(null)}
+            selectedClientId={selectedClientId}
+            onSelectClient={setSelectedClientId}
+            onPushToMarketing={pushToMarketing}
+          />
+        )}
+
+        {state.screen === 'client-modules' && (
+          <ClientModulesScreen
+            homeHeadStyle={vm.homeHeadStyle}
+            homeSubStyle={vm.homeSubStyle}
+            focusClientId={clientFocus}
+            onClearFocus={() => setClientFocus(null)}
+            onChanged={ownerInbox.reload}
+            selectedClientId={selectedClientId}
+            onSelectClient={setSelectedClientId}
+          />
         )}
 
         {state.screen === 'audits' && (
@@ -322,7 +439,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'brand-lab' && (
-          <BrandLabScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          <BrandLabScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} />
         )}
 
         {state.screen === 'idea-maker' && (
@@ -374,7 +491,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'invoicing' && (
-          <InvoicingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          <InvoicingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} />
         )}
 
         {state.screen === 'budgeting' && (
@@ -382,7 +499,29 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'marketing' && (
-          <MarketingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          <MarketingScreen
+            homeHeadStyle={vm.homeHeadStyle}
+            homeSubStyle={vm.homeSubStyle}
+            selectedClientId={selectedClientId}
+            onSelectClient={setSelectedClientId}
+            pendingBriefClientId={pendingBriefClientId}
+            onConsumePendingBrief={() => setPendingBriefClientId(null)}
+            onAskNova={askNovaWithPrompt}
+          />
+        )}
+
+        {state.screen === 'content' && (
+          <ContentCreationScreen
+            homeHeadStyle={vm.homeHeadStyle}
+            homeSubStyle={vm.homeSubStyle}
+            selectedClientId={selectedClientId}
+            onSelectClient={setSelectedClientId}
+            onAskNova={askNovaWithPrompt}
+          />
+        )}
+
+        {state.screen === 'swipe-file' && (
+          <SwipeFileScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {state.screen === 'decisions' && (
@@ -419,6 +558,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           />
         )}
 
+        {state.screen === 'edit-home-widgets' && (
+          <EditHomeWidgetsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} isOwner={isOwner} />
+        )}
+
         {state.screen === 'grant-access' && isOwner && (
           <GrantAccessScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
@@ -433,8 +576,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
       {state.novaOpen && (
         <NovaPanel
           isMobile={isMobile}
-          stackBottomOffset={novaStackBottomOffset}
-          stackLeft={novaStackLeft}
+          anchor={isMobile ? null : { cx: vm.cx, cy: vm.cy, circleSize: vm.circleSize, stageWidth: vm.stageWidth, stageHeight: vm.stageHeight }}
           assistantName={assistantName}
           messages={state.novaMessages}
           input={state.novaInput}
@@ -448,7 +590,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         />
       )}
 
-      <RemindersBox ref={remindersRef} isMobile={isMobile} bottomOffset={isMobile ? `calc(${vm.tabBarHeight + 20}px + env(safe-area-inset-bottom))` : '20px'} />
+      <RemindersBox ref={remindersRef} isMobile={isMobile} bottomOffset={isMobile ? `calc(${vm.tabBarHeight + 20}px + ${SAFE_BOTTOM})` : '20px'} />
 
       <ProductTour
         active={tourActive}

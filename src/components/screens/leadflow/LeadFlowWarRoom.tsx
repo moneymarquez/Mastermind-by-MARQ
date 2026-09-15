@@ -39,8 +39,8 @@ export default function LeadFlowWarRoom() {
   const [count, setCount] = useState(20);
   const [queue, setQueue] = useState<LeadflowLead[]>([]);
   const [index, setIndex] = useState(0);
-  const [results, setResults] = useState<Record<number, 'hot' | 'warm' | 'cold'>>({});
-  const [notes, setNotes] = useState<Record<number, string>>({});
+  const [results, setResults] = useState<Record<string, 'hot' | 'warm' | 'cold'>>({});
+  const [notes, setNotes] = useState<Record<string, string>>({});
 
   const { notConnected, reload } = useLeadflowIndustryPool(niche);
   const { updateLead } = useLeadflowLeads();
@@ -64,7 +64,7 @@ export default function LeadFlowWarRoom() {
 
   const toggleState = (s: string) => setStates((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
 
-  const logResult = (id: number, result: 'hot' | 'warm' | 'cold') => {
+  const logResult = (id: string, result: 'hot' | 'warm' | 'cold') => {
     setResults((r) => ({ ...r, [id]: result }));
     updateLead(id, { tag: result === 'hot' ? 'Hot' : result === 'warm' ? 'Warm' : 'Not Ready' });
   };

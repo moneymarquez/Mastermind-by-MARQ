@@ -28,6 +28,7 @@ const ALLOWED_TABLES = new Set([
   'journal_entries', 'fitness_workouts', 'meals', 'streaming_ideas', 'client_documents',
   'voice_notes', 'nudges', 'weekly_reviews', 'pattern_insights', 'nova_memory',
   'marketing_assets', 'marketing_campaigns', 'marketing_content_pipeline', 'notification_settings',
+  'marketing_briefs', 'content_growth_plans', 'content_checkins',
 ]);
 
 const TOOLS: Anthropic.Tool[] = [

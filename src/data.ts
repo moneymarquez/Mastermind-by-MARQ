@@ -6,7 +6,7 @@ import { MODULE_REGISTRY } from './modules.config';
 // to the single 'dialing' module (Contacts is Dialing's supporting data,
 // not a separately-toggleable thing). Items with no entry here (home,
 // settings, codelab) are system-level and never gated.
-const NAV_ITEM_TO_MODULE: Record<string, string> = { content: 'content' };
+const NAV_ITEM_TO_MODULE: Record<string, string> = {};
 for (const m of MODULE_REGISTRY) {
   for (const route of m.routes) NAV_ITEM_TO_MODULE[route] = m.key;
 }
@@ -38,6 +38,13 @@ export const NAV_DATA: NavGroup[] = [
       { id: 'dialing', label: 'Dialing', icon: 'ph-phone-call' },
       { id: 'contacts', label: 'Contacts', icon: 'ph-address-book' },
       { id: 'call-recordings', label: 'Call Recordings', icon: 'ph-microphone' },
+      { id: 'leadflow', label: 'LeadFlow', icon: 'ph-users-three' },
+    ],
+  },
+  {
+    group: 'Clients',
+    items: [
+      { id: 'client-modules', label: 'Client Modules', icon: 'ph-users-three' },
     ],
   },
   {
@@ -46,7 +53,6 @@ export const NAV_DATA: NavGroup[] = [
       { id: 'scaling-start', label: 'Start', icon: 'ph-lightning' },
       { id: 'delivery', label: 'Show Your Work', icon: 'ph-video-camera' },
       { id: 'support-inbox', label: 'Support Inbox', icon: 'ph-address-book' },
-      { id: 'leadflow', label: 'LeadFlow', icon: 'ph-users-three' },
       { id: 'website', label: 'Website/App Builder', icon: 'ph-code' },
       { id: 'client-crm', label: 'Client CRM', icon: 'ph-users' },
       { id: 'scaling-planner', label: 'Scaling Planner', icon: 'ph-rocket-launch' },
@@ -55,13 +61,14 @@ export const NAV_DATA: NavGroup[] = [
       { id: 'idea-maker', label: 'Idea Maker', icon: 'ph-lightbulb' },
       { id: 'invoicing', label: 'Invoicing', icon: 'ph-receipt' },
       { id: 'marketing', label: 'Marketing', icon: 'ph-megaphone' },
+      { id: 'content', label: 'Content Creation', icon: 'ph-video-camera' },
+      { id: 'swipe-file', label: 'Swipe File', icon: 'ph-bookmark-simple' },
     ],
   },
   {
     group: 'Side Hustles',
     items: [
       { id: 'stocks', label: 'Stocks', icon: 'ph-chart-line-up' },
-      { id: 'content', label: 'Content Creation', icon: 'ph-video-camera' },
       { id: 'streaming', label: 'Streaming', icon: 'ph-video-camera' },
     ],
   },
@@ -77,7 +84,7 @@ export const NAV_DATA: NavGroup[] = [
         label: 'Settings',
         icon: 'ph-gear-six',
         collapsible: true,
-        sub: ['Account', 'Prompt & Voice', 'Notifications', 'Manage modules', 'Grant Access', 'Legal & FAQ', 'Sign Out'],
+        sub: ['Account', 'Prompt & Voice', 'Notifications', 'Manage modules', 'Edit widgets', 'Grant Access', 'Legal & FAQ', 'Sign Out'],
       },
       { id: 'codelab', label: 'Code Lab', icon: 'ph-terminal-window' },
     ],

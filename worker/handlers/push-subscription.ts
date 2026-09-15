@@ -3,11 +3,11 @@
 // depends on Netlify staying alive.
 //
 // Note this is only the *subscribe* half of push. The three senders
-// (send-reminders, send-shift-reminders, generate-daily-plan) are still
-// Netlify Scheduled Functions, because they use the `web-push` package,
-// which needs Node crypto and doesn't run reliably in the Workers runtime
-// even with nodejs_compat. Subscribing has no such dependency — it's a
-// plain PostgREST write — so there's no reason for it to sit over there.
+// (reminders.ts, shift-reminders.ts, daily-plan.ts) are all native Worker
+// Cron Triggers now too, using @block65/webcrypto-web-push instead of the
+// `web-push` npm package, which needs Node crypto and doesn't run reliably
+// in the Workers runtime even with nodejs_compat. Subscribing never had
+// that dependency — it's a plain PostgREST write — so it moved first.
 //
 // Writes go through PostgREST directly rather than a supabase-js client,
 // using the caller's own JWT, so RLS scopes the row to them via auth.uid()

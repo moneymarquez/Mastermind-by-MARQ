@@ -16,6 +16,7 @@ const SUB_SCREEN_BY_LABEL: Record<string, string> = {
   Account: 'account-settings',
   'Prompt & Voice': 'prompt-voice-settings',
   'Manage modules': 'manage-modules',
+  'Edit widgets': 'edit-home-widgets',
   'Grant Access': 'grant-access',
   'Legal & FAQ': 'legal',
 };

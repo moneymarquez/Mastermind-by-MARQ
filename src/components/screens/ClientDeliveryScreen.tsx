@@ -4,11 +4,15 @@ import { useScalingProjects, useDeliveryLog } from '../../data/useScalingProject
 import type { ScalingProject } from '../../data/useScalingProjects';
 import { useClientDocuments } from '../../data/useClientDocuments';
 import { supabase } from '../../lib/supabase';
+import { useClients } from '../../data/useClients';
+import ClientSelector from '../ClientSelector';
 
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
   onNavigate: (id: string) => void;
+  selectedClientId: string | null;
+  onSelectClient: (id: string | null) => void;
 }
 
 const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 20 };
@@ -52,9 +56,10 @@ async function authedFetch(path: string, body: unknown): Promise<Response> {
   });
 }
 
-export default function ClientDeliveryScreen({ homeHeadStyle, homeSubStyle, onNavigate }: Props) {
+export default function ClientDeliveryScreen({ homeHeadStyle, homeSubStyle, onNavigate, selectedClientId, onSelectClient }: Props) {
   const { projects, loading, patch, uploadVideo, videoSignedUrl, removeVideo } = useScalingProjects();
   const { documents } = useClientDocuments();
+  const clientsApi = useClients();
   const [tab, setTab] = useState<ScalingProject['status']>('in_progress');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -205,6 +210,18 @@ export default function ClientDeliveryScreen({ homeHeadStyle, homeSubStyle, onNa
     <div>
       <div style={homeHeadStyle}>Show Your Work</div>
       <div style={homeSubStyle}>The client delivery pipeline — assemble a package, send it, and keep a running portfolio.</div>
+
+      <div style={{ marginTop: 20 }}>
+        <ClientSelector
+          clients={clientsApi.clients}
+          loading={clientsApi.loading}
+          error={clientsApi.error}
+          selectedId={selectedClientId}
+          onSelect={onSelectClient}
+          onCreate={clientsApi.createClient}
+          emptyHint="Projects below aren't filtered by this yet."
+        />
+      </div>
 
       <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
         {TABS.map((t) => (

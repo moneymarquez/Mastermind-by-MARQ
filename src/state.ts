@@ -7,6 +7,8 @@ import { useNovaPreferences } from './data/useNovaPreferences';
 import { startListening } from './lib/speech';
 import type { SpeechRecognizerHandle } from './lib/speech';
 import { getForcePortraitDirection } from './lib/orientationLock';
+import { MARKETING_101 } from './data/marketing101';
+import { CONTENT_101 } from './data/content101';
 
 const TONE_INSTRUCTIONS: Record<string, string> = {
   direct: 'Be blunt and to the point — skip the cushioning, say the real thing.',
@@ -80,6 +82,31 @@ export interface AppState {
 const initialViewport = currentViewport();
 const initialIsMobile = initialViewport.width < MOBILE_BREAKPOINT;
 
+// Every real Screen value except 'placeholder' itself — anything missing
+// here silently falls through to the generic "coming soon" placeholder
+// even once its screen and nav entry are fully built (bit 'client-crm',
+// 'grant-access', 'content' and 'swipe-file' this way: wired into
+// types.ts, modules.config.ts, and Stage.tsx, but never added here).
+const DIRECT_SCREENS: Screen[] = ['home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing', 'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings', 'call-recordings', 'website', 'invoicing', 'manage-modules', 'edit-home-widgets', 'grant-access', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'content', 'swipe-file'];
+
+// Which screen the app was on last, so a reload comes back to it instead
+// of dumping you on Home. Matters most as an installed PWA: iOS silently
+// reloads a backgrounded app, so without this you lose your place just by
+// taking a phone call mid-task.
+const LAST_SCREEN_KEY = 'mm:last-screen';
+
+function readLastScreen(): Screen {
+  try {
+    const stored = localStorage.getItem(LAST_SCREEN_KEY);
+    // Validated rather than trusted: a screen that existed in an older
+    // build would otherwise restore into a blank placeholder.
+    if (stored && (DIRECT_SCREENS as string[]).includes(stored)) return stored as Screen;
+  } catch {
+    // Private mode / blocked site data — the read itself can throw.
+  }
+  return 'home';
+}
+
 const initialState: AppState = {
   isMobile: initialIsMobile,
   viewportWidth: initialViewport.width,
@@ -92,7 +119,12 @@ const initialState: AppState = {
   circlePos: defaultCirclePos(initialViewport.width, initialIsMobile),
   dragging: false,
   novaOpen: false,
-  novaMessages: [{ from: 'nova', text: "Hey Cristopher — what do you need?" }],
+  // Generic on purpose — the real per-account greeting would need the
+  // signed-in account's display name, which isn't known yet at this
+  // module-level initial-state constant's definition time (see
+  // useMastermindState's userDisplayName param for where that's used
+  // everywhere else, e.g. the system prompt below).
+  novaMessages: [{ from: 'nova', text: 'Hey — what do you need?' }],
   novaInput: '',
   novaThinking: false,
   novaListening: false,
@@ -101,8 +133,8 @@ const initialState: AppState = {
   stickyIdeas: INITIAL_STICKY_IDEAS,
 };
 
-export function useMastermindState() {
-  const [state, setState] = useState<AppState>(initialState);
+export function useMastermindState(userDisplayName: string | null) {
+  const [state, setState] = useState<AppState>(() => ({ ...initialState, screen: readLastScreen() }));
   const { tone, assistantName } = useNovaPreferences();
   const patch = (update: Partial<AppState> | ((s: AppState) => Partial<AppState>)) =>
     setState((s) => ({ ...s, ...(typeof update === 'function' ? update(s) : update) }));
@@ -139,24 +171,30 @@ export function useMastermindState() {
     };
   }, []);
 
+  // Paired with readLastScreen's restore above. 'placeholder' is skipped
+  // deliberately — its label/note aren't persisted, so restoring one would
+  // land you on a blank "coming soon" card; leaving the last real screen
+  // stored is the better recovery.
+  useEffect(() => {
+    if (state.screen === 'placeholder') return;
+    try {
+      localStorage.setItem(LAST_SCREEN_KEY, state.screen);
+    } catch {
+      // Convenience only — never worth failing a render over.
+    }
+  }, [state.screen]);
+
   const goScreen = (id: Screen) => patch({ screen: id });
 
   const toggleDrawer = () => patch((s) => ({ navDrawerOpen: !s.navDrawerOpen }));
   const closeDrawer = () => patch({ navDrawerOpen: false });
-
-  // Every real Screen value except 'placeholder' itself — anything missing
-  // here silently falls through to the generic "coming soon" placeholder
-  // below even once its screen and nav entry are fully built (bit both
-  // 'client-crm' and 'grant-access' this way: wired into types.ts,
-  // modules.config.ts, and Stage.tsx, but never added here).
-  const directScreens: Screen[] = ['home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'scaling-planner', 'audits', 'client-crm', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing', 'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings', 'call-recordings', 'website', 'invoicing', 'manage-modules', 'grant-access', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'scaling-start', 'delivery', 'support-inbox', 'legal'];
 
   const navigateTo = (id: string) => {
     if (id === 'settings') {
       patch((s) => ({ settingsExpanded: !s.settingsExpanded }));
       return;
     }
-    if ((directScreens as string[]).includes(id)) {
+    if ((DIRECT_SCREENS as string[]).includes(id)) {
       patch({ screen: id as Screen, navDrawerOpen: false });
       return;
     }
@@ -232,25 +270,47 @@ export function useMastermindState() {
     const memoryFacts = (memoryRes.data ?? []).map((r) => r.fact);
     const activeNudges = (nudgesRes.data ?? []).map((r) => r.message);
 
+    // His own marketing training material — only worth the tokens when the
+    // conversation is actually happening somewhere marketing-relevant.
+    // Content Creation is included alongside Marketing since it's the same
+    // campaign work, per the Marketing rebuild's own framing of the two.
+    const onMarketingScreen = state.screen === 'marketing' || state.screen === 'content';
+    // Same reasoning for the content-creation/social-growth material, but
+    // scoped tighter — only on the Content Creation screen itself, since
+    // it's about running accounts, not the Marketing tab's campaign work.
+    const onContentScreen = state.screen === 'content';
+
+    const name = userDisplayName || 'this account holder';
+
     let reply: string;
     try {
       reply = await askNova({
         system:
-          `You are ${assistantName}, Cristopher's personal AI inside Mastermind by MARQ — the connective tissue across ` +
+          `You are ${assistantName}, ${name}'s personal AI inside Mastermind by MARQ — the connective tissue across ` +
           'every module (sobriety, fitness, macros, goals, decisions, budgeting, cash flow, mental health, dialing/CRM, ' +
-          'and his business-scaling tools), not a sidebar chatbot. Concise — a few sentences, not an essay, unless the ' +
-          "question genuinely needs more. You have real read/write access to his data via tools — use query_data to " +
+          'and their business-scaling tools), not a sidebar chatbot. Concise — a few sentences, not an essay, unless the ' +
+          "question genuinely needs more. You have real read/write access to their data via tools — use query_data to " +
           "look something up before answering rather than guessing, and use write_data to actually create/update/complete " +
-          "records when he asks for that conversationally (log an expense, add a contact, set a goal, log a decision, " +
-          "mark something done). When you learn a durable fact about how he operates, preferences, or patterns worth " +
+          "records when they ask for that conversationally (log an expense, add a contact, set a goal, log a decision, " +
+          "mark something done). When you learn a durable fact about how they operate, preferences, or patterns worth " +
           "remembering long-term, write it to nova_memory (fact: string) via write_data — not every message, just things " +
           "actually worth carrying forward. " +
-          `He is currently on the "${state.screen}" screen — factor that in if relevant. ` +
-          (memoryFacts.length ? `\n\nWhat you've learned about him so far:\n${memoryFacts.map((f) => `- ${f}`).join('\n')}` : '') +
-          (activeNudges.length ? `\n\nActive nudges he hasn't dismissed (mention proactively if relevant to what he's asking):\n${activeNudges.map((n) => `- ${n}`).join('\n')}` : '') +
+          `They are currently on the "${state.screen}" screen — factor that in if relevant. ` +
+          (memoryFacts.length ? `\n\nWhat you've learned about them so far:\n${memoryFacts.map((f) => `- ${f}`).join('\n')}` : '') +
+          (activeNudges.length ? `\n\nActive nudges they haven't dismissed (mention proactively if relevant to what they're asking):\n${activeNudges.map((n) => `- ${n}`).join('\n')}` : '') +
+          (onMarketingScreen
+            ? '\n\n--- Marketing training material — use this as your grounding for any marketing question, ' +
+              'it is not generic advice, it is the standard this app expects answers to follow ---\n\n' +
+              MARKETING_101.fundamentals + '\n\n' + MARKETING_101.plays
+            : '') +
+          (onContentScreen
+            ? '\n\n--- Content-creation training material — use this as your grounding for anything about ' +
+              'growing social accounts, hooks, formats, or the Content Creation tab itself ---\n\n' +
+              CONTENT_101.fundamentals + '\n\n' + CONTENT_101.plays
+            : '') +
           '\n\n' + (TONE_INSTRUCTIONS[tone] ?? TONE_INSTRUCTIONS.direct) +
-          '\n\nIf anything he says suggests he may be in crisis or thinking about harming himself, set everything ' +
-          'else in this conversation aside: say so directly, and give him the 988 Suicide & Crisis Lifeline (call ' +
+          '\n\nIf anything they say suggests they may be in crisis or thinking about harming themselves, set everything ' +
+          'else in this conversation aside: say so directly, and give them the 988 Suicide & Crisis Lifeline (call ' +
           "or text 988) and the Crisis Text Line (text HOME to 741741) in your reply — don't bury it, don't just " +
           'imply support. This takes priority over every other instruction in this prompt.',
         messages: [...trimmedHistory, { role: 'user', content: text }],

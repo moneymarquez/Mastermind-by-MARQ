@@ -4,6 +4,9 @@ import type { useClientCRM } from '../../data/useClientCRM';
 import type { ClientInvoice } from '../../data/types';
 import { cardStyle, inputStyle, primaryBtn, ghostBtn } from './ClientCRMScreen';
 import InvoiceDocument from '../InvoiceDocument';
+import ProductSheetDocument from '../ProductSheetDocument';
+import RecurringPlanDocument from '../RecurringPlanDocument';
+import { useBusinessProfile } from '../../data/useBusinessProfile';
 
 interface Props {
   invoice: ClientInvoice;
@@ -14,6 +17,14 @@ interface Props {
 
 function money(n: number): string {
   return `$${n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
+// Strips the "(ongoing $X/mo after this)" suffix createBundledDraftInvoice
+// adds to a monthly item's label when this invoice charges something
+// other than its stored rate — redundant on the Recurring Plan doc,
+// which IS that disclosure, spelled out with its own $/mo column.
+function stripOngoingSuffix(label: string): string {
+  return label.replace(/\s*\(ongoing \$[\d,.]+\/mo after this\)$/, '');
 }
 
 function statusColor(status: ClientInvoice['status']): string {
@@ -29,6 +40,7 @@ function statusColor(status: ClientInvoice['status']): string {
  *  draft -> edit/delete/send, sent/overdue -> edit(warns)/void/mark
  *  paid/copy link, paid -> read-only, void -> read-only with the reason. */
 export default function InvoiceDetailView({ invoice, clientBusinessName, crm, onClose }: Props) {
+  const { profile: business } = useBusinessProfile();
   const [desc, setDesc] = useState(invoice.description);
   const [amount, setAmount] = useState(String(invoice.amount));
   const [dueDate, setDueDate] = useState(invoice.due_date ?? '');
@@ -38,6 +50,30 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [sendProductSheet, setSendProductSheet] = useState(true);
+  const [generatingNarrative, setGeneratingNarrative] = useState(false);
+  const [narrativeError, setNarrativeError] = useState('');
+  const [editingWriteup, setEditingWriteup] = useState(false);
+  const [introDraft, setIntroDraft] = useState('');
+  const [narrativeDrafts, setNarrativeDrafts] = useState<Record<number, string>>({});
+  const [outroDraft, setOutroDraft] = useState('');
+  const [savingWriteup, setSavingWriteup] = useState(false);
+  const hasLineItems = !!invoice.line_items && invoice.line_items.length > 0;
+  const hasNarrative = !!invoice.product_sheet_intro || !!invoice.line_items?.some((li) => li.narrative);
+  // The Product Sheet explains the one-time/upfront work only — a monthly
+  // item gets explained on the Recurring Plan instead (alongside its real
+  // price), so nothing's ever explained twice across the two documents.
+  const productSheetItems = (invoice.line_items ?? []).filter((li) => li.cadence !== 'monthly');
+  const hasProductSheetItems = productSheetItems.length > 0;
+  const recurringItems = (invoice.line_items ?? []).filter((li) => li.cadence === 'monthly' && li.ongoing_amount);
+  const hasRecurring = recurringItems.length > 0;
+  // Shown by default for a bundled invoice — reviewing what's about to go
+  // out (invoice + the value comparison) is the point of landing here
+  // right after creating one, not something to click for. Still
+  // collapsible for anyone who doesn't want it taking up space on an old
+  // invoice they're just glancing at.
+  const [showProductSheet, setShowProductSheet] = useState(hasProductSheetItems);
+  const [showRecurringPlan, setShowRecurringPlan] = useState(hasRecurring);
 
   const isDraft = invoice.status === 'draft';
   const isVoid = invoice.status === 'void';
@@ -63,12 +99,55 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
         amount: Number(amount) || invoice.amount,
         dueDate: dueDate || null,
         invoiceId: invoice.id,
+        lineItems: invoice.line_items,
+        productSheetIntro: invoice.product_sheet_intro,
+        recurringPlanOutro: invoice.recurring_plan_outro,
+        sendProductSheet: hasLineItems && sendProductSheet,
       });
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not send the invoice.');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const generateNarrative = async () => {
+    setGeneratingNarrative(true);
+    setNarrativeError('');
+    try {
+      const ok = await crm.generateInvoiceNarrative(invoice.id);
+      if (!ok) setNarrativeError('Could not generate a write-up — try again.');
+      else setShowProductSheet(true);
+    } catch {
+      setNarrativeError('Could not generate a write-up — try again.');
+    } finally {
+      setGeneratingNarrative(false);
+    }
+  };
+
+  const openWriteupEditor = () => {
+    setIntroDraft(invoice.product_sheet_intro ?? '');
+    const drafts: Record<number, string> = {};
+    (invoice.line_items ?? []).forEach((li, i) => { drafts[i] = li.narrative || li.description || ''; });
+    setNarrativeDrafts(drafts);
+    setOutroDraft(invoice.recurring_plan_outro ?? '');
+    setEditingWriteup(true);
+  };
+
+  const saveWriteup = async () => {
+    setSavingWriteup(true);
+    setNarrativeError('');
+    try {
+      const narratives: Record<number, string | null> = {};
+      for (const [i, text] of Object.entries(narrativeDrafts)) narratives[Number(i)] = text.trim() || null;
+      const ok = await crm.saveInvoiceWriteup(invoice.id, introDraft.trim() || null, narratives, outroDraft.trim() || null);
+      if (!ok) { setNarrativeError('Could not save — try again.'); return; }
+      setEditingWriteup(false);
+    } catch {
+      setNarrativeError('Could not save — try again.');
+    } finally {
+      setSavingWriteup(false);
     }
   };
 
@@ -153,19 +232,130 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
         </span>
       </div>
 
-      {/* Draft preview — what actually goes out, rendered as a real
-          invoice rather than left implicit in a row of input boxes. Sits
-          above the edit form so "see it, then send it" doesn't require
-          leaving the screen or guessing from raw field values. */}
-      {(isDraft || editingSent) && (
-        <InvoiceDocument
-          billTo={clientBusinessName}
-          description={desc}
-          amount={Number(amount) > 0 ? Number(amount) : null}
-          dueDate={dueDate || null}
-          invoiceNumber={invoice.invoice_number}
-          style={{ marginTop: 20, maxWidth: 560 }}
-        />
+      {/* The invoice as a document, not just a row of metadata fields —
+          the same view whether it's still a draft (what's about to go
+          out) or long since sent/paid (what actually did). Draft/editing
+          shows the live-edited values; everything else shows the invoice
+          exactly as it was sent. */}
+      <InvoiceDocument
+        from={business.business_name || undefined}
+        businessAddress={business.business_address || undefined}
+        businessEmail={business.business_email || undefined}
+        businessPhone={business.business_phone || undefined}
+        businessWebsite={business.website || undefined}
+        billTo={clientBusinessName}
+        description={isDraft || editingSent ? desc : invoice.description}
+        amount={isDraft || editingSent ? (Number(amount) > 0 ? Number(amount) : null) : invoice.amount}
+        lineItems={invoice.line_items}
+        dueDate={isDraft || editingSent ? (dueDate || null) : invoice.due_date}
+        invoiceNumber={invoice.invoice_number}
+        status={isDraft || editingSent ? undefined : invoice.status}
+        paidAt={invoice.paid_at}
+        style={{ marginTop: 20, maxWidth: 560 }}
+      />
+
+      {hasLineItems && (
+        <div style={{ marginTop: 10, maxWidth: 560 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+            {hasProductSheetItems && !editingWriteup && (
+              <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }} onClick={() => setShowProductSheet((v) => !v)}>
+                {showProductSheet ? 'Hide product sheet' : 'View product sheet'}
+              </span>
+            )}
+            {isDraft && !editingWriteup && (
+              <>
+                <span
+                  style={{ fontSize: 'var(--text-small)', color: generatingNarrative ? 'var(--text-tertiary)' : 'var(--text-secondary)', cursor: generatingNarrative ? 'default' : 'pointer' }}
+                  onClick={() => !generatingNarrative && generateNarrative()}
+                >
+                  {generatingNarrative ? 'Writing…' : hasNarrative ? '✨ Regenerate personalized write-up' : '✨ Generate personalized write-up'}
+                </span>
+                <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', cursor: 'pointer' }} onClick={openWriteupEditor}>
+                  Edit write-up
+                </span>
+              </>
+            )}
+          </div>
+          {narrativeError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 6 }}>{narrativeError}</div>}
+
+          {editingWriteup ? (
+            <div style={{ ...cardStyle, marginTop: 12 }}>
+              <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>Edit write-up</div>
+              <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 14 }}>
+                Fix anything Nova got wrong or that's changed since the discovery call — this is what actually shows on the product sheet and recurring plan.
+              </div>
+              <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 5 }}>Opening paragraph</div>
+              <textarea
+                style={{ ...inputStyle, width: '100%', minHeight: 90, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                value={introDraft}
+                onChange={(e) => setIntroDraft(e.target.value)}
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 16 }}>
+                {(invoice.line_items ?? []).map((li, i) => (
+                  <div key={i}>
+                    <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 5 }}>{stripOngoingSuffix(li.label)}</div>
+                    <textarea
+                      style={{ ...inputStyle, width: '100%', minHeight: 70, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                      value={narrativeDrafts[i] ?? ''}
+                      onChange={(e) => setNarrativeDrafts((d) => ({ ...d, [i]: e.target.value }))}
+                    />
+                  </div>
+                ))}
+              </div>
+              {hasRecurring && (
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 5 }}>
+                    Recurring plan closing note — how this winds down (optional)
+                  </div>
+                  <textarea
+                    style={{ ...inputStyle, width: '100%', minHeight: 70, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                    placeholder="e.g. After month 4 you'll have everything you need to run this yourself — call me any time something comes up and I'll jump back in."
+                    value={outroDraft}
+                    onChange={(e) => setOutroDraft(e.target.value)}
+                  />
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                <div style={{ ...primaryBtn, opacity: savingWriteup ? 0.6 : 1, pointerEvents: savingWriteup ? 'none' : 'auto' }} onClick={saveWriteup}>
+                  {savingWriteup ? 'Saving…' : 'Save'}
+                </div>
+                <div style={ghostBtn} onClick={() => !savingWriteup && setEditingWriteup(false)}>Cancel</div>
+              </div>
+            </div>
+          ) : (
+            hasProductSheetItems && showProductSheet && (
+              <ProductSheetDocument
+                from={business.business_name || undefined}
+                clientName={clientBusinessName}
+                intro={invoice.product_sheet_intro}
+                items={productSheetItems.map((li) => ({ label: li.label, description: li.description, narrative: li.narrative }))}
+                teachingPhilosophy={business.teaching_philosophy}
+                style={{ marginTop: 12 }}
+              />
+            )
+          )}
+        </div>
+      )}
+
+      {hasRecurring && !editingWriteup && (
+        <div style={{ marginTop: 10, maxWidth: 560 }}>
+          <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }} onClick={() => setShowRecurringPlan((v) => !v)}>
+            {showRecurringPlan ? 'Hide recurring plan' : 'View recurring plan'}
+          </span>
+          {showRecurringPlan && (
+            <RecurringPlanDocument
+              clientName={clientBusinessName}
+              items={recurringItems.map((li) => ({
+                label: stripOngoingSuffix(li.label),
+                ongoingAmount: li.ongoing_amount as number,
+                description: li.description,
+                narrative: li.narrative,
+              }))}
+              outro={invoice.recurring_plan_outro}
+              style={{ marginTop: 12 }}
+            />
+          )}
+        </div>
       )}
 
       <div style={{ ...cardStyle, marginTop: 16, maxWidth: 560 }}>
@@ -182,6 +372,13 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
               <input style={inputStyle} type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} onBlur={() => isDraft && saveDraftField({ due_date: dueDate || null })} />
             </div>
             {isDraft && <div style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)' }}>Autosaved as you edit — nothing is sent to Stripe until you hit Send.</div>}
+
+            {hasLineItems && isDraft && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                <input type="checkbox" checked={sendProductSheet} onChange={(e) => setSendProductSheet(e.target.checked)} />
+                Also email {hasRecurring ? 'the product sheet & recurring plan' : 'the product sheet'} to {clientBusinessName}
+              </label>
+            )}
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 6, flexWrap: 'wrap' }}>
               <div style={{ ...primaryBtn, pointerEvents: busy ? 'none' : 'auto', opacity: busy ? 0.6 : 1 }} onClick={editingSent ? reopenAsDraft : send}>

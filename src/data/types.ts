@@ -171,13 +171,24 @@ export interface SymptomLog {
   created_at: string;
 }
 
-export type DailyPlanBlockType = 'fixed' | 'goal' | 'fitness' | 'macros' | 'ai_suggested';
+export type DailyPlanBlockType = 'fixed' | 'goal' | 'fitness' | 'macros' | 'dialing' | 'ai_suggested';
+
+/** What real part of the app a block is actually about — shown in the
+ *  hourly view's detail pane. Distinct from `type` (which is about how the
+ *  block was decided/categorized); this is about where it lives. 'manual'
+ *  covers a block added directly on the hour with no specific module tie. */
+export type DailyPlanModule = 'dialing' | 'fitness' | 'work-shift' | 'client-work' | 'goal' | 'manual';
 
 export interface DailyPlanBlock {
   time: string;
+  /** Minutes the block occupies, starting at `time`. Purely informational
+   *  for the hourly view — blocks aren't currently allowed to span across
+   *  an hour boundary's row assignment, which is keyed on `time` alone. */
+  duration: number;
   title: string;
   detail: string;
   type: DailyPlanBlockType;
+  module: DailyPlanModule;
   source: string | null;
 }
 
@@ -755,9 +766,15 @@ export interface ClientPortalSettings {
   handoff_mode: boolean;
   handoff_started_at: string | null;
   handoff_checkin_on: string | null;
+  /** Escape hatch for the derived progress spine (src/data/clientSpine.ts):
+   *  station key → forced state, for the cases the record can't see. */
+  spine_overrides: Partial<Record<SpineStationKey, SpineState>>;
   created_at: string;
   updated_at: string;
 }
+
+export type SpineStationKey = 'intake' | 'call' | 'brand_site' | 'systems' | 'marketing' | 'teach_back';
+export type SpineState = 'done' | 'active' | 'next';
 
 export type DeliverableKind = 'website' | 'brand' | 'gbp' | 'social' | 'payments' | 'content' | 'other';
 export const DELIVERABLE_KINDS: { key: DeliverableKind; label: string }[] = [
@@ -783,6 +800,10 @@ export interface ClientDeliverable {
   link_url: string | null;
   status: DeliverableStatus;
   sort_order: number;
+  /** Set when the owner puts a 'review' deliverable in front of the client;
+   *  approved_at is the client's one write on this table. */
+  approval_requested_at: string | null;
+  approved_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -812,6 +833,7 @@ export interface ClientModuleAssignment {
   assigned_at: string;
   opened_at: string | null;
   completed_at: string | null;
+  sort_order: number;
 }
 
 export interface ClientMessage {
@@ -821,6 +843,56 @@ export interface ClientMessage {
   body: string;
   read_at: string | null;
   created_at: string;
+}
+
+// ── Client Portal v2 (schema_057): tickets, approvals, change log ─────────
+
+export type ClientTicketKind = 'design' | 'marketing' | 'system';
+export type ClientTicketStatus = 'open' | 'options_sent' | 'resolved';
+export const TICKET_KINDS: { key: ClientTicketKind; label: string }[] = [
+  { key: 'design', label: 'Design' },
+  { key: 'marketing', label: 'Marketing' },
+  { key: 'system', label: 'System change' },
+];
+
+/** Structured feedback. Both `avoid` and `prefer` are NOT NULL and
+ *  non-blank at the database (schema_057's CHECK) — a complaint alone
+ *  cannot become a ticket. */
+export interface ClientTicket {
+  id: string;
+  client_id: string;
+  deliverable_id: string | null;
+  kind: ClientTicketKind;
+  title: string;
+  avoid: string;
+  prefer: string;
+  status: ClientTicketStatus;
+  owner_note: string | null;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
+}
+
+export interface ClientTicketOption {
+  id: string;
+  ticket_id: string;
+  body: string;
+  link_url: string | null;
+  sort_order: number;
+  chosen_at: string | null;
+  created_at: string;
+}
+
+export interface ClientChangelogEntry {
+  id: string;
+  client_id: string;
+  deliverable_id: string | null;
+  what: string;
+  why: string | null;
+  happened_on: string;
+  visible_to_client: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 // ── Stocks bot ────────────────────────────────────────────────────────────
@@ -900,12 +972,19 @@ export interface BrokerKeyStatus {
 
 export type ClientStage = 'new_lead' | 'discovery_complete' | 'analysis_sent' | 'invoice_sent' | 'active' | 'retainer';
 
+export type ClientType = 'client' | 'self' | 'internal';
+
 export interface CrmClient {
   id: string;
   business_name: string;
   contact_name: string | null;
   contact_email: string | null;
   contact_phone: string | null;
+  /** 'client' (default) vs 'self' (the account's own business) vs
+   *  'internal' — a label only, doesn't change access or behavior; lets
+   *  the client selector and reports distinguish "a real client" from
+   *  "my own stuff" later. */
+  client_type: ClientType;
   stage: ClientStage;
   reveal_full_schedule: boolean;
   source: 'internal' | 'public';
@@ -964,6 +1043,13 @@ export interface Service {
   name: string;
   price_type: PricingCadence;
   default_price: number;
+  /** What this typically costs from someone else — the Product Sheet's
+   *  value-comparison line. Null means no comparison shown for it. */
+  market_price: number | null;
+  /** Client-facing explanation of what this service is and why it
+   *  matters — the Product Sheet's per-item body text. Null means no
+   *  explanation shown for it. */
+  client_description: string | null;
   notes: string | null;
   sort_order: number;
   active: boolean;
@@ -1026,7 +1112,7 @@ export interface ClientReport {
 export type ReportAssetKind = 'content' | 'proof';
 export type ReportAssetStatus = 'draft' | 'approved' | 'live';
 
-export type ClientMediaCategory = 'truck' | 'food' | 'business_card' | 'screenshot' | 'other';
+export type ClientMediaCategory = 'truck' | 'food' | 'business_card' | 'screenshot' | 'other' | 'marketing';
 
 /** Raw source material attached to a client — the truck, the food, a
  *  business card, a screenshot of their Google listing. Never shown to
@@ -1035,6 +1121,9 @@ export interface ClientMedia {
   id: string;
   client_id: string;
   audit_id: string | null;
+  /** Which play this photo/video was shot for (schema_076) — set when
+   *  uploaded from the build-out screen's shot list, null otherwise. */
+  play_id: string | null;
   storage_path: string;
   file_name: string;
   mime_type: string | null;
@@ -1075,6 +1164,39 @@ export interface ClientReportNote {
 
 export type ClientInvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'void';
 
+/** One priced line on a bundled invoice — `market_price` is snapshotted
+ *  from the catalog at invoice-creation time, not read live, so a later
+ *  catalog price change never retroactively changes what an already-sent
+ *  invoice or Product Sheet shows. */
+export interface InvoiceLineItem {
+  label: string;
+  amount: number;
+  pricing_item_id: string | null;
+  market_price: number | null;
+  /** Client-facing explanation, snapshotted from the service catalog at
+   *  invoice-creation time — same reasoning as market_price. */
+  description: string | null;
+  /** A personalized "why this helps you" paragraph, written by Nova from
+   *  this specific client's discovery-audit answers — not the generic
+   *  catalog description. Null until "Generate personalized write-up" is
+   *  run; when present it's shown instead of `description` on the
+   *  Product Sheet, since it says the same kind of thing but grounded in
+   *  their actual situation. */
+  narrative: string | null;
+  /** Snapshotted from the pricing item at invoice-creation time — which
+   *  kind of charge this line actually is, independent of what got typed
+   *  into `amount` for this specific invoice. */
+  cadence: PricingCadence;
+  /** The pricing item's real ongoing monthly rate at creation time —
+   *  distinct from `amount` (what THIS invoice charges), since a monthly
+   *  item can be charged a one-off lump sum on its first invoice (see
+   *  the "(ongoing $X/mo after this)" label disclosure). Null for a
+   *  one_time item. Powers the Recurring Plan document: "starting next
+   *  month you'll also be billed monthly for X" — read from here, never
+   *  re-derived from the label text. */
+  ongoing_amount: number | null;
+}
+
 export interface ClientInvoice {
   id: string;
   client_id: string;
@@ -1082,6 +1204,21 @@ export interface ClientInvoice {
   sequence_index: number;
   description: string;
   amount: number;
+  /** Present only for an invoice created by bundling multiple pricing
+   *  items into one — null for the plain single-item invoices this app
+   *  has always made, which still render fine off description/amount
+   *  alone. */
+  line_items: InvoiceLineItem[] | null;
+  /** The Product Sheet's opening paragraph — this client's specific
+   *  situation and why this plan addresses it, written by Nova from their
+   *  discovery-audit answers. Null until generated; the sheet still reads
+   *  fine without it (falls back to the per-item generic text only). */
+  product_sheet_intro: string | null;
+  /** The Recurring Plan document's closing paragraph — how the engagement
+   *  winds down (e.g. a teaching-out timeline, when it becomes call-me-
+   *  if-anything-comes-up). Null until written; the doc still reads fine
+   *  without it. */
+  recurring_plan_outro: string | null;
   due_date: string | null;
   status: ClientInvoiceStatus;
   stripe_customer_id: string | null;

@@ -4,6 +4,7 @@ import { buildSchedule, taskStatus } from '../../data/shiftChecklist';
 import type { TaskStatus } from '../../data/shiftChecklist';
 import { useShiftChecklist } from '../../data/useShiftChecklist';
 import { useEvents } from '../../data/useEvents';
+import { useHolidayShifts } from '../../data/useHolidayShifts';
 import { dateStr } from '../../data/time';
 import { isNotificationSupported, notify, requestNotificationPermission } from '../../lib/notifications';
 import { isStandalone } from '../../lib/pwa';
@@ -30,6 +31,7 @@ const STATUS_COLOR: Record<TaskStatus, string> = {
 export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const { completedIds, loading, toggleTask } = useShiftChecklist();
   const { events, loading: eventsLoading } = useEvents();
+  const { shifts: holidayShifts } = useHolidayShifts();
   const [tick, setTick] = useState(0);
   const [permission, setPermission] = useState<NotificationPermission>(() => (isNotificationSupported() ? Notification.permission : 'denied'));
   const [showHomeScreenPrompt, setShowHomeScreenPrompt] = useState(
@@ -58,7 +60,14 @@ export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Pr
   // today, same source of truth as the Schedule calendar, so this only ever
   // shows up on days you're really scheduled to work.
   const todayStr = dateStr(now);
-  const hasShiftToday = events.some((e) => e.type === 'holiday' && e.event_date === todayStr);
+  // Two separate places a shift for today can come from: the personal
+  // Schedule calendar's own "Holiday" event type (events table), or the
+  // team's Holiday Calendar (holiday_shifts) with "This is my shift"
+  // checked — a shift entered there but never marked as your own is
+  // deliberately NOT enough (it might be a coworker's).
+  const hasShiftToday =
+    events.some((e) => e.type === 'holiday' && e.event_date === todayStr) ||
+    holidayShifts.some((s) => s.is_self && s.shift_date === todayStr);
 
   useEffect(() => {
     if (!hasShiftToday) return;
@@ -143,7 +152,7 @@ export default function OpeningClosingScreen({ homeHeadStyle, homeSubStyle }: Pr
           <div style={{ fontSize: 'var(--text-body-lg)', color: 'var(--text-quaternary)', fontWeight: 500 }}>No shift today</div>
           <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', marginTop: 4, lineHeight: 1.5 }}>
             The checklist and its task alerts only show up on days you actually have a shift scheduled — add one under
-            Schedule → Holiday Calendar and it'll appear here.
+            Schedule → Holiday Calendar (check "This is my shift") and it'll appear here.
           </div>
         </div>
       )}

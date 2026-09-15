@@ -17,10 +17,14 @@ import { useBrandLabRounds } from '../../data/useBrandLabRounds';
 import BrandLabRounds from './BrandLabRounds';
 import BrandLabApprovalNotes from './BrandLabApprovalNotes';
 import BrandLabLearning from './BrandLabLearning';
+import { useClients } from '../../data/useClients';
+import ClientSelector from '../ClientSelector';
 
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
+  selectedClientId: string | null;
+  onSelectClient: (id: string | null) => void;
 }
 
 const ARCHETYPES = [
@@ -176,11 +180,12 @@ function StepCard({
   );
 }
 
-export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
+export default function BrandLabScreen({ homeHeadStyle, homeSubStyle, selectedClientId, onSelectClient }: Props) {
   const { briefs, loading, addBrief, updateBrief, removeBrief, saveConcepts, pinConcept, saveStep } = useBrandLab();
   const { projects, patch: patchProject } = useScalingProjects();
   const nichesApi = useNiches();
   const crm = useClientCRM();
+  const clientsApi = useClients();
 
   const [showForm, setShowForm] = useState(false);
   const [showNiches, setShowNiches] = useState(false);
@@ -621,6 +626,18 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
           <span style={ghostBtn} onClick={() => setShowNiches(true)}>Niche library{nichesApi.niches.length ? ` (${nichesApi.niches.length})` : ''}</span>
           <div style={primaryBtn} onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : '+ New brief'}</div>
         </div>
+      </div>
+
+      <div style={{ marginTop: 20 }}>
+        <ClientSelector
+          clients={clientsApi.clients}
+          loading={clientsApi.loading}
+          error={clientsApi.error}
+          selectedId={selectedClientId}
+          onSelect={onSelectClient}
+          onCreate={clientsApi.createClient}
+          emptyHint="Briefs below aren't filtered by this yet — it links a client to a new brief in the form."
+        />
       </div>
 
       {showForm && (

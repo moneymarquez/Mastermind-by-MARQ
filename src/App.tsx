@@ -1,6 +1,7 @@
 import AuthedGate from './AuthedGate';
 import { useAuth } from './auth/useAuth';
 import AuthScreen from './auth/AuthScreen';
+import SetNewPasswordScreen from './auth/SetNewPasswordScreen';
 import { isOwnerIdentity } from './auth/ownerIdentity';
 import { useUserRole } from './data/useUserRole';
 import ClientPortal from './client-portal/ClientPortal';
@@ -8,6 +9,7 @@ import ClientPortal from './client-portal/ClientPortal';
 interface GatedProps {
   userId: string;
   userEmail: string | null | undefined;
+  userDisplayName: string | null;
   onSignOut: () => void;
 }
 
@@ -16,7 +18,7 @@ interface GatedProps {
  *  no useMastermindState, no module/subscription queries, none of it.
  *  Only the owner path needs to stay perfectly synchronous (see
  *  ownerIdentity.ts); everyone else pays one profiles lookup here. */
-function Gated({ userId, userEmail, onSignOut }: GatedProps) {
+function Gated({ userId, userEmail, userDisplayName, onSignOut }: GatedProps) {
   const isOwner = isOwnerIdentity({ id: userId, email: userEmail });
   const { role, loading } = useUserRole(isOwner);
 
@@ -26,18 +28,25 @@ function Gated({ userId, userEmail, onSignOut }: GatedProps) {
   if (role === 'client') {
     return <ClientPortal onSignOut={onSignOut} />;
   }
-  return <AuthedGate userId={userId} userEmail={userEmail} onSignOut={onSignOut} />;
+  return <AuthedGate userId={userId} userEmail={userEmail} userDisplayName={userDisplayName} onSignOut={onSignOut} />;
 }
 
 export default function App() {
-  const { session, loading, signIn, signUp, signOut } = useAuth();
+  const { session, loading, signIn, signUp, signOut, passwordRecovery, resetPassword, completePasswordReset } = useAuth();
 
   if (loading) {
     return <div style={{ minHeight: '100vh', background: 'var(--bg)' }} />;
   }
 
+  // Takes priority over the session check below — clicking a reset-
+  // password email link hands Supabase a real session, but one that's
+  // only good for setting a new password, not for using the app.
+  if (passwordRecovery) {
+    return <SetNewPasswordScreen onComplete={completePasswordReset} />;
+  }
+
   if (!session) {
-    return <AuthScreen onSignIn={signIn} onSignUp={signUp} />;
+    return <AuthScreen onSignIn={signIn} onSignUp={signUp} onResetPassword={resetPassword} />;
   }
 
   // Keyed on the user id so a sign-out/sign-in as a different account
@@ -47,6 +56,12 @@ export default function App() {
   // the owner check stays synchronous and zero-network — see
   // src/auth/ownerIdentity.ts for why that matters.
   return (
-    <Gated key={session.user.id} userId={session.user.id} userEmail={session.user.email} onSignOut={signOut} />
+    <Gated
+      key={session.user.id}
+      userId={session.user.id}
+      userEmail={session.user.email}
+      userDisplayName={(session.user.user_metadata?.full_name as string | undefined)?.trim() || null}
+      onSignOut={signOut}
+    />
   );
 }
