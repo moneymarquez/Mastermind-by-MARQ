@@ -422,18 +422,7 @@ export default function LeadFlowPool() {
             return (
               <div key={lead.id} style={{ background: '#fff', borderRadius: 'var(--radius-lg)', padding: '1rem 1.25rem', border: '1px solid #f3f4f6', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10 }}>
-                  <div style={{ flex: '1 1 240px', cursor: 'pointer', display: 'flex', gap: 10 }} onClick={() => setOpenId(open ? null : lead.id)}>
-                    {/* The whole point of the list: green means nobody has
-                        touched this one, blue means it's already been worked. */}
-                    <div style={{
-                      flex: '0 0 auto', alignSelf: 'flex-start', padding: '4px 9px', borderRadius: 'var(--radius-sm)',
-                      background: touched ? '#dbeafe' : '#dcfce7',
-                      color: touched ? '#1d4ed8' : '#15803d',
-                      border: `1px solid ${touched ? '#93c5fd' : '#86efac'}`,
-                      fontSize: 'var(--text-caption)', fontWeight: 800, letterSpacing: 0.3, whiteSpace: 'nowrap',
-                    }}>
-                      {touched ? 'RECYCLED' : 'GO TIME'}
-                    </div>
+                  <div style={{ flex: '1 1 240px', cursor: 'pointer' }} onClick={() => setOpenId(open ? null : lead.id)}>
                     <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       {lead.tier && (
@@ -441,6 +430,18 @@ export default function LeadFlowPool() {
                       )}
                       <span style={{ fontWeight: 600, fontSize: 'var(--text-subhead)' }}>{lead.business_name}</span>
                       {lead.fizzle_score != null && <span style={{ fontSize: 'var(--text-caption)', color: '#9ca3af' }}>{lead.fizzle_score}</span>}
+                      {/* Sits on the title line, after the name and score:
+                          green when nobody has touched this lead, blue once
+                          it's been worked. */}
+                      <span style={{
+                        padding: '3px 9px', borderRadius: 'var(--radius-pill)',
+                        background: touched ? '#dbeafe' : '#dcfce7',
+                        color: touched ? '#1d4ed8' : '#15803d',
+                        border: `1px solid ${touched ? '#93c5fd' : '#86efac'}`,
+                        fontSize: 'var(--text-caption)', fontWeight: 800, letterSpacing: 0.3, whiteSpace: 'nowrap',
+                      }}>
+                        {touched ? 'RECYCLED' : 'GO TIME'}
+                      </span>
                     </div>
                     <div style={{ fontSize: 'var(--text-body)', color: '#9ca3af', marginTop: 2 }}>
                       {[lead.category || lead.industry, lead.city || lead.state].filter(Boolean).join(' · ')}
