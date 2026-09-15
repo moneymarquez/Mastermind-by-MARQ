@@ -95,6 +95,95 @@ const linkBtn: React.CSSProperties = {
 };
 const label: React.CSSProperties = { fontSize: 'var(--text-caption)', color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.3 };
 
+/** What happened on an attempt. Kept as plain statuses on the lead rather
+ *  than a call-log table: the useful question here is "where does this one
+ *  stand right now", and the attempt count plus last-called date answers the
+ *  rest without another table to join. */
+// Values must match the leads_status_check constraint (schema_090) — a value
+// outside it is rejected outright by Postgres, not quietly ignored.
+const CALL_OUTCOMES: { value: string; label: string; color: string }[] = [
+  { value: 'no_answer', label: 'No answer', color: '#6b7280' },
+  { value: 'voicemail', label: 'Left voicemail', color: '#6b7280' },
+  { value: 'gatekeeper', label: "Couldn't reach owner", color: '#ca8a04' },
+  { value: 'callback', label: 'Callback later', color: '#2563eb' },
+  { value: 'interested', label: 'Interested', color: '#16a34a' },
+  { value: 'not_interested', label: 'Not interested', color: '#ef4444' },
+];
+
+const OUTCOME_LABEL: Record<string, string> = Object.fromEntries(
+  CALL_OUTCOMES.map((o) => [o.value, o.label]),
+);
+
+/** Log an attempt and keep notes on it. */
+function CallLogSection({
+  lead,
+  onLogCall,
+  onPatch,
+}: {
+  lead: LeadflowLead;
+  onLogCall: (lead: LeadflowLead, status: string) => Promise<boolean>;
+  onPatch: (id: string, patch: Partial<LeadflowLead>) => Promise<boolean>;
+}) {
+  const [notes, setNotes] = useState(lead.call_notes ?? '');
+  const [saving, setSaving] = useState('');
+
+  const log = async (status: string) => {
+    setSaving(status);
+    await onLogCall(lead, status);
+    setSaving('');
+  };
+
+  const lastCalled = lead.last_called_at ? new Date(lead.last_called_at).toLocaleDateString() : null;
+  const current = lead.status && lead.status !== 'new' ? lead.status : '';
+
+  return (
+    <div>
+      <div style={{ ...label, marginBottom: 6 }}>Call outcome</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {CALL_OUTCOMES.map((o) => {
+          const active = current === o.value;
+          return (
+            <button
+              key={o.value}
+              onClick={() => log(o.value)}
+              disabled={!!saving}
+              style={{
+                padding: '6px 12px', borderRadius: 'var(--radius-pill)', cursor: saving ? 'default' : 'pointer',
+                border: `1px solid ${active ? o.color : '#e5e7eb'}`,
+                background: active ? o.color : '#fff',
+                color: active ? '#fff' : o.color,
+                fontSize: 'var(--text-body)', fontWeight: 600, opacity: saving && saving !== o.value ? 0.5 : 1,
+              }}
+            >
+              {saving === o.value ? '…' : o.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {(current || lead.call_count) && (
+        <div style={{ fontSize: 'var(--text-caption)', color: '#9ca3af', marginTop: 6 }}>
+          {current ? OUTCOME_LABEL[current] ?? current : 'Logged'}
+          {lead.call_count ? ` · ${lead.call_count} attempt${lead.call_count === 1 ? '' : 's'}` : ''}
+          {lastCalled ? ` · last ${lastCalled}` : ''}
+        </div>
+      )}
+
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        onBlur={() => notes !== (lead.call_notes ?? '') && onPatch(lead.id, { call_notes: notes.trim() || null })}
+        placeholder="Call notes — who you spoke to, what they said, when to try again…"
+        style={{
+          width: '100%', boxSizing: 'border-box', marginTop: 8, minHeight: 70, padding: '8px 12px',
+          borderRadius: 'var(--radius-sm)', border: '1px solid #e5e7eb', fontSize: 'var(--text-body)',
+          fontFamily: 'inherit', resize: 'vertical',
+        }}
+      />
+    </div>
+  );
+}
+
 /** Books the kickoff call and hands the lead to Client CRM in one step.
  *
  *  Pick a slot, press once: a crm_clients row is created carrying the lead's
@@ -111,7 +200,7 @@ function HandoffSection({ lead }: { lead: LeadflowLead }) {
   const [date, setDate] = useState(tomorrow);
   const [time, setTime] = useState('10:00');
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(lead.status === 'sent_to_crm');
+  const [done, setDone] = useState(lead.status === 'client');
   const [err, setErr] = useState('');
 
   const send = async () => {
@@ -167,7 +256,11 @@ function HandoffSection({ lead }: { lead: LeadflowLead }) {
   );
 }
 
-function Detail({ lead }: { lead: LeadflowLead }) {
+function Detail({ lead, onLogCall, onPatch }: {
+  lead: LeadflowLead;
+  onLogCall: (lead: LeadflowLead, status: string) => Promise<boolean>;
+  onPatch: (id: string, patch: Partial<LeadflowLead>) => Promise<boolean>;
+}) {
   const owner = bestOwnerGuess(lead);
   // Prefilled with whatever the scraper found, but editable — the registry
   // lookup is currently returning nothing, so in practice this starts empty
@@ -269,13 +362,15 @@ function Detail({ lead }: { lead: LeadflowLead }) {
         </div>
       </div>
 
+      <CallLogSection lead={lead} onLogCall={onLogCall} onPatch={onPatch} />
+
       <HandoffSection lead={lead} />
     </div>
   );
 }
 
 export default function LeadFlowPool() {
-  const { pool, loading, notConnected, removeFromPool } = useLeadflowPool();
+  const { pool, loading, notConnected, removeFromPool, patchLead, logCall } = useLeadflowPool();
   const [sortBy, setSortBy] = useState<'industry' | 'reviews' | 'score'>('score');
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -340,7 +435,7 @@ export default function LeadFlowPool() {
                     <button onClick={() => removeFromPool(lead.id)} style={{ padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid #fee2e2', background: '#fff', color: '#ef4444', cursor: 'pointer', fontSize: 'var(--text-body)', fontWeight: 500 }}>Remove</button>
                   </div>
                 </div>
-                {open && <Detail lead={lead} />}
+                {open && <Detail lead={lead} onLogCall={logCall} onPatch={patchLead} />}
               </div>
             );
           })}

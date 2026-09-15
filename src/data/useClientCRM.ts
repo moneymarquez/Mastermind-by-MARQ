@@ -84,7 +84,7 @@ export function useClientCRM() {
 
   const updateClient = async (
     id: string,
-    patch: Partial<Pick<CrmClient, 'business_name' | 'contact_name' | 'contact_email' | 'contact_phone' | 'notes' | 'reveal_full_schedule'>>,
+    patch: Partial<Pick<CrmClient, 'business_name' | 'contact_name' | 'contact_email' | 'contact_phone' | 'notes' | 'transcript' | 'reveal_full_schedule'>>,
   ) => {
     await supabase.from('crm_clients').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id);
     await load();

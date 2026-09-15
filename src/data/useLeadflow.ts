@@ -55,6 +55,7 @@ export interface LeadflowLead {
   status: string | null;
   call_notes: string | null;
   call_count: number | null;
+  last_called_at: string | null;
 }
 
 export interface LeadflowHistoryItem {
@@ -251,13 +252,15 @@ export async function sendLeadToCrm(
     .single();
   if (evErr || !ev) throw new Error(`Client created, but the meeting failed: ${evErr?.message ?? 'unknown error'}`);
 
-  // Best-effort: marks the lead so it isn't worked twice. A failure here
-  // doesn't undo real work already done, so it must not surface as an error.
+  // Best-effort: marks the lead so it isn't worked twice. 'client' rather
+  // than a descriptive string — leads_status_check rejects anything outside
+  // its vocabulary, and an earlier 'sent_to_crm' would have failed here.
+  // A failure doesn't undo real work already done, so it must not surface.
   try {
     await authedFetch(`/api/leadflow/leads/${lead.id}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ status: 'sent_to_crm' }),
+      body: JSON.stringify({ status: 'client' }),
     });
   } catch { /* handoff already succeeded; status is a convenience */ }
 
@@ -288,7 +291,30 @@ export function useLeadflowPool() {
     return res.ok;
   };
 
-  return { pool, loading, notConnected, removeFromPool };
+  /** Patch a lead in place. Local state is updated from the same patch
+   *  rather than reloading all 500: a call outcome is logged mid-call, and
+   *  a full refetch would collapse the expanded card being worked in. */
+  const patchLead = async (id: string, patch: Partial<LeadflowLead>) => {
+    const res = await authedFetch(`/api/leadflow/leads/${id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(patch),
+    });
+    if (res.ok) setPool((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+    return res.ok;
+  };
+
+  /** Logs the result of an attempt: the outcome itself, plus the call
+   *  counters, so "tried twice, never reached anyone" is visible without
+   *  reading notes. */
+  const logCall = async (lead: LeadflowLead, status: string) =>
+    patchLead(lead.id, {
+      status,
+      call_count: (lead.call_count ?? 0) + 1,
+      last_called_at: new Date().toISOString(),
+    } as Partial<LeadflowLead>);
+
+  return { pool, loading, notConnected, removeFromPool, patchLead, logCall };
 }
 
 // Backs War Room's queue builder. The original app pulled all ~58k leads

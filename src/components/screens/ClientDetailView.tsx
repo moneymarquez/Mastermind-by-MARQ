@@ -46,6 +46,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
   const [emailDraft, setEmailDraft] = useState(client.contact_email ?? '');
   const [phoneDraft, setPhoneDraft] = useState(client.contact_phone ?? '');
   const [notesDraft, setNotesDraft] = useState(client.notes ?? '');
+  const [transcriptDraft, setTranscriptDraft] = useState(client.transcript ?? '');
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState('');
   const [analysisDraft, setAnalysisDraft] = useState(client.audit?.analysis_text ?? '');
@@ -391,6 +392,22 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         onChange={(e) => setNotesDraft(e.target.value)}
         onBlur={() => notesDraft !== (client.notes ?? '') && crm.updateClient(client.id, { notes: notesDraft.trim() || null })}
       />
+
+      {/* Kickoff-call transcript. Taller than notes and kept separate on
+          purpose: notes is a scratchpad, this is written once and worth
+          keeping intact. Saves on blur, same as every other field here. */}
+      <div style={{ marginTop: 14, maxWidth: 640 }}>
+        <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 4 }}>
+          Call transcript{client.transcript ? '' : ' — paste after the kickoff call'}
+        </div>
+        <textarea
+          style={{ ...textareaStyle, minHeight: 160, width: '100%' }}
+          placeholder="Paste the transcribed call here…"
+          value={transcriptDraft}
+          onChange={(e) => setTranscriptDraft(e.target.value)}
+          onBlur={() => transcriptDraft !== (client.transcript ?? '') && crm.updateClient(client.id, { transcript: transcriptDraft.trim() || null })}
+        />
+      </div>
 
       {/* Client login (Step 1 of the client-login/audit/invoice build) — a
           real, separate account scoped to just this client via RLS (see

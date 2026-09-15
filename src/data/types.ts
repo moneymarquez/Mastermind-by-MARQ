@@ -992,6 +992,10 @@ export interface CrmClient {
    *  /client/<token> — they have no login, so this is what stands in. */
   public_token: string;
   notes: string | null;
+  /** Kickoff-call transcript, pasted in after the call. Separate from
+   *  notes: notes is a short scratchpad edited constantly, a transcript is
+   *  long, written once, and shouldn't be at risk from a careless edit. */
+  transcript: string | null;
   last_activity_at: string;
   created_at: string;
   updated_at: string;
