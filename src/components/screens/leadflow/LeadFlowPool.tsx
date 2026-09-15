@@ -43,6 +43,50 @@ function LeadGallery({ paths }: { paths: string[] }) {
 
 const TIER_COLOR: Record<string, string> = { A: '#16a34a', B: '#ca8a04', C: '#9ca3af' };
 
+/** Copies text, with visible confirmation.
+ *
+ *  Exists because the Utah registry search is a form POST behind a Cloudflare
+ *  bot check — there's no query parameter to prefill a business name into, so
+ *  the name has to travel by clipboard and get pasted. Reports failure rather
+ *  than silently doing nothing: clipboard writes can be refused outright
+ *  (permissions, a non-secure context), and a button that looks like it
+ *  worked but didn't is worse than one that admits it. */
+function CopyButton({ text, label }: { text: string; label: string }) {
+  const [state, setState] = useState<'idle' | 'ok' | 'fail'>('idle');
+
+  useEffect(() => {
+    if (state === 'idle') return;
+    const t = setTimeout(() => setState('idle'), 1600);
+    return () => clearTimeout(t);
+  }, [state]);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setState('ok');
+    } catch {
+      setState('fail');
+    }
+  };
+
+  const face = state === 'ok' ? '✓ Copied' : state === 'fail' ? '✕ Copy blocked' : `📋 ${label}`;
+  return (
+    <button
+      onClick={copy}
+      disabled={!text}
+      style={{
+        padding: '7px 12px', borderRadius: 'var(--radius-sm)', cursor: text ? 'pointer' : 'default',
+        border: `1px solid ${state === 'ok' ? '#16a34a' : '#e5e7eb'}`,
+        background: state === 'ok' ? '#f0fdf4' : '#fff',
+        color: state === 'ok' ? '#16a34a' : state === 'fail' ? '#ef4444' : '#374151',
+        fontSize: 'var(--text-body)', fontWeight: 600,
+      }}
+    >
+      {face}
+    </button>
+  );
+}
+
 const linkBtn: React.CSSProperties = {
   padding: '7px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid #e5e7eb',
   background: '#fff', color: '#374151', fontSize: 'var(--text-body)', fontWeight: 600,
@@ -104,12 +148,30 @@ function Detail({ lead }: { lead: LeadflowLead }) {
         )}
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
         <a href={mapsUrl(lead)} target="_blank" rel="noopener noreferrer" style={linkBtn}>📍 Maps</a>
         {sv && <a href={sv} target="_blank" rel="noopener noreferrer" style={linkBtn}>👁 Street View</a>}
         {site && <a href={site} target="_blank" rel="noopener noreferrer" style={linkBtn}>🌐 Website</a>}
-        {reg && <a href={reg} target="_blank" rel="noopener noreferrer" style={linkBtn}>🏛 State registry</a>}
+        <CopyButton text={lead.business_name} label="Copy name" />
+        {reg && (
+          // Copies on the way out too, so the single tap that opens the
+          // registry also leaves the name ready to paste into its form.
+          <a
+            href={reg}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => { navigator.clipboard?.writeText(lead.business_name).catch(() => {}); }}
+            style={linkBtn}
+          >
+            🏛 State registry
+          </a>
+        )}
       </div>
+      {reg && (
+        <div style={{ fontSize: 'var(--text-caption)', color: '#9ca3af', marginTop: -6 }}>
+          Opening the registry copies “{lead.business_name}” — paste it into Name, or use Principal Name to search an owner directly.
+        </div>
+      )}
 
       {/* Name → TruePeopleSearch. A link, not a scrape: the site runs bot
           protection, so scraping would be brittle and against its terms. */}
