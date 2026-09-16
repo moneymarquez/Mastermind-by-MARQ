@@ -4,7 +4,7 @@ import { timeToMinutes, minutesToTime } from '../../../data/time';
 import type { LeadflowLead } from '../../../data/useLeadflow';
 import { GREEN } from './shared';
 import NotConnectedBanner from './NotConnectedBanner';
-import { mapsUrl, streetViewUrl, websiteUrl, registryUrl, peopleSearchUrl, bestOwnerGuess, staleLabel, leadImagePaths, isTouched } from './leadLinks';
+import { mapsUrl, streetViewUrl, websiteUrl, registryUrl, peopleSearchUrl, bestOwnerGuess, staleLabel, leadImagePaths, isTouched, hasOwnerContact } from './leadLinks';
 
 /** Signed thumbnails of the storefront, menu and food.
  *
@@ -184,6 +184,124 @@ function CallLogSection({
   );
 }
 
+
+const fieldStyle: React.CSSProperties = {
+  padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid #e5e7eb',
+  fontSize: 'var(--text-body)', fontFamily: 'inherit',
+};
+
+/** The owner's real name and direct line, typed in by hand.
+ *
+ *  This is the payoff of the registry and people-search links above it: the
+ *  scraper can't get owner details, so the answer arrives through those and
+ *  lands here. Saving a name and a direct number lights the OWNER ✓ marker
+ *  on the card — which stays alongside GO TIME, because knowing who to ask
+ *  for is not the same as having called them. */
+function OwnerSection({ lead, onPatch }: {
+  lead: LeadflowLead;
+  onPatch: (id: string, patch: Partial<LeadflowLead>) => Promise<boolean>;
+}) {
+  const [name, setName] = useState(lead.owner_name ?? '');
+  const [phone, setPhone] = useState(lead.owner_phone ?? '');
+  const [email, setEmail] = useState(lead.owner_email ?? '');
+  const guess = bestOwnerGuess(lead);
+  const people = peopleSearchUrl(name, lead);
+  const known = hasOwnerContact({ owner_name: name, owner_phone: phone });
+
+  const save = (patch: Partial<LeadflowLead>) => onPatch(lead.id, patch);
+
+  return (
+    <div>
+      <div style={{ ...label, marginBottom: 6 }}>
+        Owner contact {known && <span style={{ color: '#7c3aed' }}>· ✓ on file</span>}
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={() => name !== (lead.owner_name ?? '') && save({ owner_name: name.trim() || null })}
+          placeholder="Owner name"
+          style={{ ...fieldStyle, flex: '1 1 200px' }}
+        />
+        <input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          onBlur={() => phone !== (lead.owner_phone ?? '') && save({ owner_phone: phone.trim() || null })}
+          placeholder="Direct number"
+          style={{ ...fieldStyle, flex: '1 1 150px' }}
+        />
+        <input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onBlur={() => email !== (lead.owner_email ?? '') && save({ owner_email: email.trim() || null })}
+          placeholder="Email (optional)"
+          style={{ ...fieldStyle, flex: '1 1 180px' }}
+        />
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 8 }}>
+        {phone.trim() && (
+          <a href={`tel:${phone.trim()}`} style={{ ...linkBtn, color: '#7c3aed', borderColor: '#ddd6fe', background: '#faf5ff' }}>
+            📞 Call owner direct
+          </a>
+        )}
+        <a
+          href={people ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-disabled={!people}
+          style={{ ...linkBtn, background: people ? GREEN : '#f3f4f6', color: people ? '#fff' : '#9ca3af', borderColor: people ? GREEN : '#e5e7eb', pointerEvents: people ? 'auto' : 'none' }}
+        >
+          🔎 TruePeopleSearch
+        </a>
+      </div>
+
+      {!name && (guess || lead.registry_note) && (
+        <div style={{ fontSize: 'var(--text-caption)', color: '#9ca3af', marginTop: 6 }}>
+          {guess ? `Registry suggested: ${guess}${lead.owner_is_agent_only ? ' (registered agent — may not be the owner)' : ''}` : lead.registry_note}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** A manual "look at this one carefully" marker, with an optional reason. */
+function FlagSection({ lead, onPatch }: {
+  lead: LeadflowLead;
+  onPatch: (id: string, patch: Partial<LeadflowLead>) => Promise<boolean>;
+}) {
+  const flagged = !!lead.flagged;
+  const [note, setNote] = useState(lead.flag_note ?? '');
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <button
+          onClick={() => onPatch(lead.id, { flagged: !flagged })}
+          style={{
+            padding: '7px 12px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+            border: `1px solid ${flagged ? '#fbbf24' : '#e5e7eb'}`,
+            background: flagged ? '#fef3c7' : '#fff',
+            color: flagged ? '#92400e' : '#374151',
+            fontSize: 'var(--text-body)', fontWeight: 600,
+          }}
+        >
+          {flagged ? '🚩 Flagged' : '🏳 Flag this lead'}
+        </button>
+        {flagged && (
+          <input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            onBlur={() => note !== (lead.flag_note ?? '') && onPatch(lead.id, { flag_note: note.trim() || null })}
+            placeholder="Why? e.g. gone quiet 4 yrs, check before calling"
+            style={{ ...fieldStyle, flex: '1 1 240px' }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
 /** Books the kickoff call and hands the lead to Client CRM in one step.
  *
  *  Pick a slot, press once: a crm_clients row is created carrying the lead's
@@ -261,11 +379,6 @@ function Detail({ lead, onLogCall, onPatch }: {
   onLogCall: (lead: LeadflowLead, status: string) => Promise<boolean>;
   onPatch: (id: string, patch: Partial<LeadflowLead>) => Promise<boolean>;
 }) {
-  const owner = bestOwnerGuess(lead);
-  // Prefilled with whatever the scraper found, but editable — the registry
-  // lookup is currently returning nothing, so in practice this starts empty
-  // and gets typed in after reading the name off the state registry.
-  const [person, setPerson] = useState(owner);
   // Memoised because LeadGallery's effect keys off this array's identity:
   // rebuilt inline it would be a new array on every render, so every
   // keystroke in the name field below would re-sign every image.
@@ -274,7 +387,6 @@ function Detail({ lead, onLogCall, onPatch }: {
   const sv = streetViewUrl(lead);
   const site = websiteUrl(lead.website);
   const reg = registryUrl(lead);
-  const people = peopleSearchUrl(person, lead);
   const stale = staleLabel(lead.days_since_last_review);
 
   return (
@@ -300,19 +412,6 @@ function Detail({ lead, onLogCall, onPatch }: {
         </div>
       )}
 
-      <div>
-        <div style={{ ...label, marginBottom: 6 }}>Owner</div>
-        {owner ? (
-          <div style={{ fontSize: 'var(--text-body)' }}>
-            {owner}
-            {lead.owner_is_agent_only && <span style={{ color: '#9ca3af' }}> — registered agent only, may not be the owner</span>}
-          </div>
-        ) : (
-          <div style={{ fontSize: 'var(--text-body)', color: '#9ca3af' }}>
-            {lead.registry_note || 'No owner on file — open the registry below, then search the name.'}
-          </div>
-        )}
-      </div>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
         <a href={mapsUrl(lead)} target="_blank" rel="noopener noreferrer" style={linkBtn}>📍 Maps</a>
@@ -339,28 +438,9 @@ function Detail({ lead, onLogCall, onPatch }: {
         </div>
       )}
 
-      {/* Name → TruePeopleSearch. A link, not a scrape: the site runs bot
-          protection, so scraping would be brittle and against its terms. */}
-      <div>
-        <div style={{ ...label, marginBottom: 6 }}>Find the person</div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <input
-            value={person}
-            onChange={(e) => setPerson(e.target.value)}
-            placeholder="Owner name from the registry"
-            style={{ flex: '1 1 220px', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid #e5e7eb', fontSize: 'var(--text-body)' }}
-          />
-          <a
-            href={people ?? undefined}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-disabled={!people}
-            style={{ ...linkBtn, background: people ? GREEN : '#f3f4f6', color: people ? '#fff' : '#9ca3af', borderColor: people ? GREEN : '#e5e7eb', pointerEvents: people ? 'auto' : 'none' }}
-          >
-            🔎 TruePeopleSearch
-          </a>
-        </div>
-      </div>
+      <OwnerSection lead={lead} onPatch={onPatch} />
+
+      <FlagSection lead={lead} onPatch={onPatch} />
 
       <CallLogSection lead={lead} onLogCall={onLogCall} onPatch={onPatch} />
 
@@ -418,6 +498,7 @@ export default function LeadFlowPool() {
           {sorted.map((lead) => {
             const open = openId === lead.id;
             const touched = isTouched(lead);
+            const ownerKnown = hasOwnerContact(lead);
             const stale = staleLabel(lead.days_since_last_review);
             return (
               <div key={lead.id} style={{ background: '#fff', borderRadius: 'var(--radius-lg)', padding: '1rem 1.25rem', border: '1px solid #f3f4f6', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
@@ -442,12 +523,38 @@ export default function LeadFlowPool() {
                       }}>
                         {touched ? 'RECYCLED' : 'GO TIME'}
                       </span>
+                      {/* Sits alongside GO TIME rather than replacing it —
+                          having the owner's number is research done, not a
+                          call made, so the lead is still up for grabs. */}
+                      {ownerKnown && (
+                        <span title={lead.owner_phone ?? ''} style={{
+                          padding: '3px 9px', borderRadius: 'var(--radius-pill)',
+                          background: '#faf5ff', color: '#7c3aed', border: '1px solid #ddd6fe',
+                          fontSize: 'var(--text-caption)', fontWeight: 800, letterSpacing: 0.3, whiteSpace: 'nowrap',
+                        }}>
+                          ✓ OWNER
+                        </span>
+                      )}
+                      {lead.flagged && (
+                        <span title={lead.flag_note ?? 'Flagged'} style={{
+                          padding: '3px 9px', borderRadius: 'var(--radius-pill)',
+                          background: '#fef3c7', color: '#92400e', border: '1px solid #fbbf24',
+                          fontSize: 'var(--text-caption)', fontWeight: 800, letterSpacing: 0.3, whiteSpace: 'nowrap',
+                        }}>
+                          🚩 FLAGGED
+                        </span>
+                      )}
                     </div>
                     <div style={{ fontSize: 'var(--text-body)', color: '#9ca3af', marginTop: 2 }}>
                       {[lead.category || lead.industry, lead.city || lead.state].filter(Boolean).join(' · ')}
                       {lead.review_count ? ` · ⭐ ${lead.review_count}` : ''}
                       {stale ? ` · last review ${stale} ago` : ''}
                     </div>
+                    {ownerKnown && lead.owner_phone && (
+                      <a href={`tel:${lead.owner_phone}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: 'var(--text-body)', color: '#7c3aed', fontWeight: 700, textDecoration: 'none', marginTop: 4, display: 'block' }}>
+                        📞 {lead.owner_name}: {lead.owner_phone}
+                      </a>
+                    )}
                     {lead.phone && <a href={`tel:${lead.phone}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: 'var(--text-body)', color: GREEN, fontWeight: 600, textDecoration: 'none', marginTop: 4, display: 'inline-block' }}>📞 {lead.phone}</a>}
                     {touched && (
                       <div style={{ fontSize: 'var(--text-caption)', color: '#1d4ed8', marginTop: 4, fontWeight: 600 }}>

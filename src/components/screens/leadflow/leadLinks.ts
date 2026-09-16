@@ -97,6 +97,17 @@ export function bestOwnerGuess(lead: Pick<LeadflowLead, 'owner_name' | 'registry
     || (lead.registered_agent || '').trim();
 }
 
+/** Whether the owner's real contact details have been tracked down.
+ *
+ *  Needs a name AND a direct number: a name alone is what the registry
+ *  gives you and still leaves you calling the storefront, which is the
+ *  problem this is meant to mark as solved. Deliberately separate from
+ *  isTouched — finding the owner is not the same as having called them, so
+ *  a lead can be fully researched and still untouched. */
+export function hasOwnerContact(lead: Pick<LeadflowLead, 'owner_name' | 'owner_phone'>): boolean {
+  return !!(lead.owner_name || '').trim() && !!(lead.owner_phone || '').trim();
+}
+
 /** Whether this lead has already been worked.
  *
  *  Three independent signals rather than status alone, because any one of

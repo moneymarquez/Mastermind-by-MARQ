@@ -53,6 +53,16 @@ export interface LeadflowLead {
   registry_note: string | null;
   registry_url: string | null;
   status: string | null;
+  /** Owner details, typed in by hand from the registry / people search —
+   *  the scraper's registry lookup returns nothing. owner_phone is the
+   *  direct line, as distinct from `phone`, which is the storefront number
+   *  you're trying to get past. */
+  owner_phone: string | null;
+  owner_email: string | null;
+  /** Manual "look at this one carefully" marker. Independent of status:
+   *  flagging isn't working the lead, so it never makes one look called. */
+  flagged: boolean | null;
+  flag_note: string | null;
   call_notes: string | null;
   call_count: number | null;
   last_called_at: string | null;
