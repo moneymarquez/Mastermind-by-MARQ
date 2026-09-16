@@ -374,18 +374,45 @@ export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const [category, setCategory] = useState('');
   const [targetCost, setTargetCost] = useState('');
   const [url, setUrl] = useState('');
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const submit = async () => {
-    if (!title.trim()) return;
-    await addGoal({
-      title: title.trim(),
-      why: why.trim() || null,
-      category: category.trim() || null,
-      target_cost: targetCost ? Number(targetCost) : null,
-      url: url.trim() || null,
-      deadline: null,
-    });
+    if (saving) return;
+    if (!title.trim()) {
+      setSaveError('A goal needs a title.');
+      return;
+    }
+    // Target cost is a numeric column. Number('2-4 clients weekly') is NaN,
+    // which JSON.stringify writes as null — so anything typed here that isn't
+    // a plain number used to vanish on save without a word. Say so instead.
+    const costRaw = targetCost.replace(/[$,\s]/g, '');
+    const cost = costRaw ? Number(costRaw) : null;
+    if (cost !== null && !Number.isFinite(cost)) {
+      setSaveError('Target cost has to be a single dollar amount (e.g. 25000). Put ranges and metrics in "Why does it matter?" instead.');
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await addGoal({
+        title: title.trim(),
+        why: why.trim() || null,
+        category: category.trim() || null,
+        target_cost: cost,
+        url: url.trim() || null,
+        deadline: null,
+      });
+    } catch (e) {
+      // The form stays filled on purpose — losing what was typed to a failed
+      // save is worse than the failure itself.
+      setSaveError(e instanceof Error ? e.message : 'Could not save the goal.');
+      setSaving(false);
+      return;
+    }
+    setSaving(false);
     setTitle(''); setWhy(''); setCategory(''); setTargetCost(''); setUrl('');
+    setSaveError(null);
     setShowForm(false);
   };
 
@@ -415,8 +442,11 @@ export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
             style={{ alignSelf: 'flex-start', padding: '9px 16px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer' }}
             onClick={submit}
           >
-            Save goal
+            {saving ? 'Saving…' : 'Save goal'}
           </div>
+          {saveError && (
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--danger)', lineHeight: 1.4 }}>{saveError}</div>
+          )}
           <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>You'll lock it into hard numbers and pick a path right after saving.</div>
         </div>
       )}

@@ -41,7 +41,19 @@ export function useGoals() {
     url: string | null;
     deadline: string | null;
   }) => {
-    const { data } = await supabase.from('goals').insert(g).select().single();
+    // goals.user_id is NOT NULL and defaults to auth.uid(). When the session
+    // has lapsed that default evaluates to null, so the insert dies on a
+    // not-null violation whose message says nothing about being signed out.
+    // Resolve the id here so that case gets a sentence the user can act on.
+    const { data: auth } = await supabase.auth.getUser();
+    const userId = auth.user?.id;
+    if (!userId) throw new Error('You appear to be signed out — reload the page and sign in, then save again.');
+
+    // Throws rather than returning null on failure. It used to destructure
+    // only { data }, so a rejected insert — RLS, a constraint, a bad value —
+    // was indistinguishable from success and the goal just never appeared.
+    const { data, error } = await supabase.from('goals').insert({ ...g, user_id: userId }).select().single();
+    if (error) throw new Error(error.message);
     await load();
     return data as Goal | null;
   };
