@@ -76,6 +76,26 @@ export async function leadflowLeads(request: Request, env: LeadflowEnv): Promise
       return new Response(JSON.stringify(unique), { status: 200, headers: { 'content-type': 'application/json' } });
     }
 
+    // Distinct city+state pairs, for the geography pickers. Paired rather
+    // than two independent lists because a bare city name isn't unique —
+    // choosing "Springfield" has to mean a specific one.
+    if (url.searchParams.get('citiesOnly')) {
+      const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?select=city,state&limit=20000`, { headers: leadflowHeaders(env) });
+      const rows = (await res.json()) as { city: string | null; state: string | null }[];
+      const counts = new Map<string, { city: string; state: string; count: number }>();
+      for (const r of rows) {
+        const city = (r.city || '').trim();
+        if (!city) continue;
+        const state = (r.state || '').trim().toUpperCase();
+        const key = `${state}|${city}`;
+        const prev = counts.get(key);
+        if (prev) prev.count++;
+        else counts.set(key, { city, state, count: 1 });
+      }
+      const list = [...counts.values()].sort((a, b) => b.count - a.count || a.city.localeCompare(b.city));
+      return new Response(JSON.stringify(list), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+
     if (url.searchParams.get('counts')) {
       const [total, hot, warm, cold] = await Promise.all([
         countRows(env, 'select=id'),
@@ -102,11 +122,18 @@ export async function leadflowLeads(request: Request, env: LeadflowEnv): Promise
     const industry = params.get('industry');
     const tag = params.get('tag');
     const state = params.get('state');
+    const city = params.get('city');
     const pooled = params.get('pooled');
+    const dialingQueued = params.get('dialing_queued');
     if (industry && industry !== 'All') qs.set('industry', `eq.${industry}`);
     if (tag && tag !== 'All') qs.set('tag', `eq.${tag}`);
     if (state && state !== 'All') qs.set('state', `eq.${state}`);
+    // Server-side, not client-side, because Lead Finder pages 50 at a time:
+    // filtering the current page would only ever find Draper leads that
+    // happened to fall in the page you were already looking at.
+    if (city && city !== 'All') qs.set('city', `eq.${city}`);
     if (pooled) qs.set('pooled', `eq.${pooled}`);
+    if (dialingQueued) qs.set('dialing_queued', `eq.${dialingQueued}`);
 
     const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?${qs.toString()}`, { headers: leadflowHeaders(env) });
     const data = await res.text();
@@ -125,6 +152,56 @@ export async function leadflowLeads(request: Request, env: LeadflowEnv): Promise
   }
 
   return new Response('Method not allowed', { status: 405 });
+}
+
+/** Apply one patch to many leads in a single statement.
+ *
+ *  Exists for "send 100 leads to Dialing": as 100 individual PATCHes that's
+ *  100 round-trips through the Worker, slow enough to look hung and liable
+ *  to leave a half-sent batch if the tab closes partway. PostgREST's
+ *  `id=in.(…)` does the whole batch at once.
+ *
+ *  The patch is whitelisted rather than passed through. This route takes a
+ *  list of ids and a set of columns from the client, so without a whitelist
+ *  it would be a "rewrite any column on any 500 leads" endpoint — the
+ *  owner-only gate gets you in the door, but there's no reason for a
+ *  typo'd or tampered body to be able to blank out business_name in bulk. */
+const BULK_PATCH_COLUMNS = new Set(['pooled', 'dialing_queued', 'dialing_queued_at', 'tag', 'status']);
+const BULK_MAX_IDS = 500;
+
+export async function leadflowLeadsBulk(request: Request, env: LeadflowEnv): Promise<Response> {
+  const denied = await requireLeadflowAuth(request, env);
+  if (denied) return denied;
+  if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+
+  const body = (await request.json()) as { ids?: unknown; patch?: unknown };
+  const ids = Array.isArray(body.ids) ? body.ids.filter((v): v is string => typeof v === 'string') : [];
+  const patchIn = (body.patch && typeof body.patch === 'object') ? body.patch as Record<string, unknown> : {};
+
+  if (ids.length === 0) return jsonError('No lead ids given.', 400);
+  if (ids.length > BULK_MAX_IDS) return jsonError(`Too many leads in one request (${ids.length} > ${BULK_MAX_IDS}).`, 400);
+
+  const patch: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(patchIn)) {
+    if (BULK_PATCH_COLUMNS.has(k)) patch[k] = v;
+  }
+  if (Object.keys(patch).length === 0) return jsonError('No updatable columns in patch.', 400);
+
+  // Quoted so a uuid is never mistaken for part of the list syntax. These
+  // are uuids from our own rows, but the quoting is what makes that safe to
+  // rely on rather than something to hope about.
+  const inList = ids.map((id) => `"${encodeURIComponent(id)}"`).join(',');
+  const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?id=in.(${inList})`, {
+    method: 'PATCH',
+    headers: leadflowHeaders(env),
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) return new Response(await res.text(), { status: res.status });
+  return new Response(JSON.stringify({ ok: true, count: ids.length }), { status: 200, headers: { 'content-type': 'application/json' } });
+}
+
+function jsonError(error: string, status: number): Response {
+  return new Response(JSON.stringify({ error }), { status, headers: { 'content-type': 'application/json' } });
 }
 
 export async function leadflowLeadUpdate(request: Request, env: LeadflowEnv, id: string): Promise<Response> {

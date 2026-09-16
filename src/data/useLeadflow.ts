@@ -66,6 +66,11 @@ export interface LeadflowLead {
   call_notes: string | null;
   call_count: number | null;
   last_called_at: string | null;
+  /** In today's call list on the Dialing screen. Independent of `pooled`:
+   *  the pool is the standing stock of researched leads, the dialing queue
+   *  is a batch drawn from it, and sending a batch must not empty the pool. */
+  dialing_queued: boolean | null;
+  dialing_queued_at: string | null;
 }
 
 export interface LeadflowHistoryItem {
@@ -93,15 +98,47 @@ async function authedFetch(path: string, opts: RequestInit = {}): Promise<Respon
   return fetch(path, { ...opts, headers: { ...opts.headers, authorization: `Bearer ${token}` } });
 }
 
+/** One city the leads actually cover, with the state that disambiguates it. */
+export interface LeadPlace {
+  city: string;
+  state: string;
+  count: number;
+}
+
 export interface LeadFilters {
   industry: string;
   tag: string;
   state: string;
+  city?: string;
+}
+
+/** Flip a column on many leads in one request.
+ *
+ *  The alternative — one PATCH per lead — is 100 round-trips for a "send
+ *  100 to dialing" press, which is slow enough to look broken and leaves a
+ *  half-sent batch behind if the tab is closed partway. PostgREST takes an
+ *  `id=in.(…)` filter, so the whole batch is one statement.
+ *
+ *  Returns the ids actually written so callers can update local state from
+ *  the same list rather than refetching. */
+export async function bulkPatchLeads(ids: string[], patch: Partial<LeadflowLead>): Promise<string[]> {
+  if (ids.length === 0) return [];
+  const res = await authedFetch('/api/leadflow/leads/bulk', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ ids, patch }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Could not update ${ids.length} leads (${res.status}). ${body.slice(0, 200)}`);
+  }
+  return ids;
 }
 
 export function useLeadflowLeads() {
   const [leads, setLeads] = useState<LeadflowLead[]>([]);
   const [industries, setIndustries] = useState<string[]>(['All']);
+  const [places, setPlaces] = useState<LeadPlace[]>([]);
   const [counts, setCounts] = useState({ total: 0, hot: 0, warm: 0, cold: 0 });
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
@@ -113,6 +150,7 @@ export function useLeadflowLeads() {
     if (filters.industry !== 'All') qs.set('industry', filters.industry);
     if (filters.tag !== 'All') qs.set('tag', filters.tag);
     if (filters.state !== 'All') qs.set('state', filters.state);
+    if (filters.city && filters.city !== 'All') qs.set('city', filters.city);
     try {
       const res = await authedFetch(`/api/leadflow/leads?${qs}`);
       if (res.status === 503) { setNotConnected(true); setLoading(false); return; }
@@ -136,6 +174,16 @@ export function useLeadflowLeads() {
     }
   }, []);
 
+  const loadPlaces = useCallback(async () => {
+    try {
+      const res = await authedFetch('/api/leadflow/leads?citiesOnly=1');
+      if (res.ok) setPlaces(await res.json());
+    } catch {
+      // Leave the pickers on "All" — geography filtering is a convenience,
+      // and losing it shouldn't stop the lead list from loading.
+    }
+  }, []);
+
   const loadCounts = useCallback(async () => {
     try {
       const res = await authedFetch('/api/leadflow/leads?counts=1');
@@ -149,8 +197,9 @@ export function useLeadflowLeads() {
     setLoading(true);
     fetchLeads(0, true, { industry: 'All', tag: 'All', state: 'All' });
     loadIndustries();
+    loadPlaces();
     loadCounts();
-  }, [fetchLeads, loadIndustries, loadCounts]);
+  }, [fetchLeads, loadIndustries, loadPlaces, loadCounts]);
 
   const addLead = async (lead: Partial<LeadflowLead>) => {
     const res = await authedFetch('/api/leadflow/leads', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(lead) });
@@ -166,7 +215,15 @@ export function useLeadflowLeads() {
     return res.ok;
   };
 
-  return { leads, industries, counts, loading, hasMore, notConnected, error, fetchLeads, addLead, updateLead };
+  /** Log an attempt from the Finder, same shape as the pool's version. */
+  const logCall = async (lead: LeadflowLead, status: string) =>
+    updateLead(lead.id, {
+      status,
+      call_count: (lead.call_count ?? 0) + 1,
+      last_called_at: new Date().toISOString(),
+    } as Partial<LeadflowLead>);
+
+  return { leads, industries, places, counts, loading, hasMore, notConnected, error, fetchLeads, addLead, updateLead, logCall };
 }
 
 /** Signed URL for one lead-media object.
@@ -324,7 +381,83 @@ export function useLeadflowPool() {
       last_called_at: new Date().toISOString(),
     } as Partial<LeadflowLead>);
 
-  return { pool, loading, notConnected, removeFromPool, patchLead, logCall };
+  /** Hand a batch of leads to the Dialing screen.
+   *
+   *  Marks them queued and stamps when, so Dialing can show today's batch
+   *  in the order it was sent. The leads stay in the pool — this is drawing
+   *  a call list from the stock, not moving stock out of it. */
+  const sendToDialing = async (leads: LeadflowLead[]): Promise<number> => {
+    const ids = leads.map((l) => l.id);
+    const queuedAt = new Date().toISOString();
+    await bulkPatchLeads(ids, { dialing_queued: true, dialing_queued_at: queuedAt });
+    const sent = new Set(ids);
+    setPool((prev) => prev.map((l) => (sent.has(l.id) ? { ...l, dialing_queued: true, dialing_queued_at: queuedAt } : l)));
+    return ids.length;
+  };
+
+  return { pool, loading, notConnected, removeFromPool, patchLead, logCall, sendToDialing, reload: load };
+}
+
+/** Today's call list on the Dialing screen.
+ *
+ *  Reads the same `leads` rows the pool does rather than copying them into
+ *  `contacts`: the whole point of the queue is that the full lead — photos,
+ *  fizzle reasons, owner details, registry links — is in front of you while
+ *  you dial. Copying would have meant either losing all of that or keeping
+ *  two rows in sync per lead. */
+export function useDialingQueue() {
+  const [queue, setQueue] = useState<LeadflowLead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [notConnected, setNotConnected] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const qs = new URLSearchParams({ limit: '500', dialing_queued: 'true' });
+    const res = await authedFetch(`/api/leadflow/leads?${qs}`);
+    if (res.status === 503) { setNotConnected(true); setLoading(false); return; }
+    if (res.ok) setQueue(await res.json());
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  // Patched in place rather than refetched: an outcome gets logged mid-call,
+  // and reloading the queue would collapse the card being worked in.
+  const patchLead = async (id: string, patch: Partial<LeadflowLead>) => {
+    const res = await authedFetch(`/api/leadflow/leads/${id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(patch),
+    });
+    if (res.ok) setQueue((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+    return res.ok;
+  };
+
+  const logCall = async (lead: LeadflowLead, status: string) =>
+    patchLead(lead.id, {
+      status,
+      call_count: (lead.call_count ?? 0) + 1,
+      last_called_at: new Date().toISOString(),
+    } as Partial<LeadflowLead>);
+
+  /** Take one lead back out of today's list. It stays in the pool. */
+  const removeFromQueue = async (id: string) => {
+    const ok = await patchLead(id, { dialing_queued: false });
+    if (ok) setQueue((prev) => prev.filter((l) => l.id !== id));
+    return ok;
+  };
+
+  /** Clear the whole list — "done for today". Leads keep whatever outcome
+   *  was logged against them; only their place in the queue goes. */
+  const clearQueue = async (leads: LeadflowLead[]) => {
+    await bulkPatchLeads(leads.map((l) => l.id), { dialing_queued: false });
+    const cleared = new Set(leads.map((l) => l.id));
+    setQueue((prev) => prev.filter((l) => !cleared.has(l.id)));
+  };
+
+  return { queue, loading, notConnected, patchLead, logCall, removeFromQueue, clearQueue, reload: load };
 }
 
 // Backs War Room's queue builder. The original app pulled all ~58k leads
