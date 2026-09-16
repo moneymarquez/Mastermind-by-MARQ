@@ -27,17 +27,47 @@ const NAV_TOGGLE_RIGHT = 20;
 const NAV_TOGGLE_SIZE = 42;
 const CIRCLE_SCALE = 0.85; // mirrors geometry.ts's CIRCLE_SCALE
 
+/** Layout-viewport size from a visual-viewport reading.
+ *
+ *  visualViewport measures the VISUAL viewport — the part of the page
+ *  currently on screen — so pinch-zooming shrinks it. Pinch an iPad to 2x
+ *  and a 1024pt window reports 512, which is under the 768 mobile
+ *  breakpoint: the app threw away the desktop layout and rebuilt itself as
+ *  the phone layout mid-pinch, then did it again on the way back out. That
+ *  is the "zooming in distorts the page" bug.
+ *
+ *  vv.scale is the pinch factor, so multiplying undoes it and recovers the
+ *  layout viewport. Zoom then does what zoom is supposed to do — magnify
+ *  what's already laid out — instead of reflowing it.
+ *
+ *  Exported for tests, and pure so they don't need a DOM.
+ *
+ *  Note this deliberately does NOT cancel desktop browser zoom (Ctrl +).
+ *  That leaves vv.scale at 1 and genuinely shrinks the CSS-pixel viewport,
+ *  so falling back to the mobile layout at high zoom is correct there —
+ *  it's the same thing every other site does. */
+export function layoutViewport(
+  vv: { width: number; height: number; scale: number } | null | undefined,
+  fallbackWidth: number,
+  fallbackHeight: number,
+): { width: number; height: number } {
+  if (!vv) return { width: fallbackWidth, height: fallbackHeight };
+  // Guard the scale: a 0, NaN or absent value would collapse the app to a
+  // zero-size stage, which is far worse than ignoring the zoom.
+  const scale = Number.isFinite(vv.scale) && vv.scale > 0 ? vv.scale : 1;
+  return { width: vv.width * scale, height: vv.height * scale };
+}
+
 // window.innerWidth/innerHeight can briefly report a taller/wider value
 // than what's actually visible on mobile — before the browser's own chrome
 // (address bar, etc.) has settled — which is what produced the "loads in
 // overlapping, then snaps into place a moment later" bug on mobile. window.
 // visualViewport reflects the actually-rendered viewport at all times, so
-// prefer it wherever it's available (all modern mobile browsers).
+// prefer it wherever it's available (all modern mobile browsers), corrected
+// for pinch zoom by layoutViewport above.
 function currentViewport(): { width: number; height: number } {
   if (typeof window === 'undefined') return { width: 1440, height: 900 };
-  const vv = window.visualViewport;
-  const width = vv?.width ?? window.innerWidth;
-  const height = vv?.height ?? window.innerHeight;
+  const { width, height } = layoutViewport(window.visualViewport, window.innerWidth, window.innerHeight);
   // index.css's data-force-portrait rotates the rendered app 90deg to
   // compensate for a landscape-rotated phone — but the raw physical
   // viewport (what's read above) is still landscape-shaped. Without this
@@ -153,7 +183,16 @@ export function useMastermindState(userDisplayName: string | null) {
   useEffect(() => {
     const onResize = () => {
       const { width, height } = currentViewport();
-      patch({ isMobile: width < MOBILE_BREAKPOINT, viewportWidth: width, viewportHeight: height });
+      // visualViewport's scroll event fires continuously while panning a
+      // pinch-zoomed page, and now that the reading is scale-corrected the
+      // numbers it reports during that pan are identical every time.
+      // Patching anyway would re-render the whole app on every frame of a
+      // drag, which is the other half of what made zooming feel broken.
+      // setState rather than patch: patch always spreads into a fresh
+      // object, so React could never see an unchanged state and bail.
+      setState((s) => (s.viewportWidth === width && s.viewportHeight === height
+        ? s
+        : { ...s, isMobile: width < MOBILE_BREAKPOINT, viewportWidth: width, viewportHeight: height }));
     };
     // visualViewport's own resize/scroll events fire when mobile browser
     // chrome (address bar, keyboard) shows/hides — window's resize event
