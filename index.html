@@ -7,12 +7,26 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&family=Playfair+Display:wght@500;700&family=Space+Grotesk:wght@500;700&family=DM+Sans:wght@400;600&display=swap" />
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#000000" />
+    <!-- Rewritten at runtime by useTheme.ts to match the active theme; this is
+         only the value before that runs. -->
+    <meta name="theme-color" content="#0b0c11" />
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- "default", not "black-translucent". On iOS 26, black-translucent makes
+         WebKit size the installed app's WebView to screen.height minus the
+         top safe-area inset, anchored at the top — so the bottom strip of
+         the screen is OUTSIDE the WebView entirely and no CSS or JS in the
+         page can paint into it (WebKit bug 301108). That is the blank band
+         the tab bar was floating above. "default" lays the WebView out
+         edge-to-edge and lets iOS paint an opaque status bar on top, which
+         is what a native app does anyway.
+
+         iOS freezes apple-mobile-web-app-* tags at install time: an existing
+         home-screen icon keeps the old value forever. Delete and re-add the
+         app to pick this up — a normal deploy does not. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Masterminds" />
 
     <!-- iOS splash screens — without these, installed PWAs show a blank white/black

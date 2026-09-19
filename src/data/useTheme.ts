@@ -10,8 +10,19 @@ const STORAGE_KEY = 'mastermind-theme';
 // no flash of the wrong theme while the Supabase round-trip is in flight.
 // The Supabase value (source of truth once loaded) overwrites it right
 // after — see load() below.
+// The app's --mm-bg for each theme (index.css). Kept literal here because
+// this runs at module load, before any stylesheet is guaranteed applied, so
+// there's nothing to read a CSS variable from yet.
+const STATUS_BAR_COLOR: Record<Theme, string> = { dark: '#0b0c11', light: '#faf9f7' };
+
 function applyTheme(theme: Theme) {
   document.documentElement.setAttribute('data-theme', theme);
+  // As an installed iOS app the status bar is opaque (see index.html's
+  // apple-mobile-web-app-status-bar-style) and iOS tints it from this meta
+  // tag. It was a static #000000, which put a black bar above the light
+  // theme's off-white header. It now tracks the theme, so the bar reads as
+  // part of the header in both.
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', STATUS_BAR_COLOR[theme]);
 }
 
 const cachedTheme = (localStorage.getItem(STORAGE_KEY) as Theme | null) ?? 'dark';

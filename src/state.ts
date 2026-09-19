@@ -7,7 +7,6 @@ import { useNovaPreferences } from './data/useNovaPreferences';
 import { startListening } from './lib/speech';
 import type { SpeechRecognizerHandle } from './lib/speech';
 import { getForcePortraitDirection } from './lib/orientationLock';
-import { measureBottomShim } from './lib/pwa';
 import { MARKETING_101 } from './data/marketing101';
 import { CONTENT_101 } from './data/content101';
 
@@ -68,14 +67,7 @@ export function layoutViewport(
 // for pinch zoom by layoutViewport above.
 function currentViewport(): { width: number; height: number } {
   if (typeof window === 'undefined') return { width: 1440, height: 900 };
-  const lv = layoutViewport(window.visualViewport, window.innerWidth, window.innerHeight);
-  // iOS 26 installed-app band (see lib/pwa.ts bottomShim). Added to the
-  // visual height rather than replacing it, so the keyboard case still
-  // works: with the keyboard up, visualViewport shrinks by the keyboard
-  // AND is short by the band, and the true visible height is both
-  // corrections together.
-  const width = lv.width;
-  const height = lv.height + measureBottomShim();
+  const { width, height } = layoutViewport(window.visualViewport, window.innerWidth, window.innerHeight);
   // index.css's data-force-portrait rotates the rendered app 90deg to
   // compensate for a landscape-rotated phone — but the raw physical
   // viewport (what's read above) is still landscape-shaped. Without this
@@ -131,18 +123,58 @@ const DIRECT_SCREENS: Screen[] = ['home', 'daily-plan', 'dialing', 'sticky-spot'
 // of dumping you on Home. Matters most as an installed PWA: iOS silently
 // reloads a backgrounded app, so without this you lose your place just by
 // taking a phone call mid-task.
+//
+// But only for a while. Coming back after an hour is a new session, and a
+// new session should start on Overview — landing on whatever deep LeadFlow
+// tab was open yesterday is disorienting, not helpful. The stamp is
+// refreshed every time the app goes to the background (not just on
+// navigation), so "an hour away" means an hour since you last had it
+// open, not an hour since you last tapped something.
 const LAST_SCREEN_KEY = 'mm:last-screen';
+export const LAST_SCREEN_TTL_MS = 60 * 60 * 1000;
+
+interface StoredScreen {
+  screen: string;
+  at: number;
+}
+
+/** Decide what a stored value restores to. Pure so it can be tested. */
+export function restoreScreen(stored: string | null, now: number): Screen {
+  if (!stored) return 'home';
+  let parsed: Partial<StoredScreen>;
+  try {
+    parsed = JSON.parse(stored) as Partial<StoredScreen>;
+  } catch {
+    // Pre-TTL builds stored the bare screen name. There's no timestamp to
+    // judge it by, so it's treated as expired rather than trusted forever.
+    return 'home';
+  }
+  if (typeof parsed.screen !== 'string' || typeof parsed.at !== 'number') return 'home';
+  if (!Number.isFinite(parsed.at) || now - parsed.at > LAST_SCREEN_TTL_MS) return 'home';
+  // A clock that went backwards (device time changed) is not a reason to
+  // trust a stale screen either.
+  if (parsed.at > now + 5 * 60 * 1000) return 'home';
+  // Validated rather than trusted: a screen that existed in an older build
+  // would otherwise restore into a blank placeholder.
+  if (!(DIRECT_SCREENS as string[]).includes(parsed.screen)) return 'home';
+  return parsed.screen as Screen;
+}
 
 function readLastScreen(): Screen {
   try {
-    const stored = localStorage.getItem(LAST_SCREEN_KEY);
-    // Validated rather than trusted: a screen that existed in an older
-    // build would otherwise restore into a blank placeholder.
-    if (stored && (DIRECT_SCREENS as string[]).includes(stored)) return stored as Screen;
+    return restoreScreen(localStorage.getItem(LAST_SCREEN_KEY), Date.now());
   } catch {
     // Private mode / blocked site data — the read itself can throw.
+    return 'home';
   }
-  return 'home';
+}
+
+function writeLastScreen(screen: Screen): void {
+  try {
+    localStorage.setItem(LAST_SCREEN_KEY, JSON.stringify({ screen, at: Date.now() } satisfies StoredScreen));
+  } catch {
+    // Convenience only — never worth failing a render over.
+  }
 }
 
 const initialState: AppState = {
@@ -224,12 +256,28 @@ export function useMastermindState(userDisplayName: string | null) {
   // stored is the better recovery.
   useEffect(() => {
     if (state.screen === 'placeholder') return;
-    try {
-      localStorage.setItem(LAST_SCREEN_KEY, state.screen);
-    } catch {
-      // Convenience only — never worth failing a render over.
-    }
+    writeLastScreen(state.screen);
   }, [state.screen]);
+
+  // Re-stamp on the way to the background, so the TTL counts from when the
+  // app was last in front of you. Without this, an hour spent on one screen
+  // followed by a quick swipe-away would read as "left an hour ago" and
+  // reset on return, which is the opposite of what the restore is for.
+  // pagehide is the iOS-reliable one; visibilitychange covers the rest.
+  const screenRef = useRef(state.screen);
+  screenRef.current = state.screen;
+  useEffect(() => {
+    const stamp = () => {
+      if (screenRef.current !== 'placeholder') writeLastScreen(screenRef.current);
+    };
+    const onVisibility = () => { if (document.visibilityState === 'hidden') stamp(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('pagehide', stamp);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pagehide', stamp);
+    };
+  }, []);
 
   const goScreen = (id: Screen) => patch({ screen: id });
 
