@@ -23,7 +23,7 @@ import { runShiftReminders } from './handlers/shift-reminders';
 import { runReminders } from './handlers/reminders';
 import type { ReminderEnv } from './handlers/reminders';
 import type { ShiftReminderEnv } from './handlers/shift-reminders';
-import { runDailyPlan } from './handlers/daily-plan';
+import { runDailyPlan, dailyPlanToday } from './handlers/daily-plan';
 import type { DailyPlanEnv } from './handlers/daily-plan';
 import { leadflowLeads, leadflowLeadUpdate, leadflowLeadsBulk, leadflowHistory, leadflowMessages, leadflowAiReport } from './handlers/leadflow';
 import type { LeadflowEnv } from './handlers/leadflow';
@@ -53,6 +53,8 @@ export default {
     if (url.pathname === '/api/save-broker-keys') return saveBrokerKeys(request, env);
     if (url.pathname === '/api/broker-keys-status') return brokerKeysStatus(request, env);
     if (url.pathname === '/api/stocks-account') return stocksAccount(request, env);
+
+    if (url.pathname === '/api/daily-plan/today') return dailyPlanToday(request, env);
 
     if (url.pathname === '/api/leadflow/leads') return leadflowLeads(request, env);
     // Before the /leads/:id match below, which would otherwise take "bulk"

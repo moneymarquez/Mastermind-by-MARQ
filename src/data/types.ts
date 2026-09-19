@@ -288,12 +288,21 @@ export interface CommittedPath {
   actions: GoalAction[];
 }
 
+/** What the target number counts.
+ *  - dollars: a sum to save; progress is current_saved (the original, and
+ *    the default, so every goal that existed before this field is unchanged).
+ *  - per_day: a daily rate, e.g. 35 dials a day; progress is today's count.
+ *  - total: a number of things to get done, e.g. 4 appointments; progress is
+ *    completed steps. */
+export type GoalTargetUnit = 'dollars' | 'per_day' | 'total';
+
 export interface Goal {
   id: string;
   title: string;
   why: string | null;
   category: string | null;
   target_cost: number | null;
+  target_unit: GoalTargetUnit;
   current_saved: number;
   url: string | null;
   deadline: string | null;

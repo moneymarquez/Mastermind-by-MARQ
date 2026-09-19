@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import { useGoals } from '../../data/useGoals';
 import { useContacts } from '../../data/useContacts';
 import { useCallOutcomes } from '../../data/useCallOutcomes';
-import type { Goal, GoalPath } from '../../data/types';
+import type { Goal, GoalPath, GoalTargetUnit } from '../../data/types';
 import { askClaude, AiError } from '../../lib/ai';
 import { generateGoalPlan, recalculateGoalPace } from '../../lib/goalLockIn';
 import type { GoalIntake } from '../../lib/goalLockIn';
@@ -19,6 +19,17 @@ const inputStyle: CSSProperties = {
   color: 'var(--text)', fontSize: 'var(--text-body-lg)', outline: 'none',
 };
 
+const TARGET_UNIT_LABEL: Record<GoalTargetUnit, string> = { dollars: '$', per_day: 'per day', total: 'total' };
+
+/** "$10,000 (saved so far: $2,400)" / "35 per day" / "4 total (1 done)".
+ *  Without this the critique prompt read "$35" for a dials-per-day goal. */
+function describeTarget(goal: Goal): string {
+  const n = goal.target_cost ?? 0;
+  if (goal.target_unit === 'per_day') return `${n} per day`;
+  if (goal.target_unit === 'total') return `${n} total (${goal.steps.filter((s) => s.done).length} done)`;
+  return `$${n.toLocaleString()} (saved so far: $${goal.current_saved.toLocaleString()})`;
+}
+
 function goalContext(goal: Goal): string {
   const stepsText = goal.steps.length
     ? goal.steps.map((s) => `- [${s.done ? 'x' : ' '}] ${s.description}`).join('\n')
@@ -27,7 +38,7 @@ function goalContext(goal: Goal): string {
     `Title: ${goal.title}`,
     goal.why ? `Why it matters: ${goal.why}` : null,
     goal.category ? `Category: ${goal.category}` : null,
-    goal.target_cost != null ? `Target: $${goal.target_cost.toLocaleString()} (saved so far: $${goal.current_saved.toLocaleString()})` : null,
+    goal.target_cost != null ? `Target: ${describeTarget(goal)}` : null,
     goal.deadline ? `Deadline: ${goal.deadline}` : null,
     `Steps:\n${stepsText}`,
   ].filter(Boolean).join('\n');
@@ -150,7 +161,16 @@ function GoalCard({
   const [aiError, setAiError] = useState('');
   const [revising, setRevising] = useState(false);
   const [reviseFeedback, setReviseFeedback] = useState('');
-  const pct = goal.target_cost ? Math.min(100, (goal.current_saved / goal.target_cost) * 100) : goal.progress_pct;
+  // What "progress" means depends on the unit. dollars is exactly what it
+  // always was. per_day reads today's live dial count when one of the steps
+  // is auto-tracked from Dialing (which is what a dials goal has), else the
+  // manually entered number. total counts finished steps.
+  const unit: GoalTargetUnit = goal.target_unit ?? 'dollars';
+  const autoTracked = goal.steps.some((s) => s.auto_tracked_source === 'dialing_calls');
+  const doneSteps = goal.steps.filter((s) => s.done).length;
+  const current = unit === 'total' ? doneSteps : unit === 'per_day' && autoTracked ? todayDialCount : goal.current_saved;
+  const pct = goal.target_cost ? Math.min(100, (current / goal.target_cost) * 100) : goal.progress_pct;
+  const showManualUpdate = goal.target_cost != null && (unit === 'dollars' || (unit === 'per_day' && !autoTracked));
 
   const runCritique = async () => {
     setBusy('critique');
@@ -215,22 +235,34 @@ function GoalCard({
       {(goal.target_cost != null || locked) && (
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16, fontFamily: 'var(--font-mono)', fontSize: 'var(--text-body)', color: 'var(--text)' }}>
-            <span>{goal.target_cost != null ? `$${goal.current_saved.toLocaleString()}` : `${Math.round(pct)}%`}</span>
-            {goal.target_cost != null && <span style={{ color: 'var(--text-tertiary)' }}>${goal.target_cost.toLocaleString()}</span>}
+            <span>
+              {goal.target_cost == null ? `${Math.round(pct)}%`
+                : unit === 'dollars' ? `$${goal.current_saved.toLocaleString()}`
+                : unit === 'per_day' ? `${current} today`
+                : `${current} done`}
+            </span>
+            {goal.target_cost != null && (
+              <span style={{ color: 'var(--text-tertiary)' }}>
+                {unit === 'dollars' ? `$${goal.target_cost.toLocaleString()}` : `${goal.target_cost} ${TARGET_UNIT_LABEL[unit]}`}
+              </span>
+            )}
           </div>
           <div style={{ height: 8, background: 'var(--border)', borderRadius: 'var(--radius-pill)', marginTop: 6, overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${pct}%`, background: 'var(--text)', borderRadius: 'var(--radius-pill)' }} />
           </div>
-          {goal.target_cost != null && (
+          {showManualUpdate && (
             <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
               <input style={{ ...inputStyle, width: 120 }} value={savedInput} onChange={(e) => setSavedInput(e.target.value)} />
               <div
                 style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 'var(--text-body-sm)', cursor: 'pointer' }}
                 onClick={() => onSaveProgress(goal.id, Number(savedInput) || 0)}
               >
-                Update saved
+                {unit === 'per_day' ? 'Update today' : 'Update saved'}
               </div>
             </div>
+          )}
+          {goal.target_cost != null && unit === 'per_day' && autoTracked && (
+            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 8 }}>Counted live from Dialing.</div>
           )}
         </>
       )}
@@ -250,10 +282,10 @@ function GoalCard({
         </div>
       )}
 
-      {locked && (
+      {(locked || goal.steps.length > 0) && (
         <>
           <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 16, marginBottom: 8 }}>
-            Steps — {goal.committed_path!.title} · check-in {goal.check_in_cadence}
+            {locked ? `Steps — ${goal.committed_path!.title} · check-in ${goal.check_in_cadence}` : 'Steps'}
           </div>
           {goal.steps.map((s) =>
             s.auto_tracked_source === 'dialing_calls' ? (
@@ -373,6 +405,7 @@ export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const [why, setWhy] = useState('');
   const [category, setCategory] = useState('');
   const [targetCost, setTargetCost] = useState('');
+  const [targetUnit, setTargetUnit] = useState<GoalTargetUnit>('dollars');
   const [url, setUrl] = useState('');
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -389,7 +422,9 @@ export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
     const costRaw = targetCost.replace(/[$,\s]/g, '');
     const cost = costRaw ? Number(costRaw) : null;
     if (cost !== null && !Number.isFinite(cost)) {
-      setSaveError('Target cost has to be a single dollar amount (e.g. 25000). Put ranges and metrics in "Why does it matter?" instead.');
+      setSaveError(targetUnit === 'dollars'
+        ? 'Target has to be a single dollar amount (e.g. 25000). Put ranges and metrics in "Why does it matter?" instead.'
+        : 'Target has to be a single number (e.g. 35).');
       return;
     }
     setSaving(true);
@@ -400,6 +435,7 @@ export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
         why: why.trim() || null,
         category: category.trim() || null,
         target_cost: cost,
+        target_unit: targetUnit,
         url: url.trim() || null,
         deadline: null,
       });
@@ -411,7 +447,7 @@ export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
       return;
     }
     setSaving(false);
-    setTitle(''); setWhy(''); setCategory(''); setTargetCost(''); setUrl('');
+    setTitle(''); setWhy(''); setCategory(''); setTargetCost(''); setTargetUnit('dollars'); setUrl('');
     setSaveError(null);
     setShowForm(false);
   };
@@ -436,7 +472,19 @@ export default function GoalsScreen({ homeHeadStyle, homeSubStyle }: Props) {
           <input style={inputStyle} placeholder="What's the goal?" value={title} onChange={(e) => setTitle(e.target.value)} />
           <input style={inputStyle} placeholder="Why does it matter?" value={why} onChange={(e) => setWhy(e.target.value)} />
           <input style={inputStyle} placeholder="Category (e.g. savings, business)" value={category} onChange={(e) => setCategory(e.target.value)} />
-          <input style={inputStyle} placeholder="Target cost ($, optional — for savings-style goals)" value={targetCost} onChange={(e) => setTargetCost(e.target.value)} />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              style={{ ...inputStyle, flex: 1, minWidth: 0 }}
+              placeholder={targetUnit === 'dollars' ? 'Target ($, optional)' : targetUnit === 'per_day' ? 'Target per day (e.g. 35)' : 'Target total (e.g. 4)'}
+              value={targetCost}
+              onChange={(e) => setTargetCost(e.target.value)}
+            />
+            <select style={{ ...inputStyle, width: 120 }} value={targetUnit} onChange={(e) => setTargetUnit(e.target.value as GoalTargetUnit)}>
+              <option value="dollars">dollars</option>
+              <option value="per_day">per day</option>
+              <option value="total">total</option>
+            </select>
+          </div>
           <input style={inputStyle} placeholder="Reference URL (optional)" value={url} onChange={(e) => setUrl(e.target.value)} />
           <div
             style={{ alignSelf: 'flex-start', padding: '9px 16px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer' }}

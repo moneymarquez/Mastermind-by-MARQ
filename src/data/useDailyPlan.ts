@@ -3,13 +3,34 @@ import { supabase } from '../lib/supabase';
 import { todayStr } from './date';
 import type { DailyPlan, DailyPlanBlock } from './types';
 
+/** Asks the Worker to build today's plan from the same deterministic
+ *  builder the overnight job uses. Returns the row, or null if it couldn't.
+ *  Called once when today has no plan yet — the overnight run only writes
+ *  tomorrow's, so the first day after a deploy (and any day the cron missed)
+ *  would otherwise stay empty until midnight. */
+async function requestTodaysPlan(): Promise<DailyPlan | null> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return null;
+  const res = await fetch('/api/daily-plan/today', { method: 'POST', headers: { authorization: `Bearer ${token}` } });
+  if (!res.ok) return null;
+  return (await res.json()) as DailyPlan;
+}
+
 export function useDailyPlan() {
   const [plan, setPlan] = useState<DailyPlan | null>(null);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
 
   const load = useCallback(async () => {
     const { data } = await supabase.from('daily_plans').select('*').eq('plan_date', todayStr()).maybeSingle();
-    setPlan((data as DailyPlan | null) ?? null);
+    let row = (data as DailyPlan | null) ?? null;
+    if (!row) {
+      setGenerating(true);
+      row = await requestTodaysPlan();
+      setGenerating(false);
+    }
+    setPlan(row);
     setLoading(false);
   }, []);
 
@@ -54,5 +75,5 @@ export function useDailyPlan() {
     await load();
   };
 
-  return { plan, loading, updateBlocks, removeBlock, addBlock, confirm, skip };
+  return { plan, loading, generating, updateBlocks, removeBlock, addBlock, confirm, skip };
 }

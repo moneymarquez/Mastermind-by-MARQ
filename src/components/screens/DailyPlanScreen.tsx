@@ -43,7 +43,7 @@ function eventTitle(e: { type: string; notes: string | null; details: Record<str
 }
 
 export default function DailyPlanScreen({ isMobile, homeHeadStyle, homeSubStyle }: Props) {
-  const { plan, loading, removeBlock, addBlock, confirm, skip } = useDailyPlan();
+  const { plan, loading, generating, removeBlock, addBlock, confirm, skip } = useDailyPlan();
   const { events, loading: eventsLoading } = useEvents();
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
@@ -61,11 +61,17 @@ export default function DailyPlanScreen({ isMobile, homeHeadStyle, homeSubStyle 
   // would just double-list the same thing. Only hours a plan block doesn't
   // already claim fall back to a live Schedule event, which covers days
   // with no plan yet (or an event added after generation ran).
+  // Blocks that share an hour are ALL kept — the 3 PM row holds both
+  // "move leads" (3:30) and "set up for calls" (3:45), and the first used
+  // to hide the second entirely. `block`/`index` stay the first one (the
+  // row title and the remove action); `more` is the rest of that hour.
   const byHour = useMemo(() => {
-    const map = new Map<number, { block: DailyPlanBlock; index: number } | { event: (typeof todaysEvents)[number] }>();
+    const map = new Map<number, { block: DailyPlanBlock; index: number; more: { block: DailyPlanBlock; index: number }[] } | { event: (typeof todaysEvents)[number] }>();
     (plan?.blocks ?? []).forEach((block, index) => {
       const hour = Math.floor(timeToMinutes(block.time) / 60);
-      if (!map.has(hour)) map.set(hour, { block, index });
+      const existing = map.get(hour);
+      if (!existing) map.set(hour, { block, index, more: [] });
+      else if ('block' in existing) existing.more.push({ block, index });
     });
     for (const e of todaysEvents) {
       const hour = Math.floor(timeToMinutes(e.start_time) / 60);
@@ -163,27 +169,33 @@ export default function DailyPlanScreen({ isMobile, homeHeadStyle, homeSubStyle 
         </div>
       );
     }
-    const { block, index } = selected;
-    return (
-      <div style={{ padding: 24 }}>
+    const { block, index, more } = selected;
+    const renderBlock = (b: DailyPlanBlock, i: number, first: boolean) => (
+      <div key={i} style={first ? undefined : { marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--surface-3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>{block.title}</div>
-          <span style={{ fontSize: 9.5, fontWeight: 700, color: TYPE_COLOR[block.type], border: `1px solid ${TYPE_COLOR[block.type]}`, borderRadius: 'var(--radius-pill)', padding: '1px 8px' }}>
-            {TYPE_LABEL[block.type]}
+          <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>{b.title}</div>
+          <span style={{ fontSize: 9.5, fontWeight: 700, color: TYPE_COLOR[b.type], border: `1px solid ${TYPE_COLOR[b.type]}`, borderRadius: 'var(--radius-pill)', padding: '1px 8px' }}>
+            {TYPE_LABEL[b.type]}
           </span>
         </div>
         <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>
-          {formatTimeLabel(block.time)} · {block.duration} min · {MODULE_LABEL[block.module]}
+          {formatTimeLabel(b.time)} · {b.duration} min · {MODULE_LABEL[b.module]}
         </div>
-        {block.detail && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.5 }}>{block.detail}</div>}
+        {b.detail && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.5, whiteSpace: 'pre-line' }}>{b.detail}</div>}
         {plan?.status === 'draft' && (
           <div
             style={{ marginTop: 16, fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer' }}
-            onClick={async () => { await removeBlock(index); setSelectedHour(null); }}
+            onClick={async () => { await removeBlock(i); setSelectedHour(null); }}
           >
             Remove block
           </div>
         )}
+      </div>
+    );
+    return (
+      <div style={{ padding: 24 }}>
+        {renderBlock(block, index, true)}
+        {more.map((m) => renderBlock(m.block, m.index, false))}
       </div>
     );
   };
@@ -206,6 +218,7 @@ export default function DailyPlanScreen({ isMobile, homeHeadStyle, homeSubStyle 
       </div>
 
       {(loading || eventsLoading) && <div style={{ marginTop: 24, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)' }}>Loading…</div>}
+      {!loading && generating && <div style={{ marginTop: 24, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)' }}>Building today's plan…</div>}
 
       {!loading && !eventsLoading && (
         <div style={{ marginTop: 20, display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 16, alignItems: 'flex-start' }}>
@@ -214,7 +227,9 @@ export default function DailyPlanScreen({ isMobile, homeHeadStyle, homeSubStyle 
               const entry = byHour.get(hour);
               const isSelected = selectedHour === hour;
               const filled = !!entry;
-              const title = entry ? ('event' in entry ? eventTitle(entry.event) : entry.block.title) : null;
+              const title = entry
+                ? ('event' in entry ? eventTitle(entry.event) : [entry.block, ...entry.more.map((m) => m.block)].map((b) => b.title).join(' · '))
+                : null;
               return (
                 <div
                   key={hour}

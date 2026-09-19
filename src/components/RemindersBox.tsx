@@ -14,9 +14,19 @@ interface Props {
   bottomOffset?: string;
 }
 
+/** Days past due, or 0. */
+function overdueDays(dueDate: string, today = dateStr(new Date())): number {
+  const diff = Math.round((new Date(`${today}T00:00:00`).getTime() - new Date(`${dueDate}T00:00:00`).getTime()) / 86400000);
+  return diff > 0 ? diff : 0;
+}
+
 function dueLabel(dueDate: string): string {
   const today = dateStr(new Date());
   const tomorrow = dateStr(new Date(Date.now() + 86400000));
+  // Past-due used to read "due Sep 16" — the same wording as a date next
+  // week, so a reminder three days gone looked like one three days out.
+  const late = overdueDays(dueDate, today);
+  if (late > 0) return `${late} day${late === 1 ? '' : 's'} overdue`;
   if (dueDate === today) return 'due today';
   if (dueDate === tomorrow) return 'due tomorrow';
   const diffDays = Math.round((new Date(`${dueDate}T00:00:00`).getTime() - new Date(`${today}T00:00:00`).getTime()) / 86400000);
@@ -86,7 +96,7 @@ const RemindersBox = forwardRef<HTMLDivElement, Props>(function RemindersBox({ i
             )}
           </div>
           {visible.map((r) => (
-            <div key={r.id} style={{ fontSize: 'var(--text-small)', color: 'var(--text-quaternary)', padding: '6px 0', borderTop: '1px solid var(--surface-3)' }}>
+            <div key={r.id} style={{ fontSize: 'var(--text-small)', color: overdueDays(r.due_date) > 0 ? 'var(--danger)' : 'var(--text-quaternary)', padding: '6px 0', borderTop: '1px solid var(--surface-3)' }}>
               {r.title} — {dueLabel(r.due_date)}
             </div>
           ))}

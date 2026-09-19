@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { todayStr } from './date';
-import type { CommittedPath, Goal, GoalAction, GoalCheckin, GoalPath, GoalStep } from './types';
+import type { CommittedPath, Goal, GoalAction, GoalCheckin, GoalPath, GoalStep, GoalTargetUnit } from './types';
 import type { GoalReverseEngineering } from '../lib/goalLockIn';
 
 type GoalRow = Omit<Goal, 'steps' | 'checkins' | 'paths'> & { goal_steps: GoalStep[]; goal_checkins: GoalCheckin[]; goal_paths: GoalPath[] };
@@ -38,6 +38,7 @@ export function useGoals() {
     why: string | null;
     category: string | null;
     target_cost: number | null;
+    target_unit: GoalTargetUnit;
     url: string | null;
     deadline: string | null;
   }) => {
@@ -58,7 +59,7 @@ export function useGoals() {
     return data as Goal | null;
   };
 
-  const updateGoal = async (id: string, patch: Partial<Pick<Goal, 'current_saved' | 'title' | 'target_cost'>>) => {
+  const updateGoal = async (id: string, patch: Partial<Pick<Goal, 'current_saved' | 'title' | 'target_cost' | 'target_unit'>>) => {
     await supabase.from('goals').update(patch).eq('id', id);
     await load();
   };
