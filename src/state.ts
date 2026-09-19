@@ -7,6 +7,7 @@ import { useNovaPreferences } from './data/useNovaPreferences';
 import { startListening } from './lib/speech';
 import type { SpeechRecognizerHandle } from './lib/speech';
 import { getForcePortraitDirection } from './lib/orientationLock';
+import { measureBottomShim } from './lib/pwa';
 import { MARKETING_101 } from './data/marketing101';
 import { CONTENT_101 } from './data/content101';
 
@@ -67,7 +68,14 @@ export function layoutViewport(
 // for pinch zoom by layoutViewport above.
 function currentViewport(): { width: number; height: number } {
   if (typeof window === 'undefined') return { width: 1440, height: 900 };
-  const { width, height } = layoutViewport(window.visualViewport, window.innerWidth, window.innerHeight);
+  const lv = layoutViewport(window.visualViewport, window.innerWidth, window.innerHeight);
+  // iOS 26 installed-app band (see lib/pwa.ts bottomShim). Added to the
+  // visual height rather than replacing it, so the keyboard case still
+  // works: with the keyboard up, visualViewport shrinks by the keyboard
+  // AND is short by the band, and the true visible height is both
+  // corrections together.
+  const width = lv.width;
+  const height = lv.height + measureBottomShim();
   // index.css's data-force-portrait rotates the rendered app 90deg to
   // compensate for a landscape-rotated phone — but the raw physical
   // viewport (what's read above) is still landscape-shaped. Without this

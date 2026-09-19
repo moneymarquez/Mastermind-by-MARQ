@@ -6,11 +6,17 @@ import PublicAuditScreen from './PublicAuditScreen.tsx'
 import PublicClientDashboard from './PublicClientDashboard.tsx'
 import { isStandalone } from './lib/pwa'
 import { initOrientationLock } from './lib/orientationLock'
+import { initBottomShim } from './lib/pwa'
 
 // Applies the data-force-portrait attribute index.css's rotate-lock keys
 // off of — called before the first render so there's no flash of
 // sideways content if the tab happens to open already in landscape.
 initOrientationLock();
+
+// iOS 26 installed-app bottom band — sets html.ios-bottom-shim when the
+// viewport is reported short so index.css can let the app paint into it.
+// See lib/pwa.ts bottomShim for the WebKit bug this works around.
+initBottomShim();
 
 // The two genuinely public routes in the app — /audit (Part 1b: a prospect
 // filling out the lead-gen questionnaire) and /client/<token> (Part 7: a

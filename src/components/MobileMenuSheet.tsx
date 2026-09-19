@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { NavRow } from '../navRows';
 import Icon from '../Icon';
@@ -75,47 +75,106 @@ export default function MobileMenuSheet({
 }: Props) {
   const { avatarUrl } = useAvatar();
   const sheetRef = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ startY: number; lastY: number; lastT: number; velocity: number } | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ startY: number; lastY: number; lastT: number; velocity: number; active: boolean; pointerId: number } | null>(null);
+  // Set the moment a drag actually moves the sheet, and consumed by the
+  // capture-phase click handler below: a finger that dragged the sheet
+  // down over a nav row must not also "tap" that row on release.
+  const moved = useRef(false);
+  const closeTimer = useRef<number | null>(null);
   const [dragY, setDragY] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [dismissing, setDismissing] = useState(false);
+  const [listAtTop, setListAtTop] = useState(true);
+
+  // This component stays mounted with open=false (it renders null, it
+  // doesn't unmount), so drag state SURVIVES a close. Before this reset,
+  // a swipe-dismiss left dismissing=true and dragY=sheetHeight behind —
+  // and the next open rendered the sheet already translated off the
+  // bottom of the screen: scrim up, nothing under it, and the only way
+  // out was tapping the dimmed page. That is the "sometimes it bugs out"
+  // bug. Every open now starts from zero, and a pending close timer from
+  // a dismiss that got cut short is cancelled rather than firing into the
+  // reopened sheet.
+  useEffect(() => {
+    if (closeTimer.current != null) {
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+    drag.current = null;
+    moved.current = false;
+    setDragY(0);
+    setDragging(false);
+    setDismissing(false);
+    setListAtTop(true);
+  }, [open]);
 
   if (!open) return null;
 
-  const onDragStart = (e: ReactPointerEvent<HTMLDivElement>) => {
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-    const now = performance.now();
-    drag.current = { startY: e.clientY, lastY: e.clientY, lastT: now, velocity: 0 };
-    setDragging(true);
+  /** Where a pointer can start a dismiss.
+   *
+   *  Anywhere on the sheet — not just the handle — with one rule borrowed
+   *  from native iOS sheets: inside the scrolling nav list, a downward drag
+   *  only dismisses when the list is already at its top. Otherwise the list
+   *  scrolls, exactly as before. The handle-only zone this replaces was a
+   *  ~60px strip, which is why the sheet was "hard to slide down". */
+  const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (dismissing) return;
+    const list = listRef.current;
+    if (list && list.contains(e.target as Node) && list.scrollTop > 0) return;
+    drag.current = { startY: e.clientY, lastY: e.clientY, lastT: performance.now(), velocity: 0, active: false, pointerId: e.pointerId };
+    moved.current = false;
   };
-  const onDragMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (!drag.current) return;
+
+  const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d) return;
+    const dy = e.clientY - d.startY;
+    if (!d.active) {
+      // Upward from the top of the list is a scroll, not a dismiss — hand
+      // it back to the browser (the list's touch-action lets it pan up).
+      if (dy < -4) { drag.current = null; return; }
+      if (dy < 4) return; // finger jitter, not a decision yet
+      d.active = true;
+      moved.current = true;
+      setDragging(true);
+      e.currentTarget.setPointerCapture?.(d.pointerId);
+    }
     const now = performance.now();
-    const dt = now - drag.current.lastT;
-    if (dt > 0) drag.current.velocity = (e.clientY - drag.current.lastY) / dt;
-    drag.current.lastY = e.clientY;
-    drag.current.lastT = now;
-    setDragY(Math.max(0, e.clientY - drag.current.startY));
+    const dt = now - d.lastT;
+    if (dt > 0) d.velocity = (e.clientY - d.lastY) / dt;
+    d.lastY = e.clientY;
+    d.lastT = now;
+    setDragY(Math.max(0, dy));
   };
-  const onDragEnd = () => {
-    if (!drag.current) return;
-    const { velocity } = drag.current;
+
+  const onPointerEnd = () => {
+    const d = drag.current;
     drag.current = null;
+    if (!d || !d.active) return;
     setDragging(false);
     const sheetHeight = sheetRef.current?.offsetHeight ?? 0;
     const pastThreshold = sheetHeight > 0 && dragY > sheetHeight * DISMISS_HEIGHT_FRACTION;
-    if (pastThreshold || velocity > DISMISS_VELOCITY) {
+    if (pastThreshold || d.velocity > DISMISS_VELOCITY) {
       setDismissing(true);
       setDragY(sheetHeight || window.innerHeight);
-      setTimeout(onClose, DISMISS_DURATION_MS);
+      closeTimer.current = window.setTimeout(() => { closeTimer.current = null; onClose(); }, DISMISS_DURATION_MS);
     } else {
       setDragY(0);
     }
   };
 
+  const onClickCapture = (e: React.MouseEvent) => {
+    if (!moved.current) return;
+    moved.current = false;
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
   return (
     <>
-      <div style={{ position: 'absolute', inset: 0, zIndex: 48, background: 'rgba(0,0,0,0.45)' }} onClick={onClose} />
+      <div style={{ position: 'absolute', inset: 0, zIndex: 48, background: 'rgba(0,0,0,0.45)', touchAction: 'none' }} onClick={onClose} />
       <div
         ref={sheetRef}
         style={{
@@ -131,22 +190,24 @@ export default function MobileMenuSheet({
           // already-settled transform (initial mount, dragY already 0) is
           // simply a no-op, so there's no need to special-case it away.
           transition: dragging ? 'none' : dismissing ? DISMISS_TRANSITION : SPRING_BACK_TRANSITION,
-          animation: dragY === 0 && !dismissing && !dragging ? 'drawerIn 0.16s ease' : 'none',
-          touchAction: dragging ? 'none' : undefined,
+          // Constant, so it plays exactly once when the sheet mounts. It
+          // used to toggle to 'none' during a drag and back afterwards,
+          // which re-ran the entrance animation on every cancelled drag —
+          // a visible flicker each time the sheet snapped back.
+          animation: 'drawerIn 0.16s ease',
         }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerEnd}
+        onPointerCancel={onPointerEnd}
+        onClickCapture={onClickCapture}
       >
         {/* Draggable header zone — handle + Menu title row. Grabbing
             anywhere here (not just the pill) starts a drag; the nav list
             and status cards below are excluded so normal taps/scrolling
             inside them isn't hijacked. */}
-        <div
-          onPointerDown={onDragStart}
-          onPointerMove={onDragMove}
-          onPointerUp={onDragEnd}
-          onPointerCancel={onDragEnd}
-          style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0, cursor: 'grab', touchAction: 'none' }}
-        >
-          <div style={{ width: 44, height: 4, borderRadius: 4, background: 'var(--mm-line2)', alignSelf: 'center' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0, cursor: 'grab', touchAction: 'none', paddingTop: 6 }}>
+          <div style={{ width: 44, height: 5, borderRadius: 4, background: 'var(--mm-line2)', alignSelf: 'center' }} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
             <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em' }}>Menu</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
@@ -171,12 +232,24 @@ export default function MobileMenuSheet({
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10, flexShrink: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10, flexShrink: 0, touchAction: 'none' }}>
           {isOwner && <LeadsWidget leads={leads} newCount={leadsNewCount} loading={leadsLoading} onOpen={(lead) => { onOpenLead(lead); onClose(); }} compact />}
           {isOwner && <InboxWidget items={inboxItems} loading={inboxLoading} onOpen={(item) => { onOpenInbox(item); onClose(); }} compact />}
         </div>
 
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column', gap: 3, marginTop: 4 }}>
+        {/* touch-action is the whole trick here. At the top of the list,
+            pan-up tells the browser it may scroll the list natively for
+            an upward finger but must NOT claim a downward one — so the
+            downward drag reaches onPointerMove and moves the sheet instead
+            of rubber-banding an already-topped-out list. Once scrolled,
+            pan-y gives both directions back to native scrolling and
+            onPointerDown declines to start a drag. overscroll-behavior
+            contain stops a scroll from chaining into anything outside. */}
+        <div
+          ref={listRef}
+          onScroll={(e) => setListAtTop(e.currentTarget.scrollTop <= 0)}
+          style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', touchAction: listAtTop ? 'pan-up' : 'pan-y', display: 'flex', flexDirection: 'column', gap: 3, marginTop: 4 }}
+        >
           {rows.map((row, i) => {
             if (row.kind === 'header') {
               return (
@@ -218,7 +291,7 @@ export default function MobileMenuSheet({
           onClick={() => { onOpenSettings(); onClose(); }}
           style={{
             display: 'flex', alignItems: 'center', gap: 11, padding: '14px 12px 12px', marginTop: 8, cursor: 'pointer', flexShrink: 0,
-            borderTop: '1px solid var(--mm-line)',
+            borderTop: '1px solid var(--mm-line)', touchAction: 'none',
           }}
         >
           {avatarUrl ? (

@@ -256,6 +256,35 @@ body {
   height: 100%;
 }
 
+/* iOS 26 installed-app bottom band (WebKit bug 301108 — see lib/pwa.ts
+   bottomShim). The layout viewport is reported short by the top safe-area
+   inset, so the app's tab bar sat above a dead strip at the physical
+   bottom of the screen. Stage is sized past that short viewport by the
+   measured band; these rules are what let it actually paint there:
+
+   - html's overflow: hidden above clips everything to the (short)
+     viewport, so it has to be visible here, or the extra height is simply
+     cut off and nothing changes.
+   - body is pinned position: fixed so that visible overflow can't turn
+     into a scrollable document. Fixed elements contribute nothing to
+     scroll height, which means no rubber-banding and none of the "page
+     shifted up and stuck" state that a scrollable document produces on
+     iOS the first time the keyboard opens.
+
+   Only ever set on an installed iOS app whose viewport measures short, so
+   nothing here touches Safari-in-a-tab, Android, or desktop. */
+html.ios-bottom-shim {
+  overflow: visible;
+}
+html.ios-bottom-shim body {
+  position: fixed;
+  inset: 0;
+  overflow: visible;
+}
+html.ios-bottom-shim #root {
+  overflow: visible;
+}
+
 * {
   box-sizing: border-box;
 }
