@@ -282,3 +282,33 @@ function daysBetween(from: string, to: string): number {
   const [ty, tm, td] = to.split('-').map(Number);
   return Math.round((Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / 86400000);
 }
+
+/** Blocks the builder owns. Everything else in a plan — a block you added
+ *  by hand, a Nova suggestion — is yours, and a resync must leave it alone. */
+export function isFloorSource(source: string | null): boolean {
+  if (!source) return false;
+  return source === 'overdue' || source === 'shift' || source === 'event' || source === 'weekly-review'
+    || source.startsWith('dials-') || source.startsWith('step:');
+}
+
+/** Replace the floor of an existing plan with a freshly built one.
+ *
+ *  A plan is a snapshot: built at 2am, or on first open. A shift entered
+ *  after that — this morning, for today — was invisible to it, and the
+ *  calling hour stayed at 4:00 even when the shift ran to 4:00. This is
+ *  what the on-open route calls so the plan tracks the schedule instead of
+ *  the moment it was generated.
+ *
+ *  Kept: every non-floor block, unless it now sits inside a shift hour
+ *  (you can't do it while at work, and leaving it there would read as a
+ *  plan). Replaced: every floor block. Returns null when nothing changed,
+ *  so the caller can skip the write. */
+export function mergePlan(existing: PlanBlock[], fresh: PlanBlock[]): PlanBlock[] | null {
+  const shiftHours = new Set(fresh.filter((b) => b.source === 'shift').map((b) => Math.floor(toMinutes(b.time) / 60)));
+  const kept = existing.filter((b) => !isFloorSource(b.source) && !shiftHours.has(Math.floor(toMinutes(b.time) / 60)));
+  const next = [...fresh, ...kept].sort((a, b) => a.time.localeCompare(b.time) || (isFloorSource(a.source) ? -1 : 1));
+  // Order-insensitive: a plan stored in a different block order is the same
+  // plan, and treating it as changed would rewrite the row on every open.
+  const key = (bs: PlanBlock[]) => JSON.stringify(bs.map((b) => JSON.stringify([b.time, b.duration, b.title, b.detail, b.type, b.module, b.source])).sort());
+  return key(next) === key(existing) ? null : next;
+}

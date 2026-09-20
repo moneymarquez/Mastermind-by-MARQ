@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { buildPushPayload } from '@block65/webcrypto-web-push';
 import type { PushMessage, PushSubscription, VapidKeys } from '@block65/webcrypto-web-push';
 import { requireUser } from '../lib/auth';
-import { buildPlan, planNotifications, toMinutes } from '../lib/planBuilder';
+import { buildPlan, mergePlan, planNotifications, toMinutes } from '../lib/planBuilder';
 import type { PlanBlock, PlanEvent, PlanInput, PlanReminder, PlanShift, PlanStep } from '../lib/planBuilder';
 
 // Ported from netlify/functions/generate-daily-plan.ts, then rebuilt.
@@ -322,9 +322,15 @@ export async function runDailyPlan(env: DailyPlanEnv): Promise<void> {
   }
 }
 
-/** POST /api/daily-plan/today — build today's plan for the caller if there
- *  isn't one, and return it. Floor only, no model call: this runs on tab
- *  open and has to be fast, and the floor is the part that matters. */
+/** POST /api/daily-plan/today — today's plan for the caller, in sync with
+ *  today's schedule. Creates it if there isn't one; if there is, rebuilds
+ *  the floor from live shifts, events, steps and reminders and swaps it in,
+ *  keeping any blocks that were added by hand. So a shift logged this
+ *  morning blocks its hours and moves the calling hour the next time the
+ *  tab opens, instead of being invisible until tomorrow's 2am run.
+ *
+ *  Floor only, no model call: this runs on every tab open and has to be
+ *  fast. Status, confirmation and notification stamps are untouched. */
 export async function dailyPlanToday(request: Request, env: DailyPlanEnv): Promise<Response> {
   if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
   const user = await requireUser(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
@@ -334,11 +340,22 @@ export async function dailyPlanToday(request: Request, env: DailyPlanEnv): Promi
   const headers: Headers = { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, 'content-type': 'application/json' };
   const today = dateOnly(nowInTimeZone(env.STORE_TIMEZONE || 'America/Chicago'));
 
-  const existing = await existingPlan(env.VITE_SUPABASE_URL, headers, user.id, today);
-  if (existing) return json(existing);
-
   const floor = buildPlan(await fetchPlanInput(env.VITE_SUPABASE_URL, headers, user.id, today));
-  const saved = await savePlan(env.VITE_SUPABASE_URL, headers, user.id, today, floor);
-  if (!saved) return json({ error: 'Could not save the plan.' }, 500);
-  return json(saved);
+  const existing = await existingPlan(env.VITE_SUPABASE_URL, headers, user.id, today);
+
+  if (!existing) {
+    const saved = await savePlan(env.VITE_SUPABASE_URL, headers, user.id, today, floor);
+    if (!saved) return json({ error: 'Could not save the plan.' }, 500);
+    return json(saved);
+  }
+
+  const merged = mergePlan(existing.blocks ?? [], floor);
+  if (!merged) return json(existing);
+  const res = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/daily_plans?id=eq.${existing.id}`, {
+    method: 'PATCH', headers: { ...headers, Prefer: 'return=representation' },
+    body: JSON.stringify({ blocks: merged }),
+  });
+  if (!res.ok) return json(existing); // stale is better than nothing; the next open tries again
+  const rows = (await res.json()) as DailyPlanRow[];
+  return json(rows[0] ?? { ...existing, blocks: merged });
 }

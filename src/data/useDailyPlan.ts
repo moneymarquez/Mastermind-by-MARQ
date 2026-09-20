@@ -3,11 +3,12 @@ import { supabase } from '../lib/supabase';
 import { todayStr } from './date';
 import type { DailyPlan, DailyPlanBlock } from './types';
 
-/** Asks the Worker to build today's plan from the same deterministic
- *  builder the overnight job uses. Returns the row, or null if it couldn't.
- *  Called once when today has no plan yet — the overnight run only writes
- *  tomorrow's, so the first day after a deploy (and any day the cron missed)
- *  would otherwise stay empty until midnight. */
+/** Asks the Worker for today's plan, built or re-synced from the same
+ *  deterministic builder the overnight job uses. Returns the row, or null
+ *  if it couldn't. Called on every load: with no plan yet it creates one
+ *  (the overnight run only writes tomorrow's), and with one already there
+ *  it folds in anything that changed since — a shift logged this morning,
+ *  a step added at lunch — while keeping blocks added by hand. */
 async function requestTodaysPlan(): Promise<DailyPlan | null> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
@@ -24,13 +25,20 @@ export function useDailyPlan() {
 
   const load = useCallback(async () => {
     const { data } = await supabase.from('daily_plans').select('*').eq('plan_date', todayStr()).maybeSingle();
-    let row = (data as DailyPlan | null) ?? null;
-    if (!row) {
-      setGenerating(true);
-      row = await requestTodaysPlan();
-      setGenerating(false);
+    const stored = (data as DailyPlan | null) ?? null;
+    // Show what's stored immediately, then resync. Only the no-plan case
+    // waits — that's the one where there's nothing to show yet.
+    if (stored) {
+      setPlan(stored);
+      setLoading(false);
+      const synced = await requestTodaysPlan();
+      if (synced) setPlan(synced);
+      return;
     }
-    setPlan(row);
+    setGenerating(true);
+    const built = await requestTodaysPlan();
+    setGenerating(false);
+    setPlan(built);
     setLoading(false);
   }, []);
 
