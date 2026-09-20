@@ -1,5 +1,11 @@
 import type { CSSProperties } from 'react';
 import { useNudges } from '../../data/useNudges';
+import { useCallsToday } from '../../data/useCallsToday';
+import { useDailyCallGoal } from '../../data/useDailyCallGoal';
+import { useDailyPlan } from '../../data/useDailyPlan';
+import { useReminders } from '../../data/useReminders';
+import { greetingLine } from '../../data/greeting';
+import { dateStr, timeToMinutes } from '../../data/time';
 import { useHomeWidgetPrefs } from '../../data/useHomeWidgetPrefs';
 import { HOME_WIDGET_REGISTRY, isWidgetVisible } from '../../data/homeWidgets';
 
@@ -30,7 +36,20 @@ function greeting(): string {
 export default function HomeScreen({ isMobile, isOwner, homeHeadStyle, homeSubStyle, onOpenNova, assistantName, onNavigate }: Props) {
   const { nudges } = useNudges();
   const { hidden, order, known, loading: prefsLoading } = useHomeWidgetPrefs();
-  const nudgeSummary = nudges.length > 0 ? `${nudges.length} thing${nudges.length === 1 ? '' : 's'} worth a look today.` : 'Nothing urgent — everything on track.';
+  const { callsToday, loading: callsLoading } = useCallsToday();
+  const target = useDailyCallGoal();
+  const { plan } = useDailyPlan();
+  const { reminders } = useReminders();
+  const now = new Date();
+  const callBlock = plan?.blocks.find((b) => b.source === 'dials-calls');
+  const nudgeSummary = greetingLine({
+    nowMinutes: now.getHours() * 60 + now.getMinutes(),
+    callsToday, target,
+    callStartMinutes: callBlock ? timeToMinutes(callBlock.time) : 16 * 60,
+    overdueCount: reminders.filter((r) => r.due_date < dateStr(now)).length,
+    nudgeCount: nudges.length,
+    loading: callsLoading,
+  });
 
   const widgetProps = { isMobile, onNavigate, onOpenNova, assistantName };
   const hasCustomOrder = Object.keys(order).length > 0;

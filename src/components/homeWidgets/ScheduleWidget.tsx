@@ -1,6 +1,7 @@
 import { useEvents } from '../../data/useEvents';
 import { useContacts } from '../../data/useContacts';
-import { useCallOutcomes, DAILY_CALL_GOAL } from '../../data/useCallOutcomes';
+import { useCallOutcomes } from '../../data/useCallOutcomes';
+import { useDailyCallGoal } from '../../data/useDailyCallGoal';
 import { dateStr, formatTimeLabel } from '../../data/time';
 import type { HomeWidgetProps } from './types';
 import { cardShell } from './types';
@@ -14,6 +15,7 @@ export default function ScheduleWidget({ onNavigate }: HomeWidgetProps) {
   const { contacts, loading: contactsLoading } = useContacts();
   const dialingContacts = contacts.filter((c) => c.source === 'dialing');
   const { todayCount, history, loading: outcomesLoading } = useCallOutcomes(dialingContacts);
+  const DAILY_CALL_GOAL = useDailyCallGoal();
 
   const today = dateStr(new Date());
   const todayEvents = events

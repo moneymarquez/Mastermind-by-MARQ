@@ -4,7 +4,8 @@ import { todayStr } from './date';
 import type { CallOutcome, CallOutcomeType, Contact } from './types';
 import { FINAL_OUTCOMES } from './types';
 
-export const DAILY_CALL_GOAL = 100;
+// The daily call target lives in src/data/callGoal.ts (read live via
+// useDailyCallGoal) — it used to be a hardcoded 100 here.
 
 function nextBusinessDay(from: Date): string {
   const d = new Date(from);

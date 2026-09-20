@@ -5,7 +5,9 @@ import { useMacros } from '../../data/useMacros';
 import { useEvents } from '../../data/useEvents';
 import { useContacts } from '../../data/useContacts';
 import { useFitness } from '../../data/useFitness';
-import { useCallOutcomes, DAILY_CALL_GOAL } from '../../data/useCallOutcomes';
+import { useCallsToday } from '../../data/useCallsToday';
+import { useDailyCallGoal } from '../../data/useDailyCallGoal';
+import { useDailyPlan } from '../../data/useDailyPlan';
 import { formatTimeLabel, dateStr } from '../../data/time';
 import type { HomeWidgetProps } from './types';
 
@@ -32,28 +34,36 @@ export default function KpiTilesWidget({ isMobile }: HomeWidgetProps) {
   const { events, loading: eventsLoading } = useEvents();
   const { contacts, loading: contactsLoading } = useContacts();
   const { weekCount, loading: fitnessLoading } = useFitness();
-  const dialingContacts = contacts.filter((c) => c.source === 'dialing');
   const leadContacts = contacts.filter((c) => c.source === 'scalez');
-  const { todayCount, loading: outcomesLoading } = useCallOutcomes(dialingContacts);
+  const { callsToday, loading: outcomesLoading } = useCallsToday();
+  const callGoal = useDailyCallGoal();
+  const { plan, loading: planLoading } = useDailyPlan();
 
   const today = dateStr(new Date());
   const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+  const nowHHMM = `${String(Math.floor(nowMinutes / 60)).padStart(2, '0')}:${String(nowMinutes % 60).padStart(2, '0')}`;
+  // Today's plan first — it's what the day actually looks like, and it
+  // already folds in calendar events — then the Schedule for later days.
+  // "Nothing yet" only when both are genuinely empty.
+  const nextBlock = (plan?.blocks ?? []).filter((b) => b.time >= nowHHMM).sort((a, b) => a.time.localeCompare(b.time))[0];
   const next = events
-    .filter((e) => e.event_date > today || (e.event_date === today && e.start_time >= `${String(Math.floor(nowMinutes / 60)).padStart(2, '0')}:${String(nowMinutes % 60).padStart(2, '0')}`))
+    .filter((e) => e.event_date > today || (e.event_date === today && e.start_time >= nowHHMM))
     .sort((a, b) => (a.event_date === b.event_date ? a.start_time.localeCompare(b.start_time) : a.event_date.localeCompare(b.event_date)))[0];
-  const nextLabel = !next
+  const nextLabel = nextBlock
+    ? formatTimeLabel(nextBlock.time)
+    : !next
     ? 'Nothing yet'
     : next.event_date === today
     ? formatTimeLabel(next.start_time)
     : new Date(`${next.event_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
   const values: Record<string, { value: string; pct: number | null }> = {
-    "Today's call goal": { value: contactsLoading || outcomesLoading ? '—' : `${todayCount} / ${DAILY_CALL_GOAL}`, pct: Math.min(100, Math.round((todayCount / DAILY_CALL_GOAL) * 100)) },
+    "Today's call goal": { value: contactsLoading || outcomesLoading ? '—' : `${callsToday} / ${callGoal}`, pct: Math.min(100, Math.round((callsToday / callGoal) * 100)) },
     'Sobriety streak': { value: sobrietyLoading ? '—' : `${streak} day${streak === 1 ? '' : 's'}`, pct: null },
     'Workouts this week': { value: fitnessLoading ? '—' : `${weekCount}`, pct: null },
     "Today's macros": { value: macrosLoading ? '—' : `${totals.calories} kcal`, pct: null },
     'Leads in pipeline': { value: contactsLoading ? '—' : `${leadContacts.length}`, pct: null },
-    'Next on schedule': { value: eventsLoading ? '—' : nextLabel, pct: null },
+    'Next on schedule': { value: eventsLoading || planLoading ? '—' : nextLabel, pct: null },
   };
 
   return (

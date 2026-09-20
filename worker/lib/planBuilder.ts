@@ -14,6 +14,8 @@
  *  the loop.
  */
 
+import { DEFAULT_DAILY_CALL_GOAL } from '../../src/data/callGoal';
+
 export interface PlanShift { start_time: string; end_time: string }
 export interface PlanEvent { type: string; start_time: string; end_time: string; label: string }
 export interface PlanStep {
@@ -46,6 +48,8 @@ export interface PlanInput {
   events: PlanEvent[];
   steps: PlanStep[];
   overdue: PlanReminder[];
+  /** Today's dial target, from the DIALS goal (src/data/callGoal.ts). */
+  callGoal?: number;
 }
 
 export const CALL_HOUR_DEFAULT = 16 * 60;   // 4:00 PM
@@ -199,6 +203,7 @@ export function buildPlan(input: PlanInput): PlanBlock[] {
     time: toTime(callStart), duration: CALL_HOUR_LENGTH,
     title: `Calling hour — protected (${fmt(callStart)}–${fmt(callStart + CALL_HOUR_LENGTH)})`,
     detail: [
+      `Target: ${input.callGoal ?? DEFAULT_DAILY_CALL_GOAL} dials.`,
       'Non-negotiable floor. This is the only activity that produces money; everything else is downstream.',
       ...byRole.calls.map((s) => `Goal step: ${s.description}`),
       ...byRole.log.map((s) => `Goal step: ${s.description}${s.auto_tracked_source ? ' (counted live from Dialing)' : ''}`),

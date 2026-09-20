@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import Icon from '../../Icon';
 import { useContacts } from '../../data/useContacts';
-import { useCallOutcomes, DAILY_CALL_GOAL } from '../../data/useCallOutcomes';
+import { useCallOutcomes } from '../../data/useCallOutcomes';
+import { useDailyCallGoal } from '../../data/useDailyCallGoal';
 import { usePitch } from '../../data/usePitch';
 import type { CallOutcomeType, Contact, DialingContactDetails } from '../../data/types';
 import { CALL_OUTCOMES, CALL_OUTCOME_LABEL } from '../../data/types';
@@ -44,6 +45,7 @@ export default function DialingScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const dialingContacts = contacts.filter((c) => c.source === 'dialing');
   const { activeQueue, completedToday, todayCount, logOutcome, undoOutcome, history } = useCallOutcomes(dialingContacts);
   const { pitchText, loading: pitchLoading, savePitch } = usePitch();
+  const DAILY_CALL_GOAL = useDailyCallGoal();
 
   // Leads sent over from the Lead Pool. These are the same `leads` rows the
   // pool shows, not copies — which is what lets the full card (photos,
