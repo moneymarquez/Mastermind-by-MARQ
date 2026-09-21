@@ -326,8 +326,14 @@ export async function runDailyPlan(env: DailyPlanEnv): Promise<void> {
   }
 }
 
-/** POST /api/daily-plan/today — today's plan for the caller, in sync with
- *  today's schedule. Creates it if there isn't one; if there is, rebuilds
+/** How far ahead a plan can be asked for. Three days out is the window
+ *  the Daily Plan tab shows; a day of slack each side covers the client's
+ *  clock and the store timezone disagreeing around midnight. */
+export const PLAN_DAYS_AHEAD = 3;
+
+/** POST /api/daily-plan/today — a day's plan for the caller, in sync with
+ *  that day's schedule. Body may carry { date: 'YYYY-MM-DD' }; no body
+ *  means today. Creates the plan if there isn't one; if there is, rebuilds
  *  the floor from live shifts, events, steps and reminders and swaps it in,
  *  keeping any blocks that were added by hand. So a shift logged this
  *  morning blocks its hours and moves the calling hour the next time the
@@ -342,13 +348,27 @@ export async function dailyPlanToday(request: Request, env: DailyPlanEnv): Promi
   if (!env.SUPABASE_SERVICE_ROLE_KEY) return json({ error: 'Plan generation is not configured.' }, 503);
 
   const headers: Headers = { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, 'content-type': 'application/json' };
-  const today = dateOnly(nowInTimeZone(env.STORE_TIMEZONE || 'America/Chicago'));
+  const now = nowInTimeZone(env.STORE_TIMEZONE || 'America/Chicago');
+  const today = dateOnly(now);
 
-  const floor = buildPlan(await fetchPlanInput(env.VITE_SUPABASE_URL, headers, user.id, today));
-  const existing = await existingPlan(env.VITE_SUPABASE_URL, headers, user.id, today);
+  let date = today;
+  try {
+    const body = (await request.json()) as { date?: unknown };
+    if (typeof body.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.date)) date = body.date;
+  } catch {
+    // No body, or not JSON — today.
+  }
+  const earliest = dateOnly(addDays(now, -1));
+  const latest = dateOnly(addDays(now, PLAN_DAYS_AHEAD + 1));
+  if (date < earliest || date > latest) {
+    return json({ error: `Plans can be built from ${earliest} to ${latest}.` }, 400);
+  }
+
+  const floor = buildPlan(await fetchPlanInput(env.VITE_SUPABASE_URL, headers, user.id, date));
+  const existing = await existingPlan(env.VITE_SUPABASE_URL, headers, user.id, date);
 
   if (!existing) {
-    const saved = await savePlan(env.VITE_SUPABASE_URL, headers, user.id, today, floor);
+    const saved = await savePlan(env.VITE_SUPABASE_URL, headers, user.id, date, floor);
     if (!saved) return json({ error: 'Could not save the plan.' }, 500);
     return json(saved);
   }

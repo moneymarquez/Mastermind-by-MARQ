@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { todayStr } from './date';
+import { dateStr } from './time';
 import type { DailyPlan, DailyPlanBlock } from './types';
 
 /** Asks the Worker for today's plan, built or re-synced from the same
@@ -9,38 +9,52 @@ import type { DailyPlan, DailyPlanBlock } from './types';
  *  (the overnight run only writes tomorrow's), and with one already there
  *  it folds in anything that changed since — a shift logged this morning,
  *  a step added at lunch — while keeping blocks added by hand. */
-async function requestTodaysPlan(): Promise<DailyPlan | null> {
+async function requestPlan(date: string): Promise<DailyPlan | null> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   if (!token) return null;
-  const res = await fetch('/api/daily-plan/today', { method: 'POST', headers: { authorization: `Bearer ${token}` } });
+  const res = await fetch('/api/daily-plan/today', {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ date }),
+  });
   if (!res.ok) return null;
   return (await res.json()) as DailyPlan;
 }
 
-export function useDailyPlan() {
+/** One day's plan. Defaults to today — Home's tiles and greeting read
+ *  that — and the Daily Plan tab passes the day being looked at, so the
+ *  next few days can be built, adjusted and confirmed ahead of time. */
+// Local calendar date, not todayStr() — that one is UTC, which in Mountain
+// time is already tomorrow from 6pm on, and would have asked the Worker
+// for tomorrow's plan every evening.
+export function useDailyPlan(date: string = dateStr(new Date())) {
   const [plan, setPlan] = useState<DailyPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
 
   const load = useCallback(async () => {
-    const { data } = await supabase.from('daily_plans').select('*').eq('plan_date', todayStr()).maybeSingle();
+    // Reset so a day switch never shows the previous day's blocks under
+    // the new day's heading while its own load is in flight.
+    setPlan(null);
+    setLoading(true);
+    const { data } = await supabase.from('daily_plans').select('*').eq('plan_date', date).maybeSingle();
     const stored = (data as DailyPlan | null) ?? null;
     // Show what's stored immediately, then resync. Only the no-plan case
     // waits — that's the one where there's nothing to show yet.
     if (stored) {
       setPlan(stored);
       setLoading(false);
-      const synced = await requestTodaysPlan();
+      const synced = await requestPlan(date);
       if (synced) setPlan(synced);
       return;
     }
     setGenerating(true);
-    const built = await requestTodaysPlan();
+    const built = await requestPlan(date);
     setGenerating(false);
     setPlan(built);
     setLoading(false);
-  }, []);
+  }, [date]);
 
   useEffect(() => {
     load();
@@ -67,7 +81,7 @@ export function useDailyPlan() {
       await updateBlocks(blocks);
       return;
     }
-    await supabase.from('daily_plans').insert({ plan_date: todayStr(), blocks, status: 'draft' });
+    await supabase.from('daily_plans').insert({ plan_date: date, blocks, status: 'draft' });
     await load();
   };
 

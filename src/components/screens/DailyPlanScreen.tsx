@@ -2,8 +2,7 @@ import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useDailyPlan } from '../../data/useDailyPlan';
 import { useEvents } from '../../data/useEvents';
-import { todayStr } from '../../data/date';
-import { formatTimeLabel, timeToMinutes } from '../../data/time';
+import { formatTimeLabel, timeToMinutes, dateStr } from '../../data/time';
 import type { DailyPlanBlock, DailyPlanBlockType, DailyPlanModule } from '../../data/types';
 
 interface Props {
@@ -15,6 +14,23 @@ interface Props {
 // 6:00 AM through 12:00 AM (midnight) — 18 hourly rows. The last row
 // (23:00) covers up to midnight; there's no separate 24:00 row.
 const HOURS = Array.from({ length: 18 }, (_, i) => 6 + i);
+
+// Today plus the next three. Each day is its own plan row, built on
+// demand the first time it's opened and re-synced on every open after,
+// so a shift entered for Wednesday is on Wednesday's plan the moment you
+// look at it — and confirmed there, ahead of time, if you want.
+const DAYS_SHOWN = 4;
+function upcomingDays(): { date: string; label: string }[] {
+  const out: { date: string; label: string }[] = [];
+  for (let i = 0; i < DAYS_SHOWN; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    const date = dateStr(d);
+    const label = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' });
+    out.push({ date, label });
+  }
+  return out;
+}
 
 const TYPE_COLOR: Record<DailyPlanBlockType, string> = {
   fixed: 'var(--text-secondary)', goal: '#5B8DEF', fitness: 'var(--success)',
@@ -43,7 +59,9 @@ function eventTitle(e: { type: string; notes: string | null; details: Record<str
 }
 
 export default function DailyPlanScreen({ isMobile, homeHeadStyle, homeSubStyle }: Props) {
-  const { plan, loading, generating, removeBlock, addBlock, confirm, skip } = useDailyPlan();
+  const days = useMemo(upcomingDays, []);
+  const [date, setDate] = useState(days[0].date);
+  const { plan, loading, generating, removeBlock, addBlock, confirm, skip } = useDailyPlan(date);
   const { events, loading: eventsLoading } = useEvents();
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
@@ -52,8 +70,8 @@ export default function DailyPlanScreen({ isMobile, homeHeadStyle, homeSubStyle 
   const [formModule, setFormModule] = useState<DailyPlanModule>('manual');
   const [formDuration, setFormDuration] = useState(30);
 
-  const today = todayStr();
-  const todaysEvents = useMemo(() => events.filter((e) => e.event_date === today), [events, today]);
+  const isToday = date === days[0].date;
+  const todaysEvents = useMemo(() => events.filter((e) => e.event_date === date), [events, date]);
 
   // Keyed by hour (6-23). A plan block always wins its hour over a raw
   // Schedule event — Nova's generation already folds calendar events into
@@ -84,6 +102,12 @@ export default function DailyPlanScreen({ isMobile, homeHeadStyle, homeSubStyle 
 
   const openHour = (hour: number) => {
     setSelectedHour(hour);
+    setAdding(false);
+  };
+
+  const chooseDay = (d: string) => {
+    setDate(d);
+    setSelectedHour(null);
     setAdding(false);
   };
 
@@ -213,12 +237,27 @@ export default function DailyPlanScreen({ isMobile, homeHeadStyle, homeSubStyle 
             <button className="ap-btn ap-btn-secondary" onClick={skip}>Skip today</button>
           </div>
         )}
-        {plan?.status === 'confirmed' && <div style={{ fontSize: 'var(--text-small)', color: 'var(--success)' }}>Confirmed — this is your day.</div>}
-        {plan?.status === 'skipped' && <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }}>Skipped for today.</div>}
+        {plan?.status === 'confirmed' && <div style={{ fontSize: 'var(--text-small)', color: 'var(--success)' }}>{isToday ? 'Confirmed — this is your day.' : 'Confirmed.'}</div>}
+        {plan?.status === 'skipped' && <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }}>{isToday ? 'Skipped for today.' : 'Skipped.'}</div>}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
+        {days.map((d) => {
+          const active = d.date === date;
+          return (
+            <div
+              key={d.date}
+              onClick={() => chooseDay(d.date)}
+              style={{ padding: '7px 16px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body-sm)', fontWeight: 600, border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, color: active ? 'var(--text)' : 'var(--text-tertiary)' }}
+            >
+              {d.label}
+            </div>
+          );
+        })}
       </div>
 
       {(loading || eventsLoading) && <div style={{ marginTop: 24, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)' }}>Loading…</div>}
-      {!loading && generating && <div style={{ marginTop: 24, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)' }}>Building today's plan…</div>}
+      {!loading && generating && <div style={{ marginTop: 24, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)' }}>{isToday ? "Building today's plan…" : 'Building the plan…'}</div>}
 
       {!loading && !eventsLoading && (
         <div style={{ marginTop: 20, display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 16, alignItems: 'flex-start' }}>
