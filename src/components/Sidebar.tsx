@@ -71,8 +71,13 @@ export default function Sidebar({
       {open && isOwner && <LeadsWidget leads={leads} newCount={leadsNewCount} loading={leadsLoading} onOpen={onOpenLead} />}
       {open && isOwner && <InboxWidget items={inboxItems} loading={inboxLoading} onOpen={onOpenInbox} />}
 
+      {/* Vertical only. .nav-row's hover scales a row 1.5% wider than this
+          pane, and overflow-y alone gives the pane horizontal scroll room
+          for that, so a sideways trackpad or touch gesture slid the whole
+          list off its left edge. The 6px padding/negative margin keeps the
+          hover glow from being clipped flat at the row edges. */}
       {open && (
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2, fontSize: 13.5 }}>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', overscrollBehaviorX: 'none', touchAction: 'pan-y', padding: '0 6px', margin: '0 -6px', display: 'flex', flexDirection: 'column', gap: 2, fontSize: 13.5 }}>
         {rows.map((row) => {
           if (row.kind === 'header') {
             return (

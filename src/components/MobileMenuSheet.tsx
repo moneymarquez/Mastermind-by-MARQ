@@ -248,7 +248,7 @@ export default function MobileMenuSheet({
         <div
           ref={listRef}
           onScroll={(e) => setListAtTop(e.currentTarget.scrollTop <= 0)}
-          style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', touchAction: listAtTop ? 'pan-up' : 'pan-y', display: 'flex', flexDirection: 'column', gap: 3, marginTop: 4 }}
+          style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', touchAction: listAtTop ? 'pan-up' : 'pan-y', display: 'flex', flexDirection: 'column', gap: 3, marginTop: 4 }}
         >
           {rows.map((row, i) => {
             if (row.kind === 'header') {
