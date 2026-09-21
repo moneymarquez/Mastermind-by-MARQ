@@ -5,6 +5,7 @@ import {
 } from '../lib/alpaca';
 import type { AlpacaKeys, AlpacaBar, AlpacaPosition } from '../lib/alpaca';
 import type { StocksEnv } from './broker-keys';
+import { splitWatchlist } from '../../src/data/tickers';
 
 // Paper-trading bot engine (Stocks tab), ported verbatim from
 // netlify/functions/stocks-bot.ts to run as a Cloudflare Worker Cron
@@ -131,6 +132,23 @@ async function logSignal(env: RunEnv, userId: string, ticker: string, signalType
   });
 }
 
+/** A 'blocked' signal that repeats at most once per day per reason.
+ *
+ *  For conditions that hold for a whole session — a bad symbol, missing
+ *  bar history, Alpaca refusing the keys. The bot ticks every 15 minutes;
+ *  logging those every tick would be 26 identical rows a day, and the tab
+ *  would be unreadable. Once a day is enough to be seen, which is the
+ *  point: for six weeks the bot failed on every single run and the Stocks
+ *  tab said "No signals yet today", because nothing wrote the failure
+ *  anywhere a person would look. */
+async function logBlockedOnce(env: RunEnv, userId: string, ticker: string, reason: string, today: string) {
+  const qs = new URLSearchParams({ select: 'id', user_id: `eq.${userId}`, ticker: `eq.${ticker}`, signal_type: 'eq.blocked', reason: `eq.${reason}`, created_at: `gte.${today}T00:00:00`, limit: '1' });
+  const res = await fetch(`${env.supabaseUrl}/rest/v1/bot_signals?${qs.toString()}`, { headers: env.headers });
+  const rows = res.ok ? ((await res.json()) as { id: string }[]) : [];
+  if (Array.isArray(rows) && rows.length > 0) return;
+  await logSignal(env, userId, ticker, 'blocked', reason, false);
+}
+
 async function runStrategyForUser(env: RunEnv, userId: string, config: { watchlist: string[]; halted_date: string | null }, keys: AlpacaKeys, nowET: Date) {
   const [account, positions] = await Promise.all([fetchAccount(keys), fetchPositions(keys)]);
   await reconcileClosedPositions(env, userId, keys, positions);
@@ -150,13 +168,30 @@ async function runStrategyForUser(env: RunEnv, userId: string, config: { watchli
     await logSignal(env, userId, '*', 'blocked', `Daily loss limit hit (${(dailyPlPct * 100).toFixed(1)}%) — halted until tomorrow`, false);
   }
 
-  const bars = await fetchHourlyBars(keys, config.watchlist);
+  // Anything that isn't a stock symbol is skipped, not sent. One bad entry
+  // used to fail the single bars request for the entire list.
+  const { valid: watchlist, rejected } = splitWatchlist(config.watchlist);
+  for (const bad of rejected) {
+    await logBlockedOnce(env, userId, bad, `Skipped: "${bad}" is not a stock symbol the paper account can trade — remove it from the watchlist`, today);
+  }
+  if (watchlist.length === 0) {
+    await logBlockedOnce(env, userId, '*', 'Watchlist has no tradable stock symbols', today);
+    return;
+  }
+
+  const bars = await fetchHourlyBars(keys, watchlist);
   const openTickers = new Set(positions.map((p) => p.symbol));
   const correlationBlocked = openTickers.has('SPY') && openTickers.has('QQQ');
 
-  for (const ticker of config.watchlist) {
-    const read = readStrategy(bars[ticker] ?? []);
-    if (!read) continue;
+  for (const ticker of watchlist) {
+    const symbolBars = bars[ticker] ?? [];
+    const read = readStrategy(symbolBars);
+    if (!read) {
+      // Say why, once. Silence here is exactly how the missing-history bug
+      // went unnoticed.
+      await logBlockedOnce(env, userId, ticker, `Not enough bar history to evaluate (${symbolBars.length} hourly bars, need ${EMA_SLOW + 2})`, today);
+      continue;
+    }
 
     if (read.crossDown && openTickers.has(ticker)) {
       await closePosition(keys, ticker);
@@ -286,6 +321,9 @@ export async function runStocksBot(env: StocksEnv): Promise<void> {
         await runStrategyForUser(runEnv, config.user_id, config, keys, nowET);
       } catch (err) {
         console.error('stocks-bot: run failed for user', config.user_id, err);
+        // Into the tab, not just the Worker log nobody opens.
+        const message = err instanceof Error ? err.message : String(err);
+        await logBlockedOnce(runEnv, config.user_id, '*', `Run failed: ${message.slice(0, 300)}`, today).catch(() => {});
       }
       await fetch(`${supabaseUrl}/rest/v1/bot_config?user_id=eq.${config.user_id}`, {
         method: 'PATCH', headers: runEnv.headers, body: JSON.stringify({ last_run_at: new Date().toISOString() }),

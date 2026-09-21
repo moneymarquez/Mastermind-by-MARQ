@@ -119,14 +119,51 @@ export interface AlpacaBar {
   v: number;
 }
 
+/** How far back to ask for hourly bars. EMA50 on hourly bars needs 52+
+ *  bars to produce its first reading; a US session is ~7 hourly bars, so
+ *  that's 8 trading days minimum. 60 calendar days gives ~40 sessions —
+ *  enough for the slow EMA to have settled well before the bars that
+ *  matter, rather than reading off a barely-seeded average. */
+const BARS_LOOKBACK_DAYS = 60;
+
+/** Newest-first is never wanted here; the strategy reads [n-1] as "now". */
+export function sortBarsAsc(bars: AlpacaBar[]): AlpacaBar[] {
+  const seen = new Set<string>();
+  return bars
+    .filter((b) => (seen.has(b.t) ? false : (seen.add(b.t), true)))
+    .sort((a, b) => a.t.localeCompare(b.t));
+}
+
 // 1-hour candles for the strategy's EMA/momentum/volume calculations.
 // IEX feed (the free tier) — plenty for the crossover/breakout logic here.
-export async function fetchHourlyBars(keys: AlpacaKeys, symbols: string[], limit = 80): Promise<Record<string, AlpacaBar[]>> {
-  const url = `${ALPACA_DATA_BASE}/v2/stocks/bars?symbols=${symbols.join(',')}&timeframe=1Hour&limit=${limit}&feed=iex&adjustment=raw`;
-  const res = await fetch(url, { headers: alpacaHeaders(keys) });
-  if (!res.ok) throw new Error(`Alpaca bars fetch failed: ${res.status} ${await res.text()}`);
-  const body = (await res.json()) as { bars: Record<string, AlpacaBar[]> };
-  return body.bars ?? {};
+//
+// This used to send only `limit=80` with no `start`. Alpaca's default start
+// is the beginning of the current day, so every run got today's handful of
+// bars (~7), never the 52 the slow EMA needs — readStrategy returned null
+// for every symbol on every run, and the bot could never signal. `start`
+// is explicit now, and pages are followed so a long lookback isn't cut
+// off at one page.
+export async function fetchHourlyBars(keys: AlpacaKeys, symbols: string[], lookbackDays = BARS_LOOKBACK_DAYS): Promise<Record<string, AlpacaBar[]>> {
+  if (symbols.length === 0) return {};
+  const start = new Date(Date.now() - lookbackDays * 86400000).toISOString();
+  const out: Record<string, AlpacaBar[]> = {};
+  let pageToken: string | null = null;
+  for (let page = 0; page < 20; page++) {
+    const qs = new URLSearchParams({
+      symbols: symbols.join(','), timeframe: '1Hour', start, limit: '10000', feed: 'iex', adjustment: 'raw', sort: 'asc',
+    });
+    if (pageToken) qs.set('page_token', pageToken);
+    const res = await fetch(`${ALPACA_DATA_BASE}/v2/stocks/bars?${qs.toString()}`, { headers: alpacaHeaders(keys) });
+    if (!res.ok) throw new Error(`Alpaca bars fetch failed: ${res.status} ${await res.text()}`);
+    const body = (await res.json()) as { bars: Record<string, AlpacaBar[]> | null; next_page_token: string | null };
+    for (const [sym, bars] of Object.entries(body.bars ?? {})) {
+      out[sym] = [...(out[sym] ?? []), ...bars];
+    }
+    pageToken = body.next_page_token ?? null;
+    if (!pageToken) break;
+  }
+  for (const sym of Object.keys(out)) out[sym] = sortBarsAsc(out[sym]);
+  return out;
 }
 
 export interface AlpacaNewsItem {

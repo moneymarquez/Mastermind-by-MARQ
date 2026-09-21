@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useStocksBot } from '../../data/useStocksBot';
+import { splitWatchlist } from '../../data/tickers';
 import type { BotSignal, BotTrade } from '../../data/types';
 import { useNovaPreferences } from '../../data/useNovaPreferences';
 
@@ -321,12 +322,17 @@ function TradeLogPanel({ trades }: { trades: BotTrade[] }) {
 function SettingsPanel(bot: ReturnType<typeof useStocksBot>) {
   const { config, updateConfig, brokerStatus, saveBrokerKeys, savingKeys, keysError } = bot;
   const [watchlistInput, setWatchlistInput] = useState(config.watchlist.join(', '));
+  const [watchlistError, setWatchlistError] = useState('');
   const [apiKeyId, setApiKeyId] = useState('');
   const [apiSecret, setApiSecret] = useState('');
 
   const saveWatchlist = () => {
-    const tickers = watchlistInput.split(',').map((t) => t.trim().toUpperCase()).filter(Boolean).slice(0, 5);
+    // Stocks and ETFs only — the paper account can't trade gold or crypto,
+    // and one such entry used to break every run for the whole list.
+    const { valid, rejected } = splitWatchlist(watchlistInput.split(','));
+    const tickers = valid.slice(0, 5);
     setWatchlistInput(tickers.join(', '));
+    setWatchlistError(rejected.length ? `Not stock symbols, left out: ${rejected.join(', ')}. This bot trades US stocks and ETFs only (e.g. SPY, QQQ, AAPL).` : '');
     updateConfig({ watchlist: tickers });
   };
 
@@ -356,6 +362,7 @@ function SettingsPanel(bot: ReturnType<typeof useStocksBot>) {
           <input style={{ ...inputStyle, flex: 1 }} placeholder="SPY, QQQ, AAPL" value={watchlistInput} onChange={(e) => setWatchlistInput(e.target.value)} />
           <div style={pillButton('outline')} onClick={saveWatchlist}>Save</div>
         </div>
+        {watchlistError && <div style={{ fontSize: 'var(--text-body-sm)', color: RED, marginTop: 8 }}>{watchlistError}</div>}
       </div>
 
       <div style={cardStyle}>
