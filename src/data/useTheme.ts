@@ -40,14 +40,17 @@ function paintStatusBar() {
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
 }
 
+// A tiny store so any component can read the skin without prop drilling —
+// the fx components use it to pick loud vs quiet. Declared BEFORE the
+// module-load applySkin() below, which iterates it — a `const` in the
+// temporal dead zone throws, and a throw here blanks the whole app.
+const skinListeners = new Set<(s: Skin) => void>();
+
 const cachedTheme = (localStorage.getItem(STORAGE_KEY) as Theme | null) ?? 'dark';
 const cachedSkin = (localStorage.getItem(SKIN_KEY) as Skin | null) ?? 'simple';
 applyTheme(cachedTheme);
 applySkin(cachedSkin);
 
-// A tiny store so any component can read the skin without prop drilling —
-// the fx components use it to pick loud vs quiet.
-const skinListeners = new Set<(s: Skin) => void>();
 export function getSkin(): Skin { return currentSkin; }
 export function useSkin(): Skin {
   const [skin, setSkin] = useState<Skin>(currentSkin);
