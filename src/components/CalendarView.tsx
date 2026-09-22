@@ -205,7 +205,7 @@ const CalendarView = forwardRef<CalendarViewHandle, Props>(function CalendarView
                 <div
                   style={{
                     position: 'absolute', left: 60, right: 6, top: (dragRange.start / 60) * HOUR_HEIGHT, height: Math.max(4, ((dragRange.end - dragRange.start) / 60) * HOUR_HEIGHT),
-                    background: 'rgba(245,246,247,0.18)', border: '1px solid var(--text)', borderRadius: 6, pointerEvents: 'none',
+                    background: 'var(--tint-today)', border: '1px solid var(--text)', borderRadius: 6, pointerEvents: 'none',
                   }}
                 />
               )}

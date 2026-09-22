@@ -76,7 +76,7 @@ export default function PromptVoiceSettingsScreen({ homeHeadStyle, homeSubStyle 
                   onClick={() => !loading && save(opt.value)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 'var(--radius-md)', cursor: loading ? 'default' : 'pointer',
-                    border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? '#F5F6F71a' : 'transparent',
+                    border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? 'var(--tint-active)' : 'transparent',
                   }}
                 >
                   <div style={{

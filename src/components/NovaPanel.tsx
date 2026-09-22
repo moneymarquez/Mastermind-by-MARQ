@@ -1,6 +1,7 @@
 import type { ChangeEvent, CSSProperties, KeyboardEvent } from 'react';
 import type { NovaMessage } from '../types';
 import Icon from '../Icon';
+import Typewriter from './fx/Typewriter';
 import { isSpeechRecognitionSupported } from '../lib/speech';
 
 const SPACING = 20;
@@ -58,14 +59,14 @@ export default function NovaPanel({
         borderRadius: '20px 20px 0 0',
         paddingBottom: 'env(safe-area-inset-bottom)',
         background: 'var(--surface-2)', border: '1px solid var(--border)', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column',
-        boxShadow: '0 -12px 40px rgba(0,0,0,0.55)', animation: 'sheetSlideUp 0.2s ease', zIndex: 60, overflow: 'hidden',
+        boxShadow: '0 -12px 40px rgba(var(--shadow-ink),0.55)', animation: 'sheetSlideUp 0.2s ease', zIndex: 60, overflow: 'hidden',
       }
     : {
         position: 'absolute',
         ...(anchor ? anchoredPanelStyle(anchor) : { left: SPACING, top: SPACING }),
         width: PANEL_W, height: PANEL_H,
         background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-2xl)', display: 'flex', flexDirection: 'column',
-        boxShadow: '0 20px 50px rgba(0,0,0,0.5)', animation: 'bubbleFade 0.18s ease', zIndex: 45, overflow: 'hidden',
+        boxShadow: '0 20px 50px rgba(var(--shadow-ink),0.5)', animation: 'bubbleFade 0.18s ease', zIndex: 45, overflow: 'hidden',
       };
 
   return (
@@ -73,7 +74,7 @@ export default function NovaPanel({
       {isMobile && (
         <div
           onClick={onClose}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 59, animation: 'bubbleFade 0.18s ease' }}
+          style={{ position: 'fixed', inset: 0, background: 'var(--scrim-soft)', zIndex: 59, animation: 'bubbleFade 0.18s ease' }}
         />
       )}
       <div style={panelStyle}>
@@ -93,11 +94,11 @@ export default function NovaPanel({
             style={{
               alignSelf: msg.from === 'user' ? 'flex-end' : 'flex-start',
               background: msg.from === 'user' ? 'var(--text)' : 'var(--surface-4)',
-              color: msg.from === 'user' ? 'var(--bg)' : '#e9e9ed',
+              color: msg.from === 'user' ? 'var(--bg)' : 'var(--nova-text)',
               padding: '9px 13px', borderRadius: 'var(--radius-xl)', fontSize: 'var(--text-body)', maxWidth: '85%', lineHeight: 1.4,
             }}
           >
-            {msg.text}
+            {msg.from === 'nova' ? <Typewriter text={msg.text} live={i === messages.length - 1} /> : msg.text}
           </div>
         ))}
         {thinking && (

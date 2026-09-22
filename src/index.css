@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import './cyberpunk.css';
 
 /* ── Aperture / "Nocturne" ───────────────────────────────────────────────
    The palette below is the Masterminds Aperture direction, taken from its
@@ -213,6 +214,44 @@
   --radius-2xl: 14px;
   --radius-3xl: 14px;
   --radius-pill: 999px;     /* buttons, tabs, badges */
+
+  /* ── Surface-independent tokens (schema: cyberpunk build, step 0) ──
+     Each value below is exactly the literal it replaced in a component, so
+     the Simple theme is unchanged by the swap. They exist so a skin can
+     override them: Cyberpunk turns the active tint neon, the scrims
+     tinted, the category colours electric. */
+  --scrim: rgba(6,7,9,0.85);            /* modal / picker backdrop */
+  --scrim-soft: rgba(0,0,0,0.5);        /* Nova panel, tour backdrop */
+  --scrim-sheet: rgba(0,0,0,0.45);      /* mobile menu sheet */
+  --scrim-form: rgba(0,0,0,0.6);        /* event / contact form modals */
+  --shadow-ink: 0, 0, 0;                /* rgba(var(--shadow-ink), a) */
+  --tint-active: #F5F6F71a;             /* selected segment / tab tint */
+  --tint-today: rgba(245,246,247,0.18); /* calendar "today" cell */
+  --tint-chip: #8A8F9822;
+  --tint-chip-line: #8A8F9855;
+  --tour-ring: #F5F6F755;
+  --text-on-color: #ffffff;             /* white text on a status colour */
+  --text-on-success: #04140c;           /* ink on a green pill */
+  --text-on-tag: #0A0B0D;               /* ink on a selected tag */
+  --nova-text: #e9e9ed;                 /* assistant bubble text */
+  --video-bg: #000000;
+  --border-muted: #3a3d43;
+  --knob-shadow: rgba(0,0,0,0.3);
+  /* Category colours — one palette, shared by Schedule events, Contacts,
+     Daily Plan block types and the Holiday Calendar people. */
+  --cat-blue: #5B8DEF;
+  --cat-cyan: #5cc0e0;
+  --cat-purple: #c47ad1;
+  --cat-rose: #e05c7a;
+  --cat-lime: #a3c95c;
+  --cat-grey: #8A8F98;
+  --cat-green: #4CAF7D;
+  --cat-gold: #C9A24B;
+  /* Client CRM pipeline stages. */
+  --stage-new: #8a8a8a;
+  --stage-discovery: #6a8fc9;
+  --stage-invoice: #c98f4b;
+  --stage-retainer: #4a9a8a;
 
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;

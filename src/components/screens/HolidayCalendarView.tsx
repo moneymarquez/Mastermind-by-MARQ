@@ -37,7 +37,7 @@ function looksLikeOwner(personName: string): boolean {
 // Deterministic color per person so the same coworker reads consistently
 // across the calendar without maintaining a manual color map.
 function colorForName(name: string): string {
-  const palette = ['#5B8DEF', 'var(--success)', 'var(--warning)', '#c47ad1', '#5cc0e0', '#e05c7a', '#a3c95c'];
+  const palette = ['var(--cat-blue)', 'var(--success)', 'var(--warning)', 'var(--cat-purple)', 'var(--cat-cyan)', 'var(--cat-rose)', 'var(--cat-lime)'];
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
   return palette[hash % palette.length];
@@ -222,7 +222,7 @@ export default function HolidayCalendarView() {
       )}
 
       {selectedDate && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(6,7,9,0.85)', zIndex: 210, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setSelectedDate(null)}>
+        <div style={{ position: 'fixed', inset: 0, background: 'var(--scrim)', zIndex: 210, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setSelectedDate(null)}>
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-2xl)', padding: 20, width: '100%', maxWidth: 380, maxHeight: '70vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>{new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>

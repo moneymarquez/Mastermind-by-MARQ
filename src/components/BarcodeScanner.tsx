@@ -68,7 +68,7 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
   return (
     <div
       style={{
-        position: 'fixed', inset: 0, background: 'rgba(6,7,9,0.9)', zIndex: 200,
+        position: 'fixed', inset: 0, background: 'var(--scrim)', zIndex: 200,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 20,
       }}
     >
@@ -80,7 +80,7 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
       </div>
 
       {detectorSupported && !error && (
-        <video ref={videoRef} muted playsInline style={{ width: '100%', maxWidth: 360, borderRadius: 'var(--radius-lg)', background: '#000' }} />
+        <video ref={videoRef} muted playsInline style={{ width: '100%', maxWidth: 360, borderRadius: 'var(--radius-lg)', background: 'var(--video-bg)' }} />
       )}
       {error && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', maxWidth: 320, textAlign: 'center' }}>{error}</div>}
       {!detectorSupported && (

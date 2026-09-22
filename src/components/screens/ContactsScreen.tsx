@@ -22,7 +22,7 @@ const primaryBtn: CSSProperties = {
 };
 
 const SOURCE_LABEL: Record<ContactSource, string> = { dialing: 'Dialing', scalez: 'Scaling', manual: 'Manual' };
-const SOURCE_COLOR: Record<ContactSource, string> = { dialing: '#5B8DEF', scalez: 'var(--success)', manual: 'var(--text-secondary)' };
+const SOURCE_COLOR: Record<ContactSource, string> = { dialing: 'var(--cat-blue)', scalez: 'var(--success)', manual: 'var(--text-secondary)' };
 
 function matches(c: Contact, q: string): boolean {
   const s = q.trim().toLowerCase();

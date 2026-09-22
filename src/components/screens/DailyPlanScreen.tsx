@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { useSkin } from '../../data/useTheme';
+import { emptyCopy } from '../../data/emptyCopy';
 import type { CSSProperties } from 'react';
 import { useDailyPlan } from '../../data/useDailyPlan';
 import { useEvents } from '../../data/useEvents';
@@ -33,8 +35,8 @@ function upcomingDays(): { date: string; label: string }[] {
 }
 
 const TYPE_COLOR: Record<DailyPlanBlockType, string> = {
-  fixed: 'var(--text-secondary)', goal: '#5B8DEF', fitness: 'var(--success)',
-  macros: 'var(--warning)', dialing: '#5cc0e0', ai_suggested: '#c47ad1',
+  fixed: 'var(--text-secondary)', goal: 'var(--cat-blue)', fitness: 'var(--success)',
+  macros: 'var(--warning)', dialing: 'var(--cat-cyan)', ai_suggested: 'var(--cat-purple)',
 };
 const TYPE_LABEL: Record<DailyPlanBlockType, string> = {
   fixed: 'Fixed', goal: 'Goal', fitness: 'Fitness', macros: 'Macros', dialing: 'Dialing', ai_suggested: 'Nova suggested',
@@ -62,6 +64,7 @@ export default function DailyPlanScreen({ isMobile, homeHeadStyle, homeSubStyle 
   const days = useMemo(upcomingDays, []);
   const [date, setDate] = useState(days[0].date);
   const { plan, loading, generating, removeBlock, addBlock, confirm, skip } = useDailyPlan(date);
+  const skin = useSkin();
   const { events, loading: eventsLoading } = useEvents();
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
@@ -136,7 +139,7 @@ export default function DailyPlanScreen({ isMobile, homeHeadStyle, homeSubStyle 
 
   const detailPane = () => {
     if (selectedHour === null) {
-      return <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', padding: 24 }}>Pick an hour to see what's planned, or add something.</div>;
+      return <div className="fx-empty" style={{ fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', padding: 24 }}>{emptyCopy('planPickHour', skin)}</div>;
     }
     if (!selected) {
       if (adding) {
@@ -175,7 +178,7 @@ export default function DailyPlanScreen({ isMobile, homeHeadStyle, homeSubStyle 
       return (
         <div style={{ padding: 24 }}>
           <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>{formatTimeLabel(`${String(selectedHour).padStart(2, '0')}:00`)}</div>
-          <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', marginTop: 6 }}>Nothing planned for this hour.</div>
+          <div className="fx-empty" style={{ fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', marginTop: 6 }}>{emptyCopy('planHourEmpty', skin)}</div>
           <button className="ap-btn ap-btn-primary" style={{ marginTop: 14 }} onClick={startAdd}>Add a block</button>
         </div>
       );

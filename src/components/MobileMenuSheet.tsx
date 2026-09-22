@@ -3,7 +3,7 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { NavRow } from '../navRows';
 import Icon from '../Icon';
 import { LIVE_PLAN } from '../billing/plans';
-import type { Theme } from '../data/useTheme';
+import type { Skin, Theme } from '../data/useTheme';
 import InboxWidget from './InboxWidget';
 import type { InboxItem } from '../data/useOwnerInbox';
 import LeadsWidget from './LeadsWidget';
@@ -18,6 +18,8 @@ interface Props {
   isOwner: boolean;
   theme: Theme;
   onThemeChange: (next: Theme) => void;
+  skin: Skin;
+  onSkinChange: (next: Skin) => void;
   onClose: () => void;
   onOpenSettings: () => void;
   onOpenTour: () => void;
@@ -69,7 +71,7 @@ const DISMISS_DURATION_MS = 220;
  *  commit (past the height/velocity threshold) calls onClose. A cancelled
  *  drag never touches the parent at all, it just springs back to 0. */
 export default function MobileMenuSheet({
-  open, rows, ownerName, isOwner, theme, onThemeChange, onClose, onOpenSettings, onOpenTour,
+  open, rows, ownerName, isOwner, theme, onThemeChange, skin, onSkinChange, onClose, onOpenSettings, onOpenTour,
   leads, leadsNewCount, leadsLoading, onOpenLead,
   inboxItems, inboxLoading, onOpenInbox,
 }: Props) {
@@ -174,13 +176,13 @@ export default function MobileMenuSheet({
 
   return (
     <>
-      <div style={{ position: 'absolute', inset: 0, zIndex: 48, background: 'rgba(0,0,0,0.45)', touchAction: 'none' }} onClick={onClose} />
+      <div style={{ position: 'absolute', inset: 0, zIndex: 48, background: 'var(--scrim-sheet)', touchAction: 'none' }} onClick={onClose} />
       <div
         ref={sheetRef}
         style={{
           position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 49, maxHeight: '94%', overflow: 'hidden',
           borderRadius: '28px 28px 0 0', background: 'var(--mm-panel-solid)', border: '1px solid var(--mm-line)', borderBottom: 'none',
-          boxShadow: '0 -20px 50px rgba(0,0,0,0.4)',
+          boxShadow: '0 -20px 50px rgba(var(--shadow-ink),0.4)',
           padding: `8px 18px calc(18px + ${SAFE_BOTTOM})`,
           display: 'flex', flexDirection: 'column',
           transform: `translateY(${dragY}px)`,
@@ -219,6 +221,14 @@ export default function MobileMenuSheet({
               >
                 <Icon name={theme === 'dark' ? 'moon' : 'sun'} size={15} />
                 {theme === 'dark' ? 'Dark' : 'Light'}
+              </div>
+              <div
+                title={skin === 'cyberpunk' ? 'Switch to the Simple theme' : 'Switch to the Cyberpunk theme'}
+                onClick={() => onSkinChange(skin === 'cyberpunk' ? 'simple' : 'cyberpunk')}
+                onPointerDown={(e) => e.stopPropagation()}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: '50%', border: '1px solid var(--mm-line2)', color: skin === 'cyberpunk' ? 'var(--neon-blue)' : 'var(--mm-dim)', cursor: 'pointer', flexShrink: 0 }}
+              >
+                <Icon name="lightning" size={15} />
               </div>
               <div
                 title="Take the product tour"

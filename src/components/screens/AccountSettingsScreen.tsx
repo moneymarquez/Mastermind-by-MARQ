@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
-import type { Theme } from '../../data/useTheme';
+import type { Skin, Theme } from '../../data/useTheme';
+import { previewIntro } from '../../lib/fxEvents';
 import { useAvatar } from '../../data/useAvatar';
 
 interface Props {
@@ -12,6 +13,10 @@ interface Props {
   onStartTour: () => void;
   theme: Theme;
   onThemeChange: (next: Theme) => void;
+  skin: Skin;
+  onSkinChange: (next: Skin) => void;
+  soundFx: boolean;
+  onSoundFxChange: (on: boolean) => void;
 }
 
 const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 20, maxWidth: 480 };
@@ -47,7 +52,7 @@ async function openBillingPortal(): Promise<string | null> {
   }
 }
 
-export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onSignOut, onStartTour, theme, onThemeChange }: Props) {
+export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onSignOut, onStartTour, theme, onThemeChange, skin, onSkinChange, soundFx, onSoundFxChange }: Props) {
   const { avatarUrl, uploading, error: avatarError, upload: uploadAvatar, remove: removeAvatar } = useAvatar();
   const [user, setUser] = useState<User | null>(null);
   const [displayName, setDisplayName] = useState('');
@@ -137,6 +142,49 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
               </div>
             ))}
           </div>
+
+          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 16, marginBottom: 8 }}>Theme</div>
+          <div style={{ display: 'inline-flex', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-pill)', padding: 3 }}>
+            {(['simple', 'cyberpunk'] as Skin[]).map((option) => (
+              <div
+                key={option}
+                onClick={() => onSkinChange(option)}
+                style={{
+                  padding: '7px 18px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer',
+                  textTransform: 'capitalize', transition: 'background 150ms ease, color 150ms ease',
+                  background: skin === option ? 'var(--text)' : 'transparent',
+                  color: skin === option ? 'var(--bg)' : 'var(--text-secondary)',
+                }}
+              >
+                {option}
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 8, lineHeight: 1.5 }}>
+            Simple is the app as it has always been. Cyberpunk is the same layout on a dark, textured base with neon accents, rolling numbers, charged goal bars and a launch sequence. Works with either mode above.
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 16, maxWidth: 360 }}>
+            <div>
+              <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: 'var(--text)' }}>Sound effects</div>
+              <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', lineHeight: 1.5 }}>A short blip on a closed client or a finished goal. Nothing else makes noise.</div>
+            </div>
+            <div
+              role="switch"
+              aria-checked={soundFx}
+              onClick={() => onSoundFxChange(!soundFx)}
+              style={{ width: 42, height: 24, borderRadius: 12, flexShrink: 0, cursor: 'pointer', background: soundFx ? 'var(--success)' : 'var(--surface-4)', border: '1px solid var(--border-2)', position: 'relative', transition: 'background 150ms ease' }}
+            >
+              <div style={{ position: 'absolute', top: 2, left: soundFx ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: 'var(--text)', transition: 'left 150ms ease' }} />
+            </div>
+          </div>
+          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
+            Haptics follow the same two moments where the device supports them. iPhone Safari doesn't expose vibration to web apps, so they're silent there.
+          </div>
+
+          {skin === 'cyberpunk' && (
+            <div style={{ ...ghostBtn, marginTop: 14 }} onClick={previewIntro}>Replay the launch sequence</div>
+          )}
         </div>
 
         <div style={cardStyle}>

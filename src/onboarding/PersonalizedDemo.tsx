@@ -154,7 +154,7 @@ export default function PersonalizedDemo({ assistantName, selectedKeys, onContin
           onClick={() => !submitting && onContinue()}
           style={{
             width: 64, height: 64, borderRadius: '50%', background: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1, boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+            cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1, boxShadow: '0 10px 30px var(--scrim-soft)',
           }}
           title="This is real — let's set it up"
         >

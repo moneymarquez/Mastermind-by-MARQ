@@ -86,7 +86,7 @@ function LeakPicker({ current, onPick }: { current: PrimaryLeak | null; onPick: 
           style={{
             padding: '10px 14px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
             border: `1px solid ${current === l.key ? 'var(--text)' : 'var(--border)'}`,
-            background: current === l.key ? '#F5F6F71a' : 'transparent',
+            background: current === l.key ? 'var(--tint-active)' : 'transparent',
           }}
         >
           <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: current === l.key ? 'var(--text)' : 'var(--text-secondary)' }}>{l.label}</div>

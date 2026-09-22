@@ -44,7 +44,7 @@ export default function ContextMenu({ x, y, items, onClose }: Props) {
   const menuStyle: CSSProperties = {
     position: 'fixed', left: pos.x, top: pos.y, zIndex: 201, width: MENU_WIDTH,
     background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
-    boxShadow: '0 12px 32px rgba(0,0,0,0.35)', padding: 6, display: 'flex', flexDirection: 'column', gap: 2,
+    boxShadow: '0 12px 32px rgba(var(--shadow-ink),0.35)', padding: 6, display: 'flex', flexDirection: 'column', gap: 2,
   };
 
   return (

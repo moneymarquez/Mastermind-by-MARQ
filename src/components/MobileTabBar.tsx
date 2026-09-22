@@ -50,6 +50,7 @@ export default function MobileTabBar({ screen, novaOpen, onNavigate, onToggleNov
     return (
       <div
         key={item.screen}
+        className={active ? 'tab-active' : undefined}
         onClick={() => onNavigate(item.screen)}
         style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 52, color: active ? 'var(--mm-text)' : 'var(--mm-faint)', cursor: 'pointer' }}
       >
@@ -72,7 +73,7 @@ export default function MobileTabBar({ screen, novaOpen, onNavigate, onToggleNov
         // whole box (icons + cushion) a visible edge so it reads as one
         // lifted surface all the way to the true bottom, in both themes.
         borderTop: '1px solid var(--mm-line-strong)', background: 'var(--mm-bg-blur)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
-        boxShadow: '0 -6px 20px rgba(0,0,0,0.10)',
+        boxShadow: '0 -6px 20px rgba(var(--shadow-ink),0.10)',
       }}
     >
       {items.map(tab)}
@@ -80,7 +81,7 @@ export default function MobileTabBar({ screen, novaOpen, onNavigate, onToggleNov
         onClick={onToggleNova}
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', width: 54, height: 54, borderRadius: '50%', marginTop: -18,
-          background: 'var(--mm-ink)', color: 'var(--mm-ink-text)', boxShadow: '0 8px 24px rgba(0,0,0,0.35)', cursor: 'pointer',
+          background: 'var(--mm-ink)', color: 'var(--mm-ink-text)', boxShadow: '0 8px 24px rgba(var(--shadow-ink),0.35)', cursor: 'pointer',
           outline: novaOpen ? '2px solid var(--mm-line-strong)' : 'none', outlineOffset: 2,
         }}
       >

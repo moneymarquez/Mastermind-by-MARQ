@@ -218,7 +218,7 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
               type="submit"
               disabled={submitting}
               className="ap-btn ap-btn-block"
-              style={{ height: 48, marginTop: 4, background: 'var(--client-accent)', color: '#fff', border: 'none' }}
+              style={{ height: 48, marginTop: 4, background: 'var(--client-accent)', color: 'var(--text-on-color)', border: 'none' }}
             >
               {submitting ? 'Signing in…' : 'Log in'}
             </button>

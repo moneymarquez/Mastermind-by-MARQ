@@ -27,7 +27,7 @@ const ghostBtn: CSSProperties = {
   color: 'var(--text-secondary)', fontSize: 'var(--text-small)', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center',
 };
 const h: CSSProperties = { fontSize: 'var(--text-caption)', letterSpacing: 0.4, textTransform: 'uppercase', color: 'var(--text-tertiary)', fontWeight: 700, margin: '14px 0 8px' };
-const KIND_COLOR: Record<SpecFunctionalityKind, string> = { static: 'var(--text-tertiary)', form: 'var(--warning)', integration: '#6a8fc9', dynamic: 'var(--danger)' };
+const KIND_COLOR: Record<SpecFunctionalityKind, string> = { static: 'var(--text-tertiary)', form: 'var(--warning)', integration: 'var(--stage-discovery)', dynamic: 'var(--danger)' };
 const KINDS: SpecFunctionalityKind[] = ['static', 'form', 'integration', 'dynamic'];
 
 function Check({ on, onToggle, disabled }: { on: boolean; onToggle: () => void; disabled: boolean }) {

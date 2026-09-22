@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import RollingText from '../fx/RollingText';
 import type { CSSProperties } from 'react';
 import { useMacros } from '../../data/useMacros';
 import { FAST_FOOD_SEED } from '../../data/fastFoodSeed';
@@ -266,13 +267,13 @@ export default function MacrosScreen({ homeHeadStyle, homeSubStyle, activeBender
           { label: 'Fat (g)', value: totals.fat_g },
         ].map((s) => (
           <div key={s.label} style={statCardStyle}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 24, fontWeight: 600, color: 'var(--text)' }}>{loading ? '—' : s.value}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 24, fontWeight: 600, color: 'var(--text)' }}>{loading ? '—' : <RollingText text={String(s.value)} />}</div>
             <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 4 }}>{s.label}</div>
           </div>
         ))}
         <div style={statCardStyle}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 24, fontWeight: 600, color: 'var(--text)' }}>{loading ? '—' : todayWaterOz}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 24, fontWeight: 600, color: 'var(--text)' }}>{loading ? '—' : <RollingText text={String(todayWaterOz)} />}</span>
             <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)' }}>oz</span>
           </div>
           <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>

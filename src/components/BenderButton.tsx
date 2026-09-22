@@ -50,7 +50,7 @@ export default function BenderButton({ activeBender, onStart, onEnd }: Props) {
 
       {open && (
         <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(6,7,9,0.85)', zIndex: 210, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          style={{ position: 'fixed', inset: 0, background: 'var(--scrim)', zIndex: 210, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
           onClick={() => setOpen(false)}
         >
           <div

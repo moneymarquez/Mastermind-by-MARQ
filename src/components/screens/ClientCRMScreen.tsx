@@ -36,12 +36,12 @@ export const STAGES: { key: ClientStage; label: string }[] = [
 ];
 
 const STAGE_COLOR: Record<ClientStage, string> = {
-  new_lead: '#8a8a8a',
-  discovery_complete: '#6a8fc9',
+  new_lead: 'var(--stage-new)',
+  discovery_complete: 'var(--stage-discovery)',
   analysis_sent: 'var(--warning)',
-  invoice_sent: '#c98f4b',
+  invoice_sent: 'var(--stage-invoice)',
   active: 'var(--success)',
-  retainer: '#4a9a8a',
+  retainer: 'var(--stage-retainer)',
 };
 
 export const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 20 };

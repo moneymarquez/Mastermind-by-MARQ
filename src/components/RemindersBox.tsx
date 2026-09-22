@@ -1,4 +1,6 @@
 import { forwardRef, useState } from 'react';
+import { useSkin } from '../data/useTheme';
+import { emptyCopy } from '../data/emptyCopy';
 import Icon from '../Icon';
 import { useReminders } from '../data/useReminders';
 import { dateStr } from '../data/time';
@@ -35,6 +37,7 @@ function dueLabel(dueDate: string): string {
 }
 
 const RemindersBox = forwardRef<HTMLDivElement, Props>(function RemindersBox({ isMobile, bottomOffset = '20px' }, ref) {
+  const skin = useSkin();
   const { reminders, loading } = useReminders();
   const visible = reminders.slice(0, 4);
   // Mobile only: collapsed by default. RemindersBox is position:absolute
@@ -78,7 +81,7 @@ const RemindersBox = forwardRef<HTMLDivElement, Props>(function RemindersBox({ i
           {!loading && reminders.length > 0 && (
             <div style={{
               position: 'absolute', top: -3, right: -3, minWidth: 16, height: 16, borderRadius: 8, padding: '0 4px',
-              background: 'var(--danger)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'var(--danger)', color: 'var(--text-on-color)', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               {reminders.length > 9 ? '9+' : reminders.length}
             </div>
@@ -101,7 +104,7 @@ const RemindersBox = forwardRef<HTMLDivElement, Props>(function RemindersBox({ i
             </div>
           ))}
           {!loading && visible.length === 0 && (
-            <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', padding: '6px 0', borderTop: '1px solid var(--surface-3)' }}>Nothing due.</div>
+            <div className="fx-empty" style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', padding: '6px 0', borderTop: '1px solid var(--surface-3)' }}>{emptyCopy('nothingDue', skin)}</div>
           )}
         </>
       )}

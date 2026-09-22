@@ -19,7 +19,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 const cardStyle = (active: boolean): CSSProperties => ({
   display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px', borderRadius: 'var(--radius-lg)', cursor: 'pointer',
-  border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? '#F5F6F71a' : 'var(--surface)',
+  border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? 'var(--tint-active)' : 'var(--surface)',
   transition: 'border-color 0.12s ease, background 0.12s ease',
 });
 
@@ -63,7 +63,7 @@ export default function ModulePicker({ selected, onToggle }: Props) {
                   <div key={m.key} style={cardStyle(active)} onClick={() => onToggle(m.key)}>
                     <div style={{
                       width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1,
-                      border: `1px solid ${active ? 'var(--text)' : '#3a3d43'}`, background: active ? 'var(--text)' : 'transparent',
+                      border: `1px solid ${active ? 'var(--text)' : 'var(--border-muted)'}`, background: active ? 'var(--text)' : 'transparent',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--text-tiny)', color: 'var(--bg)', fontWeight: 700,
                     }}>
                       {active ? '✓' : ''}

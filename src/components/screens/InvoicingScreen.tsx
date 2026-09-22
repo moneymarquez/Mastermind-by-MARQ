@@ -36,7 +36,7 @@ const ghostBtn: CSSProperties = {
 const chip = (active: boolean): CSSProperties => ({
   padding: '7px 14px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body-sm)', fontWeight: 600, whiteSpace: 'nowrap',
   border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, color: active ? 'var(--text)' : 'var(--text-tertiary)',
-  background: active ? '#F5F6F71a' : 'transparent',
+  background: active ? 'var(--tint-active)' : 'transparent',
 });
 const fieldLabel: CSSProperties = { fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 5 };
 

@@ -63,7 +63,9 @@ import ProductTour, { filterTourSteps } from './components/ProductTour';
 import { buildViewModel } from './viewModel';
 import { moduleKeyForRoute, MODULE_REGISTRY } from './modules.config';
 import type { AppState, MastermindActions } from './state';
-import type { Theme } from './data/useTheme';
+import type { Skin, Theme } from './data/useTheme';
+import Celebration from './components/fx/Celebration';
+import Intro from './components/fx/Intro';
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
@@ -84,9 +86,19 @@ interface Props {
   isOwner: boolean;
   theme: Theme;
   onThemeChange: (next: Theme) => void;
+  skin: Skin;
+  onSkinChange: (next: Skin) => void;
+  soundFx: boolean;
+  onSoundFxChange: (on: boolean) => void;
 }
 
-export default function Stage({ state, actions, assistantName, canAccess, onSignOut, currentUserId, userEmail, userDisplayName, isOwner, theme, onThemeChange }: Props) {
+export default function Stage({ state, actions, assistantName, canAccess, onSignOut, currentUserId, userEmail, userDisplayName, isOwner, theme, onThemeChange, skin, onSkinChange, soundFx, onSoundFxChange }: Props) {
+  // Cyberpunk slides a screen in from the side it was reached from: down
+  // the nav list = in from the right, up the list = in from the left.
+  // Simple never keys the panel, so its scroll position and DOM are
+  // exactly what they were.
+  const prevScreen = useRef(state.screen);
+  const slideDir = useRef<'left' | 'right'>('left');
   // Desktop-only: the persistent Sidebar's own Menu toggle collapses it to
   // a slim icon-only rail and back — previously a dead button (no onClick
   // at all). Mobile is unaffected; it keeps MobileMenuSheet's overlay.
@@ -222,6 +234,14 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // diagonal shine (app-shine-bg, defined in index.css) supplies the
   // background instead of a flat color — no inline `background` here, or
   // it'd win specificity over the class and flatten the gradient.
+  if (prevScreen.current !== state.screen) {
+    const order = vm.navRows.filter((r) => r.kind === 'item').map((r) => r.key);
+    const from = order.indexOf(prevScreen.current);
+    const to = order.indexOf(state.screen);
+    slideDir.current = from === -1 || to === -1 || to > from ? 'left' : 'right';
+    prevScreen.current = state.screen;
+  }
+
   const stageStyle: CSSProperties = {
     width: vm.stageWidth, height: vm.stageHeight, position: 'relative', overflow: 'hidden',
   };
@@ -239,6 +259,8 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             isOwner={isOwner}
             theme={theme}
             onThemeChange={onThemeChange}
+            skin={skin}
+            onSkinChange={onSkinChange}
             onClose={actions.closeDrawer}
             onOpenSettings={() => actions.navigateTo('account-settings')}
             onOpenTour={startTour}
@@ -315,6 +337,8 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           scrolling any further. */}
       <div
         id="tour-content-panel"
+        key={skin === 'cyberpunk' ? state.screen : 'panel'}
+        className={skin === 'cyberpunk' ? `fx-screen-${slideDir.current}` : undefined}
         style={{
           ...vm.contentStyle,
           left: isMobile ? 0 : (sidebarOpen ? vm.sidebarWidth : SIDEBAR_COLLAPSED_WIDTH),
@@ -475,7 +499,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'account-settings' && (
-          <AccountSettingsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onSignOut={onSignOut} onStartTour={startTour} theme={theme} onThemeChange={onThemeChange} />
+          <AccountSettingsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onSignOut={onSignOut} onStartTour={startTour} theme={theme} onThemeChange={onThemeChange} skin={skin} onSkinChange={onSkinChange} soundFx={soundFx} onSoundFxChange={onSoundFxChange} />
         )}
 
         {state.screen === 'prompt-voice-settings' && (
@@ -591,6 +615,9 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
       )}
 
       <RemindersBox ref={remindersRef} isMobile={isMobile} bottomOffset={isMobile ? `calc(${vm.tabBarHeight + 20}px + ${SAFE_BOTTOM})` : '20px'} />
+
+      <Celebration />
+      <Intro name={(userDisplayName ?? '').split(' ')[0] || 'Marq'} />
 
       <ProductTour
         active={tourActive}

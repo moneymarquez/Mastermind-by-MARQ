@@ -246,7 +246,7 @@ export default function ClientPortalAdmin({ client, onChanged }: Props) {
 
       {preview && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
-          <div style={{ width: '100%', maxWidth: 390, height: 720, border: '1px solid var(--border-2)', borderRadius: 28, overflow: 'hidden', background: 'var(--bg)', boxShadow: '0 20px 50px rgba(0,0,0,0.25)' }}>
+          <div style={{ width: '100%', maxWidth: 390, height: 720, border: '1px solid var(--border-2)', borderRadius: 28, overflow: 'hidden', background: 'var(--bg)', boxShadow: '0 20px 50px rgba(var(--shadow-ink),0.25)' }}>
             <ClientPortal key={previewKey} previewClientId={client.id} />
           </div>
           <span style={{ ...hint, cursor: 'pointer' }} onClick={() => setPreviewKey((k) => k + 1)}>Refresh preview</span>

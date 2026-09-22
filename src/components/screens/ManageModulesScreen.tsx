@@ -28,7 +28,7 @@ const toggleTrack = (on: boolean): CSSProperties => ({
   width: 42, height: 25, borderRadius: 999, background: on ? 'var(--mm-text)' : 'var(--mm-line2)', position: 'relative', flexShrink: 0, cursor: 'pointer', transition: 'background 0.15s ease',
 });
 const toggleDot = (on: boolean): CSSProperties => ({
-  position: 'absolute', top: 2, left: on ? 19 : 2, width: 21, height: 21, borderRadius: '50%', background: 'var(--mm-bg)', boxShadow: '0 1px 3px rgba(0,0,0,0.3)', transition: 'left 0.15s ease',
+  position: 'absolute', top: 2, left: on ? 19 : 2, width: 21, height: 21, borderRadius: '50%', background: 'var(--mm-bg)', boxShadow: '0 1px 3px var(--knob-shadow)', transition: 'left 0.15s ease',
 });
 const moveBtn = (disabled: boolean): CSSProperties => ({
   width: 22, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12,

@@ -8,6 +8,9 @@ import { askClaude, AiError } from '../../lib/ai';
 import { generateGoalPlan, recalculateGoalPace } from '../../lib/goalLockIn';
 import type { GoalIntake } from '../../lib/goalLockIn';
 import { useNovaPreferences } from '../../data/useNovaPreferences';
+import RollingText from '../fx/RollingText';
+import ProgressBar from '../fx/ProgressBar';
+import { useTilt } from '../fx/useTilt';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -170,6 +173,7 @@ function GoalCard({
   const doneSteps = goal.steps.filter((s) => s.done).length;
   const current = unit === 'total' ? doneSteps : unit === 'per_day' && autoTracked ? todayDialCount : goal.current_saved;
   const pct = goal.target_cost ? Math.min(100, (current / goal.target_cost) * 100) : goal.progress_pct;
+  const tilt = useTilt();
   const showManualUpdate = goal.target_cost != null && (unit === 'dollars' || (unit === 'per_day' && !autoTracked));
 
   const runCritique = async () => {
@@ -223,7 +227,7 @@ function GoalCard({
   const hasPaths = goal.paths.length > 0;
 
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 22 }}>
+    <div {...tilt} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 22 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <div>
           <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)' }}>{goal.title}</div>
@@ -235,21 +239,19 @@ function GoalCard({
       {(goal.target_cost != null || locked) && (
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16, fontFamily: 'var(--font-mono)', fontSize: 'var(--text-body)', color: 'var(--text)' }}>
-            <span>
-              {goal.target_cost == null ? `${Math.round(pct)}%`
+            <RollingText text={
+              goal.target_cost == null ? `${Math.round(pct)}%`
                 : unit === 'dollars' ? `$${goal.current_saved.toLocaleString()}`
                 : unit === 'per_day' ? `${current} today`
-                : `${current} done`}
-            </span>
+                : `${current} done`
+            } />
             {goal.target_cost != null && (
               <span style={{ color: 'var(--text-tertiary)' }}>
                 {unit === 'dollars' ? `$${goal.target_cost.toLocaleString()}` : `${goal.target_cost} ${TARGET_UNIT_LABEL[unit]}`}
               </span>
             )}
           </div>
-          <div style={{ height: 8, background: 'var(--border)', borderRadius: 'var(--radius-pill)', marginTop: 6, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${pct}%`, background: 'var(--text)', borderRadius: 'var(--radius-pill)' }} />
-          </div>
+          <ProgressBar pct={pct} height={8} style={{ marginTop: 6 }} />
           {showManualUpdate && (
             <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
               <input style={{ ...inputStyle, width: 120 }} value={savedInput} onChange={(e) => setSavedInput(e.target.value)} />

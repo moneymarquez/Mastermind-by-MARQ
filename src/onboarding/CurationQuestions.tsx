@@ -17,7 +17,7 @@ const STYLE_OPTIONS = [
 
 const chipStyle = (active: boolean): CSSProperties => ({
   padding: '10px 16px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-body)', cursor: 'pointer',
-  border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? '#F5F6F71a' : 'var(--surface)',
+  border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? 'var(--tint-active)' : 'var(--surface)',
   color: active ? 'var(--text)' : 'var(--text-secondary)',
 });
 const inputStyle: CSSProperties = {

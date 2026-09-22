@@ -12,6 +12,12 @@ import ContactFormModal from './ContactFormModal';
 import { useDialingQueue } from '../../data/useLeadflow';
 import LeadCard from './leadflow/LeadCard';
 import { countCalledToday, sortDialingQueue } from './leadflow/leadFilters';
+import RollingText from '../fx/RollingText';
+import ProgressBar from '../fx/ProgressBar';
+import { useSkin } from '../../data/useTheme';
+import { emptyCopy } from '../../data/emptyCopy';
+import { dialStreak, streakClass } from '../../data/dialStreak';
+import { dateStr } from '../../data/time';
 
 function loggedAtLabel(iso: string): string {
   return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
@@ -75,6 +81,8 @@ export default function DialingScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const leadCallsToday = countCalledToday(leadQueue.queue);
   const callsToday = todayCount + leadCallsToday;
   const pct = Math.min(100, (callsToday / DAILY_CALL_GOAL) * 100);
+  const streak = dialStreak(history, DAILY_CALL_GOAL, dateStr(new Date()), callsToday);
+  const skin = useSkin();
 
   return (
     <div>
@@ -99,13 +107,11 @@ export default function DialingScreen({ homeHeadStyle, homeSubStyle }: Props) {
       <div style={{ display: 'flex', gap: 16, marginTop: 20, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ ...cardStyle, flex: '1 1 260px' }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 40, fontWeight: 600, color: 'var(--text)' }}>
-            {callsToday} <span style={{ fontSize: 'var(--text-title)', color: 'var(--text-tertiary)' }}>/ {DAILY_CALL_GOAL}</span>
+            <RollingText text={String(callsToday)} className={streakClass(streak)} /> <span style={{ fontSize: 'var(--text-title)', color: 'var(--text-tertiary)' }}>/ {DAILY_CALL_GOAL}</span>
           </div>
-          <div style={{ height: 8, background: 'var(--border)', borderRadius: 'var(--radius-pill)', marginTop: 14, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${pct}%`, background: 'var(--text)', borderRadius: 'var(--radius-pill)' }} />
-          </div>
+          <ProgressBar pct={pct} height={8} style={{ marginTop: 14 }} />
           <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 8 }}>
-            Calls completed today{leadCallsToday > 0 ? ` · ${leadCallsToday} from the lead queue` : ''}
+            Calls completed today{leadCallsToday > 0 ? ` · ${leadCallsToday} from the lead queue` : ''}{streak >= 3 ? ` · ${streak}-day streak` : ''}
           </div>
         </div>
         <div style={primaryBtn} onClick={() => setShowAdd(true)}>
@@ -157,8 +163,8 @@ export default function DialingScreen({ homeHeadStyle, homeSubStyle }: Props) {
             />
           ))}
           {queued.length === 0 && !leadQueue.loading && (
-            <div style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' }}>
-              No leads queued. Go to LeadFlow → Lead Pool, pick a city, and press Send 10 / 20 / 50 / 100.
+            <div className="fx-empty" style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' }}>
+              {emptyCopy('noLeadQueue', skin)}
             </div>
           )}
           {leadQueue.loading && (
@@ -191,8 +197,8 @@ export default function DialingScreen({ homeHeadStyle, homeSubStyle }: Props) {
             );
           })}
           {activeQueue.length === 0 && (
-            <div style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' }}>
-              Nothing left in today's queue — add more contacts to keep pushing toward {DAILY_CALL_GOAL}.
+            <div className="fx-empty" style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' }}>
+              {skin === 'cyberpunk' ? emptyCopy('noCallQueue', skin) : `Nothing left in today's queue — add more contacts to keep pushing toward ${DAILY_CALL_GOAL}.`}
             </div>
           )}
         </div>

@@ -77,7 +77,7 @@ const ghostBtn: CSSProperties = {
 };
 const chipStyle = (active: boolean): CSSProperties => ({
   padding: '8px 14px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-body-sm)', cursor: 'pointer',
-  border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? '#F5F6F71a' : 'var(--surface)',
+  border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? 'var(--tint-active)' : 'var(--surface)',
   color: active ? 'var(--text)' : 'var(--text-secondary)',
 });
 

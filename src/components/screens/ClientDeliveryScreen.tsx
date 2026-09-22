@@ -158,7 +158,7 @@ export default function ClientDeliveryScreen({ homeHeadStyle, homeSubStyle, onNa
             <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 10 }}>
               Manually uploaded — no automated video generation here.
             </div>
-            {videoUrl && <video src={videoUrl} controls style={{ width: '100%', borderRadius: 'var(--radius-sm)', marginBottom: 10, background: '#000' }} />}
+            {videoUrl && <video src={videoUrl} controls style={{ width: '100%', borderRadius: 'var(--radius-sm)', marginBottom: 10, background: 'var(--video-bg)' }} />}
             <div style={{ display: 'flex', gap: 8 }}>
               <input ref={fileInput} type="file" accept="video/*" style={{ display: 'none' }} onChange={onUpload} />
               <div style={ghostBtn} onClick={() => fileInput.current?.click()}>{uploading ? 'Uploading…' : selected.video_path ? 'Replace video' : 'Upload video'}</div>

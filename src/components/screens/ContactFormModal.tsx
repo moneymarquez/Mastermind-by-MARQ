@@ -10,13 +10,13 @@ interface Props {
 }
 
 const overlayStyle: CSSProperties = {
-  position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 80,
+  position: 'fixed', inset: 0, background: 'var(--scrim-form)', zIndex: 80,
   display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
 };
 const panelStyle: CSSProperties = {
   width: '100%', maxWidth: 520, maxHeight: '88vh', overflowY: 'auto',
   background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-2xl)',
-  boxShadow: '0 30px 80px rgba(0,0,0,0.5)', animation: 'bubbleFade 0.18s ease', padding: '24px 26px',
+  boxShadow: '0 30px 80px rgba(var(--shadow-ink),0.5)', animation: 'bubbleFade 0.18s ease', padding: '24px 26px',
 };
 const inputStyle: CSSProperties = {
   background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)', padding: '9px 12px',

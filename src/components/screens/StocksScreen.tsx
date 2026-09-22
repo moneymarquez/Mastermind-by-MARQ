@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { useSkin } from '../../data/useTheme';
+import { emptyCopy } from '../../data/emptyCopy';
 import type { CSSProperties } from 'react';
 import { useStocksBot } from '../../data/useStocksBot';
 import { splitWatchlist } from '../../data/tickers';
@@ -23,7 +25,7 @@ const inputStyle: CSSProperties = {
 const tabStyle = (active: boolean): CSSProperties => ({
   padding: '9px 16px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body)', fontWeight: 600,
   border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, color: active ? 'var(--text)' : 'var(--text-tertiary)',
-  background: active ? '#F5F6F71a' : 'transparent', whiteSpace: 'nowrap',
+  background: active ? 'var(--tint-active)' : 'transparent', whiteSpace: 'nowrap',
 });
 const pillButton = (variant: 'solid' | 'outline', danger?: boolean): CSSProperties => ({
   display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer',
@@ -147,6 +149,7 @@ function Sparkline({ points }: { points: number[] }) {
 }
 
 function TodayPanel({ signals, trades, account, accountLoading }: ReturnType<typeof useStocksBot>) {
+  const skin = useSkin();
   const today = new Date().toISOString().slice(0, 10);
   const todaySignals = signals.filter((s) => s.created_at.slice(0, 10) === today);
   const openTrades = trades.filter((t) => t.status === 'open');
@@ -185,7 +188,7 @@ function TodayPanel({ signals, trades, account, accountLoading }: ReturnType<typ
           </div>
         ))}
         {!accountLoading && account.positions.length === 0 && (
-          <div style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No open positions right now.</div>
+          <div className="fx-empty" style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>{emptyCopy('noPositions', skin)}</div>
         )}
       </div>
 
@@ -194,7 +197,7 @@ function TodayPanel({ signals, trades, account, accountLoading }: ReturnType<typ
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden' }}>
         {todaySignals.map((s) => <SignalRow key={s.id} signal={s} />)}
-        {todaySignals.length === 0 && <div style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No signals yet today.</div>}
+        {todaySignals.length === 0 && <div className="fx-empty" style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>{emptyCopy('noSignalsToday', skin)}</div>}
       </div>
       {openTrades.length === 0 && account.positions.length === 0 && (
         <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', marginTop: 10 }}>No trades open — the bot is watching the watchlist for a setup.</div>

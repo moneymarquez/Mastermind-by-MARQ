@@ -200,7 +200,7 @@ export default function ContentGrowthPlanView({ plan, checkins, clientName, curr
             style={{
               padding: '10px 14px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
               border: `1px solid ${plan.page_purpose === p.key ? 'var(--text)' : 'var(--border)'}`,
-              background: plan.page_purpose === p.key ? '#F5F6F71a' : 'transparent',
+              background: plan.page_purpose === p.key ? 'var(--tint-active)' : 'transparent',
             }}
           >
             <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: plan.page_purpose === p.key ? 'var(--text)' : 'var(--text-secondary)' }}>{p.label}</div>
@@ -218,7 +218,7 @@ export default function ContentGrowthPlanView({ plan, checkins, clientName, curr
             style={{
               padding: '8px 14px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
               border: `1px solid ${plan.phase === p.key ? 'var(--text)' : 'var(--border)'}`,
-              background: plan.phase === p.key ? '#F5F6F71a' : 'transparent',
+              background: plan.phase === p.key ? 'var(--tint-active)' : 'transparent',
             }}
           >
             <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: plan.phase === p.key ? 'var(--text)' : 'var(--text-secondary)' }}>{p.label}</div>

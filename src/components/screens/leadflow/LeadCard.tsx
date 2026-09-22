@@ -6,6 +6,7 @@ import type { LeadflowLead } from '../../../data/useLeadflow';
 import { leadTheme, TIER_COLOR } from './leadTheme';
 import type { LeadSkin, LeadTheme } from './leadTheme';
 import { LEAD_CALL_OUTCOMES, LEAD_OUTCOME_LABEL } from './leadOutcomes';
+import { celebrate } from '../../../lib/fxEvents';
 import {
   mapsUrl, streetViewUrl, websiteUrl, registryUrl, peopleSearchUrl,
   bestOwnerGuess, staleLabel, leadImagePaths, isTouched, hasOwnerContact,
@@ -322,6 +323,7 @@ function HandoffSection({ lead, t }: { lead: LeadflowLead; t: LeadTheme }) {
       // scalez appointment.
       await sendLeadToCrm(lead, date, time, minutesToTime(timeToMinutes(time) + 30));
       setDone(true);
+      celebrate();
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Could not send to CRM.');
     } finally {

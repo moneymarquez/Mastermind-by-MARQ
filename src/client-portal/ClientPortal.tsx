@@ -615,7 +615,7 @@ export default function ClientPortal({ onSignOut, previewClientId = null }: Prop
               <div style={{ width: 22, height: 3, borderRadius: 2, background: active ? 'var(--text)' : 'transparent' }} />
               <span style={{ fontSize: 12, fontWeight: active ? 700 : 500, whiteSpace: 'nowrap' }}>{t.label}</span>
               {!!t.badge && (
-                <span style={{ position: 'absolute', top: 10, right: 'calc(50% - 26px)', minWidth: 16, height: 16, borderRadius: 8, background: 'var(--danger)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{t.badge}</span>
+                <span style={{ position: 'absolute', top: 10, right: 'calc(50% - 26px)', minWidth: 16, height: 16, borderRadius: 8, background: 'var(--danger)', color: 'var(--text-on-color)', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{t.badge}</span>
               )}
             </div>
           );

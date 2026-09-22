@@ -93,14 +93,14 @@ export default function ProductTour({ active, steps, stepIndex, onNext, onBack, 
         width: rect.width + pad * 2,
         height: rect.height + pad * 2,
         borderRadius: 'var(--radius-2xl)',
-        boxShadow: '0 0 0 9999px rgba(6,7,9,0.8)',
-        border: '1px solid #F5F6F755',
+        boxShadow: '0 0 0 9999px var(--scrim-soft)',
+        border: '1px solid var(--tour-ring)',
         pointerEvents: 'none',
         transition: 'top 0.2s ease, left 0.2s ease, width 0.2s ease, height 0.2s ease',
         zIndex: 90,
       }
     : {
-        position: 'fixed', inset: 0, background: 'rgba(6,7,9,0.8)', pointerEvents: 'none', zIndex: 90,
+        position: 'fixed', inset: 0, background: 'var(--scrim-soft)', pointerEvents: 'none', zIndex: 90,
       };
 
   return (
@@ -110,7 +110,7 @@ export default function ProductTour({ active, steps, stepIndex, onNext, onBack, 
         style={{
           position: 'fixed', top: 'calc(88px + env(safe-area-inset-top))', left: '50%', transform: 'translateX(-50%)',
           width: 340, maxWidth: 'calc(100vw - 32px)', background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-xl)', padding: '18px 20px', zIndex: 92, boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+          borderRadius: 'var(--radius-xl)', padding: '18px 20px', zIndex: 92, boxShadow: '0 20px 50px rgba(var(--shadow-ink),0.6)',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>

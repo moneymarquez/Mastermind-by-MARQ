@@ -19,7 +19,7 @@ export default function WebsiteBuilderRoadmapScreen({ homeHeadStyle, homeSubStyl
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <div style={homeHeadStyle}>Website / App Builder</div>
-        <div style={{ padding: '3px 10px', borderRadius: 'var(--radius-pill)', background: '#8A8F9822', border: '1px solid #8A8F9855', color: 'var(--text-secondary)', fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>
+        <div style={{ padding: '3px 10px', borderRadius: 'var(--radius-pill)', background: 'var(--tint-chip)', border: '1px solid var(--tint-chip-line)', color: 'var(--text-secondary)', fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>
           In planning
         </div>
       </div>

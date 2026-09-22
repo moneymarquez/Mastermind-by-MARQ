@@ -97,6 +97,7 @@ export default function Sidebar({
             <div
               key={row.key}
               className="nav-row"
+              data-active={row.active ? 'true' : undefined}
               onClick={row.onClick}
               style={{
                 display: 'flex', alignItems: 'center', gap: 11, padding: '10px 12px', borderRadius: 12, cursor: 'pointer',

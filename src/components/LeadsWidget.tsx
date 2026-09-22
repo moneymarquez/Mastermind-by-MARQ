@@ -36,7 +36,7 @@ export default function LeadsWidget({ leads, newCount, loading, onOpen, compact 
         {newCount > 0 && (
           <span style={{
             marginLeft: 'auto', minWidth: 18, height: 18, padding: '0 5px', borderRadius: 9,
-            background: green, color: '#04140c', fontSize: 10.5, fontWeight: 700,
+            background: green, color: 'var(--text-on-success)', fontSize: 10.5, fontWeight: 700,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             {newCount > 9 ? '9+' : newCount}

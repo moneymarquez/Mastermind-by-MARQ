@@ -29,7 +29,7 @@ export default function WorkoutLibraryView({ fitness }: Props) {
   const chipStyle = (active: boolean): CSSProperties => ({
     padding: '7px 14px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body-sm)', fontWeight: 600, whiteSpace: 'nowrap',
     border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, color: active ? 'var(--text)' : 'var(--text-tertiary)',
-    background: active ? '#F5F6F71a' : 'transparent',
+    background: active ? 'var(--tint-active)' : 'transparent',
   });
 
   const loadSeed = async () => {
@@ -93,7 +93,7 @@ export default function WorkoutLibraryView({ fitness }: Props) {
       </div>
 
       {selected && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(6,7,9,0.85)', zIndex: 210, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setSelected(null)}>
+        <div style={{ position: 'fixed', inset: 0, background: 'var(--scrim)', zIndex: 210, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setSelected(null)}>
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-2xl)', padding: 22, width: '100%', maxWidth: 420, maxHeight: '75vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 600, color: 'var(--text)' }}>{selected.name}</div>
             {selected.day_label && <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', marginTop: 2 }}>{selected.day_label}</div>}

@@ -41,7 +41,7 @@ const inputStyle: CSSProperties = {
 const tabStyle = (active: boolean): CSSProperties => ({
   padding: '9px 18px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body)', fontWeight: 600,
   border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, color: active ? 'var(--text)' : 'var(--text-tertiary)',
-  background: active ? '#F5F6F71a' : 'transparent',
+  background: active ? 'var(--tint-active)' : 'transparent',
 });
 
 type Tab = 'library' | 'lock-in' | 'log';

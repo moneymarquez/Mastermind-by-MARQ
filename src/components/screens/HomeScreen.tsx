@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
+import { useSkin } from '../../data/useTheme';
+import { onceToday } from '../../lib/motion';
 import { useNudges } from '../../data/useNudges';
 import { useCallsToday } from '../../data/useCallsToday';
 import { useDailyCallGoal } from '../../data/useDailyCallGoal';
@@ -51,6 +54,30 @@ export default function HomeScreen({ isMobile, isOwner, homeHeadStyle, homeSubSt
     loading: callsLoading,
   });
 
+  // One neon pulse across the top of the screen when the calling hour
+  // starts (the plan's dials block, else 4pm). Cyberpunk only, once a
+  // day, and only if Overview is open in that first minute — a missed
+  // pulse is not shown late, that would make it a nag.
+  const skin = useSkin();
+  const callStartMinutes = callBlock ? timeToMinutes(callBlock.time) : 16 * 60;
+  const [pulse, setPulse] = useState(false);
+  useEffect(() => {
+    if (skin !== 'cyberpunk') return;
+    const check = () => {
+      const d = new Date();
+      const m = d.getHours() * 60 + d.getMinutes();
+      if (m >= callStartMinutes && m < callStartMinutes + 2 && onceToday('top-pulse')) setPulse(true);
+    };
+    check();
+    const id = window.setInterval(check, 20000);
+    return () => window.clearInterval(id);
+  }, [skin, callStartMinutes]);
+  useEffect(() => {
+    if (!pulse) return;
+    const t = window.setTimeout(() => setPulse(false), 1600);
+    return () => window.clearTimeout(t);
+  }, [pulse]);
+
   const widgetProps = { isMobile, onNavigate, onOpenNova, assistantName };
   const hasCustomOrder = Object.keys(order).length > 0;
   const visible = HOME_WIDGET_REGISTRY
@@ -82,6 +109,7 @@ export default function HomeScreen({ isMobile, isOwner, homeHeadStyle, homeSubSt
     // layout doesn't have this problem (it's wide, not tall-and-sparse),
     // so it keeps the normal top-anchored flow.
     <div style={isMobile ? { display: 'flex', flexDirection: 'column', minHeight: '100%', justifyContent: 'flex-end' } : undefined}>
+      {pulse && <div className="fx-top-pulse" aria-hidden="true" />}
       <div style={homeHeadStyle}>{greeting()}.</div>
       <div style={homeSubStyle}>{nudgeSummary}</div>
 

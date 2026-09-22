@@ -21,7 +21,7 @@ export default function NovaTrigger({ cx, cy, circleSize, dragging, novaOpen, on
       style={{
         position: 'absolute', left: cx, top: cy, width: circleSize, height: circleSize,
         borderRadius: '50%', background: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: dragging ? 'grabbing' : 'grab', zIndex: 40, boxShadow: '0 8px 24px rgba(0,0,0,0.5)', touchAction: 'none',
+        cursor: dragging ? 'grabbing' : 'grab', zIndex: 40, boxShadow: '0 8px 24px rgba(var(--shadow-ink),0.5)', touchAction: 'none',
       }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}

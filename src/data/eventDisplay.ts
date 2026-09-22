@@ -4,7 +4,7 @@ import type { CalendarEvent, EventType } from './types';
 // StreamingScreen's embedded calendar, and EventAdderModal, so a type's
 // color can never drift between screens.
 export const EVENT_TYPE_COLOR: Record<EventType, string> = {
-  holiday: '#8A8F98', dialing: '#5B8DEF', scalez: '#4CAF7D', streaming: '#C9A24B',
+  holiday: 'var(--cat-grey)', dialing: 'var(--cat-blue)', scalez: 'var(--cat-green)', streaming: 'var(--cat-gold)',
 };
 
 export function eventLabel(ev: CalendarEvent): string {

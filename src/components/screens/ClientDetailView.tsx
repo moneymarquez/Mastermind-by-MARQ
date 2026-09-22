@@ -529,7 +529,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
                           padding: '4px 11px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-tiny)', fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize',
                           border: `1px solid ${confidence[q.key] === tag ? 'transparent' : 'var(--border-2)'}`,
                           background: confidence[q.key] === tag ? (tag === 'confirmed' ? 'var(--success)' : 'var(--warning)') : 'transparent',
-                          color: confidence[q.key] === tag ? '#0A0B0D' : 'var(--text-tertiary)',
+                          color: confidence[q.key] === tag ? 'var(--text-on-tag)' : 'var(--text-tertiary)',
                         }}
                       >
                         {tag}

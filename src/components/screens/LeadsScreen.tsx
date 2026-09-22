@@ -19,7 +19,7 @@ const ghostBtn: CSSProperties = {
 };
 const greenBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 6,
-  padding: '9px 16px', borderRadius: 'var(--radius-pill)', border: 'none', background: 'var(--success)', color: '#04140c',
+  padding: '9px 16px', borderRadius: 'var(--radius-pill)', border: 'none', background: 'var(--success)', color: 'var(--text-on-success)',
   fontSize: 'var(--text-body-sm)', fontWeight: 700, cursor: 'pointer',
 };
 const activeChip: CSSProperties = { background: 'var(--text)', color: 'var(--bg)', border: 'none' };
