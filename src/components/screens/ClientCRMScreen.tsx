@@ -24,6 +24,9 @@ interface Props {
   /** "Push to Marketing" entry point (schema_069) — jumps to Marketing
    *  with this client selected and a fresh brief already open. */
   onPushToMarketing?: (clientId: string) => void;
+  /** Campaign hand-offs: open one, or start one assigned to this client. */
+  onOpenCampaign?: (campaignId: string) => void;
+  onStartCampaign?: (clientId: string) => void;
 }
 
 export const STAGES: { key: ClientStage; label: string }[] = [
@@ -137,7 +140,7 @@ function InvoiceSummary({ client }: { client: ReturnType<typeof useClientCRM>['c
   );
 }
 
-export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle, focusClientId, onClearFocus, selectedClientId, onSelectClient, onPushToMarketing }: Props) {
+export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle, focusClientId, onClearFocus, selectedClientId, onSelectClient, onPushToMarketing, onOpenCampaign, onStartCampaign }: Props) {
   const crm = useClientCRM();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -203,6 +206,8 @@ export default function ClientCRMScreen({ homeHeadStyle, homeSubStyle, focusClie
         homeHeadStyle={homeHeadStyle}
         homeSubStyle={homeSubStyle}
         onPushToMarketing={onPushToMarketing}
+        onOpenCampaign={onOpenCampaign}
+        onStartCampaign={onStartCampaign}
       />
     );
   }

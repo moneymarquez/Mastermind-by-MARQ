@@ -28,6 +28,15 @@ import { useClients } from '../../data/useClients';
 import ClientSelector from '../ClientSelector';
 import { MARKETING_101 } from '../../data/marketing101';
 import MiniMarkdown from '../MiniMarkdown';
+import { useCampaigns } from '../../data/useCampaigns';
+import type { Campaign } from '../../data/useCampaigns';
+import type { CampaignContext, DerivedStatus } from '../../data/campaignBuilder';
+import { useDailyCallGoal } from '../../data/useDailyCallGoal';
+import { useDialingQueue } from '../../data/useLeadflow';
+import { supabase } from '../../lib/supabase';
+import CampaignsHome from './marketing/CampaignsHome';
+import CampaignCockpit from './marketing/CampaignCockpit';
+import type { CockpitFocus } from './marketing/CampaignCockpit';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -42,6 +51,12 @@ interface Props {
   onConsumePendingBrief?: () => void;
   /** Opens the Nova panel and sends it a pre-composed prompt (Stage.tsx). */
   onAskNova?: (promptText: string) => void;
+  /** Arriving from a client's CRM page: open this campaign, or start a
+   *  new one already assigned to that client. One-shot, like the brief. */
+  focusCampaignId?: string | null;
+  newCampaignForClientId?: string | null;
+  onConsumeCampaignFocus?: () => void;
+  onNavigate?: (screen: string) => void;
 }
 
 const inputStyle: CSSProperties = {
@@ -151,7 +166,48 @@ function composeBriefPrompt(brief: MarketingBrief, clientName: string): string {
   return lines.join('\n');
 }
 
-export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedClientId, onSelectClient, pendingBriefClientId, onConsumePendingBrief, onAskNova }: Props) {
+export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedClientId, onSelectClient, pendingBriefClientId, onConsumePendingBrief, onAskNova, focusCampaignId, newCampaignForClientId, onConsumeCampaignFocus, onNavigate }: Props) {
+  // ── The campaign workflow (the tab's real surface) ─────────────────
+  const campaignsApi = useCampaigns();
+  const callGoal = useDailyCallGoal();
+  const dialingQueue = useDialingQueue();
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [cockpitFocus, setCockpitFocus] = useState<CockpitFocus>('step');
+  const [cockpitStep, setCockpitStep] = useState<number | undefined>(undefined);
+  const [newForClient, setNewForClient] = useState<string | null>(null);
+  const [transcript, setTranscript] = useState<string | null>(null);
+  const [showLegacy, setShowLegacy] = useState(false);
+  const navigate = onNavigate ?? (() => {});
+
+  useEffect(() => {
+    if (!focusCampaignId && !newCampaignForClientId) return;
+    if (focusCampaignId) { setOpenId(focusCampaignId); setCockpitFocus('step'); setCockpitStep(undefined); }
+    if (newCampaignForClientId) { setOpenId(null); setNewForClient(newCampaignForClientId); }
+    onConsumeCampaignFocus?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusCampaignId, newCampaignForClientId]);
+
+  const openCampaign = campaignsApi.campaigns.find((c) => c.id === openId) ?? null;
+
+  // The assigned client's kickoff transcript, for the optional prefill.
+  useEffect(() => {
+    if (!openCampaign?.client_id) { setTranscript(null); return; }
+    let live = true;
+    supabase.from('crm_clients').select('transcript').eq('id', openCampaign.client_id).maybeSingle().then(({ data }) => { if (live) setTranscript((data?.transcript as string | null) ?? null); });
+    return () => { live = false; };
+  }, [openCampaign?.client_id]);
+
+  const onOpenCampaign = (c: Campaign, next: DerivedStatus['next']) => {
+    setOpenId(c.id);
+    setCockpitFocus(next.kind === 'assets' ? 'assets' : next.kind === 'results' ? 'results' : next.kind === 'plan' ? 'plan' : 'step');
+    setCockpitStep(next.kind === 'step' || next.kind === 'launch' ? next.step : undefined);
+  };
+  const onCreateCampaign = async (name: string, clientId: string | null) => {
+    const c = await campaignsApi.create({ name, client_id: clientId });
+    setNewForClient(null);
+    if (c) { setOpenId(c.id); setCockpitFocus('step'); setCockpitStep(1); }
+  };
+
   const m = useMarketing();
   const clientsApi = useClients();
   const briefsApi = useMarketingBriefs();
@@ -236,12 +292,36 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
     if (b) setActiveBriefId(b.id);
   };
 
+  // Everything a step's options and examples read about the situation:
+  // the assignment, plus whatever the client's latest brief already says.
+  const campaignCtx: CampaignContext | null = openCampaign ? (() => {
+    const client = openCampaign.client_id ? clientsApi.clients.find((c) => c.id === openCampaign.client_id) : null;
+    const brief = openCampaign.client_id ? briefsApi.briefs.filter((b) => b.client_id === openCampaign.client_id)[0] : null;
+    return {
+      clientName: client?.business_name ?? 'Client',
+      isInternal: !openCampaign.client_id,
+      industry: brief?.industry ?? null,
+      businessModel: brief?.business_model ?? null,
+      budgetAmount: brief?.budget_amount ?? null,
+      budgetPeriod: brief?.budget_period ?? null,
+      timeline: brief?.timeline ?? null,
+      audienceHint: brief?.target_audience ?? null,
+      goal: brief?.goal ?? null,
+      positioning: brief?.positioning_statement ?? null,
+      callGoal,
+      answers: openCampaign.answers ?? {},
+    };
+  })() : null;
+
+  // A brief pushed over from the CRM lives in the playbook section below.
+  useEffect(() => { if (pendingBriefClientId || activeBriefId) setShowLegacy(true); }, [pendingBriefClientId, activeBriefId]);
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
         <div>
           <div style={homeHeadStyle}>Marketing</div>
-          <div style={homeSubStyle}>Assets, campaigns, and the content pipeline — owner-only.</div>
+          <div style={homeSubStyle}>Build a campaign, run it, see what came back.</div>
         </div>
         <MarketingDeliverablesBadge
           deliverables={deliverablesApi.deliverables}
@@ -251,6 +331,42 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
         />
       </div>
 
+      <div style={{ marginTop: 22 }}>
+        {openCampaign && campaignCtx ? (
+          <CampaignCockpit
+            key={openCampaign.id}
+            campaign={openCampaign}
+            assets={campaignsApi.assets.filter((a) => a.campaign_id === openCampaign.id)}
+            ctx={campaignCtx}
+            api={campaignsApi}
+            leadQueue={dialingQueue.queue}
+            transcript={transcript}
+            focus={cockpitFocus}
+            initialStep={cockpitStep}
+            onBack={() => setOpenId(null)}
+            onNavigate={navigate}
+          />
+        ) : (
+          <CampaignsHome
+            campaigns={campaignsApi.campaigns}
+            assets={campaignsApi.assets}
+            clients={clientsApi.clients}
+            loading={campaignsApi.loading}
+            error={campaignsApi.error}
+            newForClientId={newForClient}
+            onOpen={onOpenCampaign}
+            onCreate={onCreateCampaign}
+            onNavigate={navigate}
+          />
+        )}
+      </div>
+
+      <div style={{ ...sectionTitle, display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+        <span>Playbook & library</span>
+        <span style={{ fontSize: 'var(--text-caption)', fontWeight: 400, color: 'var(--text-secondary)', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => setShowLegacy((v) => !v)}>{showLegacy ? 'Hide' : 'Show'}</span>
+        {!showLegacy && <span style={{ fontSize: 'var(--text-caption)', fontWeight: 400, color: 'var(--text-tertiary)' }}>Briefs, plays, the asset and content library, Marketing 101.</span>}
+      </div>
+      {showLegacy && (<>
       <div style={{ marginTop: 20 }}>
         <ClientSelector
           clients={clientsApi.clients}
@@ -590,6 +706,7 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
           <MiniMarkdown text={referenceTab === 'fundamentals' ? MARKETING_101.fundamentals : MARKETING_101.plays} />
         </div>
       )}
+      </>)}
     </div>
   );
 }

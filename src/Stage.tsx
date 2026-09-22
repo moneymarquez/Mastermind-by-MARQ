@@ -134,6 +134,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // Marketing" button. One-shot like clientFocus: MarketingScreen creates
   // the brief and clears this the moment it reads it.
   const [pendingBriefClientId, setPendingBriefClientId] = useState<string | null>(null);
+  // Campaign hand-offs from a client's CRM page into Marketing.
+  const [campaignFocus, setCampaignFocus] = useState<{ campaignId: string | null; newForClientId: string | null } | null>(null);
+  const openCampaign = (campaignId: string) => { setCampaignFocus({ campaignId, newForClientId: null }); actions.navigateTo('marketing'); };
+  const startCampaignFor = (clientId: string) => { setCampaignFocus({ campaignId: null, newForClientId: clientId }); actions.navigateTo('marketing'); };
   const pushToMarketing = (clientId: string) => {
     setSelectedClientId(clientId);
     setPendingBriefClientId(clientId);
@@ -443,6 +447,8 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             selectedClientId={selectedClientId}
             onSelectClient={setSelectedClientId}
             onPushToMarketing={pushToMarketing}
+            onOpenCampaign={openCampaign}
+            onStartCampaign={startCampaignFor}
           />
         )}
 
@@ -531,6 +537,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             pendingBriefClientId={pendingBriefClientId}
             onConsumePendingBrief={() => setPendingBriefClientId(null)}
             onAskNova={askNovaWithPrompt}
+            focusCampaignId={campaignFocus?.campaignId ?? null}
+            newCampaignForClientId={campaignFocus?.newForClientId ?? null}
+            onConsumeCampaignFocus={() => setCampaignFocus(null)}
+            onNavigate={actions.navigateTo}
           />
         )}
 

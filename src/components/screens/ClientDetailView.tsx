@@ -10,6 +10,7 @@ import ClientMediaGrid from './ClientMediaGrid';
 import InvoiceDetailView from './InvoiceDetailView';
 import LiveCaptureView from './LiveCaptureView';
 import type { AnswerConfidence } from '../../data/types';
+import ClientCampaigns from './marketing/ClientCampaigns';
 
 interface Props {
   client: CrmClientWithChildren;
@@ -20,6 +21,8 @@ interface Props {
   /** "Push to Marketing" entry point (schema_069) — jumps to Marketing with
    *  this client selected and a fresh brief already open there. */
   onPushToMarketing?: (clientId: string) => void;
+  onOpenCampaign?: (campaignId: string) => void;
+  onStartCampaign?: (clientId: string) => void;
 }
 
 type Tab = 'audit' | 'analysis' | 'pricing' | 'invoices' | 'reports' | 'portal' | 'sent';
@@ -40,7 +43,7 @@ function amountLabel(amount: number | null): string {
   return amount === null ? 'TBD' : money(amount);
 }
 
-export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, homeSubStyle, onPushToMarketing }: Props) {
+export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, homeSubStyle, onPushToMarketing, onOpenCampaign, onStartCampaign }: Props) {
   const [tab, setTab] = useState<Tab>(client.audit?.status === 'complete' ? 'analysis' : 'audit');
   const [nameDraft, setNameDraft] = useState(client.business_name);
   const [emailDraft, setEmailDraft] = useState(client.contact_email ?? '');
@@ -380,6 +383,8 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
           </select>
         </div>
       </div>
+
+      {onOpenCampaign && onStartCampaign && <ClientCampaigns clientId={client.id} onOpenCampaign={onOpenCampaign} onStartCampaign={onStartCampaign} />}
 
       <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap', maxWidth: 640 }}>
         <input style={inputStyle} placeholder="Contact email" value={emailDraft} onChange={(e) => setEmailDraft(e.target.value)} onBlur={() => emailDraft !== (client.contact_email ?? '') && crm.updateClient(client.id, { contact_email: emailDraft.trim() || null })} />
