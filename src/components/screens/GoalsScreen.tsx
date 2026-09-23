@@ -10,7 +10,6 @@ import type { GoalIntake } from '../../lib/goalLockIn';
 import { useNovaPreferences } from '../../data/useNovaPreferences';
 import RollingText from '../fx/RollingText';
 import ProgressBar from '../fx/ProgressBar';
-import { useTilt } from '../fx/useTilt';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -173,7 +172,6 @@ function GoalCard({
   const doneSteps = goal.steps.filter((s) => s.done).length;
   const current = unit === 'total' ? doneSteps : unit === 'per_day' && autoTracked ? todayDialCount : goal.current_saved;
   const pct = goal.target_cost ? Math.min(100, (current / goal.target_cost) * 100) : goal.progress_pct;
-  const tilt = useTilt();
   const showManualUpdate = goal.target_cost != null && (unit === 'dollars' || (unit === 'per_day' && !autoTracked));
 
   const runCritique = async () => {
@@ -227,7 +225,7 @@ function GoalCard({
   const hasPaths = goal.paths.length > 0;
 
   return (
-    <div {...tilt} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 22 }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 22 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <div>
           <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)' }}>{goal.title}</div>

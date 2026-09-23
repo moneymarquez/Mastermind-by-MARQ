@@ -1,7 +1,6 @@
 import type { ChangeEvent, CSSProperties, KeyboardEvent } from 'react';
 import type { NovaMessage } from '../types';
 import Icon from '../Icon';
-import Typewriter from './fx/Typewriter';
 import { isSpeechRecognitionSupported } from '../lib/speech';
 
 const SPACING = 20;
@@ -98,7 +97,7 @@ export default function NovaPanel({
               padding: '9px 13px', borderRadius: 'var(--radius-xl)', fontSize: 'var(--text-body)', maxWidth: '85%', lineHeight: 1.4,
             }}
           >
-            {msg.from === 'nova' ? <Typewriter text={msg.text} live={i === messages.length - 1} /> : msg.text}
+            {msg.text}
           </div>
         ))}
         {thinking && (

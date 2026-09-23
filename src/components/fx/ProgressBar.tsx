@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useSkin } from '../../data/useTheme';
 import { prefersReducedMotion, blip, haptic } from '../../lib/motion';
@@ -49,24 +49,6 @@ export default function ProgressBar({ pct, height = 8, style, trackColor, fillCo
 
   const replay = () => { if (complete) setBurstKey((k) => k + 1); };
 
-  // Arc count by fill, not time. Deterministic per bar so re-renders don't
-  // reshuffle the bolts.
-  const arcs = useMemo(() => {
-    const n = clamped >= 100 ? 4 : clamped >= 75 ? 3 : clamped >= 50 ? 2 : clamped >= 20 ? 1 : 0;
-    return Array.from({ length: n }, (_, i) => ({
-      // Each arc is a jagged polyline hugging the leading edge: x in the
-      // last ~14% of the fill, y bouncing across the bar's height.
-      points: Array.from({ length: 7 }, (_, k) => {
-        const x = 100 - (6 - k) * 2.3 - (i * 1.7) % 4;
-        const y = k % 2 === 0 ? 10 + ((i * 37 + k * 23) % 30) : 60 + ((i * 19 + k * 41) % 30);
-        return `${x},${y}`;
-      }).join(' '),
-      period: 1900 - i * 260 - Math.round(clamped * 6),
-      delay: i * 330,
-      opacity: 0.45 + Math.min(0.55, clamped / 130),
-    }));
-  }, [clamped]);
-
   const track: CSSProperties = {
     position: 'relative', height, background: trackColor ?? 'var(--border)', borderRadius: 'var(--radius-pill)',
     overflow: 'visible', cursor: complete ? 'pointer' : undefined, ...style,
@@ -88,35 +70,11 @@ export default function ProgressBar({ pct, height = 8, style, trackColor, fillCo
     );
   }
 
+  // Cyberpunk: a flat bar. Green when complete, cyan while filling, no
+  // arcs and no burst — the theme's motion budget is spent elsewhere.
   return (
-    <div style={{ ...track, background: trackColor ?? 'var(--mm-track)', borderRadius: 2 }} onClick={replay} title={complete ? 'Tap to replay the discharge' : undefined}>
-      <div
-        key={burstKey}
-        className={burstKey > 0 ? 'fx-discharge fx-overshoot' : undefined}
-        style={{
-          ...fillBase, borderRadius: 2,
-          background: complete ? 'var(--neon-green)' : 'linear-gradient(90deg, var(--neon-blue) 0%, var(--neon-blue) 70%, var(--neon-green) 100%)',
-          boxShadow: complete ? '0 0 10px var(--neon-green-soft)' : undefined,
-        }}
-      >
-        {arcs.length > 0 && !reduced && (
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', inset: -height * 0.9, width: `calc(100% + ${height * 1.8}px)`, height: `calc(100% + ${height * 1.8}px)`, overflow: 'visible', pointerEvents: 'none' }}>
-            {arcs.map((a, i) => (
-              <polyline
-                key={i}
-                className="fx-arc"
-                points={a.points}
-                fill="none"
-                stroke="var(--neon-green)"
-                strokeWidth={1.6}
-                strokeLinejoin="round"
-                vectorEffect="non-scaling-stroke"
-                style={{ '--arc-period': `${a.period}ms`, '--arc-delay': `${a.delay}ms`, opacity: a.opacity } as CSSProperties}
-              />
-            ))}
-          </svg>
-        )}
-      </div>
+    <div style={{ ...track, background: trackColor ?? 'var(--mm-track)' }}>
+      <div style={{ ...fillBase, background: complete ? 'var(--green)' : 'var(--cyan)' }} />
     </div>
   );
 }

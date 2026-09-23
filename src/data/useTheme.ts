@@ -15,10 +15,10 @@ const SKIN_KEY = 'mastermind-skin';
 // this runs at module load, before any stylesheet is guaranteed applied, so
 // there's nothing to read a CSS variable from yet.
 const STATUS_BAR_COLOR: Record<Theme, string> = { dark: '#0b0c11', light: '#faf9f7' };
-const STATUS_BAR_COLOR_CYBER: Record<Theme, string> = { dark: '#0a0b10', light: '#262a34' };
+const STATUS_BAR_COLOR_CYBER: Record<Theme, string> = { dark: '#070B0D', light: '#171E22' };
 
 let currentTheme: Theme = 'dark';
-let currentSkin: Skin = 'simple';
+let currentSkin: Skin = 'cyberpunk';
 
 function applyTheme(theme: Theme) {
   currentTheme = theme;
@@ -47,7 +47,8 @@ function paintStatusBar() {
 const skinListeners = new Set<(s: Skin) => void>();
 
 const cachedTheme = (localStorage.getItem(STORAGE_KEY) as Theme | null) ?? 'dark';
-const cachedSkin = (localStorage.getItem(SKIN_KEY) as Skin | null) ?? 'simple';
+// Cyberpunk is the default; Simple is the opt-out in Settings.
+const cachedSkin = (localStorage.getItem(SKIN_KEY) as Skin | null) ?? 'cyberpunk';
 applyTheme(cachedTheme);
 applySkin(cachedSkin);
 

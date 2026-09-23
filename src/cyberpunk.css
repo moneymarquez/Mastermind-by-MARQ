@@ -1,349 +1,294 @@
-/* ── Cyberpunk skin ─────────────────────────────────────────────────────
-   Selected by data-skin="cyberpunk" on <html>. Everything here is an
-   OVERRIDE of tokens and behaviours the Simple theme already defines; with
-   the attribute absent none of it applies, which is how Simple stays
-   exactly what it was.
+/* ── Cyberpunk skin (v2) ────────────────────────────────────────────────
+   Selected by data-skin="cyberpunk" on <html>. Everything here overrides
+   tokens and behaviours Simple already defines; with the attribute absent
+   none of it applies, which is how Simple stays exactly what it is.
 
-   Three neons, each with one job — that rule is what keeps this from being
-   a carnival:
-     blue  — navigation, structure, primary UI
-     green — success, hover, completion
-     pink  — alerts, warnings, the one thing that needs doing now
+   What makes this read as a different app is not the colours: it's the
+   shape language (clipped panels, no radius anywhere), the type (Chakra
+   Petch for words, Martian Mono for numbers only) and the layout the
+   cyber components build. Effects are last and few.
 
-   Glow on focus only. The element being touched lights up; nothing glows
-   at rest. No moving backgrounds: the grain and scanlines are static.
-   Mono type is for numbers only; body copy stays Inter. */
+   Palette jobs — green is the point (money, progress, on pace); cyan
+   holds navigation and structure so the two never fight; amber is behind
+   pace; magenta is urgent, overdue, destructive. Nothing glows at rest. */
 
 :root[data-skin="cyberpunk"] {
-  --neon-blue: #3df2ff;
-  --neon-green: #39ff88;
-  --neon-pink: #ff2e97;
-  --neon-blue-dim: rgba(61, 242, 255, 0.55);
-  --neon-blue-soft: rgba(61, 242, 255, 0.12);
-  --neon-green-soft: rgba(57, 255, 136, 0.14);
-  --neon-pink-soft: rgba(255, 46, 151, 0.14);
+  --base: #070B0D;
+  --surface: #0E1418;
+  --surface-lift: #141D22;
+  --edge: #1E2A31;
+  --text: #DCE6EA;
+  --muted: #6A7D87;
+  --green: #2BFF88;
+  --cyan: #22D3FF;
+  --amber: #FFB020;
+  --magenta: #FF2E88;
+  --cyan-12: rgba(34, 211, 255, 0.12);
+  --cyan-22: rgba(34, 211, 255, 0.22);
+  --cyan-40: rgba(34, 211, 255, 0.40);
+  --green-10: rgba(43, 255, 136, 0.10);
+  --green-18: rgba(43, 255, 136, 0.18);
+  --magenta-12: rgba(255, 46, 136, 0.12);
+  --amber-12: rgba(255, 176, 32, 0.12);
+  --glow-green: 0 0 0 1px #2BFF88, 0 0 18px -4px #2BFF88;
+  --glow-cyan: 0 0 0 1px #22D3FF, 0 0 18px -4px #22D3FF;
 
-  /* Dark (primary): near-black, textured — not flat. */
-  --bg: #0a0b10;
-  --surface: #11131a;
-  --surface-2: #0d0f15;
-  --surface-3: #171a23;
-  --surface-4: #0f1118;
-  --border: #22262f;
-  --border-2: #2f3441;
-  --text: #e6f6ff;
-  --text-secondary: #8fa3b8;
-  --text-tertiary: #5f7186;
-  --text-quaternary: #c5d6e6;
-  --text-quaternary-2: #a6b9cc;
-  --shine: #141824;
+  /* ── App tokens, re-pointed ── */
+  --bg: var(--base);
+  --surface-2: #0B1114;
+  --surface-3: var(--surface-lift);
+  --surface-4: #0B1114;
+  --border: var(--edge);
+  --border-2: #27363E;
+  --border-muted: var(--edge);
+  --text-secondary: #9FB1BA;
+  --text-tertiary: var(--muted);
+  --text-quaternary: #C4D0D6;
+  --text-quaternary-2: #A9B7BE;
+  --shine: #10181C;
+  --color-surface: var(--surface);
 
-  --accent: var(--neon-blue);
-  --accent-2: var(--neon-blue-dim);
-  --accent-strong: #1fc7d6;
-  --accent-soft: var(--neon-blue-soft);
-  --client-accent: var(--neon-green);
-  --client-accent-soft: var(--neon-green-soft);
+  --accent: var(--cyan);
+  --accent-2: var(--cyan-40);
+  --accent-strong: #19B8E0;
+  --accent-soft: var(--cyan-12);
+  --client-accent: var(--green);
+  --client-accent-soft: var(--green-18);
+  --danger: var(--magenta);
+  --success: var(--green);
+  --warning: var(--amber);
 
-  --danger: var(--neon-pink);
-  --success: var(--neon-green);
-  --warning: var(--neon-pink);
-
-  --mm-canvas: #06070b;
-  --mm-bg: #0a0b10;
-  --mm-bg-blur: rgba(10, 11, 16, 0.82);
-  --mm-bg2: #0d0f15;
-  --mm-panel: rgba(61, 242, 255, 0.035);
-  --mm-panel-solid: #11131a;
-  --mm-tile: rgba(61, 242, 255, 0.05);
+  --mm-canvas: var(--base);
+  --mm-bg: var(--base);
+  --mm-bg-blur: rgba(7, 11, 13, 0.88);
+  --mm-bg2: #0B1114;
+  --mm-panel: rgba(34, 211, 255, 0.03);
+  --mm-panel-solid: var(--surface);
+  --mm-tile: rgba(34, 211, 255, 0.05);
   --mm-field: rgba(255, 255, 255, 0.03);
-  --mm-line: rgba(61, 242, 255, 0.14);
-  --mm-line2: rgba(61, 242, 255, 0.24);
-  --mm-line-strong: rgba(61, 242, 255, 0.45);
-  --mm-track: rgba(61, 242, 255, 0.12);
-  --mm-grid: rgba(61, 242, 255, 0.05);
-  --mm-bloom: rgba(61, 242, 255, 0.2);
-  --mm-text: #e6f6ff;
-  --mm-dim: #8fa3b8;
-  --mm-faint: #5f7186;
-  --mm-accent-text: var(--neon-blue);
-  --mm-ink: var(--neon-blue);
-  --mm-ink-text: #04121a;
-  --mm-ink-soft: rgba(61, 242, 255, 0.12);
-  --mm-ink-line: rgba(61, 242, 255, 0.3);
-  --mm-code-bg: #0b0e15;
-  --mm-code-text: #d9f7ff;
-  --mm-code-line: rgba(61, 242, 255, 0.18);
-  --mm-scrim: rgba(4, 6, 12, 0.72);
-  --mm-shadow: 0 30px 70px rgba(0, 0, 0, 0.7);
-  --mm-shadow-lift: 0 30px 70px -18px rgba(0, 0, 0, 0.8);
-  --mm-shadow-btn: 0 10px 28px rgba(0, 0, 0, 0.6);
+  --mm-line: var(--edge);
+  --mm-line2: #27363E;
+  --mm-line-strong: #2F414B;
+  --mm-text: var(--text);
+  --mm-dim: #9FB1BA;
+  --mm-faint: var(--muted);
+  --mm-ink: var(--cyan);
+  --mm-ink-text: var(--base);
+  --mm-ink-line: var(--cyan-40);
+  --mm-ink-soft: var(--cyan-12);
+  --mm-track: #142026;
+  --mm-accent-text: var(--cyan);
+  --mm-grid: rgba(34, 211, 255, 0.05);
+  --mm-bloom: rgba(34, 211, 255, 0.06);
+  --mm-scrim: rgba(7, 11, 13, 0.85);
+  --mm-shadow: none;
+  --mm-shadow-lift: none;
+  --mm-shadow-btn: none;
+  --mm-code-bg: #0B1114;
+  --mm-code-line: var(--edge);
+  --mm-code-text: var(--text);
+  --nova-text: var(--text);
+  --scrim: rgba(7, 11, 13, 0.88);
+  --scrim-soft: rgba(7, 11, 13, 0.6);
+  --scrim-sheet: rgba(7, 11, 13, 0.6);
+  --scrim-form: rgba(7, 11, 13, 0.7);
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: 0 0 0 1px var(--edge);
+  --tint-active: var(--cyan-12);
+  --tint-today: var(--cyan-12);
+  --tint-chip: rgba(34, 211, 255, 0.10);
+  --tint-chip-line: var(--cyan-40);
+  --tour-ring: var(--cyan);
+  --text-on-color: var(--base);
+  --text-on-success: var(--base);
+  --text-on-tag: var(--base);
+  --knob-shadow: none;
+  --cat-blue: var(--cyan);
+  --cat-cyan: var(--cyan);
+  --cat-purple: #B48CFF;
+  --cat-rose: var(--magenta);
+  --cat-lime: var(--green);
+  --cat-grey: var(--muted);
+  --cat-green: var(--green);
+  --cat-gold: var(--amber);
+  --stage-new: var(--muted);
+  --stage-discovery: var(--cyan);
+  --stage-invoice: var(--amber);
+  --stage-retainer: var(--green);
 
-  /* Sharp. */
-  --radius-xs: 0px;
-  --radius-sm: 2px;
-  --radius-md: 2px;
-  --radius-lg: 3px;
-  --radius-xl: 3px;
-  --radius-2xl: 3px;
-  --radius-3xl: 3px;
-  --radius-pill: 2px;
+  /* ── Shape: no radius anywhere in this theme ── */
+  --radius-xs: 0; --radius-sm: 0; --radius-md: 0; --radius-lg: 0; --radius-xl: 0; --radius-2xl: 0; --radius-3xl: 0; --radius-pill: 0;
 
-  --shadow-sm: 0 0 0 1px #22262f;
-  --shadow-md: 0 0 0 1px #2f3441, 0 6px 18px rgba(0, 0, 0, 0.6);
-  --shadow-lg: 0 0 0 1px var(--neon-blue-dim), 0 16px 40px rgba(0, 0, 0, 0.7);
-
-  /* Step-0 tokens, re-pointed. */
-  --scrim: rgba(4, 6, 12, 0.88);
-  --scrim-soft: rgba(4, 6, 12, 0.7);
-  --scrim-sheet: rgba(4, 6, 12, 0.6);
-  --scrim-form: rgba(4, 6, 12, 0.75);
-  --tint-active: var(--neon-blue-soft);
-  --tint-today: rgba(61, 242, 255, 0.16);
-  --tint-chip: rgba(61, 242, 255, 0.1);
-  --tint-chip-line: rgba(61, 242, 255, 0.3);
-  --tour-ring: var(--neon-blue-dim);
-  --text-on-color: #04121a;
-  --text-on-success: #04120a;
-  --text-on-tag: #04121a;
-  --nova-text: #d9f7ff;
-  --border-muted: #2f3441;
-  --cat-blue: var(--neon-blue);
-  --cat-cyan: #7ff7ff;
-  --cat-purple: #b892ff;
-  --cat-rose: var(--neon-pink);
-  --cat-lime: var(--neon-green);
-  --cat-grey: #6f8296;
-  --cat-green: var(--neon-green);
-  --cat-gold: #ffd166;
-  --stage-new: #6f8296;
-  --stage-discovery: var(--neon-blue);
-  --stage-invoice: #ffd166;
-  --stage-retainer: var(--neon-green);
+  /* ── Type ── */
+  --font-sans: 'Chakra Petch', 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'Martian Mono', ui-monospace, monospace;
+  --font-heading-weight: 700;
+  --text-display: 88px;
+  --text-title: 32px;
+  --text-head: 18px;
+  --text-subhead: 18px;
+  --text-stat: 34px;
+  --text-body-lg: 16px;
+  --text-body: 15px;
+  --text-body-sm: 14px;
+  --text-label: 13px;
+  --text-small: 13px;
+  --text-caption: 12px;
+  --text-tiny: 11px;
+  --text-micro: 11px;
+  --text-nano: 10px;
 }
 
-/* Light: NOT white. A lifted dark grey. Grit and glow only read on dark
-   surfaces; on white the neons turn into highlighter. So "light" here
-   means raised, not bright — the same neons on a grey that's a few steps
-   up from the dark base. */
+/* Light: lifted graphite, never white. Same neons. */
 :root[data-skin="cyberpunk"][data-theme="light"] {
-  --bg: #262a34;
-  --surface: #2f3440;
-  --surface-2: #2a2e39;
-  --surface-3: #383e4b;
-  --surface-4: #2c313c;
-  --border: #434a59;
-  --border-2: #525a6b;
-  --text: #f1fbff;
-  --text-secondary: #b3c3d4;
-  --text-tertiary: #8697aa;
-  --text-quaternary: #dbe8f3;
-  --text-quaternary-2: #c3d2e0;
-  --shine: #333947;
-  --mm-canvas: #1f232c;
-  --mm-bg: #262a34;
-  --mm-bg-blur: rgba(38, 42, 52, 0.84);
-  --mm-bg2: #2a2e39;
-  --mm-panel: rgba(61, 242, 255, 0.05);
-  --mm-panel-solid: #2f3440;
-  --mm-tile: rgba(61, 242, 255, 0.07);
-  --mm-field: rgba(255, 255, 255, 0.05);
-  --mm-line: rgba(61, 242, 255, 0.2);
-  --mm-line2: rgba(61, 242, 255, 0.32);
-  --mm-line-strong: rgba(61, 242, 255, 0.55);
-  --mm-track: rgba(61, 242, 255, 0.16);
-  --mm-text: #f1fbff;
-  --mm-dim: #b3c3d4;
-  --mm-faint: #8697aa;
-  --mm-code-bg: #1f232c;
-  --scrim: rgba(12, 14, 20, 0.85);
-  --scrim-soft: rgba(12, 14, 20, 0.66);
-  --scrim-sheet: rgba(12, 14, 20, 0.55);
-  --scrim-form: rgba(12, 14, 20, 0.7);
-  --border-muted: #525a6b;
-  --stage-new: #8a9bae;
-  --cat-grey: #8a9bae;
+  --base: #171E22;
+  --surface: #212B31;
+  --surface-lift: #2A363D;
+  --edge: #334148;
+  --surface-2: #1C252A;
+  --surface-4: #1C252A;
+  --border-2: #3C4B53;
+  --mm-bg2: #1C252A;
+  --mm-bg-blur: rgba(23, 30, 34, 0.9);
+  --mm-track: #2A363D;
+  --mm-line2: #3C4B53;
+  --mm-line-strong: #465760;
+  --text: #E6EEF2;
+  --mm-logo-filter: invert(1);
+  --mm-logo-blend: normal;
 }
 
-/* ── Grain + scanlines: static, one layer, behind everything ────────────
-   feTurbulence noise in a data URI so there's no asset; it never moves.
-   Scanlines are a 3px repeating gradient at a few percent. Both are
-   pointer-events: none and sit under the app root. */
+/* ── Base surface: textured, static ────────────────────────────────── */
+:root[data-skin="cyberpunk"] body { background: var(--base); color: var(--text); }
 :root[data-skin="cyberpunk"] body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
+  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background-image:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px),
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-  background-size: auto, 160px 160px;
-  mix-blend-mode: screen;
-  opacity: 0.55;
+    radial-gradient(900px 600px at -10% -10%, rgba(34, 211, 255, 0.06), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 3px),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.03 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
 }
 :root[data-skin="cyberpunk"] #root { position: relative; z-index: 1; }
+:root[data-skin="cyberpunk"] .app-shine-bg { background: var(--base) !important; }
 
-/* Numbers only. Body stays Inter; stat/mono elements already opt in via
-   var(--font-mono), which is what a cyberpunk skin should mean by "mono". */
-:root[data-skin="cyberpunk"] { --font-mono: 'JetBrains Mono', ui-monospace, monospace; }
+/* Radius is zero everywhere — including the inline styles Simple's
+   components carry. Author !important beats inline. */
+:root[data-skin="cyberpunk"] *, :root[data-skin="cyberpunk"] *::before, :root[data-skin="cyberpunk"] *::after { border-radius: 0 !important; }
+:root[data-skin="cyberpunk"] input, :root[data-skin="cyberpunk"] textarea, :root[data-skin="cyberpunk"] select, :root[data-skin="cyberpunk"] button {
+  font-family: var(--font-sans);
+}
+:root[data-skin="cyberpunk"] input[type="number"], :root[data-skin="cyberpunk"] input[inputmode="decimal"] { font-family: var(--font-mono); }
 
-/* ── Glow on focus only ───────────────────────────────────────────────── */
-:root[data-skin="cyberpunk"] input:focus-visible,
-:root[data-skin="cyberpunk"] textarea:focus-visible,
-:root[data-skin="cyberpunk"] select:focus-visible,
-:root[data-skin="cyberpunk"] button:focus-visible,
-:root[data-skin="cyberpunk"] [tabindex]:focus-visible {
-  outline: none;
-  border-color: var(--neon-blue) !important;
-  box-shadow: 0 0 0 1px var(--neon-blue), 0 0 14px var(--neon-blue-dim);
+/* Glow discipline: focus, hover, change. Nothing at rest. */
+:root[data-skin="cyberpunk"] :is(input, textarea, select, button, [tabindex]):focus-visible,
+:root[data-skin="cyberpunk"] :is(input, textarea):focus {
+  outline: none !important; border-color: var(--cyan) !important; box-shadow: var(--glow-cyan);
 }
-:root[data-skin="cyberpunk"] input:focus,
-:root[data-skin="cyberpunk"] textarea:focus {
-  border-color: var(--neon-blue) !important;
-  box-shadow: 0 0 0 1px var(--neon-blue), 0 0 14px var(--neon-blue-dim);
-}
+:root[data-skin="cyberpunk"] [style*="cursor: pointer"]:not(.cp-tab):not(.cp-rail-cell):not(select):not(input):not(textarea):hover { box-shadow: 0 0 0 1px var(--cyan-40); }
+:root[data-skin="cyberpunk"] [style*="cursor: pointer"]:active, :root[data-skin="cyberpunk"] button:active { transform: translateY(1px); }
 
-/* Buttons press in like hardware. This app draws most buttons as divs with
-   an inline cursor: pointer, so the selector matches that. */
-:root[data-skin="cyberpunk"] [style*="cursor: pointer"]:active,
-:root[data-skin="cyberpunk"] button:active {
-  transform: translateY(1px) scale(0.985);
-  transition: transform 60ms ease;
+/* ── Shape language: the three container types ─────────────────────── */
+/* Panel: clipped corners (top-right, bottom-left), 1px edge. The border
+   is the outer layer; the inner ::before paints the surface one pixel in,
+   so the diagonal edge is a real hairline instead of a clipped-off gap. */
+.cp-panel {
+  --cut: 14px; position: relative; background: var(--edge);
+  clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, var(--cut) 100%, 0 calc(100% - var(--cut)));
 }
-/* Hover: green is the "success/hover" neon. Subtle — a hairline, no glow. */
-:root[data-skin="cyberpunk"] [style*="cursor: pointer"]:not(.nav-row):not(select):not(input):not(textarea):hover {
-  box-shadow: 0 0 0 1px var(--neon-green-soft);
-  filter: none;
+.cp-panel::before {
+  content: ''; position: absolute; inset: 1px; background: var(--cp-fill, var(--surface)); z-index: 0;
+  clip-path: polygon(0 0, calc(100% - var(--cut) + 1px) 0, 100% calc(var(--cut) - 1px), 100% 100%, calc(var(--cut) - 1px) 100%, 0 calc(100% - var(--cut) + 1px));
 }
+.cp-panel > * { position: relative; z-index: 1; }
+.cp-panel--hero { --cut: 20px; }
+.cp-panel--chip { --cut: 8px; }
+.cp-panel--lift { --cp-fill: var(--surface-lift); }
+.cp-panel--edge-cyan { background: var(--cyan-40); }
+.cp-panel--edge-green { background: var(--green); }
+/* Rail: full-bleed strip, 2px accent edge on top. */
+.cp-rail { position: relative; background: var(--surface); border-top: 2px solid var(--cp-rail-accent, var(--cyan)); }
+/* Readout: value + label, nothing else. */
+.cp-readout { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.cp-readout .cp-num { font-family: var(--font-mono); font-weight: 700; font-size: 34px; letter-spacing: -0.01em; line-height: 1; color: var(--text); }
+.cp-label { font-family: var(--font-sans); font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.cp-num { font-family: var(--font-mono); font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.cp-hero-num { font-family: var(--font-mono); font-weight: 700; font-size: 88px; letter-spacing: -0.02em; line-height: 0.9; color: var(--text); }
+.cp-title { font-family: var(--font-sans); font-size: 32px; font-weight: 700; letter-spacing: 0.04em; color: var(--text); }
+.cp-panel-head { font-family: var(--font-sans); font-size: 18px; font-weight: 600; letter-spacing: 0.06em; color: var(--text); }
+.cp-body { font-family: var(--font-sans); font-size: 15px; color: var(--text); }
+.cp-btn {
+  --cut: 8px; position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 18px; font-family: var(--font-sans); font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--base); background: var(--green); border: none; cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, var(--cut) 100%, 0 calc(100% - var(--cut)));
+}
+.cp-btn--cyan { background: var(--cyan); }
+.cp-btn--ghost { background: var(--surface-lift); color: var(--text); box-shadow: inset 0 0 0 1px var(--edge); }
+.cp-btn:hover { box-shadow: var(--glow-green); }
+.cp-btn--cyan:hover { box-shadow: var(--glow-cyan); }
+.cp-row { border-left: 2px solid var(--cp-row-accent, var(--edge)); }
 
-/* Nav: the active tab gets the neon treatment — it's the most-looked-at
-   element. A left rail and blue text; hover is green per the neon rule. */
-:root[data-skin="cyberpunk"] .nav-row { border-left: 2px solid transparent; }
-:root[data-skin="cyberpunk"] .nav-row:hover {
-  box-shadow: none;
-  transform: none;
-  filter: none;
-  color: var(--neon-green);
-  border-left-color: var(--neon-green-soft);
+/* ── Navigation: cells, not text with a box behind it ───────────────── */
+.cp-tab {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  flex: 1 1 0; height: 100%; color: var(--muted); cursor: pointer; user-select: none; -webkit-user-select: none;
+  background: transparent; border-top: 2px solid transparent; transition: background 120ms ease;
+  --cut: 8px;
 }
-:root[data-skin="cyberpunk"] .nav-row[data-active="true"] {
-  color: var(--neon-blue) !important;
-  border-left-color: var(--neon-blue);
-  background: var(--neon-blue-soft) !important;
-  border-color: var(--mm-line2) !important;
-  text-shadow: 0 0 10px var(--neon-blue-dim);
-}
-:root[data-skin="cyberpunk"] .tab-active {
-  color: var(--neon-blue) !important;
-  text-shadow: 0 0 10px var(--neon-blue-dim);
-}
-:root[data-skin="cyberpunk"] .tab-active svg { filter: drop-shadow(0 0 6px var(--neon-blue-dim)); }
+.cp-tab .cp-tab-label { font-family: var(--font-sans); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; line-height: 1; }
+.cp-tab[data-active="true"] { background: var(--cyan-12); border-top-color: var(--cyan); color: var(--cyan); }
+.cp-tab[data-active="true"] .cp-tab-label { font-weight: 700; }
+.cp-tab.cp-pressed { background: var(--cyan-22); }
+.cp-tab--fab { flex: 0 0 64px; }
+.cp-fab { width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; background: var(--cyan); color: var(--base); --cut: 8px; clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, var(--cut) 100%, 0 calc(100% - var(--cut))); }
+.cp-fab[data-open="true"] { box-shadow: var(--glow-cyan); }
 
-/* ── Motion primitives (the components in src/components/fx add classes;
-      the keyframes live here so a skin can retune them) ─────────────── */
+.cp-rail-nav { width: 76px; transition: width 180ms ease; overflow: hidden; }
+.cp-rail-nav:hover, .cp-rail-nav[data-open="true"] { width: 210px; }
+.cp-rail-cell {
+  position: relative; display: flex; align-items: center; gap: 14px; height: 48px; padding: 0 0 0 26px; color: var(--muted); cursor: pointer;
+  border-left: 2px solid transparent; white-space: nowrap; transition: background 120ms ease; user-select: none; -webkit-user-select: none;
+}
+.cp-rail-cell > * { flex-shrink: 0; }
+.cp-rail-nav .cp-rail-label { font-family: var(--font-sans); font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0; transition: opacity 120ms ease; }
+.cp-rail-nav:hover .cp-rail-label, .cp-rail-nav[data-open="true"] .cp-rail-label { opacity: 1; }
+.cp-rail-cell:hover { background: var(--surface-lift); color: var(--text); }
+.cp-rail-cell[data-active="true"] { background: var(--cyan-12); border-left-color: var(--cyan); color: var(--cyan); }
+.cp-rail-cell[data-active="true"] .cp-rail-label { font-weight: 700; }
+.cp-rail-head { font-family: var(--font-sans); font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 16px 0 6px 26px; white-space: nowrap; opacity: 0; transition: opacity 120ms ease; }
+.cp-rail-nav:hover .cp-rail-head, .cp-rail-nav[data-open="true"] .cp-rail-head { opacity: 1; }
 
-/* Number roll-up: a strip of 0-9 slides to the target digit. */
+/* Status strip states */
+.cp-strip { display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 16px; background: var(--surface); border-top: 2px solid var(--cyan-40); border-bottom: 1px solid var(--edge); overflow: hidden; white-space: nowrap; }
+.cp-strip .cp-label { white-space: nowrap; }
+.cp-strip .cp-num { font-size: 15px; color: var(--text); white-space: nowrap; }
+@media (max-width: 480px) { .cp-strip { gap: 8px; padding: 0 12px; } .cp-strip .cp-label { font-size: 10px; letter-spacing: 0.08em; } .cp-strip .cp-num { font-size: 13px; } .cp-strip .cp-dots { min-width: 4px; } }
+.cp-strip .cp-dots { flex: 1 1 0; height: 1px; min-width: 8px; background-image: linear-gradient(90deg, var(--edge) 0 2px, transparent 2px 5px); background-size: 5px 1px; }
+.cp-strip[data-phase="live"] { background: var(--green-10); border-top-color: var(--green); }
+.cp-strip[data-phase="live"] .cp-num, .cp-strip[data-phase="live"] .cp-label { color: var(--green); }
+.cp-strip[data-phase="closed"] { background: var(--magenta-12); border-top-color: var(--magenta); }
+.cp-strip[data-phase="closed"] .cp-num, .cp-strip[data-phase="closed"] .cp-label { color: var(--magenta); }
+
+/* 35 ticks, one per call. */
+.cp-ticks { display: flex; gap: 2px; align-items: flex-end; }
+.cp-tick { width: 4px; height: 22px; background: var(--edge); flex: 0 0 4px; transition: background 200ms ease, box-shadow 200ms ease; }
+.cp-tick[data-lit="true"] { background: var(--green); }
+.cp-ticks[data-pace="behind"] .cp-tick[data-lit="true"] { background: var(--amber); }
+.cp-ticks[data-pace="closed"] .cp-tick[data-lit="false"] { box-shadow: inset 0 0 0 1px var(--magenta); }
+.cp-tick.cp-flash { animation: cp-tick-flash 200ms ease-out 1; }
+@keyframes cp-tick-flash { 0% { background: #ffffff; box-shadow: 0 0 10px #ffffff; } 100% { background: var(--green); box-shadow: none; } }
+
+/* ── Motion, the five ───────────────────────────────────────────────── */
+/* 1. Number roll-up (RollingText). */
 .roll-digit { display: inline-block; height: 1em; overflow: hidden; vertical-align: bottom; line-height: 1; }
 .roll-strip { display: flex; flex-direction: column; transition: transform var(--roll-ms, 380ms) cubic-bezier(0.22, 1, 0.36, 1); will-change: transform; }
 .roll-strip > span { display: block; height: 1em; line-height: 1; }
-:root[data-skin="cyberpunk"] .roll-digit.rolling { text-shadow: 0 0 8px var(--neon-blue-dim), 0 0 18px var(--neon-blue-soft); }
-:root[data-skin="cyberpunk"] .roll-digit { transition: text-shadow 300ms ease; }
-
-/* Overview boot: tiles power up one by one. */
-:root[data-skin="cyberpunk"] .fx-boot { animation: fx-power-up-neon 320ms cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: var(--boot-delay, 0ms); }
-@keyframes fx-power-up-neon {
-  0% { opacity: 0; transform: translateY(6px); box-shadow: 0 0 0 0 transparent; }
-  55% { opacity: 1; box-shadow: 0 0 0 1px var(--neon-blue-dim), 0 0 18px var(--neon-blue-soft); }
-  100% { opacity: 1; transform: none; box-shadow: 0 0 0 0 transparent; }
-}
-
-/* Scanline sweep across a card when its data refreshes: once. */
-:root[data-skin="cyberpunk"] .fx-sweep { position: absolute; inset: 0; overflow: hidden; pointer-events: none; border-radius: inherit; }
-:root[data-skin="cyberpunk"] .fx-sweep::after {
-  content: ''; position: absolute; inset: -20% -10%; pointer-events: none;
-  background: linear-gradient(105deg, transparent 40%, var(--neon-blue-soft) 50%, transparent 60%);
-  transform: translateX(-120%); animation: fx-sweep 520ms ease-out 1;
-}
-@keyframes fx-sweep { to { transform: translateX(120%); } }
-
-/* Warning glitch: a number that's behind twitches instead of sitting red. */
-@keyframes fx-glitch {
-  0%, 86%, 100% { transform: none; text-shadow: none; }
-  88% { transform: translate(-1px, 0) skewX(-4deg); text-shadow: 2px 0 var(--neon-pink), -2px 0 var(--neon-blue); }
-  91% { transform: translate(1px, 0) skewX(3deg); text-shadow: -2px 0 var(--neon-pink), 2px 0 var(--neon-blue); }
-  94% { transform: none; text-shadow: none; }
-  96% { transform: translate(0, -1px); text-shadow: 1px 0 var(--neon-pink); }
-}
-:root[data-skin="cyberpunk"] .fx-behind { color: var(--neon-pink); animation: fx-glitch 3.2s steps(1, end) infinite; }
-
-/* Skeleton shimmer (Cyberpunk; Simple keeps its em-dash placeholders). */
-:root[data-skin="cyberpunk"] .fx-skeleton { position: relative; display: inline-block; overflow: hidden; background: var(--mm-track); border-radius: 2px; color: transparent !important; }
-:root[data-skin="cyberpunk"] .fx-skeleton::after {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(90deg, transparent, var(--neon-blue-soft), transparent);
-  transform: translateX(-100%); animation: fx-shimmer 1.1s ease-in-out infinite;
-}
-@keyframes fx-shimmer { to { transform: translateX(100%); } }
-
-/* Tab switches slide in from the direction tapped. */
-@keyframes fx-slide-left { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
-@keyframes fx-slide-right { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
-:root[data-skin="cyberpunk"] .fx-screen-left { animation: fx-slide-left 200ms cubic-bezier(0.22, 1, 0.36, 1) both; }
-:root[data-skin="cyberpunk"] .fx-screen-right { animation: fx-slide-right 200ms cubic-bezier(0.22, 1, 0.36, 1) both; }
-
-/* Single pulse across the top of the screen when the calling hour starts. */
-@keyframes fx-top-pulse { 0% { transform: scaleX(0); opacity: 1; } 70% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
-:root[data-skin="cyberpunk"] .fx-top-pulse {
-  position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 300; pointer-events: none; transform-origin: left;
-  background: var(--neon-pink); box-shadow: 0 0 12px var(--neon-pink);
-  animation: fx-top-pulse 1400ms ease-out 1 both;
-}
-
-/* Cards tilt toward the touch point: JS sets --tx/--ty; this just paints it. */
-:root[data-skin="cyberpunk"] .fx-tilt { transition: transform 160ms ease; transform: perspective(700px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)); }
-
-/* Card and tile surfaces: hairline neon edge instead of a drop shadow. */
-:root[data-skin="cyberpunk"] .ap-card { box-shadow: none; border: 1px solid var(--mm-line); }
-
-/* Terminal caret for typed AI replies. */
-.fx-caret::after { content: '▍'; margin-left: 1px; animation: fx-blink 900ms steps(1, end) infinite; color: var(--neon-blue, currentColor); }
-@keyframes fx-blink { 50% { opacity: 0; } }
-
-/* Progress bar electricity. The SVG arcs are drawn by ProgressBar.tsx;
-   these drive their flicker and the one-shot discharge. */
-@keyframes fx-arc { 0%, 100% { opacity: 0; } 8% { opacity: 1; } 14% { opacity: 0.2; } 20% { opacity: 0.9; } 30% { opacity: 0; } }
-.fx-arc { animation: fx-arc var(--arc-period, 1600ms) linear infinite; animation-delay: var(--arc-delay, 0ms); filter: drop-shadow(0 0 3px var(--neon-green)) drop-shadow(0 0 8px var(--neon-green-soft)); }
-@keyframes fx-discharge {
-  0% { box-shadow: 0 0 0 0 var(--neon-green), 0 0 0 0 var(--neon-green); filter: brightness(1); }
-  30% { box-shadow: 0 0 22px 6px var(--neon-green), 0 0 60px 14px var(--neon-green-soft); filter: brightness(1.6); }
-  100% { box-shadow: 0 0 0 0 transparent, 0 0 0 0 transparent; filter: brightness(1); }
-}
-.fx-discharge { animation: fx-discharge 900ms ease-out 1; }
-@keyframes fx-overshoot { 0% { transform: scaleX(1); } 55% { transform: scaleX(1.035); } 100% { transform: scaleX(1); } }
-.fx-overshoot { transform-origin: left; animation: fx-overshoot 520ms cubic-bezier(0.34, 1.56, 0.64, 1) 1; }
-/* Simple's quieter version of the same events: a glow, not arcs. */
-.fx-glow-fill { box-shadow: 0 0 calc(var(--fill-pct, 0) * 0.12px) rgba(var(--shadow-ink), 0), 0 0 calc(4px + var(--fill-pct, 0) * 0.1px) color-mix(in srgb, var(--success) calc(var(--fill-pct, 0) * 1%), transparent); }
-@keyframes fx-glow-burst { 0% { filter: brightness(1); } 30% { filter: brightness(1.5); box-shadow: 0 0 18px var(--success); } 100% { filter: brightness(1); } }
-.fx-glow-burst { animation: fx-glow-burst 700ms ease-out 1; }
-
-/* Streaks: fire/glow in Simple, electricity in Cyberpunk. Levels 1/2/3 = 3/7/14 days. */
-.fx-streak-1 { text-shadow: 0 0 6px color-mix(in srgb, var(--warning) 50%, transparent); }
-.fx-streak-2 { text-shadow: 0 0 8px var(--warning), 0 0 18px color-mix(in srgb, var(--warning) 40%, transparent); }
-.fx-streak-3 { text-shadow: 0 0 10px var(--warning), 0 0 26px var(--warning); animation: fx-flame 1.6s ease-in-out infinite; }
-@keyframes fx-flame { 50% { text-shadow: 0 0 14px var(--warning), 0 0 34px var(--warning); } }
-:root[data-skin="cyberpunk"] .fx-streak-1 { text-shadow: 0 0 6px var(--neon-green-soft); }
-:root[data-skin="cyberpunk"] .fx-streak-2 { text-shadow: 0 0 8px var(--neon-green), 0 0 18px var(--neon-green-soft); }
-:root[data-skin="cyberpunk"] .fx-streak-3 { text-shadow: 0 0 10px var(--neon-green), 0 0 26px var(--neon-green); animation: fx-glitch 2.4s steps(1, end) infinite; }
-
-/* Empty-state copy in the skin reads as a terminal line. */
-:root[data-skin="cyberpunk"] .fx-empty { font-family: var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.85em; color: var(--text-tertiary); }
-
-/* Launch / cold-open overlays. */
-@keyframes fx-weld { 0% { opacity: 0; transform: translateY(6px); text-shadow: 0 0 0 transparent; filter: brightness(3); } 35% { opacity: 1; text-shadow: 0 0 18px #ff9f43, 0 0 40px #ff5e00; filter: brightness(2.2); } 100% { opacity: 1; text-shadow: 0 0 10px var(--neon-blue-dim); filter: brightness(1); } }
+/* 2. Tick light-up: above. 3. Tab cell fill: above. */
+/* 4. Launch sequence. */
+@keyframes fx-weld { 0% { opacity: 0; transform: translateY(6px); filter: brightness(3); } 35% { opacity: 1; text-shadow: 0 0 18px #ff9f43, 0 0 40px #ff5e00; filter: brightness(2.2); } 100% { opacity: 1; text-shadow: 0 0 10px var(--cyan-40); filter: brightness(1); } }
 .fx-weld-char { display: inline-block; animation: fx-weld 420ms ease-out both; animation-delay: var(--weld-delay, 0ms); white-space: pre; }
 @keyframes fx-spark { 0% { opacity: 1; transform: translate(0, 0) scale(1); } 100% { opacity: 0; transform: translate(var(--sx, 20px), var(--sy, -30px)) scale(0.2); } }
-.fx-spark { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #ffb347; box-shadow: 0 0 6px #ff7b00; animation: fx-spark 480ms ease-out both; animation-delay: var(--spark-delay, 0ms); pointer-events: none; }
+.fx-spark { position: absolute; width: 3px; height: 3px; background: #ffb347; box-shadow: 0 0 6px #ff7b00; animation: fx-spark 480ms ease-out both; animation-delay: var(--spark-delay, 0ms); pointer-events: none; }
 @keyframes fx-slam { 0% { opacity: 0; transform: scale(2.6); filter: blur(4px); } 60% { opacity: 1; transform: scale(0.96); filter: blur(0); } 75% { transform: scale(1.04); } 100% { transform: scale(1); } }
 .fx-slam { animation: fx-slam 380ms cubic-bezier(0.22, 1, 0.36, 1) both; }
 @keyframes fx-hard-glitch {
@@ -351,33 +296,44 @@
   15% { clip-path: inset(10% 0 70% 0); transform: translate(-6px, 0); filter: hue-rotate(60deg); }
   30% { clip-path: inset(60% 0 10% 0); transform: translate(6px, 0); filter: hue-rotate(-60deg); }
   45% { clip-path: inset(30% 0 40% 0); transform: translate(-3px, 1px); }
-  60% { clip-path: inset(0 0 0 0); transform: none; filter: none; }
-  100% { clip-path: inset(0 0 0 0); transform: none; }
+  60%, 100% { clip-path: inset(0 0 0 0); transform: none; filter: none; }
 }
 .fx-hard-glitch { animation: fx-hard-glitch 260ms steps(1, end) both; }
-@keyframes fx-shake { 0%, 100% { transform: none; } 25% { transform: translate(2px, -1px); } 50% { transform: translate(-2px, 1px); } 75% { transform: translate(1px, 2px); } }
-.fx-shake { animation: fx-shake 160ms linear 1; }
-
-/* Launch overlay: the logo snaps from centre to its header home. */
-.fx-intro-overlay { position: fixed; inset: 0; z-index: 500; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 18px; background: var(--mm-bg); color: var(--mm-text); cursor: pointer; user-select: none; -webkit-user-select: none; }
+.fx-intro-overlay { position: fixed; inset: 0; z-index: 500; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 18px; background: var(--base); color: var(--text); cursor: pointer; user-select: none; -webkit-user-select: none; }
 .fx-intro-overlay.fx-intro-out { animation: fx-fade-out 220ms ease-out both; }
 @keyframes fx-fade-out { to { opacity: 0; } }
 .fx-snap { transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease; transform: translate(var(--snap-x, 0px), var(--snap-y, 0px)) scale(var(--snap-s, 1)); }
-.fx-cold-line { font-size: clamp(22px, 5vw, 40px); font-weight: 600; letter-spacing: -0.02em; text-align: center; padding: 0 24px; max-width: 720px; line-height: 1.25; animation: fx-cold-in 220ms ease-out both; }
+.fx-cold-line { font-family: var(--font-sans); font-size: clamp(22px, 5vw, 40px); font-weight: 700; letter-spacing: 0.04em; text-align: center; padding: 0 24px; max-width: 720px; line-height: 1.25; animation: fx-cold-in 220ms ease-out both; }
 @keyframes fx-cold-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .fx-cold-quote { font-size: clamp(17px, 3.2vw, 26px); font-weight: 500; color: var(--mm-dim); }
-.fx-cold-quote em { font-style: normal; color: var(--neon-green); }
+/* 5. Behind-pace glitch: one 90ms slice, RGB split, then still. Retriggered by React every 20s. */
+@keyframes cp-glitch-once {
+  0% { clip-path: inset(0 0 0 0); transform: none; text-shadow: none; }
+  20% { clip-path: inset(35% 0 40% 0); transform: translateX(-5px); text-shadow: 3px 0 var(--magenta), -3px 0 var(--cyan); }
+  60% { clip-path: inset(55% 0 20% 0); transform: translateX(4px); text-shadow: -3px 0 var(--magenta), 3px 0 var(--cyan); }
+  100% { clip-path: inset(0 0 0 0); transform: none; text-shadow: none; }
+}
+.cp-glitch-once { animation: cp-glitch-once 90ms steps(1, end) 1; }
 
-/* Confetti pieces (Celebration.tsx positions them; this animates). */
+/* ── Effects Simple already has today (theme-independent; unchanged).
+      Cyberpunk neutralises the ones outside its five. ──────────────── */
+.fx-glow-fill { box-shadow: 0 0 calc(var(--fill-pct, 0) * 0.12px) rgba(var(--shadow-ink), 0), 0 0 calc(4px + var(--fill-pct, 0) * 0.1px) color-mix(in srgb, var(--success) calc(var(--fill-pct, 0) * 1%), transparent); }
+@keyframes fx-glow-burst { 0% { filter: brightness(1); } 30% { filter: brightness(1.5); box-shadow: 0 0 18px var(--success); } 100% { filter: brightness(1); } }
+.fx-glow-burst { animation: fx-glow-burst 700ms ease-out 1; }
+@keyframes fx-overshoot { 0% { transform: scaleX(1); } 55% { transform: scaleX(1.035); } 100% { transform: scaleX(1); } }
+.fx-overshoot { transform-origin: left; animation: fx-overshoot 520ms cubic-bezier(0.34, 1.56, 0.64, 1) 1; }
+.fx-streak-1 { text-shadow: 0 0 6px color-mix(in srgb, var(--warning) 50%, transparent); }
+.fx-streak-2 { text-shadow: 0 0 8px var(--warning), 0 0 18px color-mix(in srgb, var(--warning) 40%, transparent); }
+.fx-streak-3 { text-shadow: 0 0 10px var(--warning), 0 0 26px var(--warning); animation: fx-flame 1.6s ease-in-out infinite; }
+@keyframes fx-flame { 50% { text-shadow: 0 0 14px var(--warning), 0 0 34px var(--warning); } }
+:root[data-skin="cyberpunk"] .fx-streak-1, :root[data-skin="cyberpunk"] .fx-streak-2, :root[data-skin="cyberpunk"] .fx-streak-3 { text-shadow: none; animation: none; }
 @keyframes fx-confetti { 0% { opacity: 1; transform: translate(0, 0) rotate(0deg); } 100% { opacity: 0; transform: translate(var(--cx, 0px), var(--cy, 300px)) rotate(var(--cr, 720deg)); } }
 .fx-confetti { position: fixed; top: 40%; left: 50%; width: 8px; height: 12px; pointer-events: none; z-index: 400; animation: fx-confetti var(--cd, 1400ms) cubic-bezier(0.2, 0.7, 0.4, 1) both; }
+:root[data-skin="cyberpunk"] .fx-empty { font-family: var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.8em; color: var(--muted); }
 
-/* Everything above respects the OS setting. */
 @media (prefers-reduced-motion: reduce) {
   .roll-strip { transition: none !important; }
-  .fx-boot, .fx-sweep::after, .fx-behind, .fx-skeleton::after, .fx-screen-left, .fx-screen-right, .fx-top-pulse,
-  .fx-arc, .fx-discharge, .fx-overshoot, .fx-glow-burst, .fx-streak-3, .fx-caret::after, .fx-weld-char, .fx-spark,
-  .fx-slam, .fx-hard-glitch, .fx-shake, .fx-confetti, .fx-cold-line, .fx-intro-out { animation: none !important; }
-  .fx-snap { transition: none !important; }
-  .fx-tilt { transform: none !important; }
+  .cp-tick.cp-flash, .fx-weld-char, .fx-spark, .fx-slam, .fx-hard-glitch, .fx-intro-out, .fx-cold-line, .cp-glitch-once,
+  .fx-glow-burst, .fx-overshoot, .fx-streak-3, .fx-confetti { animation: none !important; }
+  .fx-snap, .cp-rail-nav, .cp-tab { transition: none !important; }
 }

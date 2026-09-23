@@ -65,6 +65,10 @@ import { moduleKeyForRoute, MODULE_REGISTRY } from './modules.config';
 import type { AppState, MastermindActions } from './state';
 import type { Skin, Theme } from './data/useTheme';
 import Celebration from './components/fx/Celebration';
+import StatusStrip, { STATUS_STRIP_HEIGHT } from './components/cyber/StatusStrip';
+import CyberTabBar from './components/cyber/CyberTabBar';
+import CyberRail, { RAIL_WIDTH } from './components/cyber/CyberRail';
+import { MOBILE_HEADER_HEIGHT } from './components/MobileHeader';
 import Intro from './components/fx/Intro';
 
 const BUILT_SCREENS = [
@@ -93,12 +97,7 @@ interface Props {
 }
 
 export default function Stage({ state, actions, assistantName, canAccess, onSignOut, currentUserId, userEmail, userDisplayName, isOwner, theme, onThemeChange, skin, onSkinChange, soundFx, onSoundFxChange }: Props) {
-  // Cyberpunk slides a screen in from the side it was reached from: down
-  // the nav list = in from the right, up the list = in from the left.
-  // Simple never keys the panel, so its scroll position and DOM are
-  // exactly what they were.
-  const prevScreen = useRef(state.screen);
-  const slideDir = useRef<'left' | 'right'>('left');
+  const cyber = skin === 'cyberpunk';
   // Desktop-only: the persistent Sidebar's own Menu toggle collapses it to
   // a slim icon-only rail and back — previously a dead button (no onClick
   // at all). Mobile is unaffected; it keeps MobileMenuSheet's overlay.
@@ -238,14 +237,6 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // diagonal shine (app-shine-bg, defined in index.css) supplies the
   // background instead of a flat color — no inline `background` here, or
   // it'd win specificity over the class and flatten the gradient.
-  if (prevScreen.current !== state.screen) {
-    const order = vm.navRows.filter((r) => r.kind === 'item').map((r) => r.key);
-    const from = order.indexOf(prevScreen.current);
-    const to = order.indexOf(state.screen);
-    slideDir.current = from === -1 || to === -1 || to > from ? 'left' : 'right';
-    prevScreen.current = state.screen;
-  }
-
   const stageStyle: CSSProperties = {
     width: vm.stageWidth, height: vm.stageHeight, position: 'relative', overflow: 'hidden',
   };
@@ -277,15 +268,33 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             onOpenInbox={openInbox}
           />
 
-          <MobileTabBar
-            screen={state.screen}
-            novaOpen={state.novaOpen}
-            onNavigate={actions.navigateTo}
-            onToggleNova={state.novaOpen ? actions.closeNova : actions.openNova}
-          />
+          {cyber && <StatusStrip style={{ position: 'absolute', left: 0, right: 0, top: `calc(${MOBILE_HEADER_HEIGHT}px + env(safe-area-inset-top))`, zIndex: 28 }} />}
+
+          {cyber ? (
+            <CyberTabBar
+              screen={state.screen}
+              novaOpen={state.novaOpen}
+              onNavigate={actions.navigateTo}
+              onToggleNova={state.novaOpen ? actions.closeNova : actions.openNova}
+            />
+          ) : (
+            <MobileTabBar
+              screen={state.screen}
+              novaOpen={state.novaOpen}
+              onNavigate={actions.navigateTo}
+              onToggleNova={state.novaOpen ? actions.closeNova : actions.openNova}
+            />
+          )}
         </>
       ) : (
         <>
+          {cyber ? (
+            <>
+              <CyberRail rows={vm.navRows} onOpenSettings={() => actions.navigateTo('account-settings')} settingsActive={state.screen === 'account-settings'} />
+              <StatusStrip style={{ position: 'absolute', top: 0, left: RAIL_WIDTH, right: 0, zIndex: 28 }} />
+            </>
+          ) : (
+            <>
           <Sidebar
             rows={vm.navRows}
             ownerName={ownerDisplayName}
@@ -308,6 +317,8 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             onOpenTour={startTour}
             onOpenNotifications={() => actions.navigateTo('notification-settings')}
           />
+            </>
+          )}
 
           {/* The floating draggable Nova trigger is desktop-only now —
               mobile's entry point is the tab bar's centre FAB, matching the
@@ -341,11 +352,12 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           scrolling any further. */}
       <div
         id="tour-content-panel"
-        key={skin === 'cyberpunk' ? state.screen : 'panel'}
-        className={skin === 'cyberpunk' ? `fx-screen-${slideDir.current}` : undefined}
         style={{
           ...vm.contentStyle,
-          left: isMobile ? 0 : (sidebarOpen ? vm.sidebarWidth : SIDEBAR_COLLAPSED_WIDTH),
+          ...(cyber ? { padding: isMobile
+            ? `calc(${MOBILE_HEADER_HEIGHT + STATUS_STRIP_HEIGHT + 16}px + env(safe-area-inset-top)) 20px calc(${vm.tabBarHeight + 24}px + ${SAFE_BOTTOM})`
+            : `${STATUS_STRIP_HEIGHT + 24}px 32px 48px` } : {}),
+          left: isMobile ? 0 : cyber ? RAIL_WIDTH : (sidebarOpen ? vm.sidebarWidth : SIDEBAR_COLLAPSED_WIDTH),
           transition: isMobile ? undefined : 'left 0.18s ease',
           paddingBottom: isMobile
             ? `calc(${vm.tabBarHeight + 28 + remindersBox.height + 28}px + ${SAFE_BOTTOM})`
@@ -626,7 +638,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
       <RemindersBox ref={remindersRef} isMobile={isMobile} bottomOffset={isMobile ? `calc(${vm.tabBarHeight + 20}px + ${SAFE_BOTTOM})` : '20px'} />
 
-      <Celebration />
+      {!cyber && <Celebration />}
       <Intro name={(userDisplayName ?? '').split(' ')[0] || 'Marq'} />
 
       <ProductTour
