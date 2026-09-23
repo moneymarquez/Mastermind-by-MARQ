@@ -16,53 +16,117 @@
 
 export type Disc = 'D' | 'I' | 'S' | 'C';
 export type Trait = Disc | 'CON' | 'STAB';
-/** 'both' — the honest escape for a pair that genuinely won't split;
- *  it scores half to each side, so it can't inflate anything. */
-export type Choice = 'a' | 'b' | 'both';
+/** Five-point lean. The two sides of a pair always share one point:
+ *  clearly A = 1/0, leans A = 0.75/0.25, both = 0.5/0.5, and so on. The
+ *  middle exists because most people stand in the middle on some pairs;
+ *  the signal comes from the ones where they don't. 'a' and 'b' are the
+ *  "clearly" ends (older drafts stored those). */
+export type Choice = 'a' | 'a_lean' | 'both' | 'b_lean' | 'b';
+export const CHOICE_WEIGHT: Record<Choice, [number, number]> = { a: [1, 0], a_lean: [0.75, 0.25], both: [0.5, 0.5], b_lean: [0.25, 0.75], b: [0, 1] };
 
-export const ASSESSMENT_VERSION = 1;
+export const ASSESSMENT_VERSION = 2;
 
 export const DISCLAIMER = 'This maps your assessment to the systems these regions are associated with. It\'s a model for thinking about your patterns — not a scan.';
 
+export interface Side { text: string; hint: string; trait: Trait }
 export interface Question {
   id: string;
-  a: { text: string; trait: Trait };
-  b: { text: string; trait: Trait };
+  /** The situation, in plain words, so the two statements have somewhere to land. */
+  scenario: string;
+  a: Side;
+  b: Side;
 }
 
 /** 24 DISC pairs (each pair of letters appears four times, so every
- *  letter is tested twelve times) then four Big Five items. Forced
- *  choice: "which is more like you, most days at work". */
+ *  letter is tested twelve times) then four Big Five items. Each one
+ *  sets a scene, then two ways of being in it, each with a line of
+ *  "what this looks like" so the statement isn't a riddle. */
 export const QUESTIONS: Question[] = [
-  { id: 'q01', a: { text: 'I decide fast and fix it later', trait: 'D' }, b: { text: 'I get people on board before I decide', trait: 'I' } },
-  { id: 'q02', a: { text: 'I push when someone stalls', trait: 'D' }, b: { text: 'I give people room and keep things calm', trait: 'S' } },
-  { id: 'q03', a: { text: 'Good enough now beats perfect later', trait: 'D' }, b: { text: 'I want it right before it goes out', trait: 'C' } },
-  { id: 'q04', a: { text: 'I talk my way through a problem', trait: 'I' }, b: { text: 'I work through it quietly and steadily', trait: 'S' } },
-  { id: 'q05', a: { text: 'I sell the idea first, details second', trait: 'I' }, b: { text: 'I lay out the details so the idea sells itself', trait: 'C' } },
-  { id: 'q06', a: { text: 'If the routine works, I leave it alone', trait: 'S' }, b: { text: 'Even when the routine works, I keep looking for a better way', trait: 'C' } },
-  { id: 'q07', a: { text: 'On a call I take control of the conversation', trait: 'D' }, b: { text: 'On a call I build rapport and let it flow', trait: 'I' } },
-  { id: 'q08', a: { text: 'I set the pace and expect people to keep up', trait: 'D' }, b: { text: 'I match the pace of the people around me', trait: 'S' } },
-  { id: 'q09', a: { text: 'I go with my gut on a number', trait: 'D' }, b: { text: 'I want the number to be checked', trait: 'C' } },
-  { id: 'q10', a: { text: 'A room of strangers charges me up', trait: 'I' }, b: { text: 'A room of strangers wears me down', trait: 'S' } },
-  { id: 'q11', a: { text: 'I improvise when the script stops working', trait: 'I' }, b: { text: 'I fix the script so it stops failing', trait: 'C' } },
-  { id: 'q12', a: { text: 'I would rather be relied on than be right', trait: 'S' }, b: { text: 'I would rather be right than be relied on', trait: 'C' } },
-  { id: 'q13', a: { text: 'After a lost deal I go straight at the next one', trait: 'D' }, b: { text: 'After a lost deal I need to talk it out first', trait: 'I' } },
-  { id: 'q14', a: { text: 'I say the hard thing in the room', trait: 'D' }, b: { text: 'I say the hard thing later, one on one', trait: 'S' } },
-  { id: 'q15', a: { text: 'I start before the plan is finished', trait: 'D' }, b: { text: 'I finish the plan before I start', trait: 'C' } },
-  { id: 'q16', a: { text: 'I would rather be liked than steady', trait: 'I' }, b: { text: 'I would rather be steady than liked', trait: 'S' } },
-  { id: 'q17', a: { text: 'A rough plan and enthusiasm gets me going', trait: 'I' }, b: { text: 'A clear checklist gets me going', trait: 'C' } },
-  { id: 'q18', a: { text: 'I let it go to keep the peace', trait: 'S' }, b: { text: 'I hold my ground once I have the facts', trait: 'C' } },
-  { id: 'q19', a: { text: 'I want the win', trait: 'D' }, b: { text: 'I want the recognition', trait: 'I' } },
-  { id: 'q20', a: { text: 'Change is a chance', trait: 'D' }, b: { text: 'Change is a cost', trait: 'S' } },
-  { id: 'q21', a: { text: 'Rules are suggestions when they slow me down', trait: 'D' }, b: { text: 'Rules exist for a reason and I follow them', trait: 'C' } },
-  { id: 'q22', a: { text: 'I fill silence', trait: 'I' }, b: { text: 'I am fine with silence', trait: 'S' } },
-  { id: 'q23', a: { text: 'I trust a story more than a spreadsheet', trait: 'I' }, b: { text: 'I trust a spreadsheet more than a story', trait: 'C' } },
-  { id: 'q24', a: { text: 'I finish what I started because I said I would', trait: 'S' }, b: { text: 'I finish what I started only if it still makes sense', trait: 'C' } },
+  { id: 'q01', scenario: 'A decision comes up — which lead list to work, whether to change the offer — and it needs an answer today.',
+    a: { text: 'I decide fast and fix it later', hint: 'You call it in the moment. If it was wrong, you change it tomorrow.', trait: 'D' },
+    b: { text: 'I get people on board before I decide', hint: 'You float it past someone first — a partner, a friend, a client — and decide once they\'re with you.', trait: 'I' } },
+  { id: 'q02', scenario: 'Someone you\'re counting on — a client, a partner, a vendor — has gone quiet and the thing is stalling.',
+    a: { text: 'I push', hint: 'You call again, text again, set a deadline. Silence gets pressure.', trait: 'D' },
+    b: { text: 'I give them room', hint: 'You wait, keep it friendly, and assume they\'ll come back. Pressure feels like it would cost the relationship.', trait: 'S' } },
+  { id: 'q03', scenario: 'A piece of work is about to go out — a proposal, a website page, a text to a lead — and it\'s 80% there.',
+    a: { text: 'Good enough now beats perfect later', hint: 'Send it. The 20% doesn\'t change the answer and waiting does.', trait: 'D' },
+    b: { text: 'I want it right before it goes out', hint: 'You hold it until the 20% is fixed. A sloppy version out in the world bothers you.', trait: 'C' } },
+  { id: 'q04', scenario: 'You\'ve hit a real problem — a lead source dried up, a client is unhappy — and you need to work it out.',
+    a: { text: 'I talk it through', hint: 'You think out loud, on a call or across a table. Saying it is how you figure it out.', trait: 'I' },
+    b: { text: 'I work through it quietly', hint: 'You go away, sit with it, and come back with the answer. Talking too early muddies it.', trait: 'S' } },
+  { id: 'q05', scenario: 'You\'re pitching something — on a call, in a room — and you have two minutes.',
+    a: { text: 'I sell the idea first, details second', hint: 'Lead with the picture and the feeling. Numbers come if they ask.', trait: 'I' },
+    b: { text: 'I lay out the details so the idea sells itself', hint: 'Lead with what it costs, what it does, what they get. Let that do the talking.', trait: 'C' } },
+  { id: 'q06', scenario: 'Your routine — the calling hour, the morning setup — is working. Not perfectly, but it\'s working.',
+    a: { text: 'If it works, I leave it alone', hint: 'Same time, same steps. Tinkering is how a good routine dies.', trait: 'S' },
+    b: { text: 'Even when it works, I keep looking for a better way', hint: 'You keep adjusting the script, the time, the order. "Working" isn\'t the same as "best".', trait: 'C' } },
+  { id: 'q07', scenario: 'You\'re on a cold call. The owner picked up and they\'re listening.',
+    a: { text: 'I take control of the conversation', hint: 'You drive: here\'s who I am, here\'s what I noticed, here\'s the ask.', trait: 'D' },
+    b: { text: 'I build rapport and let it flow', hint: 'You get them talking about the business first and find the opening as it comes.', trait: 'I' } },
+  { id: 'q08', scenario: 'You\'re working with other people on something — a partner, a crew, a client\'s staff — and they\'re slower than you.',
+    a: { text: 'I set the pace and expect people to keep up', hint: 'You move at your speed. If they fall behind, that\'s a them problem.', trait: 'D' },
+    b: { text: 'I match the pace of the people around me', hint: 'You slow down to keep everyone together. Getting there together matters more than getting there first.', trait: 'S' } },
+  { id: 'q09', scenario: 'You have to put a number on something — a price, a budget, a target — right now.',
+    a: { text: 'I go with my gut', hint: 'You say a number that feels right and move on.', trait: 'D' },
+    b: { text: 'I want it checked', hint: 'You want the math first — what it costs, what others charge — before the number leaves your mouth.', trait: 'C' } },
+  { id: 'q10', scenario: 'You walk into a room full of people you don\'t know — a networking thing, a new job site, a party.',
+    a: { text: 'It charges me up', hint: 'By the end you\'ve met half the room and you\'re buzzing.', trait: 'I' },
+    b: { text: 'It wears me down', hint: 'You find the two people you can talk to and you\'re tired by the drive home.', trait: 'S' } },
+  { id: 'q11', scenario: 'Your call script stops working — three calls in a row go nowhere at the same line.',
+    a: { text: 'I improvise on the next call', hint: 'You wing it, say it differently, see what lands.', trait: 'I' },
+    b: { text: 'I stop and fix the script', hint: 'You rewrite the line before the next dial so it doesn\'t fail again.', trait: 'C' } },
+  { id: 'q12', scenario: 'Someone describes you to a stranger. Which word would you rather they used?',
+    a: { text: 'Reliable', hint: 'They can count on you. You show up, you do what you said.', trait: 'S' },
+    b: { text: 'Right', hint: 'When you say something, it\'s correct. People check with you.', trait: 'C' } },
+  { id: 'q13', scenario: 'You just lost a deal you thought you had.',
+    a: { text: 'I go straight at the next one', hint: 'Next dial, next lead. The loss turns into fuel within the hour.', trait: 'D' },
+    b: { text: 'I need to talk it out first', hint: 'You tell someone what happened before you can get back to it.', trait: 'I' } },
+  { id: 'q14', scenario: 'Something needs to be said that the other person won\'t like — a price is going up, the work wasn\'t good enough.',
+    a: { text: 'I say it in the room', hint: 'Right there, in front of whoever\'s present. Waiting makes it worse.', trait: 'D' },
+    b: { text: 'I say it later, one on one', hint: 'You pick a quiet moment and say it privately, so nobody loses face.', trait: 'S' } },
+  { id: 'q15', scenario: 'You\'ve got a plan for something — a campaign, a launch, a new service — and it\'s about 70% figured out.',
+    a: { text: 'I start now', hint: 'Begin with the 70%. The rest gets figured out by doing it.', trait: 'D' },
+    b: { text: 'I finish the plan first', hint: 'Starting on a half plan feels reckless. You want the whole thing mapped.', trait: 'C' } },
+  { id: 'q16', scenario: 'Be honest — if you had to lose one of these, which would you keep?',
+    a: { text: 'Being liked', hint: 'People enjoy you. Rooms warm up when you walk in.', trait: 'I' },
+    b: { text: 'Being steady', hint: 'People trust you. You\'re the same person on a bad day as a good one.', trait: 'S' } },
+  { id: 'q17', scenario: 'It\'s the start of a big day of work. What actually gets you moving?',
+    a: { text: 'A rough plan and some energy', hint: 'Coffee, a general idea, and go. Too much structure kills the momentum.', trait: 'I' },
+    b: { text: 'A clear checklist', hint: 'Written steps, in order. Ticking them off is the momentum.', trait: 'C' } },
+  { id: 'q18', scenario: 'You disagree with someone and it\'s turning into an argument.',
+    a: { text: 'I let it go to keep the peace', hint: 'It\'s not worth the fight. You drop it, even if you were right.', trait: 'S' },
+    b: { text: 'I hold my ground once I have the facts', hint: 'If you know you\'re right, you don\'t back down. The facts are the point.', trait: 'C' } },
+  { id: 'q19', scenario: 'You close a big client. What\'s the best part, honestly?',
+    a: { text: 'The win itself', hint: 'You beat it. The scoreboard moved. That\'s the feeling.', trait: 'D' },
+    b: { text: 'People knowing', hint: 'Telling someone. Being seen as the person who pulled it off.', trait: 'I' } },
+  { id: 'q20', scenario: 'Something big changes on you — a client leaves, the market shifts, a plan falls apart.',
+    a: { text: 'Change is a chance', hint: 'First reaction: what\'s the opening here?', trait: 'D' },
+    b: { text: 'Change is a cost', hint: 'First reaction: what did this just cost me, and how do I get back to stable?', trait: 'S' } },
+  { id: 'q21', scenario: 'There\'s a rule — a process, a policy, "the way it\'s done" — and it\'s slowing you down.',
+    a: { text: 'Rules are suggestions when they slow me down', hint: 'You go around it and deal with it later if anyone notices.', trait: 'D' },
+    b: { text: 'Rules exist for a reason and I follow them', hint: 'You follow it, or you get it changed properly. Going around it feels wrong.', trait: 'C' } },
+  { id: 'q22', scenario: 'You\'re on a call and there\'s a pause. Nobody is talking.',
+    a: { text: 'I fill it', hint: 'Silence feels like it\'s going badly. You jump in.', trait: 'I' },
+    b: { text: 'I\'m fine with it', hint: 'You let it sit. They\'ll fill it, and what they say is usually useful.', trait: 'S' } },
+  { id: 'q23', scenario: 'Two people tell you a marketing channel works. One has a great story about it. One has a spreadsheet.',
+    a: { text: 'I trust the story', hint: 'A real person who did it and lived it is more convincing than a table.', trait: 'I' },
+    b: { text: 'I trust the spreadsheet', hint: 'Stories are selective. Numbers are what happened.', trait: 'C' } },
+  { id: 'q24', scenario: 'You\'re halfway through something you committed to and it\'s stopped making sense.',
+    a: { text: 'I finish it because I said I would', hint: 'Your word is the point. You see it through even if it\'s a slog.', trait: 'S' },
+    b: { text: 'I finish it only if it still makes sense', hint: 'Sunk cost is sunk. If it\'s wrong now, you stop and redirect.', trait: 'C' } },
   // Big Five reads — conscientiousness and emotional stability.
-  { id: 'b01', a: { text: 'I do the boring part of the job on the day it is due', trait: 'CON' }, b: { text: 'I do the boring part of the job when I finally have to', trait: 'D' } },
-  { id: 'b02', a: { text: 'When I say 4pm, it happens at 4pm', trait: 'CON' }, b: { text: 'When I say 4pm, it happens at some point that day', trait: 'I' } },
-  { id: 'b03', a: { text: 'A bad call is gone from my head by the next dial', trait: 'STAB' }, b: { text: 'A bad call stays with me for the rest of the hour', trait: 'S' } },
-  { id: 'b04', a: { text: 'Pressure makes me sharper', trait: 'STAB' }, b: { text: 'Pressure makes me scattered', trait: 'C' } },
+  { id: 'b01', scenario: 'There\'s a boring, necessary job — invoices, logging outcomes, the paperwork — with a due date.',
+    a: { text: 'I do it on the day it\'s due', hint: 'It gets done when it\'s supposed to, without anyone chasing you.', trait: 'CON' },
+    b: { text: 'I do it when I finally have to', hint: 'It gets done the day the consequences show up.', trait: 'D' } },
+  { id: 'b02', scenario: 'You told yourself the calling hour starts at 4pm.',
+    a: { text: 'It happens at 4pm', hint: 'Most days, you\'re dialing by 4:05.', trait: 'CON' },
+    b: { text: 'It happens at some point that day', hint: 'Most days it happens — at 4, or 5:30, or 8.', trait: 'I' } },
+  { id: 'b03', scenario: 'A call goes badly — the owner is rude, hangs up on you.',
+    a: { text: 'It\'s gone by the next dial', hint: 'You shrug, log it, dial. It doesn\'t follow you.', trait: 'STAB' },
+    b: { text: 'It stays with me for the hour', hint: 'You replay it. The next few calls are worse because of it.', trait: 'S' } },
+  { id: 'b04', scenario: 'The pressure is on — a deadline, a big call, money on the line.',
+    a: { text: 'Pressure makes me sharper', hint: 'You focus. Some of your best work happens with the clock running.', trait: 'STAB' },
+    b: { text: 'Pressure makes me scattered', hint: 'You get jumpy, start three things, finish none.', trait: 'C' } },
 ];
 
 export type Answers = Record<string, Choice>;
@@ -76,6 +140,7 @@ export interface Scores {
 export function scoreAnswers(answers: Answers): Scores {
   const s: Scores = { D: 0, I: 0, S: 0, C: 0, CON: 0, STAB: 0 };
   const credit = (t: Trait, w: number, bigFive: boolean) => {
+    if (w === 0) return;
     // The Big Five items only count toward CON/STAB; their "low" side is
     // deliberately not credited to a DISC letter.
     if (bigFive) { if (t === 'CON' || t === 'STAB') s[t] += w; return; }
@@ -83,10 +148,11 @@ export function scoreAnswers(answers: Answers): Scores {
   };
   for (const q of QUESTIONS) {
     const c = answers[q.id];
-    if (!c) continue;
+    if (!c || !CHOICE_WEIGHT[c]) continue;
+    const [wa, wb] = CHOICE_WEIGHT[c];
     const bigFive = q.id.startsWith('b');
-    if (c === 'both') { credit(q.a.trait, 0.5, bigFive); credit(q.b.trait, 0.5, bigFive); continue; }
-    credit(q[c].trait, 1, bigFive);
+    credit(q.a.trait, wa, bigFive);
+    credit(q.b.trait, wb, bigFive);
   }
   return s;
 }

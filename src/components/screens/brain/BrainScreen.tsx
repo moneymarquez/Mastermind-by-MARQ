@@ -119,18 +119,26 @@ export default function BrainScreen({ homeHeadStyle, homeSubStyle, onNavigate }:
           {next ? (
             <div style={{ ...cardStyle, marginTop: 16 }}>
               <div style={labelStyle}>Question {QUESTIONS.indexOf(next) + 1}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+              <div style={{ fontSize: 'var(--text-body)', color: 'var(--text)', lineHeight: 1.5, marginTop: 8 }}>{next.scenario}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 14 }}>
                 {(['a', 'b'] as const).map((c) => (
-                  <div key={c} onClick={() => answer(next.id, c)} style={{ padding: '14px 16px', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', cursor: 'pointer', fontSize: 'var(--text-body)', color: 'var(--text)', lineHeight: 1.45 }}>
-                    {next[c].text}
+                  <div key={c} onClick={() => answer(next.id, c)} style={{ display: 'flex', gap: 12, padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', cursor: 'pointer' }}>
+                    <span style={{ width: 24, height: 24, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-sm)', background: 'var(--surface-4)', border: '1px solid var(--border-2)', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{c.toUpperCase()}</span>
+                    <div>
+                      <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', lineHeight: 1.4 }}>{next[c].text}</div>
+                      <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 1.45, marginTop: 3 }}>{next[c].hint}</div>
+                    </div>
                   </div>
                 ))}
-                <div onClick={() => answer(next.id, 'both')} style={{ padding: '10px 16px', border: '1px dashed var(--border)', borderRadius: 'var(--radius-lg)', cursor: 'pointer', fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', lineHeight: 1.45 }}>
-                  Both, about equally — I honestly can't split them
-                </div>
+              </div>
+              <div style={{ ...labelStyle, marginTop: 16, marginBottom: 6 }}>How strongly?</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 6 }}>
+                {([['a', 'Clearly A'], ['a_lean', 'Leans A'], ['both', 'Both equally'], ['b_lean', 'Leans B'], ['b', 'Clearly B']] as const).map(([c, label]) => (
+                  <div key={c} onClick={() => answer(next.id, c)} style={{ padding: '10px 4px', textAlign: 'center', border: `1px ${c === 'both' ? 'dashed' : 'solid'} var(--border)`, borderRadius: 'var(--radius-lg)', cursor: 'pointer', fontSize: 'var(--text-caption)', fontWeight: 600, color: c === 'both' ? 'var(--text-tertiary)' : 'var(--text)', lineHeight: 1.25 }}>{label}</div>
+                ))}
               </div>
               <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 10, lineHeight: 1.5 }}>
-                Pick the one that's more true, even by a little — that's where the signal is. "Both" scores half to each side, so use it only when they really are a tie.
+                Tapping a card means "clearly". Standing in the middle on some of these is normal — the read comes from the ones where you don't. "Both" is a real answer, not a skip.
               </div>
               {n > 0 && (
                 <div style={{ marginTop: 12 }}>
