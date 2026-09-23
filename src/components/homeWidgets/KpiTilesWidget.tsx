@@ -8,7 +8,7 @@ import { useFitness } from '../../data/useFitness';
 import { useCallsToday } from '../../data/useCallsToday';
 import { useDailyCallGoal } from '../../data/useDailyCallGoal';
 import { useDailyPlan } from '../../data/useDailyPlan';
-import { formatTimeLabel, dateStr } from '../../data/time';
+import { formatTimeLabel, dateStr, addDaysStr } from '../../data/time';
 import { streakClass } from '../../data/dialStreak';
 import RollingText from '../fx/RollingText';
 import type { HomeWidgetProps } from './types';
@@ -39,6 +39,7 @@ export default function KpiTilesWidget({ isMobile }: HomeWidgetProps) {
   const { callsToday, streak: dialStreakDays, loading: outcomesLoading } = useCallsToday();
   const callGoal = useDailyCallGoal();
   const { plan, loading: planLoading } = useDailyPlan();
+  const { plan: tomorrowPlan } = useDailyPlan(addDaysStr(dateStr(new Date()), 1));
 
   const today = dateStr(new Date());
   const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
@@ -50,8 +51,11 @@ export default function KpiTilesWidget({ isMobile }: HomeWidgetProps) {
   const next = events
     .filter((e) => e.event_date > today || (e.event_date === today && e.start_time >= nowHHMM))
     .sort((a, b) => (a.event_date === b.event_date ? a.start_time.localeCompare(b.start_time) : a.event_date.localeCompare(b.event_date)))[0];
+  const tomorrowFirst = (tomorrowPlan?.blocks ?? []).slice().sort((a, b) => a.time.localeCompare(b.time))[0];
   const nextLabel = nextBlock
     ? formatTimeLabel(nextBlock.time)
+    : tomorrowFirst && (!next || next.event_date > addDaysStr(today, 1))
+    ? `Tomorrow ${formatTimeLabel(tomorrowFirst.time)}`
     : !next
     ? 'Nothing yet'
     : next.event_date === today

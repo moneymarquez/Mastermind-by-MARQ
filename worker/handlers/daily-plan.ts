@@ -251,8 +251,14 @@ export async function runDailyPlan(env: DailyPlanEnv): Promise<void> {
   const subs = Array.isArray(subsRaw) ? subsRaw : [];
   const vapid: VapidKeys | null = vapidPublic && vapidPrivate ? { subject: vapidSubject, publicKey: vapidPublic, privateKey: vapidPrivate } : null;
 
-  // ── Overnight generation (2:00-2:15am local — comfortably ready by 6am) ──
-  if (inWindow(now, 2, 0)) {
+  // ── Generation ────────────────────────────────────────────────────
+  // This used to run only in a 2:00–2:15am window, so one missed firing
+  // (a paused deploy, a cold worker) meant no plan for the day. Now any
+  // firing from 8pm builds tomorrow if it is missing, and any firing at
+  // all backfills today if it is missing; existingPlan() makes repeats
+  // free.
+  const buildTomorrow = now.getHours() >= 20 || now.getHours() < 6;
+  {
     // Anyone with a goal gets a plan. This used to be "anyone with a push
     // subscription", which was nobody.
     const goalUsersRes = await fetch(`${supabaseUrl}/rest/v1/goals?select=user_id`, { headers });
@@ -268,6 +274,7 @@ export async function runDailyPlan(env: DailyPlanEnv): Promise<void> {
       // Tomorrow, with the AI pass; and today as a backfill if a previous
       // night was missed, floor only — it's already the day.
       for (const [date, withAi] of [[tomorrow, true], [today, false]] as const) {
+        if (date === tomorrow && !buildTomorrow) continue;
         try {
           if (await existingPlan(supabaseUrl, headers, userId, date)) continue;
           const floor = buildPlan(await fetchPlanInput(supabaseUrl, headers, userId, date));

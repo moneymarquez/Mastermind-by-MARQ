@@ -460,7 +460,7 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
                 <div className="ap-preview-kpis">
                   {[
                     { label: 'Protein', value: '168', sub: '/202g', pct: 83 },
-                    { label: 'Dials', value: '42', sub: '/100', pct: 42 },
+                    { label: 'Dials', value: '14', sub: '/35', pct: 40 },
                     { label: 'Pipeline', value: '$84k', sub: '3 closing' },
                     { label: 'Runway', value: '7.4', sub: 'mo · +0.3 wk' },
                   ].map((t) => (
@@ -500,7 +500,7 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
                 {[
                   { label: 'Protein', value: '168', sub: '/202g', pct: 83 },
-                  { label: 'Dials', value: '42', sub: '/100', pct: 42 },
+                  { label: 'Dials', value: '14', sub: '/35', pct: 40 },
                 ].map((t) => (
                   <div key={t.label} style={{ padding: 13, borderRadius: 14, background: 'var(--mm-tile)', display: 'flex', flexDirection: 'column', gap: 7 }}>
                     <div style={{ fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--mm-faint)' }}>{t.label}</div>

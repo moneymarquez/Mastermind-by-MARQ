@@ -5,7 +5,8 @@ import { useFitness } from '../../data/useFitness';
 import { useMacros } from '../../data/useMacros';
 import { useDailyPlan } from '../../data/useDailyPlan';
 import { useDialingQueue } from '../../data/useLeadflow';
-import { formatTimeLabel } from '../../data/time';
+import { formatTimeLabel, dateStr, addDaysStr } from '../../data/time';
+import { useReminders } from '../../data/useReminders';
 import type { DialState } from '../../lib/dialClock';
 import { formatClock, formatCountdown, minutesNow } from '../../lib/dialClock';
 import RollingText from '../fx/RollingText';
@@ -21,6 +22,7 @@ export interface OverviewData {
   dialsLoading: boolean;
   next: { title: string; timeLabel: string; screen: string } | null;
   planLoading: boolean;
+  overdue: number;
   sobriety: number;
   workouts: number;
   calories: number;
@@ -80,6 +82,15 @@ export function CyberOverviewView({ d, isMobile, onNavigate }: { d: OverviewData
         <div className="cp-label" style={{ marginTop: 8 }}>{d.goal} segments, {Math.min(d.goal, d.dials)} lit</div>
       </div>
 
+      {/* Overdue reminders beat everything — the honesty rule. */}
+      {d.overdue > 0 && (
+        <Rail accent="magenta" style={{ ...gap, marginLeft: isMobile ? -20 : -32, marginRight: isMobile ? -20 : -32, padding: isMobile ? '10px 20px' : '10px 32px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <span className="cp-label" style={{ color: 'var(--magenta)' }}>Overdue</span>
+          <span className="cp-body" style={{ flex: '1 1 200px' }}><span className="cp-num" style={{ fontSize: 14 }}>{d.overdue}</span> reminder{d.overdue === 1 ? '' : 's'} past due.</span>
+          <button className="cp-btn cp-btn--ghost" onClick={() => onNavigate('daily-plan')}>See them</button>
+        </Rail>
+      )}
+
       {/* Next action: a rail with a live button. */}
       <Rail accent={d.next ? 'cyan' : 'amber'} style={{ ...gap, marginLeft: isMobile ? -20 : -32, marginRight: isMobile ? -20 : -32, padding: isMobile ? '12px 20px' : '12px 32px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         <span className="cp-label" style={{ color: d.next ? 'var(--cyan)' : 'var(--amber)' }}>{d.next ? 'Next ▸' : 'No action queued'}</span>
@@ -124,6 +135,8 @@ export function CyberOverviewView({ d, isMobile, onNavigate }: { d: OverviewData
 export default function CyberOverview({ isMobile, onNavigate }: { isMobile: boolean; onNavigate: (screen: string) => void }) {
   const strip = useStatusStripData();
   const { plan, loading: planLoading } = useDailyPlan();
+  const { plan: tomorrowPlan } = useDailyPlan(addDaysStr(dateStr(new Date()), 1));
+  const { reminders } = useReminders();
   const { streak: sobriety, loading: sobrietyLoading } = useSobriety();
   const { weekCount, loading: fitnessLoading } = useFitness();
   const { totals, nutritionTarget, loading: macrosLoading } = useMacros();
@@ -132,11 +145,17 @@ export default function CyberOverview({ isMobile, onNavigate }: { isMobile: bool
   const now = minutesNow();
   const nowHHMM = `${String(Math.floor(now / 60)).padStart(2, '0')}:${String(now % 60).padStart(2, '0')}`;
   const nextBlock = (plan?.blocks ?? []).filter((b) => b.time >= nowHHMM).sort((a, b) => a.time.localeCompare(b.time))[0];
-  const next = nextBlock ? { title: nextBlock.title, timeLabel: formatTimeLabel(nextBlock.time), screen: nextBlock.module === 'dialing' ? 'dialing' : 'daily-plan' } : null;
+  const tomorrowFirst = (tomorrowPlan?.blocks ?? []).slice().sort((a, b) => a.time.localeCompare(b.time))[0];
+  const next = nextBlock
+    ? { title: nextBlock.title, timeLabel: formatTimeLabel(nextBlock.time), screen: nextBlock.module === 'dialing' ? 'dialing' : 'daily-plan' }
+    : tomorrowFirst
+    ? { title: tomorrowFirst.title, timeLabel: `tomorrow ${formatTimeLabel(tomorrowFirst.time)}`, screen: 'daily-plan' }
+    : null;
+  const overdue = reminders.filter((r) => !r.done && r.due_date < dateStr(new Date())).length;
 
   const d: OverviewData = {
     dials: strip.dials, goal: strip.goal, callStart: strip.callStart, state: strip.state, dialsLoading: strip.loading,
-    next, planLoading,
+    next, planLoading, overdue,
     sobriety, workouts: weekCount, calories: totals.calories, calorieTarget: nutritionTarget?.daily_calories ?? null,
     vitalsLoading: sobrietyLoading || fitnessLoading || macrosLoading,
     queued: notConnected ? null : queueLoading ? 0 : queue.filter((l) => !l.last_called_at || new Date(l.last_called_at).toDateString() !== new Date().toDateString()).length,

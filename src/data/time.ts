@@ -45,3 +45,9 @@ export function formatDateLabel(dStr: string): string {
   const d = new Date(`${dStr}T00:00:00`);
   return d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 }
+
+/** YYYY-MM-DD plus n days, in local time. */
+export function addDaysStr(date: string, n: number): string {
+  const [y, m, d] = date.split('-').map(Number);
+  return dateStr(new Date(y, m - 1, d + n));
+}
