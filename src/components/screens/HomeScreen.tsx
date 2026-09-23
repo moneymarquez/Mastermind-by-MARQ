@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { useSkin } from '../../data/useTheme';
 import CyberOverview from '../cyber/CyberOverview';
+import BrainNudgeCard from './brain/BrainNudgeCard';
 import { useNudges } from '../../data/useNudges';
 import { useCallsToday } from '../../data/useCallsToday';
 import { useDailyCallGoal } from '../../data/useDailyCallGoal';
@@ -72,7 +73,7 @@ export default function HomeScreen({ isMobile, isOwner, homeHeadStyle, homeSubSt
   const desktopGridColumns = columnWidgets.length === 3 ? 'minmax(0, 1.05fr) minmax(0, 0.95fr) minmax(280px, 340px)' : 'repeat(auto-fit, minmax(280px, 1fr))';
 
   // Cyberpunk is a different Overview, not a restyle: see CyberOverview.
-  if (skin === 'cyberpunk') return <CyberOverview isMobile={isMobile} onNavigate={onNavigate} />;
+  if (skin === 'cyberpunk') return <><BrainNudgeCard onOpen={() => onNavigate('brain')} /><CyberOverview isMobile={isMobile} onNavigate={onNavigate} /></>;
 
   if (prefsLoading) return <div style={homeSubStyle}>Loading…</div>;
 
@@ -91,6 +92,7 @@ export default function HomeScreen({ isMobile, isOwner, homeHeadStyle, homeSubSt
     <div style={isMobile ? { display: 'flex', flexDirection: 'column', minHeight: '100%', justifyContent: 'flex-end' } : undefined}>
       <div style={homeHeadStyle}>{greeting()}.</div>
       <div style={homeSubStyle}>{nudgeSummary}</div>
+      <BrainNudgeCard onOpen={() => onNavigate('brain')} />
 
       {isMobile && !hasCustomOrder ? (
         // No custom order saved yet — keep the original mobile default

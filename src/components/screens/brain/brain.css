@@ -1,0 +1,14 @@
+/* Brain tab visual. Signals travel between regions on every theme; the
+   Cyberpunk skin recolours them to read as electric. Static otherwise. */
+.brain-signal { fill: none; stroke: var(--text-tertiary); stroke-width: 1.2; stroke-dasharray: 3 9; stroke-linecap: round; opacity: 0.55; animation: brain-signal 2.6s linear infinite; }
+.brain-signal[data-speed="fast"] { animation-duration: 1.3s; opacity: 0.8; }
+.brain-signal[data-speed="slow"] { animation-duration: 4.2s; opacity: 0.35; }
+@keyframes brain-signal { to { stroke-dashoffset: -48; } }
+.brain-region { cursor: pointer; transition: transform 160ms ease; transform-box: fill-box; transform-origin: center; }
+.brain-region:hover { transform: scale(1.06); }
+.brain-region[data-active="true"] .brain-ring { stroke-width: 2.5; }
+.brain-outline { fill: var(--surface-2); stroke: var(--border-2); stroke-width: 1.5; }
+:root[data-skin="cyberpunk"] .brain-signal { stroke: var(--cyan); filter: drop-shadow(0 0 3px var(--cyan)); }
+:root[data-skin="cyberpunk"] .brain-outline { fill: var(--surface); stroke: var(--edge); }
+:root[data-skin="cyberpunk"] .brain-region[data-active="true"] .brain-ring { filter: drop-shadow(0 0 6px var(--green)); }
+@media (prefers-reduced-motion: reduce) { .brain-signal { animation: none; } }

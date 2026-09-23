@@ -21,6 +21,7 @@ export const NAV_DATA: NavGroup[] = [
       { id: 'sobriety', label: 'Sobriety', icon: 'ph-heart' },
       { id: 'goals', label: 'Goals', icon: 'ph-target' },
       { id: 'mental', label: 'Mental Health', icon: 'ph-brain' },
+      { id: 'brain', label: 'Brain', icon: 'ph-brain' },
       { id: 'schedule', label: 'Schedule', icon: 'ph-calendar-blank' },
       { id: 'budgeting', label: 'Budgeting', icon: 'ph-wallet' },
       { id: 'decisions', label: 'Decision Log', icon: 'ph-scales' },

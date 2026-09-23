@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useOnboardingProgress } from '../data/useOnboardingProgress';
+import { modulesForRole } from '../data/brain';
 import { useNovaPreferences } from '../data/useNovaPreferences';
 import { supabase } from '../lib/supabase';
 import CurationQuestions from './CurationQuestions';
@@ -105,9 +106,10 @@ export default function OnboardingFlow({ onComplete, onRedeemCode }: Props) {
     // with real onboarding answers, not just held in this table — the AI
     // genuinely starts from what this person told it, not a cold start.
     await supabase.from('nova_memory').insert([
-      { fact: `Onboarding: wants ${a.goal?.toLowerCase()} out of Mastermind.` },
-      { fact: `Onboarding: describes how they operate as "${a.style}."` },
-      { fact: `Onboarding: looking for this now because — ${a.why}` },
+      { fact: `Onboarding: industry — ${a.industry}; role — ${a.role}.` },
+      ...(a.side_hustle ? [{ fact: `Onboarding: runs on the side — ${a.side_hustle}.` }] : []),
+      { fact: `Onboarding: 90-day target — ${a.ninety_day}` },
+      { fact: `Onboarding: what would make this week a win — ${a.week_win}` },
     ]);
     await save({ step: 'ai-name', answers: a });
   };
@@ -135,7 +137,7 @@ export default function OnboardingFlow({ onComplete, onRedeemCode }: Props) {
       <InviteCodeEntry onRedeem={onRedeemCode} />
       {step === 'questions' && <CurationQuestions initial={answers} onComplete={submitQuestions} />}
       {step === 'ai-name' && <AiNamingStep initialName={assistantName} onComplete={submitName} />}
-      {step === 'modules' && <OnboardingScreen onComplete={submitModules} />}
+      {step === 'modules' && <OnboardingScreen onComplete={submitModules} preselect={modulesForRole(answers.role)} />}
       {step === 'demo' && <PersonalizedDemo assistantName={assistantName} selectedKeys={draftModuleKeys} onContinue={finish} submitting={finishing} />}
     </>
   );

@@ -4,6 +4,13 @@ import { supabase } from '../lib/supabase';
 export type OnboardingStep = 'questions' | 'ai-name' | 'modules' | 'demo';
 
 export interface OnboardingAnswers {
+  /** The five signup questions (Brain tab spec §0). */
+  industry?: string;
+  role?: string;
+  side_hustle?: string;
+  ninety_day?: string;
+  week_win?: string;
+  /** Pre-Brain-tab questions, kept so old rows still type-check. */
   goal?: string;
   style?: string;
   why?: string;

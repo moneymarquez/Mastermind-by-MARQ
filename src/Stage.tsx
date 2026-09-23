@@ -24,6 +24,7 @@ import FitnessScreen from './components/screens/FitnessScreen';
 import MacrosScreen from './components/screens/MacrosScreen';
 import GoalsScreen from './components/screens/GoalsScreen';
 import MentalHealthScreen from './components/screens/MentalHealthScreen';
+import BrainScreen from './components/screens/brain/BrainScreen';
 import ScalingStartScreen from './components/screens/ScalingStartScreen';
 import ClientDeliveryScreen from './components/screens/ClientDeliveryScreen';
 import SupportInboxScreen from './components/screens/SupportInboxScreen';
@@ -72,7 +73,7 @@ import { MOBILE_HEADER_HEIGHT } from './components/MobileHeader';
 import Intro from './components/fx/Intro';
 
 const BUILT_SCREENS = [
-  'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental',
+  'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings',
   'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access',
@@ -410,6 +411,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'mental' && (
           <MentalHealthScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} activeBender={bender.activeBender} />
+        )}
+
+        {state.screen === 'brain' && (
+          <BrainScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onNavigate={actions.navigateTo} />
         )}
 
         {state.screen === 'scaling-start' && (

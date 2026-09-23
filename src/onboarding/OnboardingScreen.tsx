@@ -5,10 +5,12 @@ import { SELECTABLE_MODULE_KEYS } from '../modules.config';
 
 interface Props {
   onComplete: (selectedKeys: string[]) => Promise<void>;
+  /** Role-based starting selection (Brain spec §0); null = everything ticked. */
+  preselect?: string[] | null;
 }
 
-export default function OnboardingScreen({ onComplete }: Props) {
-  const [selected, setSelected] = useState<Set<string>>(new Set(SELECTABLE_MODULE_KEYS));
+export default function OnboardingScreen({ onComplete, preselect }: Props) {
+  const [selected, setSelected] = useState<Set<string>>(new Set(preselect ? preselect.filter((k) => SELECTABLE_MODULE_KEYS.includes(k)) : SELECTABLE_MODULE_KEYS));
   const [saving, setSaving] = useState(false);
 
   const toggle = (key: string) => {

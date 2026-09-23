@@ -8,6 +8,7 @@ export type Screen =
   | 'macros'
   | 'goals'
   | 'mental'
+  | 'brain'
   | 'scaling-start'
   | 'delivery'
   | 'support-inbox'

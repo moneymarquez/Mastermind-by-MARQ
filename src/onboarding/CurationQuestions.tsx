@@ -1,19 +1,12 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { OnboardingAnswers } from '../data/useOnboardingProgress';
+import { ROLE_OPTIONS, INDUSTRY_SUGGESTIONS } from '../data/brain';
 
 interface Props {
   initial: OnboardingAnswers;
   onComplete: (answers: OnboardingAnswers) => Promise<void>;
 }
-
-const GOAL_OPTIONS = ['Staying disciplined', 'Tracking my business', 'Managing my finances', 'Accountability', 'All of it'];
-const STYLE_OPTIONS = [
-  'I plan everything in advance',
-  'I move fast and figure it out as I go',
-  "I'm disciplined but scattered across too many tools",
-  'I need accountability to actually follow through',
-];
 
 const chipStyle = (active: boolean): CSSProperties => ({
   padding: '10px 16px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-body)', cursor: 'pointer',
@@ -24,47 +17,64 @@ const inputStyle: CSSProperties = {
   width: '100%', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)',
   padding: '11px 14px', color: 'var(--text)', fontSize: 'var(--text-label)', outline: 'none', boxSizing: 'border-box',
 };
+const q: CSSProperties = { fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)', marginBottom: 10 };
 
+/** Five questions, no more. They set defaults (which modules start
+ *  ticked, what Nova knows on day one). The personality assessment lives
+ *  in the Brain tab, after the product is in front of them. */
 export default function CurationQuestions({ initial, onComplete }: Props) {
-  const [goal, setGoal] = useState(initial.goal ?? '');
-  const [style, setStyle] = useState(initial.style ?? '');
-  const [why, setWhy] = useState(initial.why ?? '');
+  const [industry, setIndustry] = useState(initial.industry ?? '');
+  const [role, setRole] = useState(initial.role ?? '');
+  const [side, setSide] = useState(initial.side_hustle ?? '');
+  const [ninety, setNinety] = useState(initial.ninety_day ?? '');
+  const [win, setWin] = useState(initial.week_win ?? '');
   const [submitting, setSubmitting] = useState(false);
 
-  const canContinue = goal && style && why.trim();
+  const canContinue = industry.trim() && role && ninety.trim() && win.trim();
 
   const submit = async () => {
     if (!canContinue) return;
     setSubmitting(true);
-    await onComplete({ goal, style, why: why.trim() });
+    await onComplete({ industry: industry.trim(), role, side_hustle: side.trim() || undefined, ninety_day: ninety.trim(), week_win: win.trim() });
   };
 
   return (
     <div style={{ height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--bg)', padding: '48px 24px 60px', display: 'flex', justifyContent: 'center' } as CSSProperties}>
       <div style={{ width: '100%', maxWidth: 560 }}>
         <div style={{ fontSize: 'var(--text-stat)', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em', marginBottom: 2 }}>Masterminds by MARQ</div>
-        <div style={{ fontSize: 'var(--text-display)', fontWeight: 700, color: 'var(--text)', marginTop: 24, marginBottom: 6 }}>A few quick questions</div>
+        <div style={{ fontSize: 'var(--text-display)', fontWeight: 700, color: 'var(--text)', marginTop: 24, marginBottom: 6 }}>Five quick questions</div>
         <div style={{ fontSize: 'var(--text-body-lg)', color: 'var(--text-secondary)', marginBottom: 32, lineHeight: 1.6 }}>
-          Not a survey — just enough for this to feel like yours from the start.
+          Just enough to set the defaults. The real assessment waits until you've seen the app.
         </div>
 
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>What are you hoping to get out of Mastermind?</div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {GOAL_OPTIONS.map((o) => <div key={o} style={chipStyle(goal === o)} onClick={() => setGoal(o)}>{o}</div>)}
+        <div style={{ marginBottom: 26 }}>
+          <div style={q}>What industry are you in?</div>
+          <input style={inputStyle} value={industry} onChange={(e) => setIndustry(e.target.value)} placeholder="e.g. home services, food truck, salon" />
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+            {INDUSTRY_SUGGESTIONS.map((s) => <div key={s} style={{ ...chipStyle(industry === s), padding: '6px 12px', fontSize: 'var(--text-caption)' }} onClick={() => setIndustry(s)}>{s}</div>)}
           </div>
         </div>
 
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>How would you describe how you operate?</div>
+        <div style={{ marginBottom: 26 }}>
+          <div style={q}>What's your role?</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {STYLE_OPTIONS.map((o) => <div key={o} style={chipStyle(style === o)} onClick={() => setStyle(o)}>{o}</div>)}
+            {ROLE_OPTIONS.map((o) => <div key={o} style={chipStyle(role === o)} onClick={() => setRole(o)}>{o}</div>)}
           </div>
+        </div>
+
+        <div style={{ marginBottom: 26 }}>
+          <div style={q}>Anything you run on the side? <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>optional</span></div>
+          <input style={inputStyle} value={side} onChange={(e) => setSide(e.target.value)} placeholder="A second business, a stream, a rental…" />
+        </div>
+
+        <div style={{ marginBottom: 26 }}>
+          <div style={q}>What are you trying to hit in the next 90 days?</div>
+          <textarea style={{ ...inputStyle, minHeight: 64, resize: 'vertical' }} value={ninety} onChange={(e) => setNinety(e.target.value)} placeholder="A number and a date beats a feeling" />
         </div>
 
         <div style={{ marginBottom: 36 }}>
-          <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Why are you looking for something like this right now?</div>
-          <textarea style={{ ...inputStyle, minHeight: 70, resize: 'vertical' }} value={why} onChange={(e) => setWhy(e.target.value)} placeholder="A sentence or two is plenty" />
+          <div style={q}>What would make this week a win?</div>
+          <input style={inputStyle} value={win} onChange={(e) => setWin(e.target.value)} placeholder="One thing" />
         </div>
 
         <button
