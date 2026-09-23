@@ -16,7 +16,9 @@
 
 export type Disc = 'D' | 'I' | 'S' | 'C';
 export type Trait = Disc | 'CON' | 'STAB';
-export type Choice = 'a' | 'b';
+/** 'both' — the honest escape for a pair that genuinely won't split;
+ *  it scores half to each side, so it can't inflate anything. */
+export type Choice = 'a' | 'b' | 'both';
 
 export const ASSESSMENT_VERSION = 1;
 
@@ -37,25 +39,25 @@ export const QUESTIONS: Question[] = [
   { id: 'q03', a: { text: 'Good enough now beats perfect later', trait: 'D' }, b: { text: 'I want it right before it goes out', trait: 'C' } },
   { id: 'q04', a: { text: 'I talk my way through a problem', trait: 'I' }, b: { text: 'I work through it quietly and steadily', trait: 'S' } },
   { id: 'q05', a: { text: 'I sell the idea first, details second', trait: 'I' }, b: { text: 'I lay out the details so the idea sells itself', trait: 'C' } },
-  { id: 'q06', a: { text: 'I keep the routine that works', trait: 'S' }, b: { text: 'I keep checking whether the routine is actually the best way', trait: 'C' } },
+  { id: 'q06', a: { text: 'If the routine works, I leave it alone', trait: 'S' }, b: { text: 'Even when the routine works, I keep looking for a better way', trait: 'C' } },
   { id: 'q07', a: { text: 'On a call I take control of the conversation', trait: 'D' }, b: { text: 'On a call I build rapport and let it flow', trait: 'I' } },
   { id: 'q08', a: { text: 'I set the pace and expect people to keep up', trait: 'D' }, b: { text: 'I match the pace of the people around me', trait: 'S' } },
   { id: 'q09', a: { text: 'I go with my gut on a number', trait: 'D' }, b: { text: 'I want the number to be checked', trait: 'C' } },
-  { id: 'q10', a: { text: 'I get energy from new people', trait: 'I' }, b: { text: 'I get energy from familiar people', trait: 'S' } },
+  { id: 'q10', a: { text: 'A room of strangers charges me up', trait: 'I' }, b: { text: 'A room of strangers wears me down', trait: 'S' } },
   { id: 'q11', a: { text: 'I improvise when the script stops working', trait: 'I' }, b: { text: 'I fix the script so it stops failing', trait: 'C' } },
-  { id: 'q12', a: { text: 'I would rather be dependable than impressive', trait: 'S' }, b: { text: 'I would rather be precise than dependable', trait: 'C' } },
-  { id: 'q13', a: { text: 'Losing a deal makes me want to hit the next one harder', trait: 'D' }, b: { text: 'Losing a deal makes me want to talk it through with someone', trait: 'I' } },
+  { id: 'q12', a: { text: 'I would rather be relied on than be right', trait: 'S' }, b: { text: 'I would rather be right than be relied on', trait: 'C' } },
+  { id: 'q13', a: { text: 'After a lost deal I go straight at the next one', trait: 'D' }, b: { text: 'After a lost deal I need to talk it out first', trait: 'I' } },
   { id: 'q14', a: { text: 'I say the hard thing in the room', trait: 'D' }, b: { text: 'I say the hard thing later, one on one', trait: 'S' } },
   { id: 'q15', a: { text: 'I start before the plan is finished', trait: 'D' }, b: { text: 'I finish the plan before I start', trait: 'C' } },
   { id: 'q16', a: { text: 'I would rather be liked than steady', trait: 'I' }, b: { text: 'I would rather be steady than liked', trait: 'S' } },
   { id: 'q17', a: { text: 'A rough plan and enthusiasm gets me going', trait: 'I' }, b: { text: 'A clear checklist gets me going', trait: 'C' } },
-  { id: 'q18', a: { text: 'I avoid the argument to keep the peace', trait: 'S' }, b: { text: 'I avoid the argument until I have the facts', trait: 'C' } },
+  { id: 'q18', a: { text: 'I let it go to keep the peace', trait: 'S' }, b: { text: 'I hold my ground once I have the facts', trait: 'C' } },
   { id: 'q19', a: { text: 'I want the win', trait: 'D' }, b: { text: 'I want the recognition', trait: 'I' } },
   { id: 'q20', a: { text: 'Change is a chance', trait: 'D' }, b: { text: 'Change is a cost', trait: 'S' } },
   { id: 'q21', a: { text: 'Rules are suggestions when they slow me down', trait: 'D' }, b: { text: 'Rules exist for a reason and I follow them', trait: 'C' } },
   { id: 'q22', a: { text: 'I fill silence', trait: 'I' }, b: { text: 'I am fine with silence', trait: 'S' } },
   { id: 'q23', a: { text: 'I trust a story more than a spreadsheet', trait: 'I' }, b: { text: 'I trust a spreadsheet more than a story', trait: 'C' } },
-  { id: 'q24', a: { text: 'I finish what I started even when it stops being fun', trait: 'S' }, b: { text: 'I finish what I started even when it stops being efficient', trait: 'C' } },
+  { id: 'q24', a: { text: 'I finish what I started because I said I would', trait: 'S' }, b: { text: 'I finish what I started only if it still makes sense', trait: 'C' } },
   // Big Five reads — conscientiousness and emotional stability.
   { id: 'b01', a: { text: 'I do the boring part of the job on the day it is due', trait: 'CON' }, b: { text: 'I do the boring part of the job when I finally have to', trait: 'D' } },
   { id: 'b02', a: { text: 'When I say 4pm, it happens at 4pm', trait: 'CON' }, b: { text: 'When I say 4pm, it happens at some point that day', trait: 'I' } },
@@ -73,14 +75,18 @@ export interface Scores {
 
 export function scoreAnswers(answers: Answers): Scores {
   const s: Scores = { D: 0, I: 0, S: 0, C: 0, CON: 0, STAB: 0 };
+  const credit = (t: Trait, w: number, bigFive: boolean) => {
+    // The Big Five items only count toward CON/STAB; their "low" side is
+    // deliberately not credited to a DISC letter.
+    if (bigFive) { if (t === 'CON' || t === 'STAB') s[t] += w; return; }
+    if (t === 'D' || t === 'I' || t === 'S' || t === 'C') s[t] += w;
+  };
   for (const q of QUESTIONS) {
     const c = answers[q.id];
     if (!c) continue;
-    const t = q[c].trait;
-    // The Big Five items only count toward CON/STAB; their "low" side is
-    // deliberately not credited to a DISC letter.
-    if (q.id.startsWith('b')) { if (t === 'CON' || t === 'STAB') s[t] += 1; continue; }
-    if (t === 'D' || t === 'I' || t === 'S' || t === 'C') s[t] += 1;
+    const bigFive = q.id.startsWith('b');
+    if (c === 'both') { credit(q.a.trait, 0.5, bigFive); credit(q.b.trait, 0.5, bigFive); continue; }
+    credit(q[c].trait, 1, bigFive);
   }
   return s;
 }

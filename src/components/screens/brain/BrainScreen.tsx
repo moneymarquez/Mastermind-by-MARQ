@@ -120,11 +120,17 @@ export default function BrainScreen({ homeHeadStyle, homeSubStyle, onNavigate }:
             <div style={{ ...cardStyle, marginTop: 16 }}>
               <div style={labelStyle}>Question {QUESTIONS.indexOf(next) + 1}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
-                {(['a', 'b'] as Choice[]).map((c) => (
+                {(['a', 'b'] as const).map((c) => (
                   <div key={c} onClick={() => answer(next.id, c)} style={{ padding: '14px 16px', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', cursor: 'pointer', fontSize: 'var(--text-body)', color: 'var(--text)', lineHeight: 1.45 }}>
                     {next[c].text}
                   </div>
                 ))}
+                <div onClick={() => answer(next.id, 'both')} style={{ padding: '10px 16px', border: '1px dashed var(--border)', borderRadius: 'var(--radius-lg)', cursor: 'pointer', fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', lineHeight: 1.45 }}>
+                  Both, about equally — I honestly can't split them
+                </div>
+              </div>
+              <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 10, lineHeight: 1.5 }}>
+                Pick the one that's more true, even by a little — that's where the signal is. "Both" scores half to each side, so use it only when they really are a tie.
               </div>
               {n > 0 && (
                 <div style={{ marginTop: 12 }}>
