@@ -40,6 +40,7 @@ import ScheduleScreen from './components/screens/ScheduleScreen';
 import ContactsScreen from './components/screens/ContactsScreen';
 import OpeningClosingScreen from './components/screens/OpeningClosingScreen';
 import NotificationSettingsScreen from './components/screens/NotificationSettingsScreen';
+import MorningDigestScreen from './components/screens/MorningDigestScreen';
 import StreamingScreen from './components/screens/StreamingScreen';
 import StocksScreen from './components/screens/StocksScreen';
 import LeadFlowScreen from './components/screens/LeadFlowScreen';
@@ -76,7 +77,7 @@ import Intro from './components/fx/Intro';
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
-  'notification-settings', 'streaming', 'stocks', 'leadflow', 'ecommerce', 'account-settings', 'prompt-voice-settings',
+  'notification-settings', 'morning-digest', 'streaming', 'stocks', 'leadflow', 'ecommerce', 'account-settings', 'prompt-voice-settings',
   'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access',
 ];
 
@@ -504,6 +505,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'opening-closing' && (
           <OpeningClosingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'morning-digest' && (
+          <MorningDigestScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {state.screen === 'notification-settings' && (

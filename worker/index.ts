@@ -41,8 +41,10 @@ import { claudeProxy } from './handlers/claude';
 import type { ClaudeEnv } from './handlers/claude';
 import { pushSubscription } from './handlers/push-subscription';
 import type { PushSubscriptionEnv } from './handlers/push-subscription';
+import { runMorningDigest, digestTest, digestStatus, digestReply } from './handlers/digest';
+import type { DigestEnv } from './handlers/digest';
 
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
@@ -86,6 +88,10 @@ export default {
     if (url.pathname === '/api/claude') return claudeProxy(request, env);
     if (url.pathname === '/api/push-subscription') return pushSubscription(request, env);
 
+    if (url.pathname === '/api/digest/test') return digestTest(request, env);
+    if (url.pathname === '/api/digest/status') return digestStatus(request, env);
+    if (url.pathname === '/api/digest/reply') return digestReply(request, env);
+
     // Every /api/* route this app calls at request time is now handled
     // natively above. The Netlify reverse-proxy that used to catch the
     // remainder is gone: it made features silently depend on a Netlify
@@ -120,6 +126,7 @@ export default {
     ctx.waitUntil(runStocksBot(env));
     ctx.waitUntil(runDailyPlan(env));
     ctx.waitUntil(runReminders(env));
+    ctx.waitUntil(runMorningDigest(env));
   },
 
   // Cloudflare Email Routing → this Worker. Each address on
