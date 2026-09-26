@@ -43,8 +43,11 @@ import { pushSubscription } from './handlers/push-subscription';
 import type { PushSubscriptionEnv } from './handlers/push-subscription';
 import { runMorningDigest, digestTest, digestStatus, digestReply } from './handlers/digest';
 import type { DigestEnv } from './handlers/digest';
+import { engineRoute } from './handlers/engine';
+import { setupRoute } from './handlers/setup';
+import type { SetupEnv } from './handlers/setup';
 
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
@@ -91,6 +94,11 @@ export default {
     if (url.pathname === '/api/digest/test') return digestTest(request, env);
     if (url.pathname === '/api/digest/status') return digestStatus(request, env);
     if (url.pathname === '/api/digest/reply') return digestReply(request, env);
+
+    const engineMatch = url.pathname.match(/^\/api\/engine\/([a-z-]+)$/);
+    if (engineMatch) return engineRoute(request, env, engineMatch[1]);
+    const setupMatch = url.pathname.match(/^\/api\/(?:setup|connect)\/([a-z/-]+)$/);
+    if (setupMatch) return setupRoute(request, env, setupMatch[1]);
 
     // Every /api/* route this app calls at request time is now handled
     // natively above. The Netlify reverse-proxy that used to catch the

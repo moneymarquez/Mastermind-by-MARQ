@@ -98,7 +98,7 @@ function StepCard({ brand, def, open, onToggle, onSave }: { brand: Brand; def: S
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginTop: 12 }}>
             <div>
               <div style={label}>Workers do</div>
-              <div style={{ fontSize: 'var(--text-body)', color: E.muted, lineHeight: 1.5, marginTop: 3 }}>{def.workers} <span style={{ color: E.faint }}>(from Phase 3 — until then, you.)</span></div>
+              <div style={{ fontSize: 'var(--text-body)', color: E.muted, lineHeight: 1.5, marginTop: 3 }}>{def.workers} <span style={{ color: E.faint }}>(workers take this over as each one goes live — until then, you.)</span></div>
             </div>
             <div>
               <div style={label}>You do</div>

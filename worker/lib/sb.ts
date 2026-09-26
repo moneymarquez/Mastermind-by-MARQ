@@ -40,13 +40,17 @@ export class Sb {
       return Number.isFinite(n) ? n : 0;
     } catch { return 0; }
   }
-  async insert<T = Record<string, unknown>>(table: string, body: unknown, opts: { upsert?: string } = {}): Promise<T[]> {
+  /** upsert: merge on conflict. ignore: keep the existing row untouched. */
+  async insert<T = Record<string, unknown>>(table: string, body: unknown, opts: { upsert?: string; ignore?: boolean } = {}): Promise<T[]> {
     const q = opts.upsert ? `?on_conflict=${opts.upsert}` : '';
-    const prefer = ['return=representation', opts.upsert ? 'resolution=merge-duplicates' : ''].filter(Boolean).join(',');
+    const prefer = ['return=representation', opts.upsert ? (opts.ignore ? 'resolution=ignore-duplicates' : 'resolution=merge-duplicates') : ''].filter(Boolean).join(',');
     const res = await fetch(`${this.url}/rest/v1/${table}${q}`, { method: 'POST', headers: { ...this.headers, Prefer: prefer }, body: JSON.stringify(body) });
     if (!res.ok) throw new Error(`insert ${table}: ${res.status} ${(await res.text().catch(() => '')).slice(0, 300)}`);
     const rows = await res.json();
     return Array.isArray(rows) ? (rows as T[]) : [];
+  }
+  async remove(table: string, filter: string): Promise<void> {
+    await fetch(`${this.url}/rest/v1/${table}?${filter}`, { method: 'DELETE', headers: this.headers });
   }
   async patch(table: string, filter: string, body: unknown): Promise<void> {
     const res = await fetch(`${this.url}/rest/v1/${table}?${filter}`, { method: 'PATCH', headers: this.headers, body: JSON.stringify(body) });

@@ -8,6 +8,7 @@ import { useEcomProducts, linkProductToBrand } from '../../../data/useEcom';
 import { E, Pill, Badge, ConfidenceBadge, TeachingEmpty, btn, field, label } from './ecomShared';
 import ProductDrawer from './ProductDrawer';
 import CsvImportDrawer from './CsvImportDrawer';
+import { runScout } from '../../../data/useEngine';
 
 interface Props {
   search: string;
@@ -18,6 +19,8 @@ interface Props {
  *  pictures (table is the optional toggle), the drawer with every section,
  *  CSV import as the v1 source adapter. */
 export default function ProductSheetsTab({ search, onBuildBrand }: Props) {
+  const [scouting, setScouting] = useState(false);
+  const [scoutMsg, setScoutMsg] = useState('');
   const api = useEcomProducts();
   const [channel, setChannel] = useState<Channel>('tiktok');
   const [filters, setFilters] = useState<SheetFilters>(DEFAULT_FILTERS);
@@ -61,8 +64,12 @@ export default function ProductSheetsTab({ search, onBuildBrand }: Props) {
 
       {!api.loading && inChannel.length === 0 && (
         <div style={{ marginTop: 14 }}>
-          <TeachingEmpty what={`No ${CHANNELS.find((c) => c.id === channel)?.label} products yet.`} worker="Product Scout (web search over public pages; FastMoss / Jungle Scout later) — or a CSV from any tool right now" phase={3}
-            action={<button style={btn('primary')} onClick={() => setImportOpen(true)}>Import a CSV</button>} />
+          <TeachingEmpty what={`No ${CHANNELS.find((c) => c.id === channel)?.label} products yet.`} worker="Product Scout (web search over public pages; FastMoss / Jungle Scout later) — or a CSV from any tool" connection="Anthropic key (Setup)"
+            action={<div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <button style={btn('primary')} disabled={scouting} onClick={async () => { setScouting(true); setScoutMsg(''); const r = await runScout(channel, 10); setScouting(false); setScoutMsg(r.ok ? `Scout found ${r.count} — approve them in Approvals to add them here.` : r.error ?? 'Scout failed.'); }}>{scouting ? 'Scouting… (30–90s)' : 'Run Product Scout'}</button>
+              <button style={btn('ghost')} onClick={() => setImportOpen(true)}>Import a CSV</button>
+              {scoutMsg && <span style={{ fontSize: 'var(--text-caption)', color: scoutMsg.startsWith('Scout found') ? E.green : E.red }}>{scoutMsg}</span>}
+            </div>} />
         </div>
       )}
       {api.error && <div style={{ color: E.red, fontSize: 'var(--text-body)', marginTop: 10 }}>{api.error}</div>}

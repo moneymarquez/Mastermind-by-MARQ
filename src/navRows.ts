@@ -14,6 +14,8 @@ export interface NavRow {
 const SUB_SCREEN_BY_LABEL: Record<string, string> = {
   Notifications: 'notification-settings',
   'Morning Digest': 'morning-digest',
+  Setup: 'setup',
+  Playbooks: 'playbooks',
   Account: 'account-settings',
   'Prompt & Voice': 'prompt-voice-settings',
   'Manage modules': 'manage-modules',

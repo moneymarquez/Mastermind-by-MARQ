@@ -1,57 +1,132 @@
-import { useState } from 'react';
-import type { useApprovals } from '../../../data/useEcom';
-import { E, Badge, ConfidenceBadge, TeachingEmpty, btn, field, label } from './ecomShared';
-import { money, ago } from '../../../data/ecom';
+import { useRef, useState } from 'react';
+import type { useApprovals, Approval } from '../../../data/useEcom';
+import { decideApproval } from '../../../data/useEngine';
+import type { ImportRow } from '../../../data/ecomProducts';
+import { marginHealthy } from '../../../data/ecomProducts';
+import { E, Badge, ConfidenceBadge, TeachingEmpty, btn, field, label, tint, useIsMobile } from './ecomShared';
+import { money, ago, CHANNELS } from '../../../data/ecom';
 
-/** §7 — one inbox for everything waiting on you. Money cards are red-
- *  bordered and always need a tap. Empty in Phase 1; the decide path is
- *  live so Phase 3's workers only have to insert rows. */
-export default function ApprovalsTab({ api }: { api: ReturnType<typeof useApprovals> }) {
+/** §7 — one inbox for everything waiting on you, across domains. Every card
+ *  shows what it is, why (principle), source, confidence, and Approve / Send
+ *  back / Kill. Decisions go through the Worker: approving a Scout run
+ *  writes the products into the sheet; a send-back note is read into that
+ *  worker's next run (and can re-run it now). Money cards are red-bordered
+ *  and never swipe-approve. On phones: swipe right = approve, left = send back. */
+export default function ApprovalsTab({ api, onDecided }: { api: ReturnType<typeof useApprovals>; onDecided?: () => void }) {
   const pending = api.approvals.filter((a) => a.status === 'pending');
   const decided = api.approvals.filter((a) => a.status !== 'pending').slice(0, 20);
-  const [note, setNote] = useState<Record<string, string>>({});
+  const [toast, setToast] = useState('');
   return (
     <div>
+      {toast && <div style={{ ...E.card, padding: 10, marginBottom: 10, borderColor: E.green, color: E.text, fontSize: 'var(--text-body)' }}>{toast}</div>}
       {!api.loading && pending.length === 0 && (
-        <TeachingEmpty what="Nothing waiting on you." worker="every worker — drafts, brand options, supplier picks and store previews all land here" phase={3} />
+        <TeachingEmpty what="Nothing waiting on you." worker="every worker — Scout runs, drafts, brand options, supplier picks and store previews all land here" />
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {pending.map((a) => (
-          <div key={a.id} style={{ ...E.card, padding: 14, border: a.is_money ? `2px solid ${E.red}` : (E.card.border as string) }}>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-              <Badge color={E.faint}>{a.domain}</Badge>
-              <Badge color={E.blue}>{a.type}</Badge>
-              {a.is_money && <Badge color={E.red}>💲 Money · {money(a.amount_usd)}</Badge>}
-              {a.confidence && <ConfidenceBadge c={a.confidence} />}
-              <span style={{ fontSize: 'var(--text-caption)', color: E.faint, marginLeft: 'auto' }}>{ago(a.created_at)}</span>
-            </div>
-            <div style={{ fontWeight: 700, color: E.text, fontSize: 'var(--text-subhead)', marginTop: 8 }}>{a.title}</div>
-            {a.principle && <div style={{ fontSize: 'var(--text-body)', color: E.muted, marginTop: 4 }}><span style={label}>Why</span> {a.principle}</div>}
-            {a.source_url && <a href={a.source_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 'var(--text-caption)', color: E.blue }}>Source ↗</a>}
-            {Object.keys(a.payload).length > 0 && (
-              <pre style={{ fontSize: 12, color: E.text, background: E.sunk, border: `1px solid ${E.border}`, borderRadius: 6, padding: 10, marginTop: 8, whiteSpace: 'pre-wrap', maxHeight: 220, overflow: 'auto' }}>{JSON.stringify(a.payload, null, 2)}</pre>
-            )}
-            <input style={{ ...field, marginTop: 10 }} placeholder="Note back to the orchestrator (required to send back)" value={note[a.id] ?? ''} onChange={(e) => setNote((n) => ({ ...n, [a.id]: e.target.value }))} />
-            <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-              <button style={btn('primary')} onClick={() => api.decide(a.id, 'approved', note[a.id] || null)}>{a.is_money ? 'Approve · spend' : 'Approve'}</button>
-              <button style={{ ...btn('ghost'), opacity: (note[a.id] ?? '').trim() ? 1 : 0.5 }} disabled={!(note[a.id] ?? '').trim()} onClick={() => api.decide(a.id, 'sent_back', note[a.id])}>Send back</button>
-              <button style={btn('danger')} onClick={() => api.decide(a.id, 'killed', note[a.id] || null)}>Kill</button>
-            </div>
-          </div>
-        ))}
+        {pending.map((a) => <ApprovalCard key={a.id} a={a} onDone={async (msg) => { setToast(msg); await api.reload(); onDecided?.(); setTimeout(() => setToast(''), 5000); }} />)}
       </div>
       {decided.length > 0 && (
         <div style={{ marginTop: 20 }}>
           <div style={{ ...label, marginBottom: 6 }}>Decided</div>
           {decided.map((a) => (
-            <div key={a.id} style={{ display: 'flex', gap: 10, fontSize: 'var(--text-body)', color: E.muted, padding: '6px 0', borderTop: '1px solid var(--border)' }}>
+            <div key={a.id} style={{ display: 'flex', gap: 10, fontSize: 'var(--text-body)', color: E.muted, padding: '6px 0', borderTop: `1px solid ${E.border}`, flexWrap: 'wrap' }}>
               <Badge color={a.status === 'approved' ? E.green : a.status === 'killed' ? E.red : E.amber}>{a.status.replace('_', ' ')}</Badge>
-              <span style={{ color: E.text, flex: 1 }}>{a.title}</span>
+              <span style={{ color: E.text, flex: 1, minWidth: 120 }}>{a.title}</span>
+              {a.my_note && <span style={{ color: E.faint, fontStyle: 'italic' }}>“{a.my_note}”</span>}
               <span style={{ color: E.faint }}>{ago(a.created_at)}</span>
             </div>
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function ApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string) => void }) {
+  const mobile = useIsMobile();
+  const [note, setNote] = useState('');
+  const [rerun, setRerun] = useState(true);
+  const [busy, setBusy] = useState('');
+  const [err, setErr] = useState('');
+  const [dx, setDx] = useState(0);
+  const start = useRef<number | null>(null);
+  const noteRef = useRef<HTMLInputElement>(null);
+  const rows = a.type === 'scout_products' ? ((a.payload.rows ?? []) as ImportRow[]) : [];
+  const channel = CHANNELS.find((c) => c.id === a.payload.channel)?.label;
+
+  const go = async (status: 'approved' | 'sent_back' | 'killed') => {
+    if (status === 'sent_back' && !note.trim()) { setErr('Write what to change first — that note is what the worker learns from.'); noteRef.current?.focus(); return; }
+    setBusy(status); setErr('');
+    const r = await decideApproval(a.id, status, note.trim() || null, status === 'sent_back' && rerun);
+    setBusy('');
+    if (!r.ok) { setErr(r.error ?? 'Could not save that decision.'); return; }
+    const applied = r.applied as { inserted: number; updated: number } | null | undefined;
+    onDone(status === 'approved' ? (applied ? `Approved — ${applied.inserted} new, ${applied.updated} refreshed in Product Sheets.` : 'Approved.')
+      : status === 'sent_back' ? (r.rerun ? (r.rerun.ok ? `Sent back. Re-ran with your note — ${r.rerun.count} new products waiting.` : `Sent back. Re-run failed: ${r.rerun.error}`) : 'Sent back. Your note goes into the next run.')
+      : 'Killed.');
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => { if (mobile) start.current = e.touches[0].clientX; };
+  const onTouchMove = (e: React.TouchEvent) => { if (start.current != null) setDx(Math.max(-120, Math.min(120, e.touches[0].clientX - start.current))); };
+  const onTouchEnd = () => {
+    if (start.current == null) return;
+    start.current = null;
+    if (dx > 90 && !a.is_money) go('approved');
+    else if (dx < -90) { noteRef.current?.focus(); setErr('Swiped to send back — write what to change, then tap Send back.'); }
+    setDx(0);
+  };
+
+  return (
+    <div onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
+      style={{ ...E.card, padding: 14, border: a.is_money ? `2px solid ${E.red}` : `1px solid ${dx > 40 ? E.green : dx < -40 ? E.amber : E.border}`, transform: dx ? `translateX(${dx}px)` : undefined, transition: dx ? 'none' : 'transform 160ms ease' }}>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+        <Badge color={E.faint}>{a.domain}</Badge>
+        <Badge color={E.blue}>{a.type.replace(/_/g, ' ')}</Badge>
+        {channel && <Badge color={E.violet}>{channel}</Badge>}
+        {a.is_money && <Badge color={E.red}>💲 Money · {money(a.amount_usd)}</Badge>}
+        {a.confidence && <ConfidenceBadge c={a.confidence} />}
+        <span style={{ fontSize: 'var(--text-caption)', color: E.faint, marginLeft: 'auto' }}>{ago(a.created_at)}</span>
+      </div>
+      <div style={{ fontWeight: 700, color: E.text, fontSize: 'var(--text-subhead)', marginTop: 8 }}>{a.title}</div>
+      {typeof a.payload.summary === 'string' && a.payload.summary && <div style={{ fontSize: 'var(--text-body)', color: E.muted, marginTop: 4 }}>{a.payload.summary}</div>}
+      {a.principle && <div style={{ fontSize: 'var(--text-body)', color: E.muted, marginTop: 4 }}><span style={label}>Why</span> {a.principle}</div>}
+      {a.source_url && <a href={a.source_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 'var(--text-caption)', color: E.blue }}>Source ↗</a>}
+
+      {rows.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
+          {rows.map((r, i) => (
+            <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: 8, borderRadius: 'var(--radius-sm)', background: E.sunk, border: `1px solid ${E.border}` }}>
+              {r.images[0] ? <img src={r.images[0]} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} /> : <div style={{ width: 48, height: 48, borderRadius: 6, background: tint(E.accent, 10), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', color: E.accent, flexShrink: 0 }}>#{r.rank ?? i + 1}</div>}
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 700, color: E.text }}>{r.name}</span>
+                  {r.score != null && <Badge color={r.score >= 7 ? E.green : r.score >= 5 ? E.amber : E.faint}>{r.score.toFixed(0)}/10</Badge>}
+                  <ConfidenceBadge c={r.confidence} />
+                </div>
+                <div style={{ fontSize: 'var(--text-caption)', color: E.muted, fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+                  {money(r.sell_price)} sell · {r.landed_cost != null ? <span style={{ color: marginHealthy(r.sell_price, r.landed_cost) ? E.green : E.amber }}>{money(r.landed_cost)} landed</span> : 'landed ?'}{r.velocity ? ` · ${r.velocity}` : ''}{r.content_difficulty ? ` · ${r.content_difficulty} to film` : ''}
+                </div>
+                {r.detail.buyer && <div style={{ fontSize: 'var(--text-caption)', color: E.muted, marginTop: 2 }}><span style={label}>Buyer</span> {r.detail.buyer}</div>}
+                {r.detail.principle && <div style={{ fontSize: 'var(--text-caption)', color: E.muted }}><span style={label}>Principle</span> {r.detail.principle}</div>}
+                {r.source_url && <a href={r.source_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 'var(--text-caption)', color: E.blue }}>source ↗</a>}
+              </div>
+            </div>
+          ))}
+          {Array.isArray(a.payload.dropped) && (a.payload.dropped as string[]).length > 0 && <div style={{ fontSize: 'var(--text-caption)', color: E.amber }}>Dropped by the rules: {(a.payload.dropped as string[]).join('; ')}</div>}
+        </div>
+      ) : Object.keys(a.payload).length > 0 && (
+        <pre style={{ fontSize: 12, color: E.text, background: E.sunk, border: `1px solid ${E.border}`, borderRadius: 6, padding: 10, marginTop: 8, whiteSpace: 'pre-wrap', maxHeight: 220, overflow: 'auto' }}>{JSON.stringify(a.payload, null, 2)}</pre>
+      )}
+
+      <input ref={noteRef} style={{ ...field, marginTop: 10 }} placeholder='Note to the worker — e.g. "nothing under $15, and skip anything with bad reviews"' value={note} onChange={(e) => { setNote(e.target.value); setErr(''); }} />
+      {a.type === 'scout_products' && <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 'var(--text-caption)', color: E.muted, marginTop: 6 }}><input type="checkbox" checked={rerun} onChange={(e) => setRerun(e.target.checked)} /> On send back, re-run Scout now with this note</label>}
+      {err && <div style={{ fontSize: 'var(--text-caption)', color: E.amber, marginTop: 6 }}>{err}</div>}
+      <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+        <button style={btn('primary')} disabled={!!busy} onClick={() => go('approved')}>{busy === 'approved' ? 'Saving…' : a.is_money ? 'Approve · spend' : rows.length ? `Approve · add ${rows.length} to sheet` : 'Approve'}</button>
+        <button style={btn('ghost')} disabled={!!busy} onClick={() => go('sent_back')}>{busy === 'sent_back' ? (rerun && a.type === 'scout_products' ? 'Re-running…' : 'Saving…') : 'Send back'}</button>
+        <button style={btn('danger')} disabled={!!busy} onClick={() => go('killed')}>Kill</button>
+      </div>
+      {mobile && !a.is_money && <div style={{ fontSize: 10.5, color: E.faint, marginTop: 6 }}>Swipe right to approve · left to send back</div>}
     </div>
   );
 }

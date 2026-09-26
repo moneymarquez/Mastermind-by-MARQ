@@ -127,7 +127,7 @@ export default function ProductDrawer({ product: p, snapshots, onClose, onSave, 
       </Section>
 
       {!p.detail.buyer && !p.detail.angle && (
-        <div style={{ marginTop: 18 }}><TeachingEmpty what="Research fills the buyer, the angle and the money math." worker="Audience Analyst" connection="Anthropic API key" phase={3} /></div>
+        <div style={{ marginTop: 18 }}><TeachingEmpty what="Research fills the buyer, the angle and the money math." worker="Audience Analyst" connection="the orchestrator (next build phase)" phase={4} /></div>
       )}
 
       <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap', alignItems: 'center', position: 'sticky', bottom: 0, background: E.bg, padding: '10px 0' }}>

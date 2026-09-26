@@ -26,6 +26,8 @@ export type Screen =
   | 'opening-closing'
   | 'notification-settings'
   | 'morning-digest'
+  | 'setup'
+  | 'playbooks'
   | 'streaming'
   | 'stocks'
   | 'leadflow'
