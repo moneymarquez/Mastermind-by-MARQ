@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { workersFor, AUTONOMY_LABEL, CHANNELS, money, ago } from '../../../data/ecom';
+import { workersFor, AUTONOMY_LABEL, CHANNELS, LIVE_WORKERS, money, ago } from '../../../data/ecom';
 import type { Domain, Channel } from '../../../data/ecom';
 import { useWorkers, runScout, startCompany } from '../../../data/useEngine';
 import type { WorkerRow, RunResult } from '../../../data/useEngine';
@@ -10,7 +10,7 @@ const STATUS: Record<string, { color: string; label: string }> = {
 };
 /** Which workers can actually run in this build. Everyone else shows the
  *  phase they arrive in. */
-const LIVE = new Set(['scout']);
+const LIVE = new Set(LIVE_WORKERS);
 
 /** §9 "Rooms": one room per worker — status light, current task, last
  *  output, today's count, approval rate, cost today. Tap a room for its run

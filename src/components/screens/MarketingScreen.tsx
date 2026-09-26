@@ -36,8 +36,9 @@ import { useDialingQueue } from '../../data/useLeadflow';
 import { supabase } from '../../lib/supabase';
 import CampaignsHome from './marketing/CampaignsHome';
 import ScriptsTab from './marketing/ScriptsTab';
+import OfficeView from '../office/OfficeView';
 import WorkersTab from './ecom/WorkersTab';
-import { Pill, TeachingEmpty, E, panel } from './ecom/ecomShared';
+import { Pill, TeachingEmpty, E, panel, btn } from './ecom/ecomShared';
 
 type EngineTab = 'campaigns' | 'scripts' | 'inbound' | 'lists' | 'workers';
 const ENGINE_TABS: { id: EngineTab; label: string; icon: string }[] = [
@@ -194,6 +195,7 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
   // existed; Scripts is M1; Inbound, Lists and the workers light up in
   // M2–M4. A focused campaign always lands on the Campaigns tab.
   const [engineTab, setEngineTab] = useState<EngineTab>('campaigns');
+  const [officeOpen, setOfficeOpen] = useState(false);
 
   useEffect(() => {
     if (!focusCampaignId && !newCampaignForClientId) return;
@@ -340,13 +342,17 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
           <div style={homeHeadStyle}>Marketing</div>
           <div style={homeSubStyle}>Build a campaign, run it, see what came back.</div>
         </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <button style={btn('ghost')} onClick={() => setOfficeOpen(true)}>🏢 View Office</button>
         <MarketingDeliverablesBadge
           deliverables={deliverablesApi.deliverables}
           loading={deliverablesApi.loading}
           clientNameById={clientNameById}
           onMarkDone={(id) => deliverablesApi.markDone(id)}
         />
+        </div>
       </div>
+      {officeOpen && <OfficeView domain="marketing" onClose={() => setOfficeOpen(false)} />}
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 18 }}>
         {ENGINE_TABS.map((t) => <Pill key={t.id} active={engineTab === t.id} onClick={() => setEngineTab(t.id)}><span>{t.icon}</span>{t.label}</Pill>)}

@@ -10,6 +10,7 @@ import BrandsTab from './BrandsTab';
 import WorkersTab from './WorkersTab';
 import ApprovalsTab from './ApprovalsTab';
 import ProductSheetsTab from './ProductSheetsTab';
+import OfficeView from '../../office/OfficeView';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -85,6 +86,7 @@ export default function EcomScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [costOpen, setCostOpen] = useState(false);
   const [newBrandOpen, setNewBrandOpen] = useState(false);
+  const [officeOpen, setOfficeOpen] = useState(false);
   const [openBrandId, setOpenBrandId] = useState<string | null>(null);
   const brands = useEcomBrands();
   const counters = useEcomCounters();
@@ -112,6 +114,7 @@ export default function EcomScreen({ homeHeadStyle, homeSubStyle }: Props) {
           <input style={{ ...field, width: 180 }} placeholder="🔍 Search brands, products" value={search} onChange={(e) => setSearch(e.target.value)} />
           <button style={iconBtn} title="Alerts" onClick={() => setAlertsOpen(true)}>🔔{dot(counters.unreadAlerts, E.red)}</button>
           <button style={iconBtn} title="Cost this month" onClick={() => setCostOpen(true)}>💲 <span style={{ fontFamily: 'var(--font-mono)' }}>{money(counters.spentMonth)}</span></button>
+          <button style={btn('ghost')} onClick={() => setOfficeOpen(true)}>🏢 View Office</button>
           <button style={btn('primary')} onClick={() => { setTab('brands'); setNewBrandOpen(true); }}>＋ New Brand</button>
         </div>
 
@@ -169,6 +172,7 @@ export default function EcomScreen({ homeHeadStyle, homeSubStyle }: Props) {
             ))}
         </div>
       </Drawer>
+      {officeOpen && <OfficeView domain="ecom" onClose={() => { setOfficeOpen(false); refreshAll(); }} />}
     </div>
   );
 }

@@ -20,6 +20,7 @@ import { useHookLog, bestPillarFromHookLog } from '../../data/useHookLog';
 import { useAccountAudits } from '../../data/useAccountAudits';
 import AccountsTab from './content/AccountsTab';
 import PlanTab from './content/PlanTab';
+import OfficeView from '../office/OfficeView';
 import WorkersTab from './ecom/WorkersTab';
 import { Pill, TeachingEmpty, E, btn, panel } from './ecom/ecomShared';
 import { useSocialAccounts, useContentItems } from '../../data/useContentEngine';
@@ -176,6 +177,7 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
   // plans that already existed keep their own tab.
   const [engineTab, setEngineTab] = useState<EngineTab>('accounts');
   const [newOpen, setNewOpen] = useState(false);
+  const [officeOpen, setOfficeOpen] = useState(false);
   const social = useSocialAccounts();
   const contentItems = useContentItems();
 
@@ -207,14 +209,18 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
           <div style={homeHeadStyle}>Content</div>
           <div style={homeSubStyle}>Accounts, the week's plan, studio, inspiration — you film raw clips and approve; workers do the rest.</div>
         </div>
-        {(engineTab === 'accounts' || engineTab === 'plan') && (
-          <button style={{ ...btn('primary'), marginTop: 6 }} onClick={() => setNewOpen(true)}>＋ {engineTab === 'accounts' ? 'Account' : 'Post idea'}</button>
-        )}
+        <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+          <button style={btn('ghost')} onClick={() => setOfficeOpen(true)}>🏢 View Office</button>
+          {(engineTab === 'accounts' || engineTab === 'plan') && (
+            <button style={btn('primary')} onClick={() => setNewOpen(true)}>＋ {engineTab === 'accounts' ? 'Account' : 'Post idea'}</button>
+          )}
+        </div>
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 18 }}>
         {ENGINE_TABS.map((t) => <Pill key={t.id} active={engineTab === t.id} onClick={() => { setEngineTab(t.id); setNewOpen(false); }}><span>{t.icon}</span>{t.label}</Pill>)}
       </div>
 
+      {officeOpen && <OfficeView domain="content" onClose={() => setOfficeOpen(false)} />}
       {engineTab === 'accounts' && <div style={enginePanel}><AccountsTab api={social} items={contentItems.items} newOpen={newOpen} onCloseNew={() => setNewOpen(false)} onOpenPlan={() => setEngineTab('plan')} /></div>}
       {engineTab === 'plan' && <div style={enginePanel}><PlanTab items={contentItems} accounts={social} newOpen={newOpen} onCloseNew={() => setNewOpen(false)} /></div>}
       {engineTab === 'studio' && (

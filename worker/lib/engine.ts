@@ -13,7 +13,7 @@ import { scoutSystem, scoutUser, parseScout, BLOCKED_DOMAINS, SCOUT_CHANNELS } f
 export const ENGINE_DOMAINS = ['ecom', 'content', 'marketing', 'digest'] as const;
 export const TZ = 'America/Denver';
 
-export interface WorkerRow { id: string; domain: string; key: string; name: string; role: string; model: string; autonomy_level: number; status: string; current_task: string | null; enabled: boolean }
+export interface WorkerRow { id: string; domain: string; key: string; name: string; role: string; model: string; autonomy_level: number; status: string; current_task: string | null; enabled: boolean; playbook_name?: string | null }
 export interface RunRow { id: string; worker_id: string; status: string; created_at: string }
 
 /** "Start the company": one ai_workers row per worker in the spec, never
@@ -26,9 +26,13 @@ export async function ensureRoster(sb: Sb, userId: string): Promise<WorkerRow[]>
   return sb.get<WorkerRow>(`ai_workers?user_id=eq.${userId}&order=domain.asc&select=*`);
 }
 
-/** Playbooks for the worker's domain plus the cross-domain ones (psychology). */
-export async function playbooksFor(sb: Sb, userId: string, domain: string, max = 12000): Promise<string> {
-  const rows = await sb.get<{ name: string; body: string; version: number }>(`ai_playbooks?user_id=eq.${userId}&domain=in.(${domain},all)&order=name.asc&select=name,body,version`);
+/** Playbooks for the worker's domain plus the cross-domain ones (psychology).
+ *  A worker's own playbook ("worker:<key>", written by View Office fixes)
+ *  loads first, and only for that worker. */
+export async function playbooksFor(sb: Sb, userId: string, domain: string, max = 12000, workerKey?: string): Promise<string> {
+  const all = await sb.get<{ name: string; body: string; version: number }>(`ai_playbooks?user_id=eq.${userId}&domain=in.(${domain},all)&order=name.asc&select=name,body,version`);
+  const own = workerKey ? all.filter((r) => r.name === `worker:${workerKey}`) : [];
+  const rows = [...own, ...all.filter((r) => !r.name.startsWith('worker:'))];
   let out = '';
   for (const r of rows) {
     if (!r.body.trim()) continue;
@@ -69,7 +73,7 @@ export async function runScout(apiKey: string | undefined, sb: Sb, userId: strin
   await sb.patch('ai_workers', `id=eq.${w.id}`, { status: 'running', current_task: `Scouting ${SCOUT_CHANNELS[channel].label} (top ${count})`, updated_at: new Date().toISOString() });
   const finishWorker = (status: 'idle' | 'failed') => sb.patch('ai_workers', `id=eq.${w.id}`, { status, current_task: null, updated_at: new Date().toISOString() }).catch(() => {});
   try {
-    const [playbooks, corrections, spent, cap] = await Promise.all([playbooksFor(sb, userId, 'ecom'), correctionsFor(sb, userId, w.id), spentToday(sb, userId, 'ecom', z.date), capFor(sb, userId, 'ecom')]);
+    const [playbooks, corrections, spent, cap] = await Promise.all([playbooksFor(sb, userId, 'ecom', 12000, 'scout'), correctionsFor(sb, userId, w.id), spentToday(sb, userId, 'ecom', z.date), capFor(sb, userId, 'ecom')]);
     const res = await ask(apiKey, sb, {
       model: w.model, domain: 'ecom', userId, date: z.date, workerId: w.id, maxTokens: 6000,
       system: scoutSystem({ playbooks, corrections, budgetNote: `Budget: $${(cap - spent).toFixed(2)} of today's $${cap.toFixed(2)} e-commerce cap is left — use at most 5 searches.` }),

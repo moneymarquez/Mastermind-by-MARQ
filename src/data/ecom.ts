@@ -255,6 +255,10 @@ export function workersFor(domain: Domain): WorkerDef[] {
   return WORKERS.filter((w) => w.domain === domain || w.domain === 'all');
 }
 
+/** Workers whose runtime exists in this build. Everyone else shows the
+ *  phase they arrive in (and a lights-off room in View Office). */
+export const LIVE_WORKERS = ['scout'];
+
 export const AUTONOMY_LABEL: Record<number, string> = { 0: 'L0 · Draft', 1: 'L1 · Queue', 2: 'L2 · Act + notify' };
 
 // ── Connections (§11) ──────────────────────────────────────────────────
