@@ -236,7 +236,24 @@ export const WORKERS: WorkerDef[] = [
   { key: 'content', name: 'Content Producer', role: 'Hooks, scripts, captions, visuals. Shared with the Content Engine.', model: 'claude-sonnet-5', domain: 'content', tools: ['Higgsfield'], phase: 7 },
   { key: 'analytics', name: 'Analytics', role: 'Pull metrics, compute the funnel, raise flags.', model: 'claude-haiku-4-5', domain: 'ecom', tools: ['Shopify', 'TikTok', 'Instagram'], phase: 7 },
   { key: 'orchestrator', name: 'Orchestrator', role: 'Assign work, read outputs, score, route your notes, write the daily summary.', model: 'claude-fable-5-1', domain: 'all', tools: ['playbooks'], phase: 4 },
+  // Marketing Engine (spec 08 §3). Phases are M-phases.
+  { key: 'lead_filter', name: 'Lead Filter', role: 'Flag and remove chains/franchises, tag single vs. multi-location, dedupe the 58k list.', model: 'claude-haiku-4-5', domain: 'marketing', tools: ['LeadFlow'], phase: 2 },
+  { key: 'campaign_planner', name: 'Campaign Planner', role: 'Weekly plan: which list, which script, which channel, target numbers.', model: 'claude-sonnet-5', domain: 'marketing', tools: ['playbooks'], phase: 4 },
+  { key: 'script_copy', name: 'Script & Copy', role: 'Openers, voicemails, emails, DMs, landing copy — 3 tones × 2 audiences; cites the principle.', model: 'claude-sonnet-5', domain: 'marketing', tools: ['playbooks'], phase: 4 },
+  { key: 'inbound_tracker', name: 'Inbound Tracker', role: "Tags each inbound lead's source; alerts you if one waits over an hour.", model: 'claude-haiku-4-5', domain: 'marketing', tools: ['website form'], phase: 3 },
+  { key: 'campaign_scorer', name: 'Campaign Scorer', role: 'Grades each campaign out of 4, names the weak funnel stage, writes the fix.', model: 'claude-sonnet-5', domain: 'marketing', tools: [], phase: 4 },
+  // Content Engine (spec 07 §4). Phases are C-phases.
+  { key: 'account_auditor', name: 'Account Auditor', role: 'Weekly: your posts vs. results. 3 things to repeat, 3 to stop.', model: 'claude-sonnet-5', domain: 'content', tools: ['Instagram', 'TikTok'], phase: 3 },
+  { key: 'trend_researcher', name: 'Trend Researcher', role: 'Trends, formats, audio and example posts in your niches. Fills Inspiration.', model: 'claude-haiku-4-5', domain: 'content', tools: ['web search', 'TikTok Creative Center'], phase: 3 },
+  { key: 'idea_script', name: 'Idea & Script', role: 'Weekly plan: 3 hooks per post, script, shot list, on-screen text, CTA.', model: 'claude-sonnet-5', domain: 'content', tools: ['playbooks'], phase: 3 },
+  { key: 'clip_editor', name: 'Clip Editor', role: 'Best moments from raw clips, cuts, 9:16, captions, enhancements.', model: 'claude-sonnet-5', domain: 'content', tools: ['Higgsfield'], phase: 4 },
+  { key: 'post_planner', name: 'Post Planner', role: 'Best time per account from your data, caption, hashtags, cross-post plan.', model: 'claude-haiku-4-5', domain: 'content', tools: [], phase: 5 },
+  { key: 'content_analytics', name: 'Analytics', role: 'Daily metric pull, grades out of 4, flags breakouts and flops.', model: 'claude-haiku-4-5', domain: 'content', tools: ['Instagram', 'TikTok'], phase: 5 },
 ];
+/** Workers a screen shows: its own domain plus the shared orchestrator. */
+export function workersFor(domain: Domain): WorkerDef[] {
+  return WORKERS.filter((w) => w.domain === domain || w.domain === 'all');
+}
 
 export const AUTONOMY_LABEL: Record<number, string> = { 0: 'L0 · Draft', 1: 'L1 · Queue', 2: 'L2 · Act + notify' };
 

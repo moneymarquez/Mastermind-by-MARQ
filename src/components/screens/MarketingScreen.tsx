@@ -35,6 +35,18 @@ import { useDailyCallGoal } from '../../data/useDailyCallGoal';
 import { useDialingQueue } from '../../data/useLeadflow';
 import { supabase } from '../../lib/supabase';
 import CampaignsHome from './marketing/CampaignsHome';
+import ScriptsTab from './marketing/ScriptsTab';
+import WorkersTab from './ecom/WorkersTab';
+import { Pill, TeachingEmpty, E } from './ecom/ecomShared';
+
+type EngineTab = 'campaigns' | 'scripts' | 'inbound' | 'lists' | 'workers';
+const ENGINE_TABS: { id: EngineTab; label: string; icon: string }[] = [
+  { id: 'campaigns', label: 'Campaigns', icon: '🎯' },
+  { id: 'scripts', label: 'Scripts', icon: '📞' },
+  { id: 'inbound', label: 'Inbound', icon: '📥' },
+  { id: 'lists', label: 'Lists', icon: '📋' },
+  { id: 'workers', label: 'Workers', icon: '🤖' },
+];
 import CampaignCockpit from './marketing/CampaignCockpit';
 import type { CockpitFocus } from './marketing/CampaignCockpit';
 
@@ -178,9 +190,14 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
   const [transcript, setTranscript] = useState<string | null>(null);
   const [showLegacy, setShowLegacy] = useState(false);
   const navigate = onNavigate ?? (() => {});
+  // Marketing Engine (spec 08 §2): Campaigns is the builder that already
+  // existed; Scripts is M1; Inbound, Lists and the workers light up in
+  // M2–M4. A focused campaign always lands on the Campaigns tab.
+  const [engineTab, setEngineTab] = useState<EngineTab>('campaigns');
 
   useEffect(() => {
     if (!focusCampaignId && !newCampaignForClientId) return;
+    setEngineTab('campaigns');
     if (focusCampaignId) { setOpenId(focusCampaignId); setCockpitFocus('step'); setCockpitStep(undefined); }
     if (newCampaignForClientId) { setOpenId(null); setNewForClient(newCampaignForClientId); }
     onConsumeCampaignFocus?.();
@@ -331,6 +348,25 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
         />
       </div>
 
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 18 }}>
+        {ENGINE_TABS.map((t) => <Pill key={t.id} active={engineTab === t.id} onClick={() => setEngineTab(t.id)}><span>{t.icon}</span>{t.label}</Pill>)}
+      </div>
+
+      {engineTab === 'scripts' && <div style={{ marginTop: 16 }}><ScriptsTab /></div>}
+      {engineTab === 'inbound' && (
+        <div style={enginePanel}>
+          <TeachingEmpty what="Inbound — every lead that came to you, with its source, first touch, status and response time. This is the number that proves marketing works." worker="the Inbound Tracker (tags the source, alerts you if one waits over an hour)" connection="the website form → mkt_inbound" phase={3} />
+          <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 10 }}>Phase numbers on this screen are M-phases from the Marketing Engine spec.</div>
+        </div>
+      )}
+      {engineTab === 'lists' && (
+        <div style={enginePanel}>
+          <TeachingEmpty what="Lists — lead lists from LeadFlow with filter status: enriched, chain-excluded, sized, called." worker="the Lead Filter (chains and franchises out, single vs. multi-location tagged, deduped)" connection="LeadFlow (already connected)" phase={2} />
+        </div>
+      )}
+      {engineTab === 'workers' && <div style={enginePanel}><WorkersTab domain="marketing" phaseLabel="M" /></div>}
+
+      {engineTab === 'campaigns' && (<>
       <div style={{ marginTop: 22 }}>
         {openCampaign && campaignCtx ? (
           <CampaignCockpit
@@ -707,6 +743,9 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
         </div>
       )}
       </>)}
+      </>)}
     </div>
   );
 }
+
+const enginePanel: CSSProperties = { background: E.bg, borderRadius: 'var(--radius-3xl)', border: '1px solid var(--border)', fontFamily: 'Inter, sans-serif', color: '#111', padding: '1.25rem', marginTop: 16 };

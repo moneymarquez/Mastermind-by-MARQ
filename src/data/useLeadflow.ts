@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { recordLeadTouch } from './useMktEngine';
 
 export interface LeadflowLead {
   id: string;
@@ -216,12 +217,15 @@ export function useLeadflowLeads() {
   };
 
   /** Log an attempt from the Finder, same shape as the pool's version. */
-  const logCall = async (lead: LeadflowLead, status: string) =>
-    updateLead(lead.id, {
+  const logCall = async (lead: LeadflowLead, status: string) => {
+    const ok = await updateLead(lead.id, {
       status,
       call_count: (lead.call_count ?? 0) + 1,
       last_called_at: new Date().toISOString(),
     } as Partial<LeadflowLead>);
+    if (ok) recordLeadTouch(lead, status);
+    return ok;
+  };
 
   return { leads, industries, places, counts, loading, hasMore, notConnected, error, fetchLeads, addLead, updateLead, logCall };
 }
@@ -330,6 +334,8 @@ export async function sendLeadToCrm(
       body: JSON.stringify({ status: 'client' }),
     });
   } catch { /* handoff already succeeded; status is a convenience */ }
+  // A booked kickoff is the "meeting" stage of the marketing funnel.
+  await recordLeadTouch(lead, 'client', { notes: `Kickoff booked ${date} ${startTime}` });
 
   return { clientId: client.id as string, eventId: ev.id as string };
 }
@@ -374,12 +380,16 @@ export function useLeadflowPool() {
   /** Logs the result of an attempt: the outcome itself, plus the call
    *  counters, so "tried twice, never reached anyone" is visible without
    *  reading notes. */
-  const logCall = async (lead: LeadflowLead, status: string) =>
-    patchLead(lead.id, {
+  const logCall = async (lead: LeadflowLead, status: string) => {
+    const ok = await patchLead(lead.id, {
       status,
       call_count: (lead.call_count ?? 0) + 1,
       last_called_at: new Date().toISOString(),
     } as Partial<LeadflowLead>);
+    // Marketing Engine: the same tap is a funnel touch (spec 08 §6).
+    if (ok) recordLeadTouch(lead, status);
+    return ok;
+  };
 
   /** Hand a batch of leads to the Dialing screen.
    *
@@ -435,12 +445,16 @@ export function useDialingQueue() {
     return res.ok;
   };
 
-  const logCall = async (lead: LeadflowLead, status: string) =>
-    patchLead(lead.id, {
+  const logCall = async (lead: LeadflowLead, status: string) => {
+    const ok = await patchLead(lead.id, {
       status,
       call_count: (lead.call_count ?? 0) + 1,
       last_called_at: new Date().toISOString(),
     } as Partial<LeadflowLead>);
+    // Marketing Engine: the same tap is a funnel touch (spec 08 §6).
+    if (ok) recordLeadTouch(lead, status);
+    return ok;
+  };
 
   /** Take one lead back out of today's list. It stays in the pool. */
   const removeFromQueue = async (id: string) => {
