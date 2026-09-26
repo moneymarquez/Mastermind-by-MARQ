@@ -18,6 +18,22 @@ import { useContentIdeas } from '../../data/useContentIdeas';
 import { useMarketing } from '../../data/useMarketing';
 import { useHookLog, bestPillarFromHookLog } from '../../data/useHookLog';
 import { useAccountAudits } from '../../data/useAccountAudits';
+import AccountsTab from './content/AccountsTab';
+import PlanTab from './content/PlanTab';
+import WorkersTab from './ecom/WorkersTab';
+import { Pill, TeachingEmpty, E, btn } from './ecom/ecomShared';
+import { useSocialAccounts, useContentItems } from '../../data/useContentEngine';
+
+type EngineTab = 'accounts' | 'plan' | 'studio' | 'inspiration' | 'workers' | 'growth';
+const ENGINE_TABS: { id: EngineTab; label: string; icon: string }[] = [
+  { id: 'accounts', label: 'Accounts', icon: '👤' },
+  { id: 'plan', label: 'Plan', icon: '📅' },
+  { id: 'studio', label: 'Studio', icon: '🎬' },
+  { id: 'inspiration', label: 'Inspiration', icon: '💡' },
+  { id: 'workers', label: 'Workers', icon: '🤖' },
+  { id: 'growth', label: 'Growth plans', icon: '📈' },
+];
+const enginePanel: CSSProperties = { background: E.bg, borderRadius: 'var(--radius-3xl)', border: '1px solid var(--border)', fontFamily: 'Inter, sans-serif', color: '#111', padding: '1.25rem', marginTop: 16 };
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -155,6 +171,13 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
   const [showReference, setShowReference] = useState(false);
   const [referenceTab, setReferenceTab] = useState<'fundamentals' | 'plays'>('fundamentals');
+  // Content Engine (spec 07 §2): Accounts is home; Plan is the week; Studio,
+  // Inspiration and the workers arrive in C3–C4. The per-client growth
+  // plans that already existed keep their own tab.
+  const [engineTab, setEngineTab] = useState<EngineTab>('accounts');
+  const [newOpen, setNewOpen] = useState(false);
+  const social = useSocialAccounts();
+  const contentItems = useContentItems();
 
   const clientPlans = selectedClientId ? growth.plans.filter((p) => p.client_id === selectedClientId) : [];
   const activePlan = growth.plans.find((p) => p.id === activePlanId) ?? null;
@@ -179,9 +202,35 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
 
   return (
     <div>
-      <div style={homeHeadStyle}>Content Creation</div>
-      <div style={homeSubStyle}>Per-client social growth plans — platform, target, phase, and real weekly check-ins.</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+        <div>
+          <div style={homeHeadStyle}>Content</div>
+          <div style={homeSubStyle}>Accounts, the week's plan, studio, inspiration — you film raw clips and approve; workers do the rest.</div>
+        </div>
+        {(engineTab === 'accounts' || engineTab === 'plan') && (
+          <button style={{ ...btn('primary'), marginTop: 6 }} onClick={() => setNewOpen(true)}>＋ {engineTab === 'accounts' ? 'Account' : 'Post idea'}</button>
+        )}
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 18 }}>
+        {ENGINE_TABS.map((t) => <Pill key={t.id} active={engineTab === t.id} onClick={() => { setEngineTab(t.id); setNewOpen(false); }}><span>{t.icon}</span>{t.label}</Pill>)}
+      </div>
 
+      {engineTab === 'accounts' && <div style={enginePanel}><AccountsTab api={social} items={contentItems.items} newOpen={newOpen} onCloseNew={() => setNewOpen(false)} onOpenPlan={() => setEngineTab('plan')} /></div>}
+      {engineTab === 'plan' && <div style={enginePanel}><PlanTab items={contentItems} accounts={social} newOpen={newOpen} onCloseNew={() => setNewOpen(false)} /></div>}
+      {engineTab === 'studio' && (
+        <div style={enginePanel}>
+          <TeachingEmpty what="Studio — the raw clip inbox. Drop clips from your phone; the Clip Editor proposes cuts, captions, b-roll and Higgsfield enhancements, side by side, Approve / Send back." worker="the Clip Editor" connection="Higgsfield (already connected) + the Anthropic API key" phase={4} />
+          <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 10 }}>Phase numbers on this screen are C-phases from the Content Engine spec.</div>
+        </div>
+      )}
+      {engineTab === 'inspiration' && (
+        <div style={enginePanel}>
+          <TeachingEmpty what="Inspiration — posts and accounts to learn from: why it worked (hook, format, pacing, principle) and a 'make our version' button." worker="the Trend Researcher (web search, TikTok Creative Center, official embeds — never scraping IG or TikTok)" phase={3} />
+        </div>
+      )}
+      {engineTab === 'workers' && <div style={enginePanel}><WorkersTab domain="content" phaseLabel="C" /></div>}
+
+      {engineTab === 'growth' && (<>
       <ContentHookTrackRecord entries={hookLogApi.entries} loading={hookLogApi.loading} />
 
       <div style={{ marginTop: 20 }}>
@@ -354,6 +403,7 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
           <MiniMarkdown text={referenceTab === 'fundamentals' ? CONTENT_101.fundamentals : CONTENT_101.plays} />
         </div>
       )}
+      </>)}
     </div>
   );
 }

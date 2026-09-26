@@ -44,7 +44,7 @@ export default function ScriptsTab() {
       <div style={{ ...E.card, padding: 14 }}>
         <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <Metric label="Calls · 30d" value={String(stats.attempts)} />
-          <Metric label="Reached" value={String(stats.reached)} unit={pct(stats.answerRate)} />
+          <Metric label="Reached" value={String(stats.reached)} unit={stats.answerRate == null ? undefined : pct(stats.answerRate)} />
           <Metric label="Conversations" value={String(stats.conversations)} />
           <Metric label="Meetings" value={String(stats.meetings)} />
           <Metric label="Closed" value={String(stats.closes)} />
