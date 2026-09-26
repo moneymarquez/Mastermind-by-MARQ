@@ -39,10 +39,10 @@ export default function EcomScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const approvals = useApprovals();
   const clients = useClients();
 
-  const panelStyle: CSSProperties = { background: E.bg, borderRadius: 'var(--radius-3xl)', border: '1px solid var(--border)', marginTop: 24, fontFamily: 'Inter, sans-serif', color: '#111', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 560 };
-  const topBar: CSSProperties = { display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '12px 16px', flexShrink: 0 };
+  const panelStyle: CSSProperties = { background: E.bg, borderRadius: 'var(--radius-3xl)', border: '1px solid var(--border)', marginTop: 24, color: E.text, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 560 };
+  const topBar: CSSProperties = { display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', background: E.surface, borderBottom: '1px solid var(--border)', padding: '12px 16px', flexShrink: 0 };
   const iconBtn: CSSProperties = { ...btn('ghost'), padding: '8px 10px', position: 'relative' };
-  const dot = (n: number, color: string) => n > 0 ? <span style={{ position: 'absolute', top: -6, right: -6, minWidth: 18, height: 18, borderRadius: 9, background: color, color: '#fff', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>{n}</span> : null;
+  const dot = (n: number, color: string) => n > 0 ? <span style={{ position: 'absolute', top: -6, right: -6, minWidth: 18, height: 18, borderRadius: 9, background: color, color: E.onAccent, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>{n}</span> : null;
   const monthCap = DAILY_CAP_USD * 31;
 
   return (
@@ -62,7 +62,7 @@ export default function EcomScreen({ homeHeadStyle, homeSubStyle }: Props) {
 
         {/* Status strip: what workers did since you last looked. Static in
             Phase 1 — no workers yet — but the counts are real. */}
-        <div onClick={() => setTab('approvals')} style={{ background: '#f9fafb', borderBottom: '1px solid #f0f0f0', padding: '8px 16px', fontSize: 'var(--text-body)', color: E.muted, cursor: 'pointer', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div onClick={() => setTab('approvals')} style={{ background: E.sunk, borderBottom: '1px solid var(--border)', padding: '8px 16px', fontSize: 'var(--text-body)', color: E.muted, cursor: 'pointer', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <span style={{ color: E.faint }}>Since you last looked —</span>
           <span>no workers running yet (Phase 3)</span>
           <span>· <strong style={{ color: counters.pendingApprovals ? E.amber : E.text }}>{counters.pendingApprovals}</strong> need your approval</span>
@@ -88,7 +88,7 @@ export default function EcomScreen({ homeHeadStyle, homeSubStyle }: Props) {
           : approvals.alerts.map((a) => (
             <div key={a.id} style={{ ...E.card, padding: 12, marginBottom: 8, opacity: a.read_at ? 0.6 : 1 }}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <Badge color={a.severity === 'urgent' ? E.red : a.severity === 'warn' ? E.amber : '#2563eb'}>{a.severity}</Badge>
+                <Badge color={a.severity === 'urgent' ? E.red : a.severity === 'warn' ? E.amber : E.blue}>{a.severity}</Badge>
                 <span style={{ fontWeight: 600, color: E.text, flex: 1 }}>{a.title}</span>
                 {!a.read_at && <button style={{ ...btn('ghost'), padding: '4px 8px', fontSize: 12 }} onClick={() => approvals.markAlertRead(a.id)}>Read</button>}
               </div>
@@ -101,7 +101,7 @@ export default function EcomScreen({ homeHeadStyle, homeSubStyle }: Props) {
         <div style={{ ...E.card, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: E.muted }}>Month to date</span><span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{money(counters.spentMonth)} / {money(monthCap, 0)}</span></div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: E.muted }}>Today</span><span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{money(counters.spentToday)} / {money(DAILY_CAP_USD)}</span></div>
-          <div style={{ height: 6, background: '#f3f4f6', borderRadius: 3, overflow: 'hidden' }}><div style={{ width: `${Math.min(100, (counters.spentMonth / monthCap) * 100)}%`, height: '100%', background: E.green }} /></div>
+          <div style={{ height: 6, background: E.border, borderRadius: 3, overflow: 'hidden' }}><div style={{ width: `${Math.min(100, (counters.spentMonth / monthCap) * 100)}%`, height: '100%', background: E.green }} /></div>
           <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>Per-worker breakdown appears once workers run (Phase 3). E-comm, content and marketing are metered separately.</div>
         </div>
       </Drawer>

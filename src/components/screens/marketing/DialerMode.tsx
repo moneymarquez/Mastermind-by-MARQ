@@ -5,7 +5,7 @@ import { TONES, AUDIENCES, fillScript, setActiveScript } from '../../../data/mkt
 import { useDialingQueue } from '../../../data/useLeadflow';
 import type { LeadflowLead } from '../../../data/useLeadflow';
 import { LEAD_CALL_OUTCOMES, LEAD_OUTCOME_LABEL } from '../leadflow/leadOutcomes';
-import { E, btn, useIsMobile } from '../ecom/ecomShared';
+import { E, btn, useIsMobile, tint, tone } from '../ecom/ecomShared';
 
 interface Props {
   script: Script;
@@ -62,11 +62,11 @@ export default function DialerMode({ script, siblings, onClose, onLogged }: Prop
     }
   };
 
-  const pill = (active: boolean): CSSProperties => ({ ...btn('ghost'), padding: '6px 12px', fontSize: 13, background: active ? E.green : '#fff', color: active ? '#fff' : E.text, border: active ? 'none' : `1px solid ${E.border}` });
+  const pill = (active: boolean): CSSProperties => ({ ...btn('ghost'), padding: '6px 12px', fontSize: 13, background: active ? tint(E.accent, 16) : 'transparent', color: active ? E.accent : E.muted, border: `1px solid ${active ? E.accent : E.border}` });
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 130, background: '#fff', color: E.text, fontFamily: 'Inter, sans-serif', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: mobile ? 'calc(10px + env(safe-area-inset-top)) 14px 8px' : '12px 20px 8px', borderBottom: '1px solid #f0f0f0', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 130, background: E.surface, color: E.text, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: mobile ? 'calc(10px + env(safe-area-inset-top)) 14px 8px' : '12px 20px 8px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
         <div style={{ flex: '1 1 200px', minWidth: 0 }}>
           <div style={{ fontWeight: 700, fontSize: 15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{current.title} <span style={{ color: E.faint, fontWeight: 500 }}>v{current.version}</span></div>
           <div style={{ fontSize: 12, color: E.faint }}>{audience}{current.principle ? ` · ${current.principle}` : ''}</div>
@@ -85,7 +85,7 @@ export default function DialerMode({ script, siblings, onClose, onLogged }: Prop
       </div>
 
       {/* Tap 1: who you're calling. Today's queue from Dialing, uncalled first. */}
-      <div style={{ borderBottom: '1px solid #f0f0f0', padding: '8px 14px', display: 'flex', gap: 8, overflowX: 'auto', flexShrink: 0, alignItems: 'center' }}>
+      <div style={{ borderBottom: '1px solid var(--border)', padding: '8px 14px', display: 'flex', gap: 8, overflowX: 'auto', flexShrink: 0, alignItems: 'center' }}>
         {queue.loading && <span style={{ fontSize: 12, color: E.faint }}>Loading today's queue…</span>}
         {!queue.loading && queue.queue.length === 0 && (
           <span style={{ fontSize: 12, color: E.faint }}>{queue.notConnected ? 'LeadFlow isn\'t connected — the script still works, outcomes log in Dialing.' : 'No leads queued. Send some from Lead Pool → Dialing and they show up here.'}</span>
@@ -94,7 +94,7 @@ export default function DialerMode({ script, siblings, onClose, onLogged }: Prop
           const active = lead?.id === l.id;
           const done = !!l.status && l.status !== 'new';
           return (
-            <button key={l.id} onClick={() => setLeadId(l.id)} style={{ ...btn('ghost'), flexShrink: 0, flexDirection: 'column', alignItems: 'flex-start', gap: 0, padding: '6px 10px', background: active ? '#ecfdf5' : '#fff', borderColor: active ? E.green : E.border, opacity: done ? 0.55 : 1 }}>
+            <button key={l.id} onClick={() => setLeadId(l.id)} style={{ ...btn('ghost'), flexShrink: 0, flexDirection: 'column', alignItems: 'flex-start', gap: 0, padding: '6px 10px', background: active ? tint(E.accent, 14) : 'transparent', borderColor: active ? E.accent : E.border, opacity: done ? 0.55 : 1 }}>
               <span style={{ fontSize: 13, fontWeight: 700, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.business_name}</span>
               <span style={{ fontSize: 11, color: E.faint, fontWeight: 500 }}>{done ? LEAD_OUTCOME_LABEL[l.status!] ?? l.status : (l.owner_name || l.city || 'uncalled')}</span>
             </button>
@@ -111,17 +111,17 @@ export default function DialerMode({ script, siblings, onClose, onLogged }: Prop
             {phone && <a href={`tel:${phone}`} style={{ ...btn('primary'), textDecoration: 'none', padding: '6px 12px', fontSize: 13 }}>📞 {phone}</a>}
           </div>
         )}
-        <div style={{ fontSize: size, lineHeight: 1.5, whiteSpace: 'pre-wrap', color: '#111', maxWidth: 860 }}>{text}</div>
+        <div style={{ fontSize: size, lineHeight: 1.5, whiteSpace: 'pre-wrap', color: E.text, maxWidth: 860 }}>{text}</div>
       </div>
 
       {/* Tap 2: what happened. Same vocabulary as LeadFlow so the lead's
           status and the marketing touch never disagree. */}
-      <div style={{ borderTop: '1px solid #f0f0f0', padding: mobile ? '10px 12px calc(12px + env(safe-area-inset-bottom))' : '12px 20px', background: '#fafafa', flexShrink: 0 }}>
+      <div style={{ borderTop: '1px solid var(--border)', padding: mobile ? '10px 12px calc(12px + env(safe-area-inset-bottom))' : '12px 20px', background: E.bg, flexShrink: 0 }}>
         {toast && <div style={{ fontSize: 13, color: E.green, fontWeight: 600, marginBottom: 8 }}>{toast}</div>}
         {!lead && <div style={{ fontSize: 12, color: E.faint, marginBottom: 8 }}>Pick a lead above to log an outcome against it.</div>}
         <div style={{ display: 'grid', gridTemplateColumns: mobile ? 'repeat(3, 1fr)' : 'repeat(6, 1fr)', gap: 8 }}>
           {LEAD_CALL_OUTCOMES.map((o) => (
-            <button key={o.value} disabled={!lead || !!saving} onClick={() => log(o.value)} style={{ padding: mobile ? '12px 6px' : '12px 10px', borderRadius: 'var(--radius-sm)', border: `1px solid ${o.color}`, background: '#fff', color: o.color, fontWeight: 700, fontSize: 13, cursor: lead ? 'pointer' : 'default', opacity: !lead || (saving && saving !== o.value) ? 0.5 : 1, fontFamily: 'inherit' }}>
+            <button key={o.value} disabled={!lead || !!saving} onClick={() => log(o.value)} style={{ padding: mobile ? '12px 6px' : '12px 10px', borderRadius: 'var(--radius-sm)', border: `1px solid ${tone(o.color)}`, background: tint(tone(o.color), 8), color: tone(o.color), fontWeight: 700, fontSize: 13, cursor: lead ? 'pointer' : 'default', opacity: !lead || (saving && saving !== o.value) ? 0.5 : 1, fontFamily: 'inherit' }}>
               {saving === o.value ? '…' : o.label}
             </button>
           ))}

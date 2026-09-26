@@ -76,10 +76,10 @@ export default function ProductSheetsTab({ search, onBuildBrand }: Props) {
       ) : (
         <div style={{ ...E.card, marginTop: 14, overflow: 'auto' }}>
           <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 'var(--text-body)' }}>
-            <thead><tr style={{ background: '#f9fafb' }}>{['#', 'Product', 'Category', 'Price', 'Landed', 'Margin', 'Days', 'Velocity', 'Score', 'Content', 'Conf.', 'As of'].map((h) => <th key={h} style={{ textAlign: 'left', padding: '8px 10px', color: E.faint, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 12 }}>{h}</th>)}</tr></thead>
+            <thead><tr style={{ background: E.sunk }}>{['#', 'Product', 'Category', 'Price', 'Landed', 'Margin', 'Days', 'Velocity', 'Score', 'Content', 'Conf.', 'As of'].map((h) => <th key={h} style={{ textAlign: 'left', padding: '8px 10px', color: E.faint, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 12 }}>{h}</th>)}</tr></thead>
             <tbody>
               {rows.slice(0, limit).map((p) => (
-                <tr key={p.id} onClick={() => setOpenId(p.id)} style={{ borderTop: '1px solid #f3f4f6', cursor: 'pointer' }}>
+                <tr key={p.id} onClick={() => setOpenId(p.id)} style={{ borderTop: '1px solid var(--border)', cursor: 'pointer' }}>
                   <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{p.rank ?? '—'}</td>
                   <td style={{ padding: '8px 10px', color: E.text, fontWeight: 600 }}>{p.watched ? '★ ' : ''}{p.name}</td>
                   <td style={{ padding: '8px 10px', color: E.muted }}>{p.category ?? '—'}</td>
@@ -114,14 +114,14 @@ function ProductCard({ p, ranks, onOpen, onWatch, onBuild }: { p: Product; ranks
   return (
     <div style={{ ...E.card, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div onClick={onOpen} style={{ cursor: 'pointer' }}>
-        <div style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', background: '#f3f4f6', height: 160 }}>
+        <div style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', background: E.border, height: 160 }}>
           {p.images.length === 0
             ? <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: E.faint, fontSize: 12 }}>No photo yet</div>
             : p.images.map((u) => <img key={u} src={u} alt="" loading="lazy" style={{ width: '100%', height: 160, objectFit: 'cover', flex: '0 0 100%', scrollSnapAlign: 'start' }} />)}
         </div>
         <div style={{ padding: '12px 14px 0' }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            {p.rank != null && <Badge color="#111827">#{p.rank}</Badge>}
+            {p.rank != null && <Badge color={E.text}>#{p.rank}</Badge>}
             <span style={{ fontWeight: 700, color: E.text, fontSize: 'var(--text-subhead)', flex: 1, minWidth: 0 }}>{p.name}</span>
             {path && <svg width={72} height={22} aria-label="14-day rank"><path d={path} fill="none" stroke={trend === '↓' ? E.red : E.green} strokeWidth={1.8} strokeLinejoin="round" /></svg>}
           </div>

@@ -20,10 +20,10 @@ export const CHANNELS: { id: Channel; label: string; short: string }[] = [
 ];
 
 export const CONFIDENCE_LABEL: Record<Confidence, string> = { hard: 'Hard data', estimate: 'Estimate', ai: 'AI read' };
-export const CONFIDENCE_COLOR: Record<Confidence, string> = { hard: '#16a34a', estimate: '#2563eb', ai: '#7c3aed' };
+export const CONFIDENCE_COLOR: Record<Confidence, string> = { hard: 'var(--success)', estimate: 'var(--accent)', ai: 'var(--accent-strong)' };
 
 export const HEALTH_LABEL: Record<Health, string> = { building: 'Building', testing: 'Testing', growing: 'Growing', stalled: 'Stalled', killed: 'Killed' };
-export const HEALTH_COLOR: Record<Health, string> = { building: '#2563eb', testing: '#ca8a04', growing: '#16a34a', stalled: '#f59e0b', killed: '#6b7280' };
+export const HEALTH_COLOR: Record<Health, string> = { building: 'var(--accent)', testing: 'var(--warning)', growing: 'var(--success)', stalled: 'var(--warning)', killed: 'var(--text-tertiary)' };
 
 // ── Brands ─────────────────────────────────────────────────────────────
 export interface StepField {

@@ -69,7 +69,7 @@ function AccountCard({ a, api, items, today, onOpen, onLog, onOpenPlan }: { a: S
         <Metric label="Avg views · 30d" value={compact(avg == null ? null : Math.round(avg))} />
         <Metric label="Streak" value={String(streak)} unit="wk" />
       </div>
-      <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 8, fontSize: 'var(--text-caption)', color: E.muted, display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8, fontSize: 'var(--text-caption)', color: E.muted, display: 'flex', flexDirection: 'column', gap: 4 }}>
         <div><span style={label}>Best this week</span> {best ? <>{best.post.hook || best.post.caption?.slice(0, 50) || best.post.type} · <strong>{compact(best.views)}</strong> views</> : '— no measured post this week'}</div>
         <div><span style={label}>Next</span> {next ? <span style={{ cursor: 'pointer' }} onClick={onOpen}>{next.concept} · {next.scheduled_for}{next.scheduled_time ? ` ${next.scheduled_time.slice(0, 5)}` : ''}</span> : <span>nothing scheduled — <span style={{ color: E.green, cursor: 'pointer' }} onClick={onOpenPlan}>plan the week</span></span>}</div>
       </div>
@@ -150,7 +150,7 @@ function AccountDetail({ a, api, items, today, onClose, onOpenPlan }: { a: Socia
   const path = linePath(snaps.map((s) => s.followers), 300, 60);
   const ranked = posts.map((p) => ({ p, m: latestMetrics(api.metrics[p.id] ?? []) })).sort((x, y) => (y.m?.views ?? -1) - (x.m?.views ?? -1));
   const next = nextScheduled(items.filter((i) => i.account_id === a.id), today);
-  const row: CSSProperties = { display: 'flex', gap: 10, alignItems: 'center', padding: '8px 0', borderTop: '1px solid #f3f4f6', flexWrap: 'wrap' };
+  const row: CSSProperties = { display: 'flex', gap: 10, alignItems: 'center', padding: '8px 0', borderTop: '1px solid var(--border)', flexWrap: 'wrap' };
 
   return (
     <Drawer open onClose={onClose} title={<span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}><Avatar a={a} size={28} />@{a.handle}</span>} subtitle={`${PLATFORM[a.platform].label} · ${OWNERS.find((o) => o.id === a.owner)?.label}${a.voice ? ` · voice: ${a.voice.slice(0, 60)}` : ''}`} width={640}
@@ -179,12 +179,12 @@ function AccountDetail({ a, api, items, today, onClose, onOpenPlan }: { a: Socia
               {p.thumbnail_url && <img src={p.thumbnail_url} alt="" style={{ width: 44, height: 56, objectFit: 'cover', borderRadius: 6 }} />}
               <div style={{ flex: '1 1 160px', minWidth: 0 }}>
                 <div style={{ fontWeight: 600, color: E.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.hook || p.caption?.slice(0, 60) || FORMATS.find((f) => f.id === p.type)?.label}</div>
-                <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>{new Date(p.posted_at).toLocaleDateString()} · {FORMATS.find((f) => f.id === p.type)?.label}{p.url && <> · <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb' }}>open</a></>}{m && <> · as of {new Date(m.captured_at).toLocaleDateString()}</>}</div>
+                <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>{new Date(p.posted_at).toLocaleDateString()} · {FORMATS.find((f) => f.id === p.type)?.label}{p.url && <> · <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ color: E.blue }}>open</a></>}{m && <> · as of {new Date(m.captured_at).toLocaleDateString()}</>}</div>
               </div>
               <div style={{ display: 'flex', gap: 10, fontFamily: 'var(--font-mono)', fontSize: 12, color: E.muted }}>
                 <span title="views">👁 {compact(m?.views)}</span><span title="likes">♥ {compact(m?.likes)}</span><span title="saves">🔖 {compact(m?.saves)}</span><span title="shares">↗ {compact(m?.shares)}</span>
               </div>
-              {g ? <Badge color={GRADE_COLOR[g.grade]} title={g.reason}>{g.grade}/4</Badge> : <Badge color="#9ca3af" title="Needs views and a 30-day average">—/4</Badge>}
+              {g ? <Badge color={GRADE_COLOR[g.grade]} title={g.reason}>{g.grade}/4</Badge> : <Badge color={E.faint} title="Needs views and a 30-day average">—/4</Badge>}
               <button style={{ ...btn('ghost'), padding: '4px 8px', fontSize: 12 }} onClick={() => setLogFor(p)}>Update</button>
             </div>
           );

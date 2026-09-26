@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { Brand, Health } from '../../../data/ecom';
 import { STEPS, doneSteps, nextStep, nextAction, deriveHealth, money, ago } from '../../../data/ecom';
 import type { ClientListItem } from '../../../data/useClients';
-import { E, HealthBadge, Badge, ProgressRing, Pill, TeachingEmpty, Drawer, btn, field, label } from './ecomShared';
+import { E, HealthBadge, Badge, ProgressRing, Pill, TeachingEmpty, Drawer, btn, field, label, tint } from './ecomShared';
 import BrandDetail from './BrandDetail';
 import type { useEcomBrands } from '../../../data/useEcom';
 
@@ -90,7 +90,7 @@ function BrandCard({ b, health, orders, products, clientName, onOpen }: { b: Bra
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
         {b.logo_url
           ? <img src={b.logo_url} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover', border: `1px solid ${E.border}`, flexShrink: 0 }} />
-          : <div style={{ width: 44, height: 44, borderRadius: 10, background: '#eef2ff', color: '#3730a3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, flexShrink: 0 }}>{b.name.slice(0, 2).toUpperCase()}</div>}
+          : <div style={{ width: 44, height: 44, borderRadius: 10, background: tint(E.accent, 16), color: E.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, flexShrink: 0 }}>{b.name.slice(0, 2).toUpperCase()}</div>}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ fontWeight: 700, fontSize: 'var(--text-subhead)', color: E.text }}>{b.name}</span>
@@ -98,7 +98,7 @@ function BrandCard({ b, health, orders, products, clientName, onOpen }: { b: Bra
           </div>
           <div style={{ fontSize: 'var(--text-body)', color: E.faint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{b.positioning || 'No positioning yet — Step 5 writes it.'}</div>
           <div style={{ marginTop: 6 }}>
-            {b.owner_type === 'client' ? <Badge color="#7c3aed">Client · {clientName ?? 'unassigned'}</Badge> : <Badge color="#2563eb">Mine</Badge>}
+            {b.owner_type === 'client' ? <Badge color={E.violet}>Client · {clientName ?? 'unassigned'}</Badge> : <Badge color={E.blue}>Mine</Badge>}
           </div>
         </div>
         <div style={{ textAlign: 'center', flexShrink: 0 }}>
@@ -113,7 +113,7 @@ function BrandCard({ b, health, orders, products, clientName, onOpen }: { b: Bra
           <span><span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: E.text }}>{orders?.count ?? 0}</span> <span style={{ color: E.faint }}>orders</span></span>
         </div>
       ) : (
-        <div style={{ fontSize: 'var(--text-caption)', color: E.amber, background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 6, padding: '4px 8px', display: 'inline-block' }}>Connect Shopify for revenue, orders, conversion</div>
+        <div style={{ fontSize: 'var(--text-caption)', color: E.amber, background: tint(E.amber, 10), border: `1px solid ${tint(E.amber, 35)}`, borderRadius: 6, padding: '4px 8px', display: 'inline-block' }}>Connect Shopify for revenue, orders, conversion</div>
       )}
 
       <div style={{ fontSize: 'var(--text-caption)', color: E.faint, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -122,7 +122,7 @@ function BrandCard({ b, health, orders, products, clientName, onOpen }: { b: Bra
         <span>· changed {ago(b.last_activity_at)}</span>
       </div>
 
-      <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 10, fontSize: 'var(--text-body)', color: E.text, fontWeight: 600 }}>
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10, fontSize: 'var(--text-body)', color: E.text, fontWeight: 600 }}>
         <span style={{ color: E.green }}>▸</span> {nextAction(b)}
         <span style={{ color: E.faint, fontWeight: 400 }}> · {STEPS[step - 1].title}</span>
       </div>

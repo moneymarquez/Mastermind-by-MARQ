@@ -59,10 +59,10 @@ export default function CsvImportDrawer({ open, channel, onClose, onImport }: Pr
           {parsed.problems.map((p, i) => <div key={i} style={{ fontSize: 'var(--text-caption)', color: E.amber, marginTop: 4 }}>{p}</div>)}
           <div style={{ ...E.card, marginTop: 10, overflow: 'auto', maxHeight: 280 }}>
             <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 12 }}>
-              <thead><tr style={{ background: '#f9fafb' }}>{['#', 'Name', 'Channel', 'Price', 'Landed', 'Margin', 'Trend', 'Conf.'].map((h) => <th key={h} style={{ textAlign: 'left', padding: '6px 8px', color: E.faint, fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>)}</tr></thead>
+              <thead><tr style={{ background: E.sunk }}>{['#', 'Name', 'Channel', 'Price', 'Landed', 'Margin', 'Trend', 'Conf.'].map((h) => <th key={h} style={{ textAlign: 'left', padding: '6px 8px', color: E.faint, fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>)}</tr></thead>
               <tbody>
                 {parsed.rows.slice(0, 60).map((r, i) => (
-                  <tr key={i} style={{ borderTop: '1px solid #f3f4f6' }}>
+                  <tr key={i} style={{ borderTop: '1px solid var(--border)' }}>
                     <td style={{ padding: '6px 8px', fontFamily: 'var(--font-mono)' }}>{r.rank ?? '—'}</td>
                     <td style={{ padding: '6px 8px', color: E.text, fontWeight: 600 }}>{r.name}</td>
                     <td style={{ padding: '6px 8px' }}>{CHANNELS.find((c) => c.id === r.channel)?.short}</td>

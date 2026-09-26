@@ -2,10 +2,10 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { Brand, StepDef, StepState, StepStatus } from '../../../data/ecom';
 import { STEPS, stepState, stepStatus, nextStep, doneSteps, validate, money, ago } from '../../../data/ecom';
-import { Drawer, E, Metric, TeachingEmpty, Section, HealthBadge, Badge, ProgressRing, btn, field, label } from './ecomShared';
+import { Drawer, E, Metric, TeachingEmpty, Section, HealthBadge, Badge, ProgressRing, btn, field, label, tint } from './ecomShared';
 
 const STATUS_LABEL: Record<StepStatus, string> = { todo: 'To do', in_progress: 'In progress', waiting: 'Waiting on you', done: 'Done' };
-const STATUS_COLOR: Record<StepStatus, string> = { todo: '#9ca3af', in_progress: '#2563eb', waiting: '#b45309', done: '#16a34a' };
+const STATUS_COLOR: Record<StepStatus, string> = { todo: E.faint, in_progress: E.blue, waiting: E.amber, done: E.green };
 
 interface Props {
   brand: Brand | null;
@@ -94,7 +94,7 @@ function StepCard({ brand, def, open, onToggle, onSave }: { brand: Brand; def: S
         <span style={{ color: E.faint, fontSize: 12 }}>{open ? '▴' : '▾'}</span>
       </div>
       {open && (
-        <div style={{ padding: '0 14px 14px', borderTop: '1px solid #f3f4f6' }}>
+        <div style={{ padding: '0 14px 14px', borderTop: '1px solid var(--border)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginTop: 12 }}>
             <div>
               <div style={label}>Workers do</div>
@@ -106,7 +106,7 @@ function StepCard({ brand, def, open, onToggle, onSave }: { brand: Brand; def: S
             </div>
           </div>
           {def.hardStop && (
-            <div style={{ marginTop: 10, padding: '8px 12px', border: `1px solid ${E.red}`, borderRadius: 'var(--radius-sm)', background: '#fef2f2', fontSize: 'var(--text-body)', color: E.red }}>
+            <div style={{ marginTop: 10, padding: '8px 12px', border: `1px solid ${E.red}`, borderRadius: 'var(--radius-sm)', background: tint(E.red, 10), fontSize: 'var(--text-body)', color: E.red }}>
               <strong>Hard stop.</strong> {def.hardStop}
             </div>
           )}
@@ -131,7 +131,7 @@ function StepCard({ brand, def, open, onToggle, onSave }: { brand: Brand; def: S
           </div>
 
           {v && (
-            <div style={{ marginTop: 12, ...E.card, padding: 12, background: v.pass ? '#f0fdf4' : '#fffbeb', borderColor: v.pass ? '#bbf7d0' : '#fde68a' }}>
+            <div style={{ marginTop: 12, ...E.card, padding: 12, background: v.pass ? tint(E.green, 10) : tint(E.amber, 10), borderColor: v.pass ? tint(E.green, 35) : tint(E.amber, 35) }}>
               <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'baseline' }}>
                 <Metric label="Landed cost" value={money(v.landed)} confidence="estimate" />
                 <Metric label="Price ÷ landed" value={`${v.multiple.toFixed(1)}×`} confidence="estimate" />

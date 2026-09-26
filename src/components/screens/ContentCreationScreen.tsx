@@ -21,7 +21,7 @@ import { useAccountAudits } from '../../data/useAccountAudits';
 import AccountsTab from './content/AccountsTab';
 import PlanTab from './content/PlanTab';
 import WorkersTab from './ecom/WorkersTab';
-import { Pill, TeachingEmpty, E, btn } from './ecom/ecomShared';
+import { Pill, TeachingEmpty, E, btn, panel } from './ecom/ecomShared';
 import { useSocialAccounts, useContentItems } from '../../data/useContentEngine';
 
 type EngineTab = 'accounts' | 'plan' | 'studio' | 'inspiration' | 'workers' | 'growth';
@@ -33,7 +33,7 @@ const ENGINE_TABS: { id: EngineTab; label: string; icon: string }[] = [
   { id: 'workers', label: 'Workers', icon: '🤖' },
   { id: 'growth', label: 'Growth plans', icon: '📈' },
 ];
-const enginePanel: CSSProperties = { background: E.bg, borderRadius: 'var(--radius-3xl)', border: '1px solid var(--border)', fontFamily: 'Inter, sans-serif', color: '#111', padding: '1.25rem', marginTop: 16 };
+const enginePanel: CSSProperties = { ...panel, marginTop: 16 };
 
 interface Props {
   homeHeadStyle: CSSProperties;

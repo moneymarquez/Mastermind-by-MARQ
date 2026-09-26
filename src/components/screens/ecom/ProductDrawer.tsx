@@ -57,13 +57,13 @@ export default function ProductDrawer({ product: p, snapshots, onClose, onSave, 
   const ta: CSSProperties = { ...field, minHeight: 64, resize: 'vertical' };
   return (
     <Drawer open onClose={onClose} width={680}
-      title={<span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>{p.rank != null && <Badge color="#111827">#{p.rank}</Badge>}{p.name}</span>}
+      title={<span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>{p.rank != null && <Badge color={E.text}>#{p.rank}</Badge>}{p.name}</span>}
       subtitle={<>{ch?.label} · {p.category ?? 'uncategorised'} · as of {ago(p.as_of)} · <ConfidenceBadge c={p.confidence} /></>}
       actions={<button style={{ ...btn('ghost'), padding: '6px 10px' }} onClick={() => onToggleWatch(p)} title="Watch">{p.watched ? '★' : '☆'}</button>}
     >
       {/* Snapshot */}
       <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
-        {p.images.length === 0 ? <div style={{ width: 160, height: 120, borderRadius: 10, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: E.faint, fontSize: 12, flexShrink: 0 }}>No photo — add image_url</div>
+        {p.images.length === 0 ? <div style={{ width: 160, height: 120, borderRadius: 10, background: E.border, display: 'flex', alignItems: 'center', justifyContent: 'center', color: E.faint, fontSize: 12, flexShrink: 0 }}>No photo — add image_url</div>
           : p.images.map((u) => <a key={u} href={u} target="_blank" rel="noopener noreferrer" style={{ flex: '0 0 auto' }}><img src={u} alt="" loading="lazy" style={{ height: 140, borderRadius: 10, border: `1px solid ${E.border}`, display: 'block' }} /></a>)}
       </div>
       <div style={{ ...E.card, padding: 14, marginTop: 12, display: 'flex', gap: 18, flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -130,7 +130,7 @@ export default function ProductDrawer({ product: p, snapshots, onClose, onSave, 
         <div style={{ marginTop: 18 }}><TeachingEmpty what="Research fills the buyer, the angle and the money math." worker="Audience Analyst" connection="Anthropic API key" phase={3} /></div>
       )}
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap', alignItems: 'center', position: 'sticky', bottom: 0, background: '#fafafa', padding: '10px 0' }}>
+      <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap', alignItems: 'center', position: 'sticky', bottom: 0, background: E.bg, padding: '10px 0' }}>
         <button style={{ ...btn('ghost'), opacity: dirty && !saving ? 1 : 0.6 }} disabled={!dirty || saving} onClick={save}>{saving ? 'Saving…' : 'Save'}</button>
         <button style={{ ...btn('primary'), opacity: building ? 0.6 : 1 }} disabled={building} onClick={async () => { setBuilding(true); await onBuildBrand(p); setBuilding(false); }}>{building ? 'Creating…' : 'Build a brand from this'}</button>
         {p.source_url && <a href={p.source_url} target="_blank" rel="noopener noreferrer" style={{ ...btn('ghost'), textDecoration: 'none' }}>Source ↗</a>}

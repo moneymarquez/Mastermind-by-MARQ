@@ -45,12 +45,12 @@ export const SCRIPT_CHANNELS: { id: ScriptChannel; label: string; icon: string }
 
 /** The six funnel buckets every touch lands in, in funnel order. */
 export const TOUCH_OUTCOMES: { id: TouchOutcome; label: string; color: string; short: string }[] = [
-  { id: 'no_answer', label: 'No answer', short: 'No ans.', color: '#6b7280' },
-  { id: 'answered', label: 'Answered', short: 'Answered', color: '#2563eb' },
-  { id: 'conversation', label: 'Conversation', short: 'Convo', color: '#7c3aed' },
-  { id: 'meeting', label: 'Meeting booked', short: 'Meeting', color: '#16a34a' },
-  { id: 'closed', label: 'Closed', short: 'Closed', color: '#15803d' },
-  { id: 'not_interested', label: 'Not interested', short: 'Not int.', color: '#ef4444' },
+  { id: 'no_answer', label: 'No answer', short: 'No ans.', color: 'var(--text-tertiary)' },
+  { id: 'answered', label: 'Answered', short: 'Answered', color: 'var(--accent)' },
+  { id: 'conversation', label: 'Conversation', short: 'Convo', color: 'var(--accent-strong)' },
+  { id: 'meeting', label: 'Meeting booked', short: 'Meeting', color: 'var(--client-accent)' },
+  { id: 'closed', label: 'Closed', short: 'Closed', color: 'var(--success)' },
+  { id: 'not_interested', label: 'Not interested', short: 'Not int.', color: 'var(--danger)' },
 ];
 export const OUTCOME_LABEL: Record<TouchOutcome, string> = Object.fromEntries(TOUCH_OUTCOMES.map((o) => [o.id, o.label])) as Record<TouchOutcome, string>;
 export const OUTCOME_COLOR: Record<TouchOutcome, string> = Object.fromEntries(TOUCH_OUTCOMES.map((o) => [o.id, o.color])) as Record<TouchOutcome, string>;

@@ -37,7 +37,7 @@ import { supabase } from '../../lib/supabase';
 import CampaignsHome from './marketing/CampaignsHome';
 import ScriptsTab from './marketing/ScriptsTab';
 import WorkersTab from './ecom/WorkersTab';
-import { Pill, TeachingEmpty, E } from './ecom/ecomShared';
+import { Pill, TeachingEmpty, E, panel } from './ecom/ecomShared';
 
 type EngineTab = 'campaigns' | 'scripts' | 'inbound' | 'lists' | 'workers';
 const ENGINE_TABS: { id: EngineTab; label: string; icon: string }[] = [
@@ -748,4 +748,4 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
   );
 }
 
-const enginePanel: CSSProperties = { background: E.bg, borderRadius: 'var(--radius-3xl)', border: '1px solid var(--border)', fontFamily: 'Inter, sans-serif', color: '#111', padding: '1.25rem', marginTop: 16 };
+const enginePanel: CSSProperties = { ...panel, marginTop: 16 };

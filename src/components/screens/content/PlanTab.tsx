@@ -4,7 +4,7 @@ import type { useContentItems, useSocialAccounts } from '../../../data/useConten
 import type { ContentItem, Format, ItemStatus, SocialAccount } from '../../../data/contentEngine';
 import { STATUSES, STATUS, FORMATS, PLATFORM, weekDays, weekLabel, dayLabel, nextStatus, avgViews30, latestMetrics, gradePost, GRADE_COLOR } from '../../../data/contentEngine';
 import { dateStr, addDaysStr } from '../../../data/time';
-import { E, Badge, Drawer, TeachingEmpty, btn, field, label, useIsMobile } from '../ecom/ecomShared';
+import { E, Badge, Drawer, TeachingEmpty, btn, field, label, useIsMobile, tint } from '../ecom/ecomShared';
 
 type ItemsApi = ReturnType<typeof useContentItems>;
 type AccountsApi = ReturnType<typeof useSocialAccounts>;
@@ -31,7 +31,7 @@ export default function PlanTab({ items, accounts, newOpen, onCloseNew }: Props)
   const goal = accountId === 'all' ? accounts.accounts.reduce((s, a) => s + a.posts_per_week_goal, 0) : accounts.accounts.find((a) => a.id === accountId)?.posts_per_week_goal ?? 0;
   const acct = (id: string | null) => accounts.accounts.find((a) => a.id === id) ?? null;
 
-  const dayCol: CSSProperties = { background: '#fff', border: '1px solid #f3f4f6', borderRadius: 'var(--radius-md)', padding: 8, display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 };
+  const dayCol: CSSProperties = { background: E.surface, border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: 8, display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 };
 
   return (
     <div>
@@ -61,7 +61,7 @@ export default function PlanTab({ items, accounts, newOpen, onCloseNew }: Props)
           const isToday = d === today;
           const cards = byDay(d);
           return (
-            <div key={d} style={{ ...dayCol, borderColor: isToday ? E.green : '#f3f4f6', background: d < today ? '#fafafa' : '#fff' }}>
+            <div key={d} style={{ ...dayCol, borderColor: isToday ? E.green : E.border, background: d < today ? E.bg : E.surface }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                 <span style={{ ...label, color: isToday ? E.green : E.faint }}>{dow}</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: isToday ? E.green : E.text }}>{day}</span>
@@ -69,7 +69,7 @@ export default function PlanTab({ items, accounts, newOpen, onCloseNew }: Props)
                 <button style={{ ...btn('ghost'), padding: '2px 8px', fontSize: 12 }} onClick={() => setNewFor(d)} aria-label={`Add for ${d}`}>＋</button>
               </div>
               {cards.map((i) => <SlotCard key={i.id} i={i} a={acct(i.account_id)} onOpen={() => setOpenId(i.id)} />)}
-              {cards.length === 0 && !mobile && <div style={{ fontSize: 11, color: '#d1d5db', textAlign: 'center', padding: '10px 0' }}>—</div>}
+              {cards.length === 0 && !mobile && <div style={{ fontSize: 11, color: E.faint, textAlign: 'center', padding: '10px 0' }}>—</div>}
             </div>
           );
         })}
@@ -93,8 +93,8 @@ export default function PlanTab({ items, accounts, newOpen, onCloseNew }: Props)
 function SlotCard({ i, a, onOpen }: { i: ContentItem; a: SocialAccount | null; onOpen: () => void }) {
   const st = STATUS[i.status];
   return (
-    <div onClick={onOpen} style={{ border: '1px solid #f3f4f6', borderLeft: `3px solid ${st.color}`, borderRadius: 8, padding: '6px 8px', cursor: 'pointer', background: '#fff', display: 'flex', gap: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
-      {i.thumbnail_url ? <img src={i.thumbnail_url} alt="" style={{ width: 34, height: 44, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} /> : <div style={{ width: 34, height: 44, borderRadius: 4, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{FORMAT_ICON[i.format]}</div>}
+    <div onClick={onOpen} style={{ border: '1px solid var(--border)', borderLeft: `3px solid ${st.color}`, borderRadius: 8, padding: '6px 8px', cursor: 'pointer', background: E.surface, display: 'flex', gap: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+      {i.thumbnail_url ? <img src={i.thumbnail_url} alt="" style={{ width: 34, height: 44, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} /> : <div style={{ width: 34, height: 44, borderRadius: 4, background: E.border, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{FORMAT_ICON[i.format]}</div>}
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: E.text, lineHeight: 1.25, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{i.concept}</div>
         {i.hooks[0] && <div style={{ fontSize: 11, color: E.muted, lineHeight: 1.25, marginTop: 2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>“{i.hooks[0]}”</div>}
@@ -160,7 +160,7 @@ function ItemDrawer({ items, accounts, item, defaultDate, defaultAccount, onClos
           {STATUSES.map((s, idx) => {
             const cur = STATUSES.findIndex((x) => x.id === item.status);
             const done = idx <= cur;
-            return <button key={s.id} onClick={() => items.update(item.id, { status: s.id as ItemStatus })} style={{ ...btn('ghost'), padding: '4px 10px', fontSize: 12, background: done ? s.color : '#fff', color: done ? '#fff' : E.muted, border: done ? 'none' : `1px solid ${E.border}` }}>{s.label}</button>;
+            return <button key={s.id} onClick={() => items.update(item.id, { status: s.id as ItemStatus })} style={{ ...btn('ghost'), padding: '4px 10px', fontSize: 12, background: done ? tint(s.color, 20) : 'transparent', color: done ? s.color : E.muted, border: `1px solid ${done ? s.color : E.border}` }}>{s.label}</button>;
           })}
           {nextStatus(item.status) && <button style={{ ...btn('primary'), padding: '4px 10px', fontSize: 12, marginLeft: 'auto' }} onClick={advance}>{nextStatus(item.status) === 'posted' ? 'Mark posted' : `→ ${STATUS[nextStatus(item.status)!].label}`}</button>}
         </div>
@@ -179,7 +179,7 @@ function ItemDrawer({ items, accounts, item, defaultDate, defaultAccount, onClos
       {post && (
         <div style={{ ...E.card, padding: 12, marginBottom: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ fontWeight: 600, color: E.text }}>Published {new Date(post.posted_at).toLocaleDateString()}</span>
-          {post.url && <a href={post.url} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', fontSize: 13 }}>open</a>}
+          {post.url && <a href={post.url} target="_blank" rel="noopener noreferrer" style={{ color: E.blue, fontSize: 13 }}>open</a>}
           {grade ? <Badge color={GRADE_COLOR[grade.grade]} title={grade.reason}>{grade.grade}/4 · {grade.reason}</Badge> : <span style={{ fontSize: 12, color: E.faint }}>Grade appears once the post has views and the account has a 30-day average — update numbers from the account.</span>}
         </div>
       )}

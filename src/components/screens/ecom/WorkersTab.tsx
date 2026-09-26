@@ -14,18 +14,18 @@ export default function WorkersTab({ domain = 'ecom', phaseLabel = 'Phase' }: { 
         {list.map((w) => (
           <div key={w.key} style={{ ...E.card, padding: 14, display: 'flex', flexDirection: 'column', gap: 8, opacity: 0.85 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#d1d5db', flexShrink: 0 }} title="Off" />
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: E.faint, flexShrink: 0 }} title="Off" />
               <span style={{ fontWeight: 700, color: E.text, fontSize: 'var(--text-body)', flex: 1 }}>{w.name}</span>
-              {w.key === 'orchestrator' && <Badge color="#7c3aed">Brain</Badge>}
+              {w.key === 'orchestrator' && <Badge color={E.violet}>Brain</Badge>}
             </div>
             <div style={{ fontSize: 'var(--text-body)', color: E.muted, lineHeight: 1.45 }}>{w.role}</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <Badge color="#2563eb">{w.model}</Badge>
-              <Badge color="#6b7280">{AUTONOMY_LABEL[0]}</Badge>
-              <Badge color="#b45309">{w.domain === 'all' ? 'Phase' : phaseLabel} {w.phase}</Badge>
+              <Badge color={E.blue}>{w.model}</Badge>
+              <Badge color={E.faint}>{AUTONOMY_LABEL[0]}</Badge>
+              <Badge color={E.amber}>{w.domain === 'all' ? 'Phase' : phaseLabel} {w.phase}</Badge>
             </div>
             {w.tools.length > 0 && <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>Tools: {w.tools.join(', ')}</div>}
-            <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 8, display: 'flex', gap: 12, fontSize: 'var(--text-caption)', color: E.faint }}>
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8, display: 'flex', gap: 12, fontSize: 'var(--text-caption)', color: E.faint }}>
               <span><span style={label}>Today</span> 0</span>
               <span><span style={label}>Approval</span> —</span>
               <span><span style={label}>Cost</span> $0.00</span>

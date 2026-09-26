@@ -45,12 +45,12 @@ export const OWNERS: { id: Owner; label: string }[] = [
   { id: 'client', label: 'Client' },
 ];
 export const STATUSES: { id: ItemStatus; label: string; color: string }[] = [
-  { id: 'idea', label: 'Idea', color: '#6b7280' },
-  { id: 'script', label: 'Script', color: '#2563eb' },
-  { id: 'filmed', label: 'Filmed', color: '#7c3aed' },
-  { id: 'edited', label: 'Edited', color: '#ca8a04' },
-  { id: 'approved', label: 'Approved', color: '#16a34a' },
-  { id: 'posted', label: 'Posted', color: '#15803d' },
+  { id: 'idea', label: 'Idea', color: 'var(--text-tertiary)' },
+  { id: 'script', label: 'Script', color: 'var(--accent)' },
+  { id: 'filmed', label: 'Filmed', color: 'var(--accent-strong)' },
+  { id: 'edited', label: 'Edited', color: 'var(--warning)' },
+  { id: 'approved', label: 'Approved', color: 'var(--client-accent)' },
+  { id: 'posted', label: 'Posted', color: 'var(--success)' },
 ];
 export const STATUS = Object.fromEntries(STATUSES.map((s) => [s.id, s])) as Record<ItemStatus, (typeof STATUSES)[number]>;
 export const FORMATS: { id: Format; label: string }[] = [
@@ -102,7 +102,7 @@ export function gradePost(views: number | null | undefined, avg: number | null):
   if (r >= 0.5) return { grade: 2, reason: `around average (${Math.round(r * 100)}%)` };
   return { grade: 1, reason: `${Math.round(r * 100)}% of average — below half` };
 }
-export const GRADE_COLOR: Record<number, string> = { 1: '#dc2626', 2: '#ca8a04', 3: '#16a34a', 4: '#15803d' };
+export const GRADE_COLOR: Record<number, string> = { 1: 'var(--danger)', 2: 'var(--warning)', 3: 'var(--client-accent)', 4: 'var(--success)' };
 
 /** Followers now vs. the snapshot at (or just before) 30 days ago. With
  *  no snapshot that old, the earliest one stands in — but a single point
@@ -138,7 +138,7 @@ export function accountHealth(posts: Pick<SocialPost, 'posted_at'>[], change: { 
   return 'steady';
 }
 export const HEALTH_LABEL: Record<AccountHealth, string> = { new: 'New', growing: 'Growing', steady: 'Steady', quiet: 'Quiet', declining: 'Declining' };
-export const HEALTH_COLOR: Record<AccountHealth, string> = { new: '#2563eb', growing: '#16a34a', steady: '#6b7280', quiet: '#f59e0b', declining: '#dc2626' };
+export const HEALTH_COLOR: Record<AccountHealth, string> = { new: 'var(--accent)', growing: 'var(--success)', steady: 'var(--text-tertiary)', quiet: 'var(--warning)', declining: 'var(--danger)' };
 
 /** Best post of the current week by views. */
 export function bestPostThisWeek(posts: SocialPost[], metricsByPost: Record<string, PostMetrics[]>, now = new Date()): { post: SocialPost; views: number } | null {

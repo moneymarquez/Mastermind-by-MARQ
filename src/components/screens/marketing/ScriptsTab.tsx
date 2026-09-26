@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import type { Audience, Script, ScriptChannel, Tone, Venture } from '../../../data/mktEngine';
 import { AUDIENCES, PACKAGES, SCRIPT_CHANNELS, TONES, VENTURES, funnelStats, diagnoseCalls, OUTCOME_LABEL } from '../../../data/mktEngine';
 import { useScripts, useTouches } from '../../../data/useMktEngine';
-import { E, Badge, Drawer, Metric, Pill, TeachingEmpty, btn, field, label } from '../ecom/ecomShared';
+import { E, Badge, Drawer, Metric, Pill, TeachingEmpty, btn, field, label , panel } from '../ecom/ecomShared';
 import DialerMode from './DialerMode';
 
 const pct = (n: number | null) => (n == null ? '—' : `${Math.round(n * 100)}%`);
@@ -35,11 +35,11 @@ export default function ScriptsTab() {
     && (tone === 'all' || s.tone === tone) && (channel === 'all' || s.channel === channel) && (showRetired || s.active));
   const siblingsOf = (s: Script) => api.scripts.filter((x) => x.active && x.id !== s.id && x.venture === s.venture && x.audience === s.audience && x.channel === s.channel);
 
-  const panel: CSSProperties = { background: E.bg, borderRadius: 'var(--radius-3xl)', border: '1px solid var(--border)', fontFamily: 'Inter, sans-serif', color: '#111', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: 14 };
+  const panelStyle: CSSProperties = { ...panel, display: 'flex', flexDirection: 'column', gap: 14 };
   const pkg = PACKAGES.find((p) => p.audience === audience);
 
   return (
-    <div style={panel}>
+    <div style={panelStyle}>
       {/* The raw funnel, so the "why" behind a win rate is visible before the Scorer exists (M4). */}
       <div style={{ ...E.card, padding: 14 }}>
         <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -98,16 +98,16 @@ export default function ScriptsTab() {
               <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span>{ch?.icon}</span>
                 <span style={{ fontWeight: 700, color: E.text, flex: 1, minWidth: 0 }}>{s.title}</span>
-                <Badge color="#6b7280">v{s.version}</Badge>
+                <Badge color={E.faint}>v{s.version}</Badge>
                 {!s.active && <Badge color={E.amber}>retired</Badge>}
               </div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                <Badge color="#2563eb">{tn?.label}</Badge>
-                <Badge color="#7c3aed">{s.audience === 'any' ? 'Any audience' : AUDIENCES.find((a) => a.id === s.audience)?.label}</Badge>
-                {s.principle && <Badge color="#0f766e" title="Psychology principle">{s.principle}</Badge>}
+                <Badge color={E.blue}>{tn?.label}</Badge>
+                <Badge color={E.violet}>{s.audience === 'any' ? 'Any audience' : AUDIENCES.find((a) => a.id === s.audience)?.label}</Badge>
+                {s.principle && <Badge color={E.teal} title="Psychology principle">{s.principle}</Badge>}
               </div>
               <div style={{ fontSize: 'var(--text-body)', color: E.muted, lineHeight: 1.45, whiteSpace: 'pre-wrap', display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{s.body}</div>
-              <div style={{ display: 'flex', gap: 14, borderTop: '1px solid #f3f4f6', paddingTop: 8, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 14, borderTop: '1px solid var(--border)', paddingTop: 8, flexWrap: 'wrap' }}>
                 <Metric label="Used" value={String(st.attempts)} />
                 <Metric label="Reached" value={String(st.reached)} />
                 <Metric label="Win rate" value={pct(st.winRate)} />
