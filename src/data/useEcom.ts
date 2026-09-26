@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Brand, BrandSteps, StepState } from './ecom';
 import { nextStep } from './ecom';
+import type { Product, Snapshot, ImportRow } from './ecomProducts';
 
 /** Brands: the e-commerce home screen's rows. Own rows via RLS; every
  *  write stamps last_activity_at because health is derived from it. */
@@ -132,4 +133,71 @@ export function useApprovals() {
     await load();
   };
   return { approvals, alerts, loading, reload: load, decide, markAlertRead };
+}
+
+// ── Product Sheets (Phase 2) ───────────────────────────────────────────
+
+/** Products across every channel plus their rank snapshots. Imports
+ *  upsert by (channel, name) so re-importing the same sheet grows the
+ *  rank history instead of duplicating rows. */
+export function useEcomProducts() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [snapshots, setSnapshots] = useState<Record<string, Snapshot[]>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const load = useCallback(async () => {
+    const [p, s] = await Promise.all([
+      supabase.from('ecom_products').select('*').order('rank', { ascending: true, nullsFirst: false }),
+      supabase.from('ecom_product_snapshots').select('*').order('captured_at', { ascending: true }).limit(5000),
+    ]);
+    if (p.error) setError(p.error.message); else setError('');
+    setProducts((p.data ?? []) as Product[]);
+    const by: Record<string, Snapshot[]> = {};
+    for (const row of (s.data ?? []) as Snapshot[]) (by[row.product_id] ??= []).push(row);
+    setSnapshots(by);
+    setLoading(false);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const importRows = async (rows: ImportRow[], source: string): Promise<{ inserted: number; updated: number }> => {
+    let inserted = 0, updated = 0;
+    for (const r of rows) {
+      const existing = products.find((p) => p.channel === r.channel && p.name.trim().toLowerCase() === r.name.trim().toLowerCase());
+      const base = {
+        name: r.name, category: r.category, images: r.images, channel: r.channel, rank: r.rank, sell_price: r.sell_price, supplier_cost: r.supplier_cost,
+        landed_cost: r.landed_cost, margin_pct: r.margin_pct, days_trending: r.days_trending, velocity: r.velocity, score: r.score,
+        content_difficulty: r.content_difficulty, source, source_url: r.source_url, as_of: r.as_of, confidence: r.confidence, updated_at: new Date().toISOString(),
+      };
+      let id = existing?.id ?? null;
+      if (existing) {
+        const detail = { ...existing.detail, ...r.detail };
+        const { error: err } = await supabase.from('ecom_products').update({ ...base, detail }).eq('id', existing.id);
+        if (err) { setError(err.message); continue; }
+        updated++;
+      } else {
+        const { data, error: err } = await supabase.from('ecom_products').insert({ ...base, detail: r.detail }).select('id').single();
+        if (err) { setError(err.message); continue; }
+        id = (data as { id: string }).id; inserted++;
+      }
+      if (id) await supabase.from('ecom_product_snapshots').insert({ product_id: id, channel: r.channel, rank: r.rank, price: r.sell_price, captured_at: r.as_of });
+    }
+    await load();
+    return { inserted, updated };
+  };
+
+  const updateProduct = async (id: string, patch: Partial<Product>) => {
+    const { error: err } = await supabase.from('ecom_products').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id);
+    if (err) setError(err.message);
+    await load();
+  };
+  const toggleWatch = async (p: Product) => updateProduct(p.id, { watched: !p.watched });
+  const removeProduct = async (id: string) => { await supabase.from('ecom_products').delete().eq('id', id); await load(); };
+
+  return { products, snapshots, loading, error, reload: load, importRows, updateProduct, toggleWatch, removeProduct };
+}
+
+/** "Build a brand from this": the brand ↔ product link the stepper reads. */
+export async function linkProductToBrand(brandId: string, productId: string): Promise<void> {
+  await supabase.from('ecom_brand_products').upsert({ brand_id: brandId, product_id: productId, stage: 'testing' }, { onConflict: 'brand_id,product_id' });
 }

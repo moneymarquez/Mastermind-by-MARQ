@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { useEcomBrands, useEcomCounters, useApprovals } from '../../../data/useEcom';
 import { useClients } from '../../../data/useClients';
 import { money } from '../../../data/ecom';
+import type { Brand } from '../../../data/ecom';
 import { E, Pill, TeachingEmpty, Drawer, Badge, btn, field } from './ecomShared';
 import BrandsTab from './BrandsTab';
 import WorkersTab from './WorkersTab';
@@ -72,7 +73,7 @@ export default function EcomScreen({ homeHeadStyle, homeSubStyle }: Props) {
 
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '1.5rem' }}>
           {tab === 'brands' && <BrandsTab api={brands} clients={clients.clients} search={search} openBrandId={openBrandId} onOpenBrand={setOpenBrandId} newBrandOpen={newBrandOpen} onCloseNewBrand={() => setNewBrandOpen(false)} />}
-          {tab === 'sheets' && <ProductSheetsTab search={search} onBuildBrand={async (input) => { const b = await brands.createBrand(input); if (b) { setTab('brands'); setOpenBrandId(b.id); } }} />}
+          {tab === 'sheets' && <ProductSheetsTab search={search} onBuildBrand={async (input) => { const b = await brands.createBrand({ ...input, steps: input.steps as Brand['steps'] }); if (b) { setTab('brands'); setOpenBrandId(b.id); } return b?.id ?? null; }} />}
           {tab === 'workers' && <WorkersTab />}
           {tab === 'performance' && (
             <TeachingEmpty what="Performance — revenue, funnel by stage, flags and the Sunday checkup — fills from Shopify orders and post metrics." worker="Analytics + the Orchestrator's read loop" connection="Shopify custom app token, Instagram / TikTok" phase={7} />
