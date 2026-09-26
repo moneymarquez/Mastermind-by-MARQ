@@ -25,6 +25,7 @@ import MacrosScreen from './components/screens/MacrosScreen';
 import GoalsScreen from './components/screens/GoalsScreen';
 import MentalHealthScreen from './components/screens/MentalHealthScreen';
 import BrainScreen from './components/screens/brain/BrainScreen';
+import EcomScreen from './components/screens/ecom/EcomScreen';
 import ScalingStartScreen from './components/screens/ScalingStartScreen';
 import ClientDeliveryScreen from './components/screens/ClientDeliveryScreen';
 import SupportInboxScreen from './components/screens/SupportInboxScreen';
@@ -75,7 +76,7 @@ import Intro from './components/fx/Intro';
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
-  'notification-settings', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings',
+  'notification-settings', 'streaming', 'stocks', 'leadflow', 'ecommerce', 'account-settings', 'prompt-voice-settings',
   'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access',
 ];
 
@@ -519,6 +520,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'leadflow' && (
           <LeadFlowScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
+        {state.screen === 'ecommerce' && (
+          <EcomScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {state.screen === 'account-settings' && (

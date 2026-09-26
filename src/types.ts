@@ -9,6 +9,7 @@ export type Screen =
   | 'goals'
   | 'mental'
   | 'brain'
+  | 'ecommerce'
   | 'scaling-start'
   | 'delivery'
   | 'support-inbox'

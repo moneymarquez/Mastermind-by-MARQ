@@ -71,6 +71,7 @@ export const NAV_DATA: NavGroup[] = [
     items: [
       { id: 'stocks', label: 'Stocks', icon: 'ph-chart-line-up' },
       { id: 'streaming', label: 'Streaming', icon: 'ph-video-camera' },
+      { id: 'ecommerce', label: 'E-commerce', icon: 'ph-rocket-launch' },
     ],
   },
   {
