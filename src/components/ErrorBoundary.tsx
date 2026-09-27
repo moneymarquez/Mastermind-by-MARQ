@@ -9,7 +9,7 @@ import type { ErrorInfo, ReactNode } from 'react';
  *  ('mm:last-error') so it can be read back when you report it; Sentry
  *  replaces that in Phase 2. */
 interface Props { children: ReactNode; scope: 'app' | 'screen'; resetKey?: string; label?: string }
-interface State { error: Error | null }
+interface State { error: Error | null; key?: string }
 
 export function recordError(error: Error, where: string): void {
   console.error(`[${where}]`, error);
@@ -17,10 +17,13 @@ export function recordError(error: Error, where: string): void {
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
-  state: State = { error: null };
-  static getDerivedStateFromError(error: Error): State { return { error }; }
+  state: State = { error: null, key: this.props.resetKey };
+  static getDerivedStateFromError(error: Error): Partial<State> { return { error }; }
+  // Moving to another screen clears a screen-level error.
+  static getDerivedStateFromProps(props: Props, state: State): Partial<State> | null {
+    return props.resetKey !== state.key ? { error: null, key: props.resetKey } : null;
+  }
   componentDidCatch(error: Error, info: ErrorInfo) { recordError(error, `${this.props.scope}${this.props.label ? `:${this.props.label}` : ''} ${info.componentStack?.split('\n')[1]?.trim() ?? ''}`); }
-  componentDidUpdate(prev: Props) { if (this.state.error && prev.resetKey !== this.props.resetKey) this.setState({ error: null }); }
 
   render() {
     if (!this.state.error) return this.props.children;
