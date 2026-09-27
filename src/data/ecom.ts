@@ -259,6 +259,13 @@ export function workersFor(domain: Domain): WorkerDef[] {
  *  phase they arrive in (and a lights-off room in View Office). */
 export const LIVE_WORKERS = ['scout'];
 
+/** Longest a single playbook may be. Enforced in the editor, on save, and
+ *  when the orchestrator applies an edit. */
+export const PLAYBOOK_MAX_CHARS = 25000;
+/** Total playbook text one run loads (worker's own + its module's + the
+ *  cross-module ones). Room for three full playbooks. */
+export const PLAYBOOK_LOAD_BUDGET = 75000;
+
 export const AUTONOMY_LABEL: Record<number, string> = { 0: 'L0 · Draft', 1: 'L1 · Queue', 2: 'L2 · Act + notify' };
 
 // ── Connections (§11) ──────────────────────────────────────────────────

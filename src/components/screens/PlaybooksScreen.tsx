@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { usePlaybooks, STARTER_PLAYBOOKS } from '../../data/useEngine';
 import type { Playbook, PlaybookVersion } from '../../data/useEngine';
 import { E, Badge, Pill, TeachingEmpty, btn, field, label, panel, tint } from './ecom/ecomShared';
+import { PLAYBOOK_MAX_CHARS, PLAYBOOK_LOAD_BUDGET } from '../../data/ecom';
 
 interface Props { homeHeadStyle: CSSProperties; homeSubStyle: CSSProperties }
 const DOMAIN_LABEL: Record<string, string> = { all: 'Every module', ecom: 'E-commerce', content: 'Content', marketing: 'Marketing' };
@@ -62,13 +63,15 @@ function Editor({ p, api }: { p: Playbook; api: ReturnType<typeof usePlaybooks> 
         {p.change_reason && <span style={{ fontSize: 'var(--text-caption)', color: E.faint }}>last change: {p.change_reason}</span>}
       </div>
       {!p.body.trim() && hint && <TeachingEmpty what={`Not written yet. ${hint}`} worker="you — paste your notes; rough is fine" />}
-      <textarea style={{ ...field, minHeight: 320, resize: 'vertical', fontFamily: 'var(--font-mono)', fontSize: 12.5, lineHeight: 1.55 }} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Markdown. One rule per line works best: what to do, when, and why." />
+      <textarea maxLength={PLAYBOOK_MAX_CHARS} style={{ ...field, minHeight: 320, resize: 'vertical', fontFamily: 'var(--font-mono)', fontSize: 12.5, lineHeight: 1.55 }} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Markdown. One rule per line works best: what to do, when, and why." />
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         <input style={{ ...field, flex: '1 1 220px', width: 'auto' }} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why this change? (saved with the version)" />
-        <button style={btn('primary')} disabled={busy || !dirty || !reason.trim()} onClick={() => save(body, reason.trim())}>{busy ? 'Saving…' : `Save as v${p.body.trim() || p.version > 1 ? p.version + 1 : 1}`}</button>
+        <button style={btn('primary')} disabled={busy || !dirty || !reason.trim() || body.length > PLAYBOOK_MAX_CHARS} onClick={() => save(body, reason.trim())}>{busy ? 'Saving…' : `Save as v${p.body.trim() || p.version > 1 ? p.version + 1 : 1}`}</button>
         {dirty && <button style={btn('ghost')} onClick={() => setBody(p.body)}>Discard</button>}
       </div>
-      <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>{body.length.toLocaleString()} characters · workers load up to ~12,000 characters of playbooks per run.</div>
+      <div style={{ fontSize: 'var(--text-caption)', color: body.length >= PLAYBOOK_MAX_CHARS * 0.95 ? E.amber : E.faint }}>
+        <span style={{ fontFamily: 'var(--font-mono)' }}>{body.length.toLocaleString()} / {PLAYBOOK_MAX_CHARS.toLocaleString()}</span> characters · each run loads up to {PLAYBOOK_LOAD_BUDGET.toLocaleString()} characters across the worker's playbooks (about three full ones). Longer playbooks cost more per run.
+      </div>
 
       <div style={{ ...label, marginTop: 6 }}>History</div>
       {history.length === 0 && <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>No saved versions yet.</div>}

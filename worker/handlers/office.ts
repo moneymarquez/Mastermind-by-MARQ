@@ -13,7 +13,7 @@ import type { WorkerRow } from '../lib/engine';
 import { parseOrchestratorReply, applyPlaybookEdit, parseRoute, THREAD_SYSTEM, ROUTE_SYSTEM } from '../lib/office';
 import type { Proposal } from '../lib/office';
 import type { Channel } from '../../src/data/ecom';
-import { LIVE_WORKERS } from '../../src/data/ecom';
+import { LIVE_WORKERS, PLAYBOOK_MAX_CHARS, PLAYBOOK_LOAD_BUDGET } from '../../src/data/ecom';
 
 export interface OfficeEnv extends SbEnv { ANTHROPIC_API_KEY?: string }
 const LIVE = new Set(LIVE_WORKERS);
@@ -25,7 +25,7 @@ async function orchestrator(sb: Sb, userId: string): Promise<WorkerRow | null> {
 }
 
 async function workerPlaybooks(sb: Sb, userId: string, w: WorkerRow): Promise<{ text: string; names: string[] }> {
-  const text = await playbooksFor(sb, userId, w.domain === 'all' ? 'all' : w.domain, 8000, w.key);
+  const text = await playbooksFor(sb, userId, w.domain === 'all' ? 'all' : w.domain, PLAYBOOK_LOAD_BUDGET, w.key);
   const names = (await sb.get<{ name: string }>(`ai_playbooks?user_id=eq.${userId}&select=name`)).map((r) => r.name);
   return { text, names };
 }
@@ -84,6 +84,7 @@ export async function officeRoute(request: Request, env: OfficeEnv, path: string
         if (!pbRow) [pbRow] = await sb.insert<{ id: string; body: string; version: number; domain: string }>('ai_playbooks', { user_id: user.id, name: p.playbook, domain: w?.domain ?? 'all', body: '', version: 0 });
         if (pbRow.body.trim() && pbRow.version >= 1) await sb.insert('ai_playbook_versions', { user_id: user.id, playbook_id: pbRow.id, version: pbRow.version, body: pbRow.body, change_reason: 'before orchestrator edit' }, { upsert: 'playbook_id,version', ignore: true }).catch(() => {});
         const edit = applyPlaybookEdit(pbRow.body, p.before, p.after);
+        if (edit.body.length > PLAYBOOK_MAX_CHARS) return json({ error: `That edit would make ${p.playbook} ${edit.body.length.toLocaleString('en-US')} characters — over the ${PLAYBOOK_MAX_CHARS.toLocaleString('en-US')} limit. Trim the playbook first.` }, 400);
         const version = pbRow.version + 1;
         const reason = `${p.why || 'Orchestrator fix'} (from "Raise with orchestrator")`;
         await sb.patch('ai_playbooks', `id=eq.${pbRow.id}`, { body: edit.body, version, change_reason: reason, updated_at: new Date().toISOString() });

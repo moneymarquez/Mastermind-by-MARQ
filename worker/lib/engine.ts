@@ -3,7 +3,7 @@
 // ai_worker_runs row, every output lands in ai_approvals at L0, and every
 // "Send back" note is read back into that worker's next prompt. Claude calls
 // go through lib/ai.ts, which enforces the per-domain daily cap.
-import { WORKERS } from '../../src/data/ecom';
+import { WORKERS, PLAYBOOK_MAX_CHARS, PLAYBOOK_LOAD_BUDGET } from '../../src/data/ecom';
 import type { Channel } from '../../src/data/ecom';
 import type { ImportRow } from '../../src/data/ecomProducts';
 import { Sb, zonedNow } from './sb';
@@ -29,16 +29,20 @@ export async function ensureRoster(sb: Sb, userId: string): Promise<WorkerRow[]>
 /** Playbooks for the worker's domain plus the cross-domain ones (psychology).
  *  A worker's own playbook ("worker:<key>", written by View Office fixes)
  *  loads first, and only for that worker. */
-export async function playbooksFor(sb: Sb, userId: string, domain: string, max = 12000, workerKey?: string): Promise<string> {
+export async function playbooksFor(sb: Sb, userId: string, domain: string, max = PLAYBOOK_LOAD_BUDGET, workerKey?: string): Promise<string> {
   const all = await sb.get<{ name: string; body: string; version: number }>(`ai_playbooks?user_id=eq.${userId}&domain=in.(${domain},all)&order=name.asc&select=name,body,version`);
   const own = workerKey ? all.filter((r) => r.name === `worker:${workerKey}`) : [];
   const rows = [...own, ...all.filter((r) => !r.name.startsWith('worker:'))];
   let out = '';
   for (const r of rows) {
     if (!r.body.trim()) continue;
-    const block = `## ${r.name} (v${r.version})\n${r.body.trim()}\n\n`;
-    if (out.length + block.length > max) { out += `(${r.name} truncated for length)\n`; break; }
-    out += block;
+    // Each playbook whole up to its own limit; when the run's budget runs
+    // out, the last one is cut (and says so) rather than silently dropped.
+    const body = r.body.trim().slice(0, PLAYBOOK_MAX_CHARS);
+    const head = `## ${r.name} (v${r.version})\n`;
+    const room = max - out.length - head.length - 2;
+    if (room < 200) { out += `(${r.name} and later playbooks not loaded — over this run's ${max.toLocaleString('en-US')}-character budget)\n`; break; }
+    out += body.length <= room ? `${head}${body}\n\n` : `${head}${body.slice(0, room)}\n(…${r.name} cut here for length)\n\n`;
   }
   return out.trim();
 }
@@ -73,7 +77,7 @@ export async function runScout(apiKey: string | undefined, sb: Sb, userId: strin
   await sb.patch('ai_workers', `id=eq.${w.id}`, { status: 'running', current_task: `Scouting ${SCOUT_CHANNELS[channel].label} (top ${count})`, updated_at: new Date().toISOString() });
   const finishWorker = (status: 'idle' | 'failed') => sb.patch('ai_workers', `id=eq.${w.id}`, { status, current_task: null, updated_at: new Date().toISOString() }).catch(() => {});
   try {
-    const [playbooks, corrections, spent, cap] = await Promise.all([playbooksFor(sb, userId, 'ecom', 12000, 'scout'), correctionsFor(sb, userId, w.id), spentToday(sb, userId, 'ecom', z.date), capFor(sb, userId, 'ecom')]);
+    const [playbooks, corrections, spent, cap] = await Promise.all([playbooksFor(sb, userId, 'ecom', PLAYBOOK_LOAD_BUDGET, 'scout'), correctionsFor(sb, userId, w.id), spentToday(sb, userId, 'ecom', z.date), capFor(sb, userId, 'ecom')]);
     const res = await ask(apiKey, sb, {
       model: w.model, domain: 'ecom', userId, date: z.date, workerId: w.id, maxTokens: 6000,
       system: scoutSystem({ playbooks, corrections, budgetNote: `Budget: $${(cap - spent).toFixed(2)} of today's $${cap.toFixed(2)} e-commerce cap is left — use at most 5 searches.` }),

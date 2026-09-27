@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { api } from '../lib/api';
 import type { Domain } from './ecom';
+import { PLAYBOOK_MAX_CHARS } from './ecom';
 
 export interface WorkerRow { id: string; domain: string; key: string; name: string; role: string; model: string; autonomy_level: number; status: 'idle' | 'running' | 'failed' | 'disabled'; current_task: string | null; enabled: boolean; updated_at: string }
 export interface RunRow { id: string; worker_id: string | null; domain: string; status: 'queued' | 'running' | 'done' | 'failed'; input: Record<string, unknown>; output: Record<string, unknown>; summary: string | null; error: string | null; cost_usd: number; tokens_in: number; tokens_out: number; trigger: string; instructions: string | null; started_at: string | null; finished_at: string | null; created_at: string }
@@ -78,6 +79,7 @@ export function usePlaybooks() {
 
   /** Every save is a new version with its reason; the row holds the latest. */
   const save = async (p: Playbook, body: string, reason: string, threadId: string | null = null): Promise<boolean> => {
+    if (body.length > PLAYBOOK_MAX_CHARS) { setError(`Playbooks can be up to ${PLAYBOOK_MAX_CHARS.toLocaleString()} characters; this one is ${body.length.toLocaleString()}.`); return false; }
     const version = p.body.trim() || p.version > 1 ? p.version + 1 : 1;
     if (p.body.trim() && p.version === 1) {
       // Keep v1's text in history before it's replaced.
