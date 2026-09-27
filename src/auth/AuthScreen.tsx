@@ -247,8 +247,8 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
         .ap-h1 { font-size: 60px; line-height: .98; letter-spacing: -0.04em; font-weight: 600; margin: 0; text-wrap: balance; }
         .ap-h2 { font-size: 38px; line-height: 1.05; letter-spacing: -0.03em; font-weight: 600; margin: 0; text-wrap: balance; }
         .ap-navlinks { display: flex; gap: 4px; align-items: center; }
-        .ap-navlinks span { padding: 10px 14px; font-size: 14px; color: var(--mm-dim); cursor: pointer; }
-        .ap-navlinks span:hover { color: var(--mm-text); }
+        .ap-navlinks button { padding: 10px 14px; font: inherit; font-size: 14px; color: var(--mm-dim); cursor: pointer; background: none; border: none; }
+        .ap-navlinks button:hover { color: var(--mm-text); }
         .ap-module-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         .ap-preview-sidebar { display: none; }
         @media (min-width: 760px) { .ap-preview-sidebar { display: flex; } }
@@ -288,32 +288,38 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
           .only-desktop { display: none; }
           .only-mobile { display: block; }
         }
+        /* Bug inventory B-11: at phone width the nav held four items and
+           overlapped. Keep Log in, Client login and the mark. */
+        @media (max-width: 520px) {
+          .ap-nav { padding: 12px 16px !important; }
+          .ap-nav-right { gap: 10px !important; }
+          .ap-brand-text { display: none !important; }
+          .ap-brand { padding-left: 10px !important; }
+          .ap-brand img { height: 34px !important; }
+        }
       `}</style>
 
       {/* Nav — sticky, blurred, Menu pill + section links on the left,
           Log in + brand mark on the right. */}
       <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'var(--mm-bg-blur)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--mm-line)' }}>
-        <div className="ap-land" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 28px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 15px', borderRadius: 999, background: 'var(--mm-ink)', color: 'var(--mm-ink-text)', fontSize: 13.5, fontWeight: 600 }}>
-              <Icon name="list" size={16} />Menu
-            </div>
-            <div className="ap-navlinks">
-              <span onClick={() => document.getElementById('modules')?.scrollIntoView({ behavior: 'smooth' })}>Modules</span>
-              <span onClick={() => document.getElementById('nova')?.scrollIntoView({ behavior: 'smooth' })}>Nova</span>
-              <span onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}>Pricing</span>
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <span onClick={scrollToLogin} style={{ fontSize: 14, color: 'var(--mm-dim)', cursor: 'pointer' }}>Log in</span>
-            <div
+        <div className="ap-land ap-nav" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 28px' }}>
+          {/* The "Menu" pill that was here had no action — removed. */}
+          <nav className="ap-navlinks" aria-label="Sections">
+            <button type="button" onClick={() => document.getElementById('modules')?.scrollIntoView({ behavior: 'smooth' })}>Modules</button>
+            <button type="button" onClick={() => document.getElementById('nova')?.scrollIntoView({ behavior: 'smooth' })}>Nova</button>
+            <button type="button" onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}>Pricing</button>
+          </nav>
+          <div className="ap-nav-right" style={{ display: 'flex', alignItems: 'center', gap: 16, marginLeft: 'auto' }}>
+            <button type="button" onClick={scrollToLogin} style={{ fontSize: 14, color: 'var(--mm-dim)', cursor: 'pointer', background: 'none', border: 'none', padding: '12px 4px', font: 'inherit' }}>Log in</button>
+            <button
+              type="button"
               onClick={openClientLogin}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 999, border: '1px solid color-mix(in srgb, var(--client-accent) 40%, transparent)', fontSize: 13, color: 'var(--client-accent)', cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 40, padding: '8px 14px', borderRadius: 999, background: 'none', border: '1px solid color-mix(in srgb, var(--client-accent) 40%, transparent)', fontSize: 13, color: 'var(--client-accent)', cursor: 'pointer', whiteSpace: 'nowrap', font: 'inherit' }}
             >
               <Icon name="users" size={15} />Client login
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 16, borderLeft: '1px solid var(--mm-line)' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.05, textAlign: 'right' }}>
+            </button>
+            <div className="ap-brand" style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 16, borderLeft: '1px solid var(--mm-line)' }}>
+              <div className="ap-brand-text" style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.05, textAlign: 'right' }}>
                 <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.02em' }}>Masterminds</div>
                 <div style={{ fontSize: 8, letterSpacing: '0.3em', color: 'var(--mm-faint)', textTransform: 'uppercase' }}>by marq</div>
               </div>
@@ -396,7 +402,7 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
               <div style={{ fontSize: 13, color: 'var(--mm-faint)', textAlign: 'center' }}>
                 {mode === 'login' && (
                   <>No account?{' '}
-                    <span style={{ color: 'var(--mm-text)', borderBottom: '1px solid var(--mm-line2)', cursor: 'pointer' }} onClick={() => switchMode('signup')}>Start free</span>
+                    <button type="button" style={{ color: 'var(--mm-text)', cursor: 'pointer', background: 'none', border: 'none', textDecoration: 'underline', textUnderlineOffset: 3, padding: '8px 2px', font: 'inherit' }} onClick={() => switchMode('signup')}>Create an account</button>
                   </>
                 )}
                 {mode === 'signup' && (
