@@ -10,6 +10,8 @@ import type { SbEnv } from '../lib/sb';
 import { ask } from '../lib/ai';
 import { DESKS, composeDraft, fitSms, parseReply, twilioSignature, twiml, grade, HELP_TEXT, MAX_SMS } from '../lib/digestText';
 import type { Desk, DeskReport, DigestInput, ScheduleItem } from '../lib/digestText';
+import { m0Progress, M0_LABEL } from '../../src/data/stageZero';
+import type { M0Venture } from '../../src/data/stageZero';
 
 export interface DigestEnv extends SbEnv {
   ANTHROPIC_API_KEY?: string;
@@ -130,9 +132,8 @@ async function marketingDesk(sb: Sb, u: string, today: string): Promise<DeskRepo
   const [touches, scripts, m0] = await Promise.all([
     sb.get<{ outcome: string; script_id: string | null }>(`mkt_touches?user_id=eq.${u}&at=gte.${since}T00:00:00&select=outcome,script_id`),
     sb.get<{ id: string; title: string; tone: string }>(`mkt_scripts?user_id=eq.${u}&select=id,title,tone`),
-    sb.get<{ venture: string; done: boolean }>(`mkt_foundation?user_id=eq.${u}&select=venture,done`),
+    sb.get<{ venture: string; done: boolean; item_key: string }>(`mkt_foundation?user_id=eq.${u}&select=venture,done,item_key`),
   ]);
-  if (touches.length === 0 && scripts.length === 0 && m0.length === 0) return { desk: 'marketing', line: '', full: 'Marketing: no scripts or logged calls yet. Load the starter scripts in Marketing → Scripts.', setUp: false };
   const win = (o: string) => ['conversation', 'meeting', 'closed'].includes(o);
   const byTone: Record<string, { reached: number; wins: number }> = {};
   for (const t of touches) {
@@ -147,7 +148,9 @@ async function marketingDesk(sb: Sb, u: string, today: string): Promise<DeskRepo
   const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
   let line = `${touches.length} calls in 7d, ${reached} reached, ${wins} convos+`;
   if (ranked.length >= 2 && ranked[0][1].wins > ranked[1][1].wins) line = `${cap(ranked[0][0])} opener beat ${cap(ranked[1][0])} ${ranked[0][1].wins}:${ranked[1][1].wins} → use it`;
-  const m0Line = ['madebymarq', 'mastermind'].map((v) => { const rows = m0.filter((r) => r.venture === v); return rows.length ? `${v === 'madebymarq' ? 'MBM' : 'MM'} Stage Zero ${rows.filter((r) => r.done).length}/${rows.length}` : ''; }).filter(Boolean).join(' · ');
+  const m0Rows = m0.map((r) => ({ venture: r.venture as M0Venture, item_key: (r as { item_key?: string }).item_key ?? '', done: r.done }));
+  const m0Line = (['madebymarq', 'mastermind'] as M0Venture[]).map((v) => { const p = m0Progress(v, m0Rows); return `${M0_LABEL[v]} Stage Zero ${p.done}/${p.total}${p.complete ? ' ✓' : ''}`; }).join(' · ');
+  if (touches.length === 0) line = m0Line;
   const full = [`MARKETING — ${today}`, `Last 7 days: ${touches.length} touches, ${reached} reached, ${wins} conversations or better`, ranked.length ? `By tone: ${ranked.map(([k, v]) => `${k} ${v.wins}/${v.reached}`).join(', ')}` : 'By tone: not enough reached calls yet', m0Line ? `Foundation: ${m0Line}` : ''].filter(Boolean).join('\n');
   return { desk: 'marketing', line, full, setUp: true };
 }

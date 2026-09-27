@@ -36,12 +36,16 @@ import { useDialingQueue } from '../../data/useLeadflow';
 import { supabase } from '../../lib/supabase';
 import CampaignsHome from './marketing/CampaignsHome';
 import ScriptsTab from './marketing/ScriptsTab';
+import StageZeroTab from './marketing/StageZeroTab';
+import { useStageZero } from '../../data/useStageZero';
+import { m0LockMessage } from '../../data/stageZero';
 import OfficeView from '../office/OfficeView';
 import WorkersTab from './ecom/WorkersTab';
 import { Pill, TeachingEmpty, E, panel, btn } from './ecom/ecomShared';
 
-type EngineTab = 'campaigns' | 'scripts' | 'inbound' | 'lists' | 'workers';
+type EngineTab = 'stage-zero' | 'campaigns' | 'scripts' | 'inbound' | 'lists' | 'workers';
 const ENGINE_TABS: { id: EngineTab; label: string; icon: string }[] = [
+  { id: 'stage-zero', label: 'Stage Zero', icon: '🧱' },
   { id: 'campaigns', label: 'Campaigns', icon: '🎯' },
   { id: 'scripts', label: 'Scripts', icon: '📞' },
   { id: 'inbound', label: 'Inbound', icon: '📥' },
@@ -196,6 +200,8 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
   // M2–M4. A focused campaign always lands on the Campaigns tab.
   const [engineTab, setEngineTab] = useState<EngineTab>('campaigns');
   const [officeOpen, setOfficeOpen] = useState(false);
+  const stageZero = useStageZero();
+  const internalLock = m0LockMessage('madebymarq', stageZero.rows);
 
   useEffect(() => {
     if (!focusCampaignId && !newCampaignForClientId) return;
@@ -358,6 +364,7 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
         {ENGINE_TABS.map((t) => <Pill key={t.id} active={engineTab === t.id} onClick={() => setEngineTab(t.id)}><span>{t.icon}</span>{t.label}</Pill>)}
       </div>
 
+      {engineTab === 'stage-zero' && <div style={{ marginTop: 16 }}><StageZeroTab api={stageZero} /></div>}
       {engineTab === 'scripts' && <div style={{ marginTop: 16 }}><ScriptsTab /></div>}
       {engineTab === 'inbound' && (
         <div style={enginePanel}>
@@ -398,6 +405,8 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
             newForClientId={newForClient}
             onOpen={onOpenCampaign}
             onCreate={onCreateCampaign}
+            internalLock={stageZero.loading ? null : internalLock}
+            onOpenStageZero={() => setEngineTab('stage-zero')}
             onNavigate={navigate}
           />
         )}

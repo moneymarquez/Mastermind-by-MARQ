@@ -20,6 +20,10 @@ interface Props {
   newForClientId?: string | null;
   onOpen: (campaign: Campaign, next: DerivedStatus['next']) => void;
   onCreate: (name: string, clientId: string | null) => Promise<void>;
+  /** Stage Zero lock for internal (Made by MARQ) campaigns: the message
+   *  naming what's left, or null when unlocked. Client campaigns never lock. */
+  internalLock?: string | null;
+  onOpenStageZero?: () => void;
   onNavigate: (screen: string) => void;
 }
 
@@ -28,7 +32,7 @@ interface Props {
  *  deriveStatus, which only reads real state: last activity, assets
  *  still needed, results against target. Zero results never reads as on
  *  track. */
-export default function CampaignsHome({ campaigns, assets, clients, loading, error, newForClientId, onOpen, onCreate, onNavigate }: Props) {
+export default function CampaignsHome({ campaigns, assets, clients, loading, error, newForClientId, onOpen, onCreate, onNavigate, internalLock, onOpenStageZero }: Props) {
   const [creating, setCreating] = useState(!!newForClientId);
   const [name, setName] = useState('');
   const [clientId, setClientId] = useState<string>(newForClientId ?? '');
@@ -54,8 +58,9 @@ export default function CampaignsHome({ campaigns, assets, clients, loading, err
   const clientName = (id: string | null) => (id ? clients.find((c) => c.id === id)?.business_name ?? 'Client' : INTERNAL_LABEL);
   const now = new Date();
 
+  const locked = !clientId && !!internalLock;
   const create = async () => {
-    if (!name.trim() || busy) return;
+    if (!name.trim() || busy || locked) return;
     setBusy(true);
     await onCreate(name.trim(), clientId || null);
     setBusy(false);
@@ -79,8 +84,13 @@ export default function CampaignsHome({ campaigns, assets, clients, loading, err
             <option value="">{INTERNAL_LABEL} (internal)</option>
             {clients.filter((c) => c.client_type !== 'self').map((c) => <option key={c.id} value={c.id}>{c.business_name}</option>)}
           </select>
-          <button style={{ ...primaryBtn, opacity: busy || !name.trim() ? 0.6 : 1 }} disabled={busy || !name.trim()} onClick={create}>{busy ? 'Creating…' : 'Start building'}</button>
+          <button style={{ ...primaryBtn, opacity: busy || !name.trim() || locked ? 0.6 : 1 }} disabled={busy || !name.trim() || locked} onClick={create}>{busy ? 'Creating…' : locked ? '🔒 Locked' : 'Start building'}</button>
           <button style={ghostBtn} onClick={() => setCreating(false)}>Cancel</button>
+          {locked && (
+            <div style={{ flexBasis: '100%', fontSize: 'var(--text-body-sm)', color: 'var(--warning)', lineHeight: 1.5 }}>
+              {internalLock} <span style={{ textDecoration: 'underline', cursor: 'pointer' }} onClick={onOpenStageZero}>Open Stage Zero</span>. Client campaigns aren't locked — pick a client above.
+            </div>
+          )}
           <div style={{ flexBasis: '100%', fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>Clients live in the CRM; a campaign is assigned to one, or to {INTERNAL_LABEL} for your own push. The builder walks you through ten steps from here.</div>
         </div>
       )}
