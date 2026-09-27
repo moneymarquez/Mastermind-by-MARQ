@@ -109,7 +109,7 @@ export function OrchestratorPanel({ onRan }: { onRan: () => void }) {
   return (
     <div style={{ ...E.card, padding: 14, marginTop: 14 }}>
       <div style={{ ...label, marginBottom: 6 }}>Tonight's plan{plan ? ` · ${plan.date}` : ''}</div>
-      <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginBottom: 8, lineHeight: 1.45 }}>Runs by itself from 3:30am Denver, one step every 5 minutes, and finishes before the 5:30 digest. Every output still lands in Approvals.</div>
+      <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginBottom: 8, lineHeight: 1.45 }}>Runs by itself from 3:30am Denver, one step every 5 minutes, and finishes before the 5:30 digest (the cron only starts it between 3:30 and 7am). Every output still lands in Approvals.</div>
       {(plan?.plan ?? []).map((s) => {
         const t = byKey.get(s.key);
         return (

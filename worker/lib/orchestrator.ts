@@ -13,6 +13,9 @@ import { ORCH_SYSTEM } from './workers';
 import type { Channel } from '../../src/data/ecom';
 
 export const DAILY_START_MIN = 3 * 60 + 30;
+/** The cron only starts steps inside this window, so a deploy at noon
+ *  doesn't kick off a day's spend. Outside it, only the button runs. */
+export const DAILY_END_MIN = 7 * 60;
 /** Channels Scout covers each night, rotating through the week. */
 export function scoutChannelsFor(dow: number): Channel[] {
   const rot: Channel[][] = [['tiktok', 'rising'], ['tiktok', 'amazon'], ['tiktok', 'meta'], ['tiktok', 'amazon'], ['tiktok', 'etsy'], ['tiktok', 'amazon'], ['tiktok', 'walmart']];
@@ -131,12 +134,12 @@ export async function nextDailyStep(apiKey: string | undefined, sb: Sb, userId: 
   return { step, status: res.status, note: res.note };
 }
 
-/** Five-minute cron entry. One step per user per tick, from 03:30 Denver until
- *  the plan is done; skipped entirely without an Anthropic key. */
+/** Five-minute cron entry. One step per user per tick, 03:30–07:00 Denver,
+ *  until the plan is done; skipped entirely without an Anthropic key. */
 export async function runOrchestratorTick(env: SbEnv & { ANTHROPIC_API_KEY?: string }): Promise<void> {
   if (!env.ANTHROPIC_API_KEY || !env.SUPABASE_SERVICE_ROLE_KEY) return;
   const z = zonedNow(TZ);
-  if (z.minutes < DAILY_START_MIN) return;
+  if (z.minutes < DAILY_START_MIN || z.minutes >= DAILY_END_MIN) return;
   const sb = new Sb(env);
   const orchs = await sb.get<{ user_id: string }>('ai_workers?key=eq.orchestrator&enabled=eq.true&select=user_id');
   for (const o of orchs) {
