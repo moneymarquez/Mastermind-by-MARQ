@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { NAV_DATA, INITIAL_STICKY_IDEAS, PLACEHOLDER_NOTES } from './data';
+import { isDemo } from './demo/state';
 import { DIRECT_SCREENS, LAST_SCREEN_KEY, deepLinkScreen, pickInitialScreen } from './screenRestore';
 import type { StoredScreen } from './screenRestore';
 import type { NovaMessage, Point, Screen, StickyIdea } from './types';
@@ -121,6 +122,9 @@ const initialIsMobile = initialViewport.width < MOBILE_BREAKPOINT;
 // types.ts, modules.config.ts, and Stage.tsx, but never added here).
 
 function writeLastScreen(screen: Screen): void {
+  // The demo tour navigates on its own; it must not change where the real
+  // app reopens (exit returns you to where you were).
+  if (isDemo()) return;
   try {
     localStorage.setItem(LAST_SCREEN_KEY, JSON.stringify({ screen, at: Date.now() } satisfies StoredScreen));
   } catch {

@@ -1,7 +1,7 @@
 // Which screen the app opens on — pure, no React, so it's testable.
 import type { Screen } from './types';
 
-export const DIRECT_SCREENS: Screen[] = ['home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain', 'ecommerce', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing', 'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings', 'call-recordings', 'website', 'invoicing', 'manage-modules', 'edit-home-widgets', 'grant-access', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'content', 'swipe-file'];
+export const DIRECT_SCREENS: Screen[] = ['home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain', 'ecommerce', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing', 'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings', 'call-recordings', 'website', 'invoicing', 'manage-modules', 'edit-home-widgets', 'grant-access', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'content', 'swipe-file', 'changelog'];
 
 // Which screen the app was on last, so a reload comes back to it instead
 // of dumping you on Home. Matters most as an installed PWA: iOS silently

@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { NavRow } from '../../navRows';
 import Icon from '../../Icon';
+import { demoLongPress } from '../../demo/longPress';
 
 export const RAIL_WIDTH = 76;
 export const RAIL_WIDTH_OPEN = 210;
@@ -24,7 +25,7 @@ export default function CyberRail({ rows, onOpenSettings, settingsActive }: Prop
         background: 'var(--surface)', borderRight: '1px solid var(--edge)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, height: 64, padding: '0 0 0 22px', borderBottom: '1px solid var(--edge)', flexShrink: 0, whiteSpace: 'nowrap' }}>
+      <div {...demoLongPress} style={{ display: 'flex', alignItems: 'center', gap: 12, height: 64, padding: '0 0 0 22px', borderBottom: '1px solid var(--edge)', flexShrink: 0, whiteSpace: 'nowrap', WebkitTouchCallout: 'none', userSelect: 'none' }}>
         <img src="/marq-wordmark.png" alt="MARQ" style={{ width: 30, height: 30, objectFit: 'contain', filter: 'var(--mm-logo-filter)', mixBlendMode: 'var(--mm-logo-blend)' as CSSProperties['mixBlendMode'], flexShrink: 0 }} />
         <span className="cp-rail-label" style={{ color: 'var(--text)' }}>Masterminds</span>
       </div>

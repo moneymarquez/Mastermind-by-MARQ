@@ -1,3 +1,4 @@
+import { isDemo } from '../../../demo/state';
 import { useState } from 'react';
 import { useHasAssessment } from '../../../data/useBrain';
 
@@ -14,7 +15,7 @@ function readNudge(): { dismissedAt: number; times: number } {
 export default function BrainNudgeCard({ onOpen }: { onOpen: () => void }) {
   const has = useHasAssessment();
   const [nudge, setNudge] = useState(readNudge);
-  if (has !== false) return null;
+  if (has !== false || isDemo()) return null;
   if (nudge.times >= 2) return null;
   if (nudge.times === 1 && Date.now() - nudge.dismissedAt < 3 * DAY) return null;
   const dismiss = () => {

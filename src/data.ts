@@ -86,7 +86,7 @@ export const NAV_DATA: NavGroup[] = [
         label: 'Settings',
         icon: 'ph-gear-six',
         collapsible: true,
-        sub: ['Account', 'Setup', 'Playbooks', 'Prompt & Voice', 'Notifications', 'Morning Digest', 'Manage modules', 'Edit widgets', 'Grant Access', 'Legal & FAQ', 'Sign Out'],
+        sub: ['Account', 'Setup', 'Playbooks', 'Prompt & Voice', 'Notifications', 'Morning Digest', 'Manage modules', 'Edit widgets', 'Grant Access', 'Demo Mode', "What's new", 'Legal & FAQ', 'Sign Out'],
       },
       { id: 'codelab', label: 'Code Lab', icon: 'ph-terminal-window' },
     ],

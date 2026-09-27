@@ -1,4 +1,5 @@
 import Icon from '../Icon';
+import { demoLongPress } from '../demo/longPress';
 
 export const MOBILE_HEADER_HEIGHT = 68;
 
@@ -26,7 +27,7 @@ export default function MobileHeader({ onOpenMenu }: Props) {
       <div onClick={onOpenMenu} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: '50%', background: 'var(--mm-ink)', color: 'var(--mm-ink-text)', cursor: 'pointer' }}>
         <Icon name="list" size={20} />
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+      <div {...demoLongPress} style={{ display: 'flex', alignItems: 'center', gap: 5, WebkitTouchCallout: 'none', userSelect: 'none' }}>
         <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.05, textAlign: 'right' }}>
           <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: '-0.02em' }}>Masterminds</div>
           <div style={{ fontSize: 7, letterSpacing: '0.32em', color: 'var(--mm-faint)', textTransform: 'uppercase' }}>by marq</div>

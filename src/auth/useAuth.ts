@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+// Always the real client: whether you're signed in never depends on Demo
+// Mode (the demo runs its own identity on the in-memory copy), so leaving
+// the demo drops you back exactly as signed in as you were.
+import { realSupabase as supabase } from '../lib/supabase';
 
 export interface SignUpResult {
   error?: string;

@@ -1,6 +1,8 @@
 import { Suspense } from 'react';
 import { lazyScreen } from './lib/lazyScreen';
 import AuthedGate from './AuthedGate';
+import { useDemo, stopDemo } from './demo/state';
+import { DEMO_USER } from './demo/seed';
 import { useAuth } from './auth/useAuth';
 import AuthScreen from './auth/AuthScreen';
 import SetNewPasswordScreen from './auth/SetNewPasswordScreen';
@@ -36,6 +38,14 @@ function Gated({ userId, userEmail, userDisplayName, onSignOut }: GatedProps) {
 
 export default function App() {
   const { session, loading, signIn, signUp, signOut, passwordRecovery, resetPassword, completePasswordReset } = useAuth();
+  const demo = useDemo();
+
+  // Demo Mode: a separate tree on the demo identity, keyed by run so every
+  // data hook mounts fresh against the in-memory copy — and again against
+  // the real client on exit. Works logged out too ("See a 2-minute demo").
+  if (demo.active) {
+    return <Gated key={`demo-${demo.run}`} userId={DEMO_USER.id} userEmail={DEMO_USER.email} userDisplayName={DEMO_USER.name} onSignOut={stopDemo} />;
+  }
 
   if (loading) {
     return <div style={{ minHeight: '100vh', background: 'var(--bg)' }} />;

@@ -519,7 +519,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle, selectedCl
           </div>
           <span style={ghostBtn} onClick={() => regenerate(active)}>{active.concepts.length ? 'Regenerate' : `Generate ${count} concepts`}</span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginTop: 12, maxWidth: 900 }}>
+        <div data-demo="concepts" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginTop: 12, maxWidth: 900 }}>
           {active.concepts.map((c) => (
             <ConceptCard key={c.id} concept={c} pinned={active.pinned_concept_id === c.id} onPin={() => pinConcept(active.id, c.id)} />
           ))}

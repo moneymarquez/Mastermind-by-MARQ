@@ -61,7 +61,7 @@ export default function OfficeView({ domain, onClose }: { domain: Domain; onClos
   useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape' && !openWorker && !openRun && !orchOpen) onClose(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, [onClose, openWorker, openRun, orchOpen]);
 
   return (
-    <div className="of-root" style={{ position: 'fixed', inset: 0, zIndex: 110, background: 'var(--bg)', color: E.text, display: 'flex', flexDirection: 'column' }}>
+    <div className="of-root" data-demo="office" style={{ position: 'fixed', inset: 0, zIndex: 110, background: 'var(--bg)', color: E.text, display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: mobile ? 'calc(10px + env(safe-area-inset-top)) 14px 10px' : '14px 20px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: `1px solid ${E.border}`, background: E.surface, flexShrink: 0 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, fontSize: 'var(--text-subhead)' }}>{TITLE[domain] ?? domain} office</div>
@@ -221,7 +221,7 @@ function WorkerDrawer({ w, office, onClose, onOpenRun }: { w: WorkerRow; office:
         {runs.map((r) => {
           const appr = office.approvals.find((a) => a.run_id === r.id);
           return (
-            <div key={r.id} onClick={() => onOpenRun(r)} style={{ borderTop: `1px solid ${E.border}`, padding: '8px 0', cursor: 'pointer' }}>
+            <div key={r.id} data-demo="run-row" onClick={() => onOpenRun(r)} style={{ borderTop: `1px solid ${E.border}`, padding: '8px 0', cursor: 'pointer' }}>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', fontSize: 'var(--text-caption)', color: E.muted }}>
                 <span style={{ fontFamily: 'var(--font-mono)', color: E.faint }}>{new Date(r.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
                 <Badge color={r.status === 'done' ? E.green : r.status === 'failed' ? E.red : E.accent}>{r.status}</Badge>

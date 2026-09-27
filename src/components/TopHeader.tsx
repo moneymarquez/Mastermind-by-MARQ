@@ -1,4 +1,5 @@
 import Icon from '../Icon';
+import { demoLongPress } from '../demo/longPress';
 
 export const HEADER_HEIGHT = 68;
 
@@ -46,7 +47,7 @@ export default function TopHeader({ left, screenLabel, activeModuleCount, onOpen
         <div onClick={onOpenNotifications} style={{ cursor: 'pointer', display: 'flex' }}>
           <Icon name="bell" size={18} color="var(--mm-faint)" />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, paddingLeft: 14, borderLeft: '1px solid var(--mm-line)' }}>
+        <div {...demoLongPress} style={{ display: 'flex', alignItems: 'center', gap: 4, paddingLeft: 14, borderLeft: '1px solid var(--mm-line)', WebkitTouchCallout: 'none', userSelect: 'none' }}>
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.05, textAlign: 'right' }}>
             <div style={{ fontSize: 14.5, fontWeight: 600, letterSpacing: '-0.02em' }}>Masterminds</div>
             <div style={{ fontSize: 8, letterSpacing: '0.3em', color: 'var(--mm-faint)', textTransform: 'uppercase' }}>by marq</div>

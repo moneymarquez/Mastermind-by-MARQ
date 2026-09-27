@@ -1,3 +1,4 @@
+import { startDemo } from './demo/state';
 import { buildNavData } from './data';
 
 export interface NavRow {
@@ -22,6 +23,7 @@ const SUB_SCREEN_BY_LABEL: Record<string, string> = {
   'Edit widgets': 'edit-home-widgets',
   'Grant Access': 'grant-access',
   'Legal & FAQ': 'legal',
+  "What's new": 'changelog',
 };
 
 export function buildNavRows(
@@ -57,7 +59,7 @@ export function buildNavRows(
             kind: 'sub',
             key: `sub-${label}`,
             label,
-            onClick: label === 'Sign Out' ? onSignOut : targetScreen ? () => navigateTo(targetScreen) : undefined,
+            onClick: label === 'Sign Out' ? onSignOut : label === 'Demo Mode' ? () => startDemo({ returnTo: screen }) : targetScreen ? () => navigateTo(targetScreen) : undefined,
           });
         });
       }

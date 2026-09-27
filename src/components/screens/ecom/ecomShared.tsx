@@ -135,7 +135,7 @@ export function Drawer({ open, onClose, title, subtitle, actions, width = 560, c
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 120, display: 'flex', justifyContent: 'flex-end' }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'var(--mm-scrim)' }} />
-      <div style={{ position: 'relative', width: mobile ? '100%' : width, maxWidth: '100%', height: '100%', background: 'var(--bg)', color: E.text, borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', boxShadow: 'var(--mm-shadow)' }}>
+      <div data-demo="drawer" style={{ position: 'relative', width: mobile ? '100%' : width, maxWidth: '100%', height: '100%', background: 'var(--bg)', color: E.text, borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', boxShadow: 'var(--mm-shadow)' }}>
         <div style={{ padding: mobile ? 'calc(14px + env(safe-area-inset-top)) 16px 12px' : '16px 20px 12px', background: E.surface, borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', gap: 12, flexShrink: 0 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 700, color: E.text, lineHeight: 1.2 }}>{title}</div>

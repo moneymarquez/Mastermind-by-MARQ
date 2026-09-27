@@ -5,6 +5,8 @@ import { supabase } from '../../lib/supabase';
 import type { Skin, Theme } from '../../data/useTheme';
 import { previewIntro } from '../../lib/fxEvents';
 import { useAvatar } from '../../data/useAvatar';
+import { startDemo } from '../../demo/state';
+import type { DemoSpeed } from '../../demo/state';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -55,6 +57,7 @@ async function openBillingPortal(): Promise<string | null> {
 export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onSignOut, onStartTour, theme, onThemeChange, skin, onSkinChange, soundFx, onSoundFxChange }: Props) {
   const { avatarUrl, uploading, error: avatarError, upload: uploadAvatar, remove: removeAvatar } = useAvatar();
   const [user, setUser] = useState<User | null>(null);
+  const [demoSpeed, setDemoSpeed] = useState<DemoSpeed>('normal');
   const [displayName, setDisplayName] = useState('');
   const [savingName, setSavingName] = useState(false);
   const [nameSaved, setNameSaved] = useState(false);
@@ -277,6 +280,23 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
             <div style={{ ...primaryBtn, opacity: savingPassword ? 0.6 : 1 }} onClick={() => !savingPassword && changePassword()}>
               {savingPassword ? 'Updating…' : 'Update password'}
             </div>
+          </div>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>Demo Mode</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.5 }}>
+            A 2-minute guided run through the whole app on sample data. Nothing you do in it touches your account. Record hides the controls for a screen capture.
+          </div>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 12 }} role="radiogroup" aria-label="Demo speed">
+            {(['slow', 'normal', 'fast'] as const).map((sp) => (
+              <button key={sp} type="button" role="radio" aria-checked={demoSpeed === sp} onClick={() => setDemoSpeed(sp)}
+                style={{ ...ghostBtn, padding: '6px 12px', textTransform: 'capitalize', borderColor: demoSpeed === sp ? 'var(--accent)' : undefined, color: demoSpeed === sp ? 'var(--accent)' : undefined }}>{sp}</button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button type="button" style={{ ...primaryBtn, border: 'none', font: 'inherit', fontWeight: 600 }} onClick={() => startDemo({ speed: demoSpeed, returnTo: 'account-settings' })}>Start demo</button>
+            <button type="button" style={ghostBtn} onClick={() => startDemo({ speed: demoSpeed, record: true, returnTo: 'account-settings' })}>● Record</button>
           </div>
         </div>
 

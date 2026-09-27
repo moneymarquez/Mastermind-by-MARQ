@@ -123,6 +123,7 @@ function Editor({ p, api }: { p: Playbook; api: ReturnType<typeof usePlaybooks> 
         <span style={{ fontFamily: 'var(--font-mono)' }}>{body.length.toLocaleString()} / {PLAYBOOK_MAX_CHARS.toLocaleString()}</span> characters · each run loads up to {PLAYBOOK_LOAD_BUDGET.toLocaleString()} characters across the worker's playbooks (about three full ones). Longer playbooks cost more per run.
       </div>
 
+      <div data-demo="playbook-history">
       <div style={{ ...label, marginTop: 6 }}>History</div>
       {history.length === 0 && <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>No saved versions yet.</div>}
       {history.map((v) => (
@@ -136,6 +137,7 @@ function Editor({ p, api }: { p: Playbook; api: ReturnType<typeof usePlaybooks> 
           {viewing?.id === v.id && <pre style={{ width: '100%', whiteSpace: 'pre-wrap', fontFamily: 'var(--font-mono)', fontSize: 12, background: tint(E.faint, 8), padding: 10, borderRadius: 'var(--radius-sm)', color: E.text, margin: 0 }}>{v.body || '(empty)'}</pre>}
         </div>
       ))}
+      </div>
     </div>
   );
 }

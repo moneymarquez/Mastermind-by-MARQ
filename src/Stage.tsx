@@ -29,8 +29,11 @@ import CyberTabBar from './components/cyber/CyberTabBar';
 import CyberRail, { RAIL_WIDTH } from './components/cyber/CyberRail';
 import { MOBILE_HEADER_HEIGHT } from './components/MobileHeader';
 import Intro from './components/fx/Intro';
+import { useDemo } from './demo/state';
 
 // Screens load on demand; Overview ships in the main bundle.
+const DemoTour = lazyScreen(() => import('./demo/DemoTour'));
+const ChangelogScreen = lazyScreen(() => import('./components/screens/ChangelogScreen'));
 const ClientModulesScreen = lazyScreen(() => import('./components/screens/ClientModulesScreen'));
 const DailyPlanScreen = lazyScreen(() => import('./components/screens/DailyPlanScreen'));
 const DialingScreen = lazyScreen(() => import('./components/screens/DialingScreen'));
@@ -84,7 +87,7 @@ const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'stocks', 'leadflow', 'ecommerce', 'account-settings', 'prompt-voice-settings',
-  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access',
+  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access', 'changelog',
 ];
 
 interface Props {
@@ -107,6 +110,7 @@ interface Props {
 
 export default function Stage({ state, actions, assistantName, canAccess, onSignOut, currentUserId, userEmail, userDisplayName, isOwner, theme, onThemeChange, skin, onSkinChange, soundFx, onSoundFxChange }: Props) {
   const cyber = skin === 'cyberpunk';
+  const demo = useDemo();
   // Desktop-only: the persistent Sidebar's own Menu toggle collapses it to
   // a slim icon-only rail and back — previously a dead button (no onClick
   // at all). Mobile is unaffected; it keeps MobileMenuSheet's overlay.
@@ -380,6 +384,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         ) : (
           <ErrorBoundary scope="screen" resetKey={state.screen} label={state.screen === 'home' ? 'Overview' : undefined}>
           <Suspense fallback={<ScreenLoading />}>
+          <div data-demo-content="">
         {state.screen === 'home' && (
           <HomeScreen isMobile={isMobile} isOwner={isOwner} homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onOpenNova={actions.openNova} assistantName={assistantName} onNavigate={actions.navigateTo} />
         )}
@@ -598,6 +603,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           />
         )}
 
+        {state.screen === 'changelog' && (
+          <ChangelogScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        )}
+
         {state.screen === 'swipe-file' && (
           <SwipeFileScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
@@ -647,6 +656,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         {(state.screen === 'placeholder' || !BUILT_SCREENS.includes(state.screen)) && (
           <PlaceholderScreen isMobile={isMobile} label={state.placeholderLabel} note={state.placeholderNote} />
         )}
+          </div>
           </Suspense>
           </ErrorBoundary>
         )}
@@ -672,7 +682,9 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
       <RemindersBox ref={remindersRef} isMobile={isMobile} bottomOffset={isMobile ? `calc(${vm.tabBarHeight + 20}px + ${SAFE_BOTTOM})` : '20px'} />
 
       {!cyber && <Celebration />}
-      <Intro name={(userDisplayName ?? '').split(' ')[0] || 'Marq'} />
+      {!demo.active && <Intro name={(userDisplayName ?? '').split(' ')[0] || 'Marq'} />}
+
+      {demo.active && <Suspense fallback={null}><DemoTour navigate={actions.navigateTo} /></Suspense>}
 
       <ProductTour
         active={tourActive}

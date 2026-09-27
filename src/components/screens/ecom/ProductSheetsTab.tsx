@@ -120,7 +120,7 @@ function ProductCard({ p, ranks, onOpen, onWatch, onBuild }: { p: Product; ranks
   const num: CSSProperties = { fontFamily: 'var(--font-mono)', fontWeight: 600, color: E.text };
   return (
     <div style={{ ...E.card, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      <div onClick={onOpen} style={{ cursor: 'pointer' }}>
+      <div data-demo="product-card" onClick={onOpen} style={{ cursor: 'pointer' }}>
         <div style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', background: E.border, height: 160 }}>
           {p.images.length === 0
             ? <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: E.faint, fontSize: 12 }}>No photo yet</div>

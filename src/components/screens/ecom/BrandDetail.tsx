@@ -56,7 +56,7 @@ export default function BrandDetail({ brand, clientName, orders30d, productsLive
       </Section>
 
       <Section title={`The 10 steps · ${done} done`} aside={<ProgressRing done={done} total={10} size={34} />}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div data-demo="brand-steps" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {STEPS.map((s) => (
             <StepCard key={s.n} brand={brand} def={s} open={current === s.n} onToggle={() => setOpenStep(current === s.n ? -1 : s.n)} onSave={(state) => onSaveStep(brand, s.n, state)} />
           ))}

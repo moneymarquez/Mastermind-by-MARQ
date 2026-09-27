@@ -4,6 +4,7 @@ import type { SignUpResult } from './useAuth';
 import { PLANS, LIVE_PLAN } from '../billing/plans';
 import { MODULE_REGISTRY } from '../modules.config';
 import Icon from '../Icon';
+import { startDemo } from '../demo/state';
 
 interface Props {
   onSignIn: (email: string, password: string) => Promise<string | null>;
@@ -348,6 +349,9 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
               <div className="ap-hero-ctas">
                 <button className="mm-btn mm-btn-ink" style={{ padding: '15px 26px', fontSize: 15.5 }} onClick={() => { switchMode('signup'); scrollToLogin(); }}>
                   Create your account<Icon name="arrow-right" size={18} />
+                </button>
+                <button type="button" className="mm-btn mm-btn-outline" style={{ padding: '15px 26px', fontSize: 15.5 }} onClick={() => startDemo()}>
+                  <span aria-hidden="true" style={{ fontSize: 12 }}>▶</span>See a 2-minute demo
                 </button>
                 <a className="mm-btn mm-btn-outline" href="#modules" style={{ padding: '15px 26px', fontSize: 15.5, textAlign: 'center' }}>See what's inside</a>
               </div>

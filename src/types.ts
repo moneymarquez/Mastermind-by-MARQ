@@ -40,6 +40,7 @@ export type Screen =
   | 'marketing'
   | 'content'
   | 'swipe-file'
+  | 'changelog'
   | 'decisions'
   | 'weekly-review'
   | 'cashflow'
