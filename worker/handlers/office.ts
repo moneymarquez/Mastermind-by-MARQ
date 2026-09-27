@@ -8,15 +8,18 @@ import { requireUser } from '../lib/auth';
 import { Sb, json, zonedNow } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
 import { ask, CapReached } from '../lib/ai';
-import { playbooksFor, runScout, TZ } from '../lib/engine';
+import { playbooksFor, RUNNERS, TZ } from '../lib/engine';
 import type { WorkerRow } from '../lib/engine';
 import { parseOrchestratorReply, applyPlaybookEdit, parseRoute, THREAD_SYSTEM, ROUTE_SYSTEM } from '../lib/office';
 import type { Proposal } from '../lib/office';
 import type { Channel } from '../../src/data/ecom';
+import type { Venture, ScriptChannel } from '../../src/data/mktEngine';
 import { LIVE_WORKERS, PLAYBOOK_MAX_CHARS, PLAYBOOK_LOAD_BUDGET } from '../../src/data/ecom';
 
 export interface OfficeEnv extends SbEnv { ANTHROPIC_API_KEY?: string }
-const LIVE = new Set(LIVE_WORKERS);
+// Live = has a runner. LIVE_WORKERS (the app's list) and RUNNERS agree;
+// the orchestrator itself is routed to, never run as a task.
+const LIVE = new Set(LIVE_WORKERS.filter((k) => k in RUNNERS));
 const workerPlaybook = (key: string) => `worker:${key}`;
 
 async function orchestrator(sb: Sb, userId: string): Promise<WorkerRow | null> {
@@ -100,8 +103,9 @@ export async function officeRoute(request: Request, env: OfficeEnv, path: string
         result = { settings: patch };
       } else if (p.kind === 'rerun') {
         if (!w || !LIVE.has(w.key)) return json({ error: `${w?.name ?? 'This worker'} can't run yet in this build.` }, 400);
-        const [run] = t.run_id ? await sb.get<{ input: { channel?: Channel } }>(`ai_worker_runs?id=eq.${t.run_id}&select=input`) : [];
-        const r = await runScout(env.ANTHROPIC_API_KEY, sb, user.id, { channel: run?.input?.channel ?? 'tiktok', instructions: p.instructions, trigger: 'rerun' });
+        const [run] = t.run_id ? await sb.get<{ input: Record<string, unknown> }>(`ai_worker_runs?id=eq.${t.run_id}&select=input`) : [];
+        const i = run?.input ?? {};
+        const r = await RUNNERS[w.key](env.ANTHROPIC_API_KEY, sb, user.id, { channel: (i.channel as Channel) ?? 'tiktok', count: i.count as number | undefined, productId: i.product_id as string | undefined, venture: i.venture as Venture | undefined, scriptChannel: w.key === 'script_copy' ? (i.channel as ScriptChannel) : undefined, instructions: p.instructions, trigger: 'rerun' });
         result = { rerun: r };
       }
       const proposals = m.proposal.map((x, i) => (i === index ? { ...x, applied_at: new Date().toISOString() } : x));
@@ -117,15 +121,15 @@ export async function officeRoute(request: Request, env: OfficeEnv, path: string
       const orch = await orchestrator(sb, user.id);
       const res = await ask(env.ANTHROPIC_API_KEY, sb, {
         model: orch?.model ?? 'claude-fable-5-1', domain, userId: user.id, date, workerId: orch?.id ?? null, maxTokens: 400,
-        system: ROUTE_SYSTEM(workers.map((w) => ({ key: w.key, name: w.name, role: w.role, live: LIVE.has(w.key) }))),
+        system: ROUTE_SYSTEM(workers.map((w) => ({ key: w.key, name: w.name, role: w.role, live: LIVE.has(w.key) })), domain === 'ecom' ? await sb.get<{ id: string; name: string }>(`ecom_products?user_id=eq.${user.id}&order=score.desc.nullslast&limit=30&select=id,name`) : []),
         user: text,
       });
       const route = parseRoute(res.text, workers.map((w) => w.key));
       const target = workers.find((w) => w.key === route.workerKey) ?? null;
       const [task] = await sb.insert<{ id: string }>('ai_tasks', { user_id: user.id, domain, body: text, worker_id: target?.id ?? null, instructions: route.instructions || text, status: target && LIVE.has(target.key) ? 'running' : 'waiting', note: route.reply || null });
       if (target && LIVE.has(target.key)) {
-        const r = await runScout(env.ANTHROPIC_API_KEY, sb, user.id, { channel: (route.channel as Channel) ?? 'tiktok', instructions: route.instructions || text, trigger: 'manual' });
-        await sb.patch('ai_tasks', `id=eq.${task.id}`, { status: r.ok ? 'done' : 'failed', run_id: r.runId ?? null, note: r.ok ? `${route.reply || 'Done.'} ${r.count} products → Approvals.` : r.error, updated_at: new Date().toISOString() });
+        const r = await RUNNERS[target.key](env.ANTHROPIC_API_KEY, sb, user.id, { channel: (route.channel as Channel) ?? 'tiktok', productId: route.productId ?? undefined, scriptChannel: (route.scriptChannel as ScriptChannel) ?? undefined, instructions: route.instructions || text, trigger: 'manual' });
+        await sb.patch('ai_tasks', `id=eq.${task.id}`, { status: r.ok ? 'done' : 'failed', run_id: r.runId ?? null, note: r.ok ? `${route.reply || 'Done.'} ${r.skipped ? r.summary : `${r.summary ?? ''} → Approvals.`}` : r.error, updated_at: new Date().toISOString() });
         return json({ task_id: task.id, worker: target.name, reply: route.reply, run: r });
       }
       const note = target ? `${route.reply || `Routed to ${target.name}.`} ${target.name} isn't live yet — the task waits for it.` : (route.reply || 'No worker fits that yet.');

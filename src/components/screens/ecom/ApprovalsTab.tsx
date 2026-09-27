@@ -4,6 +4,7 @@ import { decideApproval } from '../../../data/useEngine';
 import type { ImportRow } from '../../../data/ecomProducts';
 import { marginHealthy } from '../../../data/ecomProducts';
 import { E, Badge, ConfidenceBadge, TeachingEmpty, btn, field, label, tint, useIsMobile } from './ecomShared';
+import { ApprovalBody, APPROVE_LABEL } from './ApprovalBodies';
 import { money, ago, CHANNELS } from '../../../data/ecom';
 
 /** §7 — one inbox for everything waiting on you, across domains. Every card
@@ -42,6 +43,20 @@ export default function ApprovalsTab({ api, onDecided }: { api: ReturnType<typeo
   );
 }
 
+/** Types whose worker can be re-run straight from a send-back. */
+const RERUNNABLE = new Set(['analysis', 'teardown', 'lead_tags', 'scripts', 'campaign_plan']);
+function appliedMessage(type: string, a: Record<string, number> | null | undefined): string {
+  if (!a) return 'Approved.';
+  if (type === 'scout_products') return `Approved — ${a.inserted} new, ${a.updated} refreshed in Product Sheets.`;
+  if (type === 'analysis') return 'Approved — the product drawer is filled in.';
+  if (type === 'teardown') return `Approved — ${a.competitors} dossiers and ${a.angles} angles saved on the product.`;
+  if (type === 'lead_tags') return `Approved — ${a.tagged} leads tagged (${a.chains ?? 0} chains, ${a.duplicates ?? 0} duplicates).`;
+  if (type === 'scripts') return `Approved — ${a.added} new scripts, ${a.versioned} new versions in Scripts.`;
+  if (type === 'campaign_plan') return 'Approved — the campaign is in Campaigns as planned.';
+  if (type === 'grades') return `Approved — ${a.graded} campaigns graded.`;
+  return 'Approved.';
+}
+
 function ApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string) => void }) {
   const mobile = useIsMobile();
   const [note, setNote] = useState('');
@@ -60,9 +75,8 @@ function ApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string) => voi
     const r = await decideApproval(a.id, status, note.trim() || null, status === 'sent_back' && rerun);
     setBusy('');
     if (!r.ok) { setErr(r.error ?? 'Could not save that decision.'); return; }
-    const applied = r.applied as { inserted: number; updated: number } | null | undefined;
-    onDone(status === 'approved' ? (applied ? `Approved — ${applied.inserted} new, ${applied.updated} refreshed in Product Sheets.` : 'Approved.')
-      : status === 'sent_back' ? (r.rerun ? (r.rerun.ok ? `Sent back. Re-ran with your note — ${r.rerun.count} new products waiting.` : `Sent back. Re-run failed: ${r.rerun.error}`) : 'Sent back. Your note goes into the next run.')
+    onDone(status === 'approved' ? appliedMessage(a.type, r.applied as Record<string, number> | null | undefined)
+      : status === 'sent_back' ? (r.rerun ? (r.rerun.ok ? `Sent back. Re-ran with your note — the new version is waiting.` : `Sent back. Re-run failed: ${r.rerun.error}`) : 'Sent back. Your note goes into the next run.')
       : 'Killed.');
   };
 
@@ -114,16 +128,16 @@ function ApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string) => voi
           ))}
           {Array.isArray(a.payload.dropped) && (a.payload.dropped as string[]).length > 0 && <div style={{ fontSize: 'var(--text-caption)', color: E.amber }}>Dropped by the rules: {(a.payload.dropped as string[]).join('; ')}</div>}
         </div>
-      ) : Object.keys(a.payload).length > 0 && (
+      ) : APPROVE_LABEL[a.type] ? <ApprovalBody type={a.type} payload={a.payload} /> : Object.keys(a.payload).length > 0 && (
         <pre style={{ fontSize: 12, color: E.text, background: E.sunk, border: `1px solid ${E.border}`, borderRadius: 6, padding: 10, marginTop: 8, whiteSpace: 'pre-wrap', maxHeight: 220, overflow: 'auto' }}>{JSON.stringify(a.payload, null, 2)}</pre>
       )}
 
       <input ref={noteRef} style={{ ...field, marginTop: 10 }} placeholder='Note to the worker — e.g. "nothing under $15, and skip anything with bad reviews"' value={note} onChange={(e) => { setNote(e.target.value); setErr(''); }} />
-      {a.type === 'scout_products' && <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 'var(--text-caption)', color: E.muted, marginTop: 6 }}><input type="checkbox" checked={rerun} onChange={(e) => setRerun(e.target.checked)} /> On send back, re-run Scout now with this note</label>}
+      {(a.type === 'scout_products' || RERUNNABLE.has(a.type)) && <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 'var(--text-caption)', color: E.muted, marginTop: 6 }}><input type="checkbox" checked={rerun} onChange={(e) => setRerun(e.target.checked)} /> On send back, re-run the worker now with this note</label>}
       {err && <div style={{ fontSize: 'var(--text-caption)', color: E.amber, marginTop: 6 }}>{err}</div>}
       <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-        <button style={btn('primary')} disabled={!!busy} onClick={() => go('approved')}>{busy === 'approved' ? 'Saving…' : a.is_money ? 'Approve · spend' : rows.length ? `Approve · add ${rows.length} to sheet` : 'Approve'}</button>
-        <button style={btn('ghost')} disabled={!!busy} onClick={() => go('sent_back')}>{busy === 'sent_back' ? (rerun && a.type === 'scout_products' ? 'Re-running…' : 'Saving…') : 'Send back'}</button>
+        <button style={btn('primary')} disabled={!!busy} onClick={() => go('approved')}>{busy === 'approved' ? 'Saving…' : a.is_money ? 'Approve · spend' : rows.length ? `Approve · add ${rows.length} to sheet` : APPROVE_LABEL[a.type]?.(a.payload) ?? 'Approve'}</button>
+        <button style={btn('ghost')} disabled={!!busy} onClick={() => go('sent_back')}>{busy === 'sent_back' ? (rerun && (a.type === 'scout_products' || RERUNNABLE.has(a.type)) ? 'Re-running…' : 'Saving…') : 'Send back'}</button>
         <button style={btn('danger')} disabled={!!busy} onClick={() => go('killed')}>Kill</button>
       </div>
       {mobile && !a.is_money && <div style={{ fontSize: 10.5, color: E.faint, marginTop: 6 }}>Swipe right to approve · left to send back</div>}

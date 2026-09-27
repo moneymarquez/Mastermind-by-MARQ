@@ -491,6 +491,17 @@ export default function LeadCard({ lead, open, onToggle, onPatch, onLogCall, ski
             {lead.dialing_queued && (
               <span style={badge('rgba(124,58,237,0.10)', '#7c3aed', '#c4b5fd')}>☎ IN DIALING</span>
             )}
+            {/* Lead Filter's tags: a chain or a duplicate is a dial to skip;
+                MULTI means an operator, which changes the script. */}
+            {lead.is_chain && (
+              <span title={lead.filter_note ?? ''} style={badge('rgba(220,38,38,0.12)', '#b91c1c', '#fca5a5')}>⛓ CHAIN{lead.chain_name ? ` · ${lead.chain_name.toUpperCase()}` : ''}</span>
+            )}
+            {lead.duplicate_of && !lead.is_chain && (
+              <span title={lead.filter_note ?? ''} style={badge('rgba(217,119,6,0.12)', '#b45309', '#fcd34d')}>⧉ DUPLICATE</span>
+            )}
+            {!lead.is_chain && !lead.duplicate_of && lead.business_size === 'multi' && (
+              <span title={lead.filter_note ?? ''} style={badge('rgba(37,99,235,0.10)', '#1d4ed8', '#93c5fd')}>MULTI-LOCATION</span>
+            )}
           </div>
 
           <div style={{ fontSize: 'var(--text-body)', color: t.faint, marginTop: 2 }}>

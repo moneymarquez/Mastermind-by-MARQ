@@ -3,8 +3,9 @@ import type { CSSProperties } from 'react';
 import type { Product, Snapshot, ProductDetail } from '../../../data/ecomProducts';
 import { landedCost, marginPct, marginHealthy, sparklinePath, rankTrend } from '../../../data/ecomProducts';
 import { CHANNELS, money, ago } from '../../../data/ecom';
-import { Drawer, E, Metric, Badge, ConfidenceBadge, Section, TeachingEmpty, btn, field, label } from './ecomShared';
+import { Drawer, E, Metric, Badge, ConfidenceBadge, Section, btn, field, label } from './ecomShared';
 import { askConfirm } from '../../../lib/confirm';
+import ProductWorkers from './ProductWorkers';
 
 interface Props {
   product: Product | null;
@@ -14,6 +15,8 @@ interface Props {
   onToggleWatch: (p: Product) => Promise<void>;
   onBuildBrand: (p: Product) => Promise<void>;
   onRemove: (id: string) => Promise<void>;
+  /** A worker run finished — refresh the approvals count. */
+  onRan?: () => void;
 }
 
 const SECTIONS: { key: keyof ProductDetail; title: string; hint: string }[] = [
@@ -30,7 +33,7 @@ const SECTIONS: { key: keyof ProductDetail; title: string; hint: string }[] = [
 
 /** §5 product drawer — everything, grouped. Phase 2 fields are edited by
  *  hand; from Phase 3 the Scout and Analyst fill the same fields. */
-export default function ProductDrawer({ product: p, snapshots, onClose, onSave, onToggleWatch, onBuildBrand, onRemove }: Props) {
+export default function ProductDrawer({ product: p, snapshots, onClose, onSave, onToggleWatch, onBuildBrand, onRemove, onRan }: Props) {
   const [detail, setDetail] = useState<ProductDetail>(p?.detail ?? {});
   const [nums, setNums] = useState({ sell: p?.sell_price?.toString() ?? '', supplier: p?.supplier_cost?.toString() ?? '', ship: p?.detail.ship_cost?.toString() ?? '' });
   const [saving, setSaving] = useState(false);
@@ -78,6 +81,8 @@ export default function ProductDrawer({ product: p, snapshots, onClose, onSave, 
         <Metric label="Days trending" value={p.days_trending != null ? String(p.days_trending) : '—'} trend={p.velocity === 'rising' ? '↑ rising' : p.velocity === 'fading' ? '↓ fading' : p.velocity === 'flat' ? '→ flat' : undefined} />
         <Metric label="Score" value={p.score != null ? `${p.score}/10` : '—'} confidence="ai" />
       </div>
+      <ProductWorkers productId={p.id} analysis={(p.detail as Record<string, unknown>).analysis as Parameters<typeof ProductWorkers>[0]['analysis']} onRan={() => onRan?.()} />
+
       {p.detail.videos && (
         <Section title="Public videos"><div style={{ fontSize: 'var(--text-body)', color: E.text, whiteSpace: 'pre-wrap' }}>{p.detail.videos}</div><div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 4 }}>Official oEmbed players arrive with the Scout (Phase 3); until then these are links.</div></Section>
       )}
@@ -126,10 +131,6 @@ export default function ProductDrawer({ product: p, snapshots, onClose, onSave, 
         </div>
         <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 6 }}>Matters most with no ad budget: easy content is the whole plan.</div>
       </Section>
-
-      {!p.detail.buyer && !p.detail.angle && (
-        <div style={{ marginTop: 18 }}><TeachingEmpty what="Research fills the buyer, the angle and the money math." worker="Audience Analyst" connection="the orchestrator (next build phase)" phase={4} /></div>
-      )}
 
       <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap', alignItems: 'center', position: 'sticky', bottom: 0, background: E.bg, padding: '10px 0' }}>
         <button style={{ ...btn('ghost'), opacity: dirty && !saving ? 1 : 0.6 }} disabled={!dirty || saving} onClick={save}>{saving ? 'Saving…' : 'Save'}</button>

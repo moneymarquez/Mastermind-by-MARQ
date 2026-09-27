@@ -34,12 +34,15 @@ const n = (v: unknown) => (v == null ? 0 : Number(v));
 // which reads as "not set up" rather than an exception.
 
 async function ecomDesk(sb: Sb, u: string, today: string, yday: string): Promise<DeskReport> {
-  const [added, pending, alerts, top, brands] = await Promise.all([
+  const [added, pending, alerts, top, brands, orch] = await Promise.all([
     sb.get<{ channel: string }>(`ecom_products?user_id=eq.${u}&created_at=gte.${yday}T00:00:00&select=channel`),
     sb.get<{ id: string; is_money: boolean; title: string }>(`ai_approvals?user_id=eq.${u}&domain=eq.ecom&status=eq.pending&select=id,is_money,title`),
     sb.count(`ai_alerts?user_id=eq.${u}&domain=eq.ecom&read_at=is.null`),
     sb.get<{ name: string; score: number | null }>(`ecom_products?user_id=eq.${u}&score=not.is.null&order=score.desc&limit=1&select=name,score`),
     sb.get<{ name: string; current_step: number }>(`ecom_brands?user_id=eq.${u}&select=name,current_step`),
+    // The Orchestrator's overnight summary (lib/orchestrator.ts), written
+    // before this desk runs.
+    sb.get<{ summary_text: string }>(`ai_daily_summaries?user_id=eq.${u}&domain=eq.orchestrator&date=eq.${today}&select=summary_text`),
   ]);
   const total = await sb.count(`ecom_products?user_id=eq.${u}`);
   if (total === 0 && brands.length === 0) return { desk: 'ecom', line: '', full: 'E-Com: no products or brands yet. Import a product sheet or run Product Scout.', setUp: false };
@@ -59,6 +62,7 @@ async function ecomDesk(sb: Sb, u: string, today: string, yday: string): Promise
     `Brands: ${brands.map((b) => `${b.name} (step ${b.current_step})`).join(', ') || 'none'}`,
     `Waiting on you: ${pending.length} approval${pending.length === 1 ? '' : 's'}${money.length ? ` (${money.length} money)` : ''} · ${alerts} unread alert${alerts === 1 ? '' : 's'}`,
     top[0] ? `Top product: ${top[0].name} ${n(top[0].score).toFixed(1)}/10` : '',
+    orch[0]?.summary_text ? `Orchestrator overnight: ${orch[0].summary_text}` : '',
   ].filter(Boolean).join('\n');
   return { desk: 'ecom', line: parts.join('. '), full, setUp: true, urgent };
 }

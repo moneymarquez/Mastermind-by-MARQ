@@ -48,10 +48,10 @@ export function applyPlaybookEdit(body: string, before: string, after: string): 
   return { body: trimmed ? `${trimmed}\n${after}` : after, mode: 'appended' };
 }
 
-export interface RouteDecision { workerKey: string | null; instructions: string; channel: string | null; reply: string }
+export interface RouteDecision { workerKey: string | null; instructions: string; channel: string | null; reply: string; productId: string | null; scriptChannel: string | null }
 export function parseRoute(text: string, allowedKeys: string[]): RouteDecision {
   let obj: Record<string, unknown>;
-  try { obj = extractJson(text) as Record<string, unknown>; } catch { return { workerKey: null, instructions: '', channel: null, reply: text.trim() }; }
+  try { obj = extractJson(text) as Record<string, unknown>; } catch { return { workerKey: null, instructions: '', channel: null, reply: text.trim(), productId: null, scriptChannel: null }; }
   const key = str(obj.worker_key);
   const channel = str(obj.channel);
   return {
@@ -59,6 +59,8 @@ export function parseRoute(text: string, allowedKeys: string[]): RouteDecision {
     instructions: str(obj.instructions).slice(0, PLAYBOOK_MAX_CHARS),
     channel: ['tiktok', 'amazon', 'meta', 'etsy', 'walmart', 'rising'].includes(channel) ? channel : null,
     reply: str(obj.reply),
+    productId: /^[0-9a-f-]{36}$/i.test(str(obj.product_id)) ? str(obj.product_id) : null,
+    scriptChannel: ['call', 'voicemail', 'email', 'dm', 'landing'].includes(str(obj.script_channel)) ? str(obj.script_channel) : null,
   };
 }
 
@@ -73,9 +75,12 @@ export const THREAD_SYSTEM = (w: { name: string; role: string; model: string; au
   playbooks ? `Current playbooks this worker loads:\n${playbooks}` : 'This worker has no playbook yet; a playbook proposal will create one.',
 ].join('\n\n');
 
-export const ROUTE_SYSTEM = (workers: { key: string; name: string; role: string; live: boolean }[]) => [
+export const ROUTE_SYSTEM = (workers: { key: string; name: string; role: string; live: boolean }[], products: { id: string; name: string }[] = []) => [
   'You are the Orchestrator. Marq just gave you an order. Pick the ONE worker best suited to do it, and rewrite the order as clear instructions for that worker.',
   `Workers:\n${workers.map((w) => `- ${w.key}: ${w.name} — ${w.role}${w.live ? '' : ' (not live yet)'}`).join('\n')}`,
   'If the order is about finding products on a channel, pick scout and set channel to one of tiktok, amazon, meta, etsy, walmart, rising.',
-  'Answer ONLY with JSON: {"worker_key":"","channel":null,"instructions":"","reply":"one sentence telling Marq who you gave it to and what they will do"}',
-].join('\n\n');
+  'Analyst and Teardown work on one product: set product_id to the matching product from the list below (null if none matches).',
+  'Script & Copy writes for one channel: set script_channel to call, voicemail, email, dm or landing.',
+  products.length ? `Products in the sheet:\n${products.map((p) => `- ${p.id}: ${p.name}`).join('\n')}` : '',
+  'Answer ONLY with JSON: {"worker_key":"","channel":null,"product_id":null,"script_channel":null,"instructions":"","reply":"one sentence telling Marq who you gave it to and what they will do"}',
+].filter(Boolean).join('\n\n');

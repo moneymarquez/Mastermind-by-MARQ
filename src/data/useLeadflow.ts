@@ -72,6 +72,14 @@ export interface LeadflowLead {
    *  is a batch drawn from it, and sending a batch must not empty the pool. */
   dialing_queued: boolean | null;
   dialing_queued_at: string | null;
+  /** Written by the Lead Filter worker when Marq approves a batch
+   *  (schema_106). Null = not filtered yet. */
+  is_chain?: boolean | null;
+  chain_name?: string | null;
+  business_size?: 'single' | 'multi' | 'unknown' | null;
+  duplicate_of?: string | null;
+  filter_note?: string | null;
+  filtered_at?: string | null;
 }
 
 export interface LeadflowHistoryItem {

@@ -42,6 +42,7 @@ import type { ClaudeEnv } from './handlers/claude';
 import { pushSubscription } from './handlers/push-subscription';
 import type { PushSubscriptionEnv } from './handlers/push-subscription';
 import { runMorningDigest, digestTest, digestStatus, digestReply } from './handlers/digest';
+import { runOrchestratorTick } from './lib/orchestrator';
 import type { DigestEnv } from './handlers/digest';
 import { engineRoute } from './handlers/engine';
 import { setupRoute } from './handlers/setup';
@@ -134,6 +135,7 @@ export default {
   async scheduled(event: { cron: string }, env: Env, ctx: { waitUntil: (promise: Promise<unknown>) => void }): Promise<void> {
     if (event.cron === '*/5 * * * *') {
       ctx.waitUntil(runShiftReminders(env));
+      ctx.waitUntil(runOrchestratorTick(env));
       return;
     }
     ctx.waitUntil(runStocksBot(env));

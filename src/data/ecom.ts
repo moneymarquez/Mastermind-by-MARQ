@@ -257,7 +257,7 @@ export function workersFor(domain: Domain): WorkerDef[] {
 
 /** Workers whose runtime exists in this build. Everyone else shows the
  *  phase they arrive in (and a lights-off room in View Office). */
-export const LIVE_WORKERS = ['scout'];
+export const LIVE_WORKERS = ['scout', 'analyst', 'teardown', 'lead_filter', 'script_copy', 'campaign_planner', 'campaign_scorer'];
 
 /** Longest a single playbook may be. Enforced in the editor, on save, and
  *  when the orchestrator applies an edit. */
