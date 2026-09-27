@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { workersFor, AUTONOMY_LABEL, CHANNELS, LIVE_WORKERS, money, ago } from '../../../data/ecom';
+import { workersFor, AUTONOMY_LABEL, CHANNELS, LIVE_WORKERS, PLAYBOOK_MAX_CHARS, money, ago } from '../../../data/ecom';
 import type { Domain, Channel } from '../../../data/ecom';
 import { useWorkers, runScout, startCompany } from '../../../data/useEngine';
 import type { WorkerRow, RunResult } from '../../../data/useEngine';
@@ -110,7 +110,8 @@ function WorkerRoom({ w, api, phaseLabel, onClose, onRan }: { w: WorkerRow; api:
             <select style={{ ...field, width: 'auto' }} value={channel} onChange={(e) => setChannel(e.target.value as Channel)}>{CHANNELS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>
             <select style={{ ...field, width: 'auto' }} value={count} onChange={(e) => setCount(Number(e.target.value))}>{[5, 10, 15, 20].map((n) => <option key={n} value={n}>Top {n}</option>)}</select>
           </div>
-          <input style={{ ...field, marginTop: 8 }} value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder='Optional: "only products over $30", "nothing fragile"' />
+          <textarea maxLength={PLAYBOOK_MAX_CHARS} style={{ ...field, marginTop: 8, minHeight: 64, resize: 'vertical' }} value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder='Optional instructions for this run: "only products over $30", "nothing fragile"…' />
+          <div style={{ fontSize: 'var(--text-caption)', color: E.faint, fontFamily: 'var(--font-mono)' }}>{instructions.length.toLocaleString()} / {PLAYBOOK_MAX_CHARS.toLocaleString()}</div>
           <button style={{ ...btn('primary'), marginTop: 10 }} disabled={busy || !w.enabled} onClick={run}>{busy ? 'Scouting… (30–90 seconds)' : `Run ${w.name}`}</button>
           <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 6 }}>Uses web search on public pages (never Instagram, Facebook or TikTok video pages). Counts against today's e-commerce cap; results go to Approvals, not straight into the sheet.</div>
           {result && (

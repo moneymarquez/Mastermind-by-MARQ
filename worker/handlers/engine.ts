@@ -7,6 +7,7 @@ import type { SbEnv } from '../lib/sb';
 import { spentToday, capFor } from '../lib/ai';
 import { ensureRoster, runScout, decide, ENGINE_DOMAINS, TZ } from '../lib/engine';
 import type { Channel } from '../../src/data/ecom';
+import { PLAYBOOK_MAX_CHARS } from '../../src/data/ecom';
 
 export interface EngineEnv extends SbEnv { ANTHROPIC_API_KEY?: string }
 const CHANNELS: Channel[] = ['tiktok', 'amazon', 'meta', 'etsy', 'walmart', 'rising'];
@@ -33,7 +34,7 @@ export async function engineRoute(request: Request, env: EngineEnv, path: string
       const b = await body<{ worker?: string; channel?: string; count?: number; instructions?: string }>(request);
       if (!b || b.worker !== 'scout') return json({ error: 'Only Product Scout runs in this phase.' }, 400);
       const channel = CHANNELS.includes(b.channel as Channel) ? (b.channel as Channel) : 'tiktok';
-      const r = await runScout(env.ANTHROPIC_API_KEY, sb, user.id, { channel, count: b.count, instructions: b.instructions?.slice(0, 1000) || null });
+      const r = await runScout(env.ANTHROPIC_API_KEY, sb, user.id, { channel, count: b.count, instructions: b.instructions?.slice(0, PLAYBOOK_MAX_CHARS) || null });
       return json(r, r.ok ? 200 : r.capReached ? 429 : 502);
     }
     if (path === 'decide') {

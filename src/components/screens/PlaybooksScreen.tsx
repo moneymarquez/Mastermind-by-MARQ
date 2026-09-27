@@ -31,7 +31,7 @@ export default function PlaybooksScreen({ homeHeadStyle, homeSubStyle }: Props) 
             </Pill>
           ))}
         </div>
-        {open && <Editor key={open.id + open.version} p={open} api={pb} />}
+        {open && <Editor key={open.id} p={open} api={pb} />}
         <div style={{ ...E.card, padding: 12, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <span style={label}>New playbook</span>
           <input style={{ ...field, flex: '1 1 160px', width: 'auto' }} value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. Objection handling" />
@@ -49,10 +49,16 @@ function Editor({ p, api }: { p: Playbook; api: ReturnType<typeof usePlaybooks> 
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<PlaybookVersion[]>([]);
   const [viewing, setViewing] = useState<PlaybookVersion | null>(null);
-  useEffect(() => { api.versions(p.id).then(setHistory); }, [p.id, p.version]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { api.versions(p.id).then(setHistory); setBody(p.body); }, [p.id, p.version, p.body]); // eslint-disable-line react-hooks/exhaustive-deps
   const hint = STARTER_PLAYBOOKS.find((s) => s.name === p.name)?.hint;
   const dirty = body !== p.body;
-  const save = async (text: string, why: string) => { setBusy(true); await api.save(p, text, why); setBusy(false); setReason(''); };
+  const [saved, setSaved] = useState<'' | 'ok' | 'fail'>('');
+  // The reason is optional — a missing one no longer silently disables Save.
+  const save = async (text: string, why: string) => {
+    setBusy(true); setSaved('');
+    const ok = await api.save(p, text, why || 'Edited in Playbooks');
+    setBusy(false); setSaved(ok ? 'ok' : 'fail'); if (ok) setReason('');
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -65,9 +71,11 @@ function Editor({ p, api }: { p: Playbook; api: ReturnType<typeof usePlaybooks> 
       {!p.body.trim() && hint && <TeachingEmpty what={`Not written yet. ${hint}`} worker="you — paste your notes; rough is fine" />}
       <textarea maxLength={PLAYBOOK_MAX_CHARS} style={{ ...field, minHeight: 320, resize: 'vertical', fontFamily: 'var(--font-mono)', fontSize: 12.5, lineHeight: 1.55 }} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Markdown. One rule per line works best: what to do, when, and why." />
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        <input style={{ ...field, flex: '1 1 220px', width: 'auto' }} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why this change? (saved with the version)" />
-        <button style={btn('primary')} disabled={busy || !dirty || !reason.trim() || body.length > PLAYBOOK_MAX_CHARS} onClick={() => save(body, reason.trim())}>{busy ? 'Saving…' : `Save as v${p.body.trim() || p.version > 1 ? p.version + 1 : 1}`}</button>
+        <input style={{ ...field, flex: '1 1 220px', width: 'auto' }} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why this change? (optional — saved with the version)" />
+        <button style={btn('primary')} disabled={busy || !dirty || body.length > PLAYBOOK_MAX_CHARS} onClick={() => save(body, reason.trim())}>{busy ? 'Saving…' : `Save as v${p.body.trim() || p.version > 1 ? p.version + 1 : 1}`}</button>
         {dirty && <button style={btn('ghost')} onClick={() => setBody(p.body)}>Discard</button>}
+        {!dirty && saved === 'ok' && <span style={{ fontSize: 'var(--text-caption)', color: E.green, fontWeight: 600 }}>✓ Saved as v{p.version}</span>}
+        {saved === 'fail' && <span style={{ fontSize: 'var(--text-caption)', color: E.red }}>Not saved: {api.error || 'the database refused it'}</span>}
       </div>
       <div style={{ fontSize: 'var(--text-caption)', color: body.length >= PLAYBOOK_MAX_CHARS * 0.95 ? E.amber : E.faint }}>
         <span style={{ fontFamily: 'var(--font-mono)' }}>{body.length.toLocaleString()} / {PLAYBOOK_MAX_CHARS.toLocaleString()}</span> characters · each run loads up to {PLAYBOOK_LOAD_BUDGET.toLocaleString()} characters across the worker's playbooks (about three full ones). Longer playbooks cost more per run.

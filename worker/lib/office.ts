@@ -1,6 +1,7 @@
 // View Office — pure parts of the orchestrator loop: its reply format,
 // proposal validation, the playbook before/after edit, and task routing.
 import { extractJson } from './scout';
+import { PLAYBOOK_MAX_CHARS } from '../../src/data/ecom';
 
 export type Proposal =
   | { kind: 'rerun'; instructions: string; why: string; applied_at?: string }
@@ -21,10 +22,10 @@ export function parseOrchestratorReply(text: string, playbookNames: string[], de
     const kind = str(p.kind);
     if (seen.has(kind)) continue;
     const why = str(p.why) || str(p.reason);
-    if (kind === 'rerun' && str(p.instructions)) { out.push({ kind, instructions: str(p.instructions).slice(0, 1000), why }); seen.add(kind); }
+    if (kind === 'rerun' && str(p.instructions)) { out.push({ kind, instructions: str(p.instructions).slice(0, PLAYBOOK_MAX_CHARS), why }); seen.add(kind); }
     if (kind === 'playbook' && str(p.after)) {
       const name = str(p.playbook);
-      out.push({ kind, playbook: playbookNames.includes(name) || name.startsWith('worker:') ? name : defaultPlaybook, before: str(p.before), after: str(p.after).slice(0, 4000), why });
+      out.push({ kind, playbook: playbookNames.includes(name) || name.startsWith('worker:') ? name : defaultPlaybook, before: str(p.before), after: str(p.after).slice(0, PLAYBOOK_MAX_CHARS), why });
       seen.add(kind);
     }
     if (kind === 'settings') {
@@ -55,7 +56,7 @@ export function parseRoute(text: string, allowedKeys: string[]): RouteDecision {
   const channel = str(obj.channel);
   return {
     workerKey: allowedKeys.includes(key) ? key : null,
-    instructions: str(obj.instructions).slice(0, 1000),
+    instructions: str(obj.instructions).slice(0, PLAYBOOK_MAX_CHARS),
     channel: ['tiktok', 'amazon', 'meta', 'etsy', 'walmart', 'rising'].includes(channel) ? channel : null,
     reply: str(obj.reply),
   };
