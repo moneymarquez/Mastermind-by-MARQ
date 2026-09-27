@@ -1,5 +1,6 @@
 import ErrorBoundary from './components/ErrorBoundary';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { lazyScreen } from './lib/lazyScreen';
 import type { CSSProperties } from 'react';
 import Sidebar, { SIDEBAR_COLLAPSED_WIDTH } from './components/Sidebar';
 import TopHeader from './components/TopHeader';
@@ -15,55 +16,7 @@ import { useOwnerInbox } from './data/useOwnerInbox';
 import type { InboxItem } from './data/useOwnerInbox';
 import { useLeads } from './data/useLeads';
 import type { LeadItem } from './data/useLeads';
-import ClientModulesScreen from './components/screens/ClientModulesScreen';
 import HomeScreen from './components/screens/HomeScreen';
-import DailyPlanScreen from './components/screens/DailyPlanScreen';
-import DialingScreen from './components/screens/DialingScreen';
-import StickySpotScreen from './components/screens/StickySpotScreen';
-import SobrietyScreen from './components/screens/SobrietyScreen';
-import FitnessScreen from './components/screens/FitnessScreen';
-import MacrosScreen from './components/screens/MacrosScreen';
-import GoalsScreen from './components/screens/GoalsScreen';
-import MentalHealthScreen from './components/screens/MentalHealthScreen';
-import BrainScreen from './components/screens/brain/BrainScreen';
-import EcomScreen from './components/screens/ecom/EcomScreen';
-import ScalingStartScreen from './components/screens/ScalingStartScreen';
-import ClientDeliveryScreen from './components/screens/ClientDeliveryScreen';
-import SupportInboxScreen from './components/screens/SupportInboxScreen';
-import LeadsScreen from './components/screens/LeadsScreen';
-import LegalScreen from './components/screens/LegalScreen';
-import ScalingPlannerScreen from './components/screens/ScalingPlannerScreen';
-import BusinessAuditsScreen from './components/screens/BusinessAuditsScreen';
-import ClientCRMScreen from './components/screens/ClientCRMScreen';
-import IdeaMakerScreen from './components/screens/IdeaMakerScreen';
-import BrandLabScreen from './components/screens/BrandLabScreen';
-import ScheduleScreen from './components/screens/ScheduleScreen';
-import ContactsScreen from './components/screens/ContactsScreen';
-import OpeningClosingScreen from './components/screens/OpeningClosingScreen';
-import NotificationSettingsScreen from './components/screens/NotificationSettingsScreen';
-import MorningDigestScreen from './components/screens/MorningDigestScreen';
-import SetupScreen from './components/screens/SetupScreen';
-import PlaybooksScreen from './components/screens/PlaybooksScreen';
-import StreamingScreen from './components/screens/StreamingScreen';
-import StocksScreen from './components/screens/StocksScreen';
-import LeadFlowScreen from './components/screens/LeadFlowScreen';
-import AccountSettingsScreen from './components/screens/AccountSettingsScreen';
-import PromptVoiceSettingsScreen from './components/screens/PromptVoiceSettingsScreen';
-import CallRecordingsScreen from './components/screens/CallRecordingsScreen';
-import WebsiteBuilderRoadmapScreen from './components/screens/WebsiteBuilderRoadmapScreen';
-import InvoicingScreen from './components/screens/InvoicingScreen';
-import BudgetingScreen from './components/screens/BudgetingScreen';
-import MarketingScreen from './components/screens/MarketingScreen';
-import ContentCreationScreen from './components/screens/ContentCreationScreen';
-import SwipeFileScreen from './components/screens/SwipeFileScreen';
-import DecisionLogScreen from './components/screens/DecisionLogScreen';
-import WeeklyReviewScreen from './components/screens/WeeklyReviewScreen';
-import CashFlowScreen from './components/screens/CashFlowScreen';
-import PatternDetectionScreen from './components/screens/PatternDetectionScreen';
-import VoiceCaptureScreen from './components/screens/VoiceCaptureScreen';
-import ManageModulesScreen from './components/screens/ManageModulesScreen';
-import EditHomeWidgetsScreen from './components/screens/EditHomeWidgetsScreen';
-import GrantAccessScreen from './components/screens/GrantAccessScreen';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
 import ProductTour, { filterTourSteps } from './components/ProductTour';
 import { buildViewModel } from './viewModel';
@@ -76,6 +29,56 @@ import CyberTabBar from './components/cyber/CyberTabBar';
 import CyberRail, { RAIL_WIDTH } from './components/cyber/CyberRail';
 import { MOBILE_HEADER_HEIGHT } from './components/MobileHeader';
 import Intro from './components/fx/Intro';
+
+// Screens load on demand; Overview ships in the main bundle.
+const ClientModulesScreen = lazyScreen(() => import('./components/screens/ClientModulesScreen'));
+const DailyPlanScreen = lazyScreen(() => import('./components/screens/DailyPlanScreen'));
+const DialingScreen = lazyScreen(() => import('./components/screens/DialingScreen'));
+const StickySpotScreen = lazyScreen(() => import('./components/screens/StickySpotScreen'));
+const SobrietyScreen = lazyScreen(() => import('./components/screens/SobrietyScreen'));
+const FitnessScreen = lazyScreen(() => import('./components/screens/FitnessScreen'));
+const MacrosScreen = lazyScreen(() => import('./components/screens/MacrosScreen'));
+const GoalsScreen = lazyScreen(() => import('./components/screens/GoalsScreen'));
+const MentalHealthScreen = lazyScreen(() => import('./components/screens/MentalHealthScreen'));
+const BrainScreen = lazyScreen(() => import('./components/screens/brain/BrainScreen'));
+const EcomScreen = lazyScreen(() => import('./components/screens/ecom/EcomScreen'));
+const ScalingStartScreen = lazyScreen(() => import('./components/screens/ScalingStartScreen'));
+const ClientDeliveryScreen = lazyScreen(() => import('./components/screens/ClientDeliveryScreen'));
+const SupportInboxScreen = lazyScreen(() => import('./components/screens/SupportInboxScreen'));
+const LeadsScreen = lazyScreen(() => import('./components/screens/LeadsScreen'));
+const LegalScreen = lazyScreen(() => import('./components/screens/LegalScreen'));
+const ScalingPlannerScreen = lazyScreen(() => import('./components/screens/ScalingPlannerScreen'));
+const BusinessAuditsScreen = lazyScreen(() => import('./components/screens/BusinessAuditsScreen'));
+const ClientCRMScreen = lazyScreen(() => import('./components/screens/ClientCRMScreen'));
+const IdeaMakerScreen = lazyScreen(() => import('./components/screens/IdeaMakerScreen'));
+const BrandLabScreen = lazyScreen(() => import('./components/screens/BrandLabScreen'));
+const ScheduleScreen = lazyScreen(() => import('./components/screens/ScheduleScreen'));
+const ContactsScreen = lazyScreen(() => import('./components/screens/ContactsScreen'));
+const OpeningClosingScreen = lazyScreen(() => import('./components/screens/OpeningClosingScreen'));
+const NotificationSettingsScreen = lazyScreen(() => import('./components/screens/NotificationSettingsScreen'));
+const MorningDigestScreen = lazyScreen(() => import('./components/screens/MorningDigestScreen'));
+const SetupScreen = lazyScreen(() => import('./components/screens/SetupScreen'));
+const PlaybooksScreen = lazyScreen(() => import('./components/screens/PlaybooksScreen'));
+const StreamingScreen = lazyScreen(() => import('./components/screens/StreamingScreen'));
+const StocksScreen = lazyScreen(() => import('./components/screens/StocksScreen'));
+const LeadFlowScreen = lazyScreen(() => import('./components/screens/LeadFlowScreen'));
+const AccountSettingsScreen = lazyScreen(() => import('./components/screens/AccountSettingsScreen'));
+const PromptVoiceSettingsScreen = lazyScreen(() => import('./components/screens/PromptVoiceSettingsScreen'));
+const CallRecordingsScreen = lazyScreen(() => import('./components/screens/CallRecordingsScreen'));
+const WebsiteBuilderRoadmapScreen = lazyScreen(() => import('./components/screens/WebsiteBuilderRoadmapScreen'));
+const InvoicingScreen = lazyScreen(() => import('./components/screens/InvoicingScreen'));
+const BudgetingScreen = lazyScreen(() => import('./components/screens/BudgetingScreen'));
+const MarketingScreen = lazyScreen(() => import('./components/screens/MarketingScreen'));
+const ContentCreationScreen = lazyScreen(() => import('./components/screens/ContentCreationScreen'));
+const SwipeFileScreen = lazyScreen(() => import('./components/screens/SwipeFileScreen'));
+const DecisionLogScreen = lazyScreen(() => import('./components/screens/DecisionLogScreen'));
+const WeeklyReviewScreen = lazyScreen(() => import('./components/screens/WeeklyReviewScreen'));
+const CashFlowScreen = lazyScreen(() => import('./components/screens/CashFlowScreen'));
+const PatternDetectionScreen = lazyScreen(() => import('./components/screens/PatternDetectionScreen'));
+const VoiceCaptureScreen = lazyScreen(() => import('./components/screens/VoiceCaptureScreen'));
+const ManageModulesScreen = lazyScreen(() => import('./components/screens/ManageModulesScreen'));
+const EditHomeWidgetsScreen = lazyScreen(() => import('./components/screens/EditHomeWidgetsScreen'));
+const GrantAccessScreen = lazyScreen(() => import('./components/screens/GrantAccessScreen'));
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
@@ -374,6 +377,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <PlaceholderScreen isMobile={isMobile} label="Not available" note="This section isn't available on your account." />
         ) : (
           <ErrorBoundary scope="screen" resetKey={state.screen} label={state.screen === 'home' ? 'Overview' : undefined}>
+          <Suspense fallback={<ScreenLoading />}>
         {state.screen === 'home' && (
           <HomeScreen isMobile={isMobile} isOwner={isOwner} homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onOpenNova={actions.openNova} assistantName={assistantName} onNavigate={actions.navigateTo} />
         )}
@@ -641,6 +645,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         {(state.screen === 'placeholder' || !BUILT_SCREENS.includes(state.screen)) && (
           <PlaceholderScreen isMobile={isMobile} label={state.placeholderLabel} note={state.placeholderNote} />
         )}
+          </Suspense>
           </ErrorBoundary>
         )}
       </div>
@@ -675,6 +680,15 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         onBack={() => setTourStep((i) => Math.max(0, i - 1))}
         onSkip={stopTour}
       />
+    </div>
+  );
+}
+
+/** Shown for the moment a screen's code is loading. */
+function ScreenLoading() {
+  return (
+    <div aria-busy="true" aria-label="Loading" style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 8 }}>
+      {[180, 90, 90].map((h, i) => <div key={i} style={{ height: h, borderRadius: 'var(--radius-lg)', background: 'var(--surface)', border: '1px solid var(--border)', opacity: 0.6 }} />)}
     </div>
   );
 }

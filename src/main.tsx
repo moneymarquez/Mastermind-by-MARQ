@@ -1,10 +1,11 @@
-import { StrictMode } from 'react'
+import { StrictMode, Suspense } from 'react'
+import { lazyScreen } from './lib/lazyScreen'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import ErrorBoundary, { recordError } from './components/ErrorBoundary'
-import PublicAuditScreen from './PublicAuditScreen.tsx'
-import PublicClientDashboard from './PublicClientDashboard.tsx'
+const PublicAuditScreen = lazyScreen(() => import('./PublicAuditScreen'))
+const PublicClientDashboard = lazyScreen(() => import('./PublicClientDashboard'))
 import { isStandalone } from './lib/pwa'
 import { initOrientationLock } from './lib/orientationLock'
 
@@ -26,11 +27,13 @@ const clientToken = path.startsWith('/client/') ? path.slice('/client/'.length) 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary scope="app">
+      <Suspense fallback={null}>
       {isPublicAudit
         ? <PublicAuditScreen />
         : clientToken
           ? <PublicClientDashboard token={clientToken} />
           : <App />}
+      </Suspense>
     </ErrorBoundary>
   </StrictMode>,
 )

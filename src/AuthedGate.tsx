@@ -1,13 +1,17 @@
+import { Suspense } from 'react';
+import { lazyScreen } from './lib/lazyScreen';
 import Stage from './Stage';
 import { useMastermindState } from './state';
 import { useModuleAccess } from './data/useModuleAccess';
 import { useSubscription } from './data/useSubscription';
 import { useTheme } from './data/useTheme';
 import { isOwnerIdentity } from './auth/ownerIdentity';
-import OnboardingFlow from './onboarding/OnboardingFlow';
+;
 import { setPromptUser } from './lib/promptUser';
-import BillingGateScreen from './billing/BillingGateScreen';
+;
 import { supabase } from './lib/supabase';
+const OnboardingFlow = lazyScreen(() => import('./onboarding/OnboardingFlow'));
+const BillingGateScreen = lazyScreen(() => import('./billing/BillingGateScreen'));
 
 interface Props {
   userId: string;
@@ -66,7 +70,7 @@ export default function AuthedGate({ userId, userEmail, userDisplayName, onSignO
       return <div style={{ minHeight: '100vh', background: 'var(--bg)' }} />;
     }
     if (!subscription.isActive) {
-      return <BillingGateScreen onSubscribed={subscription.refresh} onSignOut={onSignOut} theme={theme.theme} />;
+      return <Suspense fallback={<div style={{ minHeight: '100vh', background: 'var(--bg)' }} />}><BillingGateScreen onSubscribed={subscription.refresh} onSignOut={onSignOut} theme={theme.theme} /></Suspense>;
     }
   }
 

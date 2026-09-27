@@ -1,10 +1,13 @@
+import { Suspense } from 'react';
+import { lazyScreen } from './lib/lazyScreen';
 import AuthedGate from './AuthedGate';
 import { useAuth } from './auth/useAuth';
 import AuthScreen from './auth/AuthScreen';
 import SetNewPasswordScreen from './auth/SetNewPasswordScreen';
 import { isOwnerIdentity } from './auth/ownerIdentity';
 import { useUserRole } from './data/useUserRole';
-import ClientPortal from './client-portal/ClientPortal';
+const ClientPortal = lazyScreen(() => import('./client-portal/ClientPortal'));
+;
 
 interface GatedProps {
   userId: string;
@@ -26,7 +29,7 @@ function Gated({ userId, userEmail, userDisplayName, onSignOut }: GatedProps) {
     return <div style={{ minHeight: '100vh', background: 'var(--bg)' }} />;
   }
   if (role === 'client') {
-    return <ClientPortal onSignOut={onSignOut} />;
+    return <Suspense fallback={<div style={{ minHeight: '100vh', background: 'var(--bg)' }} />}><ClientPortal onSignOut={onSignOut} /></Suspense>;
   }
   return <AuthedGate userId={userId} userEmail={userEmail} userDisplayName={userDisplayName} onSignOut={onSignOut} />;
 }
