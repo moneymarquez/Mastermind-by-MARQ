@@ -22,9 +22,9 @@ const CYCLE_LABEL: Record<BillingCycle, string> = { weekly: 'Weekly', monthly: '
 
 function StatTile({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
-    <div style={{ ...cardStyle, flex: 1, minWidth: 140 }}>
+    <div style={{ ...cardStyle, flex: 1, minWidth: 140, overflow: 'hidden' }}>
       <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>{label}</div>
-      <div style={{ fontSize: 'var(--text-stat)', fontWeight: 700, color: color ?? 'var(--text)', marginTop: 6, fontFamily: 'var(--font-mono)' }}>{value}</div>
+      <div style={{ fontSize: 'min(var(--text-stat), 6.4vw)', fontWeight: 700, color: color ?? 'var(--text)', marginTop: 6, fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>{value}</div>
     </div>
   );
 }

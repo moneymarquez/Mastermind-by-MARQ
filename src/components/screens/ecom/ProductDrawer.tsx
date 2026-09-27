@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { Product, Snapshot, ProductDetail } from '../../../data/ecomProducts';
 import { landedCost, marginPct, marginHealthy, sparklinePath, rankTrend } from '../../../data/ecomProducts';
@@ -36,6 +36,12 @@ const SECTIONS: { key: keyof ProductDetail; title: string; hint: string }[] = [
 export default function ProductDrawer({ product: p, snapshots, onClose, onSave, onToggleWatch, onBuildBrand, onRemove, onRan }: Props) {
   const [detail, setDetail] = useState<ProductDetail>(p?.detail ?? {});
   const [nums, setNums] = useState({ sell: p?.sell_price?.toString() ?? '', supplier: p?.supplier_cost?.toString() ?? '', ship: p?.detail.ship_cost?.toString() ?? '' });
+  // The drawer stays mounted between products, so reload the form fields
+  // whenever a different product opens.
+  useEffect(() => {
+    setDetail(p?.detail ?? {});
+    setNums({ sell: p?.sell_price?.toString() ?? '', supplier: p?.supplier_cost?.toString() ?? '', ship: p?.detail.ship_cost?.toString() ?? '' });
+  }, [p?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const [saving, setSaving] = useState(false);
   const [building, setBuilding] = useState(false);
   if (!p) return null;
@@ -88,6 +94,7 @@ export default function ProductDrawer({ product: p, snapshots, onClose, onSave, 
       )}
 
       {/* Money */}
+      <div data-demo="money" />
       <Section title="Money" aside={<Badge color={marginHealthy(sell || null, landed) ? E.green : E.amber}>{landed == null ? 'Enter costs' : marginHealthy(sell, landed) ? '≥ 3× landed' : 'Under 3× landed'}</Badge>}>
         <div style={{ ...E.card, padding: 14 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10 }}>
