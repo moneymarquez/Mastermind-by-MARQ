@@ -133,6 +133,7 @@ export default function PersonalizedDemo({ assistantName, selectedKeys, onContin
           This is what your dashboard looks like, built out with {selectedModules.length} module{selectedModules.length === 1 ? '' : 's'} you picked.
           {' '}<strong style={{ color: 'var(--text)' }}>{assistantName}</strong> is already reading across all of it.
         </div>
+        <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 6 }}>Example numbers — yours fill in as you use it.</div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14, marginTop: 32 }}>
           {selectedModules.map((m) => {
@@ -149,17 +150,17 @@ export default function PersonalizedDemo({ assistantName, selectedKeys, onContin
         </div>
       </div>
 
-      <div style={{ position: 'fixed', right: 32, bottom: 32 }}>
-        <div
+      {/* Bug inventory B-14: the only way forward used to be an unlabelled
+          arrow in a div. A real, labelled button in a bottom bar now. */}
+      <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, padding: '12px 16px calc(12px + env(safe-area-inset-bottom))', background: 'color-mix(in srgb, var(--bg) 88%, transparent)', backdropFilter: 'blur(12px)', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'center' }}>
+        <button
+          type="button"
           onClick={() => !submitting && onContinue()}
-          style={{
-            width: 64, height: 64, borderRadius: '50%', background: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1, boxShadow: '0 10px 30px var(--scrim-soft)',
-          }}
-          title="This is real — let's set it up"
+          disabled={submitting}
+          style={{ width: '100%', maxWidth: 420, minHeight: 50, borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-lg)', fontWeight: 700, cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
         >
-          <Icon name="arrow-up" size={22} color="var(--bg)" style={{ transform: 'rotate(90deg)' }} />
-        </div>
+          {submitting ? 'Setting it up…' : <>This is real — set it up <Icon name="arrow-up" size={18} color="var(--bg)" style={{ transform: 'rotate(90deg)' }} /></>}
+        </button>
       </div>
     </div>
   );
