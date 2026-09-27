@@ -52,7 +52,7 @@ export default function PlanTab({ items, accounts, newOpen, onCloseNew }: Props)
       {items.error && <div style={{ color: E.red, marginBottom: 10 }}>{items.error}</div>}
       {!items.loading && items.items.length === 0 && (
         <div style={{ marginBottom: 12 }}>
-          <TeachingEmpty what="An empty week. Tap a day's ＋ to add a post idea: concept, hook, format, which account." worker="you (C1) — from C3 the Idea & Script worker fills the week with hooks and shot lists for you to approve" />
+          <TeachingEmpty what="An empty week. Tap a day's ＋ to add a post idea: concept, hook, format, which account." worker="you for now — later the Idea & Script worker fills the week with hooks and shot lists for you to approve" />
         </div>
       )}
 

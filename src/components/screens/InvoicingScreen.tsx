@@ -246,9 +246,6 @@ function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack
       </div>
       {error && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginBottom: 10 }}>Couldn't save: {error}</div>}
 
-      <div style={{ display: 'inline-flex', padding: '9px 16px', borderRadius: 'var(--radius-pill)', border: '1px solid color-mix(in srgb, var(--warning) 33%, transparent)', background: 'color-mix(in srgb, var(--warning) 8%, transparent)', color: 'var(--warning)', fontSize: 'var(--text-small)', fontWeight: 600, marginBottom: 16 }}>
-        Send to client — coming soon
-      </div>
 
       {doc.doc_type === 'invoice' && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>

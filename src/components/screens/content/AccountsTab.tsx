@@ -23,7 +23,7 @@ export default function AccountsTab({ api, items, newOpen, onCloseNew, onOpenPla
     <div>
       {api.error && <div style={{ color: E.red, marginBottom: 10 }}>{api.error}</div>}
       {!api.loading && api.accounts.length === 0 && (
-        <TeachingEmpty what="No accounts yet. Add every account this engine will run: Mastermind, Made by Marq, your personal one, each e-comm brand." worker="you (C1) — Instagram and TikTok connections fill the numbers from C2" />
+        <TeachingEmpty what="No accounts yet. Add every account this engine will run: Mastermind, Made by Marq, your personal one, each e-comm brand." worker="you for now — once Instagram and TikTok are connected, the numbers fill in by themselves" />
       )}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12, marginTop: api.accounts.length ? 0 : 12 }}>
         {api.accounts.map((a) => <AccountCard key={a.id} a={a} api={api} items={items} today={today} onOpen={() => setOpenId(a.id)} onLog={() => setLogId(a.id)} onOpenPlan={onOpenPlan} />)}
@@ -165,7 +165,7 @@ function AccountDetail({ a, api, items, today, onClose, onOpenPlan }: { a: Socia
       <Section title="Followers over time" aside={<span style={{ fontSize: 'var(--text-caption)', color: E.faint }}>{snaps.length} snapshot{snaps.length === 1 ? '' : 's'}</span>}>
         <div style={{ ...E.card, padding: 12 }}>
           {path ? <svg width="100%" height={60} viewBox="0 0 300 60" preserveAspectRatio="none" aria-label="Followers"><path d={path} fill="none" stroke={E.green} strokeWidth={2} strokeLinejoin="round" /></svg>
-            : <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>Two snapshots draw a line. Log numbers once a day and it fills in; from C2 the API does it.</div>}
+            : <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>Two snapshots draw a line. Log numbers once a day and it fills in; once the account is connected it updates itself.</div>}
         </div>
       </Section>
       <Section title="Next up" aside={<button style={{ ...btn('ghost'), padding: '4px 10px', fontSize: 12 }} onClick={() => { onClose(); onOpenPlan(); }}>Open plan</button>}>
@@ -192,7 +192,7 @@ function AccountDetail({ a, api, items, today, onClose, onOpenPlan }: { a: Socia
         })}
       </Section>
       <Section title="What's working">
-        <TeachingEmpty what="Top 10 by saves and shares, best-time heatmap, and the Auditor's read (3 things to repeat, 3 to stop)." worker="the Account Auditor" connection="Instagram / TikTok API (C2)" phase={3} />
+        <TeachingEmpty what="Top 10 by saves and shares, best-time heatmap, and the Auditor's read (3 things to repeat, 3 to stop)." worker="the Account Auditor" connection="an Instagram or TikTok connection" />
       </Section>
       {edit && <AccountDrawer api={api} a={a} onClose={() => setEdit(false)} />}
       {addPost && <PostDrawer a={a} api={api} onClose={() => setAddPost(false)} />}

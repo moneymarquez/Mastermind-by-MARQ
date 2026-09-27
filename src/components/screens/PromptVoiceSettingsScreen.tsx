@@ -98,8 +98,7 @@ export default function PromptVoiceSettingsScreen({ homeHeadStyle, homeSubStyle 
         <div style={cardStyle}>
           <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>Voice</div>
           <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>
-            Voice input is live — tap the mic icon next to {assistantName}'s message box to talk instead of type.
-            Voice output (spoken replies) isn't built yet.
+            Tap the mic icon next to {assistantName}'s message box to talk instead of type.
           </div>
         </div>
       </div>
