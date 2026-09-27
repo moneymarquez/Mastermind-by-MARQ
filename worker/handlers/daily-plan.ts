@@ -1,7 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { buildPushPayload } from '@block65/webcrypto-web-push';
 import type { PushMessage, PushSubscription, VapidKeys } from '@block65/webcrypto-web-push';
-import { requireUser } from '../lib/auth';
+import { requireMember, memberIds } from '../lib/member';
+import { Sb } from '../lib/sb';
 import { buildPlan, mergePlan, planNotifications, toMinutes } from '../lib/planBuilder';
 import type { PlanBlock, PlanEvent, PlanInput, PlanReminder, PlanShift, PlanStep } from '../lib/planBuilder';
 import { dailyCallGoalFrom } from '../../src/data/callGoal';
@@ -268,6 +269,9 @@ export async function runDailyPlan(env: DailyPlanEnv): Promise<void> {
       ...subs.map((s) => s.user_id),
     ])];
     const anthropic = anthropicKey ? new Anthropic({ apiKey: anthropicKey }) : null;
+    // The AI pass spends on the app's key: members only. Everyone else
+    // still gets the deterministic floor.
+    const members = await memberIds(new Sb({ VITE_SUPABASE_URL: supabaseUrl, VITE_SUPABASE_ANON_KEY: '', SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey }));
     if (!anthropic) console.error('runDailyPlan: ANTHROPIC_API_KEY not set — saving the deterministic floor only');
 
     for (const userId of userIds) {
@@ -278,7 +282,7 @@ export async function runDailyPlan(env: DailyPlanEnv): Promise<void> {
         try {
           if (await existingPlan(supabaseUrl, headers, userId, date)) continue;
           const floor = buildPlan(await fetchPlanInput(supabaseUrl, headers, userId, date));
-          const blocks = withAi && anthropic ? await enrichWithAi(anthropic, supabaseUrl, headers, userId, floor) : floor;
+          const blocks = withAi && anthropic && members.has(userId) ? await enrichWithAi(anthropic, supabaseUrl, headers, userId, floor) : floor;
           await savePlan(supabaseUrl, headers, userId, date, blocks);
         } catch (err) {
           console.error('runDailyPlan: generation failed for user', userId, date, err);
@@ -350,9 +354,10 @@ export const PLAN_DAYS_AHEAD = 3;
  *  fast. Status, confirmation and notification stamps are untouched. */
 export async function dailyPlanToday(request: Request, env: DailyPlanEnv): Promise<Response> {
   if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
-  const user = await requireUser(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
-  if (user instanceof Response) return user;
   if (!env.SUPABASE_SERVICE_ROLE_KEY) return json({ error: 'Plan generation is not configured.' }, 503);
+  const m = await requireMember(request, env);
+  if (m instanceof Response) return m;
+  const user = m.user;
 
   const headers: Headers = { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, 'content-type': 'application/json' };
   const now = nowInTimeZone(env.STORE_TIMEZONE || 'America/Chicago');

@@ -1,8 +1,8 @@
 // /api/engine/* — the shared worker engine's HTTP surface. Runs are
 // synchronous from the caller's point of view ("Run now" waits for the
 // answer); the overnight plan runs from the */5 cron (lib/orchestrator.ts).
-import { requireUser } from '../lib/auth';
-import { Sb, json, zonedNow } from '../lib/sb';
+import { requireMember } from '../lib/member';
+import { json, zonedNow } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
 import { spentToday, capFor } from '../lib/ai';
 import { ensureRoster, RUNNERS, decide, ENGINE_DOMAINS, TZ } from '../lib/engine';
@@ -19,10 +19,10 @@ const SCRIPT_CHANNELS: ScriptChannel[] = ['call', 'voicemail', 'email', 'dm', 'l
 async function body<T>(request: Request): Promise<T | null> { try { return (await request.json()) as T; } catch { return null; } }
 
 export async function engineRoute(request: Request, env: EngineEnv, path: string): Promise<Response> {
-  const user = await requireUser(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
-  if (user instanceof Response) return user;
-  if (!env.SUPABASE_SERVICE_ROLE_KEY) return json({ error: 'SUPABASE_SERVICE_ROLE_KEY is not set as a Worker secret.' }, 500);
-  const sb = new Sb(env);
+  // Members only (bug inventory B-02): every route here can spend.
+  const m = await requireMember(request, env);
+  if (m instanceof Response) return m;
+  const { user, sb } = m;
   try {
     if (path === 'start') {
       const workers = await ensureRoster(sb, user.id);

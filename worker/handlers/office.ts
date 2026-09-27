@@ -4,7 +4,7 @@
 // apply:  do one proposal — playbook edits save a new ai_playbooks version
 //         with change_reason + thread_id, so the correction sticks.
 // assign: "＋ Assign task" — the orchestrator routes an order to a worker.
-import { requireUser } from '../lib/auth';
+import { requireMember } from '../lib/member';
 import { Sb, json, zonedNow } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
 import { ask, CapReached } from '../lib/ai';
@@ -34,10 +34,10 @@ async function workerPlaybooks(sb: Sb, userId: string, w: WorkerRow): Promise<{ 
 }
 
 export async function officeRoute(request: Request, env: OfficeEnv, path: string): Promise<Response> {
-  const user = await requireUser(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
-  if (user instanceof Response) return user;
-  if (!env.SUPABASE_SERVICE_ROLE_KEY) return json({ error: 'SUPABASE_SERVICE_ROLE_KEY is not set as a Worker secret.' }, 500);
-  const sb = new Sb(env);
+  // Members only (bug inventory B-02): every route here can spend.
+  const m = await requireMember(request, env);
+  if (m instanceof Response) return m;
+  const { user, sb } = m;
   let b: Record<string, unknown> = {};
   try { b = (await request.json()) as Record<string, unknown>; } catch { /* empty */ }
   const date = zonedNow(TZ).date;

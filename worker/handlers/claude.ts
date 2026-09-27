@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { requireUser } from '../lib/auth';
+import { requireMember, assistantBudget, recordAssistantCost, MAX_ASSISTANT_TOKENS } from '../lib/member';
+import { zonedNow } from '../lib/sb';
 
 // The general-purpose Claude proxy behind src/lib/ai.ts's askClaude() —
 // every AI feature outside Nova's own chat routes through here (Client CRM
@@ -25,6 +26,7 @@ const MODEL = 'claude-opus-5';
 export interface ClaudeEnv {
   VITE_SUPABASE_URL: string;
   VITE_SUPABASE_ANON_KEY: string;
+  SUPABASE_SERVICE_ROLE_KEY: string;
   ANTHROPIC_API_KEY?: string;
 }
 
@@ -52,8 +54,13 @@ function json(body: unknown, status = 200): Response {
 export async function claudeProxy(request: Request, env: ClaudeEnv): Promise<Response> {
   if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
 
-  const user = await requireUser(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
-  if (user instanceof Response) return user;
+  // Members only, metered (bug inventory B-02): this route runs Opus on
+  // the app's key, so a free signup must not reach it.
+  const m = await requireMember(request, env);
+  if (m instanceof Response) return m;
+  const date = zonedNow('America/Denver').date;
+  const over = await assistantBudget(m.sb, m.user.id, m.owner, date);
+  if (over) return over;
 
   if (!env.ANTHROPIC_API_KEY) {
     return json({ error: 'Server misconfigured: missing ANTHROPIC_API_KEY' }, 500);
@@ -96,13 +103,14 @@ export async function claudeProxy(request: Request, env: ClaudeEnv): Promise<Res
   try {
     const response = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: body.maxTokens ?? 1200,
+      max_tokens: Math.max(1, Math.min(MAX_ASSISTANT_TOKENS, Math.floor(Number(body.maxTokens) || 1200))),
       thinking: { type: 'disabled' },
       output_config: { effort: body.effort === 'medium' || body.effort === 'high' ? body.effort : 'low' },
       system: body.system,
       messages: anthropicMessages,
     });
 
+    await recordAssistantCost(m.sb, m.user.id, date, MODEL, response.usage.input_tokens, response.usage.output_tokens);
     const text = response.content
       .filter((b): b is Anthropic.TextBlock => b.type === 'text')
       .map((b) => b.text)

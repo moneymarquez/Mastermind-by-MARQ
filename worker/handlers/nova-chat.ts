@@ -1,9 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { requireUser } from '../lib/auth';
+import { requireMember, assistantBudget, recordAssistantCost } from '../lib/member';
+import { zonedNow } from '../lib/sb';
 
 export interface NovaChatEnv {
   VITE_SUPABASE_URL: string;
   VITE_SUPABASE_ANON_KEY: string;
+  SUPABASE_SERVICE_ROLE_KEY: string;
   ANTHROPIC_API_KEY?: string;
 }
 
@@ -131,8 +133,11 @@ interface NovaChatRequest {
 export async function novaChat(request: Request, env: NovaChatEnv): Promise<Response> {
   const authHeader = request.headers.get('authorization') ?? '';
   const userToken = authHeader.replace(/^Bearer\s+/i, '');
-  const user = await requireUser(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
-  if (user instanceof Response) return user;
+  const m = await requireMember(request, env);
+  if (m instanceof Response) return m;
+  const date = zonedNow('America/Denver').date;
+  const over = await assistantBudget(m.sb, m.user.id, m.owner, date);
+  if (over) return over;
   if (!env.ANTHROPIC_API_KEY) {
     return new Response(JSON.stringify({ error: 'Nova needs ANTHROPIC_API_KEY set.' }), { status: 503, headers: { 'content-type': 'application/json' } });
   }
@@ -154,6 +159,7 @@ export async function novaChat(request: Request, env: NovaChatEnv): Promise<Resp
       tools: TOOLS,
       messages: conversation,
     });
+    await recordAssistantCost(m.sb, m.user.id, date, MODEL, msg.usage.input_tokens, msg.usage.output_tokens);
 
     if (msg.stop_reason !== 'tool_use') {
       const text = msg.content.filter((b): b is Anthropic.TextBlock => b.type === 'text').map((b) => b.text).join('\n').trim();

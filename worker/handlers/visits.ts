@@ -2,14 +2,14 @@
 // from Cloudflare Web Analytics (Appendix 5 Part 4), via the GraphQL
 // Analytics API with the CF_API_TOKEN set on the Setup page (needs Account
 // Analytics → Read). Returns daily visits and page views for 14 days.
-import { requireUser } from '../lib/auth';
+import { requireOwner } from '../lib/auth';
 import { Sb, json } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
 
 export interface VisitsEnv extends SbEnv { CF_API_TOKEN?: string; CF_ACCOUNT_ID?: string }
 
 export async function marketingVisits(request: Request, env: VisitsEnv): Promise<Response> {
-  const user = await requireUser(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+  const user = await requireOwner(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
   if (user instanceof Response) return user;
   const venture = new URL(request.url).searchParams.get('venture') ?? 'madebymarq';
   const sb = new Sb(env);
