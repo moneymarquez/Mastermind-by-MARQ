@@ -2,6 +2,32 @@
 
 _2026-09-27. Discovery only — nothing here is fixed yet. Severity: **P0** crash / data loss / security, **P1** blocks a task or blocks App Store approval, **P2** ugly or confusing, **P3** nit._
 
+## Status after the Phase 1 sweep (2026-09-27)
+
+| Item | Status |
+|---|---|
+| B-01 leads / lead-media open to every account | **Migration written, not applied** — `supabase/schema_107_leads_owner_only.sql` drops 3 policies, so it waits for Marq's OK |
+| B-02 paid AI routes open to free signups | Fixed (a81ba0c) |
+| B-03 open email relay | Fixed (dd872be) |
+| B-04 deploy may wipe secrets | **Needs Marq:** Setup → Test on the Cloudflare and Anthropic cards |
+| B-05 no error boundary | Fixed (3b74f10) |
+| B-06 deep links ignored | Fixed (5481b14) |
+| B-07 owner's name in everyone's AI | Fixed (4c7ae91) |
+| B-08 no in-app deletion / export | Fixed (e344fbd) |
+| B-09 no invoice PDF | Fixed (9e8fb43) |
+| B-10 slow first load | Fixed (b8be731) — Lighthouse mobile 53 → 87–90 |
+| B-11 sign-in header at 375 px | Fixed (766fc0e) |
+| B-12 billing screen at 375 px + coming-soon tier | Fixed (d94c78e) |
+| B-13 build-phase / coming-soon text | Fixed for every screen a tester can reach (2b56ad5); owner-only worker screens keep their phase badges |
+| B-14 onboarding's last step | Fixed (00c32ee) |
+| B-15 onboarding heading at 375 px | Fixed (5255213) |
+| **B-31** (new) "Create document" looked like it did nothing | Fixed (9e8fb43) — the list didn't know about the new document until a reload |
+| B-16 – B-30 (P2 / P3) | Open — Phase 3 polish / Phase 2 hardening |
+
+Tests: `npm test` (Vitest, 9 files) covers B-02, B-03, B-06, B-07, B-08 and the worker engine.
+
+---
+
 ## How this was tested
 
 - **Every screen, 375 px and 414 px**, as the owner and as a comped tester (a signed-in non-owner who has finished onboarding): 49 screens × 2 widths × 2 accounts = 196 screen visits. Each visit: page errors, console errors, horizontal overflow, blank screen, tap targets under 44 px, unlabelled buttons, placeholder text, then **every visible button clicked once** (destructive ones skipped) watching for crashes.

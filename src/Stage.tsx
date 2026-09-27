@@ -204,7 +204,9 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // screens (home, settings, codelab, manage-modules, placeholder), which
   // always pass through unblocked.
   const routeModuleKey = moduleKeyForRoute(state.screen);
-  const screenBlocked = routeModuleKey ? !canAccess(routeModuleKey) : false;
+  // Grant Access has no module key but is owner-only; now that ?screen= deep
+  // links work it must say so instead of rendering an empty page.
+  const screenBlocked = routeModuleKey ? !canAccess(routeModuleKey) : state.screen === 'grant-access' && !isOwner;
 
   // Product tour — on-demand only (help icon or Settings), never
   // auto-started. Steps are filtered by the same canAccess used for
