@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { NAV_DATA, INITIAL_STICKY_IDEAS, PLACEHOLDER_NOTES } from './data';
+import { DIRECT_SCREENS, LAST_SCREEN_KEY, deepLinkScreen, pickInitialScreen } from './screenRestore';
+import type { StoredScreen } from './screenRestore';
 import type { NovaMessage, Point, Screen, StickyIdea } from './types';
 import { askNova, AiError } from './lib/ai';
 import { supabase } from './lib/supabase';
@@ -117,57 +119,6 @@ const initialIsMobile = initialViewport.width < MOBILE_BREAKPOINT;
 // even once its screen and nav entry are fully built (bit 'client-crm',
 // 'grant-access', 'content' and 'swipe-file' this way: wired into
 // types.ts, modules.config.ts, and Stage.tsx, but never added here).
-const DIRECT_SCREENS: Screen[] = ['home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain', 'ecommerce', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing', 'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings', 'call-recordings', 'website', 'invoicing', 'manage-modules', 'edit-home-widgets', 'grant-access', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'content', 'swipe-file'];
-
-// Which screen the app was on last, so a reload comes back to it instead
-// of dumping you on Home. Matters most as an installed PWA: iOS silently
-// reloads a backgrounded app, so without this you lose your place just by
-// taking a phone call mid-task.
-//
-// But only for a while. Coming back after an hour is a new session, and a
-// new session should start on Overview — landing on whatever deep LeadFlow
-// tab was open yesterday is disorienting, not helpful. The stamp is
-// refreshed every time the app goes to the background (not just on
-// navigation), so "an hour away" means an hour since you last had it
-// open, not an hour since you last tapped something.
-const LAST_SCREEN_KEY = 'mm:last-screen';
-export const LAST_SCREEN_TTL_MS = 60 * 60 * 1000;
-
-interface StoredScreen {
-  screen: string;
-  at: number;
-}
-
-/** Decide what a stored value restores to. Pure so it can be tested. */
-export function restoreScreen(stored: string | null, now: number): Screen {
-  if (!stored) return 'home';
-  let parsed: Partial<StoredScreen>;
-  try {
-    parsed = JSON.parse(stored) as Partial<StoredScreen>;
-  } catch {
-    // Pre-TTL builds stored the bare screen name. There's no timestamp to
-    // judge it by, so it's treated as expired rather than trusted forever.
-    return 'home';
-  }
-  if (typeof parsed.screen !== 'string' || typeof parsed.at !== 'number') return 'home';
-  if (!Number.isFinite(parsed.at) || now - parsed.at > LAST_SCREEN_TTL_MS) return 'home';
-  // A clock that went backwards (device time changed) is not a reason to
-  // trust a stale screen either.
-  if (parsed.at > now + 5 * 60 * 1000) return 'home';
-  // Validated rather than trusted: a screen that existed in an older build
-  // would otherwise restore into a blank placeholder.
-  if (!(DIRECT_SCREENS as string[]).includes(parsed.screen)) return 'home';
-  return parsed.screen as Screen;
-}
-
-function readLastScreen(): Screen {
-  try {
-    return restoreScreen(localStorage.getItem(LAST_SCREEN_KEY), Date.now());
-  } catch {
-    // Private mode / blocked site data — the read itself can throw.
-    return 'home';
-  }
-}
 
 function writeLastScreen(screen: Screen): void {
   try {
@@ -177,12 +128,18 @@ function writeLastScreen(screen: Screen): void {
   }
 }
 
-/** ?screen=<id> deep links (OAuth callbacks, push notifications). Only
- *  built screens are honoured; anything else opens Overview. */
 function initialScreen(): Screen {
   try {
-    const q = new URLSearchParams(window.location.search).get('screen');
-    if (q && (DIRECT_SCREENS as string[]).includes(q)) return q as Screen;
+    const stored = (() => { try { return localStorage.getItem(LAST_SCREEN_KEY); } catch { return null; } })();
+    const picked = pickInitialScreen(window.location.search, stored, Date.now());
+    // Consume the deep link so a later reload restores wherever you went
+    // next instead of jumping back to the linked screen.
+    if (deepLinkScreen(window.location.search)) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('screen');
+      window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+    }
+    return picked;
   } catch { /* SSR / no window */ }
   return 'home';
 }
@@ -191,7 +148,7 @@ const initialState: AppState = {
   isMobile: initialIsMobile,
   viewportWidth: initialViewport.width,
   viewportHeight: initialViewport.height,
-  screen: initialScreen(),
+  screen: 'home',
   placeholderLabel: '',
   placeholderNote: '',
   settingsExpanded: false,
@@ -214,7 +171,7 @@ const initialState: AppState = {
 };
 
 export function useMastermindState(userDisplayName: string | null) {
-  const [state, setState] = useState<AppState>(() => ({ ...initialState, screen: readLastScreen() }));
+  const [state, setState] = useState<AppState>(() => ({ ...initialState, screen: initialScreen() }));
   const { tone, assistantName } = useNovaPreferences();
   const patch = (update: Partial<AppState> | ((s: AppState) => Partial<AppState>)) =>
     setState((s) => ({ ...s, ...(typeof update === 'function' ? update(s) : update) }));
