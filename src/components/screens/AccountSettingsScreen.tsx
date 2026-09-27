@@ -29,11 +29,11 @@ const primaryBtn: CSSProperties = {
   background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer', alignSelf: 'flex-start',
 };
 const ghostBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 'var(--radius-pill)',
+  display: 'inline-flex', alignItems: 'center', minHeight: 44, font: 'inherit', background: 'none', padding: '9px 16px', borderRadius: 'var(--radius-pill)',
   border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 'var(--text-body)', cursor: 'pointer', alignSelf: 'flex-start',
 };
 const dangerBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 'var(--radius-pill)',
+  display: 'inline-flex', alignItems: 'center', minHeight: 44, font: 'inherit', background: 'none', padding: '9px 16px', borderRadius: 'var(--radius-pill)',
   border: '1px solid color-mix(in srgb, var(--danger) 33%, transparent)', color: 'var(--danger)', fontSize: 'var(--text-body)', cursor: 'pointer', alignSelf: 'flex-start',
 };
 
@@ -65,7 +65,34 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
   const [passwordSaved, setPasswordSaved] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
 
-  const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm' | 'contact'>('idle');
+  const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm' | 'working'>('idle');
+  const [deleteText, setDeleteText] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
+  // Bug inventory B-08: real export + real deletion (worker/handlers/account.ts).
+  const exportData = async () => {
+    setExporting(true); setExportError('');
+    try {
+      const { data } = await supabase.auth.getSession();
+      const res = await fetch('/api/account/export', { headers: { authorization: `Bearer ${data.session?.access_token ?? ''}` } });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? `Export failed (${res.status})`);
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = `mastermind-export-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    } catch (e) { setExportError(e instanceof Error ? e.message : 'Export failed.'); }
+    setExporting(false);
+  };
+  const deleteAccount = async () => {
+    setDeleteStep('working'); setDeleteError('');
+    const { data } = await supabase.auth.getSession();
+    const res = await fetch('/api/account/delete', { method: 'POST', headers: { authorization: `Bearer ${data.session?.access_token ?? ''}`, 'content-type': 'application/json' }, body: JSON.stringify({ confirm: deleteText.trim() }) }).catch(() => null);
+    const body = res ? await res.json().catch(() => ({})) : { error: 'Could not reach the server — check your connection and try again.' };
+    if (!res || !res.ok) { setDeleteError(body.error ?? `Delete failed (${res?.status})`); setDeleteStep('confirm'); return; }
+    try { localStorage.clear(); } catch { /* fine */ }
+    onSignOut();
+  };
   const [portalError, setPortalError] = useState('');
   const [openingPortal, setOpeningPortal] = useState(false);
 
@@ -265,31 +292,36 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
         </div>
 
         <div style={cardStyle}>
+          <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>Your data</div>
+          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.5 }}>Download everything in your account as one JSON file.</div>
+          <button type="button" style={{ ...ghostBtn, opacity: exporting ? 0.6 : 1 }} disabled={exporting} onClick={exportData}>{exporting ? 'Preparing…' : 'Export my data'}</button>
+          {exportError && <div role="alert" style={{ fontSize: 'var(--text-caption)', color: 'var(--danger)', marginTop: 10 }}>{exportError}</div>}
+        </div>
+
+        <div style={cardStyle}>
           <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Session</div>
-          <div style={ghostBtn} onClick={onSignOut}>Sign out</div>
+          <button type="button" style={ghostBtn} onClick={onSignOut}>Sign out</button>
         </div>
 
         <div style={{ ...cardStyle, borderColor: 'color-mix(in srgb, var(--danger) 20%, transparent)' }}>
           <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--danger)', marginBottom: 8 }}>Delete account</div>
           {deleteStep === 'idle' && (
             <>
-              <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginBottom: 12 }}>Permanently removes your account and data. This can't be undone.</div>
-              <div style={dangerBtn} onClick={() => setDeleteStep('confirm')}>Delete my account</div>
+              <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.5 }}>Permanently deletes your account, everything in it, and your uploaded files, and cancels your subscription. This can't be undone — export your data first if you want a copy.</div>
+              <button type="button" style={dangerBtn} onClick={() => setDeleteStep('confirm')}>Delete my account</button>
             </>
           )}
-          {deleteStep === 'confirm' && (
+          {deleteStep !== 'idle' && (
             <>
-              <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-quaternary-2)', marginBottom: 12 }}>Are you sure? This permanently deletes your account and all data in it.</div>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <div style={dangerBtn} onClick={() => setDeleteStep('contact')}>Yes, delete it</div>
-                <div style={ghostBtn} onClick={() => setDeleteStep('idle')}>Cancel</div>
+              <label htmlFor="delete-confirm" style={{ display: 'block', fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginBottom: 8, lineHeight: 1.5 }}>Type <strong style={{ color: 'var(--text)' }}>DELETE</strong> to confirm. Everything is removed straight away.</label>
+              <input id="delete-confirm" autoCapitalize="characters" autoComplete="off" value={deleteText} onChange={(e) => { setDeleteText(e.target.value); setDeleteError(''); }}
+                style={{ width: '100%', boxSizing: 'border-box', minHeight: 44, padding: '10px 12px', marginBottom: 10, borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 'var(--text-body)' }} />
+              {deleteError && <div role="alert" style={{ fontSize: 'var(--text-caption)', color: 'var(--danger)', marginBottom: 10 }}>{deleteError}</div>}
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <button type="button" style={{ ...dangerBtn, opacity: deleteText.trim() === 'DELETE' && deleteStep !== 'working' ? 1 : 0.5 }} disabled={deleteText.trim() !== 'DELETE' || deleteStep === 'working'} onClick={deleteAccount}>{deleteStep === 'working' ? 'Deleting…' : 'Delete everything'}</button>
+                <button type="button" style={ghostBtn} disabled={deleteStep === 'working'} onClick={() => { setDeleteStep('idle'); setDeleteText(''); setDeleteError(''); }}>Cancel</button>
               </div>
             </>
-          )}
-          {deleteStep === 'contact' && (
-            <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-              Full self-serve deletion isn't wired up yet — email support to have your account and data removed. Nothing has been deleted.
-            </div>
           )}
         </div>
       </div>

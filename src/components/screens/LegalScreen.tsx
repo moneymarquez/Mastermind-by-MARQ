@@ -24,7 +24,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'How do I get my data deleted?',
-    a: 'Settings → Account → "Delete account" starts the request. Deletion is handled manually right now rather than an instant automated button — for a request this consequential and irreversible, a human double-checking it happens correctly is safer than an untested automated process. Expect it to be handled within a few days.',
+    a: 'Settings → Account → "Delete my account", then type DELETE. Your account, everything in it and your uploaded files are deleted straight away, any subscription is cancelled, and you get a confirmation email. Want a copy first? Settings → Account → "Export my data" downloads everything as a file.',
   },
   {
     q: 'How do I cancel my subscription?',
