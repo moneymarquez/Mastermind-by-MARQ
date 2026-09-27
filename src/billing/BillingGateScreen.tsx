@@ -81,25 +81,30 @@ export default function BillingGateScreen({ onSubscribed, onSignOut, theme }: Pr
   }, []);
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--bg)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 } as CSSProperties}>
-      <div style={{ position: 'absolute', top: 24, left: 24, lineHeight: 1.1 }}>
-        <div style={{ fontSize: 'var(--text-stat)', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em' }}>Masterminds</div>
-        <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, color: 'var(--text)', letterSpacing: '0.04em', marginTop: 2 }}>by MARQ</div>
-      </div>
-      <div style={{ position: 'absolute', top: 24, right: 24 }}>
-        <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={onSignOut}>Sign out</span>
+    // Bug inventory B-12: the header used to be absolutely positioned over
+    // vertically centred content, so on a phone the two overlapped. It's a
+    // normal row now and the content flows under it.
+    <div style={{ height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 'calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))' } as CSSProperties}>
+      <div style={{ width: '100%', maxWidth: 780, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div style={{ lineHeight: 1.1 }}>
+          <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em' }}>Masterminds</div>
+          <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, color: 'var(--text)', letterSpacing: '0.04em', marginTop: 2 }}>by MARQ</div>
+        </div>
+        <button type="button" onClick={onSignOut} style={{ minHeight: 44, padding: '0 8px', background: 'none', border: 'none', fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer', font: 'inherit' }}>Sign out</button>
       </div>
 
-      <div style={{ width: 780, maxWidth: '94vw', display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: 780, display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap', justifyContent: 'center' }}>
         {/* The lineup. Prices come from plans.ts so the number read here
             and the number Stripe charges can't drift apart. */}
-        <div style={{ flex: '1 1 260px', minWidth: 240, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ fontSize: 'var(--text-display)', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.015em' }}>Pricing</div>
+        <div style={{ flex: '1 1 260px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ fontSize: 'var(--text-title)', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.015em' }}>Pricing</div>
           <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
             Your modules and data are already set up — this just unlocks them.
           </div>
 
-          {PLANS.map((plan) => (
+          {/* Only plans you can buy today — a greyed-out "coming soon" tier
+              is placeholder content App Review rejects. */}
+          {PLANS.filter((p) => p.live).map((plan) => (
             <div
               key={plan.key}
               className={`ap-card ${plan.featured ? 'ap-elev-md' : ''}`}
@@ -111,7 +116,7 @@ export default function BillingGateScreen({ onSubscribed, onSignOut, theme }: Pr
                 {!plan.live && <span className="ap-tag ap-tag-neutral">Not yet available</span>}
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
-                <span style={{ fontSize: 'var(--text-display)', fontWeight: 700, color: 'var(--text)', fontFamily: 'var(--font-mono)' }}>{plan.price}</span>
+                <span style={{ fontSize: 'clamp(28px, 9vw, 44px)', fontWeight: 700, color: 'var(--text)', fontFamily: 'var(--font-mono)' }}>{plan.price}</span>
                 <span style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>{plan.cadence}</span>
               </div>
               <p className="ap-card-body" style={{ color: 'var(--text-secondary)' }}>{plan.tagline}</p>
@@ -126,7 +131,7 @@ export default function BillingGateScreen({ onSubscribed, onSignOut, theme }: Pr
           ))}
         </div>
 
-        <div style={{ flex: '1 1 340px', minWidth: 300, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '28px 26px' }}>
+        <div style={{ flex: '1 1 340px', minWidth: 0, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '24px 20px' }}>
           <div style={{ fontSize: 'var(--text-title)', fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Subscribe to continue</div>
           <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.6 }}>
             {LIVE_PLAN.price}{LIVE_PLAN.cadence}, cancel anytime.
