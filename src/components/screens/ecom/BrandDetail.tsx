@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import type { Brand, StepDef, StepState, StepStatus } from '../../../data/ecom';
 import { STEPS, stepState, stepStatus, nextStep, doneSteps, validate, money, ago } from '../../../data/ecom';
 import { Drawer, E, Metric, TeachingEmpty, Section, HealthBadge, Badge, ProgressRing, btn, field, label, tint } from './ecomShared';
+import { askConfirm } from '../../../lib/confirm';
 
 const STATUS_LABEL: Record<StepStatus, string> = { todo: 'To do', in_progress: 'In progress', waiting: 'Waiting on you', done: 'Done' };
 const STATUS_COLOR: Record<StepStatus, string> = { todo: E.faint, in_progress: E.blue, waiting: E.amber, done: E.green };
@@ -63,7 +64,7 @@ export default function BrandDetail({ brand, clientName, orders30d, productsLive
       </Section>
 
       <div style={{ marginTop: 28 }}>
-        <span style={{ fontSize: 'var(--text-caption)', color: E.faint, cursor: 'pointer' }} onClick={() => { if (window.confirm(`Delete "${brand.name}" and everything under it?`)) { onRemove(brand.id); onClose(); } }}>Delete brand</span>
+        <span style={{ fontSize: 'var(--text-caption)', color: E.faint, cursor: 'pointer' }} onClick={async () => { if (await askConfirm(`Delete "${brand.name}" and everything under it?`)) { onRemove(brand.id); onClose(); } }}>Delete brand</span>
       </div>
     </Drawer>
   );

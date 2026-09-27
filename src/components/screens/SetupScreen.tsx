@@ -7,6 +7,7 @@ import { WORKERS, AUTONOMY_LABEL } from '../../data/ecom';
 import { startCompany, usePlaybooks } from '../../data/useEngine';
 import { supabase } from '../../lib/supabase';
 import { E, Badge, Pill, TeachingEmpty, btn, field, label, panel, tint } from './ecom/ecomShared';
+import { askConfirm } from '../../lib/confirm';
 
 interface Props { homeHeadStyle: CSSProperties; homeSubStyle: CSSProperties; onNavigate?: (id: string) => void }
 interface Status {
@@ -213,7 +214,7 @@ function AccountCard({ a, state, conn, onChanged }: { a: SetupEntry; state?: { c
     setBusy(''); setMsg(r.error ?? r.detail); if (r.ok) setVals({}); onChanged();
   };
   const test = async () => { setBusy('test'); await api('/api/setup/test', { body: { provider: a.id } }); setBusy(''); onChanged(); };
-  const disconnect = async () => { if (!confirm(`Disconnect ${a.name}?`)) return; await api('/api/connect/disconnect', { body: { provider: a.id } }); onChanged(); };
+  const disconnect = async () => { if (!(await askConfirm(`Disconnect ${a.name}?`))) return; await api('/api/connect/disconnect', { body: { provider: a.id } }); onChanged(); };
   return (
     <div style={{ ...E.card, padding: 14 }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', cursor: 'pointer' }} onClick={() => setOpen(!open)}>

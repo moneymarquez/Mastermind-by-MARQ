@@ -4,6 +4,7 @@ import { usePlaybooks, STARTER_PLAYBOOKS } from '../../data/useEngine';
 import type { Playbook, PlaybookVersion } from '../../data/useEngine';
 import { E, Badge, Pill, TeachingEmpty, btn, field, label, panel, tint } from './ecom/ecomShared';
 import { PLAYBOOK_MAX_CHARS, PLAYBOOK_LOAD_BUDGET } from '../../data/ecom';
+import { askConfirm } from '../../lib/confirm';
 
 interface Props { homeHeadStyle: CSSProperties; homeSubStyle: CSSProperties }
 const DOMAIN_LABEL: Record<string, string> = { all: 'Every module', ecom: 'E-commerce', content: 'Content', marketing: 'Marketing' };
@@ -60,14 +61,14 @@ function Editor({ p, api }: { p: Playbook; api: ReturnType<typeof usePlaybooks> 
   const isStarter = STARTER_PLAYBOOKS.some((s) => s.name === p.name);
   const reloadHistory = () => api.versions(p.id).then(setHistory);
   const doClear = async () => {
-    if (!confirm(`Clear everything in ${p.name}? The current text stays in History until you delete that version.`)) return;
+    if (!(await askConfirm(`Clear everything in ${p.name}? The current text stays in History until you delete that version.`))) return;
     setBusy(true); const ok = await api.clear(p); setBusy(false); setNote(ok ? `${p.name} cleared.` : '');
   };
   const doMove = async () => {
     const target = others.find((x) => x.id === moveTarget);
     if (!target) return;
     const verb = moveMode === 'replace' ? `replace what's in ${target.name}` : `add it to the end of ${target.name}`;
-    if (!confirm(`Move this text out of ${p.name} and ${verb}?${moveMode === 'replace' && target.body.trim() ? ` ${target.name}'s current text stays in its History.` : ''}`)) return;
+    if (!(await askConfirm(`Move this text out of ${p.name} and ${verb}?${moveMode === 'replace' && target.body.trim() ? ` ${target.name}'s current text stays in its History.` : ''}`))) return;
     setBusy(true); const ok = await api.moveTo(p, target, moveMode); setBusy(false);
     setNote(ok ? `Moved to ${target.name}. ${p.name} is now empty.` : ''); setMoveTarget('');
   };
@@ -111,11 +112,11 @@ function Editor({ p, api }: { p: Playbook; api: ReturnType<typeof usePlaybooks> 
           <button style={btn('primary')} disabled={busy || !moveTarget} onClick={doMove}>Move</button>
           <span style={{ flex: 1 }} />
           <button style={btn('danger')} disabled={busy} onClick={doClear}>Clear playbook</button>
-          {!isStarter && <button style={btn('danger')} disabled={busy} onClick={async () => { if (confirm(`Delete the ${p.name} playbook and all its history? This can't be undone.`)) await api.remove(p); }}>Delete playbook</button>}
+          {!isStarter && <button style={btn('danger')} disabled={busy} onClick={async () => { if (await askConfirm(`Delete the ${p.name} playbook and all its history? This can't be undone.`)) await api.remove(p); }}>Delete playbook</button>}
         </div>
       )}
       {!p.body.trim() && !isStarter && !dirty && (
-        <button style={{ ...btn('danger'), alignSelf: 'flex-start' }} disabled={busy} onClick={async () => { if (confirm(`Delete the ${p.name} playbook and all its history? This can't be undone.`)) await api.remove(p); }}>Delete playbook</button>
+        <button style={{ ...btn('danger'), alignSelf: 'flex-start' }} disabled={busy} onClick={async () => { if (await askConfirm(`Delete the ${p.name} playbook and all its history? This can't be undone.`)) await api.remove(p); }}>Delete playbook</button>
       )}
       {note && <div style={{ fontSize: 'var(--text-caption)', color: E.green, fontWeight: 600 }}>✓ {note}</div>}
       <div style={{ fontSize: 'var(--text-caption)', color: body.length >= PLAYBOOK_MAX_CHARS * 0.95 ? E.amber : E.faint }}>
@@ -130,8 +131,8 @@ function Editor({ p, api }: { p: Playbook; api: ReturnType<typeof usePlaybooks> 
           <span style={{ flex: 1, minWidth: 140 }}>{v.change_reason ?? '—'}{v.thread_id && <span style={{ color: E.violet }}> · from an orchestrator thread</span>}</span>
           <span style={{ fontFamily: 'var(--font-mono)', color: E.faint }}>{new Date(v.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
           <button style={{ ...btn('ghost'), padding: '3px 8px', fontSize: 11 }} onClick={() => setViewing(viewing?.id === v.id ? null : v)}>{viewing?.id === v.id ? 'Hide' : 'View'}</button>
-          {v.version !== p.version && <button style={{ ...btn('ghost'), padding: '3px 8px', fontSize: 11 }} disabled={busy} onClick={() => { if (confirm(`Restore v${v.version}? It's saved as a new version.`)) save(v.body, `Reverted to v${v.version}`); }}>Revert</button>}
-          {v.version !== p.version && <button style={{ ...btn('danger'), padding: '3px 8px', fontSize: 11 }} disabled={busy} onClick={async () => { if (confirm(`Delete v${v.version} from history for good? This can't be undone.`)) { await api.deleteVersion(v); reloadHistory(); } }}>Delete</button>}
+          {v.version !== p.version && <button style={{ ...btn('ghost'), padding: '3px 8px', fontSize: 11 }} disabled={busy} onClick={async () => { if (await askConfirm(`Restore v${v.version}? It's saved as a new version.`)) save(v.body, `Reverted to v${v.version}`); }}>Revert</button>}
+          {v.version !== p.version && <button style={{ ...btn('danger'), padding: '3px 8px', fontSize: 11 }} disabled={busy} onClick={async () => { if (await askConfirm(`Delete v${v.version} from history for good? This can't be undone.`)) { await api.deleteVersion(v); reloadHistory(); } }}>Delete</button>}
           {viewing?.id === v.id && <pre style={{ width: '100%', whiteSpace: 'pre-wrap', fontFamily: 'var(--font-mono)', fontSize: 12, background: tint(E.faint, 8), padding: 10, borderRadius: 'var(--radius-sm)', color: E.text, margin: 0 }}>{v.body || '(empty)'}</pre>}
         </div>
       ))}

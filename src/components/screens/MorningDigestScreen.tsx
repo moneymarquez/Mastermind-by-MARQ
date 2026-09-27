@@ -5,6 +5,7 @@ import type { BlockKind, ScheduleBlock } from '../../data/useDigest';
 import { api } from '../../lib/api';
 import { isPushSupported, subscribeToPush } from '../../lib/push';
 import { E, Badge, Pill, Section, TeachingEmpty, btn, field, label, panel, tint } from './ecom/ecomShared';
+import { askConfirm } from '../../lib/confirm';
 
 interface Props { homeHeadStyle: CSSProperties; homeSubStyle: CSSProperties }
 
@@ -115,8 +116,8 @@ export default function MorningDigestScreen({ homeHeadStyle, homeSubStyle }: Pro
           <NewBlock day={day} onAdd={(b) => d.addBlock(b)} />
           {dayBlocks.length > 0 && (
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-              <button style={{ ...btn('ghost'), fontSize: 12, padding: '5px 10px' }} onClick={() => { if (confirm(`Copy ${DAYS[day]} onto Mon–Fri? Their current blocks are replaced.`)) d.copyDay(day, [1, 2, 3, 4, 5].filter((x) => x !== day)); }}>Copy {DAYS[day]} to weekdays</button>
-              <button style={{ ...btn('ghost'), fontSize: 12, padding: '5px 10px' }} onClick={() => { if (confirm(`Copy ${DAYS[day]} onto every other day?`)) d.copyDay(day, [0, 1, 2, 3, 4, 5, 6].filter((x) => x !== day)); }}>Copy to all days</button>
+              <button style={{ ...btn('ghost'), fontSize: 12, padding: '5px 10px' }} onClick={async () => { if (await askConfirm(`Copy ${DAYS[day]} onto Mon–Fri? Their current blocks are replaced.`)) d.copyDay(day, [1, 2, 3, 4, 5].filter((x) => x !== day)); }}>Copy {DAYS[day]} to weekdays</button>
+              <button style={{ ...btn('ghost'), fontSize: 12, padding: '5px 10px' }} onClick={async () => { if (await askConfirm(`Copy ${DAYS[day]} onto every other day?`)) d.copyDay(day, [0, 1, 2, 3, 4, 5, 6].filter((x) => x !== day)); }}>Copy to all days</button>
             </div>
           )}
         </Section>

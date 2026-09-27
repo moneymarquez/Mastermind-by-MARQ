@@ -4,6 +4,7 @@ import type { Product, Snapshot, ProductDetail } from '../../../data/ecomProduct
 import { landedCost, marginPct, marginHealthy, sparklinePath, rankTrend } from '../../../data/ecomProducts';
 import { CHANNELS, money, ago } from '../../../data/ecom';
 import { Drawer, E, Metric, Badge, ConfidenceBadge, Section, TeachingEmpty, btn, field, label } from './ecomShared';
+import { askConfirm } from '../../../lib/confirm';
 
 interface Props {
   product: Product | null;
@@ -134,7 +135,7 @@ export default function ProductDrawer({ product: p, snapshots, onClose, onSave, 
         <button style={{ ...btn('ghost'), opacity: dirty && !saving ? 1 : 0.6 }} disabled={!dirty || saving} onClick={save}>{saving ? 'Saving…' : 'Save'}</button>
         <button style={{ ...btn('primary'), opacity: building ? 0.6 : 1 }} disabled={building} onClick={async () => { setBuilding(true); await onBuildBrand(p); setBuilding(false); }}>{building ? 'Creating…' : 'Build a brand from this'}</button>
         {p.source_url && <a href={p.source_url} target="_blank" rel="noopener noreferrer" style={{ ...btn('ghost'), textDecoration: 'none' }}>Source ↗</a>}
-        <span style={{ marginLeft: 'auto', fontSize: 'var(--text-caption)', color: E.faint, cursor: 'pointer' }} onClick={() => { if (window.confirm(`Remove "${p.name}" from the sheet?`)) { onRemove(p.id); onClose(); } }}>Remove</span>
+        <span style={{ marginLeft: 'auto', fontSize: 'var(--text-caption)', color: E.faint, cursor: 'pointer' }} onClick={async () => { if (await askConfirm(`Remove "${p.name}" from the sheet?`)) { onRemove(p.id); onClose(); } }}>Remove</span>
       </div>
     </Drawer>
   );

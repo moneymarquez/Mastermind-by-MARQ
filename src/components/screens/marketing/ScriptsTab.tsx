@@ -5,6 +5,7 @@ import { AUDIENCES, PACKAGES, SCRIPT_CHANNELS, TONES, VENTURES, funnelStats, dia
 import { useScripts, useTouches } from '../../../data/useMktEngine';
 import { E, Badge, Drawer, Metric, Pill, TeachingEmpty, btn, field, label , panel } from '../ecom/ecomShared';
 import DialerMode from './DialerMode';
+import { askConfirm } from '../../../lib/confirm';
 
 const pct = (n: number | null) => (n == null ? '—' : `${Math.round(n * 100)}%`);
 
@@ -187,7 +188,7 @@ function ScriptDrawer({ script, defaults, api, onClose }: { script: Script | nul
       <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
         <button style={btn('primary')} disabled={busy} onClick={save}>{busy ? 'Saving…' : script ? (bodyChanged ? `Save as v${script.version + 1}` : 'Save') : 'Create'}</button>
         <button style={btn('ghost')} onClick={onClose}>Cancel</button>
-        {script && <button style={{ ...btn('danger'), marginLeft: 'auto' }} onClick={async () => { if (confirm('Delete this script? Touches logged against it keep their outcome but lose the link.')) { await api.remove(script.id); onClose(); } }}>Delete</button>}
+        {script && <button style={{ ...btn('danger'), marginLeft: 'auto' }} onClick={async () => { if (await askConfirm('Delete this script? Touches logged against it keep their outcome but lose the link.')) { await api.remove(script.id); onClose(); } }}>Delete</button>}
       </div>
     </Drawer>
   );

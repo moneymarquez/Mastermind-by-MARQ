@@ -11,6 +11,7 @@ import { AiError } from '../../../lib/ai';
 import MiniMarkdown from '../../MiniMarkdown';
 import CampaignStepCard, { cardStyle, inputStyle, primaryBtn, ghostBtn, labelStyle } from './CampaignStepCard';
 import CampaignResults from './CampaignResults';
+import { askConfirm } from '../../../lib/confirm';
 
 export type CockpitFocus = 'step' | 'assets' | 'results' | 'plan';
 
@@ -354,7 +355,7 @@ export default function CampaignCockpit({ campaign, assets, ctx, api, leadQueue,
       <div style={{ marginTop: 28, display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
         {campaign.status === 'running' && <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => api.update(campaign.id, { status: 'planned', launched_at: null })}>Pause (back to planning)</span>}
         {campaign.status === 'done' && <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => api.update(campaign.id, { status: 'running' })}>Reopen</span>}
-        <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => { if (window.confirm(`Delete "${campaign.name}" and its checklist and calendar entries?`)) { api.remove(campaign.id); onBack(); } }}>Delete campaign</span>
+        <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={async () => { if (await askConfirm(`Delete "${campaign.name}" and its checklist and calendar entries?`)) { api.remove(campaign.id); onBack(); } }}>Delete campaign</span>
       </div>
     </div>
   );

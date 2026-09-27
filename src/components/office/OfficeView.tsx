@@ -11,6 +11,7 @@ import type { Proposal, ThreadMessage } from '../../data/useOffice';
 import { spriteState, roomOrder, SPRITE_ROW, STATE_LABEL, spriteUrl } from '../../data/office';
 import type { SpriteState } from '../../data/office';
 import { E, Badge, Drawer, Metric, TeachingEmpty, btn, field, label, tint, useIsMobile } from '../screens/ecom/ecomShared';
+import { askConfirm } from '../../lib/confirm';
 
 const TITLE: Record<string, string> = { ecom: 'E-commerce', content: 'Content', marketing: 'Marketing' };
 const BUBBLE: Partial<Record<SpriteState, { text: string; cls: string }>> = {
@@ -252,7 +253,7 @@ function PlaybookHistory({ name }: { name: string }) {
         <div key={v.id} style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', fontSize: 'var(--text-caption)', color: E.muted, borderTop: `1px solid ${E.border}`, padding: '5px 0' }}>
           <Badge color={p && v.version === p.version ? E.green : E.faint}>v{v.version}</Badge>
           <span style={{ flex: 1 }}>{v.change_reason ?? '—'}{v.thread_id ? ' · orchestrator thread' : ''}</span>
-          {p && v.version !== p.version && <button style={{ ...btn('ghost'), padding: '3px 8px', fontSize: 11 }} onClick={async () => { if (confirm(`Revert ${name} to v${v.version}?`)) { await pb.save(p, v.body, `Reverted to v${v.version}`); } }}>Revert</button>}
+          {p && v.version !== p.version && <button style={{ ...btn('ghost'), padding: '3px 8px', fontSize: 11 }} onClick={async () => { if (await askConfirm(`Revert ${name} to v${v.version}?`)) { await pb.save(p, v.body, `Reverted to v${v.version}`); } }}>Revert</button>}
         </div>
       ))}
     </Section2>

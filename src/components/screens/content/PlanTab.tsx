@@ -5,6 +5,7 @@ import type { ContentItem, Format, ItemStatus, SocialAccount } from '../../../da
 import { STATUSES, STATUS, FORMATS, PLATFORM, weekDays, weekLabel, dayLabel, nextStatus, avgViews30, latestMetrics, gradePost, GRADE_COLOR } from '../../../data/contentEngine';
 import { dateStr, addDaysStr } from '../../../data/time';
 import { E, Badge, Drawer, TeachingEmpty, btn, field, label, useIsMobile, tint } from '../ecom/ecomShared';
+import { askConfirm } from '../../../lib/confirm';
 
 type ItemsApi = ReturnType<typeof useContentItems>;
 type AccountsApi = ReturnType<typeof useSocialAccounts>;
@@ -206,7 +207,7 @@ function ItemDrawer({ items, accounts, item, defaultDate, defaultAccount, onClos
       <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
         <button style={btn('primary')} disabled={busy || !concept.trim()} onClick={save}>{busy ? 'Saving…' : item ? 'Save' : 'Add to plan'}</button>
         <button style={btn('ghost')} onClick={onClose}>Cancel</button>
-        {item && <button style={{ ...btn('danger'), marginLeft: 'auto' }} onClick={async () => { if (confirm('Delete this idea?')) { await items.remove(item.id); onClose(); } }}>Delete</button>}
+        {item && <button style={{ ...btn('danger'), marginLeft: 'auto' }} onClick={async () => { if (await askConfirm('Delete this idea?')) { await items.remove(item.id); onClose(); } }}>Delete</button>}
       </div>
     </Drawer>
   );

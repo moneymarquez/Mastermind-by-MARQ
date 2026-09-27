@@ -5,6 +5,7 @@ import type { SocialAccount, ContentItem, Platform, Owner, Format, SocialPost } 
 import { PLATFORMS, PLATFORM, OWNERS, FORMATS, followerChange30, avgViews30, postingStreakWeeks, accountHealth, HEALTH_LABEL, HEALTH_COLOR, bestPostThisWeek, nextScheduled, latestMetrics, gradePost, GRADE_COLOR, linePath, compact } from '../../../data/contentEngine';
 import { dateStr } from '../../../data/time';
 import { E, Badge, Drawer, Metric, Section, TeachingEmpty, btn, field, label } from '../ecom/ecomShared';
+import { askConfirm } from '../../../lib/confirm';
 
 type Api = ReturnType<typeof useSocialAccounts>;
 interface Props { api: Api; items: ContentItem[]; newOpen: boolean; onCloseNew: () => void; onOpenPlan: () => void }
@@ -113,7 +114,7 @@ function AccountDrawer({ api, a, onClose }: { api: Api; a?: SocialAccount; onClo
       <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
         <button style={btn('primary')} disabled={busy} onClick={save}>{busy ? 'Saving…' : a ? 'Save' : 'Add account'}</button>
         <button style={btn('ghost')} onClick={onClose}>Cancel</button>
-        {a && <button style={{ ...btn('danger'), marginLeft: 'auto' }} onClick={async () => { if (confirm(`Remove @${a.handle} and its posts and numbers?`)) { await api.removeAccount(a.id); onClose(); } }}>Remove</button>}
+        {a && <button style={{ ...btn('danger'), marginLeft: 'auto' }} onClick={async () => { if (await askConfirm(`Remove @${a.handle} and its posts and numbers?`)) { await api.removeAccount(a.id); onClose(); } }}>Remove</button>}
       </div>
     </Drawer>
   );
@@ -242,7 +243,7 @@ function PostMetricsDrawer({ p, api, onClose }: { p: SocialPost; api: Api; onClo
       <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
         <button style={btn('primary')} disabled={busy} onClick={async () => { setBusy(true); await api.logPostMetrics(p.id, { views: num(views), likes: num(likes), comments: num(comments), shares: num(shares), saves: num(saves), follows: num(follows) }); setBusy(false); onClose(); }}>{busy ? 'Saving…' : 'Save'}</button>
         <button style={btn('ghost')} onClick={onClose}>Cancel</button>
-        <button style={{ ...btn('danger'), marginLeft: 'auto' }} onClick={async () => { if (confirm('Remove this post and its numbers?')) { await api.removePost(p.id); onClose(); } }}>Remove</button>
+        <button style={{ ...btn('danger'), marginLeft: 'auto' }} onClick={async () => { if (await askConfirm('Remove this post and its numbers?')) { await api.removePost(p.id); onClose(); } }}>Remove</button>
       </div>
     </Drawer>
   );
