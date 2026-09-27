@@ -5,6 +5,7 @@ import { useSubscription } from './data/useSubscription';
 import { useTheme } from './data/useTheme';
 import { isOwnerIdentity } from './auth/ownerIdentity';
 import OnboardingFlow from './onboarding/OnboardingFlow';
+import { setPromptUser } from './lib/promptUser';
 import BillingGateScreen from './billing/BillingGateScreen';
 import { supabase } from './lib/supabase';
 
@@ -34,6 +35,7 @@ interface Props {
 // either.
 export default function AuthedGate({ userId, userEmail, userDisplayName, onSignOut }: Props) {
   const { state, actions, assistantName } = useMastermindState(userDisplayName);
+  setPromptUser(isOwnerIdentity({ id: userId, email: userEmail }), userDisplayName);
   const isOwner = isOwnerIdentity({ id: userId, email: userEmail });
   const moduleAccess = useModuleAccess(userId, isOwner);
   const subscription = useSubscription(isOwner);

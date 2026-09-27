@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { personalizePrompt } from './promptUser';
 
 export interface AskClaudeOptions {
   system: string;
@@ -31,7 +32,7 @@ async function postJson(path: string, token: string, opts: AskClaudeOptions, tim
     return await fetch(path, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-      body: JSON.stringify(opts),
+      body: JSON.stringify({ ...opts, system: personalizePrompt(opts.system) }),
       signal: controller.signal,
     });
   } catch (err) {

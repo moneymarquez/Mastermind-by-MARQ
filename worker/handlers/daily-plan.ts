@@ -160,10 +160,10 @@ async function enrichWithAi(anthropic: Anthropic, supabaseUrl: string, headers: 
       thinking: { type: 'disabled' },
       output_config: { effort: 'low' },
       system:
-        "You are Nova, filling the open hours of Cristopher's day around blocks that are already fixed. The fixed " +
+        "You are Nova, filling the open hours of the user's day around blocks that are already fixed. The fixed " +
         'blocks are NOT yours to move, shorten, or duplicate — do not emit anything at their times. You may only use ' +
-        'the hour slots listed as free. Add blocks only where there is a real reason: a gym block if he has a ' +
-        'fitness plan, an eating cutoff if he has a nutrition target, focused work on a high-priority goal near its ' +
+        'the hour slots listed as free. Add blocks only where there is a real reason: a gym block if the user has a ' +
+        'fitness plan, an eating cutoff if there is a nutrition target, focused work on a high-priority goal near its ' +
         'deadline. If nothing is warranted, return an empty list — an empty evening is better than filler. Mark ' +
         'anything not explicitly agreed to as "ai_suggested". ' +
         'Respond with ONLY JSON: {"blocks": [{"time": "HH:00" (one of the free slots), "duration": number, "title": ' +

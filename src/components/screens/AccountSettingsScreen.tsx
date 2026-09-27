@@ -232,7 +232,7 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
             <div>
               <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 4 }}>Display name</div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <input style={{ ...inputStyle, flex: 1 }} placeholder="Cristopher" value={displayName} onChange={(e) => { setDisplayName(e.target.value); setNameSaved(false); }} />
+                <input style={{ ...inputStyle, flex: 1 }} placeholder="Your first name" value={displayName} onChange={(e) => { setDisplayName(e.target.value); setNameSaved(false); }} />
                 <div style={primaryBtn} onClick={saveDisplayName}>{savingName ? 'Saving…' : 'Save'}</div>
               </div>
               {nameSaved && <div style={{ fontSize: 'var(--text-caption)', color: 'var(--success)', marginTop: 6 }}>Saved.</div>}

@@ -14,6 +14,12 @@ function StatCard({ icon, bg, num, label }: { icon: string; bg: string; num: num
   );
 }
 
+/** Time-of-day greeting (it used to say "Good morning, Cristopher" at any hour). */
+function greeting(now = new Date()): string {
+  const h = now.getHours();
+  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+}
+
 export default function LeadFlowDashboard({ onOpenFinder }: { onOpenFinder: () => void }) {
   const { leads, counts, notConnected } = useLeadflowLeads();
 
@@ -38,7 +44,7 @@ export default function LeadFlowDashboard({ onOpenFinder }: { onOpenFinder: () =
       {notConnected && <NotConnectedBanner />}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
         <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 4 }}>Good morning, Cristopher</h1>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 4 }}>{greeting()}</h1>
           <p style={{ color: '#9ca3af', fontSize: 'var(--text-subhead)' }}>Here's where your pipeline stands today.</p>
         </div>
         <button onClick={onOpenFinder} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 'var(--radius-md)', padding: '10px 18px', fontSize: 'var(--text-label)', fontWeight: 500, cursor: 'pointer' }}>View Lead Finder ↗</button>
