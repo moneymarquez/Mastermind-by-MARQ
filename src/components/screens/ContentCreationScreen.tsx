@@ -21,6 +21,7 @@ import { useAccountAudits } from '../../data/useAccountAudits';
 import AccountsTab from './content/AccountsTab';
 import PlanTab from './content/PlanTab';
 import OfficeView from '../office/OfficeView';
+import EngineBar from './ecom/EngineBar';
 import WorkersTab from './ecom/WorkersTab';
 import { Pill, TeachingEmpty, E, btn, panel } from './ecom/ecomShared';
 import { useSocialAccounts, useContentItems } from '../../data/useContentEngine';
@@ -218,6 +219,8 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 18 }}>
         {ENGINE_TABS.map((t) => <Pill key={t.id} active={engineTab === t.id} onClick={() => { setEngineTab(t.id); setNewOpen(false); }}><span>{t.icon}</span>{t.label}</Pill>)}
+        <div style={{ flex: 1 }} />
+        <EngineBar domain="content" />
       </div>
 
       {officeOpen && <OfficeView domain="content" onClose={() => setOfficeOpen(false)} />}

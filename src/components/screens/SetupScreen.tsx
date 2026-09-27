@@ -26,7 +26,13 @@ export default function SetupScreen({ homeHeadStyle, homeSubStyle, onNavigate }:
   const [status, setStatus] = useState<Status | null>(null);
   const [tab, setTab] = useState<Tab>('platform');
   const [flash, setFlash] = useState('');
-  const load = () => api<Status>('/api/setup/status').then((s) => { setStatus(s); if (!s.error && !s.owner) setTab((t) => (t === 'platform' ? 'accounts' : t)); });
+  const [loadError, setLoadError] = useState('');
+  // A failed status call (offline, signed out, Worker error) shows the
+  // error instead of rendering half a page from a partial object.
+  const load = () => api<Status>('/api/setup/status').then((s) => {
+    if (s.error || !Array.isArray(s.connections)) { setLoadError(s.error ?? 'Setup status came back incomplete.'); setStatus(null); return; }
+    setLoadError(''); setStatus(s); if (!s.owner) setTab((t) => (t === 'platform' ? 'accounts' : t));
+  });
   useEffect(() => {
     load();
     const q = new URLSearchParams(window.location.search);
@@ -35,7 +41,7 @@ export default function SetupScreen({ homeHeadStyle, homeSubStyle, onNavigate }:
     if (q.get('connected') || q.get('connect_error')) window.history.replaceState({}, '', window.location.pathname);
   }, []);
 
-  const conn = (id: string) => status?.connections.find((c) => c.provider === id);
+  const conn = (id: string) => status?.connections?.find((c) => c.provider === id);
 
   return (
     <div>
@@ -48,8 +54,8 @@ export default function SetupScreen({ homeHeadStyle, homeSubStyle, onNavigate }:
       </div>
       <div style={{ ...panel, marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {flash && <div style={{ ...E.card, padding: 10, borderColor: flash.startsWith('Connect failed') ? E.red : E.green, fontSize: 'var(--text-body)' }}>{flash}</div>}
-        {status?.error && <div style={{ color: E.red }}>{status.error}</div>}
-        {!status && <div style={{ color: E.faint }}>Checking what's connected…</div>}
+        {loadError && <div style={{ color: E.red }}>Couldn't load Setup: {loadError} <button style={{ ...btn('ghost'), padding: '3px 10px', fontSize: 12, marginLeft: 6 }} onClick={load}>Retry</button></div>}
+        {!status && !loadError && <div style={{ color: E.faint }}>Checking what's connected…</div>}
         {status && tab === 'platform' && (
           <>
             <div style={{ fontSize: 'var(--text-body)', color: E.muted, lineHeight: 1.5 }}>

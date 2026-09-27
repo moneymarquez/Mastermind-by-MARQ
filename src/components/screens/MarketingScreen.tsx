@@ -37,6 +37,7 @@ import { supabase } from '../../lib/supabase';
 import CampaignsHome from './marketing/CampaignsHome';
 import ScriptsTab from './marketing/ScriptsTab';
 import StageZeroTab from './marketing/StageZeroTab';
+import EngineBar from './ecom/EngineBar';
 import { useStageZero } from '../../data/useStageZero';
 import { m0LockMessage } from '../../data/stageZero';
 import OfficeView from '../office/OfficeView';
@@ -362,6 +363,8 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 18 }}>
         {ENGINE_TABS.map((t) => <Pill key={t.id} active={engineTab === t.id} onClick={() => setEngineTab(t.id)}><span>{t.icon}</span>{t.label}</Pill>)}
+        <div style={{ flex: 1 }} />
+        <EngineBar domain="marketing" />
       </div>
 
       {engineTab === 'stage-zero' && <div style={{ marginTop: 16 }}><StageZeroTab api={stageZero} /></div>}
