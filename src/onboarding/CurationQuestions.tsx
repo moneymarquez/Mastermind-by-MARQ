@@ -42,7 +42,7 @@ export default function CurationQuestions({ initial, onComplete }: Props) {
     <div style={{ height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--bg)', padding: '48px 24px 60px', display: 'flex', justifyContent: 'center' } as CSSProperties}>
       <div style={{ width: '100%', maxWidth: 560 }}>
         <div style={{ fontSize: 'var(--text-stat)', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em', marginBottom: 2 }}>Masterminds by MARQ</div>
-        <div style={{ fontSize: 'var(--text-display)', fontWeight: 700, color: 'var(--text)', marginTop: 24, marginBottom: 6 }}>Five quick questions</div>
+        <div style={{ fontSize: 'clamp(30px, 9vw, var(--text-display))', fontWeight: 700, color: 'var(--text)', overflowWrap: 'break-word', marginTop: 24, marginBottom: 6 }}>Five quick questions</div>
         <div style={{ fontSize: 'var(--text-body-lg)', color: 'var(--text-secondary)', marginBottom: 32, lineHeight: 1.6 }}>
           Just enough to set the defaults. The real assessment waits until you've seen the app.
         </div>

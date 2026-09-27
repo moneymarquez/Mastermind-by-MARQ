@@ -44,7 +44,7 @@ function InviteCodeEntry({ onRedeem }: { onRedeem: (code: string) => Promise<voi
   };
 
   return (
-    <div style={{ position: 'fixed', top: 14, right: 20, zIndex: 60, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+    <div style={{ position: 'fixed', top: 'calc(38px + env(safe-area-inset-top))', right: 16, zIndex: 60, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
       {!open ? (
         <span
           style={{ fontSize: 13, color: 'var(--text-tertiary)', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}
