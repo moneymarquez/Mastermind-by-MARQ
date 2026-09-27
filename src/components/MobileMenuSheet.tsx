@@ -278,7 +278,10 @@ export default function MobileMenuSheet({
             return (
               <div
                 key={row.key}
-                onClick={() => { row.onClick?.(); onClose(); }}
+                // A collapsible row (Settings) only expands its dropdown — the
+                // sheet stays open so the sub-items can be tapped. Closing here
+                // dropped you back on the screen underneath (usually Overview).
+                onClick={() => { row.onClick?.(); if (!row.collapsible) onClose(); }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 13, minHeight: 48, padding: '0 10px', borderRadius: 14, cursor: 'pointer',
                   background: row.active ? 'var(--mm-tile)' : 'transparent', fontSize: 15, fontWeight: row.active ? 500 : 400,
