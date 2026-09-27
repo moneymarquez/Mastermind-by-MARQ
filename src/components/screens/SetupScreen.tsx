@@ -63,7 +63,15 @@ export default function SetupScreen({ homeHeadStyle, homeSubStyle, onNavigate }:
               Keys here are yours only, set once, and power the workers for everyone (usage is tracked per user in the cost ledger). They're stored as Cloudflare Worker secrets — never in the browser or a table.{' '}
               {status.canWriteSecrets ? <Badge color={E.green}>Save buttons write secrets directly</Badge> : <Badge color={E.amber}>Save needs the Cloudflare token first — see that card</Badge>}
             </div>
-            {PLATFORM_SETUP.map((p) => <PlatformCard key={p.id} p={p} present={status.platform.find((x) => x.id === p.id)?.present ?? []} conn={conn(p.id)} canWrite={status.canWriteSecrets} extra={p.id === 'twilio' ? status.replyWebhook : undefined} onChanged={load} />)}
+            {!status.canWriteSecrets && (
+              <div style={{ ...E.card, padding: 14, borderColor: E.amber, background: tint(E.amber, 8) }}>
+                <div style={{ fontWeight: 700, color: E.text }}>Do this first: the Cloudflare card below</div>
+                <div style={{ fontSize: 'var(--text-body)', color: E.muted, marginTop: 4, lineHeight: 1.5 }}>
+                  This page saves keys by writing them into Cloudflare for you. It can't do that until two values — <span style={{ fontFamily: 'var(--font-mono)' }}>CF_API_TOKEN</span> and <span style={{ fontFamily: 'var(--font-mono)' }}>CF_ACCOUNT_ID</span> — are added by hand in the Cloudflare dashboard, once. After that, type any key here and Save works. Until then you can still type into any box; Save will tell you where to put it instead.
+                </div>
+              </div>
+            )}
+            {[...PLATFORM_SETUP].sort((a, b) => (status.canWriteSecrets ? 0 : (a.id === 'cloudflare_secrets' ? -1 : b.id === 'cloudflare_secrets' ? 1 : 0))).map((p) => <PlatformCard key={p.id} startOpen={!status.canWriteSecrets && p.id === 'cloudflare_secrets'} p={p} present={status.platform.find((x) => x.id === p.id)?.present ?? []} conn={conn(p.id)} canWrite={status.canWriteSecrets} extra={p.id === 'twilio' ? status.replyWebhook : undefined} onChanged={load} />)}
             <AppSecretsCard status={status} onChanged={load} />
           </>
         )}
@@ -98,8 +106,8 @@ function TestLine({ conn }: { conn?: Status['connections'][number] }) {
   );
 }
 
-function PlatformCard({ p, present, conn, canWrite, extra, onChanged }: { p: SetupEntry; present: { secret: string; set: boolean }[]; conn?: Status['connections'][number]; canWrite: boolean; extra?: string; onChanged: () => void }) {
-  const [open, setOpen] = useState(false);
+function PlatformCard({ p, present, conn, canWrite, extra, onChanged, startOpen }: { startOpen?: boolean; p: SetupEntry; present: { secret: string; set: boolean }[]; conn?: Status['connections'][number]; canWrite: boolean; extra?: string; onChanged: () => void }) {
+  const [open, setOpen] = useState(!!startOpen);
   const [vals, setVals] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState('');
   const [msg, setMsg] = useState('');
@@ -107,6 +115,10 @@ function PlatformCard({ p, present, conn, canWrite, extra, onChanged }: { p: Set
   const test = async () => { setBusy('test'); const r = await api<{ ok: boolean; detail: string }>('/api/setup/test', { body: { provider: p.id } }); setMsg(r.error ?? ''); setBusy(''); onChanged(); };
   const save = async () => {
     setBusy('save'); setMsg('');
+    if (p.id === 'cloudflare_secrets' && !canWrite) {
+      setMsg('These two can\'t be saved from here — they\'re what lets this page save. Add them in Cloudflare (step 4 above), then press Test.');
+      setBusy(''); return;
+    }
     for (const [name, value] of Object.entries(vals)) {
       if (!value.trim()) continue;
       const r = await api<{ ok?: boolean; detail?: string }>('/api/setup/secret', { body: { name, value } });
@@ -137,17 +149,17 @@ function PlatformCard({ p, present, conn, canWrite, extra, onChanged }: { p: Set
               return (
                 <div key={f.secret}>
                   <div style={{ ...label, marginBottom: 4, display: 'flex', gap: 6 }}>{f.label} <span style={{ fontFamily: 'var(--font-mono)', textTransform: 'none', letterSpacing: 0 }}>{f.secret}</span> {isSet ? <Badge color={E.green}>set</Badge> : <Badge color={E.amber}>missing</Badge>}</div>
-                  <input style={field} type="password" autoComplete="off" placeholder={isSet ? '•••••••• (set — type to replace)' : f.placeholder ?? ''} value={vals[f.secret] ?? ''} onChange={(e) => setVals({ ...vals, [f.secret]: e.target.value })} disabled={!canWrite} />
+                  <input style={field} type="password" autoComplete="off" placeholder={isSet ? '•••••••• (set — type to replace)' : f.placeholder ?? ''} value={vals[f.secret] ?? ''} onChange={(e) => setVals({ ...vals, [f.secret]: e.target.value })} />
                 </div>
               );
             })}
           </div>
           {extra && <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 8 }}>Reply webhook for Twilio: <span style={{ fontFamily: 'var(--font-mono)', color: E.muted, wordBreak: 'break-all' }}>{extra}</span> (HTTP POST)</div>}
           <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-            <button style={btn('primary')} disabled={!!busy || !canWrite || !Object.values(vals).some((v) => v.trim())} onClick={save}>{busy === 'save' ? 'Saving…' : 'Save'}</button>
+            <button style={btn('primary')} disabled={!!busy || !Object.values(vals).some((v) => v.trim())} onClick={save}>{busy === 'save' ? 'Saving…' : 'Save'}</button>
             {p.testable && <button style={btn('ghost')} disabled={!!busy} onClick={test}>{busy === 'test' ? 'Testing…' : 'Test'}</button>}
           </div>
-          {!canWrite && <div style={{ fontSize: 'var(--text-caption)', color: E.amber, marginTop: 6 }}>Until the Cloudflare token card is done, add these in Cloudflare → Workers & Pages → mastermind-by-marq → Settings → Variables and Secrets → Add → Secret, using the exact names shown, then press Test.</div>}
+          {!canWrite && p.id !== 'cloudflare_secrets' && <div style={{ fontSize: 'var(--text-caption)', color: E.amber, marginTop: 6 }}>Save needs the Cloudflare card done first. Or add these yourself: Cloudflare → Workers & Pages → mastermind-by-marq → Settings → Variables and Secrets → Add → type Secret, using the exact names shown, then press Test here.</div>}
           {msg && <div style={{ fontSize: 'var(--text-caption)', color: msg.startsWith('Saved') ? E.green : E.red, marginTop: 6 }}>{msg}</div>}
         </div>
       )}
@@ -188,11 +200,11 @@ function AppSecretsCard({ status, onChanged }: { status: Status; onChanged: () =
           <div key={r.secret}>
             <div style={{ ...label, marginBottom: 2 }}>{r.label} <span style={{ fontFamily: 'var(--font-mono)', textTransform: 'none', letterSpacing: 0 }}>{r.secret}</span></div>
             <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginBottom: 4 }}>{r.help}</div>
-            <input style={field} type="password" autoComplete="off" value={vals[r.secret] ?? ''} onChange={(e) => setVals({ ...vals, [r.secret]: e.target.value })} disabled={!status.canWriteSecrets} />
+            <input style={field} type="password" autoComplete="off" value={vals[r.secret] ?? ''} onChange={(e) => setVals({ ...vals, [r.secret]: e.target.value })} />
           </div>
         ))}
       </div>
-      <button style={{ ...btn('primary'), marginTop: 10 }} disabled={!status.canWriteSecrets || !Object.values(vals).some((v) => v.trim())} onClick={save}>Save</button>
+      <button style={{ ...btn('primary'), marginTop: 10 }} disabled={!Object.values(vals).some((v) => v.trim())} onClick={save}>Save</button>
       {msg && <span style={{ fontSize: 'var(--text-caption)', color: msg === 'Saved.' ? E.green : E.red, marginLeft: 8 }}>{msg}</span>}
     </div>
   );
