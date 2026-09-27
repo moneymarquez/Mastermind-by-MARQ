@@ -6,7 +6,7 @@ _2026-09-27. Discovery only — nothing here is fixed yet. Severity: **P0** cras
 
 | Item | Status |
 |---|---|
-| B-01 leads / lead-media open to every account | **Migration written, not applied** — `supabase/schema_107_leads_owner_only.sql` drops 3 policies, so it waits for Marq's OK |
+| B-01 leads / lead-media open to every account | Fixed — `schema_107` applied 2026-09-27 under Marq's autonomy grant (the marqleads scraper writes with the service-role key, so it's unaffected) |
 | B-02 paid AI routes open to free signups | Fixed (a81ba0c) |
 | B-03 open email relay | Fixed (dd872be) |
 | B-04 deploy may wipe secrets | **Needs Marq:** Setup → Test on the Cloudflare and Anthropic cards |
