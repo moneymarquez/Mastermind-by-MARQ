@@ -1,4 +1,4 @@
-import { requireUser } from '../lib/auth';
+import { requireOwner } from '../lib/auth';
 
 // The one genuinely automation-worthy piece of the delivery pipeline —
 // packaging a live preview link, a signed video URL, and an invoice
@@ -35,6 +35,33 @@ interface DeliverEmailBody {
   invoiceSummary?: string;
 }
 
+/** Everything the caller sends is escaped before it goes into the HTML
+ *  (bug inventory B-03) and links must be plain http(s). */
+export function esc(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+export function safeUrl(u: string | undefined): string | null {
+  if (!u) return null;
+  try { const url = new URL(u); return url.protocol === 'https:' || url.protocol === 'http:' ? url.toString() : null; } catch { return null; }
+}
+export const EMAIL_RE = /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/;
+
+/** The HTML body, from caller fields that are all treated as text. */
+export function deliveryHtml(body: DeliverEmailBody): string {
+  const preview = safeUrl(body.previewUrl), video = safeUrl(body.videoUrl);
+  const parts: string[] = [
+    `<p>Hi ${esc((body.clientName || 'there').slice(0, 120))},</p>`,
+    `<p><strong>${esc(body.projectName.slice(0, 200))}</strong> is ready — everything's below.</p>`,
+    '<ul>',
+  ];
+  if (preview) parts.push(`<li><a href="${esc(preview)}">Live preview</a></li>`);
+  if (video) parts.push(`<li><a href="${esc(video)}">Walkthrough video</a> (link expires in 7 days)</li>`);
+  parts.push('</ul>');
+  if (body.invoiceSummary) parts.push(`<p>${esc(body.invoiceSummary.slice(0, 4000)).replace(/\n/g, '<br/>')}</p>`);
+  parts.push('<p>Thanks,<br/>Made by MARQ</p>');
+  return parts.join('');
+}
+
 function notConfigured(): Response {
   return new Response(
     JSON.stringify({ error: 'Email delivery is not configured yet — RESEND_API_KEY and MADEBYMARQUEZ_FROM_EMAIL (or RESEND_FROM_EMAIL) not set.' }),
@@ -43,7 +70,9 @@ function notConfigured(): Response {
 }
 
 export async function sendDeliveryEmail(request: Request, env: DeliverEmailEnv): Promise<Response> {
-  const user = await requireUser(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+  // Owner only (bug inventory B-03): this sends from the agency's domain,
+  // and Show Your Work is an owner-only module.
+  const user = await requireOwner(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
   if (user instanceof Response) return user;
   const fromEmail = env.MADEBYMARQUEZ_FROM_EMAIL || env.RESEND_FROM_EMAIL;
   if (!env.RESEND_API_KEY || !fromEmail) return notConfigured();
@@ -57,17 +86,9 @@ export async function sendDeliveryEmail(request: Request, env: DeliverEmailEnv):
   if (!body.to || !body.projectName) {
     return new Response(JSON.stringify({ error: 'Missing client email or project name.' }), { status: 400, headers: { 'content-type': 'application/json' } });
   }
-
-  const parts: string[] = [
-    `<p>Hi ${body.clientName || 'there'},</p>`,
-    `<p><strong>${body.projectName}</strong> is ready — everything's below.</p>`,
-    '<ul>',
-  ];
-  if (body.previewUrl) parts.push(`<li><a href="${body.previewUrl}">Live preview</a></li>`);
-  if (body.videoUrl) parts.push(`<li><a href="${body.videoUrl}">Walkthrough video</a> (link expires in 7 days)</li>`);
-  parts.push('</ul>');
-  if (body.invoiceSummary) parts.push(`<p>${body.invoiceSummary}</p>`);
-  parts.push('<p>Thanks,<br/>Made by MARQ</p>');
+  if (typeof body.to !== 'string' || !EMAIL_RE.test(body.to.trim())) {
+    return new Response(JSON.stringify({ error: 'That client email doesn\'t look right — one address, like name@business.com.' }), { status: 400, headers: { 'content-type': 'application/json' } });
+  }
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -75,9 +96,9 @@ export async function sendDeliveryEmail(request: Request, env: DeliverEmailEnv):
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
       body: JSON.stringify({
         from: fromEmail,
-        to: [body.to],
-        subject: `${body.projectName} — ready for you`,
-        html: parts.join(''),
+        to: [body.to.trim()],
+        subject: `${body.projectName.replace(/[\r\n]+/g, ' ').slice(0, 150)} — ready for you`,
+        html: deliveryHtml(body),
       }),
     });
     if (!res.ok) {
