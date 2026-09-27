@@ -53,6 +53,24 @@ function Editor({ p, api }: { p: Playbook; api: ReturnType<typeof usePlaybooks> 
   const hint = STARTER_PLAYBOOKS.find((s) => s.name === p.name)?.hint;
   const dirty = body !== p.body;
   const [saved, setSaved] = useState<'' | 'ok' | 'fail'>('');
+  const [note, setNote] = useState('');
+  const [moveTarget, setMoveTarget] = useState('');
+  const [moveMode, setMoveMode] = useState<'replace' | 'append'>('replace');
+  const others = api.playbooks.filter((x) => x.id !== p.id);
+  const isStarter = STARTER_PLAYBOOKS.some((s) => s.name === p.name);
+  const reloadHistory = () => api.versions(p.id).then(setHistory);
+  const doClear = async () => {
+    if (!confirm(`Clear everything in ${p.name}? The current text stays in History until you delete that version.`)) return;
+    setBusy(true); const ok = await api.clear(p); setBusy(false); setNote(ok ? `${p.name} cleared.` : '');
+  };
+  const doMove = async () => {
+    const target = others.find((x) => x.id === moveTarget);
+    if (!target) return;
+    const verb = moveMode === 'replace' ? `replace what's in ${target.name}` : `add it to the end of ${target.name}`;
+    if (!confirm(`Move this text out of ${p.name} and ${verb}?${moveMode === 'replace' && target.body.trim() ? ` ${target.name}'s current text stays in its History.` : ''}`)) return;
+    setBusy(true); const ok = await api.moveTo(p, target, moveMode); setBusy(false);
+    setNote(ok ? `Moved to ${target.name}. ${p.name} is now empty.` : ''); setMoveTarget('');
+  };
   // The reason is optional — a missing one no longer silently disables Save.
   const save = async (text: string, why: string) => {
     setBusy(true); setSaved('');
@@ -77,6 +95,29 @@ function Editor({ p, api }: { p: Playbook; api: ReturnType<typeof usePlaybooks> 
         {!dirty && saved === 'ok' && <span style={{ fontSize: 'var(--text-caption)', color: E.green, fontWeight: 600 }}>✓ Saved as v{p.version}</span>}
         {saved === 'fail' && <span style={{ fontSize: 'var(--text-caption)', color: E.red }}>Not saved: {api.error || 'the database refused it'}</span>}
       </div>
+      {p.body.trim() && !dirty && (
+        <div style={{ ...E.card, padding: 10, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={label}>Wrong tab?</span>
+          <select style={{ ...field, width: 'auto' }} value={moveTarget} onChange={(e) => setMoveTarget(e.target.value)}>
+            <option value="">Move this text to…</option>
+            {others.map((x) => <option key={x.id} value={x.id}>{x.name}{x.body.trim() ? ` (has ${x.body.length.toLocaleString()} chars)` : ' (empty)'}</option>)}
+          </select>
+          {moveTarget && others.find((x) => x.id === moveTarget)?.body.trim() && (
+            <select style={{ ...field, width: 'auto' }} value={moveMode} onChange={(e) => setMoveMode(e.target.value as 'replace' | 'append')}>
+              <option value="replace">Replace its text</option>
+              <option value="append">Add to the end</option>
+            </select>
+          )}
+          <button style={btn('primary')} disabled={busy || !moveTarget} onClick={doMove}>Move</button>
+          <span style={{ flex: 1 }} />
+          <button style={btn('danger')} disabled={busy} onClick={doClear}>Clear playbook</button>
+          {!isStarter && <button style={btn('danger')} disabled={busy} onClick={async () => { if (confirm(`Delete the ${p.name} playbook and all its history? This can't be undone.`)) await api.remove(p); }}>Delete playbook</button>}
+        </div>
+      )}
+      {!p.body.trim() && !isStarter && !dirty && (
+        <button style={{ ...btn('danger'), alignSelf: 'flex-start' }} disabled={busy} onClick={async () => { if (confirm(`Delete the ${p.name} playbook and all its history? This can't be undone.`)) await api.remove(p); }}>Delete playbook</button>
+      )}
+      {note && <div style={{ fontSize: 'var(--text-caption)', color: E.green, fontWeight: 600 }}>✓ {note}</div>}
       <div style={{ fontSize: 'var(--text-caption)', color: body.length >= PLAYBOOK_MAX_CHARS * 0.95 ? E.amber : E.faint }}>
         <span style={{ fontFamily: 'var(--font-mono)' }}>{body.length.toLocaleString()} / {PLAYBOOK_MAX_CHARS.toLocaleString()}</span> characters · each run loads up to {PLAYBOOK_LOAD_BUDGET.toLocaleString()} characters across the worker's playbooks (about three full ones). Longer playbooks cost more per run.
       </div>
@@ -90,6 +131,7 @@ function Editor({ p, api }: { p: Playbook; api: ReturnType<typeof usePlaybooks> 
           <span style={{ fontFamily: 'var(--font-mono)', color: E.faint }}>{new Date(v.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
           <button style={{ ...btn('ghost'), padding: '3px 8px', fontSize: 11 }} onClick={() => setViewing(viewing?.id === v.id ? null : v)}>{viewing?.id === v.id ? 'Hide' : 'View'}</button>
           {v.version !== p.version && <button style={{ ...btn('ghost'), padding: '3px 8px', fontSize: 11 }} disabled={busy} onClick={() => { if (confirm(`Restore v${v.version}? It's saved as a new version.`)) save(v.body, `Reverted to v${v.version}`); }}>Revert</button>}
+          {v.version !== p.version && <button style={{ ...btn('danger'), padding: '3px 8px', fontSize: 11 }} disabled={busy} onClick={async () => { if (confirm(`Delete v${v.version} from history for good? This can't be undone.`)) { await api.deleteVersion(v); reloadHistory(); } }}>Delete</button>}
           {viewing?.id === v.id && <pre style={{ width: '100%', whiteSpace: 'pre-wrap', fontFamily: 'var(--font-mono)', fontSize: 12, background: tint(E.faint, 8), padding: 10, borderRadius: 'var(--radius-sm)', color: E.text, margin: 0 }}>{v.body || '(empty)'}</pre>}
         </div>
       ))}

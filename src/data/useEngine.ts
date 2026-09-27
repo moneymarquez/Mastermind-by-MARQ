@@ -100,5 +100,31 @@ export function usePlaybooks() {
     const { data } = await supabase.from('ai_playbook_versions').select('*').eq('playbook_id', playbookId).order('version', { ascending: false });
     return (data ?? []) as PlaybookVersion[];
   };
-  return { playbooks, loading, error, reload: load, save, create, versions };
+  /** Empty a playbook. Saved as a new version, so it's reversible until
+   *  the old version is deleted from history. */
+  const clear = (p: Playbook) => save(p, '', 'Cleared');
+  /** Move a playbook's text into another one (replace or append), then
+   *  clear the source — for when something went in the wrong tab. */
+  const moveTo = async (src: Playbook, target: Playbook, mode: 'replace' | 'append'): Promise<boolean> => {
+    const body = mode === 'append' && target.body.trim() ? `${target.body.trimEnd()}\n\n${src.body.trim()}` : src.body.trim();
+    if (body.length > PLAYBOOK_MAX_CHARS) { setError(`${target.name} would be ${body.length.toLocaleString()} characters — over the ${PLAYBOOK_MAX_CHARS.toLocaleString()} limit. Use Replace, or trim first.`); return false; }
+    if (!(await save(target, body, `Moved from ${src.name}`))) return false;
+    const fresh = ((await supabase.from('ai_playbooks').select('*').eq('id', src.id).single()).data ?? src) as Playbook;
+    return save(fresh, '', `Moved to ${target.name}`);
+  };
+  /** Delete one old version from history for good. */
+  const deleteVersion = async (v: PlaybookVersion): Promise<boolean> => {
+    const { error: e } = await supabase.from('ai_playbook_versions').delete().eq('id', v.id);
+    if (e) { setError(e.message); return false; }
+    await load();
+    return true;
+  };
+  /** Delete a playbook you added (the five starters can be cleared, not deleted). */
+  const remove = async (p: Playbook): Promise<boolean> => {
+    const { error: e } = await supabase.from('ai_playbooks').delete().eq('id', p.id);
+    if (e) { setError(e.message); return false; }
+    await load();
+    return true;
+  };
+  return { playbooks, loading, error, reload: load, save, create, versions, clear, moveTo, deleteVersion, remove };
 }
