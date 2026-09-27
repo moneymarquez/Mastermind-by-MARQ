@@ -48,6 +48,7 @@ import { engineRoute } from './handlers/engine';
 import { setupRoute } from './handlers/setup';
 import { officeRoute } from './handlers/office';
 import { marketingVisits } from './handlers/visits';
+import { logEvent } from './handlers/events';
 import { accountRoute } from './handlers/account';
 import type { SetupEnv } from './handlers/setup';
 
@@ -106,6 +107,7 @@ export default {
     const officeMatch = url.pathname.match(/^\/api\/office\/([a-z-]+)$/);
     if (officeMatch) return officeRoute(request, env, officeMatch[1]);
     if (url.pathname === '/api/marketing/visits') return marketingVisits(request, env);
+    if (url.pathname === '/api/events') return logEvent(request, env);
     const accountMatch = url.pathname.match(/^\/api\/account\/([a-z-]+)$/);
     if (accountMatch) return accountRoute(request, env, accountMatch[1]);
 
