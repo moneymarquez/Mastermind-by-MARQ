@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useClientDocuments } from '../../data/useClientDocuments';
 import type { ClientDocument } from '../../data/useClientDocuments';
@@ -8,6 +8,7 @@ import { DOC_TYPE_LABELS, QUICK_START_FIELDS } from '../../data/documentSchemas'
 import type { DocType } from '../../data/documentSchemas';
 import DocumentEditForm from './DocumentEditForm';
 import DocumentPreview from './DocumentPreview';
+import { printElement, printTitle } from '../../lib/printDoc';
 import { useClients } from '../../data/useClients';
 import ClientSelector from '../ClientSelector';
 
@@ -34,7 +35,7 @@ const ghostBtn: CSSProperties = {
   border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 'var(--text-body)', cursor: 'pointer',
 };
 const chip = (active: boolean): CSSProperties => ({
-  padding: '7px 14px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body-sm)', fontWeight: 600, whiteSpace: 'nowrap',
+  minHeight: 40, font: 'inherit', padding: '7px 14px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body-sm)', fontWeight: 600, whiteSpace: 'nowrap',
   border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, color: active ? 'var(--text)' : 'var(--text-tertiary)',
   background: active ? 'var(--tint-active)' : 'transparent',
 });
@@ -141,14 +142,14 @@ function NewDocumentPanel({ onCreated }: { onCreated: (id: string) => void }) {
 
       <div style={fieldLabel}>Document type</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-        {ALL_TYPES.map((t) => <div key={t} style={chip(docType === t)} onClick={() => setDocType(t)}>{DOC_TYPE_LABELS[t]}</div>)}
+        {ALL_TYPES.map((t) => <button type="button" key={t} style={chip(docType === t)} onClick={() => setDocType(t)}>{DOC_TYPE_LABELS[t]}</button>)}
       </div>
 
       {mapping && (
         <>
           <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-            <div style={chip(mode === 'contact')} onClick={() => setMode('contact')}>Link a contact</div>
-            <div style={chip(mode === 'manual')} onClick={() => setMode('manual')}>Enter manually</div>
+            <button type="button" style={chip(mode === 'contact')} onClick={() => setMode('contact')}>Link a contact</button>
+            <button type="button" style={chip(mode === 'manual')} onClick={() => setMode('manual')}>Enter manually</button>
           </div>
 
           {mode === 'contact' ? (
@@ -219,6 +220,8 @@ function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack
   // in this file rather than a new inconsistency.
   const [status, setLocalStatus] = useState(doc.status);
   const [tab, setTab] = useState<'edit' | 'preview'>(startTab);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const downloadPdf = () => { if (previewRef.current?.firstElementChild) printElement(previewRef.current.firstElementChild as HTMLElement, printTitle([label.includes(DOC_TYPE_LABELS[doc.doc_type]) ? null : DOC_TYPE_LABELS[doc.doc_type], label])); };
   const [saved, setSaved] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -272,23 +275,24 @@ function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
-        <div style={chip(tab === 'preview')} onClick={() => setTab('preview')}>Preview</div>
-        <div style={chip(tab === 'edit')} onClick={() => setTab('edit')}>Edit</div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
+        <button type="button" style={chip(tab === 'preview')} onClick={() => setTab('preview')}>Preview</button>
+        <button type="button" style={chip(tab === 'edit')} onClick={() => setTab('edit')}>Edit</button>
+        <button type="button" style={{ ...chip(false), marginLeft: 'auto' }} onClick={downloadPdf}>⬇ Download PDF</button>
       </div>
 
       {tab === 'edit' && <DocumentEditForm docType={doc.doc_type} data={draftData} onChange={onDataChange} />}
-      {tab === 'preview' && (
-        <div style={{ borderRadius: 'var(--radius-xl)', overflow: 'hidden', border: '1px solid var(--border)', maxWidth: 860 }}>
-          <DocumentPreview docType={doc.doc_type} data={draftData} profile={profile} />
-        </div>
-      )}
+      {/* The preview stays mounted (hidden while editing) so Download PDF
+          always prints the latest draft. */}
+      <div style={{ borderRadius: 'var(--radius-xl)', overflow: 'hidden', border: '1px solid var(--border)', maxWidth: 860, display: tab === 'preview' ? 'block' : 'none' }}>
+        <div ref={previewRef}><DocumentPreview docType={doc.doc_type} data={draftData} profile={profile} /></div>
+      </div>
     </div>
   );
 }
 
 export default function InvoicingScreen({ homeHeadStyle, homeSubStyle, selectedClientId, onSelectClient }: Props) {
-  const { documents, loading } = useClientDocuments();
+  const { documents, loading, reload } = useClientDocuments();
   const { contacts } = useContacts();
   const clientsApi = useClients();
   const [filter, setFilter] = useState<DocType | null>(null);
@@ -321,13 +325,16 @@ export default function InvoicingScreen({ homeHeadStyle, homeSubStyle, selectedC
       </div>
 
       <div style={{ marginTop: 20 }}>
-        <NewDocumentPanel onCreated={(id) => { setOpenedFromCreate(true); setSelectedId(id); }} />
+        {/* The panel creates through its own hook instance, so this list
+            reloads before opening the new document — it used to look like
+            Create did nothing until the page was reloaded. */}
+        <NewDocumentPanel onCreated={async (id) => { await reload(); setOpenedFromCreate(true); setSelectedId(id); }} />
         <BusinessProfilePanel />
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-        <div style={chip(filter === null)} onClick={() => setFilter(null)}>All</div>
-        {ALL_TYPES.map((t) => <div key={t} style={chip(filter === t)} onClick={() => setFilter(t)}>{DOC_TYPE_LABELS[t]}</div>)}
+        <button type="button" style={chip(filter === null)} onClick={() => setFilter(null)}>All</button>
+        {ALL_TYPES.map((t) => <button type="button" key={t} style={chip(filter === t)} onClick={() => setFilter(t)}>{DOC_TYPE_LABELS[t]}</button>)}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden' }}>

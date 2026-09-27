@@ -121,5 +121,5 @@ export function useClientDocuments() {
     return true;
   };
 
-  return { documents, loading, error, create, update, duplicate, remove, setStatus };
+  return { documents, loading, error, create, update, duplicate, remove, setStatus, reload: load };
 }
