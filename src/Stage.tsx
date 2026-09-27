@@ -1,3 +1,4 @@
+import ErrorBoundary from './components/ErrorBoundary';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import Sidebar, { SIDEBAR_COLLAPSED_WIDTH } from './components/Sidebar';
@@ -372,7 +373,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         {screenBlocked ? (
           <PlaceholderScreen isMobile={isMobile} label="Not available" note="This section isn't available on your account." />
         ) : (
-          <>
+          <ErrorBoundary scope="screen" resetKey={state.screen} label={state.screen === 'home' ? 'Overview' : undefined}>
         {state.screen === 'home' && (
           <HomeScreen isMobile={isMobile} isOwner={isOwner} homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onOpenNova={actions.openNova} assistantName={assistantName} onNavigate={actions.navigateTo} />
         )}
@@ -640,7 +641,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         {(state.screen === 'placeholder' || !BUILT_SCREENS.includes(state.screen)) && (
           <PlaceholderScreen isMobile={isMobile} label={state.placeholderLabel} note={state.placeholderNote} />
         )}
-          </>
+          </ErrorBoundary>
         )}
       </div>
 

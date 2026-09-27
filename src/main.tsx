@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import ErrorBoundary, { recordError } from './components/ErrorBoundary'
 import PublicAuditScreen from './PublicAuditScreen.tsx'
 import PublicClientDashboard from './PublicClientDashboard.tsx'
 import { isStandalone } from './lib/pwa'
@@ -24,11 +25,13 @@ const clientToken = path.startsWith('/client/') ? path.slice('/client/'.length) 
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {isPublicAudit
-      ? <PublicAuditScreen />
-      : clientToken
-        ? <PublicClientDashboard token={clientToken} />
-        : <App />}
+    <ErrorBoundary scope="app">
+      {isPublicAudit
+        ? <PublicAuditScreen />
+        : clientToken
+          ? <PublicClientDashboard token={clientToken} />
+          : <App />}
+    </ErrorBoundary>
   </StrictMode>,
 )
 
@@ -61,3 +64,8 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js');
   });
 }
+
+// Errors outside React's render (event handlers, promises) don't reach an
+// error boundary; keep the last one for the bug report all the same.
+window.addEventListener('error', (e) => { if (e.error instanceof Error) recordError(e.error, 'window'); });
+window.addEventListener('unhandledrejection', (e) => { if (e.reason instanceof Error) recordError(e.reason, 'promise'); });
