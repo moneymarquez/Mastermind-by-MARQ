@@ -22,7 +22,9 @@ _2026-09-27. Discovery only — nothing here is fixed yet. Severity: **P0** cras
 | B-14 onboarding's last step | Fixed (00c32ee) |
 | B-15 onboarding heading at 375 px | Fixed (5255213) |
 | **B-31** (new) "Create document" looked like it did nothing | Fixed (9e8fb43) — the list didn't know about the new document until a reload |
-| B-16 – B-30 (P2 / P3) | Open — Phase 3 polish / Phase 2 hardening |
+| B-22 client logins could edit any column on their rows | Fixed — `schema_110` applied: a trigger limits client logins to the fields the portal writes (verified: resolve allowed, title edit refused, owner unaffected) |
+| DB hardening (Phase 2) | `schema_109` applied: anon can no longer run the 12 admin SECURITY DEFINER RPCs (`is_owner` / `my_client_id` stay, 69 policies call them); `touch_updated_at` search_path fixed; indexes on ~150 unindexed foreign keys. Two-account test: a second signed-in account sees 0 rows in every public table, and cross-account inserts / updates are refused |
+| B-16 – B-30 (P2 / P3), except B-22 | Open — Phase 3 polish / Phase 2 hardening |
 
 Tests: `npm test` (Vitest, 9 files) covers B-02, B-03, B-06, B-07, B-08 and the worker engine.
 
