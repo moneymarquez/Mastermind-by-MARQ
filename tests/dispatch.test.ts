@@ -67,3 +67,15 @@ describe('deep links + transcript chips', () => {
     expect(pieces.filter((p) => p.kind !== 'word').map((p) => [p.kind, p.text])).toEqual([['name', 'Mikhail'], ['date', 'by Thursday']]);
   });
 });
+
+import { toE164 } from '../worker/lib/phone';
+describe('phone numbers for Twilio', () => {
+  it('normalises the ways people save numbers', () => {
+    expect(toE164('17372583742')).toBe('+17372583742');
+    expect(toE164('+17372583742')).toBe('+17372583742');
+    expect(toE164('(737) 258-3742')).toBe('+17372583742');
+    expect(toE164('737-258-3742')).toBe('+17372583742');
+    expect(toE164('+44 20 7946 0958')).toBe('+442079460958');
+    expect(toE164('')).toBe('');
+  });
+});

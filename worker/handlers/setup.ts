@@ -9,6 +9,7 @@ import { Sb, json } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
 import { seal, open, signState, verifyState } from '../lib/vault';
 import { PLATFORM_SETUP, ACCOUNT_SETUP, WRITABLE_SECRETS } from '../../src/data/setupCatalog';
+import { toE164 } from '../lib/phone';
 
 export interface SetupEnv extends SbEnv {
   ANTHROPIC_API_KEY?: string; TWILIO_ACCOUNT_SID?: string; TWILIO_AUTH_TOKEN?: string; TWILIO_FROM_NUMBER?: string; DIGEST_TO_NUMBER?: string;
@@ -29,14 +30,18 @@ const errText = async (res: Response) => { const t = await res.text().catch(() =
 async function testTwilio(env: Env): Promise<TestResult> {
   const sid = (env.TWILIO_ACCOUNT_SID ?? '').trim();
   const token = (env.TWILIO_AUTH_TOKEN ?? '').trim();
-  const from = (env.TWILIO_FROM_NUMBER ?? '').trim();
-  const to = (env.DIGEST_TO_NUMBER ?? '').trim();
+  const fromSaved = (env.TWILIO_FROM_NUMBER ?? '').trim();
+  const toSaved = (env.DIGEST_TO_NUMBER ?? '').trim();
+  // Sent the way Twilio needs it (+1…), whatever form it was saved in.
+  const from = toE164(fromSaved);
+  const to = toE164(toSaved);
   const missing = [['TWILIO_ACCOUNT_SID', sid], ['TWILIO_AUTH_TOKEN', token], ['TWILIO_FROM_NUMBER', from], ['DIGEST_TO_NUMBER', to]].filter(([, v]) => !v).map(([k]) => k);
   if (missing.length) return { ok: false, detail: `Missing: ${missing.join(', ')}.` };
   const sidShown = `${sid.slice(0, 6)}…`;
   const redact = (t: string) => t.split(sid).join(sidShown).replace(/\s+/g, ' ').slice(0, 400);
   const e164 = (n: string) => /^\+[1-9]\d{7,14}$/.test(n);
-  const lines: string[] = [`Account SID ${sidShown}.`, `From ${from}${e164(from) ? '' : ' (not in +15551234567 form — Twilio may reject it)'} → to ${to}${e164(to) ? '' : ' (not in +15551234567 form)'}.`];
+  const shown = (saved: string, sent: string) => (saved === sent ? sent : `${sent} (saved as ${saved}; the + is added automatically)`);
+  const lines: string[] = [`Account SID ${sidShown}.`, `From ${shown(fromSaved, from)}${e164(from) ? '' : ' — not a valid phone number'} → to ${shown(toSaved, to)}${e164(to) ? '' : ' — not a valid phone number'}.`];
   const auth = { Authorization: `Basic ${btoa(`${sid}:${token}`)}` };
   const base = `https://api.twilio.com/2010-04-01/Accounts/${sid}`;
 

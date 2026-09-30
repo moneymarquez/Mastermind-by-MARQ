@@ -12,6 +12,7 @@ import { DESKS, composeDraft, fitSms, parseReply, twilioSignature, twiml, grade,
 import type { Desk, DeskReport, DigestInput, ScheduleItem } from '../lib/digestText';
 import { m0Progress, M0_LABEL } from '../../src/data/stageZero';
 import type { M0Venture } from '../../src/data/stageZero';
+import { toE164 } from '../lib/phone';
 
 export interface DigestEnv extends SbEnv {
   ANTHROPIC_API_KEY?: string;
@@ -256,7 +257,7 @@ export async function sendSms(env: DigestEnv, body: string, to = env.DIGEST_TO_N
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}/Messages.json`, {
     method: 'POST',
     headers: { Authorization: `Basic ${btoa(`${env.TWILIO_ACCOUNT_SID}:${env.TWILIO_AUTH_TOKEN}`)}`, 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ To: to, From: env.TWILIO_FROM_NUMBER, Body: body }).toString(),
+    body: new URLSearchParams({ To: toE164(to), From: toE164(env.TWILIO_FROM_NUMBER), Body: body }).toString(),
   });
   if (res.ok) return { channel: 'sms', sent: true };
   const err = (await res.json().catch(() => ({}))) as { message?: string; code?: number };
