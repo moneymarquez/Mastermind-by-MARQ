@@ -49,10 +49,12 @@ import { setupRoute } from './handlers/setup';
 import { officeRoute } from './handlers/office';
 import { marketingVisits } from './handlers/visits';
 import { logEvent } from './handlers/events';
+import type { DispatchEnv } from './handlers/dispatch';
+import { dispatchExtract, dispatchTranscribe, dispatchNotify, dispatchNudge, dispatchInvite, dispatchJoin } from './handlers/dispatch';
 import { accountRoute } from './handlers/account';
 import type { SetupEnv } from './handlers/setup';
 
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv, DispatchEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
@@ -108,6 +110,12 @@ export default {
     if (officeMatch) return officeRoute(request, env, officeMatch[1]);
     if (url.pathname === '/api/marketing/visits') return marketingVisits(request, env);
     if (url.pathname === '/api/events') return logEvent(request, env);
+    if (url.pathname === '/api/dispatch/extract') return dispatchExtract(request, env);
+    if (url.pathname === '/api/dispatch/transcribe') return dispatchTranscribe(request, env);
+    if (url.pathname === '/api/dispatch/notify') return dispatchNotify(request, env);
+    if (url.pathname === '/api/dispatch/nudge') return dispatchNudge(request, env);
+    if (url.pathname === '/api/dispatch/invite') return dispatchInvite(request, env);
+    if (url.pathname === '/api/dispatch/join') return dispatchJoin(request, env);
     const accountMatch = url.pathname.match(/^\/api\/account\/([a-z-]+)$/);
     if (accountMatch) return accountRoute(request, env, accountMatch[1]);
 

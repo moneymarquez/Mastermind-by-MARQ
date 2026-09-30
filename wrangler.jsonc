@@ -65,6 +65,11 @@
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   },
+  // Workers AI — Dispatch's server-side transcription (Whisper), used when
+  // the browser can't transcribe live and as the retry when it failed.
+  // Billed to the Cloudflare account; the free daily allocation covers
+  // normal use.
+  "ai": { "binding": "AI" },
   // Two Cron Triggers, told apart by event.cron in worker/index.ts's
   // scheduled() export:
   //   */15 * * * * — Stocks bot engine (worker/handlers/stocks-bot.ts),
