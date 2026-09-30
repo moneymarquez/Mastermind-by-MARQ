@@ -423,6 +423,10 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
                 {mode === 'reset' && (
                   <span style={{ color: 'var(--mm-text)', borderBottom: '1px solid var(--mm-line2)', cursor: 'pointer' }} onClick={() => switchMode('login')}>← Back to log in</span>
                 )}
+                <div style={{ marginTop: 6, display: 'flex', justifyContent: 'center', gap: 14, flexWrap: 'wrap' }}>
+                  <a href="/privacy" style={{ color: 'var(--mm-faint)', textDecoration: 'underline', textUnderlineOffset: 3, padding: '10px 2px' }}>Privacy Policy</a>
+                  <a href="/terms" style={{ color: 'var(--mm-faint)', textDecoration: 'underline', textUnderlineOffset: 3, padding: '10px 2px' }}>Terms &amp; Conditions</a>
+                </div>
               </div>
             </div>
           </div>
@@ -755,10 +759,12 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
               <div style={{ fontSize: 8, fontWeight: 700, color: 'var(--mm-faint)', letterSpacing: '0.3em', textTransform: 'uppercase' }}>by marq</div>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 24, fontSize: 13, color: 'var(--mm-faint)' }}>
+          <div style={{ display: 'flex', gap: '8px 24px', fontSize: 13, color: 'var(--mm-faint)', flexWrap: 'wrap' }}>
             <span style={{ cursor: 'pointer' }} onClick={() => document.getElementById('modules')?.scrollIntoView({ behavior: 'smooth' })}>Modules</span>
             <span style={{ cursor: 'pointer' }} onClick={() => document.getElementById('nova')?.scrollIntoView({ behavior: 'smooth' })}>Nova</span>
             <span style={{ cursor: 'pointer' }} onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}>Pricing</span>
+            <a href="/privacy" style={{ color: 'inherit', textDecoration: 'none' }}>Privacy Policy</a>
+            <a href="/terms" style={{ color: 'inherit', textDecoration: 'none' }}>Terms &amp; Conditions</a>
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--mm-faint)' }}>© {new Date().getFullYear()} MARQ</div>
         </footer>

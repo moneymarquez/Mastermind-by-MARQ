@@ -1,0 +1,38 @@
+Last updated: September 29, 2026
+
+Mastermind by MARQ ("Mastermind," "we," "us") is operated by Cristopher Marquez, doing business as Made by Marq and Mastermind by MARQ, at mastermindsbymarq.com.
+
+What we collect
+- Account information: name, email address, and mobile phone number you provide.
+- Content you enter into the app: tasks, schedules, notes, business and product information, and activity logs.
+- If you choose to connect a third-party account (for example Instagram, TikTok, Shopify, or Stripe), we receive an access token that lets the app act on your behalf, along with data those services return, such as post performance or order data.
+- Basic usage and device data (pages viewed, browser type) to keep the service working.
+
+How we use it
+- To provide and improve the app, including the daily planning summary you turn on.
+- To send you the messages and notifications you have opted in to.
+- To process payments (through Stripe) and to secure your account.
+
+SMS / text messages
+If you turn on the Morning Digest in Settings, we send you one daily planning text, plus replies to commands you send. We do not sell or share your SMS opt-in data or personal information with third parties for marketing purposes. Reply STOP at any time to opt out, or HELP for help. Message and data rates may apply. You can also turn text delivery off in Settings.
+
+Who we share data with
+We do not sell your personal information. We use service providers who process data only to run the app: Supabase (database and authentication), Cloudflare (hosting), Stripe (payments), Twilio (text messages), Anthropic (AI processing of the content you submit), and, if you connect them, Meta/Instagram, TikTok, and Shopify. We may disclose information if required by law.
+
+Connected accounts
+Access tokens for connected accounts are stored securely and used only to perform actions you request. You can disconnect any account in Settings at any time, which revokes our access.
+
+Data retention and deletion
+We keep your data while your account is active. You can delete your account in Settings, or request deletion of your data by emailing [CONTACT EMAIL]; we will delete it within 30 days, except where we must keep records for legal or payment reasons. For Instagram/Meta data deletion requests, use the same email or disconnect the account in Settings.
+
+Security
+We use industry-standard safeguards, but no system is completely secure.
+
+Children
+The service is not directed to anyone under 13, and we do not knowingly collect their information.
+
+Changes
+We may update this policy and will change the date above when we do.
+
+Contact
+Mastermind by MARQ (Made by Marq), Sandy, Utah. Email: [CONTACT EMAIL]

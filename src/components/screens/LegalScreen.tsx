@@ -52,6 +52,13 @@ export default function LegalScreen({ homeHeadStyle, homeSubStyle }: Props) {
 
       <div style={{ marginTop: 24, maxWidth: 680 }}>
         <div style={cardStyle}>
+          <div style={heading}>Privacy Policy and Terms</div>
+          <div style={{ ...body, display: 'flex', gap: 18, flexWrap: 'wrap' }}>
+            <a href="/privacy" target="_blank" rel="noopener" style={{ color: 'var(--text)', fontWeight: 600, textUnderlineOffset: 3, padding: '8px 0' }}>Privacy Policy ↗</a>
+            <a href="/terms" target="_blank" rel="noopener" style={{ color: 'var(--text)', fontWeight: 600, textUnderlineOffset: 3, padding: '8px 0' }}>Terms &amp; Conditions ↗</a>
+          </div>
+        </div>
+        <div style={cardStyle}>
           <div style={heading}>Not professional advice</div>
           <div style={body}>
             Mastermind by MARQ is a personal organization and productivity tool with AI features layered in. It is
