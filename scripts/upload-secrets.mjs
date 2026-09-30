@@ -8,7 +8,11 @@
 // Deploy command in Cloudflare (Workers & Pages → mastermind-by-marq →
 // Settings → Build → Deploy command):
 //
-//   node scripts/upload-secrets.mjs && npx wrangler deploy
+//   npx wrangler deploy --keep-vars && node scripts/upload-secrets.mjs
+//
+// Deploy first, then secrets, so the upload lands after anything the deploy
+// resets. It replaces the old inline `echo {...} | wrangler secret bulk`,
+// which only carried the Stripe and Supabase keys.
 //
 // Only names that are actually set (non-empty) are uploaded, so a missing
 // build variable never blanks out a secret that's already on the Worker.
