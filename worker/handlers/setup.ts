@@ -28,6 +28,11 @@ const errText = async (res: Response) => { const t = await res.text().catch(() =
 // DIGEST_TO_NUMBER — and every Twilio answer is shown as-is, with the
 // Account SID cut to its first 6 characters and the token never shown.
 async function testTwilio(env: Env): Promise<TestResult> {
+  const r = await testTwilioInner(env);
+  const sid = (env.TWILIO_ACCOUNT_SID ?? '').trim();
+  return sid ? { ...r, detail: r.detail.split(sid).join(`${sid.slice(0, 6)}…`) } : r;
+}
+async function testTwilioInner(env: Env): Promise<TestResult> {
   const sid = (env.TWILIO_ACCOUNT_SID ?? '').trim();
   const token = (env.TWILIO_AUTH_TOKEN ?? '').trim();
   const fromSaved = (env.TWILIO_FROM_NUMBER ?? '').trim();
@@ -64,7 +69,7 @@ async function testTwilio(env: Env): Promise<TestResult> {
   let msg: { sid?: string; status?: string; code?: number; message?: string; more_info?: string; error_code?: number | null; error_message?: string | null } = {};
   try { msg = JSON.parse(sendRaw); } catch { /* not JSON */ }
   if (!send.ok) {
-    lines.push(`Send POST /Messages.json → HTTP ${send.status}, Twilio error ${msg.code ?? '?'}: ${msg.message ?? redact(sendRaw)}${msg.more_info ? ` (${msg.more_info})` : ''}.`);
+    lines.push(`Send POST /Messages.json → HTTP ${send.status}, Twilio error ${msg.code ?? '?'}: ${redact(msg.message ?? sendRaw)}${msg.more_info ? ` (${msg.more_info})` : ''}.`);
     return { ok: false, detail: lines.join('\n') };
   }
   lines.push(`Send POST /Messages.json → HTTP ${send.status}, message ${msg.sid ?? '?'} ${msg.status ?? ''}.`);
@@ -75,7 +80,7 @@ async function testTwilio(env: Env): Promise<TestResult> {
     const st = await fetch(`${base}/Messages/${msg.sid}.json`, { headers: auth }).catch(() => null);
     const m = st?.ok ? ((await st.json().catch(() => ({}))) as typeof msg) : null;
     if (m) {
-      lines.push(`After 4s: ${m.status}${m.error_code ? `, Twilio error ${m.error_code}${m.error_message ? `: ${m.error_message}` : ''} (https://www.twilio.com/docs/api/errors/${m.error_code})` : ''}.`);
+      lines.push(`After 4s: ${m.status}${m.error_code ? `, Twilio error ${m.error_code}${m.error_message ? `: ${redact(m.error_message)}` : ''} (https://www.twilio.com/docs/api/errors/${m.error_code})` : ''}.`);
       if (m.status === 'failed' || m.status === 'undelivered') return { ok: false, detail: lines.join('\n') };
     }
   }
