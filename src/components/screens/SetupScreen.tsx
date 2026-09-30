@@ -100,7 +100,7 @@ function TestLine({ conn }: { conn?: Status['connections'][number] }) {
   return (
     <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
       <Badge color={conn.status === 'connected' ? E.green : E.red}>{conn.status === 'connected' ? '● connected' : '● failing'}</Badge>
-      <span style={{ fontSize: 'var(--text-caption)', color: conn.status === 'connected' ? E.muted : E.red }}>{conn.note}</span>
+      <span style={{ fontSize: 'var(--text-caption)', color: conn.status === 'connected' ? E.muted : E.red, whiteSpace: 'pre-line', overflowWrap: 'anywhere' }}>{conn.note}</span>
       {conn.last_tested_at && <span style={{ fontSize: 'var(--text-caption)', color: E.faint }}>· {new Date(conn.last_tested_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>}
     </span>
   );

@@ -20,6 +20,63 @@ interface TestResult { ok: boolean; detail: string }
 
 const errText = async (res: Response) => { const t = await res.text().catch(() => ''); try { const j = JSON.parse(t) as { error?: { message?: string } | string; message?: string; errors?: { message: string }[] }; return (typeof j.error === 'string' ? j.error : j.error?.message) ?? j.message ?? j.errors?.[0]?.message ?? t.slice(0, 200); } catch { return t.slice(0, 200); } };
 
+// ── Twilio: send a real text, report exactly what Twilio said ─────────
+// The old check looked the from-number up in IncomingPhoneNumbers and
+// treated any failure as "not found". Now the test is the thing that
+// matters — can this account send from TWILIO_FROM_NUMBER to
+// DIGEST_TO_NUMBER — and every Twilio answer is shown as-is, with the
+// Account SID cut to its first 6 characters and the token never shown.
+async function testTwilio(env: Env): Promise<TestResult> {
+  const sid = (env.TWILIO_ACCOUNT_SID ?? '').trim();
+  const token = (env.TWILIO_AUTH_TOKEN ?? '').trim();
+  const from = (env.TWILIO_FROM_NUMBER ?? '').trim();
+  const to = (env.DIGEST_TO_NUMBER ?? '').trim();
+  const missing = [['TWILIO_ACCOUNT_SID', sid], ['TWILIO_AUTH_TOKEN', token], ['TWILIO_FROM_NUMBER', from], ['DIGEST_TO_NUMBER', to]].filter(([, v]) => !v).map(([k]) => k);
+  if (missing.length) return { ok: false, detail: `Missing: ${missing.join(', ')}.` };
+  const sidShown = `${sid.slice(0, 6)}…`;
+  const redact = (t: string) => t.split(sid).join(sidShown).replace(/\s+/g, ' ').slice(0, 400);
+  const e164 = (n: string) => /^\+[1-9]\d{7,14}$/.test(n);
+  const lines: string[] = [`Account SID ${sidShown}.`, `From ${from}${e164(from) ? '' : ' (not in +15551234567 form — Twilio may reject it)'} → to ${to}${e164(to) ? '' : ' (not in +15551234567 form)'}.`];
+  const auth = { Authorization: `Basic ${btoa(`${sid}:${token}`)}` };
+  const base = `https://api.twilio.com/2010-04-01/Accounts/${sid}`;
+
+  // Clue only (doesn't decide pass/fail): does this SID own the number?
+  const look = await fetch(`${base}/IncomingPhoneNumbers.json?PhoneNumber=${encodeURIComponent(from)}`, { headers: auth }).catch(() => null);
+  if (look) {
+    const raw = await look.text().catch(() => '');
+    let count: number | string = '?';
+    try { count = ((JSON.parse(raw) as { incoming_phone_numbers?: unknown[] }).incoming_phone_numbers ?? []).length; } catch { /* not JSON */ }
+    lines.push(`Lookup GET /IncomingPhoneNumbers.json?PhoneNumber=… → HTTP ${look.status}, ${count} match${count === 1 ? '' : 'es'}${look.ok ? '' : ` — raw: ${redact(raw)}`}.`);
+  } else lines.push('Lookup request failed to reach Twilio.');
+
+  // The real test: send one text.
+  const send = await fetch(`${base}/Messages.json`, {
+    method: 'POST', headers: { ...auth, 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ To: to, From: from, Body: 'Mastermind: Twilio test — if you got this, texts work.' }).toString(),
+  }).catch(() => null);
+  if (!send) return { ok: false, detail: [...lines, 'Send request failed to reach Twilio.'].join('\n') };
+  const sendRaw = await send.text().catch(() => '');
+  let msg: { sid?: string; status?: string; code?: number; message?: string; more_info?: string; error_code?: number | null; error_message?: string | null } = {};
+  try { msg = JSON.parse(sendRaw); } catch { /* not JSON */ }
+  if (!send.ok) {
+    lines.push(`Send POST /Messages.json → HTTP ${send.status}, Twilio error ${msg.code ?? '?'}: ${msg.message ?? redact(sendRaw)}${msg.more_info ? ` (${msg.more_info})` : ''}.`);
+    return { ok: false, detail: lines.join('\n') };
+  }
+  lines.push(`Send POST /Messages.json → HTTP ${send.status}, message ${msg.sid ?? '?'} ${msg.status ?? ''}.`);
+  // Accepted isn't delivered: carriers can still refuse it (e.g. 30032, an
+  // unverified toll-free number). Check back once.
+  if (msg.sid) {
+    await new Promise((r) => setTimeout(r, 4000));
+    const st = await fetch(`${base}/Messages/${msg.sid}.json`, { headers: auth }).catch(() => null);
+    const m = st?.ok ? ((await st.json().catch(() => ({}))) as typeof msg) : null;
+    if (m) {
+      lines.push(`After 4s: ${m.status}${m.error_code ? `, Twilio error ${m.error_code}${m.error_message ? `: ${m.error_message}` : ''} (https://www.twilio.com/docs/api/errors/${m.error_code})` : ''}.`);
+      if (m.status === 'failed' || m.status === 'undelivered') return { ok: false, detail: lines.join('\n') };
+    }
+  }
+  return { ok: true, detail: lines.join('\n') };
+}
+
 async function testPlatform(id: string, env: Env, sb: Sb): Promise<TestResult> {
   switch (id) {
     case 'anthropic': {
@@ -27,24 +84,7 @@ async function testPlatform(id: string, env: Env, sb: Sb): Promise<TestResult> {
       const res = await fetch('https://api.anthropic.com/v1/models?limit=1', { headers: { 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' } });
       return res.ok ? { ok: true, detail: 'Key accepted by the Anthropic API.' } : { ok: false, detail: `Anthropic ${res.status}: ${await errText(res)}` };
     }
-    case 'twilio': {
-      const missing = ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_FROM_NUMBER', 'DIGEST_TO_NUMBER'].filter((k) => !env[k]);
-      if (missing.length === 4) return { ok: false, detail: 'No Twilio secrets are set yet.' };
-      if (!env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN) return { ok: false, detail: `Missing: ${missing.join(', ')}.` };
-      const auth = { Authorization: `Basic ${btoa(`${env.TWILIO_ACCOUNT_SID}:${env.TWILIO_AUTH_TOKEN}`)}` };
-      const acct = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}.json`, { headers: auth });
-      if (!acct.ok) return { ok: false, detail: `Twilio ${acct.status}: ${await errText(acct)}` };
-      const a = (await acct.json()) as { status: string; type: string };
-      let numberNote = '';
-      if (env.TWILIO_FROM_NUMBER) {
-        const nums = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}/IncomingPhoneNumbers.json?PhoneNumber=${encodeURIComponent(env.TWILIO_FROM_NUMBER)}`, { headers: auth });
-        const list = nums.ok ? ((await nums.json()) as { incoming_phone_numbers: unknown[] }).incoming_phone_numbers : [];
-        numberNote = list.length ? ' The from-number belongs to this account.' : ' The from-number was NOT found on this account.';
-        if (!list.length) return { ok: false, detail: `Account ${a.status} (${a.type}).${numberNote}` };
-      }
-      if (missing.length) return { ok: false, detail: `Account ${a.status} (${a.type}), but still missing: ${missing.join(', ')}.` };
-      return { ok: a.status === 'active', detail: `Account ${a.status} (${a.type}${a.type === 'Trial' ? ' — texts get a trial prefix until you upgrade' : ''}).${numberNote} Toll-free verification status is on the Twilio console.` };
-    }
+    case 'twilio': return testTwilio(env);
     case 'cloudflare_secrets': {
       if (!env.CF_API_TOKEN || !env.CF_ACCOUNT_ID) return { ok: false, detail: 'CF_API_TOKEN and CF_ACCOUNT_ID must be added by hand once (see the steps).' };
       const res = await fetch('https://api.cloudflare.com/client/v4/user/tokens/verify', { headers: { Authorization: `Bearer ${env.CF_API_TOKEN}` } });
@@ -110,7 +150,7 @@ async function testAccount(id: string, tok: Record<string, string>): Promise<Tes
 }
 
 async function recordStatus(sb: Sb, userId: string, provider: string, r: TestResult) {
-  await sb.insert('ai_connections', { user_id: userId, provider, status: r.ok ? 'connected' : 'failed', last_tested_at: new Date().toISOString(), note: r.detail.slice(0, 500), updated_at: new Date().toISOString() }, { upsert: 'user_id,provider' }).catch((e) => console.error('ai_connections', e));
+  await sb.insert('ai_connections', { user_id: userId, provider, status: r.ok ? 'connected' : 'failed', last_tested_at: new Date().toISOString(), note: r.detail.slice(0, 2000), updated_at: new Date().toISOString() }, { upsert: 'user_id,provider' }).catch((e) => console.error('ai_connections', e));
 }
 
 async function loadToken(env: Env, sb: Sb, userId: string, provider: string): Promise<Record<string, string> | null> {
