@@ -4,12 +4,14 @@
 // API (Claude, Twilio, Stripe, Resend) or write to the database.
 import { PLATFORM_SETUP, ACCOUNT_SETUP } from '../data/setupCatalog';
 import { buildSeed, demoLeads, DEMO_DIGEST_TEXT } from './seed';
+import { demoRows } from './client';
+import { localExtract } from '../dispatch/localExtract';
 
 type Json = Record<string, unknown> | unknown[];
 const ok = (body: Json, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 const NOT_IN_DEMO = { error: 'That runs in the real app — this is the demo.' };
 
-function answer(url: URL, method: string): Response {
+function answer(url: URL, method: string, body: unknown = null): Response {
   const p = url.pathname;
   const q = url.searchParams;
   if (p === '/api/leadflow/leads') {
@@ -52,6 +54,20 @@ function answer(url: URL, method: string): Response {
   if (p === '/api/broker-keys-status') return ok({ configured: true });
   if (p === '/api/marketing/visits') return ok({ visits: 1240, days: [] });
   if (p === '/api/events') return ok({ ok: true });
+  // Dispatch: extraction by the local rules (no Claude), nobody is texted.
+  if (p === '/api/dispatch/extract') {
+    const people = demoRows('dispatch_members').map((m) => ({ id: String(m.id), name: String(m.name) }));
+    const text = String((body as { transcript?: string } | null)?.transcript ?? '');
+    return ok({ ...localExtract(text, people), owner_id: 'demo', cost_usd: 0 });
+  }
+  if (p === '/api/dispatch/notify') {
+    const sid = (body as { session_id?: string } | null)?.session_id;
+    const ids = new Set(demoRows('dispatch_tasks').filter((t) => t.session_id === sid).map((t) => t.assignee_member_id).filter(Boolean));
+    return ok({ notified: demoRows('dispatch_members').filter((m) => ids.has(m.id)).map((m) => ({ name: String(m.name).split(' ')[0], via: 'sms' })) });
+  }
+  if (p === '/api/dispatch/nudge') return ok({ sent: true, via: 'sms' });
+  if (p === '/api/dispatch/invite') return ok({ link: `${window.location.origin}/?join=demo-invite-link`, sms: (body as { sms?: boolean } | null)?.sms ? { sent: true } : null });
+  if (p === '/api/dispatch/transcribe') return ok({ error: 'Server transcription runs in the real app.' }, 501);
   return ok(NOT_IN_DEMO, 200);
 }
 
@@ -67,7 +83,9 @@ export function installDemoApi(): void {
     const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, window.location.origin);
     if (url.origin === window.location.origin && url.pathname.startsWith('/api/')) {
       await new Promise((r) => setTimeout(r, 120));
-      return answer(url, (init?.method ?? (input instanceof Request ? input.method : 'GET')).toUpperCase());
+      let body: unknown = null;
+      try { if (typeof init?.body === 'string') body = JSON.parse(init.body); } catch { /* not JSON */ }
+      return answer(url, (init?.method ?? (input instanceof Request ? input.method : 'GET')).toUpperCase(), body);
     }
     // Supabase and every other paid/external API are off-limits in the demo.
     if (/supabase\.co|anthropic\.com|stripe\.com|twilio\.com|resend\.com/.test(url.host)) return ok(NOT_IN_DEMO, 503);

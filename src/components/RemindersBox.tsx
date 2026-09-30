@@ -14,6 +14,8 @@ interface Props {
    *  the box too low, overlapping the tab bar. '20px' (the plain corner
    *  margin) everywhere else, including desktop. */
   bottomOffset?: string;
+  /** Screens with their own bottom controls (Dispatch) hide it. */
+  hidden?: boolean;
 }
 
 /** Days past due, or 0. */
@@ -36,7 +38,7 @@ function dueLabel(dueDate: string): string {
   return `due ${new Date(`${dueDate}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
 }
 
-const RemindersBox = forwardRef<HTMLDivElement, Props>(function RemindersBox({ isMobile, bottomOffset = '20px' }, ref) {
+const RemindersBox = forwardRef<HTMLDivElement, Props>(function RemindersBox({ isMobile, bottomOffset = '20px', hidden = false }, ref) {
   const skin = useSkin();
   const { reminders, loading } = useReminders();
   const visible = reminders.slice(0, 4);
@@ -60,6 +62,7 @@ const RemindersBox = forwardRef<HTMLDivElement, Props>(function RemindersBox({ i
   // ~180px tall: the bottom of every long screen (Brand Lab's New Brief
   // form first) sat underneath it. Same node, swapped contents, keeps
   // the observer alive across the toggle.
+  if (hidden) return <div ref={ref} style={{ display: 'none' }} />;
   return (
     <div
       ref={ref}

@@ -10,6 +10,8 @@ type Row = Record<string, unknown>;
 
 export const DEMO_USER = { id: 'a4b89df9-7122-424a-afb5-fc4871e0963b', email: 'marq@madebymarq.demo', name: 'Marq' };
 const U = DEMO_USER.id;
+/** A second workspace where the demo identity is a member (explore mode). */
+export const JAMES_TEAM = { ownerId: 'downer00-0000-4000-8000-000000000001', memberId: 'dmemjame-0000-4000-8000-000000000001' };
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const dayStr = (offset = 0) => { const d = new Date(); d.setDate(d.getDate() + offset); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
@@ -253,6 +255,41 @@ export function buildSeed(): Record<string, Row[]> {
   ]);
   T('client_invoices', [{ id: uid('cinv'), client_id: clients[0].id, amount_cents: 235000, status: 'paid', description: 'Build + first month', created_at: iso(-6), paid_at: iso(-4) }]);
   T('services', []); T('client_pricing_items', []); T('pricing_template_items', []);
+
+  // ── Dispatch: a two-person crew, this morning's run, one overdue ─────
+  const mk = (name: string, role: string, phone: string, extra: Row = {}) => ({ id: uid('dmem'), owner_id: U, user_id: null, name, role, phone, email: null, notify: 'sms', color: null, invite_token: null, invited_at: iso(-9), joined_at: iso(-8), last_active_at: hoursAgo(1.5), ...extra });
+  const mikhail = mk('Mikhail Petrov', 'manager', '+1 555 010 4471', { user_id: 'dmikhail-0000-4000-8000-000000000001' });
+  const sam = mk('Sam Ortega', 'member', '+1 555 010 8812', { last_active_at: hoursAgo(20) });
+  T('dispatch_members', [mikhail, sam]);
+  const s1 = { id: uid('dses'), owner_id: U, created_by: U, created_at: iso(0, 10, 42), duration_s: 48, notes: ['Johnson site gate code is 4471'], extraction: {},
+    transcript: "Okay — Mikhail, get the Johnson bid out by Thursday, that's the big one. Call the supplier about the pallets, probably Mikhail too. Mikhail, double-check the Ridgeline punch list before Friday. I'll sign the lease Friday. Johnson site gate code is 4471." };
+  const s2 = { id: uid('dses'), owner_id: U, created_by: U, created_at: iso(-1, 16, 5), duration_s: 21, notes: [], extraction: {},
+    transcript: 'Sam, send the Ridgeline invoice today and book the dumpster pickup for Monday.' };
+  T('dispatch_sessions', [s1, s2]);
+  const task = (session: Row, assignee: Row | null, title: string, priority: number, due: string | null, quote: string, extra: Row = {}) => ({
+    id: uid('dtsk'), owner_id: U, session_id: session.id, created_by: U, assignee_member_id: assignee ? assignee.id : null, title, priority, priority_reason: priority === 1 ? 'Called "the big one" — money on the line' : priority === 2 ? 'Has a hard date this week' : 'Normal', due_date: due, source_quote: quote, status: 'open', needs_help: false, done_at: null, nudged_at: null, sort_order: 0, created_at: session.created_at, updated_at: session.created_at, ...extra });
+  const bid = task(s1, mikhail, 'Johnson bid out', 1, dayStr(1), "get the Johnson bid out by Thursday, that's the big one");
+  T('dispatch_tasks', [
+    bid,
+    task(s1, mikhail, 'Call supplier re: pallets', 3, null, 'Call the supplier about the pallets, probably Mikhail too'),
+    task(s1, mikhail, 'Check the Ridgeline punch list', 2, dayStr(-1), 'double-check the Ridgeline punch list before Friday'),
+    task(s1, null, 'Sign the lease', 2, dayStr(2), "I'll sign the lease Friday"),
+    task(s2, sam, 'Send the Ridgeline invoice', 2, dayStr(-1), 'send the Ridgeline invoice today', { status: 'done', done_at: iso(0, 9, 15) }),
+    task(s2, sam, 'Book the dumpster pickup', 3, dayStr(4), 'book the dumpster pickup for Monday', { status: 'done', done_at: iso(0, 8, 40) }),
+  ]);
+  // Overview shows the Dispatch widget (medium) after the default widgets.
+  T('home_widget_prefs', [{ widget_key: 'dispatch', hidden: false, sort_order: null, size: 'M' }]);
+
+  // Marq on James's crew — what the member side ("From James") looks like.
+  const J = JAMES_TEAM.ownerId;
+  db.dispatch_members.push({ id: JAMES_TEAM.memberId, owner_id: J, user_id: U, name: 'Marq', role: 'member', phone: null, email: null, notify: 'push', color: null, invite_token: null, invited_at: iso(-20), joined_at: iso(-20), last_active_at: hoursAgo(1), created_at: iso(-20) });
+  const js = { id: uid('dses'), owner_id: J, created_by: J, created_at: iso(0, 7, 55), duration_s: 30, notes: [], extraction: {}, transcript: "Marq — the Johnson bid out by Thursday, that's the big one. And send me the Ridgeline photos." };
+  db.dispatch_sessions.push(js);
+  db.dispatch_tasks.push(
+    { ...task(js, null, 'Johnson bid out', 1, dayStr(1), "that's the big one"), owner_id: J, created_by: J, assignee_member_id: JAMES_TEAM.memberId },
+    { ...task(js, null, 'Send James the Ridgeline photos', 3, null, 'send me the Ridgeline photos'), owner_id: J, created_by: J, assignee_member_id: JAMES_TEAM.memberId },
+  );
+  T('dispatch_comments', [{ id: uid('dcom'), task_id: bid.id, owner_id: U, author_id: 'dmikhail-0000-4000-8000-000000000001', body: 'Need the final window count from Sam before I can price it.', created_at: iso(0, 11, 30) }]);
 
   // Everything else a screen might ask for starts empty (never undefined).
   return db;

@@ -9,12 +9,14 @@ const PublicClientDashboard = lazyScreen(() => import('./PublicClientDashboard')
 import { isStandalone } from './lib/pwa'
 import { initOrientationLock } from './lib/orientationLock'
 import { initDemo } from './demo/lifecycle'
+import { captureJoinToken } from './dispatch/join';
 
 // Applies the data-force-portrait attribute index.css's rotate-lock keys
 // off of — called before the first render so there's no flash of
 // sideways content if the tab happens to open already in landscape.
 initOrientationLock();
 // Demo Mode (?demo=1 / ?demo=record&speed=fast) — before the first render.
+captureJoinToken();
 initDemo();
 
 // The two genuinely public routes in the app — /audit (Part 1b: a prospect

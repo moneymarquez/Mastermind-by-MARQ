@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { NAV_DATA, INITIAL_STICKY_IDEAS, PLACEHOLDER_NOTES } from './data';
 import { isDemo } from './demo/state';
-import { DIRECT_SCREENS, LAST_SCREEN_KEY, deepLinkScreen, pickInitialScreen } from './screenRestore';
+import { DIRECT_SCREENS, LAST_SCREEN_KEY, deepLinkScreen, pickInitialScreen, pathScreen } from './screenRestore';
 import type { StoredScreen } from './screenRestore';
 import type { NovaMessage, Point, Screen, StickyIdea } from './types';
 import { askNova, AiError } from './lib/ai';
@@ -135,6 +135,13 @@ function writeLastScreen(screen: Screen): void {
 function initialScreen(): Screen {
   try {
     const stored = (() => { try { return localStorage.getItem(LAST_SCREEN_KEY); } catch { return null; } })();
+    const byPath = pathScreen(window.location.pathname, window.location.search);
+    if (byPath) {
+      // Consumed the same way as ?screen=: the next reload restores normally.
+      try { if (byPath.talk) sessionStorage.setItem('dp:talk-on-open', '1'); } catch { /* ok */ }
+      window.history.replaceState(window.history.state, '', '/');
+      return byPath.screen;
+    }
     const picked = pickInitialScreen(window.location.search, stored, Date.now());
     // Consume the deep link so a later reload restores wherever you went
     // next instead of jumping back to the linked screen.

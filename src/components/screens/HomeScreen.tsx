@@ -11,8 +11,11 @@ import { greetingLine } from '../../data/greeting';
 import { dateStr, timeToMinutes } from '../../data/time';
 import { useHomeWidgetPrefs } from '../../data/useHomeWidgetPrefs';
 import { HOME_WIDGET_REGISTRY, isWidgetVisible } from '../../data/homeWidgets';
+import { useMyTeams } from '../../data/useDispatch';
+import { FromOwnerSection } from '../../dispatch/FromOwner';
 
 interface Props {
+  currentUserId?: string;
   isMobile: boolean;
   isOwner: boolean;
   homeHeadStyle: CSSProperties;
@@ -36,9 +39,11 @@ function greeting(): string {
  *  widgets" under Settings). No saved prefs at all (everyone, until they
  *  actually open the editor) renders the exact pre-widget-system default
  *  layout: 6-tile KPI row, then Macros/Schedule/Nova in that order. */
-export default function HomeScreen({ isMobile, isOwner, homeHeadStyle, homeSubStyle, onOpenNova, assistantName, onNavigate }: Props) {
+export default function HomeScreen({ currentUserId, isMobile, isOwner, homeHeadStyle, homeSubStyle, onOpenNova, assistantName, onNavigate }: Props) {
   const { nudges } = useNudges();
-  const { hidden, order, known, loading: prefsLoading } = useHomeWidgetPrefs();
+  // Teams this account is on (not the one it leads): "From <lead>" goes first.
+  const { teams } = useMyTeams(!!currentUserId);
+  const { hidden, order, known, sizes, loading: prefsLoading } = useHomeWidgetPrefs();
   const { callsToday, loading: callsLoading } = useCallsToday();
   const target = useDailyCallGoal();
   const { plan } = useDailyPlan();
@@ -73,7 +78,23 @@ export default function HomeScreen({ isMobile, isOwner, homeHeadStyle, homeSubSt
   const desktopGridColumns = columnWidgets.length === 3 ? 'minmax(0, 1.05fr) minmax(0, 0.95fr) minmax(280px, 340px)' : 'repeat(auto-fit, minmax(280px, 1fr))';
 
   // Cyberpunk is a different Overview, not a restyle: see CyberOverview.
-  if (skin === 'cyberpunk') return <><BrainNudgeCard onOpen={() => onNavigate('brain')} /><CyberOverview isMobile={isMobile} onNavigate={onNavigate} /></>;
+  // Its fixed layout still carries the member side of Dispatch, and the
+  // Dispatch widget when it's switched on — above the overview when it's
+  // been pinned first in Edit widgets, below otherwise (spec 15 §3A).
+  if (skin === 'cyberpunk') {
+    const dispatchDef = visible.find((w) => w.key === 'dispatch');
+    const pinned = dispatchDef && visible[0]?.key === 'dispatch' && hasCustomOrder;
+    const dispatchCard = dispatchDef && <div style={{ marginTop: 18 }}><dispatchDef.Component {...widgetProps} size={sizes.dispatch ?? dispatchDef.sizes?.[0]} /></div>;
+    return (
+      <>
+        <BrainNudgeCard onOpen={() => onNavigate('brain')} />
+        {currentUserId && teams.map((t) => <div key={t.owner_id} style={{ marginBottom: 18 }}><FromOwnerSection team={t} userId={currentUserId} /></div>)}
+        {pinned && dispatchCard}
+        <CyberOverview isMobile={isMobile} onNavigate={onNavigate} />
+        {!pinned && dispatchCard}
+      </>
+    );
+  }
 
   if (prefsLoading) return <div style={homeSubStyle}>Loading…</div>;
 
@@ -93,6 +114,7 @@ export default function HomeScreen({ isMobile, isOwner, homeHeadStyle, homeSubSt
       <div style={homeHeadStyle}>{greeting()}.</div>
       <div style={homeSubStyle}>{nudgeSummary}</div>
       <BrainNudgeCard onOpen={() => onNavigate('brain')} />
+      {currentUserId && teams.map((t) => <div key={t.owner_id} style={{ marginTop: 18 }}><FromOwnerSection team={t} userId={currentUserId} /></div>)}
 
       {isMobile && !hasCustomOrder ? (
         // No custom order saved yet — keep the original mobile default
@@ -101,25 +123,25 @@ export default function HomeScreen({ isMobile, isOwner, homeHeadStyle, homeSubSt
         // custom order (below), mobile switches to honoring it like
         // desktop always does.
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 18 }}>
-          {columnWidgets.filter((w) => w.key === 'nova').map((w) => <w.Component key={w.key} {...widgetProps} />)}
-          {fullWidgets.map((w) => <w.Component key={w.key} {...widgetProps} />)}
-          {columnWidgets.filter((w) => w.key !== 'nova').map((w) => <w.Component key={w.key} {...widgetProps} />)}
+          {columnWidgets.filter((w) => w.key === 'nova').map((w) => <w.Component key={w.key} {...widgetProps} size={sizes[w.key] ?? w.sizes?.[0]} />)}
+          {fullWidgets.map((w) => <w.Component key={w.key} {...widgetProps} size={sizes[w.key] ?? w.sizes?.[0]} />)}
+          {columnWidgets.filter((w) => w.key !== 'nova').map((w) => <w.Component key={w.key} {...widgetProps} size={sizes[w.key] ?? w.sizes?.[0]} />)}
         </div>
       ) : isMobile ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 18 }}>
-          {fullWidgets.map((w) => <w.Component key={w.key} {...widgetProps} />)}
-          {columnWidgets.map((w) => <w.Component key={w.key} {...widgetProps} />)}
+          {fullWidgets.map((w) => <w.Component key={w.key} {...widgetProps} size={sizes[w.key] ?? w.sizes?.[0]} />)}
+          {columnWidgets.map((w) => <w.Component key={w.key} {...widgetProps} size={sizes[w.key] ?? w.sizes?.[0]} />)}
         </div>
       ) : (
         <>
           {fullWidgets.map((w) => (
             <div key={w.key} style={{ marginTop: 24 }}>
-              <w.Component {...widgetProps} />
+              <w.Component {...widgetProps} size={sizes[w.key] ?? w.sizes?.[0]} />
             </div>
           ))}
           {columnWidgets.length > 0 && (
             <div style={{ display: 'grid', gridTemplateColumns: desktopGridColumns, gap: 12, marginTop: 18 }}>
-              {columnWidgets.map((w) => <w.Component key={w.key} {...widgetProps} />)}
+              {columnWidgets.map((w) => <w.Component key={w.key} {...widgetProps} size={sizes[w.key] ?? w.sizes?.[0]} />)}
             </div>
           )}
         </>

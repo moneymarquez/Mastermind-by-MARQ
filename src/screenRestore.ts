@@ -1,7 +1,7 @@
 // Which screen the app opens on — pure, no React, so it's testable.
 import type { Screen } from './types';
 
-export const DIRECT_SCREENS: Screen[] = ['home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain', 'ecommerce', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing', 'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings', 'call-recordings', 'website', 'invoicing', 'manage-modules', 'edit-home-widgets', 'grant-access', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'content', 'swipe-file', 'changelog'];
+export const DIRECT_SCREENS: Screen[] = ['home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain', 'ecommerce', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing', 'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings', 'call-recordings', 'website', 'invoicing', 'manage-modules', 'edit-home-widgets', 'grant-access', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'content', 'swipe-file', 'changelog', 'dispatch'];
 
 // Which screen the app was on last, so a reload comes back to it instead
 // of dumping you on Home. Matters most as an installed PWA: iOS silently
@@ -49,6 +49,13 @@ export function restoreScreen(stored: string | null, now: number): Screen {
 export function deepLinkScreen(search: string): Screen | null {
   const q = new URLSearchParams(search).get('screen');
   return q && (DIRECT_SCREENS as string[]).includes(q) ? (q as Screen) : null;
+}
+
+/** Path deep links: /dispatch (the home-screen shortcut, spec 15 §3B).
+ *  `talk` is true for /dispatch?talk=1 — open straight into recording. */
+export function pathScreen(pathname: string, search: string): { screen: Screen; talk: boolean } | null {
+  if (pathname.replace(/\/+$/, '') === '/dispatch') return { screen: 'dispatch', talk: new URLSearchParams(search).get('talk') === '1' };
+  return null;
 }
 
 /** What the app opens on: a deep link wins over the remembered screen

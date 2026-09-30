@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react';
+import { WalkieIcon } from './dispatch/bits';
 import {
   House, PhoneCall, ForkKnife, Heart, Target, Brain, Barbell, UsersThree, RocketLaunch,
   ClipboardText, Receipt, Palette, Flask, Lightbulb, Microphone, Code, CalendarBlank,
@@ -77,6 +78,8 @@ interface Props {
  *  the id scheme the original design used for its icon-font classes. */
 export default function Icon({ name, size, color, style }: Props) {
   const key = name.replace(/^ph-/, '');
+  // Dispatch's walkie-talkie isn't in Phosphor (spec 15 §1).
+  if (key === 'dispatch') return <span style={{ display: 'inline-flex', color, ...style }}><WalkieIcon size={Number(size) || 20} /></span>;
   const Cmp = ICONS[key];
   if (!Cmp) return null;
   return <Cmp size={size} weight="regular" color={color} style={style} />;

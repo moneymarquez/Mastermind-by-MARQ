@@ -3,6 +3,8 @@
 // land in memory only — nothing here can reach the real database, because
 // there is no network code in this file at all. Reset on every demo start.
 import { buildSeed, DEMO_USER } from './seed';
+import { getDemo } from './state';
+import { JAMES_TEAM } from './seed';
 
 type Row = Record<string, unknown>;
 type Filter = (r: Row) => boolean;
@@ -11,6 +13,8 @@ let db: Record<string, Row[]> = {};
 let n = 0;
 const id = () => `d0000000-0000-4000-8000-${String(++n).padStart(12, '0')}`;
 export function resetDemoDb(): void { db = buildSeed(); n = 0; }
+/** Read-only peek at the in-memory demo tables (for /api answers). */
+export function demoRows(table: string): Record<string, unknown>[] { return (db[table] ?? []) as Record<string, unknown>[]; }
 
 function cmp(r: Row, col: string, op: string, v: unknown): boolean {
   if (col.includes('->')) {
@@ -135,7 +139,10 @@ const rpcData: Record<string, unknown> = { is_comped: true, is_owner: true, list
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const demoClient: any = {
   from: builder,
-  rpc: (name: string) => { const p: Promise<unknown> & { single?: () => unknown; maybeSingle?: () => unknown } = Promise.resolve({ data: rpcData[name] ?? null, error: null }); p.single = () => p; p.maybeSingle = () => p; return p; },
+  rpc: (name: string) => {
+    // Explore mode shows the member side too: Marq is also on James's crew.
+    const data = name === 'dispatch_my_teams' ? (getDemo().tour ? [] : [{ member_id: JAMES_TEAM.memberId, owner_id: JAMES_TEAM.ownerId, owner_name: 'James', role: 'member' }]) : rpcData[name] ?? null;
+    const p: Promise<unknown> & { single?: () => unknown; maybeSingle?: () => unknown } = Promise.resolve({ data, error: null }); p.single = () => p; p.maybeSingle = () => p; return p; },
   channel, removeChannel: () => Promise.resolve('ok'), removeAllChannels: () => Promise.resolve([]), getChannels: () => [],
   storage: { from: storage },
   functions: { invoke: async () => ({ data: null, error: { message: 'Not available in the demo.' } }) },

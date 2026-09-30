@@ -2,9 +2,15 @@
 // same lines become the App Store "What's New" text in Phase 6).
 export interface Release { version: string; date: string; title: string; items: string[] }
 
-export const APP_VERSION = '0.9.0';
+export const APP_VERSION = '0.10.0';
 
 export const CHANGELOG: Release[] = [
+  { version: '0.10.0', date: '2026-09-30', title: 'Dispatch', items: [
+    'Dispatch: hold the mic, say who does what by when, review, send. It lands on their board and they get a text.',
+    'A live board of who has what — overdue in red, done and "need help" show up the moment they happen.',
+    'Invite your crew by link or text. They get a slim app with just their tasks — no subscription needed.',
+    'The Dispatch widget on Overview (small, medium or large), and /dispatch?talk=1 opens straight into recording.',
+  ] },
   { version: '0.9.0', date: '2026-09-27', title: 'Demo Mode, faster, safer', items: [
     'Demo Mode: a two-minute guided tour with demo data — Settings → Demo Mode.',
     'The app opens about 10× lighter: screens load as you open them.',

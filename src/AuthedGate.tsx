@@ -1,4 +1,6 @@
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { useMyTeams } from './data/useDispatch';
+import { hasPendingJoin, redeemPendingJoin } from './dispatch/join';
 import { lazyScreen } from './lib/lazyScreen';
 import Stage from './Stage';
 import { useMastermindState } from './state';
@@ -12,6 +14,7 @@ import { setPromptUser } from './lib/promptUser';
 import { supabase } from './lib/supabase';
 const OnboardingFlow = lazyScreen(() => import('./onboarding/OnboardingFlow'));
 const BillingGateScreen = lazyScreen(() => import('./billing/BillingGateScreen'));
+const MemberApp = lazyScreen(() => import('./dispatch/MemberApp'));
 
 interface Props {
   userId: string;
@@ -44,8 +47,33 @@ export default function AuthedGate({ userId, userEmail, userDisplayName, onSignO
   const moduleAccess = useModuleAccess(userId, isOwner);
   const subscription = useSubscription(isOwner);
   const theme = useTheme();
+  // Dispatch teams (spec 15 §2.4): an invite link redeems here, and someone
+  // who's on a team without their own subscription gets the slim member app
+  // instead of onboarding and the paywall.
+  const myTeams = useMyTeams(!isOwner);
+  const [joining, setJoining] = useState(hasPendingJoin());
+  const [joinNote, setJoinNote] = useState<string | null>(null);
+  useEffect(() => {
+    if (!joining) return;
+    void redeemPendingJoin().then(async (r) => {
+      if (r?.joined) setJoinNote(`You're on ${r.owner_name}'s team. Their tasks for you show up here.`);
+      else if (r?.error) setJoinNote(r.error);
+      await myTeams.refresh();
+      setJoining(false);
+    });
+  }, [joining]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!isOwner) {
+    if (joining || myTeams.loading) {
+      return <div style={{ minHeight: '100vh', background: 'var(--bg)' }} />;
+    }
+    const teamOnly = myTeams.teams.length > 0 && !subscription.loading && !subscription.isActive;
+    if (teamOnly) {
+      return <Suspense fallback={<div style={{ minHeight: '100vh', background: 'var(--bg)' }} />}><MemberApp teams={myTeams.teams} userId={userId} onSignOut={onSignOut} banner={joinNote} /></Suspense>;
+    }
+    if (myTeams.teams.length > 0 && subscription.loading) {
+      return <div style={{ minHeight: '100vh', background: 'var(--bg)' }} />;
+    }
     if (moduleAccess.loading) {
       return <div style={{ minHeight: '100vh', background: 'var(--bg)' }} />;
     }

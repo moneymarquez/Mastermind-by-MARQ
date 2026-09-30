@@ -16,11 +16,13 @@ export interface DemoState {
   run: number;
   /** Where to return to on exit. */
   returnTo: string | null;
+  /** false = explore on sample data with no guided tour (?demo=explore). */
+  tour: boolean;
 }
 
 export const SPEED_FACTOR: Record<DemoSpeed, number> = { slow: 1.6, normal: 1, fast: 0.62 };
 
-let state: DemoState = { active: false, record: false, speed: 'normal', auto: true, step: 0, run: 0, returnTo: null };
+let state: DemoState = { active: false, record: false, speed: 'normal', auto: true, step: 0, run: 0, returnTo: null, tour: true };
 const listeners = new Set<() => void>();
 const emit = () => { for (const l of listeners) l(); };
 
@@ -29,13 +31,13 @@ export function getDemo(): DemoState { return state; }
 export function subscribeDemo(l: () => void): () => void { listeners.add(l); return () => listeners.delete(l); }
 export function useDemo(): DemoState { return useSyncExternalStore(subscribeDemo, getDemo, getDemo); }
 
-export function startDemo(opts: Partial<Pick<DemoState, 'record' | 'speed' | 'auto' | 'returnTo'>> = {}): void {
+export function startDemo(opts: Partial<Pick<DemoState, 'record' | 'speed' | 'auto' | 'returnTo' | 'tour'>> = {}): void {
   const speed = opts.speed ?? state.speed;
   state = {
     active: true, record: !!opts.record, speed,
     // Slow is for live walkthroughs where Marq talks over it: manual by default.
     auto: opts.auto ?? (opts.record ? true : speed !== 'slow'),
-    step: 0, run: state.run + 1, returnTo: opts.returnTo ?? null,
+    step: 0, run: state.run + 1, returnTo: opts.returnTo ?? null, tour: opts.tour ?? true,
   };
   emit();
 }
@@ -53,7 +55,7 @@ export function demoFromUrl(search = window.location.search): Partial<DemoState>
   const d = p.get('demo');
   if (!d || d === '0') return null;
   const speed = p.get('speed');
-  return { record: d === 'record', speed: speed === 'slow' || speed === 'fast' ? speed : 'normal' };
+  return { record: d === 'record', tour: d !== 'explore', speed: speed === 'slow' || speed === 'fast' ? speed : 'normal' };
 }
 export function consumeDemoUrl(): void {
   const opts = demoFromUrl();

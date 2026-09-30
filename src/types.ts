@@ -46,6 +46,7 @@ export type Screen =
   | 'cashflow'
   | 'patterns'
   | 'voice-capture'
+  | 'dispatch'
   | 'manage-modules'
   | 'edit-home-widgets'
   | 'grant-access'

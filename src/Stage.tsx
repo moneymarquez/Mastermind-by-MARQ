@@ -1,5 +1,5 @@
 import ErrorBoundary from './components/ErrorBoundary';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { lazyScreen } from './lib/lazyScreen';
 import type { CSSProperties } from 'react';
 import Sidebar, { SIDEBAR_COLLAPSED_WIDTH } from './components/Sidebar';
@@ -29,11 +29,14 @@ import CyberTabBar from './components/cyber/CyberTabBar';
 import CyberRail, { RAIL_WIDTH } from './components/cyber/CyberRail';
 import { MOBILE_HEADER_HEIGHT } from './components/MobileHeader';
 import Intro from './components/fx/Intro';
-import { useDemo } from './demo/state';
+import { useDemo, stopDemo } from './demo/state';
+import { DispatchProvider } from './dispatch/DispatchContext';
 
 // Screens load on demand; Overview ships in the main bundle.
 const DemoTour = lazyScreen(() => import('./demo/DemoTour'));
 const ChangelogScreen = lazyScreen(() => import('./components/screens/ChangelogScreen'));
+const DispatchScreen = lazyScreen(() => import('./dispatch/DispatchScreen'));
+const DispatchLayer = lazyScreen(() => import('./dispatch/DispatchLayer'));
 const ClientModulesScreen = lazyScreen(() => import('./components/screens/ClientModulesScreen'));
 const DailyPlanScreen = lazyScreen(() => import('./components/screens/DailyPlanScreen'));
 const DialingScreen = lazyScreen(() => import('./components/screens/DialingScreen'));
@@ -87,7 +90,7 @@ const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'stocks', 'leadflow', 'ecommerce', 'account-settings', 'prompt-voice-settings',
-  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access', 'changelog',
+  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access', 'changelog', 'dispatch',
 ];
 
 interface Props {
@@ -256,7 +259,12 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
     width: vm.stageWidth, height: vm.stageHeight, position: 'relative', overflow: 'hidden',
   };
 
+  const dispatchOn = canAccess('dispatch');
+  const navigateToRef = useRef(actions.navigateTo); navigateToRef.current = actions.navigateTo;
+  const openDispatch = useCallback(() => navigateToRef.current('dispatch'), []);
+  const leadFirst = (userDisplayName ?? '').split(' ')[0] || (isOwner ? 'Marq' : 'You');
   return (
+    <DispatchProvider userId={currentUserId} ownerId={dispatchOn ? currentUserId : null} leadName={leadFirst} onOpen={openDispatch}>
     <div className="app-shine-bg" style={stageStyle}>
       {isMobile ? (
         <>
@@ -386,7 +394,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <Suspense fallback={<ScreenLoading />}>
           <div data-demo-content="">
         {state.screen === 'home' && (
-          <HomeScreen isMobile={isMobile} isOwner={isOwner} homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onOpenNova={actions.openNova} assistantName={assistantName} onNavigate={actions.navigateTo} />
+          <HomeScreen currentUserId={currentUserId} isMobile={isMobile} isOwner={isOwner} homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onOpenNova={actions.openNova} assistantName={assistantName} onNavigate={actions.navigateTo} />
         )}
 
         {state.screen === 'daily-plan' && (
@@ -627,6 +635,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <PatternDetectionScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
+        {state.screen === 'dispatch' && (
+          <DispatchScreen isMobile={isMobile} onBack={() => actions.navigateTo('home')} dockBottom={`calc(${vm.tabBarHeight + 10}px + ${SAFE_BOTTOM})`} />
+        )}
+
         {state.screen === 'voice-capture' && (
           <VoiceCaptureScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
@@ -679,12 +691,18 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         />
       )}
 
-      <RemindersBox ref={remindersRef} isMobile={isMobile} bottomOffset={isMobile ? `calc(${vm.tabBarHeight + 20}px + ${SAFE_BOTTOM})` : '20px'} />
+      {/* Dispatch docks its own bar where the reminders bell sits. */}
+      <RemindersBox hidden={isMobile && state.screen === 'dispatch'} ref={remindersRef} isMobile={isMobile} bottomOffset={isMobile ? `calc(${vm.tabBarHeight + 20}px + ${SAFE_BOTTOM})` : '20px'} />
 
       {!cyber && <Celebration />}
       {!demo.active && <Intro name={(userDisplayName ?? '').split(' ')[0] || 'Marq'} />}
 
-      {demo.active && <Suspense fallback={null}><DemoTour navigate={actions.navigateTo} /></Suspense>}
+      {demo.active && demo.tour && <Suspense fallback={null}><DemoTour navigate={actions.navigateTo} /></Suspense>}
+      {demo.active && !demo.tour && (
+        <button type="button" onClick={stopDemo} style={{ position: 'fixed', top: 'calc(2px + env(safe-area-inset-top))', left: '50%', transform: 'translateX(-50%)', zIndex: 120, minHeight: 22, padding: '0 10px', opacity: 0.85, borderRadius: 999, border: '1px solid var(--mm-line)', background: 'var(--mm-panel-solid)', color: 'var(--mm-dim)', font: 'inherit', fontSize: 11, cursor: 'pointer' }}>
+          Sample data · Exit
+        </button>
+      )}
 
       <ProductTour
         active={tourActive}
@@ -694,7 +712,9 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         onBack={() => setTourStep((i) => Math.max(0, i - 1))}
         onSkip={stopTour}
       />
+      {dispatchOn && <Suspense fallback={null}><DispatchLayer /></Suspense>}
     </div>
+    </DispatchProvider>
   );
 }
 

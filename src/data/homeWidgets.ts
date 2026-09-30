@@ -6,9 +6,10 @@ import NovaWidget from '../components/homeWidgets/NovaWidget';
 import GoalsProgressWidget from '../components/homeWidgets/GoalsProgressWidget';
 import CrmPipelineWidget from '../components/homeWidgets/CrmPipelineWidget';
 import BudgetingSnapshotWidget from '../components/homeWidgets/BudgetingSnapshotWidget';
+import DispatchWidget from '../dispatch/DispatchWidget';
 import type { HomeWidgetProps } from '../components/homeWidgets/types';
 
-export type HomeWidgetKey = 'kpi-tiles' | 'macros' | 'schedule' | 'nova' | 'goals' | 'crm-pipeline' | 'budgeting';
+export type HomeWidgetKey = 'kpi-tiles' | 'macros' | 'schedule' | 'nova' | 'goals' | 'crm-pipeline' | 'budgeting' | 'dispatch';
 
 export interface HomeWidgetDef {
   key: HomeWidgetKey;
@@ -24,6 +25,10 @@ export interface HomeWidgetDef {
    *  after the original fixed layout shipped, so nobody's Overview
    *  changes just because a new option became available. */
   defaultHidden?: boolean;
+  /** Sizes the account can pick in Edit widgets; the first is the default. */
+  sizes?: ('S' | 'M' | 'L')[];
+  /** Module that must be on for this widget to be offered. */
+  module?: string;
   Component: ComponentType<HomeWidgetProps>;
 }
 
@@ -41,6 +46,7 @@ export const HOME_WIDGET_REGISTRY: HomeWidgetDef[] = [
   { key: 'goals', label: 'Goals progress', description: 'Your active goals and how close each one is.', layout: 'column', defaultHidden: true, Component: GoalsProgressWidget },
   { key: 'crm-pipeline', label: 'Client CRM pipeline', description: 'How many clients are in each stage right now.', layout: 'column', ownerOnly: true, defaultHidden: true, Component: CrmPipelineWidget },
   { key: 'budgeting', label: 'This month (Budgeting)', description: 'Income, expenses, and net for the current month.', layout: 'column', defaultHidden: true, Component: BudgetingSnapshotWidget },
+  { key: 'dispatch', label: 'Dispatch', description: 'Hold to talk right from Overview — open and overdue counts, and who has what.', layout: 'column', defaultHidden: true, sizes: ['M', 'S', 'L'], module: 'dispatch', Component: DispatchWidget },
 ];
 
 export const DEFAULT_HOME_WIDGET_ORDER: HomeWidgetKey[] = HOME_WIDGET_REGISTRY.map((w) => w.key);

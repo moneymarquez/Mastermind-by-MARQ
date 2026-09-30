@@ -5,6 +5,7 @@ import { PLANS, LIVE_PLAN } from '../billing/plans';
 import { MODULE_REGISTRY } from '../modules.config';
 import Icon from '../Icon';
 import { startDemo } from '../demo/state';
+import { hasPendingJoin } from '../dispatch/join';
 
 interface Props {
   onSignIn: (email: string, password: string) => Promise<string | null>;
@@ -361,6 +362,11 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
             </div>
 
             <div id="login-card" style={{ padding: 26, borderRadius: 18, border: '1px solid var(--mm-line)', background: 'var(--mm-panel-solid)', boxShadow: 'var(--mm-shadow)', display: 'flex', flexDirection: 'column', gap: 18 }}>
+              {hasPendingJoin() && (
+                <div role="status" style={{ padding: '12px 14px', borderRadius: 12, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', fontSize: 14, lineHeight: 1.45 }}>
+                  You've been invited to a team. Log in — or create a free login — and your tasks will be waiting. No subscription needed.
+                </div>
+              )}
               <div>
                 <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em' }}>
                   {mode === 'login' ? 'Log in' : mode === 'signup' ? 'Create your account' : 'Reset your password'}

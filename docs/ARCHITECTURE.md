@@ -119,4 +119,19 @@ Six tables have RLS on with no policies (service-role only by design): app_owner
 
 ## 7. Third-party services
 
-Supabase (DB/Auth/Storage/Realtime) · Cloudflare (Workers, static assets, Email Routing, Web Analytics, API) · Anthropic (Opus 5, Sonnet 5, Haiku 4.5, Fable 5.1; web search tool) · Stripe (subscriptions, client invoices) · Resend (outbound email, inbound webhook) · Twilio (digest SMS, pending toll-free verification) · Web Push (VAPID) · Alpaca (stocks bot) · Google Fonts (7 families loaded from index.html) · Etsy / CJ Dropshipping / Higgsfield (optional connections).
+Supabase (DB/Auth/Storage/Realtime) · Cloudflare (Workers, static assets, Workers AI Whisper for Dispatch transcription, Email Routing, Web Analytics, API) · Anthropic (Opus 5, Sonnet 5, Haiku 4.5, Fable 5.1; web search tool) · Stripe (subscriptions, client invoices) · Resend (outbound email, inbound webhook) · Twilio (digest SMS, pending toll-free verification) · Web Push (VAPID) · Alpaca (stocks bot) · Google Fonts (7 families loaded from index.html) · Etsy / CJ Dropshipping / Higgsfield (optional connections).
+
+## Dispatch (specs 14 + 15)
+- **Client:** `src/dispatch/`
+  - `capture.ts`: one voice controller. Live words from SpeechRecognition, a level meter from AnalyserNode, and a MediaRecorder copy kept for retry.
+  - `DispatchLayer.tsx`: the transcript sheet, recovery states, the Type-it sheet and Review. Mounted once in Stage, so the home widget's mic works from anywhere.
+  - `DispatchScreen.tsx`: Talk, Board and People.
+  - `FromOwner.tsx`: the member side.
+  - `MemberApp.tsx`: the slim app for team members without a subscription.
+  - Data comes from `src/data/useDispatch.ts`, shared through `DispatchContext`: one fetch and one realtime channel on `dispatch_tasks` / `dispatch_comments`.
+- **Server:** `worker/handlers/dispatch.ts` (extract, transcribe, notify, nudge, invite, join). Schema is `schema_111`; widget sizes are `schema_112`.
+- **Entry points:**
+  - Nav item "Dispatch".
+  - Overview widget in S/M/L (also shown on the cyberpunk Overview).
+  - `/dispatch` and `/dispatch?talk=1` (the manifest shortcut, which records after a 1-second countdown).
+- **Demo Mode:** `?demo=explore` gives sample data with no tour. Dispatch runs on `src/dispatch/localExtract.ts` there, so no paid calls.
