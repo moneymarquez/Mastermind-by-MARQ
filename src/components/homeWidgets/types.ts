@@ -10,6 +10,8 @@ export interface HomeWidgetProps {
   onNavigate: (screen: string) => void;
   onOpenNova: () => void;
   assistantName: string;
+  /** For widgets that offer sizes (HomeWidgetDef.sizes) — S / M / L. */
+  size?: 'S' | 'M' | 'L';
 }
 
 export const cardShell: CSSProperties = {

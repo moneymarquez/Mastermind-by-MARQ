@@ -5,6 +5,7 @@ interface PrefRow {
   widget_key: string;
   hidden: boolean;
   sort_order: number | null;
+  size?: string | null;
 }
 
 /** This account's own Overview widget preferences
@@ -24,6 +25,7 @@ export function useHomeWidgetPrefs() {
   // "explicitly turned back on" (hidden=false written), and both of those
   // collapse to "not in the hidden set" on their own.
   const [known, setKnown] = useState<Set<string>>(new Set());
+  const [sizes, setSizes] = useState<Record<string, 'S' | 'M' | 'L'>>({});
   const [loading, setLoading] = useState(true);
   // Surfaced when a save actually fails — previously a failed upsert had
   // nowhere to go: no error state, nothing logged, nothing shown, so a
@@ -32,8 +34,11 @@ export function useHomeWidgetPrefs() {
   const [saveError, setSaveError] = useState('');
 
   const load = useCallback(async () => {
-    const { data } = await supabase.from('home_widget_prefs').select('widget_key, hidden, sort_order');
+    // size arrived with schema_112; an older database without it still loads.
+    let { data, error } = await supabase.from('home_widget_prefs').select('widget_key, hidden, sort_order, size');
+    if (error) ({ data } = await supabase.from('home_widget_prefs').select('widget_key, hidden, sort_order'));
     const rows = (data ?? []) as PrefRow[];
+    setSizes(Object.fromEntries(rows.filter((r) => r.size === 'S' || r.size === 'M' || r.size === 'L').map((r) => [r.widget_key, r.size as 'S' | 'M' | 'L'])));
     setHidden(new Set(rows.filter((r) => r.hidden).map((r) => r.widget_key)));
     setKnown(new Set(rows.map((r) => r.widget_key)));
     setOrder(Object.fromEntries(rows.filter((r) => r.sort_order !== null).map((r) => [r.widget_key, r.sort_order as number])));
@@ -88,5 +93,12 @@ export function useHomeWidgetPrefs() {
     }
   };
 
-  return { hidden, order, known, loading, saveError, setWidgetHidden, reorderWidgets, reload: load };
+  const setWidgetSize = async (widgetKey: string, size: 'S' | 'M' | 'L') => {
+    setSizes((prev) => ({ ...prev, [widgetKey]: size }));
+    setSaveError('');
+    const { error } = await supabase.from('home_widget_prefs').upsert({ widget_key: widgetKey, size }, { onConflict: 'user_id,widget_key' });
+    if (error) { console.error('setWidgetSize failed to save:', error); setSaveError("Couldn't save that size — try again."); await load(); }
+  };
+
+  return { hidden, order, known, sizes, loading, saveError, setWidgetHidden, setWidgetSize, reorderWidgets, reload: load };
 }

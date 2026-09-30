@@ -31,7 +31,7 @@ const moveBtn = (disabled: boolean): CSSProperties => ({
  *  (Macros/Schedule/etc. are all still fully reachable from their own
  *  nav entries), so it's always fully reversible. */
 export default function EditHomeWidgetsScreen({ homeHeadStyle, homeSubStyle, isOwner }: Props) {
-  const { hidden, order, known, loading, saveError, setWidgetHidden, reorderWidgets } = useHomeWidgetPrefs();
+  const { hidden, order, known, sizes, loading, saveError, setWidgetHidden, setWidgetSize, reorderWidgets } = useHomeWidgetPrefs();
 
   const items = HOME_WIDGET_REGISTRY
     .filter((w) => !w.ownerOnly || isOwner)
@@ -86,6 +86,14 @@ export default function EditHomeWidgetsScreen({ homeHeadStyle, homeSubStyle, isO
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 'var(--text-body)', color: isHidden ? 'var(--mm-faint)' : 'var(--mm-text)' }}>{w.label}</div>
                     <div style={{ fontSize: 'var(--text-caption)', color: 'var(--mm-faint)', marginTop: 2 }}>{w.description}</div>
+                    {w.sizes && !isHidden && (
+                      <div role="radiogroup" aria-label={`${w.label} size`} style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                        {(['S', 'M', 'L'] as const).filter((sz) => w.sizes!.includes(sz)).map((sz) => {
+                          const on = (sizes[w.key] ?? w.sizes![0]) === sz;
+                          return <button key={sz} type="button" role="radio" aria-checked={on} onClick={() => setWidgetSize(w.key, sz)} style={{ minWidth: 44, minHeight: 36, borderRadius: 10, border: `1px solid ${on ? 'var(--mm-ink)' : 'var(--mm-line)'}`, background: on ? 'var(--mm-ink)' : 'transparent', color: on ? 'var(--mm-bg)' : 'var(--mm-text)', font: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{sz}</button>;
+                        })}
+                      </div>
+                    )}
                   </div>
                   <div onClick={() => setWidgetHidden(w.key, !isHidden)} style={toggleTrack(!isHidden)} title={isHidden ? 'Hidden — tap to show' : 'Shown — tap to hide'}>
                     <div style={toggleDot(!isHidden)} />
