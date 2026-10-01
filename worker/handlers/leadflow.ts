@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { requireOwner } from '../lib/auth';
+import { requireUser, isOwnerUser } from '../lib/auth';
 
 // LeadFlow used to live in its own separate Supabase project
 // (buuntdpgiwvarvtyncfx, github.com/moneymarquez/leadflow), reached with a
@@ -15,7 +15,7 @@ import { requireOwner } from '../lib/auth';
 //
 // `leads`/`history`/`messages` here have RLS on with no anon-readable
 // policy, so reads/writes still go through the service-role key,
-// server-side only. requireOwner below is what gates the route itself.
+// server-side only. requireLeadflowAuth below is what gates the route itself.
 const LEADFLOW_URL = 'https://jqkxaxjuvurciqmvnsbw.supabase.co';
 
 export interface LeadflowEnv {
@@ -37,15 +37,21 @@ function notConfigured(): Response {
   );
 }
 
-// requireOwner, not requireUser — LeadFlow is Scaling-category and Scaling
-// is owner-only end to end. This is the actual enforcement for it: these
+// The owner, or someone the owner granted LeadFlow to (Settings → Grant
+// Access → owner_only_grants). This is the actual enforcement: these
 // routes read through the service-role key, which bypasses RLS, so nothing
-// but this check stands between a signed-in non-owner and every lead row.
+// but this check stands between a signed-in account and every lead row.
+// A granted teammate works the owner's one lead pool — the same leads,
+// not a copy.
 async function requireLeadflowAuth(request: Request, env: LeadflowEnv): Promise<Response | null> {
-  const user = await requireOwner(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+  const user = await requireUser(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
   if (user instanceof Response) return user;
   if (!env.SUPABASE_SERVICE_ROLE_KEY) return notConfigured();
-  return null;
+  if (isOwnerUser(user)) return null;
+  const res = await fetch(`${LEADFLOW_URL}/rest/v1/owner_only_grants?user_id=eq.${user.id}&module_key=eq.leadflow&select=user_id`, { headers: leadflowHeaders(env) }).catch(() => null);
+  const rows = res?.ok ? ((await res.json()) as unknown[]) : [];
+  if (rows.length) return null;
+  return new Response(JSON.stringify({ error: 'Owner only' }), { status: 403, headers: { 'content-type': 'application/json' } });
 }
 
 // Uses a HEAD request + the Content-Range response header, same trick
