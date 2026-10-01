@@ -73,7 +73,8 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
   // (onSignIn) — AuthedGate routes by role after; only the surface a
   // client actually sees differs.
   const [view, setView] = useState<'main' | 'client-login'>('main');
-  const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
+  // /forgot-password (and /reset-password) open straight into the reset form.
+  const [mode, setMode] = useState<'login' | 'signup' | 'reset'>(() => (typeof window !== 'undefined' && /^\/(forgot|reset)-password\/?$/.test(window.location.pathname) ? 'reset' : 'login'));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -91,6 +92,25 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
   // past login.
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', 'light');
+  }, []);
+
+  // An expired or already-used reset link comes back as
+  // #error=access_denied&error_code=otp_expired&error_description=… —
+  // say so and put them on the reset form instead of a silent homepage.
+  useEffect(() => {
+    const h = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const code = h.get('error_code') ?? h.get('error');
+    const onResetPath = /^\/(forgot|reset)-password\/?$/.test(window.location.pathname);
+    if (code) {
+      setMode('reset');
+      setError(code === 'otp_expired' || /expired|invalid/i.test(h.get('error_description') ?? '')
+        ? 'That reset link has expired or was already used. Enter your email and we\'ll send a new one.'
+        : (h.get('error_description') ?? 'That link didn\'t work.').replace(/\+/g, ' '));
+    }
+    if (code || onResetPath) {
+      window.history.replaceState(window.history.state, '', '/');
+      setTimeout(() => document.getElementById('login-card')?.scrollIntoView({ block: 'center' }), 50);
+    }
   }, []);
 
   const switchMode = (next: 'login' | 'signup' | 'reset') => {
@@ -379,18 +399,18 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={fieldStyle}>
                   <Icon name="envelope-simple" size={17} color="var(--mm-faint)" />
-                  <input type="email" autoFocus autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
+                  <input type="email" name="email" autoComplete={mode === 'signup' ? 'email' : 'username'} inputMode="email" aria-label="Email" autoFocus autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
                 </div>
                 {mode !== 'reset' && (
                   <div style={fieldStyle}>
                     <Icon name="lock-simple" size={17} color="var(--mm-faint)" />
-                    <input type="password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
+                    <input type="password" name="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} aria-label="Password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
                   </div>
                 )}
                 {mode === 'signup' && (
                   <div style={fieldStyle}>
                     <Icon name="lock-simple" size={17} color="var(--mm-faint)" />
-                    <input type="password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={inputStyle} />
+                    <input type="password" name="confirm-password" autoComplete="new-password" aria-label="Confirm password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={inputStyle} />
                   </div>
                 )}
                 {mode === 'login' && (

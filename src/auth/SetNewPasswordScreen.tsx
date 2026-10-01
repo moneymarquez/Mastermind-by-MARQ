@@ -4,6 +4,7 @@ import Icon from '../Icon';
 
 interface Props {
   onComplete: (newPassword: string) => Promise<string | null>;
+  onCancel?: () => void;
 }
 
 const fieldStyle: React.CSSProperties = {
@@ -11,7 +12,7 @@ const fieldStyle: React.CSSProperties = {
   borderRadius: 'var(--radius-md)', border: '1px solid var(--mm-line)', background: 'var(--mm-field, var(--mm-panel))',
 };
 const inputStyle: React.CSSProperties = {
-  flex: 1, border: 'none', outline: 'none', background: 'transparent', color: 'var(--mm-text)', fontSize: 14,
+  flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent', color: 'var(--mm-text)', fontSize: 16,
 };
 
 /** Reached by clicking the link in a password-reset email — Supabase
@@ -20,11 +21,12 @@ const inputStyle: React.CSSProperties = {
  *  App.tsx routes here instead of into the normal authed app for as long
  *  as that's true, regardless of session presence — this session is only
  *  good for setting a new password, not for using the product. */
-export default function SetNewPasswordScreen({ onComplete }: Props) {
+export default function SetNewPasswordScreen({ onComplete, onCancel }: Props) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [show, setShow] = useState(false);
 
   // Same reasoning as AuthScreen.tsx: the pre-auth "ink" system always
   // renders light, independent of whatever theme was cached from a
@@ -53,7 +55,7 @@ export default function SetNewPasswordScreen({ onComplete }: Props) {
   return (
     <div
       style={{
-        height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, color: 'var(--mm-text)',
+        minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, color: 'var(--mm-text)',
         background: 'var(--mm-canvas)',
       }}
     >
@@ -72,17 +74,20 @@ export default function SetNewPasswordScreen({ onComplete }: Props) {
         >
           <div style={fieldStyle}>
             <Icon name="lock-simple" size={17} color="var(--mm-faint)" />
-            <input type="password" autoFocus autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="New password" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
+            <input type={show ? 'text' : 'password'} name="new-password" autoComplete="new-password" aria-label="New password" autoFocus autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="New password" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
+            <button type="button" onClick={() => setShow((x) => !x)} aria-pressed={show} style={{ border: 'none', background: 'none', color: 'var(--mm-faint)', fontSize: 12.5, cursor: 'pointer', padding: '10px 4px', minWidth: 44 }}>{show ? 'Hide' : 'Show'}</button>
           </div>
           <div style={fieldStyle}>
             <Icon name="lock-simple" size={17} color="var(--mm-faint)" />
-            <input type="password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Confirm new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={inputStyle} />
+            <input type={show ? 'text' : 'password'} name="confirm-new-password" autoComplete="new-password" aria-label="Confirm new password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Confirm new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={inputStyle} />
           </div>
-          {error && <div style={{ fontSize: 13, color: 'var(--danger)' }}>{error}</div>}
+          <div style={{ fontSize: 12.5, color: 'var(--mm-faint)' }}>At least 8 characters.</div>
+          {error && <div role="alert" style={{ fontSize: 13, color: 'var(--danger)' }}>{error}</div>}
           <button type="submit" disabled={submitting} style={{ height: 48, marginTop: 4, width: '100%', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 15, borderRadius: 999, background: 'var(--mm-ink)', color: 'var(--mm-ink-text)' }}>
             {submitting ? 'Saving…' : 'Save password'}
           </button>
         </form>
+        {onCancel && <button type="button" onClick={onCancel} style={{ alignSelf: 'center', border: 'none', background: 'none', color: 'var(--mm-faint)', fontSize: 13, cursor: 'pointer', padding: '10px 6px', textDecoration: 'underline', textUnderlineOffset: 3 }}>Cancel and go back to log in</button>}
       </div>
     </div>
   );

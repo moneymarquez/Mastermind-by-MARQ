@@ -37,7 +37,7 @@ function Gated({ userId, userEmail, userDisplayName, onSignOut }: GatedProps) {
 }
 
 export default function App() {
-  const { session, loading, signIn, signUp, signOut, passwordRecovery, resetPassword, completePasswordReset } = useAuth();
+  const { session, loading, signIn, signUp, signOut, passwordRecovery, resetPassword, completePasswordReset, cancelPasswordReset } = useAuth();
   const demo = useDemo();
 
   // Demo Mode: a separate tree on the demo identity, keyed by run so every
@@ -55,7 +55,7 @@ export default function App() {
   // password email link hands Supabase a real session, but one that's
   // only good for setting a new password, not for using the app.
   if (passwordRecovery) {
-    return <SetNewPasswordScreen onComplete={completePasswordReset} />;
+    return <SetNewPasswordScreen onComplete={completePasswordReset} onCancel={cancelPasswordReset} />;
   }
 
   if (!session) {

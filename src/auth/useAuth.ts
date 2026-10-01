@@ -109,5 +109,11 @@ export function useAuth() {
     return null;
   };
 
-  return { session, loading, signIn, signUp, signOut, passwordRecovery, resetPassword, completePasswordReset };
+  /** Leave the set-new-password screen without changing anything. */
+  const cancelPasswordReset = async () => {
+    setPasswordRecovery(false);
+    await supabase.auth.signOut();
+  };
+
+  return { session, loading, signIn, signUp, signOut, passwordRecovery, resetPassword, completePasswordReset, cancelPasswordReset };
 }
