@@ -16,6 +16,12 @@ const HELP: Record<string, { busy: string; note: string }> = {
   lead_filter: { busy: 'Filtering… (10–40 seconds)', note: 'Rules first (known chains, same phone / place / address = duplicate, names that repeat = multi-location), then Haiku checks the names the rules can\'t settle. Approve to tag the leads in LeadFlow.' },
   script_copy: { busy: 'Writing… (30–60 seconds)', note: '3 tones × 2 audiences for one channel, quoting your packages and citing the principle. It reads how your current scripts are doing first. Approve to save them as new versions.' },
   campaign_planner: { busy: 'Planning… (20–40 seconds)', note: 'One campaign for the week: list, script, channel, and targets from your own numbers. Approve to add it to Campaigns as planned.' },
+  trend_researcher: { busy: 'Researching… (30–90 seconds)', note: 'Web search on public trend pages (TikTok Creative Center, YouTube, trend reports) — never Instagram, Facebook or TikTok video pages. Each find comes with why it worked and "our version". Approve to add them to Inspiration.' },
+  idea_script: { busy: 'Writing… (30–60 seconds)', note: 'Next week\'s posts for one account (the one furthest behind its weekly goal if you don\'t pick): 3 hooks each, script, shot list, on-screen text, CTA. It reads the account\'s best posts, its last audit and saved Inspiration first. Approve to add them to the Plan.' },
+  account_auditor: { busy: 'Auditing… (20–40 seconds)', note: 'Reads the last 14 days of posts against their numbers: exactly 3 things to repeat and 3 to stop, each with its evidence. Needs 2+ posts with views logged.' },
+  content_analytics: { busy: 'Grading… (10–30 seconds)', note: 'Grades each post out of 4 against the account\'s own 30-day average (no AI in the grade), then writes one change per post. Breakouts (3×) and flops (under ⅓) raise an alert right away. Approve to save the grades.' },
+  post_planner: { busy: 'Planning… (15–30 seconds)', note: 'Best time from your own posts\' views by hour (defaults until an account has 5 measured posts), final caption, hashtags and a cross-post plan for each scripted post in the next 10 days. Approve to set them on the Plan.' },
+  clip_editor: { busy: 'Cutting… (20–40 seconds)', note: 'Reads the clip\'s timed transcript and proposes the hook, the cuts, captions, b-roll and Higgsfield prompts for a 9:16 short. Upload and transcribe clips in Studio first.' },
   campaign_scorer: { busy: 'Grading… (10–30 seconds)', note: `Grades each running campaign out of 4 against your own average (answer → conversation → meeting → close), names the weak stage and writes the fix. Needs 10+ touches per campaign.` },
 };
 
@@ -31,6 +37,18 @@ export function RunPanel({ workerKey, workerName, enabled, onRan }: { workerKey:
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<RunRes | null>(null);
   const needsProduct = workerKey === 'analyst' || workerKey === 'teardown';
+  const byAccount = ['trend_researcher', 'idea_script', 'account_auditor', 'content_analytics', 'post_planner'].includes(workerKey);
+  const [accountId, setAccountId] = useState('');
+  const [accounts, setAccounts] = useState<{ id: string; platform: string; handle: string }[]>([]);
+  const [clipId, setClipId] = useState('');
+  const [clips, setClips] = useState<{ id: string; file_name: string | null; status: string }[]>([]);
+  const [posts, setPosts] = useState(3);
+
+  useEffect(() => {
+    if (byAccount) supabase.from('social_accounts').select('id,platform,handle').order('created_at').then(({ data }) => setAccounts((data ?? []) as typeof accounts));
+    if (workerKey === 'clip_editor') supabase.from('content_clips').select('id,file_name,status').not('transcript', 'is', null).order('created_at', { ascending: false }).limit(50)
+      .then(({ data }) => setClips((data ?? []) as typeof clips));
+  }, [byAccount, workerKey]);
 
   useEffect(() => {
     if (!needsProduct) return;
@@ -45,7 +63,10 @@ export function RunPanel({ workerKey, workerName, enabled, onRan }: { workerKey:
     if (needsProduct) body.product_id = productId;
     if (workerKey === 'script_copy') Object.assign(body, { venture, script_channel: scriptChannel });
     if (workerKey === 'campaign_planner') body.venture = venture;
-    if (workerKey === 'lead_filter') body.all = all;
+    if (workerKey === 'lead_filter' || workerKey === 'content_analytics') body.all = all;
+    if (byAccount && accountId) body.account_id = accountId;
+    if (workerKey === 'idea_script') body.count = posts;
+    if (workerKey === 'clip_editor' && clipId) body.clip_id = clipId;
     const r = await runWorkerNow(workerKey, body);
     setResult(r.error && r.ok === undefined ? { ok: false, error: r.error } : r); setBusy(false); onRan();
   };
@@ -64,6 +85,10 @@ export function RunPanel({ workerKey, workerName, enabled, onRan }: { workerKey:
           : <div style={{ fontSize: 'var(--text-body)', color: E.muted }}>No products yet — run Product Scout or import a sheet first.</div>)}
         {(workerKey === 'script_copy' || workerKey === 'campaign_planner') && <select aria-label="Venture" style={{ ...field, width: 'auto' }} value={venture} onChange={(e) => setVenture(e.target.value)}>{VENTURES.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}</select>}
         {workerKey === 'script_copy' && <select aria-label="Script channel" style={{ ...field, width: 'auto' }} value={scriptChannel} onChange={(e) => setScriptChannel(e.target.value)}>{SCRIPT_CHANNELS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>}
+        {byAccount && <select aria-label="Account" style={{ ...field, width: 'auto', maxWidth: '100%' }} value={accountId} onChange={(e) => setAccountId(e.target.value)}><option value="">{workerKey === 'idea_script' ? 'Furthest behind its goal' : 'All accounts'}</option>{accounts.map((a) => <option key={a.id} value={a.id}>@{a.handle} · {a.platform}</option>)}</select>}
+        {workerKey === 'idea_script' && <select aria-label="How many posts" style={{ ...field, width: 'auto' }} value={posts} onChange={(e) => setPosts(Number(e.target.value))}>{[1, 2, 3, 4, 5, 7].map((n) => <option key={n} value={n}>{n} post{n === 1 ? '' : 's'}</option>)}</select>}
+        {workerKey === 'clip_editor' && <select aria-label="Clip" style={{ ...field, flex: 1, minWidth: 0 }} value={clipId} onChange={(e) => setClipId(e.target.value)}><option value="">Oldest raw clip</option>{clips.map((c) => <option key={c.id} value={c.id}>{c.file_name ?? 'clip'} · {c.status}</option>)}</select>}
+        {workerKey === 'content_analytics' && <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 'var(--text-body)', color: E.muted }}><input type="checkbox" checked={all} onChange={(e) => setAll(e.target.checked)} /> Re-grade posts already graded</label>}
         {workerKey === 'lead_filter' && <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 'var(--text-body)', color: E.muted }}><input type="checkbox" checked={all} onChange={(e) => setAll(e.target.checked)} /> Re-check leads already tagged</label>}
       </div>
       <textarea maxLength={PLAYBOOK_MAX_CHARS} style={{ ...field, marginTop: 8, minHeight: 64, resize: 'vertical' }} value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder="Optional instructions for this run" />

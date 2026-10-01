@@ -2,9 +2,15 @@
 // same lines become the App Store "What's New" text in Phase 6).
 export interface Release { version: string; date: string; title: string; items: string[] }
 
-export const APP_VERSION = '0.10.0';
+export const APP_VERSION = '0.11.0';
 
 export const CHANGELOG: Release[] = [
+  { version: '0.11.0', date: '2026-10-01', title: 'Content workers', items: [
+    'Studio: upload a raw clip from your phone; it\'s transcribed and the Clip Editor proposes the hook, cuts, captions, b-roll and Higgsfield prompts. Watch raw and edited side by side, then approve or send it back.',
+    'Inspiration: the Trend Researcher finds what\'s working in your niches, with why it worked and "our version". One tap puts it on the Plan.',
+    'Idea & Script writes next week\'s posts (3 hooks, script, shot list, CTA); Post Planner picks the time from your own numbers and writes the caption.',
+    'Account Auditor: 3 things to repeat and 3 to stop, every Sunday. Analytics grades each post out of 4 and flags breakouts and flops.',
+  ] },
   { version: '0.10.0', date: '2026-09-30', title: 'Dispatch', items: [
     'Dispatch: hold the mic, say who does what by when, review, send. It lands on their board and they get a text.',
     'A live board of who has what — overdue in red, done and "need help" show up the moment they happen.',

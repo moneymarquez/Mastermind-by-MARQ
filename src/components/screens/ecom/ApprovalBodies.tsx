@@ -19,7 +19,16 @@ export const APPROVE_LABEL: Record<string, (p: P) => string> = {
   scripts: (p) => `Approve · save ${arr(p.scripts).length} scripts`,
   campaign_plan: () => 'Approve · add to Campaigns',
   grades: (p) => `Approve · grade ${arr(p.items).length}`,
+  inspiration: (p) => `Approve · save ${arr(p.items).length} to Inspiration`,
+  content_plan: (p) => `Approve · add ${plural(arr(p.posts).length, 'post')} to the Plan`,
+  content_audit: () => 'Approve · save the audit',
+  content_grades: (p) => `Approve · grade ${plural(arr(p.items).length, 'post')}`,
+  post_plan: (p) => `Approve · schedule ${arr(p.slots).length}`,
+  clip_edit: () => 'Approve · save the edit',
 };
+const DAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const secs = (n: unknown) => (typeof n === 'number' ? `${Math.floor(n / 60)}:${String(Math.floor(n % 60)).padStart(2, '0')}` : '—');
+const gradeColor = (g: number) => (g >= 4 ? E.green : g === 3 ? E.blue : g === 2 ? E.amber : E.red);
 
 export function ApprovalBody({ type, payload: p }: { type: string; payload: P }) {
   if (type === 'analysis') {
@@ -144,6 +153,121 @@ export function ApprovalBody({ type, payload: p }: { type: string; payload: P })
           </Box>
         ))}
         {arr<string>(p.skipped).length > 0 && <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>Not graded yet: {arr<string>(p.skipped).join('; ')}</div>}
+      </div>
+    );
+  }
+  if (type === 'inspiration') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
+        {arr<Record<string, unknown>>(p.items).map((x, i) => (
+          <Box key={i}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontWeight: 700, color: E.text }}>{String(x.title)}</span>
+              {typeof x.format === 'string' && x.format && <Badge color={E.violet}>{x.format}</Badge>}
+              <a href={String(x.url)} target="_blank" rel="noopener noreferrer" style={{ fontSize: 'var(--text-caption)', color: E.blue }}>open ↗</a>
+            </div>
+            <Line k="Hook" v={x.hook} /><Line k="Why it worked" v={x.why_it_worked} /><Line k="Principle" v={x.principle} />
+            <div style={{ fontSize: 'var(--text-caption)', color: E.text, marginTop: 4, padding: 6, borderRadius: 6, background: tint(E.accent, 8) }}><span style={label}>Our version</span> {String(x.our_version)}</div>
+          </Box>
+        ))}
+        {arr<string>(p.dropped).length > 0 && <div style={{ fontSize: 'var(--text-caption)', color: E.amber }}>Dropped: {arr<string>(p.dropped).join('; ')}</div>}
+      </div>
+    );
+  }
+  if (type === 'content_plan') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
+        {arr<{ concept: string; format: string; hooks: string[]; script: string; shot_list: string[]; on_screen_text: string; cta: string; caption: string; hashtags: string; day: number; principle: string; why: string }>(p.posts).map((x, i) => (
+          <Box key={i}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Badge color={E.faint}>{DAY[x.day] ?? '—'}</Badge><Badge color={E.violet}>{x.format}</Badge>
+              <span style={{ fontWeight: 700, color: E.text }}>{x.concept}</span>
+            </div>
+            <div style={{ marginTop: 4 }}>{x.hooks.map((h, k) => <div key={k} style={{ fontSize: 'var(--text-caption)', color: E.text }}><span style={label}>Hook {k + 1}</span> {h}</div>)}</div>
+            <details style={{ marginTop: 4 }}>
+              <summary style={{ fontSize: 'var(--text-caption)', color: E.blue, cursor: 'pointer' }}>Script and shot list</summary>
+              <div style={{ fontSize: 'var(--text-caption)', color: E.text, whiteSpace: 'pre-wrap', marginTop: 4, lineHeight: 1.5 }}>{x.script}</div>
+              {x.shot_list.length > 0 && <ol style={{ margin: '4px 0 0', paddingLeft: 18, fontSize: 'var(--text-caption)', color: E.muted }}>{x.shot_list.map((s, k) => <li key={k}>{s}</li>)}</ol>}
+            </details>
+            <Line k="On screen" v={x.on_screen_text} /><Line k="CTA" v={x.cta} /><Line k="Why" v={x.why} /><Line k="Principle" v={x.principle} />
+          </Box>
+        ))}
+      </div>
+    );
+  }
+  if (type === 'content_audit') {
+    const list = (k: 'repeat' | 'stop', color: string, title: string) => (
+      <Box>
+        <div style={{ ...label, color }}>{title}</div>
+        {arr<{ point: string; evidence: string }>(p[k]).map((x, i) => (
+          <div key={i} style={{ marginTop: 6 }}>
+            <div style={{ fontSize: 'var(--text-body)', color: E.text, fontWeight: 600 }}>{i + 1}. {x.point}</div>
+            {x.evidence && <div style={{ fontSize: 'var(--text-caption)', color: E.muted }}>{x.evidence}</div>}
+          </div>
+        ))}
+      </Box>
+    );
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
+        <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>@{String(p.handle)} · {String(p.period_start)} → {String(p.period_end)} · {String(p.posts_count)} posts</div>
+        {list('repeat', E.green, 'Repeat')}
+        {list('stop', E.red, 'Stop')}
+      </div>
+    );
+  }
+  if (type === 'content_grades') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
+        {arr<{ post_id: string; hook: string; views: number; avg: number; grade: number; reason: string; change: string; flag: string | null }>(p.items).map((g) => (
+          <Box key={g.post_id}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Badge color={gradeColor(g.grade)}>{g.grade}/4</Badge>
+              {g.flag && <Badge color={g.flag === 'breakout' ? E.green : E.red}>{g.flag === 'breakout' ? '🚀 breakout' : '📉 flop'}</Badge>}
+              <span style={{ color: E.text, fontWeight: 600, minWidth: 0, overflowWrap: 'anywhere' }}>{g.hook || 'Post'}</span>
+            </div>
+            <div style={{ fontSize: 'var(--text-caption)', color: E.muted, fontFamily: 'var(--font-mono)', marginTop: 2 }}>{g.views.toLocaleString()} views vs {g.avg.toLocaleString()} avg · {g.reason}</div>
+            <Line k="Change" v={g.change} />
+          </Box>
+        ))}
+        {arr<string>(p.skipped).length > 0 && <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>Not graded: {arr<string>(p.skipped).slice(0, 6).join('; ')}</div>}
+      </div>
+    );
+  }
+  if (type === 'post_plan') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
+        {arr<{ account_id: string; handle: string; hours: { hour: number; posts: number; avg_views: number }[]; from_data: boolean }>(p.best).map((b) => (
+          <div key={b.account_id} style={{ fontSize: 'var(--text-caption)', color: E.muted }}><span style={label}>@{b.handle}</span> best {b.hours.map((h) => `${String(h.hour).padStart(2, '0')}:00`).join(', ')} {b.from_data ? '(from your posts)' : '(defaults — not enough posts yet)'}</div>
+        ))}
+        {arr<{ item_id: string; concept: string; scheduled_for: string; scheduled_time: string; caption: string; hashtags: string; cross_post: string[]; why_time: string; had: { scheduled_for: string | null } }>(p.slots).map((x) => (
+          <Box key={x.item_id}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Badge color={E.blue}>{new Date(`${x.scheduled_for}T00:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} · {x.scheduled_time}</Badge>
+              {!x.had.scheduled_for && <Badge color={E.amber}>new date</Badge>}
+              <span style={{ color: E.text, fontWeight: 600 }}>{x.concept}</span>
+            </div>
+            <div style={{ fontSize: 'var(--text-caption)', color: E.text, whiteSpace: 'pre-wrap', marginTop: 4 }}>{x.caption}</div>
+            <Line k="Tags" v={x.hashtags} /><Line k="Cross-post" v={x.cross_post.join(' · ')} /><Line k="Why then" v={x.why_time} />
+          </Box>
+        ))}
+      </div>
+    );
+  }
+  if (type === 'clip_edit') {
+    const x = (p.plan ?? {}) as { hook: { start: number; end: number; text: string; why: string }; cuts: { start: number; end: number; why: string }[]; captions: unknown[]; broll: { at: number; prompt: string }[]; higgsfield: string[]; on_screen_text: string; edited_length_s: number };
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
+        <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>{String(p.file_name ?? 'Clip')} · {secs(p.duration_s)} raw → {secs(x.edited_length_s)} · 9:16 · {arr(x.captions).length} captions. Preview it side by side in Studio.</div>
+        <Box>
+          <div style={{ fontWeight: 700, color: E.text }}>Opens on {secs(x.hook.start)}–{secs(x.hook.end)}{x.hook.text ? `: “${x.hook.text}”` : ''}</div>
+          <Line k="Why" v={x.hook.why} />
+          {x.cuts.map((c, i) => <div key={i} style={{ fontSize: 'var(--text-caption)', color: E.muted, marginTop: 2 }}><span style={{ fontFamily: 'var(--font-mono)', color: E.text }}>{secs(c.start)}–{secs(c.end)}</span> {c.why}</div>)}
+        </Box>
+        {(x.broll.length > 0 || x.higgsfield.length > 0) && <Box>
+          {x.broll.map((b, i) => <Line key={i} k={`B-roll @${secs(b.at)}`} v={b.prompt} />)}
+          {x.higgsfield.map((h, i) => <Line key={`h${i}`} k="Higgsfield" v={h} />)}
+        </Box>}
+        <Line k="On screen" v={x.on_screen_text} />
       </div>
     );
   }

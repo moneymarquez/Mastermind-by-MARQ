@@ -20,6 +20,8 @@ export interface AccountSnapshot { id: string; account_id: string; captured_at: 
 export interface SocialPost {
   id: string; account_id: string; external_id: string | null; url: string | null; type: Format; caption: string | null; hook: string | null; format: string | null;
   length_sec: number | null; thumbnail_url: string | null; posted_at: string; content_item_id: string | null; created_at: string; updated_at: string;
+  /** Set by the Analytics worker (C5) when its grades are approved. */
+  grade?: number | null; grade_note?: string | null;
 }
 export interface PostMetrics { id: string; post_id: string; captured_at: string; views: number | null; reach: number | null; likes: number | null; comments: number | null; shares: number | null; saves: number | null; follows: number | null; source: 'manual' | 'api' }
 export interface ContentItem {
@@ -27,6 +29,35 @@ export interface ContentItem {
   caption: string | null; hashtags: string | null; visual_prompt: string | null; format: Format; thumbnail_url: string | null; scheduled_for: string | null; scheduled_time: string | null;
   posted_post_id: string | null; grade: number | null; grade_note: string | null; created_at: string; updated_at: string;
 }
+
+/** Trend Researcher finds (C3) and links saved by hand. */
+export interface Inspiration {
+  id: string; account_id: string | null; url: string; platform: string | null; title: string | null; hook: string | null; format: string | null;
+  why_it_worked: string | null; principle: string | null; our_version: string | null; tags: string[]; source: string | null; created_at: string;
+}
+export type ClipStatus = 'raw' | 'editing' | 'proposed' | 'approved' | 'sent_back' | 'failed';
+/** A raw clip in Studio (C4). The video lives in the private content-clips bucket. */
+export interface Clip {
+  id: string; content_item_id: string | null; account_id: string | null; storage_path: string | null; file_name: string | null; duration_s: number | null;
+  transcript: string | null; segments: { start: number; end: number; text: string }[] | null; edit_plan: ClipPlan | null; status: ClipStatus; notes: string | null; created_at: string; updated_at: string;
+}
+export interface ClipPlan {
+  hook: { start: number; end: number; text: string; why: string }; cuts: { start: number; end: number; why: string }[]; captions: { start: number; end: number; text: string }[];
+  broll: { at: number; prompt: string }[]; higgsfield: string[]; on_screen_text: string; title: string; edited_length_s: number; aspect: '9:16'; principle: string; notes: string;
+}
+/** The play order of an edit: the hook, then each kept range. */
+export function editSequence(p: Pick<ClipPlan, 'hook' | 'cuts'>): { start: number; end: number }[] {
+  return [p.hook, ...p.cuts].filter((r) => r && r.end > r.start).map((r) => ({ start: r.start, end: r.end }));
+}
+/** Where the edited preview is, given the source time and which range is
+ *  playing: keep going, jump to the next range, or stop. */
+export function nextInSequence(seq: { start: number; end: number }[], idx: number, t: number): { idx: number; seek: number | null; stop: boolean } {
+  if (idx >= seq.length) return { idx, seek: null, stop: true };
+  if (t < seq[idx].end - 0.03) return { idx, seek: null, stop: false };
+  const n = idx + 1;
+  return n < seq.length ? { idx: n, seek: seq[n].start, stop: false } : { idx: n, seek: null, stop: true };
+}
+export interface ContentAudit { id: string; account_id: string | null; period_start: string | null; period_end: string | null; posts_count: number | null; repeat: { point: string; evidence: string }[]; stop: { point: string; evidence: string }[]; summary: string | null; created_at: string }
 
 export const PLATFORMS: { id: Platform; label: string; color: string; short: string }[] = [
   { id: 'instagram', label: 'Instagram', short: 'IG', color: '#db2777' },

@@ -125,6 +125,7 @@ function ItemDrawer({ items, accounts, item, defaultDate, defaultAccount, onClos
   const [thumb, setThumb] = useState(item?.thumbnail_url ?? '');
   const [postUrl, setPostUrl] = useState('');
   const [posting, setPosting] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   const lines = (s: string) => s.split('\n').map((x) => x.trim()).filter(Boolean);
   const payload = () => ({ concept: concept.trim(), account_id: accountId || null, format, scheduled_for: date || null, scheduled_time: time ? `${time}:00` : null, hooks: lines(hooks), script: script.trim() || null, shot_list: lines(shots), caption: caption.trim() || null, hashtags: hashtags.trim() || null, visual_prompt: visual.trim() || null, thumbnail_url: thumb.trim() || null });
@@ -177,11 +178,23 @@ function ItemDrawer({ items, accounts, item, defaultDate, defaultAccount, onClos
           {!accountId && <div style={{ fontSize: 12, color: E.amber, marginTop: 6 }}>Pick an account first — the post's numbers live under it.</div>}
         </div>
       )}
+      {item && item.status !== 'posted' && ['edited', 'approved'].includes(item.status) && (caption.trim() || hashtags.trim()) && !posting && (
+        <div style={{ ...E.card, padding: 12, marginBottom: 12, borderColor: E.green }}>
+          <div style={{ ...label, marginBottom: 4 }}>Ready to post{item.scheduled_for ? ` · ${item.scheduled_for}${item.scheduled_time ? ` ${item.scheduled_time.slice(0, 5)}` : ''}` : ''}</div>
+          <div style={{ fontSize: 'var(--text-body)', color: E.text, whiteSpace: 'pre-wrap' }}>{[caption.trim(), hashtags.trim()].filter(Boolean).join('\n\n')}</div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+            <button style={btn('ghost')} onClick={() => { void navigator.clipboard?.writeText([caption.trim(), hashtags.trim()].filter(Boolean).join('\n\n')); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>{copied ? '✓ Copied' : 'Copy caption + tags'}</button>
+            <button style={btn('primary')} onClick={() => setPosting(true)}>I posted it</button>
+          </div>
+          <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 6 }}>Post it from your phone, then paste the link so the Analytics worker can grade it.</div>
+        </div>
+      )}
       {post && (
         <div style={{ ...E.card, padding: 12, marginBottom: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ fontWeight: 600, color: E.text }}>Published {new Date(post.posted_at).toLocaleDateString()}</span>
           {post.url && <a href={post.url} target="_blank" rel="noopener noreferrer" style={{ color: E.blue, fontSize: 13 }}>open</a>}
-          {grade ? <Badge color={GRADE_COLOR[grade.grade]} title={grade.reason}>{grade.grade}/4 · {grade.reason}</Badge> : <span style={{ fontSize: 12, color: E.faint }}>Grade appears once the post has views and the account has a 30-day average — update numbers from the account.</span>}
+          {post.grade && post.grade_note ? <Badge color={GRADE_COLOR[post.grade]} title={post.grade_note}>{post.grade}/4</Badge> : null}
+          {post.grade_note ? <div style={{ flexBasis: '100%', fontSize: 12, color: E.muted }}>{post.grade_note}</div> : grade ? <Badge color={GRADE_COLOR[grade.grade]} title={grade.reason}>{grade.grade}/4 · {grade.reason}</Badge> : <span style={{ fontSize: 12, color: E.faint }}>Grade appears once the post has views and the account has a 30-day average — update numbers from the account.</span>}
         </div>
       )}
       <div style={{ ...label, marginBottom: 4 }}>Concept</div>

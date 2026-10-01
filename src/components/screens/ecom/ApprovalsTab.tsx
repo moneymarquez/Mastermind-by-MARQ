@@ -44,7 +44,7 @@ export default function ApprovalsTab({ api, onDecided }: { api: ReturnType<typeo
 }
 
 /** Types whose worker can be re-run straight from a send-back. */
-const RERUNNABLE = new Set(['analysis', 'teardown', 'lead_tags', 'scripts', 'campaign_plan']);
+const RERUNNABLE = new Set(['analysis', 'teardown', 'lead_tags', 'scripts', 'campaign_plan', 'inspiration', 'content_plan', 'content_audit', 'content_grades', 'post_plan', 'clip_edit']);
 function appliedMessage(type: string, a: Record<string, number> | null | undefined): string {
   if (!a) return 'Approved.';
   if (type === 'scout_products') return `Approved — ${a.inserted} new, ${a.updated} refreshed in Product Sheets.`;
@@ -54,6 +54,12 @@ function appliedMessage(type: string, a: Record<string, number> | null | undefin
   if (type === 'scripts') return `Approved — ${a.added} new scripts, ${a.versioned} new versions in Scripts.`;
   if (type === 'campaign_plan') return 'Approved — the campaign is in Campaigns as planned.';
   if (type === 'grades') return `Approved — ${a.graded} campaigns graded.`;
+  if (type === 'inspiration') return `Approved — ${a.saved} saved to Inspiration.`;
+  if (type === 'content_plan') return `Approved — ${a.added} posts added to the Plan as scripts.`;
+  if (type === 'content_audit') return 'Approved — the audit is saved on the account; Idea & Script reads it next run.';
+  if (type === 'content_grades') return `Approved — ${a.graded} posts graded.`;
+  if (type === 'post_plan') return `Approved — ${a.scheduled} posts timed and captioned on the Plan.`;
+  if (type === 'clip_edit') return 'Approved — the edit is saved on the clip in Studio.';
   return 'Approved.';
 }
 

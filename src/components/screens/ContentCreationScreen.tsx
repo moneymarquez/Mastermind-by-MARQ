@@ -23,8 +23,11 @@ import PlanTab from './content/PlanTab';
 import OfficeView from '../office/OfficeView';
 import EngineBar from './ecom/EngineBar';
 import WorkersTab from './ecom/WorkersTab';
-import { Pill, TeachingEmpty, E, btn, panel } from './ecom/ecomShared';
-import { useSocialAccounts, useContentItems } from '../../data/useContentEngine';
+import { Pill, btn, panel } from './ecom/ecomShared';
+import { useSocialAccounts, useContentItems, useInspiration, useClips, useLatestAudits } from '../../data/useContentEngine';
+import InspirationTab from './content/InspirationTab';
+import StudioTab from './content/StudioTab';
+import LatestAudits from './content/LatestAudits';
 
 type EngineTab = 'accounts' | 'plan' | 'studio' | 'inspiration' | 'workers' | 'growth';
 const ENGINE_TABS: { id: EngineTab; label: string; icon: string }[] = [
@@ -181,6 +184,9 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
   const [officeOpen, setOfficeOpen] = useState(false);
   const social = useSocialAccounts();
   const contentItems = useContentItems();
+  const inspiration = useInspiration();
+  const clips = useClips();
+  const latestAudits = useLatestAudits();
 
   const clientPlans = selectedClientId ? growth.plans.filter((p) => p.client_id === selectedClientId) : [];
   const activePlan = growth.plans.find((p) => p.id === activePlanId) ?? null;
@@ -220,23 +226,15 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 18 }}>
         {ENGINE_TABS.map((t) => <Pill key={t.id} active={engineTab === t.id} onClick={() => { setEngineTab(t.id); setNewOpen(false); }}><span>{t.icon}</span>{t.label}</Pill>)}
         <div style={{ flex: 1 }} />
-        <EngineBar domain="content" />
+        <EngineBar domain="content" onDecided={() => { void inspiration.reload(); void clips.reload(); void latestAudits.reload(); void contentItems.reload(); void social.reload(); }} />
       </div>
 
       {officeOpen && <OfficeView domain="content" onClose={() => setOfficeOpen(false)} />}
+      {engineTab === 'accounts' && <LatestAudits audits={latestAudits.audits} accounts={social.accounts} />}
       {engineTab === 'accounts' && <div style={enginePanel}><AccountsTab api={social} items={contentItems.items} newOpen={newOpen} onCloseNew={() => setNewOpen(false)} onOpenPlan={() => setEngineTab('plan')} /></div>}
       {engineTab === 'plan' && <div style={enginePanel}><PlanTab items={contentItems} accounts={social} newOpen={newOpen} onCloseNew={() => setNewOpen(false)} /></div>}
-      {engineTab === 'studio' && (
-        <div style={enginePanel}>
-          <TeachingEmpty what="Studio — the raw clip inbox. Drop clips from your phone; the Clip Editor proposes cuts, captions, b-roll and Higgsfield enhancements, side by side, Approve / Send back." worker="the Clip Editor" connection="Higgsfield (already connected) + the Anthropic API key" phase={4} />
-          <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 10 }}>Phase numbers on this screen are C-phases from the Content Engine spec.</div>
-        </div>
-      )}
-      {engineTab === 'inspiration' && (
-        <div style={enginePanel}>
-          <TeachingEmpty what="Inspiration — posts and accounts to learn from: why it worked (hook, format, pacing, principle) and a 'make our version' button." worker="the Trend Researcher (web search, TikTok Creative Center, official embeds — never scraping IG or TikTok)" phase={3} />
-        </div>
-      )}
+      {engineTab === 'studio' && <div style={enginePanel}><StudioTab api={clips} accounts={social} items={contentItems} /></div>}
+      {engineTab === 'inspiration' && <div style={enginePanel}><InspirationTab api={inspiration} accounts={social} items={contentItems} onOpenPlan={() => setEngineTab('plan')} /></div>}
       {engineTab === 'workers' && <div style={enginePanel}><WorkersTab domain="content" phaseLabel="C" /></div>}
 
       {engineTab === 'growth' && (<>

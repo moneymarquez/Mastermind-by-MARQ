@@ -15,6 +15,8 @@ import type { BriefCtx, ProductForAnalysis, LeadLite, LeadTag, Gradable, Analysi
 import { funnelStats } from '../../src/data/mktEngine';
 import type { TouchOutcome, Venture, ScriptChannel } from '../../src/data/mktEngine';
 import { landedCost, marginPct } from '../../src/data/ecomProducts';
+import { trendSystem, trendUser, parseTrends, ideaSystem, ideaUser, parseIdeas, scriptBody, gradeMeasured, auditSystem, auditUser, parseAudit, analyticsSystem, analyticsUser, parseGrades, bestHours, plannerSystem as postPlannerSystem, plannerUser as postPlannerUser, parseSlots, clipSystem, clipUser, parseClipEdit, cleanSegments } from './contentWorkers';
+import type { AccountLite, MeasuredPost, InspirationDraft, PostDraft, AuditPayload, GradeOut, SlotOut, PlanItemLite, EditPlan } from './contentWorkers';
 
 export const ENGINE_DOMAINS = ['ecom', 'content', 'marketing', 'digest'] as const;
 export const TZ = 'America/Denver';
@@ -302,9 +304,156 @@ export function runScorer(apiKey: string | undefined, sb: Sb, userId: string, in
   });
 }
 
+// ── Content Engine workers (C2–C6) ────────────────────────────────────
+const ACCOUNT_COLS = 'id,platform,handle,owner,voice,posts_per_week_goal,followers';
+async function accountsFor(sb: Sb, userId: string, accountId?: string): Promise<AccountLite[]> {
+  return sb.get<AccountLite>(`social_accounts?user_id=eq.${userId}${accountId ? `&id=eq.${accountId}` : ''}&order=created_at.asc&select=${ACCOUNT_COLS}`);
+}
+/** Posts with their latest metrics row folded in. */
+async function measuredPosts(sb: Sb, userId: string, q: { accountId?: string; sinceIso?: string }): Promise<MeasuredPost[]> {
+  const posts = await sb.get<Omit<MeasuredPost, 'views' | 'likes' | 'comments' | 'shares' | 'saves' | 'follows'>>(`social_posts?user_id=eq.${userId}${q.accountId ? `&account_id=eq.${q.accountId}` : ''}${q.sinceIso ? `&posted_at=gte.${q.sinceIso}` : ''}&order=posted_at.asc&limit=1000&select=id,account_id,posted_at,type,hook,caption,length_sec,grade,content_item_id`);
+  if (!posts.length) return [];
+  const metrics: { post_id: string; captured_at: string; views: number | null; likes: number | null; comments: number | null; shares: number | null; saves: number | null; follows: number | null }[] = [];
+  for (const ids of chunks(posts.map((p) => p.id), 150)) metrics.push(...await sb.get<(typeof metrics)[number]>(`social_post_metrics?post_id=in.(${ids.join(',')})&order=captured_at.asc&select=post_id,captured_at,views,likes,comments,shares,saves,follows`));
+  const last = new Map<string, (typeof metrics)[number]>();
+  for (const m of metrics) last.set(m.post_id, m);
+  return posts.map((p) => { const m = last.get(p.id); return { ...p, views: m?.views ?? null, likes: m?.likes ?? null, comments: m?.comments ?? null, shares: m?.shares ?? null, saves: m?.saves ?? null, follows: m?.follows ?? null }; });
+}
+const handleOf = (a: AccountLite | undefined) => (a ? `@${a.handle}` : 'no account');
+
+export function runTrendResearcher(apiKey: string | undefined, sb: Sb, userId: string, input: { accountId?: string; instructions?: string | null; trigger?: Trigger }): Promise<RunOutcome> {
+  return runWorker(apiKey, sb, userId, {
+    key: 'trend_researcher', task: 'Researching what is working in your niches', input: { account_id: input.accountId ?? null }, instructions: input.instructions, trigger: input.trigger, entityType: 'inspiration',
+    async execute(ctx) {
+      const [accounts, recent] = await Promise.all([accountsFor(sb, userId, input.accountId), sb.get<{ title: string | null; url: string }>(`content_inspiration?user_id=eq.${userId}&order=created_at.desc&limit=40&select=title,url`)]);
+      const res = await ctx.ask({ maxTokens: 6000, system: trendSystem({ ...ctx.brief, budgetNote: `${ctx.brief.budgetNote} Use at most 5 searches.` }), user: trendUser(accounts, recent.map((r) => r.title ?? r.url), input.instructions), tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5, blocked_domains: BLOCKED_DOMAINS }] });
+      const t = parseTrends(res.text, BLOCKED_DOMAINS);
+      const known = new Set(recent.map((r) => r.url));
+      const items = t.items.filter((i) => !known.has(i.url));
+      if (!items.length) return { summary: 'Everything it found is already in Inspiration.', skipped: true, dropped: t.dropped };
+      return { summary: t.summary || `${items.length} ideas`, count: items.length, dropped: t.dropped, approval: { type: 'inspiration', title: `Trend Researcher: ${items.length} post${items.length === 1 ? '' : 's'} to learn from`, payload: { account_id: input.accountId ?? (accounts.length === 1 ? accounts[0].id : null), items, summary: t.summary, dropped: t.dropped, sources: res.sources.slice(0, 20) }, principle: items[0]?.principle || null, source_url: items[0]?.url ?? null, confidence: 'estimate' } };
+    },
+  });
+}
+
+export function runIdeaScript(apiKey: string | undefined, sb: Sb, userId: string, input: { accountId?: string; count?: number; instructions?: string | null; trigger?: Trigger }): Promise<RunOutcome> {
+  return runWorker(apiKey, sb, userId, {
+    key: 'idea_script', task: 'Writing next week\'s posts', input: { account_id: input.accountId ?? null, count: input.count ?? null }, instructions: input.instructions, trigger: input.trigger, entityType: 'account', entityId: input.accountId ?? null,
+    async execute(ctx) {
+      const accounts = await accountsFor(sb, userId, input.accountId);
+      if (!accounts.length) return { summary: 'Add an account on the Accounts tab first — the plan is written per account.', skipped: true };
+      // No account picked: the one furthest behind its weekly goal for next week.
+      const nextMon = addDaysIso(ctx.date, ((8 - new Date(`${ctx.date}T00:00:00Z`).getUTCDay()) % 7) || 7);
+      const planned = await sb.get<{ account_id: string | null }>(`content_items?user_id=eq.${userId}&scheduled_for=gte.${nextMon}&scheduled_for=lte.${addDaysIso(nextMon, 6)}&select=account_id`);
+      const gap = (a: AccountLite) => a.posts_per_week_goal - planned.filter((p) => p.account_id === a.id).length;
+      const account = input.accountId ? accounts[0] : [...accounts].sort((a, b) => gap(b) - gap(a))[0];
+      const count = Math.max(1, Math.min(7, input.count ?? Math.max(gap(account), 1)));
+      await sb.patch('ai_workers', `id=eq.${ctx.w.id}`, { current_task: `Writing ${count} posts for @${account.handle}`.slice(0, 200) }).catch(() => {});
+      const [posts, insp, [audit]] = await Promise.all([
+        measuredPosts(sb, userId, { accountId: account.id, sinceIso: `${addDaysIso(ctx.date, -60)}T00:00:00` }),
+        sb.get<{ title: string; our_version: string | null; format: string | null }>(`content_inspiration?user_id=eq.${userId}&or=(account_id.eq.${account.id},account_id.is.null)&order=created_at.desc&limit=8&select=title,our_version,format`),
+        sb.get<{ repeat: { point: string }[]; stop: { point: string }[] }>(`content_audits?user_id=eq.${userId}&account_id=eq.${account.id}&order=created_at.desc&limit=1&select=repeat,stop`),
+      ]);
+      const res = await ctx.ask({ maxTokens: 7000, system: ideaSystem(ctx.brief), user: ideaUser({ account, count, history: posts.map((p) => ({ hook: p.hook, format: p.type, views: p.views, grade: p.grade })), inspiration: insp, audit: audit ? { repeat: audit.repeat.map((r) => r.point), stop: audit.stop.map((r) => r.point) } : null }, input.instructions) });
+      const p = parseIdeas(res.text, count);
+      return { summary: p.summary || `${p.posts.length} posts for @${account.handle}`, count: p.posts.length, dropped: p.dropped, approval: { type: 'content_plan', title: `Idea & Script: ${p.posts.length} post${p.posts.length === 1 ? '' : 's'} for @${account.handle} (week of ${nextMon})`, payload: { account_id: account.id, handle: account.handle, week_start: nextMon, posts: p.posts, summary: p.summary, dropped: p.dropped }, principle: p.posts[0]?.principle || null, entity_type: 'account', entity_id: account.id } };
+    },
+  });
+}
+
+export function runAuditor(apiKey: string | undefined, sb: Sb, userId: string, input: { accountId?: string; instructions?: string | null; trigger?: Trigger }): Promise<RunOutcome> {
+  return runWorker(apiKey, sb, userId, {
+    key: 'account_auditor', task: 'Auditing last week\'s posts', input: { account_id: input.accountId ?? null }, instructions: input.instructions, trigger: input.trigger, entityType: 'account', entityId: input.accountId ?? null,
+    async execute(ctx) {
+      const accounts = await accountsFor(sb, userId, input.accountId);
+      if (!accounts.length) return { summary: 'No accounts to audit yet.', skipped: true };
+      const end = ctx.date, start = addDaysIso(end, -13);
+      // The audit window is two weeks; the 30 days before it are the yardstick.
+      const all = await measuredPosts(sb, userId, { accountId: input.accountId, sinceIso: `${addDaysIso(end, -45)}T00:00:00` });
+      const pick = accounts.map((a) => ({ a, posts: all.filter((p) => p.account_id === a.id && p.posted_at.slice(0, 10) >= start) })).filter((x) => x.posts.length >= 2).sort((x, y) => y.posts.length - x.posts.length)[0];
+      if (!pick) return { summary: `Not enough to audit — it needs 2+ posts in the last 14 days on ${input.accountId ? handleOf(accounts[0]) : 'one account'}. Log posts on the Accounts tab.`, skipped: true };
+      const { graded } = gradeMeasured(all.filter((p) => p.account_id === pick.a.id));
+      const inWindow = pick.posts.map((p) => graded.find((g) => g.id === p.id) ?? p);
+      const res = await ctx.ask({ maxTokens: 2500, system: auditSystem(ctx.brief), user: auditUser(pick.a, inWindow, { start, end }, input.instructions) });
+      const audit = parseAudit(res.text, pick.a, pick.posts, { start, end });
+      return { summary: audit.summary || `Audit of @${pick.a.handle}`, count: 1, approval: { type: 'content_audit', title: `Audit: @${pick.a.handle} — repeat ${audit.repeat.length}, stop ${audit.stop.length} (${pick.posts.length} posts)`, payload: { ...audit }, principle: audit.repeat[0]?.point ?? null, confidence: 'estimate', entity_type: 'account', entity_id: pick.a.id } };
+    },
+  });
+}
+
+export function runContentAnalytics(apiKey: string | undefined, sb: Sb, userId: string, input: { accountId?: string; all?: boolean; instructions?: string | null; trigger?: Trigger }): Promise<RunOutcome> {
+  return runWorker(apiKey, sb, userId, {
+    key: 'content_analytics', task: 'Grading posts against your own average', input: { account_id: input.accountId ?? null, all: !!input.all }, instructions: input.instructions, trigger: input.trigger, entityType: 'posts',
+    async execute(ctx) {
+      const posts = await measuredPosts(sb, userId, { accountId: input.accountId, sinceIso: `${addDaysIso(ctx.date, -75)}T00:00:00` });
+      const { graded, skipped } = gradeMeasured(posts);
+      // Only posts at least a day old (numbers settle) that are ungraded,
+      // unless asked to re-grade everything.
+      const dayAgo = Date.now() - 86400000;
+      const todo = graded.filter((g) => (input.all || g.grade == null) && new Date(g.posted_at).getTime() <= dayAgo).slice(-40);
+      if (!todo.length) return { summary: posts.length ? `Nothing new to grade${skipped.length ? ` — ${skipped.slice(0, 3).join('; ')}` : ''}.` : 'No posts logged yet.', skipped: true, output: { skipped } };
+      const res = await ctx.ask({ maxTokens: 2500, system: analyticsSystem(ctx.brief), user: analyticsUser(todo, input.instructions) });
+      const g = parseGrades(res.text, todo);
+      // Breakouts and flops are facts, not decisions — they alert now.
+      const accounts = await accountsFor(sb, userId);
+      for (const i of g.items.filter((x) => x.flag)) {
+        const a = accounts.find((x) => x.id === i.account_id);
+        await alert(sb, userId, 'content', i.flag === 'breakout' ? 'info' : 'warn', `post_${i.flag}`, `${i.flag === 'breakout' ? '🚀 Breakout' : '📉 Flop'} on ${handleOf(a)}: ${i.views.toLocaleString('en-US')} views vs ${i.avg.toLocaleString('en-US')} average`, `"${i.hook}" — ${i.change || i.reason}`, { type: 'social_post', id: i.post_id });
+      }
+      const avg = g.items.reduce((s, i) => s + i.grade, 0) / g.items.length;
+      return { summary: g.summary || `${g.items.length} posts graded, average ${avg.toFixed(1)}/4`, count: g.items.length, approval: { type: 'content_grades', title: `Analytics: ${g.items.length} post${g.items.length === 1 ? '' : 's'} graded · avg ${avg.toFixed(1)}/4${g.items.some((i) => i.flag === 'breakout') ? ' · breakout' : ''}`, payload: { items: g.items, skipped, summary: g.summary }, confidence: 'hard' } };
+    },
+  });
+}
+
+export function runPostPlanner(apiKey: string | undefined, sb: Sb, userId: string, input: { accountId?: string; instructions?: string | null; trigger?: Trigger }): Promise<RunOutcome> {
+  return runWorker(apiKey, sb, userId, {
+    key: 'post_planner', task: 'Picking times, captions and hashtags', input: { account_id: input.accountId ?? null }, instructions: input.instructions, trigger: input.trigger, entityType: 'content_items',
+    async execute(ctx) {
+      const horizon = addDaysIso(ctx.date, 10);
+      const items = await sb.get<PlanItemLite>(`content_items?user_id=eq.${userId}${input.accountId ? `&account_id=eq.${input.accountId}` : ''}&status=in.(script,filmed,edited,approved)&or=(scheduled_for.is.null,and(scheduled_for.gte.${ctx.date},scheduled_for.lte.${horizon}))&order=scheduled_for.asc.nullslast&limit=14&select=id,account_id,concept,format,hooks,script,caption,hashtags,scheduled_for,scheduled_time,status`);
+      if (!items.length) return { summary: 'Nothing to schedule — no scripted posts without a slot in the next 10 days.', skipped: true };
+      const accounts = await accountsFor(sb, userId, input.accountId);
+      const posts = await measuredPosts(sb, userId, { accountId: input.accountId, sinceIso: `${addDaysIso(ctx.date, -90)}T00:00:00` });
+      const withBest = accounts.filter((a) => items.some((i) => i.account_id === a.id) || accounts.length <= 3).map((a) => ({ ...a, best: bestHours(posts.filter((p) => p.account_id === a.id), TZ) }));
+      const res = await ctx.ask({ maxTokens: 4000, system: postPlannerSystem(ctx.brief), user: postPlannerUser({ today: ctx.date, items, accounts: withBest }, input.instructions) });
+      const p = parseSlots(res.text, items, ctx.date);
+      const fromData = withBest.some((a) => a.best.from_data);
+      return { summary: p.summary || `${p.slots.length} posts scheduled`, count: p.slots.length, dropped: p.dropped, approval: { type: 'post_plan', title: `Post Planner: ${p.slots.length} post${p.slots.length === 1 ? '' : 's'} timed and captioned`, payload: { slots: p.slots, best: withBest.map((a) => ({ account_id: a.id, handle: a.handle, ...a.best })), summary: p.summary, dropped: p.dropped }, confidence: fromData ? 'estimate' : 'ai', principle: fromData ? 'Times come from your own posts\' views by hour.' : 'Times are defaults — fewer than 5 measured posts per account.' } };
+    },
+  });
+}
+
+export function runClipEditor(apiKey: string | undefined, sb: Sb, userId: string, input: { clipId?: string; instructions?: string | null; trigger?: Trigger }): Promise<RunOutcome> {
+  return runWorker(apiKey, sb, userId, {
+    key: 'clip_editor', task: 'Cutting a raw clip', input: { clip_id: input.clipId ?? null }, instructions: input.instructions, trigger: input.trigger, entityType: 'clip', entityId: input.clipId ?? null,
+    async execute(ctx) {
+      const q = input.clipId ? `id=eq.${input.clipId}` : 'status=eq.raw&transcript=not.is.null&order=created_at.asc&limit=1';
+      const [clip] = await sb.get<{ id: string; file_name: string | null; duration_s: number | null; segments: unknown; transcript: string | null; content_item_id: string | null; account_id: string | null }>(`content_clips?user_id=eq.${userId}&${q}&select=id,file_name,duration_s,segments,transcript,content_item_id,account_id`);
+      if (!clip) return { summary: input.clipId ? 'That clip is gone.' : 'No transcribed raw clips waiting. Upload one in Studio.', skipped: true };
+      const segments = cleanSegments(clip.segments);
+      if (!segments.length) throw new Error('This clip has no timed transcript yet — open it in Studio and tap Transcribe.');
+      const duration = Number(clip.duration_s) || segments[segments.length - 1].end;
+      const [item] = clip.content_item_id ? await sb.get<{ concept: string; account_id: string | null }>(`content_items?id=eq.${clip.content_item_id}&user_id=eq.${userId}&select=concept,account_id`) : [];
+      const acctId = clip.account_id ?? item?.account_id ?? null;
+      const [account] = acctId ? await accountsFor(sb, userId, acctId) : [];
+      await sb.patch('content_clips', `id=eq.${clip.id}&user_id=eq.${userId}`, { status: 'editing', updated_at: now() });
+      try {
+        const res = await ctx.ask({ maxTokens: 5000, system: clipSystem(ctx.brief), user: clipUser({ file_name: clip.file_name, duration_s: duration, segments, concept: item?.concept ?? null, account: account ?? null }, input.instructions) });
+        const plan = parseClipEdit(res.text, duration);
+        await sb.patch('content_clips', `id=eq.${clip.id}&user_id=eq.${userId}`, { status: 'proposed', updated_at: now() });
+        return { summary: `${plan.title || clip.file_name || 'Clip'}: ${duration.toFixed(0)}s raw → ${plan.edited_length_s}s, ${plan.cuts.length} cut${plan.cuts.length === 1 ? '' : 's'}`, count: 1, approval: { type: 'clip_edit', title: `Clip Editor: ${plan.title || clip.file_name || 'raw clip'} — ${duration.toFixed(0)}s → ${plan.edited_length_s}s`, payload: { clip_id: clip.id, file_name: clip.file_name, duration_s: duration, plan, summary: plan.notes }, principle: plan.principle || null, entity_type: 'clip', entity_id: clip.id } };
+      } catch (e) {
+        await sb.patch('content_clips', `id=eq.${clip.id}&user_id=eq.${userId}`, { status: 'raw', updated_at: now() }).catch(() => {});
+        throw e;
+      }
+    },
+  });
+}
+
 /** One entry point for "Run now", the Assign-task router and the daily
  *  plan — keyed by worker. */
-export interface AnyRunInput { channel?: Channel; count?: number; productId?: string; venture?: Venture; scriptChannel?: ScriptChannel; all?: boolean; instructions?: string | null; trigger?: Trigger }
+export interface AnyRunInput { channel?: Channel; count?: number; productId?: string; venture?: Venture; scriptChannel?: ScriptChannel; all?: boolean; accountId?: string; clipId?: string; instructions?: string | null; trigger?: Trigger }
 export const RUNNERS: Record<string, (apiKey: string | undefined, sb: Sb, userId: string, i: AnyRunInput) => Promise<RunOutcome>> = {
   scout: (k, sb, u, i) => runScout(k, sb, u, { channel: i.channel ?? 'tiktok', count: i.count, instructions: i.instructions, trigger: i.trigger }),
   analyst: (k, sb, u, i) => (i.productId ? runAnalyst(k, sb, u, { productId: i.productId, instructions: i.instructions, trigger: i.trigger }) : Promise.resolve({ ok: false, error: 'Pick a product for the Analyst.' })),
@@ -313,6 +462,12 @@ export const RUNNERS: Record<string, (apiKey: string | undefined, sb: Sb, userId
   script_copy: (k, sb, u, i) => runScriptCopy(k, sb, u, { venture: i.venture, channel: i.scriptChannel, instructions: i.instructions, trigger: i.trigger }),
   campaign_planner: (k, sb, u, i) => runPlanner(k, sb, u, { venture: i.venture, instructions: i.instructions, trigger: i.trigger }),
   campaign_scorer: (k, sb, u, i) => runScorer(k, sb, u, { instructions: i.instructions, trigger: i.trigger }),
+  trend_researcher: (k, sb, u, i) => runTrendResearcher(k, sb, u, { accountId: i.accountId, instructions: i.instructions, trigger: i.trigger }),
+  idea_script: (k, sb, u, i) => runIdeaScript(k, sb, u, { accountId: i.accountId, count: i.count, instructions: i.instructions, trigger: i.trigger }),
+  account_auditor: (k, sb, u, i) => runAuditor(k, sb, u, { accountId: i.accountId, instructions: i.instructions, trigger: i.trigger }),
+  content_analytics: (k, sb, u, i) => runContentAnalytics(k, sb, u, { accountId: i.accountId, all: i.all, instructions: i.instructions, trigger: i.trigger }),
+  post_planner: (k, sb, u, i) => runPostPlanner(k, sb, u, { accountId: i.accountId, instructions: i.instructions, trigger: i.trigger }),
+  clip_editor: (k, sb, u, i) => runClipEditor(k, sb, u, { clipId: i.clipId, instructions: i.instructions, trigger: i.trigger }),
 };
 
 /** Approve writes the Scout's products into the sheet (upsert by channel +
@@ -400,6 +555,53 @@ export const APPLIERS: Record<string, Applier> = {
     for (const i of items) await sb.patch('mkt_campaigns', `id=eq.${i.campaign_id}&user_id=eq.${u}`, { grade: i.grade, grade_note: `${i.weak ? `Weak: ${i.weak}. ` : ''}${i.fix}`.slice(0, 1000), updated_at: now() });
     return { graded: items.length };
   },
+
+  inspiration: async (sb, u, raw) => {
+    const items = (raw.items ?? []) as InspirationDraft[];
+    if (items.length) await sb.insert('content_inspiration', items.map((i) => ({ user_id: u, account_id: (raw.account_id as string | null) ?? null, url: i.url, platform: i.platform, title: i.title, hook: i.hook || null, format: i.format || null, why_it_worked: i.why_it_worked, principle: i.principle || null, our_version: i.our_version, tags: i.tags, source: 'trend_researcher' })));
+    return { saved: items.length };
+  },
+
+  /** Each post lands on the Plan as a scripted card on its day. */
+  content_plan: async (sb, u, raw) => {
+    const posts = (raw.posts ?? []) as PostDraft[];
+    const week = raw.week_start as string;
+    if (posts.length) await sb.insert('content_items', posts.map((p) => ({ user_id: u, account_id: raw.account_id ?? null, status: 'script', concept: p.concept, hooks: p.hooks, script: scriptBody(p), shot_list: p.shot_list, caption: p.caption || null, hashtags: p.hashtags || null, format: p.format, scheduled_for: week ? addDaysIso(week, p.day) : null })));
+    return { added: posts.length };
+  },
+
+  content_audit: async (sb, u, raw) => {
+    const a = raw as unknown as AuditPayload;
+    const [row] = await sb.insert<{ id: string }>('content_audits', { user_id: u, account_id: a.account_id, period_start: a.period_start, period_end: a.period_end, posts_count: a.posts_count, repeat: a.repeat, stop: a.stop, summary: a.summary || null });
+    return { audit_id: row?.id, repeat: a.repeat.length, stop: a.stop.length };
+  },
+
+  content_grades: async (sb, u, raw) => {
+    const items = (raw.items ?? []) as GradeOut[];
+    for (const i of items) {
+      const note = `${i.reason}${i.change ? ` — ${i.change}` : ''}`.slice(0, 1000);
+      await sb.patch('social_posts', `id=eq.${i.post_id}&user_id=eq.${u}`, { grade: i.grade, grade_note: note, updated_at: now() });
+      if (i.content_item_id) await sb.patch('content_items', `id=eq.${i.content_item_id}&user_id=eq.${u}`, { grade: i.grade, grade_note: note, updated_at: now() }).catch(() => {});
+    }
+    return { graded: items.length };
+  },
+
+  post_plan: async (sb, u, raw) => {
+    const slots = (raw.slots ?? []) as SlotOut[];
+    for (const s of slots) await sb.patch('content_items', `id=eq.${s.item_id}&user_id=eq.${u}`, { scheduled_for: s.scheduled_for, scheduled_time: s.scheduled_time, caption: s.caption, hashtags: s.hashtags || null, updated_at: now() });
+    return { scheduled: slots.length };
+  },
+
+  /** The approved edit is saved on the clip; its post moves to Edited. */
+  clip_edit: async (sb, u, raw) => {
+    const id = raw.clip_id as string;
+    const [clip] = await sb.get<{ id: string; content_item_id: string | null }>(`content_clips?id=eq.${id}&user_id=eq.${u}&select=id,content_item_id`);
+    if (!clip) throw new Error('That clip was deleted.');
+    const plan = raw.plan as EditPlan;
+    await sb.patch('content_clips', `id=eq.${id}&user_id=eq.${u}`, { edit_plan: plan, status: 'approved', updated_at: now() });
+    if (clip.content_item_id) await sb.patch('content_items', `id=eq.${clip.content_item_id}&user_id=eq.${u}&status=in.(idea,script,filmed)`, { status: 'edited', updated_at: now() }).catch(() => {});
+    return { clip_id: id, length: plan.edited_length_s };
+  },
 };
 
 /** A send-back re-run repeats the same job with Marq's note as the
@@ -410,6 +612,9 @@ function rerunInput(key: string, input: Record<string, unknown>): AnyRunInput {
   if (key === 'script_copy') return { venture: input.venture as Venture, scriptChannel: input.channel as ScriptChannel };
   if (key === 'campaign_planner') return { venture: input.venture as Venture };
   if (key === 'lead_filter') return { all: true };
+  if (['trend_researcher', 'idea_script', 'account_auditor', 'post_planner'].includes(key)) return { accountId: (input.account_id as string | null) ?? undefined, count: (input.count as number | null) ?? undefined };
+  if (key === 'content_analytics') return { accountId: (input.account_id as string | null) ?? undefined, all: true };
+  if (key === 'clip_editor') return { clipId: (input.clip_id as string | null) ?? undefined };
   return {};
 }
 

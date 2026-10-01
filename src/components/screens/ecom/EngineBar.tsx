@@ -9,7 +9,7 @@ import { E, Badge, Drawer, TeachingEmpty, btn, field } from './ecomShared';
 /** The shared right-hand side of every engine module's top bar (Appendix
  *  2 §2, Appendix 3 §2): 🔔 alerts · 💲 cost · approvals · ＋ Command —
  *  scoped to one domain, same engine tables as E-commerce. */
-export default function EngineBar({ domain }: { domain: 'content' | 'marketing' }) {
+export default function EngineBar({ domain, onDecided }: { domain: 'content' | 'marketing'; onDecided?: () => void }) {
   const ap = useApprovals();
   const [open, setOpen] = useState<'alerts' | 'cost' | 'approvals' | 'command' | null>(null);
   const [spend, setSpend] = useState<{ today: number; month: number; cap: number }>({ today: 0, month: 0, cap: 1 });
@@ -39,9 +39,9 @@ export default function EngineBar({ domain }: { domain: 'content' | 'marketing' 
   return (
     <>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-        <button style={{ ...btn('ghost'), padding: '6px 10px' }} onClick={() => setOpen('alerts')} title="Alerts">🔔{dot(unread, E.red)}</button>
+        <button style={{ ...btn('ghost'), padding: '6px 10px' }} onClick={() => { void ap.reload(); setOpen('alerts'); }} title="Alerts">🔔{dot(unread, E.red)}</button>
         <button style={{ ...btn('ghost'), padding: '6px 10px' }} onClick={() => setOpen('cost')} title="Cost"><span>💲</span><span style={{ fontFamily: 'var(--font-mono)' }}>{money(spend.today)}</span></button>
-        <button style={{ ...btn('ghost'), padding: '6px 10px' }} onClick={() => setOpen('approvals')}>Approvals{dot(pending, E.amber)}</button>
+        <button style={{ ...btn('ghost'), padding: '6px 10px' }} onClick={() => { void ap.reload(); setOpen('approvals'); }}>Approvals{dot(pending, E.amber)}</button>
         <button style={{ ...btn('primary'), padding: '6px 12px' }} onClick={() => setOpen('command')}>＋ Command</button>
       </div>
       <Drawer open={open === 'alerts'} onClose={() => setOpen(null)} title="Alerts" subtitle="Only things that need a human." width={440}>
@@ -64,7 +64,7 @@ export default function EngineBar({ domain }: { domain: 'content' | 'marketing' 
         </div>
       </Drawer>
       <Drawer open={open === 'approvals'} onClose={() => setOpen(null)} title="Approvals" subtitle={`Waiting on you in ${domain}`} width={620}>
-        <ApprovalsTab api={scoped} />
+        <ApprovalsTab api={scoped} onDecided={onDecided} />
       </Drawer>
       <Drawer open={open === 'command'} onClose={() => setOpen(null)} title="＋ Command" subtitle="Type anything; the orchestrator turns it into a task for the right worker." width={520}>
         <textarea style={{ ...field, minHeight: 90, resize: 'vertical' }} value={cmd} onChange={(e) => setCmd(e.target.value)} placeholder={domain === 'content' ? '"make 5 Reels for Mastermind this week about the morning text"' : '"plan next week\'s calls for single-location food trucks"'} />

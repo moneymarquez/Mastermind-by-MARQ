@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { SocialAccount, AccountSnapshot, SocialPost, PostMetrics, ContentItem, Platform, Owner, Format, ItemStatus } from './contentEngine';
+import type { Inspiration, Clip, ContentAudit } from './contentEngine';
 
 /** Accounts, their follower snapshots, posts and post metrics — everything
  *  the Accounts home reads. C1 is hand-entered; C2 swaps the source. */
@@ -107,4 +108,65 @@ export function useContentItems() {
   };
   const remove = async (id: string) => { await supabase.from('content_items').delete().eq('id', id); await load(); };
   return { items, loading, error, reload: load, create, update, remove };
+}
+
+
+/** Inspiration: Trend Researcher finds plus links saved by hand. */
+export function useInspiration() {
+  const [rows, setRows] = useState<Inspiration[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const load = useCallback(async () => {
+    const { data, error: err } = await supabase.from('content_inspiration').select('*').order('created_at', { ascending: false }).limit(300);
+    setError(err ? err.message : '');
+    setRows((data ?? []) as Inspiration[]);
+    setLoading(false);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+  const add = async (input: Partial<Inspiration> & { url: string }) => {
+    const { error: err } = await supabase.from('content_inspiration').insert({ ...input, source: 'manual' });
+    if (err) setError(err.message);
+    await load();
+    return !err;
+  };
+  const remove = async (id: string) => { setRows((r) => r.filter((x) => x.id !== id)); await supabase.from('content_inspiration').delete().eq('id', id); };
+  return { rows, loading, error, reload: load, add, remove };
+}
+
+/** Studio's clips, newest first. */
+export function useClips() {
+  const [clips, setClips] = useState<Clip[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const load = useCallback(async () => {
+    const { data, error: err } = await supabase.from('content_clips').select('*').order('created_at', { ascending: false }).limit(100);
+    setError(err ? err.message : '');
+    setClips((data ?? []) as Clip[]);
+    setLoading(false);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+  const update = async (id: string, patch: Partial<Clip>) => {
+    setClips((cs) => cs.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+    const { error: err } = await supabase.from('content_clips').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id);
+    if (err) { setError(err.message); await load(); }
+  };
+  const remove = async (c: Clip) => {
+    setClips((cs) => cs.filter((x) => x.id !== c.id));
+    if (c.storage_path) await supabase.storage.from('content-clips').remove([c.storage_path]);
+    await supabase.from('content_clips').delete().eq('id', c.id);
+  };
+  return { clips, loading, error, setError, reload: load, update, remove };
+}
+
+/** The latest audit per account (the Account Auditor's, once approved). */
+export function useLatestAudits() {
+  const [audits, setAudits] = useState<Record<string, ContentAudit>>({});
+  const load = useCallback(async () => {
+    const { data } = await supabase.from('content_audits').select('*').order('created_at', { ascending: false }).limit(50);
+    const by: Record<string, ContentAudit> = {};
+    for (const a of (data ?? []) as ContentAudit[]) if (a.account_id && !by[a.account_id]) by[a.account_id] = a;
+    setAudits(by);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+  return { audits, reload: load };
 }

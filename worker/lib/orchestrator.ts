@@ -29,13 +29,21 @@ export function planFor(dow: number): Step[] {
   steps.push({ key: 'analyst', worker: 'analyst', label: 'Analyse the top new products' });
   steps.push({ key: 'teardown', worker: 'teardown', label: 'Tear down a watched product' });
   steps.push({ key: 'lead_filter', worker: 'lead_filter', label: 'Tag new leads' });
+  steps.push({ key: 'content_analytics', worker: 'content_analytics', label: 'Grade yesterday\'s posts' });
+  if (dow === 1 || dow === 4) steps.push({ key: 'trend_researcher', worker: 'trend_researcher', label: 'Find what\'s working in your niches' });
+  steps.push({ key: 'clip_editor', worker: 'clip_editor', label: 'Cut the next raw clip in Studio' });
   if (dow === 0) {
+    steps.push({ key: 'account_auditor', worker: 'account_auditor', label: 'Audit the last two weeks of posts' });
+    steps.push({ key: 'idea_script', worker: 'idea_script', label: 'Write next week\'s posts' });
+    steps.push({ key: 'post_planner', worker: 'post_planner', label: 'Time and caption the week\'s posts' });
     steps.push({ key: 'campaign_scorer', worker: 'campaign_scorer', label: 'Grade last week\'s campaigns' });
     steps.push({ key: 'campaign_planner', worker: 'campaign_planner', label: 'Plan next week\'s campaign' });
   }
   steps.push({ key: 'summary', worker: 'orchestrator', label: 'Write the daily summary' });
   return steps;
 }
+
+const CONTENT_KEYS = new Set(['content_analytics', 'trend_researcher', 'clip_editor', 'account_auditor', 'idea_script', 'post_planner']);
 
 interface TaskRow { id: string; body: string; status: string; note: string | null }
 const taskKey = (date: string, step: string) => `daily:${date}:${step}`;
@@ -125,7 +133,7 @@ export async function nextDailyStep(apiKey: string | undefined, sb: Sb, userId: 
   const step = plan.find((s) => !done.has(taskKey(date, s.key)));
   if (!step) return null;
   const wid = step.worker ? await workerId(sb, userId, step.worker) : null;
-  const domain = step.worker === 'orchestrator' ? 'ecom' : ['lead_filter', 'campaign_scorer', 'campaign_planner'].includes(step.worker ?? '') ? 'marketing' : 'ecom';
+  const domain = step.worker === 'orchestrator' ? 'ecom' : ['lead_filter', 'campaign_scorer', 'campaign_planner'].includes(step.worker ?? '') ? 'marketing' : CONTENT_KEYS.has(step.worker ?? '') ? 'content' : 'ecom';
   const [task] = await sb.insert<{ id: string }>('ai_tasks', { user_id: userId, domain, body: taskKey(date, step.key), worker_id: wid, instructions: step.label, status: 'running' });
   let res: { status: 'done' | 'failed' | 'waiting'; note: string; runId?: string | null };
   try { res = await runStep(apiKey, sb, userId, step, date); }

@@ -13,6 +13,7 @@ import { PLAYBOOK_MAX_CHARS } from '../../src/data/ecom';
 
 export interface EngineEnv extends SbEnv { ANTHROPIC_API_KEY?: string }
 const CHANNELS: Channel[] = ['tiktok', 'amazon', 'meta', 'etsy', 'walmart', 'rising'];
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const VENTURES: Venture[] = ['madebymarq', 'mastermind', 'client'];
 const SCRIPT_CHANNELS: ScriptChannel[] = ['call', 'voicemail', 'email', 'dm', 'landing'];
 
@@ -35,13 +36,14 @@ export async function engineRoute(request: Request, env: EngineEnv, path: string
       return json({ workers, spend, anthropic: !!env.ANTHROPIC_API_KEY, date });
     }
     if (path === 'run') {
-      const b = await body<{ worker?: string; channel?: string; count?: number; product_id?: string; venture?: string; script_channel?: string; all?: boolean; instructions?: string }>(request);
+      const b = await body<{ worker?: string; channel?: string; count?: number; product_id?: string; venture?: string; script_channel?: string; all?: boolean; account_id?: string; clip_id?: string; instructions?: string }>(request);
       const runner = b?.worker ? RUNNERS[b.worker] : undefined;
       if (!b || !runner) return json({ error: `${b?.worker ?? 'That worker'} doesn't run yet in this build.` }, 400);
       const r = await runner(env.ANTHROPIC_API_KEY, sb, user.id, {
         channel: CHANNELS.includes(b.channel as Channel) ? (b.channel as Channel) : 'tiktok', count: b.count, productId: b.product_id,
         venture: VENTURES.includes(b.venture as Venture) ? (b.venture as Venture) : undefined,
         scriptChannel: SCRIPT_CHANNELS.includes(b.script_channel as ScriptChannel) ? (b.script_channel as ScriptChannel) : undefined,
+        accountId: UUID.test(b.account_id ?? '') ? b.account_id : undefined, clipId: UUID.test(b.clip_id ?? '') ? b.clip_id : undefined,
         all: !!b.all, instructions: b.instructions?.slice(0, PLAYBOOK_MAX_CHARS) || null,
       });
       return json(r, r.ok ? 200 : r.capReached ? 429 : 502);
