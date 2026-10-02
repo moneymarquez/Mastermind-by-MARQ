@@ -16,7 +16,7 @@ import { useOwnerInbox } from './data/useOwnerInbox';
 import type { InboxItem } from './data/useOwnerInbox';
 import { useLeads } from './data/useLeads';
 import type { LeadItem } from './data/useLeads';
-import HomeScreen from './components/screens/HomeScreen';
+import HomeScreen, { HomeExtras } from './components/screens/HomeScreen';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
 import ProductTour, { filterTourSteps } from './components/ProductTour';
 import { buildViewModel } from './viewModel';
@@ -91,6 +91,7 @@ const ManageModulesScreen = lazyScreen(() => import('./components/screens/Manage
 const EditHomeWidgetsScreen = lazyScreen(() => import('./components/screens/EditHomeWidgetsScreen'));
 const GrantAccessScreen = lazyScreen(() => import('./components/screens/GrantAccessScreen'));
 const InboxScreen = lazyScreen(() => import('./components/screens/inbox/InboxScreen'));
+const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
@@ -442,7 +443,13 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <ErrorBoundary scope="screen" resetKey={state.screen} label={state.screen === 'home' ? 'Overview' : undefined}>
           <Suspense fallback={<ScreenLoading />}>
           <div data-demo-content="">
-        {state.screen === 'home' && (
+        {state.screen === 'home' && !cyber && (
+          <HomeV2 device={device} isOwner={isOwner} novaOpen={state.novaOpen} leads={leadFeed.leads} leadsNow={leadFeed.now} inboxItems={ownerInbox.items}
+            canOpen={(id) => groups.some((g) => g.items.some((i) => i.id === id))} labelFor={(id) => groups.flatMap((g) => g.items).find((i) => i.id === id)?.label ?? id}
+            onNavigate={shellNav} onOpenLead={(ref) => { setInboxFocus({ tab: 'leads', ref }); shellNav(device === 'phone' ? 'inbox' : 'leads'); }}
+            top={<HomeExtras currentUserId={currentUserId} onNavigate={shellNav} />} />
+        )}
+        {state.screen === 'home' && cyber && (
           <HomeScreen currentUserId={currentUserId} isMobile={isMobile} isOwner={isOwner} homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onOpenNova={actions.openNova} assistantName={assistantName} onNavigate={actions.navigateTo} />
         )}
 

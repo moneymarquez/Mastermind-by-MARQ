@@ -149,3 +149,15 @@ export default function HomeScreen({ currentUserId, isMobile, isOwner, homeHeadS
     </div>
   );
 }
+
+/** What the redesigned Home keeps from this one: the Brain nudge and the
+ *  member side of Dispatch ("From <lead>"), above everything else. */
+export function HomeExtras({ currentUserId, onNavigate }: { currentUserId?: string; onNavigate: (screen: string) => void }) {
+  const { teams } = useMyTeams(!!currentUserId);
+  return (
+    <>
+      <BrainNudgeCard onOpen={() => onNavigate('brain')} />
+      {currentUserId && teams.map((t) => <FromOwnerSection key={t.owner_id} team={t} userId={currentUserId} />)}
+    </>
+  );
+}

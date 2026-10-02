@@ -41,7 +41,7 @@ export default function InboxScreen(p: Props) {
   const phone = p.device === 'phone';
   const [tab, setTab] = useState<'inbox' | 'leads'>(p.focus?.tab ?? p.initialTab ?? 'inbox');
   const ui = useUnifiedInbox(p.isOwner);
-  useEffect(() => { if (p.focus) { setTab(p.focus.tab); } }, [p.focus]);
+  useEffect(() => { if (p.focus) { setTab(p.focus.tab); if (p.focus.tab === 'leads') p.onFocusConsumed(); } }, [p.focus]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (p.initialTab) setTab(p.initialTab); }, [p.initialTab]);
   const waiting = p.feed.waiting;
   const unread = ui.msgs.filter((m) => m.unread).length;
