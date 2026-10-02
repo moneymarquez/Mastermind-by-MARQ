@@ -5,12 +5,13 @@ export interface Release { version: string; date: string; title: string; items: 
 export const APP_VERSION = '0.11.0';
 
 export const CHANGELOG: Release[] = [
-  { version: '0.11.0', date: '2026-10-01', title: 'Content workers', items: [
+  { version: '0.11.0', date: '2026-10-01', title: 'Every worker is live', items: [
     'Studio: upload a raw clip from your phone; it\'s transcribed and the Clip Editor proposes the hook, cuts, captions, b-roll and Higgsfield prompts. Watch raw and edited side by side, then approve or send it back.',
     'Inspiration: the Trend Researcher finds what\'s working in your niches, with why it worked and "our version". One tap puts it on the Plan.',
     'Idea & Script writes next week\'s posts (3 hooks, script, shot list, CTA); Post Planner picks the time from your own numbers and writes the caption.',
     'Account Auditor: 3 things to repeat and 3 to stop, every Sunday. Analytics grades each post out of 4 and flags breakouts and flops.',
     'Marketing → Inbound: your website form posts straight in, with the source tagged and how long each lead waited. Anyone unanswered after an hour sends you an urgent alert.',
+    'E-commerce: Supplier Finder, Brand Lab (real .com checks), Store Builder (a previewable landing page with a quality gate), Content Producer and Analytics now run from each brand step. The sample and the domain stay red cards you buy yourself.',
     'Marketing → Lists: saved slices of LeadFlow (city, category, size) with live counts — callable, chains, duplicates, already called.',
   ] },
   { version: '0.10.0', date: '2026-09-30', title: 'Dispatch', items: [

@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
+import { supabase } from '../../../lib/supabase';
 import { money } from '../../../data/ecom';
 import { E, Badge, label, tint } from './ecomShared';
 
@@ -26,12 +28,18 @@ export const APPROVE_LABEL: Record<string, (p: P) => string> = {
   post_plan: (p) => `Approve · schedule ${arr(p.slots).length}`,
   clip_edit: () => 'Approve · save the edit',
   inbound_tags: (p) => `Approve · tag ${arr(p.tags).length}`,
+  supplier_pick: () => 'Approve · use this supplier',
+  brand_options: () => 'Approve · use this brand',
+  store_draft: () => 'Approve · save the page',
+  brand_read: (p) => `Approve · save (${String(p.recommendation)})`,
+  sample_purchase: () => '✓ I bought it',
+  domain_purchase: () => '✓ I bought it',
 };
 const DAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const secs = (n: unknown) => (typeof n === 'number' ? `${Math.floor(n / 60)}:${String(Math.floor(n % 60)).padStart(2, '0')}` : '—');
 const gradeColor = (g: number) => (g >= 4 ? E.green : g === 3 ? E.blue : g === 2 ? E.amber : E.red);
 
-export function ApprovalBody({ type, payload: p }: { type: string; payload: P }) {
+export function ApprovalBody({ type, payload: p, choice = 0, onChoice }: { type: string; payload: P; choice?: number; onChoice?: (i: number) => void }) {
   if (type === 'analysis') {
     const d = (p.detail ?? {}) as Record<string, string>;
     const n = (p.numbers ?? {}) as Record<string, number | string | null>;
@@ -273,6 +281,80 @@ export function ApprovalBody({ type, payload: p }: { type: string; payload: P })
       </div>
     );
   }
+  if (type === 'supplier_pick') {
+    const sup = arr<{ name: string; url: string | null; unit_cost: number | null; ship_cost: number | null; ship_days: number | null; rating: number | null; moq: number | null; branded_packaging: boolean | null; notes: string }>(p.suppliers);
+    const sample = (p.sample ?? {}) as { qty: number; variant: string; est_cost: number | null };
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
+        <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>Tap the one to use — the worker's pick is preselected.</div>
+        {sup.map((x, i) => (
+          <label key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: 8, borderRadius: 'var(--radius-sm)', background: i === choice ? tint(E.accent, 10) : E.sunk, border: `1px solid ${i === choice ? E.accent : E.border}`, cursor: 'pointer', minWidth: 0 }}>
+            <input type="radio" name="supplier" checked={i === choice} onChange={() => onChoice?.(i)} style={{ marginTop: 3 }} />
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span style={{ fontWeight: 700, color: E.text }}>{x.name}</span>
+                {i === p.pick && <Badge color={E.green}>worker's pick</Badge>}
+                {x.url && <a href={x.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ fontSize: 'var(--text-caption)', color: E.blue }}>open ↗</a>}
+              </div>
+              <div style={{ fontSize: 'var(--text-caption)', color: E.muted, fontFamily: 'var(--font-mono)', marginTop: 2 }}>{money(x.unit_cost)} + {money(x.ship_cost)} ship · {x.ship_days ?? '?'}d · ★{x.rating ?? '?'} · MOQ {x.moq ?? '?'}{x.branded_packaging ? ' · branded box' : ''}</div>
+              {x.notes && <div style={{ fontSize: 'var(--text-caption)', color: E.muted }}>{x.notes}</div>}
+            </div>
+          </label>
+        ))}
+        <Box>
+          <Line k="Sample" v={`${sample.qty}× ${sample.variant || ''}${sample.est_cost != null ? ` · ~${money(sample.est_cost)}` : ''} — queued as a money card for you to buy`} />
+          {arr<string>(p.inspection).length > 0 && <Line k="Inspect" v={arr<string>(p.inspection).join(' · ')} />}
+          {arr<string>(p.shot_list).length > 0 && <Line k="Shots" v={arr<string>(p.shot_list).join(' · ')} />}
+        </Box>
+      </div>
+    );
+  }
+  if (type === 'brand_options') {
+    const opts = arr<{ name: string; domain: string; domain_status?: string; handles: string; positioning: string; voice: string; palette: { hex: string; name: string; why: string }[]; type: { heading: string; body: string; why: string }; logo_direction: string; principle: string; why_this_buyer: string }>(p.options);
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+        {opts.map((o, i) => (
+          <label key={i} style={{ display: 'block', padding: 10, borderRadius: 'var(--radius-sm)', background: i === choice ? tint(E.accent, 10) : E.sunk, border: `1px solid ${i === choice ? E.accent : E.border}`, cursor: 'pointer', minWidth: 0 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <input type="radio" name="brand" checked={i === choice} onChange={() => onChoice?.(i)} />
+              <span style={{ fontWeight: 800, color: E.text, fontSize: 'var(--text-subhead)' }}>{o.name}</span>
+              <Badge color={o.domain_status === 'available' ? E.green : o.domain_status === 'taken' ? E.red : E.faint}>{o.domain} · {o.domain_status ?? 'unchecked'}</Badge>
+            </div>
+            <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>{o.palette.map((c) => <span key={c.hex} title={`${c.name} — ${c.why}`} style={{ width: 28, height: 28, borderRadius: 6, background: c.hex, border: `1px solid ${E.border}` }} />)}</div>
+            <Line k="Positioning" v={o.positioning} /><Line k="Voice" v={o.voice} /><Line k="Type" v={o.type.heading ? `${o.type.heading} / ${o.type.body} — ${o.type.why}` : ''} />
+            <Line k="Logo" v={o.logo_direction} /><Line k="Why this buyer" v={o.why_this_buyer} /><Line k="Principle" v={o.principle} /><Line k="Handles" v={`${o.handles} (check by hand)`} />
+          </label>
+        ))}
+      </div>
+    );
+  }
+  if (type === 'store_draft') return <StoreDraftBody p={p} />;
+  if (type === 'brand_read') {
+    const f = (p.funnel ?? {}) as Record<string, number | null>;
+    return (
+      <div style={{ marginTop: 10 }}>
+        <Box>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-caption)', color: E.text }}>{(f.views ?? 0).toLocaleString()} views → {f.clicks ?? 0} clicks → {f.add_to_carts ?? 0} carts → {f.purchases ?? 0} sales</div>
+          <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+            <Badge color={p.flag === 'kill' ? E.red : p.flag === 'double_down' ? E.green : p.flag === 'fix' ? E.amber : E.faint}>{String(p.flag).replace('_', ' ')}</Badge>
+            <Badge color={E.blue}>{String(p.diagnosis)}</Badge>
+            <span style={{ fontSize: 'var(--text-caption)', color: E.faint }}>from {String(p.source)}</span>
+          </div>
+          <Line k="Why" v={p.why} /><Line k="Evidence" v={p.evidence} /><Line k="Next" v={p.next} />
+        </Box>
+      </div>
+    );
+  }
+  if (type === 'sample_purchase' || type === 'domain_purchase') {
+    return (
+      <div style={{ marginTop: 10 }}>
+        <Box>
+          <Line k={type === 'sample_purchase' ? 'From' : 'Domain'} v={type === 'sample_purchase' ? `${p.supplier} · ${p.qty}× ${p.variant ?? ''}` : p.domain} />
+          <div style={{ fontSize: 'var(--text-caption)', color: E.muted, marginTop: 4 }}>Nothing is bought for you. Buy it yourself, then tap “I bought it”.</div>
+        </Box>
+      </div>
+    );
+  }
   if (type === 'clip_edit') {
     const x = (p.plan ?? {}) as { hook: { start: number; end: number; text: string; why: string }; cuts: { start: number; end: number; why: string }[]; captions: unknown[]; broll: { at: number; prompt: string }[]; higgsfield: string[]; on_screen_text: string; edited_length_s: number };
     return (
@@ -292,4 +374,33 @@ export function ApprovalBody({ type, payload: p }: { type: string; payload: P })
     );
   }
   return null;
+}
+
+/** The store page, rendered in a locked-down frame (no scripts), with
+ *  the quality gate beside it and a download. Nothing is published. */
+function StoreDraftBody({ p }: { p: P }) {
+  const [html, setHtml] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof p.build_id !== 'string') return;
+    supabase.from('ecom_store_builds').select('html').eq('id', p.build_id).maybeSingle().then(({ data }) => setHtml((data as { html?: string } | null)?.html ?? null));
+  }, [p.build_id]);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+      <Box>
+        {arr<{ name: string; pass: boolean; detail: string }>(p.checks).map((c) => <div key={c.name} style={{ fontSize: 'var(--text-caption)', color: c.pass ? E.green : E.red }}>{c.pass ? '✓' : '✕'} {c.name} <span style={{ color: E.muted }}>— {c.detail}</span></div>)}
+      </Box>
+      {html ? <StorePreview html={html} /> : <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>Loading the preview…</div>}
+    </div>
+  );
+}
+export function StorePreview({ html, name = 'store' }: { html: string; name?: string }) {
+  const download = () => { const u = URL.createObjectURL(new Blob([html], { type: 'text/html' })); const a = document.createElement('a'); a.href = u; a.download = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-index.html`; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1000); };
+  return (
+    <div>
+      <div style={{ width: '100%', maxWidth: 390, margin: '0 auto', aspectRatio: '9 / 16', maxHeight: 640, border: `1px solid ${E.border}`, borderRadius: 'var(--radius-sm)', overflow: 'hidden', background: '#fff' }}>
+        <iframe title="Store preview" sandbox="" srcDoc={html} style={{ width: '100%', height: '100%', border: 0 }} />
+      </div>
+      <button onClick={download} style={{ marginTop: 8, padding: '6px 12px', borderRadius: 'var(--radius-pill)', border: `1px solid ${E.border}`, background: 'transparent', color: E.text, cursor: 'pointer', fontSize: 13 }}>Download HTML</button>
+    </div>
+  );
 }

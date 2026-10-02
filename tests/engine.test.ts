@@ -69,7 +69,7 @@ test('worker runtime lifecycle, approvals, overnight plan', async () => {
   sb = mockSb({ ai_workers: workers, ai_playbooks: [], ai_approvals: [], ai_cost_ledger: [], ai_domain_caps: [], ecom_products: [], ecom_competitors: [], leads: [], mkt_campaigns: [], mkt_touches: [], mkt_scripts: [] });
   const seen: string[] = [];
   for (let i = 0; i < 14; i++) { const s = await nextDailyStep(undefined, sb as never, U, '2026-09-28', 1); if (!s) break; seen.push(`${s.step.key}:${s.status}`); }
-  assert.deepEqual(seen.map((s) => s.split(':').slice(0, -1).join(':')), ['scout:tiktok', 'scout:amazon', 'analyst', 'teardown', 'lead_filter', 'inbound_tracker', 'content_analytics', 'trend_researcher', 'clip_editor', 'summary']);
+  assert.deepEqual(seen.map((s) => s.split(':').slice(0, -1).join(':')), ['scout:tiktok', 'scout:amazon', 'analyst', 'teardown', 'lead_filter', 'inbound_tracker', 'brand_analytics', 'content_analytics', 'trend_researcher', 'clip_editor', 'summary']);
   assert.equal(seen[0].endsWith('failed'), true); // no key → scout fails, plan continues
   assert.equal(await nextDailyStep(undefined, sb as never, U, '2026-09-28', 1), null);
   const sum = sb.db.ai_daily_summaries[0] as { domain: string; summary_text: string; numbers: { how: string } };

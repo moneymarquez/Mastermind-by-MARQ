@@ -30,6 +30,7 @@ export function planFor(dow: number): Step[] {
   steps.push({ key: 'teardown', worker: 'teardown', label: 'Tear down a watched product' });
   steps.push({ key: 'lead_filter', worker: 'lead_filter', label: 'Tag new leads' });
   steps.push({ key: 'inbound_tracker', worker: 'inbound_tracker', label: 'Tag where new inbound leads came from' });
+  steps.push({ key: 'brand_analytics', worker: 'analytics', label: 'Read the funnel for brands that are posting' });
   steps.push({ key: 'content_analytics', worker: 'content_analytics', label: 'Grade yesterday\'s posts' });
   if (dow === 1 || dow === 4) steps.push({ key: 'trend_researcher', worker: 'trend_researcher', label: 'Find what\'s working in your niches' });
   steps.push({ key: 'clip_editor', worker: 'clip_editor', label: 'Cut the next raw clip in Studio' });
@@ -89,6 +90,15 @@ async function runStep(apiKey: string | undefined, sb: Sb, userId: string, step:
     const id = await teardownTarget(sb, userId);
     if (!id) return { status: 'done', note: 'Teardown: no watched product without a teardown. Watch one (★) in Product Sheets.' };
     return one(await RUNNERS.teardown(apiKey, sb, userId, { productId: id, trigger: 'cron' }), step.label);
+  }
+  if (step.key === 'brand_analytics') {
+    // Brands from step 8 on (posting / reading / deciding) that aren't killed.
+    const brands = await sb.get<{ id: string }>(`ecom_brands?user_id=eq.${userId}&current_step=gte.8&health=neq.killed&order=last_activity_at.desc&limit=3&select=id`);
+    if (!brands.length) return { status: 'done', note: 'Analytics: no brand is posting yet (step 8+).' };
+    const res = [];
+    for (const b of brands) { const r = await RUNNERS.analytics(apiKey, sb, userId, { brandId: b.id, trigger: 'cron' }); res.push(r); if (r.capReached) break; }
+    const ok = res.filter((r) => r.ok);
+    return { status: ok.length ? 'done' : 'failed', note: `Analytics: ${ok.length}/${res.length} brands read → Approvals${ok.length < res.length ? ` (${res.find((r) => !r.ok)?.error})` : ''}`, runId: ok[0]?.runId ?? res[0]?.runId ?? null };
   }
   if (step.key === 'summary') return writeSummary(apiKey, sb, userId, date);
   const runner = step.worker ? RUNNERS[step.worker] : null;

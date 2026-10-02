@@ -43,8 +43,10 @@ export default function ApprovalsTab({ api, onDecided }: { api: ReturnType<typeo
   );
 }
 
+/** Cards where Approve applies the option you picked. */
+const CHOOSES = new Set(['brand_options', 'supplier_pick']);
 /** Types whose worker can be re-run straight from a send-back. */
-const RERUNNABLE = new Set(['analysis', 'teardown', 'lead_tags', 'scripts', 'campaign_plan', 'inspiration', 'content_plan', 'content_audit', 'content_grades', 'post_plan', 'clip_edit', 'inbound_tags']);
+const RERUNNABLE = new Set(['analysis', 'teardown', 'lead_tags', 'scripts', 'campaign_plan', 'inspiration', 'content_plan', 'content_audit', 'content_grades', 'post_plan', 'clip_edit', 'inbound_tags', 'supplier_pick', 'brand_options', 'store_draft', 'brand_read']);
 function appliedMessage(type: string, a: Record<string, number> | null | undefined): string {
   if (!a) return 'Approved.';
   if (type === 'scout_products') return `Approved — ${a.inserted} new, ${a.updated} refreshed in Product Sheets.`;
@@ -59,6 +61,12 @@ function appliedMessage(type: string, a: Record<string, number> | null | undefin
   if (type === 'content_audit') return 'Approved — the audit is saved on the account; Idea & Script reads it next run.';
   if (type === 'content_grades') return `Approved — ${a.graded} posts graded.`;
   if (type === 'post_plan') return `Approved — ${a.scheduled} posts timed and captioned on the Plan.`;
+  if (type === 'supplier_pick') return `Approved — ${a.supplier} is on step 4. The sample is a red card in Approvals: buy it yourself, then tap "I bought it".`;
+  if (type === 'brand_options') return `Approved — ${a.name} fills step 5. The domain is waiting as a red card: buy it yourself.`;
+  if (type === 'sample_purchase') return 'Marked ordered on step 4.';
+  if (type === 'domain_purchase') return `${a.domain} marked bought on step 5.`;
+  if (type === 'store_draft') return 'Approved — the page is on step 6. Download it from there; nothing was published.';
+  if (type === 'brand_read') return `Saved on steps 9 and 10 — ${a.diagnosis}, recommend ${a.recommendation}.`;
   if (type === 'inbound_tags') return `Approved — ${a.tagged} sources set on Inbound.`;
   if (type === 'clip_edit') return 'Approved — the edit is saved on the clip in Studio.';
   return 'Approved.';
@@ -71,6 +79,8 @@ function ApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string) => voi
   const [busy, setBusy] = useState('');
   const [err, setErr] = useState('');
   const [dx, setDx] = useState(0);
+  // Cards that offer options (Brand Lab, suppliers): which one Approve applies.
+  const [choice, setChoice] = useState<number>(typeof a.payload.pick === 'number' ? a.payload.pick : 0);
   const start = useRef<number | null>(null);
   const noteRef = useRef<HTMLInputElement>(null);
   const rows = a.type === 'scout_products' ? ((a.payload.rows ?? []) as ImportRow[]) : [];
@@ -79,7 +89,7 @@ function ApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string) => voi
   const go = async (status: 'approved' | 'sent_back' | 'killed') => {
     if (status === 'sent_back' && !note.trim()) { setErr('Write what to change first — that note is what the worker learns from.'); noteRef.current?.focus(); return; }
     setBusy(status); setErr('');
-    const r = await decideApproval(a.id, status, note.trim() || null, status === 'sent_back' && rerun);
+    const r = await decideApproval(a.id, status, note.trim() || null, status === 'sent_back' && rerun, CHOOSES.has(a.type) ? choice : undefined);
     setBusy('');
     if (!r.ok) { setErr(r.error ?? 'Could not save that decision.'); return; }
     onDone(status === 'approved' ? appliedMessage(a.type, r.applied as Record<string, number> | null | undefined)
@@ -135,7 +145,7 @@ function ApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string) => voi
           ))}
           {Array.isArray(a.payload.dropped) && (a.payload.dropped as string[]).length > 0 && <div style={{ fontSize: 'var(--text-caption)', color: E.amber }}>Dropped by the rules: {(a.payload.dropped as string[]).join('; ')}</div>}
         </div>
-      ) : APPROVE_LABEL[a.type] ? <ApprovalBody type={a.type} payload={a.payload} /> : Object.keys(a.payload).length > 0 && (
+      ) : APPROVE_LABEL[a.type] ? <ApprovalBody type={a.type} payload={a.payload} choice={choice} onChoice={setChoice} /> : Object.keys(a.payload).length > 0 && (
         <pre style={{ fontSize: 12, color: E.text, background: E.sunk, border: `1px solid ${E.border}`, borderRadius: 6, padding: 10, marginTop: 8, whiteSpace: 'pre-wrap', maxHeight: 220, overflow: 'auto' }}>{JSON.stringify(a.payload, null, 2)}</pre>
       )}
 
@@ -143,7 +153,7 @@ function ApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string) => voi
       {(a.type === 'scout_products' || RERUNNABLE.has(a.type)) && <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 'var(--text-caption)', color: E.muted, marginTop: 6 }}><input type="checkbox" checked={rerun} onChange={(e) => setRerun(e.target.checked)} /> On send back, re-run the worker now with this note</label>}
       {err && <div style={{ fontSize: 'var(--text-caption)', color: E.amber, marginTop: 6 }}>{err}</div>}
       <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-        <button style={btn('primary')} disabled={!!busy} onClick={() => go('approved')}>{busy === 'approved' ? 'Saving…' : a.is_money ? 'Approve · spend' : rows.length ? `Approve · add ${rows.length} to sheet` : APPROVE_LABEL[a.type]?.(a.payload) ?? 'Approve'}</button>
+        <button style={btn('primary')} disabled={!!busy} onClick={() => go('approved')}>{busy === 'approved' ? 'Saving…' : a.type === 'sample_purchase' || a.type === 'domain_purchase' ? '✓ I bought it' : a.is_money ? 'Approve · spend' : rows.length ? `Approve · add ${rows.length} to sheet` : APPROVE_LABEL[a.type]?.(a.payload) ?? 'Approve'}</button>
         <button style={btn('ghost')} disabled={!!busy} onClick={() => go('sent_back')}>{busy === 'sent_back' ? (rerun && (a.type === 'scout_products' || RERUNNABLE.has(a.type)) ? 'Re-running…' : 'Saving…') : 'Send back'}</button>
         <button style={btn('danger')} disabled={!!busy} onClick={() => go('killed')}>Kill</button>
       </div>

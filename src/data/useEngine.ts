@@ -53,8 +53,8 @@ export interface DailyTask { id: string; body: string; status: string; note: str
 export interface DailyPlan { date: string; plan: { key: string; worker: string | null; label: string }[]; tasks: DailyTask[]; summary: { date: string; summary_text: string; numbers: Record<string, unknown> } | null }
 export const getDailyPlan = () => api<DailyPlan>('/api/engine/daily', { method: 'GET' });
 export const runDailyStep = () => api<{ date: string; done: boolean; step: { step: { key: string; label: string }; status: string; note: string } | null }>('/api/engine/daily', { method: 'POST' });
-export const decideApproval = (approvalId: string, status: 'approved' | 'sent_back' | 'killed', note?: string | null, rerun?: boolean) =>
-  api<{ ok: boolean; applied?: Record<string, unknown> | null; rerun?: RunResult; error?: string }>('/api/engine/decide', { body: { approval_id: approvalId, status, note, rerun } });
+export const decideApproval = (approvalId: string, status: 'approved' | 'sent_back' | 'killed', note?: string | null, rerun?: boolean, choice?: number) =>
+  api<{ ok: boolean; applied?: Record<string, unknown> | null; rerun?: RunResult; error?: string }>('/api/engine/decide', { body: { approval_id: approvalId, status, note, rerun, choice } });
 export const startCompany = () => api<{ workers: WorkerRow[]; anthropic: boolean }>('/api/engine/start', { method: 'POST' });
 
 // ── Playbooks ─────────────────────────────────────────────────────────

@@ -16,6 +16,8 @@ import { funnelStats } from '../../src/data/mktEngine';
 import type { TouchOutcome, Venture, ScriptChannel } from '../../src/data/mktEngine';
 import { landedCost, marginPct } from '../../src/data/ecomProducts';
 import { trendSystem, trendUser, parseTrends, ideaSystem, ideaUser, parseIdeas, scriptBody, gradeMeasured, auditSystem, auditUser, parseAudit, analyticsSystem, analyticsUser, parseGrades, bestHours, plannerSystem as postPlannerSystem, plannerUser as postPlannerUser, parseSlots, clipSystem, clipUser, parseClipEdit, cleanSegments } from './contentWorkers';
+import { supplierSystem, supplierUser, parseSuppliers, brandSystem, brandUser, parseBrands, domainStatusFrom, storeSystem, storeUser, extractHtml, qualityGate, diagnoseFunnel, readSystem, parseRead } from './ecomWorkers';
+import type { BrandCtx, SupplierPayload, BrandOption, GateCheck, Flag } from './ecomWorkers';
 import { ruleSource, trackerSystem, trackerUser, mergeTrackerTags } from './inbound';
 import type { InboundLite, SourceTag, Source } from './inbound';
 import type { AccountLite, MeasuredPost, InspirationDraft, PostDraft, AuditPayload, GradeOut, SlotOut, PlanItemLite, EditPlan } from './contentWorkers';
@@ -478,9 +480,132 @@ export function runInboundTracker(apiKey: string | undefined, sb: Sb, userId: st
   });
 }
 
+// ── E-commerce phases 5–7: per-brand workers ──────────────────────────
+interface BrandRow { id: string; name: string; positioning: string | null; domain: string | null; steps: Record<string, { status?: string; fields?: Record<string, string>; note?: string }> }
+async function brandFor(sb: Sb, userId: string, brandId?: string): Promise<{ row: BrandRow; ctx: BrandCtx; productId: string | null }> {
+  if (!brandId) throw new Error('Pick a brand.');
+  const [row] = await sb.get<BrandRow>(`ecom_brands?id=eq.${brandId}&user_id=eq.${userId}&select=id,name,positioning,domain,steps`);
+  if (!row) throw new Error('That brand is gone.');
+  const f = (n: number) => row.steps?.[String(n)]?.fields ?? {};
+  const [link] = await sb.get<{ product_id: string }>(`ecom_brand_products?brand_id=eq.${brandId}&user_id=eq.${userId}&order=created_at.asc&limit=1&select=product_id`);
+  const [prod] = link ? await sb.get<{ name: string; sell_price: number | null; supplier_cost: number | null; detail: Record<string, string> }>(`ecom_products?id=eq.${link.product_id}&select=name,sell_price,supplier_cost,detail`) : [];
+  const n = (v: unknown) => { const x = Number(v); return v === '' || v == null || !Number.isFinite(x) ? null : x; };
+  return {
+    row, productId: link?.product_id ?? null,
+    ctx: {
+      id: row.id, name: row.name, product: f(1).product_name || prod?.name || '', sell_price: n(f(2).sell_price) ?? n(prod?.sell_price), buyer: f(5).buyer || prod?.detail?.buyer || '',
+      angle: f(3).angle || prod?.detail?.angle || '', principle: f(3).principle || '', voice: f(5).voice || '', positioning: f(5).positioning || row.positioning || '', palette: f(5).palette || '',
+      domain: f(5).domain || row.domain || '', supplier_cost: n(f(4).unit_cost) ?? n(f(2).supplier_cost) ?? n(prod?.supplier_cost), ship_days: n(f(4).ship_days) ?? n(f(2).ship_days),
+    },
+  };
+}
+/** Merge fields into one step of the brand (the same shape BrandDetail saves). */
+async function patchStep(sb: Sb, userId: string, brandId: string, n: number, fields: Record<string, string>, status?: string) {
+  const [b] = await sb.get<{ steps: BrandRow['steps'] }>(`ecom_brands?id=eq.${brandId}&user_id=eq.${userId}&select=steps`);
+  if (!b) throw new Error('That brand is gone.');
+  const cur = b.steps?.[String(n)] ?? {};
+  const steps = { ...(b.steps ?? {}), [String(n)]: { ...cur, ...(status ? { status } : {}), fields: { ...(cur.fields ?? {}), ...fields } } };
+  await sb.patch('ecom_brands', `id=eq.${brandId}&user_id=eq.${userId}`, { steps, last_activity_at: now(), updated_at: now() });
+}
+const needBrand = (i: AnyRunInput) => (i.brandId ? null : Promise.resolve<RunOutcome>({ ok: false, error: 'Pick a brand first.' }));
+
+export function runSupplierFinder(apiKey: string | undefined, sb: Sb, userId: string, input: { brandId: string; instructions?: string | null; trigger?: Trigger }): Promise<RunOutcome> {
+  return runWorker(apiKey, sb, userId, {
+    key: 'supplier', task: 'Finding suppliers', input: { brand_id: input.brandId }, instructions: input.instructions, trigger: input.trigger, entityType: 'brand', entityId: input.brandId,
+    async execute(ctx) {
+      const b = await brandFor(sb, userId, input.brandId);
+      if (!b.ctx.product) return { summary: 'Pick the product (step 1) first.', skipped: true };
+      const res = await ctx.ask({ maxTokens: 5000, system: supplierSystem(ctx.brief), user: supplierUser(b.ctx, input.instructions), tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5, blocked_domains: BLOCKED_DOMAINS }] });
+      const p = parseSuppliers(res.text, b.ctx, b.productId, BLOCKED_DOMAINS);
+      const pick = p.suppliers[p.pick];
+      return { summary: p.summary || `${p.suppliers.length} suppliers, pick: ${pick.name}`, count: p.suppliers.length, dropped: p.dropped, approval: { type: 'supplier_pick', title: `Supplier Finder: ${b.row.name} — ${p.suppliers.length} suppliers, pick ${pick.name}`, payload: { ...p, sources: res.sources.slice(0, 15) }, principle: p.why_pick || null, source_url: pick.url, confidence: 'estimate', entity_type: 'brand', entity_id: b.row.id } };
+    },
+  });
+}
+
+export function runBrandLab(apiKey: string | undefined, sb: Sb, userId: string, input: { brandId: string; instructions?: string | null; trigger?: Trigger }): Promise<RunOutcome> {
+  return runWorker(apiKey, sb, userId, {
+    key: 'brandlab', task: 'Drafting three brand options', input: { brand_id: input.brandId }, instructions: input.instructions, trigger: input.trigger, entityType: 'brand', entityId: input.brandId,
+    async execute(ctx) {
+      const b = await brandFor(sb, userId, input.brandId);
+      if (!b.ctx.buyer) return { summary: 'Brand Lab reasons from the buyer — fill "Who\'s buying" (step 5) or run the Analyst on the product first.', skipped: true };
+      const res = await ctx.ask({ maxTokens: 5000, system: brandSystem(ctx.brief), user: brandUser(b.ctx, input.instructions) });
+      const p = parseBrands(res.text);
+      // A real .com check (RDAP), not a guess. Handles can't be checked
+      // without scraping, so they say "check by hand".
+      for (const o of p.options) {
+        const r = await fetch(`https://rdap.verisign.com/com/v1/domain/${encodeURIComponent(o.domain)}`, { headers: { accept: 'application/rdap+json' } }).catch(() => null);
+        o.domain_status = o.domain.endsWith('.com') && r ? domainStatusFrom(r.status) : 'unknown';
+      }
+      const free = p.options.filter((o) => o.domain_status === 'available').length;
+      return { summary: p.summary || `${p.options.length} options`, count: p.options.length, approval: { type: 'brand_options', title: `Brand Lab: ${p.options.map((o) => o.name).join(' · ')} (${free} .com free)`, payload: { brand_id: b.row.id, options: p.options, summary: p.summary }, principle: p.options[0]?.principle || null, entity_type: 'brand', entity_id: b.row.id } };
+    },
+  });
+}
+
+export function runStoreBuilder(apiKey: string | undefined, sb: Sb, userId: string, input: { brandId: string; instructions?: string | null; trigger?: Trigger }): Promise<RunOutcome> {
+  return runWorker(apiKey, sb, userId, {
+    key: 'builder', task: 'Building the store page', input: { brand_id: input.brandId }, instructions: input.instructions, trigger: input.trigger, entityType: 'brand', entityId: input.brandId,
+    async execute(ctx) {
+      const b = await brandFor(sb, userId, input.brandId);
+      if (!b.ctx.product || !b.ctx.angle) return { summary: 'The store page needs the product (step 1) and the angle (step 3).', skipped: true };
+      const res = await ctx.ask({ maxTokens: 12000, system: storeSystem(ctx.brief), user: storeUser(b.ctx, input.instructions) });
+      const html = extractHtml(res.text);
+      const gate = qualityGate(html);
+      const [build] = await sb.insert<{ id: string }>('ecom_store_builds', { user_id: userId, brand_id: b.row.id, status: gate.pass ? 'preview' : 'changes_requested', checks: { checks: gate.checks, pass: gate.pass }, html, summary: `${gate.checks.filter((c) => c.pass).length}/${gate.checks.length} checks` });
+      return { summary: `Store page drafted — quality gate ${gate.pass ? 'passed' : `failed: ${gate.checks.filter((c) => !c.pass).map((c) => c.name).join(', ')}`}.`, count: 1, approval: { type: 'store_draft', title: `Store Builder: ${b.row.name} landing page — gate ${gate.pass ? 'passed' : 'failed'}`, payload: { brand_id: b.row.id, build_id: build?.id ?? null, checks: gate.checks, pass: gate.pass, kb: Math.round(html.length / 1024), summary: gate.pass ? 'Every check passed. Preview it before approving.' : 'Some checks failed — send it back with what to fix.' }, confidence: 'hard', entity_type: 'brand', entity_id: b.row.id } };
+    },
+  });
+}
+
+export function runContentProducer(apiKey: string | undefined, sb: Sb, userId: string, input: { brandId: string; count?: number; instructions?: string | null; trigger?: Trigger }): Promise<RunOutcome> {
+  return runWorker(apiKey, sb, userId, {
+    key: 'content', task: 'Writing launch content', input: { brand_id: input.brandId, count: input.count ?? null }, instructions: input.instructions, trigger: input.trigger, entityType: 'brand', entityId: input.brandId,
+    async execute(ctx) {
+      const b = await brandFor(sb, userId, input.brandId);
+      if (!b.ctx.product) return { summary: 'Pick the product (step 1) first.', skipped: true };
+      const [acct] = await sb.get<AccountLite>(`social_accounts?user_id=eq.${userId}&brand_id=eq.${b.row.id}&order=created_at.asc&limit=1&select=${ACCOUNT_COLS}`);
+      const account: AccountLite = acct ?? { id: '', platform: 'tiktok', handle: b.row.name.toLowerCase().replace(/[^a-z0-9._]/g, ''), owner: 'ecom', voice: b.ctx.voice || null, posts_per_week_goal: 14, followers: null };
+      const [angles] = await Promise.all([b.productId ? sb.get<{ angle: string; principle: string | null; how_to_film: string | null }>(`ecom_angles?product_id=eq.${b.productId}&user_id=eq.${userId}&limit=3&select=angle,principle,how_to_film`) : Promise.resolve([])]);
+      const count = Math.max(3, Math.min(7, input.count ?? 6));
+      const extra = [`This is the launch content for an e-commerce brand. Product: ${b.ctx.product}${b.ctx.sell_price != null ? ` at $${b.ctx.sell_price}` : ''}. Buyer: ${b.ctx.buyer || 'unknown'}.`, `Rotate across these angles: ${[b.ctx.angle, ...angles.map((a) => a.angle)].filter(Boolean).slice(0, 3).join(' | ') || 'pick three'}.`, 'In shot_list, name the product shots to film from the sample. Put one Higgsfield visual prompt per post at the end of the script as "Higgsfield: …".', input.instructions ?? ''].filter(Boolean).join('\n');
+      const res = await ctx.ask({ maxTokens: 7000, system: ideaSystem(ctx.brief), user: ideaUser({ account, count, history: [], inspiration: [], audit: null }, extra) });
+      const p = parseIdeas(res.text, count);
+      const nextMon = addDaysIso(ctx.date, ((8 - new Date(`${ctx.date}T00:00:00Z`).getUTCDay()) % 7) || 7);
+      return { summary: p.summary || `${p.posts.length} posts for ${b.row.name}`, count: p.posts.length, dropped: p.dropped, approval: { type: 'content_plan', title: `Content Producer: ${p.posts.length} launch posts for ${b.row.name}`, payload: { account_id: acct?.id ?? null, brand_id: b.row.id, handle: account.handle, week_start: nextMon, posts: p.posts, summary: p.summary, dropped: p.dropped }, principle: p.posts[0]?.principle || null, entity_type: 'brand', entity_id: b.row.id } };
+    },
+  });
+}
+
+export function runBrandAnalytics(apiKey: string | undefined, sb: Sb, userId: string, input: { brandId: string; instructions?: string | null; trigger?: Trigger }): Promise<RunOutcome> {
+  return runWorker(apiKey, sb, userId, {
+    key: 'analytics', task: 'Reading the funnel', input: { brand_id: input.brandId }, instructions: input.instructions, trigger: input.trigger, entityType: 'brand', entityId: input.brandId,
+    async execute(ctx) {
+      const b = await brandFor(sb, userId, input.brandId);
+      const f9 = b.row.steps?.['9']?.fields ?? {};
+      const since = `${addDaysIso(ctx.date, -30)}T00:00:00`;
+      // Hard numbers win over typed ones: orders from ecom_orders, funnel
+      // rows from ecom_funnel_daily, views from the brand's logged posts.
+      const [orders, links] = await Promise.all([
+        sb.get<{ total: number }>(`ecom_orders?brand_id=eq.${b.row.id}&user_id=eq.${userId}&placed_at=gte.${since}&select=total`),
+        sb.get<{ id: string }>(`ecom_brand_products?brand_id=eq.${b.row.id}&user_id=eq.${userId}&select=id`),
+      ]);
+      const funnel = links.length ? await sb.get<{ views: number; clicks: number; add_to_carts: number; purchases: number; refunds: number }>(`ecom_funnel_daily?brand_product_id=in.(${links.map((l) => l.id).join(',')})&date=gte.${since.slice(0, 10)}&select=views,clicks,add_to_carts,purchases,refunds`) : [];
+      const sum = (k: 'views' | 'clicks' | 'add_to_carts' | 'purchases' | 'refunds') => funnel.reduce((s, r) => s + (Number(r[k]) || 0), 0);
+      const typed = (k: string) => { const x = Number(f9[k]); return f9[k] === '' || f9[k] == null || !Number.isFinite(x) ? null : x; };
+      const f = funnel.length ? { views: sum('views'), clicks: sum('clicks'), add_to_carts: sum('add_to_carts'), purchases: sum('purchases'), refunds: sum('refunds') } : { views: typed('views'), clicks: typed('clicks'), add_to_carts: typed('add_to_carts'), purchases: orders.length || typed('purchases'), refunds: null };
+      const d = diagnoseFunnel(f);
+      const res = await ctx.ask({ maxTokens: 600, system: readSystem(ctx.brief), user: `${b.row.name}: ${JSON.stringify(f)}. Orders 30d: ${orders.length} ($${orders.reduce((s, o) => s + Number(o.total), 0).toFixed(0)}). Diagnosis: ${d.diagnosis} (${d.why}). Flag: ${d.flag}.${input.instructions ? ` ${input.instructions}` : ''}` });
+      const r = parseRead(res.text, d.flag);
+      if (d.flag === 'kill' || d.flag === 'double_down') await alert(sb, userId, 'ecom', d.flag === 'kill' ? 'warn' : 'info', `brand_${d.flag}`, `${b.row.name}: ${d.flag === 'kill' ? 'kill flag' : 'double down'} — ${d.diagnosis}`, d.why, { type: 'brand', id: b.row.id });
+      return { summary: `${d.diagnosis} → ${r.recommendation}`, count: 1, approval: { type: 'brand_read', title: `Analytics: ${b.row.name} — ${d.diagnosis}, recommend ${r.recommendation}`, payload: { brand_id: b.row.id, funnel: f, source: funnel.length ? 'funnel rows' : 'typed numbers', orders30: orders.length, ...d, ...r, summary: d.why }, confidence: funnel.length ? 'hard' : 'estimate', entity_type: 'brand', entity_id: b.row.id } };
+    },
+  });
+}
+
 /** One entry point for "Run now", the Assign-task router and the daily
  *  plan — keyed by worker. */
-export interface AnyRunInput { channel?: Channel; count?: number; productId?: string; venture?: Venture; scriptChannel?: ScriptChannel; all?: boolean; accountId?: string; clipId?: string; instructions?: string | null; trigger?: Trigger }
+export interface AnyRunInput { channel?: Channel; count?: number; productId?: string; venture?: Venture; scriptChannel?: ScriptChannel; all?: boolean; accountId?: string; clipId?: string; brandId?: string; instructions?: string | null; trigger?: Trigger }
 export const RUNNERS: Record<string, (apiKey: string | undefined, sb: Sb, userId: string, i: AnyRunInput) => Promise<RunOutcome>> = {
   scout: (k, sb, u, i) => runScout(k, sb, u, { channel: i.channel ?? 'tiktok', count: i.count, instructions: i.instructions, trigger: i.trigger }),
   analyst: (k, sb, u, i) => (i.productId ? runAnalyst(k, sb, u, { productId: i.productId, instructions: i.instructions, trigger: i.trigger }) : Promise.resolve({ ok: false, error: 'Pick a product for the Analyst.' })),
@@ -494,6 +619,11 @@ export const RUNNERS: Record<string, (apiKey: string | undefined, sb: Sb, userId
   account_auditor: (k, sb, u, i) => runAuditor(k, sb, u, { accountId: i.accountId, instructions: i.instructions, trigger: i.trigger }),
   content_analytics: (k, sb, u, i) => runContentAnalytics(k, sb, u, { accountId: i.accountId, all: i.all, instructions: i.instructions, trigger: i.trigger }),
   post_planner: (k, sb, u, i) => runPostPlanner(k, sb, u, { accountId: i.accountId, instructions: i.instructions, trigger: i.trigger }),
+  supplier: (k, sb, u, i) => needBrand(i) ?? runSupplierFinder(k, sb, u, { brandId: i.brandId!, instructions: i.instructions, trigger: i.trigger }),
+  brandlab: (k, sb, u, i) => needBrand(i) ?? runBrandLab(k, sb, u, { brandId: i.brandId!, instructions: i.instructions, trigger: i.trigger }),
+  builder: (k, sb, u, i) => needBrand(i) ?? runStoreBuilder(k, sb, u, { brandId: i.brandId!, instructions: i.instructions, trigger: i.trigger }),
+  content: (k, sb, u, i) => needBrand(i) ?? runContentProducer(k, sb, u, { brandId: i.brandId!, count: i.count, instructions: i.instructions, trigger: i.trigger }),
+  analytics: (k, sb, u, i) => needBrand(i) ?? runBrandAnalytics(k, sb, u, { brandId: i.brandId!, instructions: i.instructions, trigger: i.trigger }),
   inbound_tracker: (k, sb, u, i) => runInboundTracker(k, sb, u, { all: i.all, instructions: i.instructions, trigger: i.trigger }),
   clip_editor: (k, sb, u, i) => runClipEditor(k, sb, u, { clipId: i.clipId, instructions: i.instructions, trigger: i.trigger }),
 };
@@ -590,11 +720,13 @@ export const APPLIERS: Record<string, Applier> = {
     return { saved: items.length };
   },
 
-  /** Each post lands on the Plan as a scripted card on its day. */
+  /** Each post lands on the Plan as a scripted card on its day. From the
+   *  Content Producer it also carries the brand and fills step 7's hooks. */
   content_plan: async (sb, u, raw) => {
     const posts = (raw.posts ?? []) as PostDraft[];
     const week = raw.week_start as string;
-    if (posts.length) await sb.insert('content_items', posts.map((p) => ({ user_id: u, account_id: raw.account_id ?? null, status: 'script', concept: p.concept, hooks: p.hooks, script: scriptBody(p), shot_list: p.shot_list, caption: p.caption || null, hashtags: p.hashtags || null, format: p.format, scheduled_for: week ? addDaysIso(week, p.day) : null })));
+    if (raw.brand_id) await patchStep(sb, u, raw.brand_id as string, 7, { hooks: posts.map((p) => p.hooks[0]).filter(Boolean).join('\n') }, 'in_progress').catch(() => {});
+    if (posts.length) await sb.insert('content_items', posts.map((p) => ({ user_id: u, account_id: raw.account_id || null, brand_id: raw.brand_id ?? null, status: 'script', concept: p.concept, hooks: p.hooks, script: scriptBody(p), shot_list: p.shot_list, caption: p.caption || null, hashtags: p.hashtags || null, format: p.format, scheduled_for: week ? addDaysIso(week, p.day) : null })));
     return { added: posts.length };
   },
 
@@ -618,6 +750,64 @@ export const APPLIERS: Record<string, Applier> = {
     const slots = (raw.slots ?? []) as SlotOut[];
     for (const s of slots) await sb.patch('content_items', `id=eq.${s.item_id}&user_id=eq.${u}`, { scheduled_for: s.scheduled_for, scheduled_time: s.scheduled_time, caption: s.caption, hashtags: s.hashtags || null, updated_at: now() });
     return { scheduled: slots.length };
+  },
+
+  /** The picked supplier fills step 4, every option is saved on the
+   *  product, and the sample becomes a red money card — never bought. */
+  supplier_pick: async (sb, u, raw) => {
+    const p = raw as unknown as SupplierPayload & { choice?: number };
+    const idx = typeof p.choice === 'number' && p.suppliers[p.choice] ? p.choice : p.pick;
+    const s = p.suppliers[idx];
+    let supplierId: string | null = null;
+    if (p.product_id) {
+      const rows = await sb.insert<{ id: string }>('ecom_suppliers', p.suppliers.map((x, i) => ({ user_id: u, product_id: p.product_id, name: x.name, url: x.url, unit_cost: x.unit_cost, ship_cost: x.ship_cost, ship_days: x.ship_days, rating: x.rating, moq: x.moq, branded_packaging: x.branded_packaging, chosen: i === idx })));
+      supplierId = rows[idx]?.id ?? null;
+    }
+    await patchStep(sb, u, p.brand_id, 4, { supplier_name: s.name, supplier_url: s.url ?? '', unit_cost: s.unit_cost == null ? '' : String(s.unit_cost), ship_days: s.ship_days == null ? '' : String(s.ship_days), sample_status: 'not ordered', inspection: p.inspection.map((x) => `☐ ${x}`).join('\n') }, 'in_progress');
+    let sampleId: string | null = null;
+    if (supplierId) { const [smp] = await sb.insert<{ id: string }>('ecom_samples', { user_id: u, supplier_id: supplierId, brand_id: p.brand_id, status: 'queued', cost_usd: p.sample.est_cost, shot_list: p.shot_list }); sampleId = smp?.id ?? null; }
+    const cost = p.sample.est_cost ?? (s.unit_cost != null ? (s.unit_cost + (s.ship_cost ?? 0)) * p.sample.qty : null);
+    await sb.insert('ai_approvals', { user_id: u, domain: 'ecom', type: 'sample_purchase', entity_type: 'brand', entity_id: p.brand_id, title: `Buy the sample: ${p.sample.qty}× from ${s.name}${cost != null ? ` (~$${cost.toFixed(2)})` : ''}`, payload: { brand_id: p.brand_id, sample_id: sampleId, supplier: s.name, url: s.url, qty: p.sample.qty, variant: p.sample.variant, summary: 'Buy it yourself from the link, then approve here to mark it ordered.' }, is_money: true, amount_usd: cost == null ? null : Number(cost.toFixed(2)), confidence: 'estimate', source_url: s.url });
+    return { supplier: s.name, saved: p.suppliers.length };
+  },
+
+  /** "I bought it" — the sample is marked ordered on step 4. */
+  sample_purchase: async (sb, u, raw) => {
+    if (raw.sample_id) await sb.patch('ecom_samples', `id=eq.${raw.sample_id}&user_id=eq.${u}`, { status: 'ordered', updated_at: now() });
+    await patchStep(sb, u, raw.brand_id as string, 4, { sample_status: 'ordered' });
+    return { ordered: true };
+  },
+
+  /** The chosen option fills step 5; the domain becomes a money card. */
+  brand_options: async (sb, u, raw) => {
+    const opts = (raw.options ?? []) as BrandOption[];
+    const o = opts[typeof raw.choice === 'number' && opts[raw.choice] ? raw.choice : 0];
+    if (!o) throw new Error('No option to apply.');
+    const brandId = raw.brand_id as string;
+    await patchStep(sb, u, brandId, 5, { positioning: o.positioning, voice: o.voice, palette: o.palette.map((c) => `${c.hex} ${c.name} — ${c.why}`).join('\n'), domain: o.domain, handles: o.handles, principles: o.principle }, 'in_progress');
+    await sb.patch('ecom_brands', `id=eq.${brandId}&user_id=eq.${u}`, { name: o.name, positioning: o.positioning, domain: o.domain, identity: { palette: o.palette, type: o.type, logo_direction: o.logo_direction, voice: o.voice }, updated_at: now() });
+    if (o.domain_status !== 'taken') await sb.insert('ai_approvals', { user_id: u, domain: 'ecom', type: 'domain_purchase', entity_type: 'brand', entity_id: brandId, title: `Buy the domain: ${o.domain}${o.domain_status === 'available' ? ' (available)' : ''}`, payload: { brand_id: brandId, domain: o.domain, summary: 'Buy it yourself (Cloudflare Registrar is at cost), then approve here to mark it bought.' }, is_money: true, amount_usd: 10.44, confidence: 'estimate', source_url: `https://domains.cloudflare.com/?domain=${encodeURIComponent(o.domain)}` });
+    return { name: o.name, domain: o.domain };
+  },
+
+  domain_purchase: async (sb, u, raw) => {
+    await patchStep(sb, u, raw.brand_id as string, 5, { domain: `${raw.domain} (bought)` });
+    return { domain: raw.domain };
+  },
+
+  /** Approving the page fills step 6 with the build; nothing is published. */
+  store_draft: async (sb, u, raw) => {
+    if (raw.build_id) await sb.patch('ecom_store_builds', `id=eq.${raw.build_id}&user_id=eq.${u}`, { status: 'preview', updated_at: now() });
+    await patchStep(sb, u, raw.brand_id as string, 6, { review_notes: `Store page approved ${new Date().toISOString().slice(0, 10)} — ${raw.pass ? 'gate passed' : 'approved with failing checks'}. Download it from the brand's Store build step.` }, 'in_progress');
+    return { build_id: raw.build_id };
+  },
+
+  brand_read: async (sb, u, raw) => {
+    const f = (raw.funnel ?? {}) as Record<string, number | null>;
+    const n = (v: number | null | undefined) => (v == null ? '' : String(v));
+    await patchStep(sb, u, raw.brand_id as string, 9, { views: n(f.views), clicks: n(f.clicks), add_to_carts: n(f.add_to_carts), purchases: n(f.purchases), diagnosis: String(raw.diagnosis) });
+    await patchStep(sb, u, raw.brand_id as string, 10, { reason: `Analytics recommends ${raw.recommendation}: ${raw.evidence || raw.why}${raw.next ? ` Next: ${raw.next}` : ''}`.slice(0, 1000) });
+    return { diagnosis: raw.diagnosis, recommendation: raw.recommendation };
   },
 
   inbound_tags: async (sb, u, raw) => {
@@ -648,12 +838,13 @@ function rerunInput(key: string, input: Record<string, unknown>): AnyRunInput {
   if (key === 'lead_filter') return { all: true };
   if (['trend_researcher', 'idea_script', 'account_auditor', 'post_planner'].includes(key)) return { accountId: (input.account_id as string | null) ?? undefined, count: (input.count as number | null) ?? undefined };
   if (key === 'inbound_tracker') return { all: true };
+  if (['supplier', 'brandlab', 'builder', 'content', 'analytics'].includes(key)) return { brandId: input.brand_id as string, count: (input.count as number | null) ?? undefined };
   if (key === 'content_analytics') return { accountId: (input.account_id as string | null) ?? undefined, all: true };
   if (key === 'clip_editor') return { clipId: (input.clip_id as string | null) ?? undefined };
   return {};
 }
 
-export interface DecideInput { approvalId: string; status: 'approved' | 'sent_back' | 'killed'; note?: string | null; rerun?: boolean }
+export interface DecideInput { approvalId: string; status: 'approved' | 'sent_back' | 'killed'; note?: string | null; rerun?: boolean; /** Which option, for cards that offer several (Brand Lab, suppliers). */ choice?: number }
 export async function decide(apiKey: string | undefined, sb: Sb, userId: string, input: DecideInput): Promise<{ ok: boolean; applied?: unknown; rerun?: RunOutcome; error?: string }> {
   const [a] = await sb.get<{ id: string; type: string; status: string; payload: Record<string, unknown>; worker_id: string | null; run_id: string | null; is_money: boolean }>(`ai_approvals?id=eq.${input.approvalId}&user_id=eq.${userId}&select=id,type,status,payload,worker_id,run_id,is_money`);
   if (!a) return { ok: false, error: 'Approval not found.' };
@@ -663,7 +854,7 @@ export async function decide(apiKey: string | undefined, sb: Sb, userId: string,
   // reading "approved" with nothing behind it.
   let applied: unknown = null;
   if (input.status === 'approved' && APPLIERS[a.type]) {
-    try { applied = await APPLIERS[a.type](sb, userId, a.payload); }
+    try { applied = await APPLIERS[a.type](sb, userId, typeof input.choice === 'number' ? { ...a.payload, choice: input.choice } : a.payload); }
     catch (e) { return { ok: false, error: `Could not apply it: ${e instanceof Error ? e.message : String(e)}` }; }
   }
   await sb.patch('ai_approvals', `id=eq.${a.id}`, { status: input.status, my_note: input.note?.trim() || null, decided_at: now(), updated_at: now() });

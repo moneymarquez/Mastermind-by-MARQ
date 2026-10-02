@@ -1,4 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '../../../lib/supabase';
+import { runWorkerNow } from '../../../data/useEngine';
+import { diagnoseFunnel } from '../../../../worker/lib/ecomWorkers';
+import { StorePreview } from './ApprovalBodies';
 import type { CSSProperties } from 'react';
 import type { Brand, StepDef, StepState, StepStatus } from '../../../data/ecom';
 import { STEPS, stepState, stepStatus, nextStep, doneSteps, validate, money, ago } from '../../../data/ecom';
@@ -44,21 +48,17 @@ export default function BrandDetail({ brand, clientName, orders30d, productsLive
           </>
         ) : (
           <div style={{ gridColumn: '1 / -1' }}>
-            <TeachingEmpty what="Revenue, orders and conversion show here once Shopify is connected." worker="Analytics" connection="Shopify custom app token" phase={7} />
+            <TeachingEmpty what="Revenue, orders and conversion show here once Shopify is connected. Until then, Analytics reads the funnel from step 9." worker="Analytics" connection="Shopify custom app token" />
           </div>
         )}
       </div>
 
-      <Section title="30-day revenue + views">
-        <div style={{ ...E.card, padding: 16 }}>
-          <TeachingEmpty what="The chart fills from Shopify orders and post metrics." worker="Analytics" connection="Shopify + Instagram / TikTok" phase={7} />
-        </div>
-      </Section>
+      <Performance brand={brand} />
 
       <Section title={`The 10 steps · ${done} done`} aside={<ProgressRing done={done} total={10} size={34} />}>
         <div data-demo="brand-steps" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {STEPS.map((s) => (
-            <StepCard key={s.n} brand={brand} def={s} open={current === s.n} onToggle={() => setOpenStep(current === s.n ? -1 : s.n)} onSave={(state) => onSaveStep(brand, s.n, state)} />
+            <StepCard key={`${s.n}-${brand.last_activity_at}`} brand={brand} def={s} open={current === s.n} onToggle={() => setOpenStep(current === s.n ? -1 : s.n)} onSave={(state) => onSaveStep(brand, s.n, state)} />
           ))}
         </div>
       </Section>
@@ -145,6 +145,8 @@ function StepCard({ brand, def, open, onToggle, onSave }: { brand: Brand; def: S
             </div>
           )}
 
+          {STEP_WORKER[def.n] && <StepWorker brand={brand} n={def.n} />}
+
           <div style={{ marginTop: 12 }}>
             <div style={{ ...label, marginBottom: 4 }}>Your note</div>
             <input style={field} value={note} placeholder="Anything to remember, or a note back to the worker later" onChange={(e) => setNote(e.target.value)} />
@@ -161,5 +163,82 @@ function StepCard({ brand, def, open, onToggle, onSave }: { brand: Brand; def: S
         </div>
       )}
     </div>
+  );
+}
+
+/** The worker that does each step's work, run from the step itself. */
+const STEP_WORKER: Record<number, { key: string; name: string; busy: string }> = {
+  4: { key: 'supplier', name: 'Supplier Finder', busy: 'Searching… (40–90s)' },
+  5: { key: 'brandlab', name: 'Brand Lab', busy: 'Designing… (30–60s)' },
+  6: { key: 'builder', name: 'Store Builder', busy: 'Building… (60–120s)' },
+  7: { key: 'content', name: 'Content Producer', busy: 'Writing… (30–60s)' },
+  9: { key: 'analytics', name: 'Analytics', busy: 'Reading… (10–20s)' },
+};
+function StepWorker({ brand, n }: { brand: Brand; n: number }) {
+  const w = STEP_WORKER[n];
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [html, setHtml] = useState<string | null>(null);
+  useEffect(() => {
+    if (n !== 6) return;
+    supabase.from('ecom_store_builds').select('html').eq('brand_id', brand.id).not('html', 'is', null).order('created_at', { ascending: false }).limit(1)
+      .then(({ data }) => setHtml(((data ?? [])[0] as { html?: string } | undefined)?.html ?? null));
+  }, [n, brand.id, msg]);
+  const run = async () => {
+    setBusy(true); setMsg(null);
+    const r = await runWorkerNow(w.key, { brand_id: brand.id });
+    setBusy(false);
+    setMsg(r.ok ? { ok: true, text: r.skipped ? r.summary ?? '' : `${r.summary ?? 'Done'} → waiting in Approvals.${r.costUsd ? ` (${money(r.costUsd)})` : ''}` } : { ok: false, text: r.error ?? 'Run failed.' });
+  };
+  return (
+    <div style={{ marginTop: 12, padding: 10, borderRadius: 'var(--radius-sm)', border: `1px dashed ${E.border}` }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <button style={btn('primary')} disabled={busy} onClick={run}>{busy ? w.busy : `🤖 Run ${w.name}`}</button>
+        <span style={{ fontSize: 'var(--text-caption)', color: E.faint }}>Its output waits in Approvals; approving fills this step.</span>
+      </div>
+      {msg && <div style={{ fontSize: 'var(--text-caption)', color: msg.ok ? E.muted : E.red, marginTop: 6 }}>{msg.text}</div>}
+      {n === 6 && html && <div style={{ marginTop: 10 }}><div style={{ ...label, marginBottom: 6 }}>Latest store page</div><StorePreview html={html} name={brand.name} /></div>}
+    </div>
+  );
+}
+
+/** Performance + alerts: the funnel from step 9 (filled by Analytics or
+ *  by hand), where it breaks, and this brand's kill / double-down flags. */
+function Performance({ brand }: { brand: Brand }) {
+  const [alerts, setAlerts] = useState<{ id: string; severity: string; title: string; body: string | null; created_at: string }[]>([]);
+  useEffect(() => {
+    supabase.from('ai_alerts').select('id,severity,title,body,created_at').eq('entity_type', 'brand').eq('entity_id', brand.id).order('created_at', { ascending: false }).limit(5)
+      .then(({ data }) => setAlerts((data ?? []) as typeof alerts));
+  }, [brand.id]);
+  const f = stepState(brand, 9).fields ?? {};
+  const n = (k: string) => { const x = Number(f[k]); return f[k] === '' || f[k] == null || !Number.isFinite(x) ? null : x; };
+  const funnel = { views: n('views'), clicks: n('clicks'), add_to_carts: n('add_to_carts'), purchases: n('purchases') };
+  const has = Object.values(funnel).some((v) => v != null);
+  const d = has ? diagnoseFunnel(funnel) : null;
+  const rec = stepState(brand, 10).fields?.reason;
+  const FLAG: Record<string, string> = { kill: E.red, double_down: E.green, fix: E.amber, wait: E.faint };
+  return (
+    <Section title="Performance">
+      <div style={{ ...E.card, padding: 16 }}>
+        {has ? (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: 12 }}>
+              <Metric label="Views" value={(funnel.views ?? 0).toLocaleString()} />
+              <Metric label="Clicks" value={String(funnel.clicks ?? 0)} />
+              <Metric label="Carts" value={String(funnel.add_to_carts ?? 0)} />
+              <Metric label="Sales" value={String(funnel.purchases ?? 0)} />
+            </div>
+            {d && <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', marginTop: 10 }}><Badge color={FLAG[d.flag]}>{d.flag.replace('_', ' ')}</Badge><span style={{ fontSize: 'var(--text-body)', color: E.text }}>{d.diagnosis}</span><span style={{ fontSize: 'var(--text-caption)', color: E.muted, flexBasis: '100%' }}>{d.why}</span></div>}
+            {rec && <div style={{ fontSize: 'var(--text-caption)', color: E.muted, marginTop: 8 }}><span style={label}>Recommendation</span> {rec}</div>}
+          </>
+        ) : <TeachingEmpty what="The funnel shows here once step 9 has numbers — run Analytics from step 9, or type them in." worker="Analytics" connection="Shopify (optional — hand-entered numbers work)" />}
+        {alerts.length > 0 && (
+          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={label}>Alerts</div>
+            {alerts.map((a) => <div key={a.id} style={{ display: 'flex', gap: 6, alignItems: 'baseline', flexWrap: 'wrap', fontSize: 'var(--text-caption)', color: E.muted }}><Badge color={a.severity === 'urgent' ? E.red : a.severity === 'warn' ? E.amber : E.blue}>{a.severity}</Badge><span style={{ color: E.text }}>{a.title}</span><span>{ago(a.created_at)}</span></div>)}
+          </div>
+        )}
+      </div>
+    </Section>
   );
 }
