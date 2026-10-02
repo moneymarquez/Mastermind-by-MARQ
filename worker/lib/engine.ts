@@ -16,6 +16,8 @@ import { funnelStats } from '../../src/data/mktEngine';
 import type { TouchOutcome, Venture, ScriptChannel } from '../../src/data/mktEngine';
 import { landedCost, marginPct } from '../../src/data/ecomProducts';
 import { trendSystem, trendUser, parseTrends, ideaSystem, ideaUser, parseIdeas, scriptBody, gradeMeasured, auditSystem, auditUser, parseAudit, analyticsSystem, analyticsUser, parseGrades, bestHours, plannerSystem as postPlannerSystem, plannerUser as postPlannerUser, parseSlots, clipSystem, clipUser, parseClipEdit, cleanSegments } from './contentWorkers';
+import { ruleSource, trackerSystem, trackerUser, mergeTrackerTags } from './inbound';
+import type { InboundLite, SourceTag, Source } from './inbound';
 import type { AccountLite, MeasuredPost, InspirationDraft, PostDraft, AuditPayload, GradeOut, SlotOut, PlanItemLite, EditPlan } from './contentWorkers';
 
 export const ENGINE_DOMAINS = ['ecom', 'content', 'marketing', 'digest'] as const;
@@ -451,6 +453,31 @@ export function runClipEditor(apiKey: string | undefined, sb: Sb, userId: string
   });
 }
 
+// ── Inbound Tracker (M3) ──────────────────────────────────────────────
+export function runInboundTracker(apiKey: string | undefined, sb: Sb, userId: string, input: { all?: boolean; instructions?: string | null; trigger?: Trigger }): Promise<RunOutcome> {
+  return runWorker(apiKey, sb, userId, {
+    key: 'inbound_tracker', task: 'Tagging where inbound leads came from', input: { all: !!input.all }, instructions: input.instructions, trigger: input.trigger, entityType: 'inbound',
+    async execute(ctx) {
+      const rows = await sb.get<InboundLite & { source_by: string | null }>(`mkt_inbound?user_id=eq.${userId}${input.all ? '' : '&source_by=is.null'}&order=first_touch_at.desc&limit=200&select=id,name,source,source_detail,message,notes,page_url,utm,first_touch_at,source_by`);
+      if (!rows.length) return { summary: input.all ? 'No inbound leads yet.' : 'Every inbound lead already has its source.', skipped: true };
+      const tags: SourceTag[] = [];
+      const unsure: InboundLite[] = [];
+      for (const r of rows) {
+        const t = ruleSource({ utm: r.utm, source_detail: r.source_detail, message: r.message, notes: r.notes, referrer: r.source_detail?.startsWith('Referrer: ') ? r.source_detail.slice(10) : null });
+        if (t) tags.push({ id: r.id, name: r.name, source: t.source, detail: t.detail, by: 'rule', was: r.source }); else unsure.push(r);
+      }
+      if (unsure.length) {
+        const res = await ctx.ask({ maxTokens: 2000, system: trackerSystem(ctx.brief), user: trackerUser(unsure.slice(0, 60)) });
+        tags.push(...mergeTrackerTags(res.text, unsure));
+      }
+      const changed = tags.filter((t) => t.source !== t.was).length;
+      const counts = Object.fromEntries((['website', 'ig_dm', 'tiktok', 'referral', 'google', 'other'] as Source[]).map((k) => [k, tags.filter((t) => t.source === k).length]));
+      const summary = `${tags.length} lead${tags.length === 1 ? '' : 's'} tagged, ${changed} changed source.`;
+      return { summary, count: tags.length, approval: { type: 'inbound_tags', title: `Inbound Tracker: ${tags.length} source${tags.length === 1 ? '' : 's'} (${changed} changed)`, payload: { tags, counts, summary }, principle: 'You can only double down on a channel you can see.', confidence: unsure.length ? 'estimate' : 'hard' } };
+    },
+  });
+}
+
 /** One entry point for "Run now", the Assign-task router and the daily
  *  plan — keyed by worker. */
 export interface AnyRunInput { channel?: Channel; count?: number; productId?: string; venture?: Venture; scriptChannel?: ScriptChannel; all?: boolean; accountId?: string; clipId?: string; instructions?: string | null; trigger?: Trigger }
@@ -467,6 +494,7 @@ export const RUNNERS: Record<string, (apiKey: string | undefined, sb: Sb, userId
   account_auditor: (k, sb, u, i) => runAuditor(k, sb, u, { accountId: i.accountId, instructions: i.instructions, trigger: i.trigger }),
   content_analytics: (k, sb, u, i) => runContentAnalytics(k, sb, u, { accountId: i.accountId, all: i.all, instructions: i.instructions, trigger: i.trigger }),
   post_planner: (k, sb, u, i) => runPostPlanner(k, sb, u, { accountId: i.accountId, instructions: i.instructions, trigger: i.trigger }),
+  inbound_tracker: (k, sb, u, i) => runInboundTracker(k, sb, u, { all: i.all, instructions: i.instructions, trigger: i.trigger }),
   clip_editor: (k, sb, u, i) => runClipEditor(k, sb, u, { clipId: i.clipId, instructions: i.instructions, trigger: i.trigger }),
 };
 
@@ -592,6 +620,12 @@ export const APPLIERS: Record<string, Applier> = {
     return { scheduled: slots.length };
   },
 
+  inbound_tags: async (sb, u, raw) => {
+    const tags = (raw.tags ?? []) as SourceTag[];
+    for (const t of tags) await sb.patch('mkt_inbound', `id=eq.${t.id}&user_id=eq.${u}`, { source: t.source, source_detail: t.detail || null, source_by: t.by, updated_at: now() });
+    return { tagged: tags.length };
+  },
+
   /** The approved edit is saved on the clip; its post moves to Edited. */
   clip_edit: async (sb, u, raw) => {
     const id = raw.clip_id as string;
@@ -613,6 +647,7 @@ function rerunInput(key: string, input: Record<string, unknown>): AnyRunInput {
   if (key === 'campaign_planner') return { venture: input.venture as Venture };
   if (key === 'lead_filter') return { all: true };
   if (['trend_researcher', 'idea_script', 'account_auditor', 'post_planner'].includes(key)) return { accountId: (input.account_id as string | null) ?? undefined, count: (input.count as number | null) ?? undefined };
+  if (key === 'inbound_tracker') return { all: true };
   if (key === 'content_analytics') return { accountId: (input.account_id as string | null) ?? undefined, all: true };
   if (key === 'clip_editor') return { clipId: (input.clip_id as string | null) ?? undefined };
   return {};

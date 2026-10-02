@@ -25,6 +25,7 @@ export const APPROVE_LABEL: Record<string, (p: P) => string> = {
   content_grades: (p) => `Approve · grade ${plural(arr(p.items).length, 'post')}`,
   post_plan: (p) => `Approve · schedule ${arr(p.slots).length}`,
   clip_edit: () => 'Approve · save the edit',
+  inbound_tags: (p) => `Approve · tag ${arr(p.tags).length}`,
 };
 const DAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const secs = (n: unknown) => (typeof n === 'number' ? `${Math.floor(n / 60)}:${String(Math.floor(n % 60)).padStart(2, '0')}` : '—');
@@ -250,6 +251,25 @@ export function ApprovalBody({ type, payload: p }: { type: string; payload: P })
             <Line k="Tags" v={x.hashtags} /><Line k="Cross-post" v={x.cross_post.join(' · ')} /><Line k="Why then" v={x.why_time} />
           </Box>
         ))}
+      </div>
+    );
+  }
+  if (type === 'inbound_tags') {
+    const SRC: Record<string, string> = { website: 'Website', ig_dm: 'Instagram', tiktok: 'TikTok', referral: 'Referral', google: 'Google', other: 'Other' };
+    const c = (p.counts ?? {}) as Record<string, number>;
+    return (
+      <div style={{ marginTop: 10 }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{Object.entries(c).filter(([, n]) => n > 0).map(([k, n]) => <Badge key={k} color={E.blue}>{SRC[k] ?? k} · {n}</Badge>)}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8, maxHeight: 260, overflow: 'auto' }}>
+          {arr<{ id: string; name: string | null; source: string; detail: string; by: string; was: string }>(p.tags).map((t) => (
+            <div key={t.id} style={{ display: 'flex', gap: 6, alignItems: 'baseline', flexWrap: 'wrap', fontSize: 'var(--text-caption)', color: E.muted }}>
+              <span style={{ color: E.text, fontWeight: 600 }}>{t.name ?? 'Lead'}</span>
+              {t.was !== t.source && <span style={{ color: E.faint, textDecoration: 'line-through' }}>{SRC[t.was] ?? t.was}</span>}
+              <Badge color={t.was !== t.source ? E.amber : E.faint}>{SRC[t.source] ?? t.source}</Badge>
+              <span>{t.detail}{t.by === 'ai' ? ' · Haiku' : ''}</span>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

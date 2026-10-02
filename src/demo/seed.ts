@@ -225,11 +225,19 @@ export function buildSeed(): Record<string, Row[]> {
   T('mkt_campaigns', campaigns);
   const outcomesMkt = ['no_answer', 'answered', 'conversation', 'no_answer', 'meeting', 'no_answer', 'conversation', 'not_interested', 'no_answer', 'answered', 'closed', 'no_answer'];
   T('mkt_touches', outcomesMkt.map((o, i) => ({ id: uid('tuch'), campaign_id: campaigns[0].id, script_id: scripts[0].id, contact_id: null, contact_name: String(dialContacts[i].business_name), contact_phone: String(dialContacts[i].phone), channel: 'call', outcome: o, source_status: null, notes: null, at: hoursAgo(i * 3) })));
+  const inb = (name: string, src: string, detail: string, hrs: number, replied: number | null, status: string, extra: Record<string, unknown> = {}) => ({ id: uid('inbd'), contact_id: null, name, phone: null, email: null, source: src, source_detail: detail, source_by: 'rule', first_touch_at: hoursAgo(hrs), responded_at: replied == null ? null : hoursAgo(replied), status, notes: null, message: null, page_url: null, utm: {}, alerted_at: null, venture: 'madebymarq', ...extra });
   T('mkt_inbound', [
-    { id: uid('inbd'), contact_id: null, name: 'Pine & Pour', phone: '(555) 014-2200', email: null, source: 'website', source_detail: 'Contact form', first_touch_at: hoursAgo(0.4), responded_at: null, status: 'new', notes: null },
-    { id: uid('inbd'), contact_id: null, name: 'Red Rock Barbers', phone: '(555) 015-9910', email: null, source: 'instagram', source_detail: 'DM from reel', first_touch_at: hoursAgo(5), responded_at: hoursAgo(4.6), status: 'contacted', notes: null },
+    inb('Pine & Pour', 'website', 'Website form', 0.4, null, 'new', { phone: '(555) 014-2200', email: 'hello@pineandpour.demo', message: 'We need online ordering before patio season. What does it cost?', page_url: 'https://madebymarquez.com/contact' }),
+    inb('Copper Kettle Catering', 'google', 'Search: google.com', 1.6, null, 'new', { email: 'events@copperkettle.demo', message: 'Saw your site on Google — can you redo ours?', alerted_at: hoursAgo(0.6) }),
+    inb('Red Rock Barbers', 'ig_dm', 'Meta: instagram', 5, 4.6, 'conversation', { phone: '(555) 015-9910', notes: 'Wants booking + a gallery. Call Thursday.' }),
+    inb('Sam\'s Smash Burgers', 'referral', 'Mentions a referral', 30, 29.2, 'meeting', { phone: '(555) 017-3321', message: 'Pine & Pour said you built theirs.' }),
+    inb('Basin Yoga', 'tiktok', 'utm_source=tiktok', 80, 78.5, 'client', { email: 'basin@yoga.demo' }),
   ]);
-  T('mkt_lists', [{ id: uid('list'), name: 'Salt Lake independents', venture: 'madebymarq', filters: {}, counts: { total: 412, enriched: 388, chain_excluded: 36 }, notes: null }]);
+  T('mkt_inbound_keys', [{ user_id: 'demo', key: 'demo0000000000000000000000000000demo', created_at: iso(-10) }]);
+  T('mkt_lists', [
+    { id: uid('list'), name: 'Salt Lake independents', venture: 'madebymarq', filters: { city: 'Salt Lake', state: 'UT', excludeChains: true, excludeDuplicates: true, size: 'single' }, counts: { total: 412, callable: 318, filtered: 388, chain_excluded: 36, duplicates: 22, sized: 360, called: 74 }, notes: null, created_at: iso(-6), updated_at: iso(-1) },
+    { id: uid('list'), name: 'Food trucks · not called', venture: 'madebymarq', filters: { category: 'food truck', excludeChains: true, excludeDuplicates: true, uncalledOnly: true }, counts: { total: 96, callable: 61, filtered: 96, chain_excluded: 4, duplicates: 7, sized: 90, called: 24 }, notes: null, created_at: iso(-3), updated_at: iso(0) },
+  ]);
   T('mkt_foundation', ['gbp', 'legal', 'site', 'email'].map((k, i) => ({ venture: 'madebymarq', item_key: k, done: i < 3, proof_url: null, note: null, done_at: iso(-i) })));
   T('mkt_sites', []);
 

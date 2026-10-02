@@ -29,6 +29,7 @@ export function planFor(dow: number): Step[] {
   steps.push({ key: 'analyst', worker: 'analyst', label: 'Analyse the top new products' });
   steps.push({ key: 'teardown', worker: 'teardown', label: 'Tear down a watched product' });
   steps.push({ key: 'lead_filter', worker: 'lead_filter', label: 'Tag new leads' });
+  steps.push({ key: 'inbound_tracker', worker: 'inbound_tracker', label: 'Tag where new inbound leads came from' });
   steps.push({ key: 'content_analytics', worker: 'content_analytics', label: 'Grade yesterday\'s posts' });
   if (dow === 1 || dow === 4) steps.push({ key: 'trend_researcher', worker: 'trend_researcher', label: 'Find what\'s working in your niches' });
   steps.push({ key: 'clip_editor', worker: 'clip_editor', label: 'Cut the next raw clip in Studio' });
@@ -133,7 +134,7 @@ export async function nextDailyStep(apiKey: string | undefined, sb: Sb, userId: 
   const step = plan.find((s) => !done.has(taskKey(date, s.key)));
   if (!step) return null;
   const wid = step.worker ? await workerId(sb, userId, step.worker) : null;
-  const domain = step.worker === 'orchestrator' ? 'ecom' : ['lead_filter', 'campaign_scorer', 'campaign_planner'].includes(step.worker ?? '') ? 'marketing' : CONTENT_KEYS.has(step.worker ?? '') ? 'content' : 'ecom';
+  const domain = step.worker === 'orchestrator' ? 'ecom' : ['lead_filter', 'inbound_tracker', 'campaign_scorer', 'campaign_planner'].includes(step.worker ?? '') ? 'marketing' : CONTENT_KEYS.has(step.worker ?? '') ? 'content' : 'ecom';
   const [task] = await sb.insert<{ id: string }>('ai_tasks', { user_id: userId, domain, body: taskKey(date, step.key), worker_id: wid, instructions: step.label, status: 'running' });
   let res: { status: 'done' | 'failed' | 'waiting'; note: string; runId?: string | null };
   try { res = await runStep(apiKey, sb, userId, step, date); }

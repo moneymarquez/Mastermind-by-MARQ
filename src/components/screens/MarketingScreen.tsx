@@ -36,13 +36,15 @@ import { useDialingQueue } from '../../data/useLeadflow';
 import { supabase } from '../../lib/supabase';
 import CampaignsHome from './marketing/CampaignsHome';
 import ScriptsTab from './marketing/ScriptsTab';
+import InboundTab from './marketing/InboundTab';
+import ListsTab from './marketing/ListsTab';
 import StageZeroTab from './marketing/StageZeroTab';
 import EngineBar from './ecom/EngineBar';
 import { useStageZero } from '../../data/useStageZero';
 import { m0LockMessage } from '../../data/stageZero';
 import OfficeView from '../office/OfficeView';
 import WorkersTab from './ecom/WorkersTab';
-import { Pill, TeachingEmpty, E, panel, btn } from './ecom/ecomShared';
+import { Pill, panel, btn } from './ecom/ecomShared';
 
 type EngineTab = 'stage-zero' | 'campaigns' | 'scripts' | 'inbound' | 'lists' | 'workers';
 const ENGINE_TABS: { id: EngineTab; label: string; icon: string }[] = [
@@ -369,17 +371,8 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
 
       {engineTab === 'stage-zero' && <div style={{ marginTop: 16 }}><StageZeroTab api={stageZero} /></div>}
       {engineTab === 'scripts' && <div style={{ marginTop: 16 }}><ScriptsTab /></div>}
-      {engineTab === 'inbound' && (
-        <div style={enginePanel}>
-          <TeachingEmpty what="Inbound — every lead that came to you, with its source, first touch, status and response time. This is the number that proves marketing works." worker="the Inbound Tracker (tags the source, alerts you if one waits over an hour)" connection="the website form → mkt_inbound" phase={3} />
-          <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 10 }}>Phase numbers on this screen are M-phases from the Marketing Engine spec.</div>
-        </div>
-      )}
-      {engineTab === 'lists' && (
-        <div style={enginePanel}>
-          <TeachingEmpty what="Lists — lead lists from LeadFlow with filter status: enriched, chain-excluded, sized, called." worker="the Lead Filter (chains and franchises out, single vs. multi-location tagged, deduped)" connection="LeadFlow (already connected)" phase={2} />
-        </div>
-      )}
+      {engineTab === 'inbound' && <div style={enginePanel}><InboundTab /></div>}
+      {engineTab === 'lists' && <div style={enginePanel}><ListsTab /></div>}
       {engineTab === 'workers' && <div style={enginePanel}><WorkersTab domain="marketing" phaseLabel="M" /></div>}
 
       {engineTab === 'campaigns' && (<>

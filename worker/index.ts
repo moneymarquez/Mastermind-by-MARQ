@@ -51,6 +51,7 @@ import { marketingVisits } from './handlers/visits';
 import { logEvent } from './handlers/events';
 import type { DispatchEnv } from './handlers/dispatch';
 import type { ContentEnv } from './handlers/content';
+import { inboundPost, runInboundWaitCheck } from './handlers/inbound';
 import { contentTranscribe } from './handlers/content';
 import { dispatchExtract, dispatchTranscribe, dispatchNotify, dispatchNudge, dispatchInvite, dispatchJoin } from './handlers/dispatch';
 import { accountRoute } from './handlers/account';
@@ -112,6 +113,7 @@ export default {
     if (officeMatch) return officeRoute(request, env, officeMatch[1]);
     if (url.pathname === '/api/marketing/visits') return marketingVisits(request, env);
     if (url.pathname === '/api/events') return logEvent(request, env);
+    if (url.pathname.startsWith('/api/inbound/')) return inboundPost(request, env, url.pathname.slice('/api/inbound/'.length));
     if (url.pathname === '/api/content/transcribe') return contentTranscribe(request, env);
     if (url.pathname === '/api/dispatch/extract') return dispatchExtract(request, env);
     if (url.pathname === '/api/dispatch/transcribe') return dispatchTranscribe(request, env);
@@ -152,6 +154,7 @@ export default {
     if (event.cron === '*/5 * * * *') {
       ctx.waitUntil(runShiftReminders(env));
       ctx.waitUntil(runOrchestratorTick(env));
+      ctx.waitUntil(runInboundWaitCheck(env));
       return;
     }
     ctx.waitUntil(runStocksBot(env));
