@@ -14,7 +14,6 @@ import LeadCard from './leadflow/LeadCard';
 import { countCalledToday, sortDialingQueue } from './leadflow/leadFilters';
 import RollingText from '../fx/RollingText';
 import ProgressBar from '../fx/ProgressBar';
-import { useSkin } from '../../data/useTheme';
 import { emptyCopy } from '../../data/emptyCopy';
 import { dialStreak, streakClass } from '../../data/dialStreak';
 import { dateStr } from '../../data/time';
@@ -82,7 +81,6 @@ export default function DialingScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const callsToday = todayCount + leadCallsToday;
   const pct = Math.min(100, (callsToday / DAILY_CALL_GOAL) * 100);
   const streak = dialStreak(history, DAILY_CALL_GOAL, dateStr(new Date()), callsToday);
-  const skin = useSkin();
 
   return (
     <div>
@@ -164,7 +162,7 @@ export default function DialingScreen({ homeHeadStyle, homeSubStyle }: Props) {
           ))}
           {queued.length === 0 && !leadQueue.loading && (
             <div className="fx-empty" style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' }}>
-              {emptyCopy('noLeadQueue', skin)}
+              {emptyCopy('noLeadQueue')}
             </div>
           )}
           {leadQueue.loading && (
@@ -198,7 +196,7 @@ export default function DialingScreen({ homeHeadStyle, homeSubStyle }: Props) {
           })}
           {activeQueue.length === 0 && (
             <div className="fx-empty" style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' }}>
-              {skin === 'cyberpunk' ? emptyCopy('noCallQueue', skin) : `Nothing left in today's queue — add more contacts to keep pushing toward ${DAILY_CALL_GOAL}.`}
+              {`Nothing left in today's queue — add more contacts to keep pushing toward ${DAILY_CALL_GOAL}.`}
             </div>
           )}
         </div>

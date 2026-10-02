@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { useSkin } from '../../data/useTheme';
 import { emptyCopy } from '../../data/emptyCopy';
 import type { CSSProperties } from 'react';
 import { useDailyPlan } from '../../data/useDailyPlan';
@@ -64,7 +63,6 @@ export default function DailyPlanScreen({ isMobile, homeHeadStyle, homeSubStyle 
   const days = useMemo(upcomingDays, []);
   const [date, setDate] = useState(days[0].date);
   const { plan, loading, generating, removeBlock, addBlock, confirm, skip } = useDailyPlan(date);
-  const skin = useSkin();
   const { events, loading: eventsLoading } = useEvents();
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
@@ -139,7 +137,7 @@ export default function DailyPlanScreen({ isMobile, homeHeadStyle, homeSubStyle 
 
   const detailPane = () => {
     if (selectedHour === null) {
-      return <div className="fx-empty" style={{ fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', padding: 24 }}>{emptyCopy('planPickHour', skin)}</div>;
+      return <div className="fx-empty" style={{ fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', padding: 24 }}>{emptyCopy('planPickHour')}</div>;
     }
     if (!selected) {
       if (adding) {
@@ -178,7 +176,7 @@ export default function DailyPlanScreen({ isMobile, homeHeadStyle, homeSubStyle 
       return (
         <div style={{ padding: 24 }}>
           <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>{formatTimeLabel(`${String(selectedHour).padStart(2, '0')}:00`)}</div>
-          <div className="fx-empty" style={{ fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', marginTop: 6 }}>{emptyCopy('planHourEmpty', skin)}</div>
+          <div className="fx-empty" style={{ fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', marginTop: 6 }}>{emptyCopy('planHourEmpty')}</div>
           <button className="ap-btn ap-btn-primary" style={{ marginTop: 14 }} onClick={startAdd}>Add a block</button>
         </div>
       );

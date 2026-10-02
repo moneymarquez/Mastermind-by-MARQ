@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
-import type { Skin, Theme } from '../../data/useTheme';
-import { previewIntro } from '../../lib/fxEvents';
+import type { Theme } from '../../data/useTheme';
 import { useAvatar } from '../../data/useAvatar';
 import { startDemo } from '../../demo/state';
 import type { DemoSpeed } from '../../demo/state';
@@ -15,8 +14,6 @@ interface Props {
   onStartTour: () => void;
   theme: Theme;
   onThemeChange: (next: Theme) => void;
-  skin: Skin;
-  onSkinChange: (next: Skin) => void;
   soundFx: boolean;
   onSoundFxChange: (on: boolean) => void;
 }
@@ -54,7 +51,7 @@ async function openBillingPortal(): Promise<string | null> {
   }
 }
 
-export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onSignOut, onStartTour, theme, onThemeChange, skin, onSkinChange, soundFx, onSoundFxChange }: Props) {
+export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onSignOut, onStartTour, theme, onThemeChange, soundFx, onSoundFxChange }: Props) {
   const { avatarUrl, uploading, error: avatarError, upload: uploadAvatar, remove: removeAvatar } = useAvatar();
   const [user, setUser] = useState<User | null>(null);
   const [demoSpeed, setDemoSpeed] = useState<DemoSpeed>('normal');
@@ -173,27 +170,6 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
             ))}
           </div>
 
-          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 16, marginBottom: 8 }}>Style</div>
-          <div style={{ display: 'inline-flex', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-pill)', padding: 3 }}>
-            {(['simple', 'cyberpunk'] as Skin[]).map((option) => (
-              <div
-                key={option}
-                onClick={() => onSkinChange(option)}
-                style={{
-                  padding: '7px 18px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer',
-                  textTransform: 'capitalize', transition: 'background 150ms ease, color 150ms ease',
-                  background: skin === option ? 'var(--text)' : 'transparent',
-                  color: skin === option ? 'var(--bg)' : 'var(--text-secondary)',
-                }}
-              >
-                {option === 'simple' ? 'Masterminds' : option}
-              </div>
-            ))}
-          </div>
-          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 8, lineHeight: 1.5 }}>
-            Masterminds is the standard look. Cyberpunk is the same layout on a dark, textured base with neon accents, rolling numbers, charged goal bars and a launch sequence. Works with either mode above.
-          </div>
-
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 16, maxWidth: 360 }}>
             <div>
               <div style={{ fontSize: 'var(--text-body-sm)', fontWeight: 600, color: 'var(--text)' }}>Sound effects</div>
@@ -212,9 +188,6 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
             Haptics follow the same two moments where the device supports them. iPhone Safari doesn't expose vibration to web apps, so they're silent there.
           </div>
 
-          {skin === 'cyberpunk' && (
-            <div style={{ ...ghostBtn, marginTop: 14 }} onClick={previewIntro}>Replay the launch sequence</div>
-          )}
         </div>
 
         <div style={cardStyle}>

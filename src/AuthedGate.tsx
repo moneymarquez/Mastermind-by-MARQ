@@ -116,8 +116,6 @@ export default function AuthedGate({ userId, userEmail, userDisplayName, onSignO
         isOwner={isOwner}
         theme={theme.theme}
         onThemeChange={theme.save}
-        skin={theme.skin}
-        onSkinChange={theme.saveSkin}
         soundFx={theme.soundFx}
         onSoundFxChange={theme.saveSoundFx}
       />

@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { useSkin } from '../../data/useTheme';
 import { emptyCopy } from '../../data/emptyCopy';
 import type { CSSProperties } from 'react';
 import { useStocksBot } from '../../data/useStocksBot';
@@ -149,7 +148,6 @@ function Sparkline({ points }: { points: number[] }) {
 }
 
 function TodayPanel({ signals, trades, account, accountLoading }: ReturnType<typeof useStocksBot>) {
-  const skin = useSkin();
   const today = new Date().toISOString().slice(0, 10);
   const todaySignals = signals.filter((s) => s.created_at.slice(0, 10) === today);
   const openTrades = trades.filter((t) => t.status === 'open');
@@ -188,7 +186,7 @@ function TodayPanel({ signals, trades, account, accountLoading }: ReturnType<typ
           </div>
         ))}
         {!accountLoading && account.positions.length === 0 && (
-          <div className="fx-empty" style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>{emptyCopy('noPositions', skin)}</div>
+          <div className="fx-empty" style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>{emptyCopy('noPositions')}</div>
         )}
       </div>
 
@@ -197,7 +195,7 @@ function TodayPanel({ signals, trades, account, accountLoading }: ReturnType<typ
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden' }}>
         {todaySignals.map((s) => <SignalRow key={s.id} signal={s} />)}
-        {todaySignals.length === 0 && <div className="fx-empty" style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>{emptyCopy('noSignalsToday', skin)}</div>}
+        {todaySignals.length === 0 && <div className="fx-empty" style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>{emptyCopy('noSignalsToday')}</div>}
       </div>
       {openTrades.length === 0 && account.positions.length === 0 && (
         <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', marginTop: 10 }}>No trades open — the bot is watching the watchlist for a setup.</div>

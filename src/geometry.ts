@@ -1,5 +1,5 @@
 import type { AppState } from './state';
-import { SIDEBAR_WIDTH } from './components/Sidebar';
+const SIDEBAR_WIDTH = 248;
 
 // Compact-core sizing (was "Direction 1" in the design tool's A/B variants
 // — the one actually shipped) is now the only option, not a switchable one.

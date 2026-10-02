@@ -66,8 +66,7 @@ export default function MicButton({ size = 'lg', variant = 'round', label }: { s
   }
 
   const R = size === 'lg' ? 78 : 42; const W = size === 'lg' ? 168 : 92;
-  // The cyberpunk skin squares every corner, so the level ring follows the mic.
-  const square = typeof document !== 'undefined' && document.documentElement.dataset.skin === 'cyberpunk';
+  const square = false;
   const perimeter = square ? 8 * R : 2 * Math.PI * R;
   const ring = (p: React.SVGProps<SVGCircleElement & SVGRectElement>) => square
     ? <rect x={W / 2 - R} y={W / 2 - R} width={2 * R} height={2 * R} fill="none" {...(p as React.SVGProps<SVGRectElement>)} />

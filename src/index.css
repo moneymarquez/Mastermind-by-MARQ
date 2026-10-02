@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-@import './cyberpunk.css';
+
 
 /* ── Aperture / "Nocturne" ───────────────────────────────────────────────
    The palette below is the Masterminds Aperture direction, taken from its
@@ -583,7 +583,7 @@ textarea.ap-input { min-height: 90px; resize: vertical; }
    handoff values, so every screen re-themes at once without touching
    each component. Light mode = white cards, hairline borders, no shadows;
    blurple stays the only accent. */
-:root:not([data-skin="cyberpunk"]) {
+:root {
   --bg: #0b0b0d;
   --surface: #131318;
   --surface-2: #101014;
@@ -676,7 +676,7 @@ textarea.ap-input { min-height: 90px; resize: vertical; }
   --text-stat: 26px;
   --text-display: 28px;
 }
-:root:not([data-skin="cyberpunk"])[data-theme="light"] {
+:root[data-theme="light"] {
   --bg: #f4f4f6;
   --surface: #ffffff;
   --surface-2: #f2f2f5;
@@ -743,7 +743,7 @@ textarea.ap-input { min-height: 90px; resize: vertical; }
   --tint-today: color-mix(in srgb, #705bcd 18%, transparent);
 }
 /* Inter everywhere, tabular figures always. */
-:root:not([data-skin="cyberpunk"]) body {
+:root body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;

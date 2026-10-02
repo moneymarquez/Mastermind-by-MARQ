@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { useSkin } from '../../data/useTheme';
 import { prefersReducedMotion, blip, haptic } from '../../lib/motion';
 
 /** A goal progress bar that charges.
  *
- *  Cyberpunk: arcs of electricity crawl the filled portion, concentrated
+ *  A glow whose strength is the fill percentage, concentrated
  *  at the leading edge — where progress stops, which is where the eye goes.
  *  Intensity scales with PERCENTAGE FILLED, not elapsed time: a bar at 25%
  *  for a month never gets brighter by standing still.
@@ -27,7 +26,6 @@ export default function ProgressBar({ pct, height = 8, style, trackColor, fillCo
   trackColor?: string;
   fillColor?: string;
 }) {
-  const skin = useSkin();
   const reduced = prefersReducedMotion();
   const clamped = Math.max(0, Math.min(100, Number.isFinite(pct) ? pct : 0));
   const complete = clamped >= 100;
@@ -58,7 +56,6 @@ export default function ProgressBar({ pct, height = 8, style, trackColor, fillCo
     transition: reduced ? undefined : 'width 520ms cubic-bezier(0.22, 1, 0.36, 1)', position: 'relative',
   };
 
-  if (skin !== 'cyberpunk') {
     return (
       <div style={track} onClick={replay} title={complete ? 'Tap to replay' : undefined}>
         <div
@@ -68,13 +65,4 @@ export default function ProgressBar({ pct, height = 8, style, trackColor, fillCo
         />
       </div>
     );
-  }
-
-  // Cyberpunk: a flat bar. Green when complete, cyan while filling, no
-  // arcs and no burst — the theme's motion budget is spent elsewhere.
-  return (
-    <div style={{ ...track, background: trackColor ?? 'var(--mm-track)' }}>
-      <div style={{ ...fillBase, background: complete ? 'var(--green)' : 'var(--cyan)' }} />
-    </div>
-  );
 }
