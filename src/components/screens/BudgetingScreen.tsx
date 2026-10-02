@@ -4,10 +4,15 @@ import { useBudgeting, currentMonthKey, shiftMonthKey, monthLabel } from '../../
 import type { BudgetType, Cadence } from '../../data/useBudgeting';
 import { useSubscriptionTracker, monthlyCost, isStale } from '../../data/useSubscriptionTracker';
 import type { BillingCycle } from '../../data/useSubscriptionTracker';
+import type { Device } from '../shell/Shell';
+import BudgetOverview from './budget/BudgetOverview';
 
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
+  /** Set in the redesign: the overview (BudgetOverview) replaces the old
+   *  header, month switcher, totals and category cards. */
+  device?: Device;
 }
 
 const inputStyle: CSSProperties = {
@@ -146,7 +151,7 @@ function SubscriptionForm({ onAdd }: { onAdd: (input: { name: string; cost: numb
   );
 }
 
-export default function BudgetingScreen({ homeHeadStyle, homeSubStyle }: Props) {
+export default function BudgetingScreen({ homeHeadStyle, homeSubStyle, device }: Props) {
   const budgeting = useBudgeting();
   const subs = useSubscriptionTracker();
   const [monthKey, setMonthKey] = useState(currentMonthKey());
@@ -159,6 +164,13 @@ export default function BudgetingScreen({ homeHeadStyle, homeSubStyle }: Props) 
 
   return (
     <div>
+      {device ? (
+        <>
+          <BudgetOverview device={device} b={budgeting} monthKey={monthKey} setMonthKey={setMonthKey} />
+          <div style={{ ...sectionTitle, marginTop: 44 }}>Categories</div>
+          <CategoryForm onAdd={(name, amount) => budgeting.addCategory(name, amount)} />
+        </>
+      ) : (<>
       <div style={homeHeadStyle}>Budgeting</div>
       <div style={homeSubStyle}>Income, expenses, and what's coming up — including money from paid invoices.</div>
 
@@ -197,6 +209,8 @@ export default function BudgetingScreen({ homeHeadStyle, homeSubStyle }: Props) 
         {summary.byCategory.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No categories yet.</div>}
         <CategoryForm onAdd={(name, amount) => budgeting.addCategory(name, amount)} />
       </div>
+
+      </>)}
 
       <div style={sectionTitle}>Log a transaction</div>
       <TransactionForm

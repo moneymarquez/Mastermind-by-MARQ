@@ -642,7 +642,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'budgeting' && (
-          <BudgetingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          <BudgetingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} device={cyber ? undefined : device} />
         )}
 
         {state.screen === 'marketing' && (

@@ -39,7 +39,7 @@ export function buildSeed(): Record<string, Row[]> {
 
   // ── Account ────────────────────────────────────────────────────────
   T('profiles', [{ id: U, role: 'owner', client_id: null }]);
-  T('nova_preferences', [{ id: uid('pref'), tone: 'direct', assistant_name: 'Nova', theme: 'dark', skin: 'cyberpunk', sound_fx: false }]);
+  T('nova_preferences', [{ id: uid('pref'), tone: 'direct', assistant_name: 'Nova', theme: 'system', skin: 'simple', sound_fx: false }]);
   T('business_profile', [{ id: uid('bizp'), business_name: 'Made by Marq', business_email: 'hello@madebymarq.demo', business_phone: '(555) 010-2030', business_address: '120 Main St, Salt Lake City, UT', website: 'madebymarq.demo' }]);
   T('subscriptions', [{ id: uid('subs'), status: 'active', current_period_end: iso(20) }]);
 
