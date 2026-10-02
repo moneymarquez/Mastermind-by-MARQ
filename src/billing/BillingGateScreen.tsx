@@ -4,6 +4,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { supabase } from '../lib/supabase';
 import type { Theme } from '../data/useTheme';
+import { resolveTheme } from '../data/useTheme';
 import { PLANS, LIVE_PLAN } from './plans';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
@@ -151,7 +152,7 @@ export default function BillingGateScreen({ onSubscribed, onSignOut, theme }: Pr
             stripe={stripePromise}
             options={{
               clientSecret,
-              appearance: theme === 'light'
+              appearance: resolveTheme(theme) === 'light'
                 ? { theme: 'stripe', variables: { colorBackground: '#e9ecf7', colorText: '#292b31', colorPrimary: '#5d5294', borderRadius: '8px' } }
                 : { theme: 'night', variables: { colorBackground: '#202230', colorText: '#e9e9ed', colorPrimary: '#9184d9', borderRadius: '8px' } },
             }}

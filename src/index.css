@@ -574,3 +574,178 @@ textarea.ap-input { min-height: 90px; resize: vertical; }
   [style*="cursor: pointer"] { transition: none !important; }
   [style*="cursor: pointer"]:active { transform: none !important; }
 }
+
+/* ── Masterminds redesign (design_handoff_masterminds, 2026-10) ─────────
+   The handoff's single token layer. It sits last so it wins over the
+   older Aperture values above, and only when the Cyberpunk skin is off
+   (that skin keeps its own palette). Both naming families the app grew —
+   --bg/--surface/--accent and the --mm-* "ink" set — resolve to the same
+   handoff values, so every screen re-themes at once without touching
+   each component. Light mode = white cards, hairline borders, no shadows;
+   blurple stays the only accent. */
+:root:not([data-skin="cyberpunk"]) {
+  --bg: #0b0b0d;
+  --surface: #131318;
+  --surface-2: #101014;
+  --surface-3: #1b1b21;
+  --surface-4: #101014;
+  --border: #25252d;
+  --border-2: #34343e;
+  --grid: #202027;
+  --text: #f4f4f6;
+  --text-secondary: #9a9ca8;
+  --text-tertiary: #6b6d78;
+  --text-quaternary: #d4d5db;
+  --text-quaternary-2: #b4b6bf;
+  --shine: #1b1b21;
+  --accent: #897cdc;
+  --accent-2: #a49ae5;
+  --accent-strong: #7466cc;
+  --accent-soft: #393453;
+  --accent-wash: rgba(137,124,220,.12);
+  --success: #3fcb7f;
+  --warning: #e0b25e;
+  --danger: #e2707f;
+  --client-accent: #4fb3ac;
+  --client-accent-soft: color-mix(in srgb, #4fb3ac 14%, transparent);
+  --cat-1: #897cdc;
+  --cat-2: #ce7a3b;
+  --cat-3: #0094bc;
+  --cat-other: #4a4c56;
+  --card-shadow: 0 0 40px rgba(0,0,0,.18);
+
+  --mm-canvas: #0b0b0d;
+  --mm-bg: #0b0b0d;
+  --mm-bg-blur: rgba(11,11,13,.88);
+  --mm-bg2: #101014;
+  --mm-panel: #131318;
+  --mm-panel-solid: #131318;
+  --mm-tile: #1b1b21;
+  --mm-field: #101014;
+  --mm-line: #25252d;
+  --mm-line2: #2e2e37;
+  --mm-line-strong: #3d3d48;
+  --mm-track: #202027;
+  --mm-grid: #202027;
+  --mm-bloom: rgba(137,124,220,.12);
+  --mm-text: #f4f4f6;
+  --mm-dim: #9a9ca8;
+  --mm-faint: #6b6d78;
+  --mm-accent-text: #ffffff;
+  /* Primary button = --text background with --bg text. */
+  --mm-ink: #f4f4f6;
+  --mm-ink-text: #0b0b0d;
+  --mm-ink-soft: rgba(11,11,13,.09);
+  --mm-ink-line: rgba(11,11,13,.16);
+  --mm-code-bg: #101014;
+  --mm-code-line: #25252d;
+  --mm-scrim: rgba(6,6,8,.66);
+  --mm-shadow: 0 0 40px rgba(0,0,0,.18);
+  --mm-shadow-lift: 0 24px 60px -18px rgba(0,0,0,.6);
+  --mm-shadow-btn: none;
+
+  --shadow-sm: 0 0 0 1px #25252d;
+  --shadow-md: 0 0 0 1px #25252d, 0 0 40px rgba(0,0,0,.18);
+  --shadow-lg: 0 0 0 1px #34343e, 0 16px 40px rgba(0,0,0,.5);
+  --tint-active: color-mix(in srgb, #897cdc 14%, transparent);
+  --tint-today: color-mix(in srgb, #897cdc 22%, transparent);
+
+  /* Figures are Inter with tabular numbers — no monospace in this look. */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Shape: cards 16, buttons + inputs 8, inner tiles 10–12. */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 16px;
+  --radius-3xl: 16px;
+
+  /* Type: body 15, row meta 12–13, chips 12. */
+  --text-caption: 12px;
+  --text-small: 12.5px;
+  --text-body-sm: 13px;
+  --text-body: 14px;
+  --text-body-lg: 15px;
+  --text-label: 15px;
+  --text-subhead: 15px;
+  --text-head: 17px;
+  --text-title: 22px;
+  --text-stat: 26px;
+  --text-display: 28px;
+}
+:root:not([data-skin="cyberpunk"])[data-theme="light"] {
+  --bg: #f4f4f6;
+  --surface: #ffffff;
+  --surface-2: #f2f2f5;
+  --surface-3: #ebebef;
+  --surface-4: #f2f2f5;
+  --border: #e3e3ea;
+  --border-2: #d3d3dc;
+  --grid: #ececf1;
+  --text: #121216;
+  --text-secondary: #5b5d69;
+  --text-tertiary: #80828d;
+  --text-quaternary: #2b2d35;
+  --text-quaternary-2: #3d3f49;
+  --shine: #ebebef;
+  --accent: #705bcd;
+  --accent-2: #8574d6;
+  --accent-strong: #5b47b8;
+  --accent-soft: #dcd6f5;
+  --accent-wash: rgba(112,91,205,.10);
+  --success: #17915a;
+  --warning: #a26f0c;
+  --danger: #c13f55;
+  --client-accent: #2f8f88;
+  --client-accent-soft: color-mix(in srgb, #2f8f88 14%, transparent);
+  --cat-1: #705bcd;
+  --cat-2: #c56c21;
+  --cat-3: #007dae;
+  --cat-other: #c9cad3;
+  --card-shadow: none;
+
+  --mm-canvas: #f4f4f6;
+  --mm-bg: #f4f4f6;
+  --mm-bg-blur: rgba(244,244,246,.88);
+  --mm-bg2: #f2f2f5;
+  --mm-panel: #ffffff;
+  --mm-panel-solid: #ffffff;
+  --mm-tile: #ebebef;
+  --mm-field: #f2f2f5;
+  --mm-line: #e3e3ea;
+  --mm-line2: #d8d8e0;
+  --mm-line-strong: #b9bac5;
+  --mm-track: #ececf1;
+  --mm-grid: #ececf1;
+  --mm-bloom: rgba(112,91,205,.10);
+  --mm-text: #121216;
+  --mm-dim: #5b5d69;
+  --mm-faint: #80828d;
+  --mm-accent-text: #000000;
+  --mm-ink: #121216;
+  --mm-ink-text: #ffffff;
+  --mm-ink-soft: rgba(255,255,255,.15);
+  --mm-ink-line: rgba(255,255,255,.16);
+  --mm-code-bg: #121216;
+  --mm-code-line: rgba(255,255,255,.13);
+  --mm-scrim: rgba(244,244,246,.72);
+  --mm-shadow: none;
+  --mm-shadow-lift: 0 18px 48px -20px rgba(18,18,22,.22);
+  --mm-shadow-btn: none;
+
+  --shadow-sm: 0 0 0 1px #e3e3ea;
+  --shadow-md: 0 0 0 1px #e3e3ea;
+  --shadow-lg: 0 0 0 1px #d3d3dc, 0 16px 40px rgba(18,18,22,.12);
+  --tint-active: color-mix(in srgb, #705bcd 12%, transparent);
+  --tint-today: color-mix(in srgb, #705bcd 18%, transparent);
+}
+/* Inter everywhere, tabular figures always. */
+:root:not([data-skin="cyberpunk"]) body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  color: var(--text-secondary);
+}

@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { setSoundEnabled, soundEnabled } from '../lib/motion';
 
-export type Theme = 'dark' | 'light';
+/** The saved preference. 'system' follows the device; what's painted is
+ *  always one of the two resolved themes. */
+export type Theme = 'dark' | 'light' | 'system';
+export type Resolved = 'dark' | 'light';
 /** The second axis. Simple is the app as it has always been; Cyberpunk is
  *  src/cyberpunk.css layered on top via data-skin. Independent of theme:
  *  all four combinations render. */
@@ -14,16 +17,31 @@ const SKIN_KEY = 'mastermind-skin';
 // The app's --mm-bg for each theme (index.css). Kept literal here because
 // this runs at module load, before any stylesheet is guaranteed applied, so
 // there's nothing to read a CSS variable from yet.
-const STATUS_BAR_COLOR: Record<Theme, string> = { dark: '#0b0c11', light: '#faf9f7' };
-const STATUS_BAR_COLOR_CYBER: Record<Theme, string> = { dark: '#070B0D', light: '#171E22' };
+const STATUS_BAR_COLOR: Record<Resolved, string> = { dark: '#0b0b0d', light: '#f4f4f6' };
+const STATUS_BAR_COLOR_CYBER: Record<Resolved, string> = { dark: '#070B0D', light: '#171E22' };
 
-let currentTheme: Theme = 'dark';
-let currentSkin: Skin = 'cyberpunk';
+let currentPref: Theme = 'dark';
+let currentTheme: Resolved = 'dark';
+let currentSkin: Skin = 'simple';
+
+const darkQuery = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+export const resolveTheme = (t: Theme): Resolved => (t === 'system' ? (darkQuery && !darkQuery.matches ? 'light' : 'dark') : t);
+const themeListeners = new Set<(t: Resolved) => void>();
 
 function applyTheme(theme: Theme) {
-  currentTheme = theme;
-  document.documentElement.setAttribute('data-theme', theme);
+  currentPref = theme;
+  currentTheme = resolveTheme(theme);
+  document.documentElement.setAttribute('data-theme', currentTheme);
   paintStatusBar();
+  for (const l of themeListeners) l(currentTheme);
+}
+// "System" re-paints the moment the device flips.
+darkQuery?.addEventListener?.('change', () => { if (currentPref === 'system') applyTheme('system'); });
+/** The theme actually on screen right now (never 'system'). */
+export function useResolvedTheme(): Resolved {
+  const [t, setT] = useState<Resolved>(currentTheme);
+  useEffect(() => { themeListeners.add(setT); return () => { themeListeners.delete(setT); }; }, []);
+  return t;
 }
 function applySkin(skin: Skin) {
   currentSkin = skin;
@@ -47,8 +65,14 @@ function paintStatusBar() {
 const skinListeners = new Set<(s: Skin) => void>();
 
 const cachedTheme = (localStorage.getItem(STORAGE_KEY) as Theme | null) ?? 'dark';
-// Cyberpunk is the default; Simple is the opt-out in Settings.
-const cachedSkin = (localStorage.getItem(SKIN_KEY) as Skin | null) ?? 'cyberpunk';
+// The 2026-10 redesign ("simple", shown as "Masterminds") is the default.
+// Cyberpunk stays as an opt-in in Settings. Anyone still on Cyberpunk from
+// when it was the default is moved over once (REDESIGN_KEY marks it), and
+// can switch back in Settings → Appearance.
+const REDESIGN_KEY = 'mastermind-redesign-2026-10';
+const movedToRedesign = localStorage.getItem(REDESIGN_KEY) === '1';
+if (!movedToRedesign) { localStorage.setItem(SKIN_KEY, 'simple'); }
+const cachedSkin = (localStorage.getItem(SKIN_KEY) as Skin | null) ?? 'simple';
 applyTheme(cachedTheme);
 applySkin(cachedSkin);
 
@@ -73,7 +97,11 @@ export function useTheme() {
     // failed quietly and localStorage was the only persistence.
     const { data } = await supabase.from('nova_preferences').select('theme, skin, sound_fx').maybeSingle();
     const nextTheme = (data?.theme as Theme | undefined) ?? cachedTheme;
-    const nextSkin = (data?.skin as Skin | undefined) ?? cachedSkin;
+    let nextSkin = (data?.skin as Skin | undefined) ?? cachedSkin;
+    if (!movedToRedesign) {
+      localStorage.setItem(REDESIGN_KEY, '1');
+      if (nextSkin !== 'simple') { nextSkin = 'simple'; void supabase.from('nova_preferences').upsert({ skin: 'simple', updated_at: new Date().toISOString() }, { onConflict: 'user_id' }); }
+    }
     setTheme(nextTheme);
     setSkinState(nextSkin);
     if (typeof data?.sound_fx === 'boolean') { setSoundFxState(data.sound_fx); setSoundEnabled(data.sound_fx); }

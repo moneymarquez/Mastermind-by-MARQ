@@ -154,10 +154,10 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
         <div style={cardStyle}>
           <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>Appearance</div>
           <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.5 }}>
-            Switches instantly, everywhere in the app — synced to your account, so it carries over to any device you sign in on.
+            {theme === 'system' ? 'Matches your device — it switches when your phone or computer does.' : 'Every screen switches at once. You can also use the sun/moon button in the header.'} Synced to your account.
           </div>
           <div style={{ display: 'inline-flex', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-pill)', padding: 3 }}>
-            {(['dark', 'light'] as Theme[]).map((option) => (
+            {(['dark', 'light', 'system'] as Theme[]).map((option) => (
               <div
                 key={option}
                 onClick={() => onThemeChange(option)}
@@ -173,7 +173,7 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
             ))}
           </div>
 
-          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 16, marginBottom: 8 }}>Theme</div>
+          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 16, marginBottom: 8 }}>Style</div>
           <div style={{ display: 'inline-flex', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-pill)', padding: 3 }}>
             {(['simple', 'cyberpunk'] as Skin[]).map((option) => (
               <div
@@ -186,12 +186,12 @@ export default function AccountSettingsScreen({ homeHeadStyle, homeSubStyle, onS
                   color: skin === option ? 'var(--bg)' : 'var(--text-secondary)',
                 }}
               >
-                {option}
+                {option === 'simple' ? 'Masterminds' : option}
               </div>
             ))}
           </div>
           <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginTop: 8, lineHeight: 1.5 }}>
-            Simple is the app as it has always been. Cyberpunk is the same layout on a dark, textured base with neon accents, rolling numbers, charged goal bars and a launch sequence. Works with either mode above.
+            Masterminds is the standard look. Cyberpunk is the same layout on a dark, textured base with neon accents, rolling numbers, charged goal bars and a launch sequence. Works with either mode above.
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 16, maxWidth: 360 }}>
