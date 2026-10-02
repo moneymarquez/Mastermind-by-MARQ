@@ -16,6 +16,8 @@ import type { Theme } from './data/useTheme';
 import Celebration from './components/fx/Celebration';
 import { useDemo, stopDemo } from './demo/state';
 import { DispatchProvider } from './dispatch/DispatchContext';
+import { ModuleProvider } from './components/mm/Page';
+import type { ModuleCtxValue } from './components/mm/Page';
 import { PhoneHeader, PhoneTabBar, AppSidebar, AppTopBar, NotificationsPanel, SearchPalette, ModulesGrid, deviceFor, sidebarW, PHONE_HEADER_H, PHONE_TAB_H, TOP_BAR_H, NOVA_DOCK_W } from './components/shell/Shell';
 import { shellGroups, crumbFor } from './components/shell/nav';
 import { useLeadFeed } from './data/useLeadFeed';
@@ -28,12 +30,10 @@ const ChangelogScreen = lazyScreen(() => import('./components/screens/ChangelogS
 const DispatchScreen = lazyScreen(() => import('./dispatch/DispatchScreen'));
 const DispatchLayer = lazyScreen(() => import('./dispatch/DispatchLayer'));
 const ClientModulesScreen = lazyScreen(() => import('./components/screens/ClientModulesScreen'));
-const DailyPlanScreen = lazyScreen(() => import('./components/screens/DailyPlanScreen'));
 const DialingScreen = lazyScreen(() => import('./components/screens/DialingScreen'));
 const StickySpotScreen = lazyScreen(() => import('./components/screens/StickySpotScreen'));
-const SobrietyScreen = lazyScreen(() => import('./components/screens/SobrietyScreen'));
+const SobrietyV2 = lazyScreen(() => import('./components/screens/v2/SobrietyV2'));
 const FitnessScreen = lazyScreen(() => import('./components/screens/FitnessScreen'));
-const MacrosScreen = lazyScreen(() => import('./components/screens/MacrosScreen'));
 const GoalsScreen = lazyScreen(() => import('./components/screens/GoalsScreen'));
 const MentalHealthScreen = lazyScreen(() => import('./components/screens/MentalHealthScreen'));
 const BrainScreen = lazyScreen(() => import('./components/screens/brain/BrainScreen'));
@@ -62,6 +62,8 @@ const PromptVoiceSettingsScreen = lazyScreen(() => import('./components/screens/
 const CallRecordingsScreen = lazyScreen(() => import('./components/screens/CallRecordingsScreen'));
 const WebsiteBuilderRoadmapScreen = lazyScreen(() => import('./components/screens/WebsiteBuilderRoadmapScreen'));
 const InvoicingScreen = lazyScreen(() => import('./components/screens/InvoicingScreen'));
+const DailyPlanV2 = lazyScreen(() => import('./components/screens/v2/DailyPlanV2'));
+const MacrosV2 = lazyScreen(() => import('./components/screens/v2/MacrosV2'));
 const BudgetingScreen = lazyScreen(() => import('./components/screens/BudgetingScreen'));
 const MarketingScreen = lazyScreen(() => import('./components/screens/MarketingScreen'));
 const ContentCreationScreen = lazyScreen(() => import('./components/screens/ContentCreationScreen'));
@@ -177,6 +179,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   const novaDock = device === 'desktop' && state.novaOpen ? NOVA_DOCK_W : 0;
   const shellNav = (id: string) => { setNotifOpen(false); if (state.novaOpen && device !== 'desktop') actions.closeNova(); actions.navigateTo(id); };
   const bender = useBender();
+  const moduleCtx: ModuleCtxValue = { device, novaOpen: state.novaOpen, isOwner, nav: shellNav, askNova: (p?: string) => { if (p) askNovaWithPrompt(p); else if (!state.novaOpen) actions.openNova(); } };
 
   // A real set name always wins, regardless of owner status — per-account
   // display, not a hardcoded "Cristopher" for one account and everyone
@@ -256,6 +259,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         ) : (
           <ErrorBoundary scope="screen" resetKey={state.screen} label={state.screen === 'home' ? 'Overview' : undefined}>
           <Suspense fallback={<ScreenLoading />}>
+          <ModuleProvider value={moduleCtx}>
           <div data-demo-content="">
         {state.screen === 'home' && (
           <HomeV2 device={device} isOwner={isOwner} novaOpen={state.novaOpen} leads={leadFeed.leads} leadsNow={leadFeed.now} inboxItems={ownerInbox.items}
@@ -264,9 +268,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             top={<HomeExtras currentUserId={currentUserId} onNavigate={shellNav} />} />
         )}
                 
-        {state.screen === 'daily-plan' && (
-          <DailyPlanScreen isMobile={isMobile} homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'daily-plan' && <DailyPlanV2 />}
 
         {state.screen === 'dialing' && (
           <DialingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
@@ -284,17 +286,13 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           />
         )}
 
-        {state.screen === 'sobriety' && (
-          <SobrietyScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} bender={bender} />
-        )}
+        {state.screen === 'sobriety' && <SobrietyV2 />}
 
         {state.screen === 'fitness' && (
           <FitnessScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
-        {state.screen === 'macros' && (
-          <MacrosScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} activeBender={bender.activeBender} />
-        )}
+        {state.screen === 'macros' && <MacrosV2 />}
 
         {state.screen === 'goals' && (
           <GoalsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
@@ -536,6 +534,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <PlaceholderScreen isMobile={isMobile} label={state.placeholderLabel} note={state.placeholderNote} />
         )}
           </div>
+          </ModuleProvider>
           </Suspense>
           </ErrorBoundary>
         )}

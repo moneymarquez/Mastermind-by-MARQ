@@ -9,7 +9,7 @@ import type { DailyPlan, DailyPlanBlock } from './types';
  *  (the overnight run only writes tomorrow's), and with one already there
  *  it folds in anything that changed since — a shift logged this morning,
  *  a step added at lunch — while keeping blocks added by hand. */
-async function requestPlan(date: string): Promise<DailyPlan | null> {
+export async function requestPlan(date: string): Promise<DailyPlan | null> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   if (!token) return null;
@@ -97,5 +97,5 @@ export function useDailyPlan(date: string = dateStr(new Date())) {
     await load();
   };
 
-  return { plan, loading, generating, updateBlocks, removeBlock, addBlock, confirm, skip };
+  return { plan, loading, generating, reload: load, updateBlocks, removeBlock, addBlock, confirm, skip };
 }

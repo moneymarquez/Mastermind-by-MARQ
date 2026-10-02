@@ -183,7 +183,7 @@ export function Heatmap({ cells, flow = 'column', lo = 'Less', hi = 'More', slip
   const R = row ? Math.ceil(n / 7) : 7, C = row ? 7 : Math.ceil(n / 7);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{ display: 'grid', gridTemplateRows: `repeat(${R}, auto)`, gridTemplateColumns: `repeat(${C}, minmax(0,1fr))`, gridAutoFlow: row ? 'row' : 'column', gap: 4 }}>
+      <div style={{ display: 'grid', gridTemplateRows: `repeat(${R}, auto)`, gridTemplateColumns: `repeat(${C}, minmax(0,${row ? '1fr' : '34px'}))`, gridAutoFlow: row ? 'row' : 'column', gap: 4, justifyContent: row ? undefined : 'space-between' }}>
         {cells.map((c, i) => {
           if (c.v === '_') return <div key={i} />;
           const lvl = c.v === 'x' ? 0 : c.v === '.' ? -1 : c.v;

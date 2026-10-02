@@ -189,6 +189,8 @@ export interface DailyPlanBlock {
   detail: string;
   type: DailyPlanBlockType;
   module: DailyPlanModule;
+  /** Ticked off on the timeline (redesign). */
+  done?: boolean;
   source: string | null;
 }
 
