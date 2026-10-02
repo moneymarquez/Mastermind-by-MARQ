@@ -68,6 +68,7 @@ function answer(url: URL, method: string, body: unknown = null): Response {
   if (p === '/api/dispatch/nudge') return ok({ sent: true, via: 'sms' });
   if (p === '/api/dispatch/invite') return ok({ link: `${window.location.origin}/?join=demo-invite-link`, sms: (body as { sms?: boolean } | null)?.sms ? { sent: true } : null });
   if (p === '/api/dispatch/transcribe') return ok({ error: 'Server transcription runs in the real app.' }, 501);
+  if (p === '/api/inbox/reply') return ok({ ok: true, from: 'demo', to: 'demo' });
   if (p === '/api/content/transcribe') return ok({ error: 'Transcription runs in the real app.' }, 501);
   return ok(NOT_IN_DEMO, 200);
 }

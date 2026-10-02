@@ -31,6 +31,11 @@ import { MOBILE_HEADER_HEIGHT } from './components/MobileHeader';
 import Intro from './components/fx/Intro';
 import { useDemo, stopDemo } from './demo/state';
 import { DispatchProvider } from './dispatch/DispatchContext';
+import { PhoneHeader, PhoneTabBar, AppSidebar, AppTopBar, NotificationsPanel, SearchPalette, ModulesGrid, deviceFor, sidebarW, PHONE_HEADER_H, PHONE_TAB_H, TOP_BAR_H, NOVA_DOCK_W } from './components/shell/Shell';
+import { shellGroups, crumbFor } from './components/shell/nav';
+import { useLeadFeed } from './data/useLeadFeed';
+import { useNotifications } from './data/useNotifications';
+import { useResolvedTheme } from './data/useTheme';
 
 // Screens load on demand; Overview ships in the main bundle.
 const DemoTour = lazyScreen(() => import('./demo/DemoTour'));
@@ -85,12 +90,13 @@ const VoiceCaptureScreen = lazyScreen(() => import('./components/screens/VoiceCa
 const ManageModulesScreen = lazyScreen(() => import('./components/screens/ManageModulesScreen'));
 const EditHomeWidgetsScreen = lazyScreen(() => import('./components/screens/EditHomeWidgetsScreen'));
 const GrantAccessScreen = lazyScreen(() => import('./components/screens/GrantAccessScreen'));
+const InboxScreen = lazyScreen(() => import('./components/screens/inbox/InboxScreen'));
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'stocks', 'leadflow', 'ecommerce', 'account-settings', 'prompt-voice-settings',
-  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access', 'changelog', 'dispatch',
+  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access', 'changelog', 'dispatch', 'inbox', 'modules',
 ];
 
 interface Props {
@@ -131,6 +137,20 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // rather than guarded, same as useModuleAccess elsewhere in this file.
   const ownerInbox = useOwnerInbox();
   const leads = useLeads();
+  // ── Redesign shell (design handoff: MM App) ─────────────────────────
+  const leadFeed = useLeadFeed(isOwner);
+  const notifs = useNotifications(ownerInbox.items, leadFeed.leads, leadFeed.now, true);
+  const resolvedTheme = useResolvedTheme();
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  // One-shot hand-off into Inbox / Leads from a notification or Home card.
+  const [inboxFocus, setInboxFocus] = useState<{ tab: 'inbox' | 'leads'; ref?: string } | null>(null);
+  useEffect(() => {
+    if (cyber) return;
+    const onKey = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setSearchOpen((v) => !v); } };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [cyber]);
   // A client message or ticket tapped in the Inbox widget, or a
   // transferred lead, all land on THAT client — in Client Modules for
   // the first two, in Client CRM for a lead (since that's where its
@@ -190,6 +210,16 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   const navAccess = (moduleKey: string) => canAccess(moduleKey) && !navPrefs.hidden.has(moduleKey);
   const vm = buildViewModel(state, actions.navigateTo, onSignOut, navAccess, isOwner, navPrefs.order);
   const { isMobile } = vm;
+  const device = deviceFor(vm.stageWidth);
+  const groups = useMemo(() => shellGroups(navAccess, isOwner, navPrefs.order), [navAccess, isOwner, navPrefs.order]);
+  const moduleTiles = useMemo(() => shellGroups(navAccess, isOwner, navPrefs.order, { lockedPreview: true }), [navAccess, isOwner, navPrefs.order]);
+  const badges = { inbox: ownerInbox.items.filter((i) => i.unread).length, leads: leadFeed.waiting, urgent: leadFeed.urgent > 0 };
+  const toggleTheme = () => onThemeChange(resolvedTheme === 'dark' ? 'light' : 'dark');
+  const toggleNova = () => (state.novaOpen ? actions.closeNova() : actions.openNova());
+  // Desktop: Nova is a 360px column that pushes content. iPad: it slides
+  // over. Phone: a full screen above the tab bar.
+  const novaDock = !cyber && device === 'desktop' && state.novaOpen ? NOVA_DOCK_W : 0;
+  const shellNav = (id: string) => { setNotifOpen(false); if (state.novaOpen && device !== 'desktop') actions.closeNova(); actions.navigateTo(id); };
   const bender = useBender();
 
   // Real counts/labels for the desktop header — no invented "11 streams
@@ -266,7 +296,19 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   return (
     <DispatchProvider userId={currentUserId} ownerId={dispatchOn ? currentUserId : null} leadName={leadFirst} onOpen={openDispatch}>
     <div className="app-shine-bg" style={stageStyle}>
-      {isMobile ? (
+      {!cyber ? (
+        device === 'phone' ? (
+          <>
+            <PhoneHeader dark={resolvedTheme === 'dark'} onToggleTheme={toggleTheme} onSearch={() => setSearchOpen(true)} onBell={() => setNotifOpen((v) => !v)} bellDot={notifs.unread > 0} bellOpen={notifOpen} />
+            <PhoneTabBar screen={state.screen} novaOpen={state.novaOpen} badges={badges} onNav={shellNav} onNova={toggleNova} />
+          </>
+        ) : (
+          <>
+            <AppSidebar device={device} screen={state.screen} novaOpen={state.novaOpen} groups={groups} badges={badges} ownerName={ownerDisplayName} isOwner={isOwner} onNav={shellNav} onNova={toggleNova} onSearch={() => setSearchOpen(true)} />
+            <AppTopBar device={device} left={sidebarW(device)} right={novaDock} crumb={crumbFor(state.screen, groups)} dark={resolvedTheme === 'dark'} novaOpen={state.novaOpen} bellDot={notifs.unread > 0} bellOpen={notifOpen} onToggleTheme={toggleTheme} onSearch={() => setSearchOpen(true)} onBell={() => setNotifOpen((v) => !v)} onNova={toggleNova} />
+          </>
+        )
+      ) : isMobile ? (
         <>
           <MobileHeader onOpenMenu={actions.toggleDrawer} />
 
@@ -377,14 +419,21 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         id="tour-content-panel"
         style={{
           ...vm.contentStyle,
+          ...(!cyber ? {
+            left: device === 'phone' ? 0 : sidebarW(device), right: novaDock, transition: 'right .18s ease',
+            padding: device === 'phone' ? `calc(${PHONE_HEADER_H + 12}px + env(safe-area-inset-top)) 16px 0` : `${TOP_BAR_H + 28}px 32px 0`,
+            paddingBottom: device === 'phone' ? `calc(${PHONE_TAB_H + 28 + remindersBox.height}px + max(env(safe-area-inset-bottom), 20px))` : `${48 + remindersBox.height + 20}px`,
+          } : {}),
           ...(cyber ? { padding: isMobile
             ? `calc(${MOBILE_HEADER_HEIGHT + STATUS_STRIP_HEIGHT + 16}px + env(safe-area-inset-top)) 20px calc(${vm.tabBarHeight + 24}px + ${SAFE_BOTTOM})`
             : `${STATUS_STRIP_HEIGHT + 24}px 32px 48px` } : {}),
-          left: isMobile ? 0 : cyber ? RAIL_WIDTH : (sidebarOpen ? vm.sidebarWidth : SIDEBAR_COLLAPSED_WIDTH),
-          transition: isMobile ? undefined : 'left 0.18s ease',
-          paddingBottom: isMobile
-            ? `calc(${vm.tabBarHeight + 28 + remindersBox.height + 28}px + ${SAFE_BOTTOM})`
-            : `${48 + remindersBox.height + 20}px`,
+          ...(cyber ? {
+            left: isMobile ? 0 : RAIL_WIDTH,
+            transition: isMobile ? undefined : 'left 0.18s ease',
+            paddingBottom: isMobile
+              ? `calc(${vm.tabBarHeight + 28 + remindersBox.height + 28}px + ${SAFE_BOTTOM})`
+              : `${48 + remindersBox.height + 20}px`,
+          } : {}),
         }}
       >
         {screenBlocked ? (
@@ -460,7 +509,11 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           />
         )}
 
-        {state.screen === 'leads' && (
+        {state.screen === 'leads' && !cyber && (
+          <InboxScreen device={device} isOwner={isOwner} initialTab="leads" inbox={ownerInbox} feed={leadFeed} focus={inboxFocus} onFocusConsumed={() => setInboxFocus(null)}
+            onOpenClient={(id: string) => { setClientFocus(id); actions.navigateTo('client-crm'); }} onOpenLeadFlow={() => actions.navigateTo('leadflow')} onNavigate={shellNav} />
+        )}
+        {state.screen === 'leads' && cyber && (
           <LeadsScreen
             homeHeadStyle={vm.homeHeadStyle}
             homeSubStyle={vm.homeSubStyle}
@@ -661,6 +714,12 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <EditHomeWidgetsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} isOwner={isOwner} />
         )}
 
+        {state.screen === 'modules' && <ModulesGrid groups={moduleTiles} onOpen={shellNav} />}
+        {state.screen === 'inbox' && (
+          <InboxScreen device={device} isOwner={isOwner} inbox={ownerInbox} feed={leadFeed} focus={inboxFocus} onFocusConsumed={() => setInboxFocus(null)}
+            onOpenClient={(id: string) => { setClientFocus(id); actions.navigateTo('client-modules'); }} onOpenLeadFlow={() => actions.navigateTo('leadflow')} onNavigate={shellNav} />
+        )}
+
         {state.screen === 'grant-access' && isOwner && (
           <GrantAccessScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
@@ -674,8 +733,15 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
       </div>
 
+      {!cyber && notifOpen && (
+        <NotificationsPanel device={device} items={notifs.items} isRead={notifs.isRead} now={leadFeed.now} onMarkAll={notifs.markAll} onClose={() => setNotifOpen(false)}
+          onOpen={(n) => { notifs.markRead(n.id); setNotifOpen(false); if (n.target.screen === 'leads' || n.target.screen === 'inbox') { setInboxFocus({ tab: n.target.screen === 'leads' ? 'leads' : 'inbox', ref: n.target.ref }); shellNav(device !== 'phone' && n.target.screen === 'leads' ? 'leads' : 'inbox'); } else shellNav(n.target.screen); }} />
+      )}
+      {!cyber && searchOpen && <SearchPalette groups={groups} onOpen={shellNav} onClose={() => setSearchOpen(false)} />}
+
       {state.novaOpen && (
         <NovaPanel
+          layout={cyber ? undefined : device === 'phone' ? 'screen' : device === 'desktop' ? 'dock' : 'overlay'}
           isMobile={isMobile}
           anchor={isMobile ? null : { cx: vm.cx, cy: vm.cy, circleSize: vm.circleSize, stageWidth: vm.stageWidth, stageHeight: vm.stageHeight }}
           assistantName={assistantName}
@@ -692,7 +758,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
       )}
 
       {/* Dispatch docks its own bar where the reminders bell sits. */}
-      <RemindersBox hidden={isMobile && state.screen === 'dispatch'} ref={remindersRef} isMobile={isMobile} bottomOffset={isMobile ? `calc(${vm.tabBarHeight + 20}px + ${SAFE_BOTTOM})` : '20px'} />
+      <RemindersBox hidden={!cyber || (isMobile && state.screen === 'dispatch')} ref={remindersRef} isMobile={isMobile} bottomOffset={isMobile ? `calc(${vm.tabBarHeight + 20}px + ${SAFE_BOTTOM})` : '20px'} />
 
       {!cyber && <Celebration />}
       {!demo.active && <Intro name={(userDisplayName ?? '').split(' ')[0] || 'Marq'} />}

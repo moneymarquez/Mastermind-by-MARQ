@@ -6,6 +6,10 @@ import { isSpeechRecognitionSupported } from '../lib/speech';
 const SPACING = 20;
 
 interface Props {
+  /** Redesign layouts: 'screen' = phone, full screen above the tab bar;
+   *  'dock' = desktop, a 360px right column; 'overlay' = iPad, slides over
+   *  the content. Unset = the original sheet / floating panel. */
+  layout?: 'screen' | 'dock' | 'overlay';
   isMobile: boolean;
   /** Desktop only — the trigger circle's live position/size and the
    *  stage's dimensions, so the panel can anchor itself right next to
@@ -40,7 +44,7 @@ function anchoredPanelStyle(a: { cx: number; cy: number; circleSize: number; sta
 }
 
 export default function NovaPanel({
-  isMobile, anchor, assistantName, messages, input, thinking, listening,
+  layout, isMobile, anchor, assistantName, messages, input, thinking, listening,
   onClose, onInputChange, onKeyDown, onSend, onMicClick,
 }: Props) {
   const micSupported = isSpeechRecognitionSupported();
@@ -67,6 +71,8 @@ export default function NovaPanel({
         background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-2xl)', display: 'flex', flexDirection: 'column',
         boxShadow: '0 20px 50px rgba(var(--shadow-ink),0.5)', animation: 'bubbleFade 0.18s ease', zIndex: 45, overflow: 'hidden',
       };
+
+  if (layout) return <NovaShellPanel layout={layout} assistantName={assistantName} messages={messages} input={input} thinking={thinking} listening={listening} micSupported={micSupported} onClose={onClose} onInputChange={onInputChange} onKeyDown={onKeyDown} onSend={onSend} onMicClick={onMicClick} />;
 
   return (
     <>
@@ -138,5 +144,49 @@ export default function NovaPanel({
       </div>
       </div>
     </>
+  );
+}
+
+/** Nova in the redesign shell (design handoff: MM App — Nova). */
+function NovaShellPanel({ layout, assistantName, messages, input, thinking, listening, micSupported, onClose, onInputChange, onKeyDown, onSend, onMicClick }: {
+  layout: 'screen' | 'dock' | 'overlay'; assistantName: string; messages: NovaMessage[]; input: string; thinking: boolean; listening: boolean; micSupported: boolean;
+  onClose: (e: React.SyntheticEvent) => void; onInputChange: (e: ChangeEvent<HTMLInputElement>) => void; onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void; onSend: () => void; onMicClick: () => void;
+}) {
+  const screen = layout === 'screen';
+  const wrap: CSSProperties = screen
+    ? { position: 'absolute', left: 0, right: 0, top: 'calc(60px + env(safe-area-inset-top))', bottom: 'calc(64px + max(env(safe-area-inset-bottom), 20px))', zIndex: 55, background: 'var(--bg)' }
+    : { position: 'absolute', top: 56, right: 0, bottom: 0, width: 360, zIndex: layout === 'overlay' ? 45 : 28, background: 'var(--surface-2)', borderLeft: '1px solid var(--border)', boxShadow: layout === 'overlay' ? '-24px 0 60px -20px rgba(0,0,0,.5)' : 'none', animation: layout === 'overlay' ? 'mmSlideIn .18s ease' : undefined };
+  const sparkle = <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)" aria-hidden="true"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z" /></svg>;
+  return (
+    <section aria-label={assistantName} style={{ ...wrap, display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: screen ? '6px 16px 12px' : '14px 14px 12px', borderBottom: '1px solid var(--border)' }}>
+        {sparkle}
+        <span style={{ flex: 1, color: 'var(--text)', fontSize: screen ? 24 : 15, fontWeight: screen ? 700 : 600, letterSpacing: screen ? '-0.035em' : '-0.015em' }}>{assistantName}</span>
+        <button onClick={onClose} aria-label="Close" style={{ width: 34, height: 34, borderRadius: 8, border: 0, background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
+        </button>
+      </div>
+      <div className="mm-scroll-y" style={{ flex: 1, minHeight: 0, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {messages.length === 0 && <div style={{ color: 'var(--text-tertiary)', fontSize: 14, lineHeight: 1.5 }}>Ask about anything in your modules — today's plan, your budget, a client, what's waiting on you.</div>}
+        {messages.map((m, i) => (
+          <div key={i} style={m.from === 'user'
+            ? { alignSelf: 'flex-end', maxWidth: '85%', background: 'var(--surface-3)', color: 'var(--text)', padding: '10px 14px', borderRadius: 16, fontSize: 15, lineHeight: 1.45 }
+            : { alignSelf: 'flex-start', maxWidth: '92%', color: 'var(--text)', fontSize: 15, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{m.text}</div>
+        ))}
+        {thinking && <div style={{ color: 'var(--text-tertiary)', fontSize: 14 }}>Thinking…</div>}
+      </div>
+      <div style={{ display: 'flex', gap: 8, padding: 12, borderTop: '1px solid var(--border)' }}>
+        <input value={input} onChange={onInputChange} onKeyDown={onKeyDown} placeholder={listening ? 'Listening…' : `Ask ${assistantName}`} aria-label={`Message ${assistantName}`}
+          style={{ flex: 1, minWidth: 0, height: screen ? 46 : 42, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', padding: '0 12px', fontSize: 15, outline: 'none', fontFamily: 'inherit' }} />
+        {micSupported && (
+          <button onClick={onMicClick} aria-label={listening ? 'Stop listening' : 'Speak'} style={{ width: screen ? 46 : 42, height: screen ? 46 : 42, flex: 'none', borderRadius: 8, border: '1px solid var(--border)', background: listening ? 'var(--danger)' : 'transparent', color: listening ? 'var(--bg)' : 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="microphone" size={17} />
+          </button>
+        )}
+        <button onClick={onSend} aria-label="Send" style={{ width: screen ? 46 : 42, height: screen ? 46 : 42, flex: 'none', borderRadius: 8, border: 0, background: 'var(--text)', color: 'var(--bg)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5" /><path d="m5 12 7-7 7 7" /></svg>
+        </button>
+      </div>
+    </section>
   );
 }

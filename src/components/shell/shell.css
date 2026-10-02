@@ -1,0 +1,27 @@
+/* The redesign's shell (design handoff: MM App). Hover states live here
+   because inline styles can't express them. */
+.mm-nav-row { display: flex; align-items: center; gap: 10px; padding: 0 10px; border-radius: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; user-select: none; border: 0; background: transparent; width: 100%; text-align: left; font-family: inherit; box-sizing: border-box; }
+.mm-nav-row:hover { background: var(--surface-3); }
+.mm-nav-row[data-active="true"] { background: var(--surface-3); color: var(--text); }
+.mm-nav-row:focus-visible, .mm-icon-btn:focus-visible, .mm-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mm-group-head { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 6px; color: var(--text-tertiary); font-size: 12.5px; font-weight: 500; cursor: pointer; border: 0; background: transparent; width: 100%; font-family: inherit; }
+.mm-group-head:hover { color: var(--text-secondary); }
+.mm-icon-btn { display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); cursor: pointer; position: relative; flex: none; padding: 0; font-family: inherit; }
+.mm-icon-btn:hover { background: var(--surface-2); }
+.mm-icon-btn[data-on="true"] { background: var(--surface-3); color: var(--text); }
+.mm-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; padding: 0 14px; height: 38px; border: 1px solid var(--border); background: transparent; color: var(--text); }
+.mm-btn:hover { background: var(--surface-2); }
+.mm-btn--primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+.mm-btn--primary:hover { background: var(--text); opacity: .9; }
+.mm-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; height: 48px; cursor: pointer; border: 0; background: transparent; font-family: inherit; padding: 0; }
+.mm-tile { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 12px; min-height: 88px; box-sizing: border-box; cursor: pointer; text-align: left; font-family: inherit; }
+.mm-tile:hover { background: var(--surface-3); }
+.mm-notif-item { display: flex; gap: 10px; padding: 10px 14px; cursor: pointer; border: 0; background: transparent; width: 100%; text-align: left; font-family: inherit; }
+.mm-notif-item:hover { background: var(--surface-2); }
+.mm-search-row { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border-radius: 8px; cursor: pointer; color: var(--text); font-size: 14px; border: 0; background: transparent; width: 100%; text-align: left; font-family: inherit; }
+.mm-search-row[data-sel="true"], .mm-search-row:hover { background: var(--surface-3); }
+.mm-chip { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 500; line-height: 18px; white-space: nowrap; }
+.mm-scroll-y { overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+@keyframes mmPanelIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes mmSlideIn { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .mm-anim { animation: none !important; } }
