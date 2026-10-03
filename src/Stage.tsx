@@ -48,7 +48,7 @@ const IdeaMakerScreen = lazyScreen(() => import('./components/screens/IdeaMakerS
 const BrandLabScreen = lazyScreen(() => import('./components/screens/BrandLabScreen'));
 const ScheduleScreen = lazyScreen(() => import('./components/screens/ScheduleScreen'));
 const ContactsScreen = lazyScreen(() => import('./components/screens/ContactsScreen'));
-const OpeningClosingScreen = lazyScreen(() => import('./components/screens/OpeningClosingScreen'));
+const OpeningClosingV2 = lazyScreen(() => import('./components/screens/v2/OpeningClosingV2'));
 const NotificationSettingsScreen = lazyScreen(() => import('./components/screens/NotificationSettingsScreen'));
 const MorningDigestScreen = lazyScreen(() => import('./components/screens/MorningDigestScreen'));
 const SetupScreen = lazyScreen(() => import('./components/screens/SetupScreen'));
@@ -378,9 +378,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <ContactsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
-        {state.screen === 'opening-closing' && (
-          <OpeningClosingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'opening-closing' && <OpeningClosingV2 />}
 
         {state.screen === 'setup' && (
           <SetupScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onNavigate={actions.navigateTo} />
