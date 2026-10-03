@@ -15,7 +15,7 @@ import type { Theme } from './data/useTheme';
 import Celebration from './components/fx/Celebration';
 import { useDemo, stopDemo } from './demo/state';
 import { DispatchProvider } from './dispatch/DispatchContext';
-import { ModuleProvider } from './components/mm/Page';
+import { ModuleProvider, BackRow } from './components/mm/Page';
 import type { ModuleCtxValue } from './components/mm/Page';
 import { PhoneHeader, PhoneTabBar, AppSidebar, AppTopBar, NotificationsPanel, SearchPalette, ModulesGrid, deviceFor, sidebarW, PHONE_HEADER_H, PHONE_TAB_H, TOP_BAR_H, NOVA_DOCK_W } from './components/shell/Shell';
 import { shellGroups, crumbFor } from './components/shell/nav';
@@ -77,6 +77,11 @@ const EditHomeWidgetsScreen = lazyScreen(() => import('./components/screens/Edit
 const GrantAccessScreen = lazyScreen(() => import('./components/screens/GrantAccessScreen'));
 const InboxScreen = lazyScreen(() => import('./components/screens/inbox/InboxScreen'));
 const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
+
+// Screens still on their pre-redesign layout: on phone they get the shared
+// back row so every module navigates the same way. Remove one from here
+// as it moves onto the mm/Page frame.
+const LEGACY_SCREENS = new Set(['sticky-spot', 'brain', 'delivery', 'legal', 'brand-lab', 'setup', 'playbooks', 'morning-digest', 'notification-settings', 'streaming', 'stocks', 'leadflow', 'ecommerce', 'account-settings', 'prompt-voice-settings', 'budgeting', 'marketing', 'content', 'changelog', 'swipe-file', 'manage-modules', 'edit-home-widgets', 'grant-access']);
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
@@ -259,6 +264,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <Suspense fallback={<ScreenLoading />}>
           <ModuleProvider value={moduleCtx}>
           <div data-demo-content="">
+        {LEGACY_SCREENS.has(state.screen) && <BackRow />}
         {state.screen === 'home' && (
           <HomeV2 device={device} isOwner={isOwner} novaOpen={state.novaOpen} leads={leadFeed.leads} leadsNow={leadFeed.now} inboxItems={ownerInbox.items}
             canOpen={(id) => groups.some((g) => g.items.some((i) => i.id === id))} labelFor={(id) => groups.flatMap((g) => g.items).find((i) => i.id === id)?.label ?? id}

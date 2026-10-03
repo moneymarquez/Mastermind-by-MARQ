@@ -63,6 +63,22 @@ function Menu({ items, onClose }: { items: PageAction[]; onClose: () => void }) 
 
 const iconBtn: CSSProperties = { width: 40, height: 40 };
 
+/** The phone back row (All modules · Ask Nova) on its own, for screens
+ *  that haven't moved onto Page yet, so navigation reads the same
+ *  everywhere. Renders nothing on iPad / desktop (the sidebar does that job). */
+export function BackRow({ back = 'All modules', backTo = 'modules' }: { back?: string; backTo?: string }) {
+  const { device, nav, askNova } = useModule();
+  if (device !== 'phone') return null;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0 14px' }}>
+      <button onClick={() => nav(backTo)} style={{ display: 'flex', alignItems: 'center', gap: 2, height: 40, marginLeft: -6, padding: 0, border: 0, background: 'transparent', color: 'var(--text-secondary)', fontSize: 15, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>
+        <GChevronLeft size={22} />{back}
+      </button>
+      <button className="mm-btn" onClick={() => askNova()} style={{ height: 40, padding: '0 12px', fontSize: 13, fontWeight: 500 }}><GNova size={15} color="var(--accent)" fill />Ask Nova</button>
+    </div>
+  );
+}
+
 /** Module page: phone gets the back row (All modules · Ask Nova · ⋯), then
  *  the 24px title; wide gets the 28px title with actions on the right.
  *  `fab` is the module's primary action: a floating button on phone, the
