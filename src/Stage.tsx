@@ -46,7 +46,7 @@ const BusinessAuditsScreen = lazyScreen(() => import('./components/screens/Busin
 const ClientCRMScreen = lazyScreen(() => import('./components/screens/ClientCRMScreen'));
 const IdeaMakerScreen = lazyScreen(() => import('./components/screens/IdeaMakerScreen'));
 const BrandLabScreen = lazyScreen(() => import('./components/screens/BrandLabScreen'));
-const ScheduleScreen = lazyScreen(() => import('./components/screens/ScheduleScreen'));
+const ScheduleV2 = lazyScreen(() => import('./components/screens/v2/ScheduleV2'));
 const ContactsScreen = lazyScreen(() => import('./components/screens/ContactsScreen'));
 const OpeningClosingV2 = lazyScreen(() => import('./components/screens/v2/OpeningClosingV2'));
 const NotificationSettingsScreen = lazyScreen(() => import('./components/screens/NotificationSettingsScreen'));
@@ -368,9 +368,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <IdeaMakerScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
-        {state.screen === 'schedule' && (
-          <ScheduleScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'schedule' && <ScheduleV2 />}
 
         {state.screen === 'contacts' && (
           <ContactsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />

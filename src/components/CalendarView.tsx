@@ -37,6 +37,10 @@ export interface CalendarViewHandle {
    *  StreamingScreen's "New Stream") so each page keeps its own button
    *  placement while sharing the same modal/calendar machinery. */
   openAddModal: () => void;
+  /** Jumps to a day in day view (redesigned Schedule's month grid). */
+  openDay: (date: string) => void;
+  /** Opens an existing event's edit modal. */
+  openEdit: (ev: CalendarEvent) => void;
 }
 
 interface Props {
@@ -71,6 +75,11 @@ const CalendarView = forwardRef<CalendarViewHandle, Props>(function CalendarView
   const timelineRef = useRef<HTMLDivElement>(null);
 
   useImperativeHandle(ref, () => ({
+    openDay: (date: string) => { setSelectedDate(date); setMode('day'); },
+    openEdit: (ev: CalendarEvent) => {
+      setSelectedDate(ev.event_date); setMode('day');
+      setModalConfig({ initialType: ev.type, initialDate: ev.event_date, initialStart: ev.start_time.slice(0, 5), initialEnd: ev.end_time.slice(0, 5), editingEvent: ev });
+    },
     openAddModal: () => {
       setModalConfig({
         initialType: defaultType,
