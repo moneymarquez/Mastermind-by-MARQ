@@ -32,7 +32,7 @@ const ClientModulesScreen = lazyScreen(() => import('./components/screens/Client
 const DialingScreen = lazyScreen(() => import('./components/screens/DialingScreen'));
 const StickySpotScreen = lazyScreen(() => import('./components/screens/StickySpotScreen'));
 const SobrietyV2 = lazyScreen(() => import('./components/screens/v2/SobrietyV2'));
-const FitnessScreen = lazyScreen(() => import('./components/screens/FitnessScreen'));
+const FitnessV2 = lazyScreen(() => import('./components/screens/v2/FitnessV2'));
 const GoalsV2 = lazyScreen(() => import('./components/screens/v2/GoalsV2'));
 const MentalHealthV2 = lazyScreen(() => import('./components/screens/v2/MentalHealthV2'));
 const BrainScreen = lazyScreen(() => import('./components/screens/brain/BrainScreen'));
@@ -286,9 +286,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'sobriety' && <SobrietyV2 />}
 
-        {state.screen === 'fitness' && (
-          <FitnessScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'fitness' && <FitnessV2 />}
 
         {state.screen === 'macros' && <MacrosV2 />}
 
