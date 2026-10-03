@@ -1,9 +1,15 @@
 import { useMemo, useState } from 'react';
 import { emptyCopy } from '../../data/emptyCopy';
 import type { CSSProperties } from 'react';
+import Card from '../mm/Card';
+import Chip from '../mm/Chip';
+import Row from '../mm/Row';
+import Stat from '../mm/Stat';
+import { Line, Donut } from '../mm/charts';
+import { Page, useModule, NovaMark } from '../mm/Page';
 import { useStocksBot } from '../../data/useStocksBot';
 import { splitWatchlist } from '../../data/tickers';
-import type { BotSignal, BotTrade } from '../../data/types';
+import type { BotTrade } from '../../data/types';
 import { useNovaPreferences } from '../../data/useNovaPreferences';
 
 interface Props {
@@ -38,7 +44,7 @@ const pillButton = (variant: 'solid' | 'outline', danger?: boolean): CSSProperti
 function money(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return '—';
   const sign = n < 0 ? '-' : '';
-  return `${sign}$${Math.abs(n).toFixed(2)}`;
+  return `${sign}$${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 function pct(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return '—';
@@ -151,75 +157,64 @@ function Sparkline({ points }: { points: number[] }) {
   );
 }
 
-function TodayPanel({ signals, trades, account, accountLoading }: ReturnType<typeof useStocksBot>) {
+function TodayPanel({ signals, account, accountLoading, dailySummaries }: ReturnType<typeof useStocksBot>) {
+  const { device, novaOpen } = useModule();
+  const phone = device === 'phone';
   const today = new Date().toISOString().slice(0, 10);
   const todaySignals = signals.filter((s) => s.created_at.slice(0, 10) === today);
-  const openTrades = trades.filter((t) => t.status === 'open');
-
-  return (
-    <div style={{ marginTop: 20 }}>
-      <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-        <div style={{ ...cardStyle, minWidth: 160 }}>
-          <div style={{ ...mono, fontSize: 'var(--text-display)', fontWeight: 600, color: accountLoading ? 'var(--text-tertiary)' : pnlColor(account.dailyPl) }}>
-            {accountLoading ? '—' : money(account.dailyPl)}
-          </div>
-          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>Net P&L today {accountLoading ? '' : `(${pct(account.dailyPlPct)})`}</div>
-        </div>
-        <div style={{ ...cardStyle, minWidth: 160 }}>
-          <div style={{ ...mono, fontSize: 'var(--text-display)', fontWeight: 600, color: 'var(--text)' }}>{accountLoading ? '—' : money(account.equity)}</div>
-          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>Paper account equity</div>
-        </div>
-        <div style={{ ...cardStyle, minWidth: 160 }}>
-          <div style={{ ...mono, fontSize: 'var(--text-display)', fontWeight: 600, color: 'var(--text)' }}>{account.positions.length}</div>
-          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>Open positions</div>
-        </div>
+  const curve = [...dailySummaries].filter((d) => d.equity != null).sort((x, y) => x.summary_date.localeCompare(y.summary_date)).slice(-30);
+  const first = curve[0]?.equity ?? null;
+  const change = first != null && !accountLoading ? account.equity - first : null;
+  const best = [...account.positions].sort((x, y) => y.unrealized_plpc - x.unrealized_plpc)[0];
+  const worst = [...account.positions].sort((x, y) => x.unrealized_plpc - y.unrealized_plpc)[0];
+  const latestNote = [...dailySummaries].sort((x, y) => y.summary_date.localeCompare(x.summary_date)).find((d) => d.nova_commentary);
+  const dollars = Math.floor(Math.abs(account.equity));
+  const hero = (
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
+      <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Paper portfolio</span>
+      <div style={{ display: 'flex', alignItems: 'baseline', color: 'var(--text)', fontSize: phone ? 40 : 46, fontWeight: 600, letterSpacing: '-0.04em', lineHeight: 1 }}>{accountLoading ? '—' : `$${dollars.toLocaleString('en-US')}`}{!accountLoading && <span style={{ fontSize: 22, color: 'var(--text-tertiary)' }}>.{String(Math.round(Math.abs(account.equity) * 100) % 100).padStart(2, '0')}</span>}</div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        {change != null && <Chip k={change >= 0 ? 'good' : 'bad'}>{change >= 0 ? '↑' : '↓'} {money(Math.abs(change))}</Chip>}
+        <span style={{ fontSize: 13, color: 'var(--text-tertiary)', fontWeight: 500 }}>{curve.length ? `since ${new Date(`${curve[0].summary_date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'Paper money · no real trades'}</span>
       </div>
-
-      <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginTop: 24, marginBottom: 10 }}>Open positions</div>
-      <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden' }}>
-        {account.positions.map((p) => (
-          <div key={p.symbol} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)' }}>
-            <div>
-              <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>{p.symbol}</div>
-              <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 2 }}>{p.qty} sh · avg {money(p.avg_entry_price)} · now {money(p.current_price)}</div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ ...mono, fontSize: 'var(--text-label)', fontWeight: 600, color: pnlColor(p.unrealized_pl) }}>{money(p.unrealized_pl)}</div>
-              <div style={{ fontSize: 'var(--text-small)', color: pnlColor(p.unrealized_plpc) }}>{pct(p.unrealized_plpc)}</div>
-            </div>
-          </div>
-        ))}
-        {!accountLoading && account.positions.length === 0 && (
-          <div className="fx-empty" style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>{emptyCopy('noPositions')}</div>
-        )}
-      </div>
-
-      <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginTop: 24, marginBottom: 10 }}>
-        Today's signals <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>— including blocked ones, so you can see why the bot did (or didn't) act</span>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden' }}>
-        {todaySignals.map((s) => <SignalRow key={s.id} signal={s} />)}
-        {todaySignals.length === 0 && <div className="fx-empty" style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>{emptyCopy('noSignalsToday')}</div>}
-      </div>
-      {openTrades.length === 0 && account.positions.length === 0 && (
-        <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', marginTop: 10 }}>No trades open — the bot is watching the watchlist for a setup.</div>
-      )}
-    </div>
+      {curve.length >= 2 && <Line vals={curve.map((d) => Math.round(d.equity!))} labels={[new Date(`${curve[0].summary_date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), 'Today']} pts={curve.map((d) => d.summary_date)} pre="$" color="good" h={120} />}
+    </section>
   );
-}
-
-function SignalRow({ signal }: { signal: BotSignal }) {
-  const color = signal.signal_type === 'entry' ? GREEN : signal.signal_type === 'exit' ? GOLD : 'var(--text-tertiary)';
-  const label = signal.signal_type === 'entry' ? 'Entered' : signal.signal_type === 'exit' ? 'Exited' : 'Blocked';
-  return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 20px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)' }}>
-      <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: 0.4, minWidth: 56, marginTop: 2 }}>{label}</div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)' }}>{signal.ticker === '*' ? 'Bot-wide' : signal.ticker}</div>
-        <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 2 }}>{signal.reason}</div>
-      </div>
-      <div style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{new Date(signal.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-    </div>
+  const stats = [
+    <Stat key="t" label="Today" value={accountLoading ? '—' : money(account.dailyPl)} pill={accountLoading ? '' : pct(account.dailyPlPct)} k={account.dailyPl > 0 ? 'good' : account.dailyPl < 0 ? 'bad' : 'neutral'} />,
+    <Stat key="b" label="Best" value={best?.symbol ?? '—'} pill={best ? pct(best.unrealized_plpc) : 'No positions'} k={best && best.unrealized_plpc > 0 ? 'good' : 'neutral'} />,
+    <Stat key="w" label="Worst" value={worst && worst !== best ? worst.symbol : '—'} pill={worst && worst !== best ? pct(worst.unrealized_plpc) : '—'} k={worst && worst.unrealized_plpc < 0 ? 'bad' : 'neutral'} />,
+    <Stat key="c" label="Cash" value={accountLoading ? '—' : money(account.cash)} pill="Paper money" />,
+  ];
+  const alloc = account.positions.length > 0 && <Card title="Allocation" meta={`${account.positions.length} holdings`} wide={!phone}><Donut rows={[...account.positions.map((p) => ({ name: p.symbol, value: Math.round(p.qty * p.current_price) })), { name: 'Cash', value: Math.round(account.cash) }].filter((x) => x.value > 0)} /></Card>;
+  const signalsCard = (
+    <Card title="Today's signals" meta="Including blocked ones" flush wide={!phone}>
+      {todaySignals.length ? <div>{todaySignals.map((sg, i) => <Row key={sg.id} first={i === 0} name={sg.ticker === '*' ? 'Bot-wide' : sg.ticker} meta={new Date(sg.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} chip={sg.signal_type === 'entry' ? 'Entered' : sg.signal_type === 'exit' ? 'Exited' : 'Blocked'} k={sg.signal_type === 'entry' ? 'good' : sg.signal_type === 'exit' ? 'warn' : 'neutral'} note={sg.reason} />)}</div>
+        : <div style={{ padding: '10px 0 14px', fontSize: 14, color: 'var(--text-tertiary)' }}>{emptyCopy('noSignalsToday')}</div>}
+    </Card>
+  );
+  const note = latestNote && <Card title="Commentary" meta={latestNote.summary_date} wide={!phone}><NovaMark /><p style={{ margin: 0, fontSize: 15, lineHeight: 1.5, color: 'var(--text-secondary)' }}>{latestNote.nova_commentary}</p><span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>Practice only. Not financial advice.</span></Card>;
+  const positions = (
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', minWidth: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 20px' }}><span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>Positions</span><span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-tertiary)' }}>Paper trading · no real money</span></div>
+      {[...account.positions.map((p) => ({ k: p.symbol, cells: [p.symbol, String(p.qty), money(p.current_price), pct(p.unrealized_plpc), money(p.qty * p.current_price)], up: p.unrealized_plpc >= 0 })), { k: 'cash', cells: ['Cash', '—', '—', 'Available', money(account.cash)], up: null }].map((r, i) => (
+        <div key={r.k} style={{ display: 'grid', gridTemplateColumns: phone ? '70px 1fr 90px' : '90px 70px 100px 110px minmax(0,1fr)', gap: 12, alignItems: 'center', minHeight: 48, padding: '0 20px', borderTop: '1px solid var(--grid)', background: i === 0 ? undefined : undefined, fontSize: 14 }}>
+          <span style={{ color: 'var(--text)', fontWeight: 600 }}>{r.cells[0]}</span>
+          {!phone && <span style={{ color: 'var(--text-secondary)' }}>{r.cells[1]}</span>}
+          {!phone && <span style={{ color: 'var(--text-secondary)' }}>{r.cells[2]}</span>}
+          <span>{r.up == null ? <Chip k="neutral">{r.cells[3]}</Chip> : <Chip k={r.up ? 'good' : 'bad'}>{r.cells[3]}</Chip>}</span>
+          <span style={{ color: 'var(--text)', fontWeight: 600, textAlign: 'right' }}>{r.cells[4]}</span>
+        </div>
+      ))}
+      {!accountLoading && !account.connected && <div style={{ padding: '12px 20px', borderTop: '1px solid var(--grid)', fontSize: 13.5, color: 'var(--text-secondary)' }}>No broker connected yet. Add paper keys under Watchlist & settings.</div>}
+    </section>
+  );
+  return phone ? <>{hero}<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>{stats[0]}{stats[3]}</div>{positions}{alloc}{note}{signalsCard}</> : (
+    <>
+      <div style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? 'minmax(0,1.35fr) minmax(0,1fr)' : 'minmax(0,1.2fr) minmax(0,1fr)', gap: 16 }}>{hero}<div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 16 }}>{stats}</div></div>
+      <div style={{ display: 'grid', gridTemplateColumns: device === 'desktop' && !novaOpen ? 'repeat(3,minmax(0,1fr))' : 'repeat(2,minmax(0,1fr))', gap: 16, alignItems: 'start' }}>{alloc}{note}<div style={{ gridColumn: alloc && note && !(device === 'desktop' && !novaOpen) ? '1 / -1' : 'auto' }}>{signalsCard}</div></div>
+      {positions}
+    </>
   );
 }
 
@@ -424,45 +419,26 @@ export default function StocksScreen({ homeHeadStyle, homeSubStyle }: Props) {
 
   const halted = config.halted_date === new Date().toISOString().slice(0, 10);
 
+  void homeHeadStyle; void homeSubStyle;
   return (
-    <div>
-      <div style={homeHeadStyle}>Stocks</div>
-      <div style={homeSubStyle}>Paper-trading bot on Alpaca — watches the market, trades small, shows its work.</div>
-
-      <div style={{ ...cardStyle, marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ padding: '5px 12px', borderRadius: 'var(--radius-pill)', background: `${GOLD}22`, border: `1px solid ${GOLD}55`, color: GOLD, fontSize: 'var(--text-caption)', fontWeight: 700, letterSpacing: 0.5 }}>PAPER</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: config.enabled ? GREEN : 'var(--text-tertiary)' }} />
-            <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)' }}>{config.enabled ? 'Running' : 'Paused'}</div>
-          </div>
-          {halted && (
-            <div style={{ padding: '5px 12px', borderRadius: 'var(--radius-pill)', background: `${RED}22`, border: `1px solid ${RED}55`, color: RED, fontSize: 'var(--text-caption)', fontWeight: 700 }}>
-              HALTED — {config.halted_reason}
-            </div>
-          )}
-          <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }}>Last run: {timeAgo(config.last_run_at)}</div>
-        </div>
-        <div style={pillButton(config.enabled ? 'outline' : 'solid', config.enabled)} onClick={toggleEnabled}>
-          {config.enabled ? 'Kill switch — stop bot' : 'Turn bot ON'}
-        </div>
+    <Page title="Stocks" sub="Paper-trading bot on Alpaca · not financial advice" right={{ t: config.enabled ? 'Stop bot' : 'Turn bot on', onClick: () => void toggleEnabled() }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <Chip k="warn">Paper</Chip>
+        <Chip k={config.enabled ? 'live' : 'neutral'}>{config.enabled ? 'Running' : 'Paused'}</Chip>
+        {halted && <Chip k="bad">{`Halted: ${config.halted_reason}`}</Chip>}
+        <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Last run {timeAgo(config.last_run_at)}</span>
       </div>
-
-      <Walkthrough />
-
-      <div style={{ display: 'flex', gap: 8, marginTop: 20, flexWrap: 'wrap' }}>
-        <div style={tabStyle(tab === 'today')} onClick={() => setTab('today')}>Today</div>
-        <div style={tabStyle(tab === 'performance')} onClick={() => setTab('performance')}>Performance</div>
-        <div style={tabStyle(tab === 'log')} onClick={() => setTab('log')}>Trade Log</div>
-        <div style={tabStyle(tab === 'settings')} onClick={() => setTab('settings')}>Watchlist & Settings</div>
-        <div style={tabStyle(tab === 'news')} onClick={() => setTab('news')}>News</div>
+      <div style={{ display: 'flex', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)', overflowX: 'auto', maxWidth: '100%', alignSelf: 'flex-start' }}>
+        {([['today', 'Today'], ['performance', 'Performance'], ['log', 'Trade log'], ['settings', 'Watchlist & settings'], ['news', 'News']] as [Tab, string][]).map(([k, l]) => (
+          <button key={k} aria-pressed={tab === k} onClick={() => setTab(k)} style={{ padding: '7px 14px', borderRadius: 999, border: 0, fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', whiteSpace: 'nowrap', background: tab === k ? 'var(--text)' : 'transparent', color: tab === k ? 'var(--bg)' : 'var(--text-secondary)' }}>{l}</button>
+        ))}
       </div>
-
       {tab === 'today' && <TodayPanel {...bot} />}
       {tab === 'performance' && <PerformancePanel {...bot} />}
       {tab === 'log' && <TradeLogPanel trades={bot.trades} />}
-      {tab === 'settings' && <SettingsPanel {...bot} />}
+      {tab === 'settings' && <><Walkthrough /><SettingsPanel {...bot} /></>}
       {tab === 'news' && <NewsPanel account={bot.account} accountLoading={bot.accountLoading} />}
-    </div>
+      <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Paper trading only. Practice, not financial advice.</span>
+    </Page>
   );
 }
