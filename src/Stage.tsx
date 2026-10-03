@@ -43,7 +43,7 @@ const SupportInboxScreen = lazyScreen(() => import('./components/screens/Support
 const LegalScreen = lazyScreen(() => import('./components/screens/LegalScreen'));
 const ScalingPlannerScreen = lazyScreen(() => import('./components/screens/ScalingPlannerScreen'));
 const BusinessAuditsScreen = lazyScreen(() => import('./components/screens/BusinessAuditsScreen'));
-const ClientCRMScreen = lazyScreen(() => import('./components/screens/ClientCRMScreen'));
+const ClientCRMV2 = lazyScreen(() => import('./components/screens/v2/ClientCRMV2'));
 const IdeaMakerScreen = lazyScreen(() => import('./components/screens/IdeaMakerScreen'));
 const BrandLabScreen = lazyScreen(() => import('./components/screens/BrandLabScreen'));
 const ScheduleV2 = lazyScreen(() => import('./components/screens/v2/ScheduleV2'));
@@ -329,17 +329,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'client-crm' && (
-          <ClientCRMScreen
-            homeHeadStyle={vm.homeHeadStyle}
-            homeSubStyle={vm.homeSubStyle}
-            focusClientId={clientFocus}
-            onClearFocus={() => setClientFocus(null)}
-            selectedClientId={selectedClientId}
-            onSelectClient={setSelectedClientId}
-            onPushToMarketing={pushToMarketing}
-            onOpenCampaign={openCampaign}
-            onStartCampaign={startCampaignFor}
-          />
+          <ClientCRMV2 focusClientId={clientFocus} onClearFocus={() => setClientFocus(null)} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} onPushToMarketing={pushToMarketing} onOpenCampaign={openCampaign} onStartCampaign={startCampaignFor} />
         )}
 
         {state.screen === 'client-modules' && (
