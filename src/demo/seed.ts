@@ -287,9 +287,16 @@ export function buildSeed(): Record<string, Row[]> {
   T('client_tickets', [{ id: uid('tick'), client_id: clients[0].id, deliverable_id: null, kind: 'bug', title: 'Booking button missing on mobile', avoid: "Don't move the menu — customers know where it is.", prefer: 'Put the button back where it was, under the hero photo.', status: 'open', owner_note: null, created_at: hoursAgo(26), updated_at: hoursAgo(26), resolved_at: null, crm_clients: { business_name: 'Blue Door Bakery', contact_name: 'Nina Brooks' } }]);
   T('client_messages', [{ id: uid('cmsg'), client_id: clients[1].id, sender: 'client', body: 'Can we move Thursday\'s review to 11:30? Something came up at 11.', read_at: null, created_at: hoursAgo(2.5), crm_clients: { business_name: 'Summit Auto Spa', contact_name: 'Dev Patel' } }]);
   T('client_documents', [
-    { id: uid('cdoc'), doc_type: 'invoice', contact_id: null, label: 'Blue Door Bakery — Invoice', status: 'sent', paid_at: null, data: { client_name: 'Nina Brooks', client_company: 'Blue Door Bakery', invoice_number: 'INV-0042', line_items: [{ type: 'Build', description: 'Website + online ordering', qty: '1', rate: '1800', amount: '1800' }, { type: 'Retainer', description: 'Monthly care plan', qty: '1', rate: '550', amount: '550' }] } },
+    { id: 'cdoc-blue-door-invoice', doc_type: 'invoice', contact_id: null, label: 'Blue Door Bakery — Invoice', status: 'sent', paid_at: null, data: { client_name: 'Nina Brooks', client_company: 'Blue Door Bakery', invoice_number: 'INV-0042', line_items: [{ type: 'Build', description: 'Website + online ordering', qty: '1', rate: '1800', amount: '1800' }, { type: 'Retainer', description: 'Monthly care plan', qty: '1', rate: '550', amount: '550' }] } },
     { id: uid('cdoc'), doc_type: 'proposal', contact_id: null, label: 'Juniper Tacos — Project Brief', status: 'draft', paid_at: null, data: {} },
   ]);
+  const deliveryInvoice = 'cdoc-blue-door-invoice';
+  T('scaling_projects', [
+    { id: uid('sprj'), name: 'Website + online ordering', idea_session_id: null, brand_lab_brief_id: null, website_url: 'https://bluedoorbakery.demo', scaling_plan_id: null, invoice_document_id: deliveryInvoice, status: 'ready_to_deliver', client_name: 'Blue Door Bakery', client_email: 'nina@bluedoorbakery.demo', video_path: null, delivered_at: null, created_at: iso(-12), updated_at: iso(-1) },
+    { id: uid('sprj'), name: 'Booking site', idea_session_id: null, brand_lab_brief_id: null, website_url: null, scaling_plan_id: null, invoice_document_id: null, status: 'in_progress', client_name: 'Summit Auto Spa', client_email: null, video_path: null, delivered_at: null, created_at: iso(-5), updated_at: iso(-2) },
+    { id: uid('sprj'), name: 'Website', idea_session_id: null, brand_lab_brief_id: null, website_url: 'https://junipertacos.demo', scaling_plan_id: null, invoice_document_id: null, status: 'delivered', client_name: 'Juniper Tacos', client_email: 'hola@junipertacos.demo', video_path: null, delivered_at: iso(-20), created_at: iso(-50), updated_at: iso(-20) },
+  ]);
+  T('delivery_log', []);
   T('client_invoices', [{ id: uid('cinv'), client_id: clients[0].id, amount_cents: 235000, status: 'paid', description: 'Build + first month', created_at: iso(-6), paid_at: iso(-4) }]);
   T('services', []); T('client_pricing_items', []); T('pricing_template_items', []);
 

@@ -38,7 +38,7 @@ const MentalHealthV2 = lazyScreen(() => import('./components/screens/v2/MentalHe
 const BrainScreen = lazyScreen(() => import('./components/screens/brain/BrainScreen'));
 const EcomScreen = lazyScreen(() => import('./components/screens/ecom/EcomScreen'));
 const ScalingStartScreen = lazyScreen(() => import('./components/screens/ScalingStartScreen'));
-const ClientDeliveryScreen = lazyScreen(() => import('./components/screens/ClientDeliveryScreen'));
+const ShowYourWorkV2 = lazyScreen(() => import('./components/screens/v2/ShowYourWorkV2'));
 const SupportInboxV2 = lazyScreen(() => import('./components/screens/v2/SupportInboxV2'));
 const LegalScreen = lazyScreen(() => import('./components/screens/LegalScreen'));
 const ScalingPlannerScreen = lazyScreen(() => import('./components/screens/ScalingPlannerScreen'));
@@ -81,7 +81,7 @@ const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 // Screens still on their pre-redesign layout: on phone they get the shared
 // back row so every module navigates the same way. Remove one from here
 // as it moves onto the mm/Page frame.
-const LEGACY_SCREENS = new Set(['brain', 'delivery', 'legal', 'brand-lab', 'setup', 'playbooks', 'morning-digest', 'notification-settings', 'leadflow', 'ecommerce', 'prompt-voice-settings', 'budgeting', 'marketing', 'content', 'changelog', 'swipe-file', 'edit-home-widgets', 'grant-access']);
+const LEGACY_SCREENS = new Set(['brain', 'legal', 'brand-lab', 'setup', 'playbooks', 'morning-digest', 'notification-settings', 'leadflow', 'ecommerce', 'prompt-voice-settings', 'budgeting', 'marketing', 'content', 'changelog', 'swipe-file', 'edit-home-widgets', 'grant-access']);
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
@@ -296,9 +296,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <ScalingStartScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onNavigate={actions.navigateTo} />
         )}
 
-        {state.screen === 'delivery' && (
-          <ClientDeliveryScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onNavigate={actions.navigateTo} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} />
-        )}
+        {state.screen === 'delivery' && <ShowYourWorkV2 onNavigate={actions.navigateTo} />}
 
         {state.screen === 'support-inbox' && (
           <SupportInboxV2 onOpenClient={(clientId) => { setClientFocus(clientId); actions.navigateTo('client-modules'); }} />
