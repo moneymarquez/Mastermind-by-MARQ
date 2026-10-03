@@ -60,7 +60,7 @@ const AccountSettingsScreen = lazyScreen(() => import('./components/screens/Acco
 const PromptVoiceSettingsScreen = lazyScreen(() => import('./components/screens/PromptVoiceSettingsScreen'));
 const CallRecordingsV2 = lazyScreen(() => import('./components/screens/v2/CallRecordingsV2'));
 const WebsiteBuilderRoadmapScreen = lazyScreen(() => import('./components/screens/WebsiteBuilderRoadmapScreen'));
-const InvoicingScreen = lazyScreen(() => import('./components/screens/InvoicingScreen'));
+const InvoicingV2 = lazyScreen(() => import('./components/screens/v2/InvoicingV2'));
 const DailyPlanV2 = lazyScreen(() => import('./components/screens/v2/DailyPlanV2'));
 const MacrosV2 = lazyScreen(() => import('./components/screens/v2/MacrosV2'));
 const BudgetingScreen = lazyScreen(() => import('./components/screens/BudgetingScreen'));
@@ -400,9 +400,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <WebsiteBuilderRoadmapScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
-        {state.screen === 'invoicing' && (
-          <InvoicingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} />
-        )}
+        {state.screen === 'invoicing' && <InvoicingV2 />}
 
         {state.screen === 'budgeting' && (
           <BudgetingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} device={device} />

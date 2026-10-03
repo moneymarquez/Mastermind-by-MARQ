@@ -41,7 +41,7 @@ const chip = (active: boolean): CSSProperties => ({
 });
 const fieldLabel: CSSProperties = { fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 5 };
 
-function BusinessProfilePanel() {
+export function BusinessProfilePanel() {
   const { profile, save, error } = useBusinessProfile();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(profile);
@@ -94,7 +94,7 @@ function BusinessProfilePanel() {
   );
 }
 
-function NewDocumentPanel({ onCreated }: { onCreated: (id: string) => void }) {
+export function NewDocumentPanel({ onCreated }: { onCreated: (id: string) => void }) {
   const { create, error } = useClientDocuments();
   const { contacts } = useContacts();
   const [docType, setDocType] = useState<DocType>('invoice');
@@ -208,7 +208,7 @@ function NewDocumentPanel({ onCreated }: { onCreated: (id: string) => void }) {
 const STATUS_LABEL: Record<ClientDocument['status'], string> = { draft: 'Draft', sent: 'Sent', paid: 'Paid' };
 const STATUS_COLOR: Record<ClientDocument['status'], string> = { draft: 'var(--text-tertiary)', sent: 'var(--warning)', paid: 'var(--success)' };
 
-function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack: () => void; startTab: 'edit' | 'preview' }) {
+export function DocumentDetail({ doc, onBack, startTab }: { doc: ClientDocument; onBack: () => void; startTab: 'edit' | 'preview' }) {
   const { update, duplicate, remove, setStatus, error } = useClientDocuments();
   const { profile } = useBusinessProfile();
   const [label, setLabel] = useState(doc.label);
