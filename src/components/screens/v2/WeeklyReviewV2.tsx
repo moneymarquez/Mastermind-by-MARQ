@@ -8,19 +8,13 @@ import Stat from '../../mm/Stat';
 import type { PillKind } from '../../mm/Stat';
 import { Bars } from '../../mm/charts';
 import { Page, useModule, useAi, AiOffCard, NovaMark, area } from '../../mm/Page';
-import { goalPace } from './GoalsV2';
+import { goalPace, weekNo } from './math';
 import { addDays, shortDate, usd, num } from './util';
 
 type Tile = { l: string; v: string; d: string; k?: PillKind };
 type Nums = { calls: number; callsPrev: number; spent: number; spentPrev: number; clean: number | null; logged: number; workouts: number; mood: number | null; moodPrev: number | null; goalsOn: number; goalsAll: number };
 
 const MOOD = { bad: 1, rough: 2, okay: 3, good: 4, great: 5 } as Record<string, number>;
-/** Week of the year, Sunday-start (matches weekStartOf). Pure. */
-export function weekNo(start: string): number {
-  const d = new Date(`${start}T00:00:00`), j = new Date(d.getFullYear(), 0, 1);
-  return Math.floor(((d.getTime() - j.getTime()) / 86400000 + j.getDay()) / 7) + 1;
-}
-
 /** The week's numbers, pulled from every module that has them. Read-only. */
 async function weekNumbers(start: string): Promise<Nums> {
   const end = addDays(start, 7), prev = addDays(start, -7);

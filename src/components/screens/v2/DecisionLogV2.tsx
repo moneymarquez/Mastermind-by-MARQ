@@ -12,13 +12,11 @@ import ModuleDash from '../../mm/ModuleDash';
 import type { SplitRow } from '../../mm/ModuleDash';
 import { Page, Sheet, Field, field, area, useModule, useAi, AiOffCard, NovaMark, ChoiceRow } from '../../mm/Page';
 import { ymd, shortDate, addDays, usd } from './util';
+import { lateNight } from './math';
 
 const RATING: Record<OutcomeRating, { l: string; k: ChipKind }> = { good: { l: 'Good call', k: 'good' }, mixed: { l: 'Mixed', k: 'warn' }, bad: { l: 'Bad call', k: 'bad' } };
 const MODE: Record<DecisionMode, string> = { analytical: 'Analytical', emotional: 'Emotional', mixed: 'Mixed' };
 const stamp = (iso: string) => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-/** Logged between 10 PM and 4 AM, local time. Pure. */
-export const lateNight = (iso: string) => { const h = new Date(iso).getHours(); return h >= 22 || h < 4; };
-
 function status(d: Decision, today: string): { c: string; k: ChipKind } {
   if (d.status === 'reviewed' && d.outcome_rating) return { c: RATING[d.outcome_rating].l, k: RATING[d.outcome_rating].k };
   if (d.review_date <= today) return { c: d.review_date === today ? 'Review due' : `Review due ${shortDate(d.review_date)}`, k: 'warn' };

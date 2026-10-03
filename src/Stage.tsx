@@ -70,7 +70,7 @@ const SwipeFileScreen = lazyScreen(() => import('./components/screens/SwipeFileS
 const DecisionLogV2 = lazyScreen(() => import('./components/screens/v2/DecisionLogV2'));
 const WeeklyReviewV2 = lazyScreen(() => import('./components/screens/v2/WeeklyReviewV2'));
 const CashFlowV2 = lazyScreen(() => import('./components/screens/v2/CashFlowV2'));
-const PatternDetectionScreen = lazyScreen(() => import('./components/screens/PatternDetectionScreen'));
+const PatternsV2 = lazyScreen(() => import('./components/screens/v2/PatternsV2'));
 const VoiceCaptureScreen = lazyScreen(() => import('./components/screens/VoiceCaptureScreen'));
 const ManageModulesScreen = lazyScreen(() => import('./components/screens/ManageModulesScreen'));
 const EditHomeWidgetsScreen = lazyScreen(() => import('./components/screens/EditHomeWidgetsScreen'));
@@ -478,9 +478,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'cashflow' && <CashFlowV2 />}
 
-        {state.screen === 'patterns' && (
-          <PatternDetectionScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'patterns' && <PatternsV2 />}
 
         {state.screen === 'dispatch' && (
           <DispatchScreen isMobile={isMobile} onBack={() => actions.navigateTo('home')} dockBottom={`calc(${PHONE_TAB_H + 10}px + max(env(safe-area-inset-bottom), 20px))`} />

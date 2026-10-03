@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useMentalHealth } from '../../../data/useMentalHealth';
 import { useMentalHealthProfile } from '../../../data/useMentalHealthProfile';
 import { useBender } from '../../../data/useBender';
-import type { MentalHealthCheckin, Mood } from '../../../data/types';
+import type { Mood } from '../../../data/types';
 import Card from '../../mm/Card';
 import Stat from '../../mm/Stat';
 import Row from '../../mm/Row';
@@ -12,28 +12,13 @@ import { Page, useModule, useAi, AiOffCard, NovaMark, area } from '../../mm/Page
 import MentalHealthProfileView from '../MentalHealthProfileView';
 import { reflectOnCheckin } from '../MentalHealthScreen';
 import { addDays, ymd, shortDate, num } from './util';
+import { MOOD_SCORE, splitTags, dailyMood } from './math';
 
-/** 1–5 scale used by the chart (design: Awful · Low · Okay · Good · Great). */
-export const MOOD_SCORE: Record<Mood, number> = { bad: 1, rough: 2, okay: 3, good: 4, great: 5 };
 const SCALE: { m: Mood; l: string }[] = [{ m: 'bad', l: 'Awful' }, { m: 'rough', l: 'Low' }, { m: 'okay', l: 'Okay' }, { m: 'good', l: 'Good' }, { m: 'great', l: 'Great' }];
 const LABEL = Object.fromEntries(SCALE.map((s) => [s.m, s.l])) as Record<Mood, string>;
 const TAGS = ['Slept well', 'Busy', 'Anxious', 'Lonely', 'Tired', 'Grateful', 'Stressed', 'Social'];
 
-/** Tags ride in the note's first line ("Tags: Busy, Slept well.") so they
- *  need no schema change. Pure. */
-export function splitTags(note: string | null): { tags: string[]; text: string } {
-  const m = /^Tags: ([^\n]*?)\.(?:\n|$)/.exec(note ?? '');
-  if (!m) return { tags: [], text: note ?? '' };
-  return { tags: m[1].split(',').map((t) => t.trim()).filter(Boolean), text: (note ?? '').slice(m[0].length).trim() };
-}
 const joinTags = (tags: string[], text: string) => [tags.length ? `Tags: ${tags.join(', ')}.` : '', text.trim()].filter(Boolean).join('\n');
-
-/** Daily mood (average of that day's check-ins), oldest first. Pure. */
-export function dailyMood(rows: MentalHealthCheckin[]): { day: string; v: number }[] {
-  const by = new Map<string, number[]>();
-  for (const r of rows) { const d = ymd(new Date(r.created_at)); by.set(d, [...(by.get(d) ?? []), MOOD_SCORE[r.mood]]); }
-  return [...by.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([day, vs]) => ({ day, v: vs.reduce((s, x) => s + x, 0) / vs.length }));
-}
 
 export default function MentalHealthV2() {
   const { device, novaOpen } = useModule();

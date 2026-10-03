@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useCashFlow, buildForecast } from '../../../data/useCashFlow';
-import type { Forecast, ForecastEvent } from '../../../data/useCashFlow';
+import type { ForecastEvent } from '../../../data/useCashFlow';
 import { dateStr } from '../../../data/time';
 import Card from '../../mm/Card';
 import Chip from '../../mm/Chip';
@@ -10,6 +10,7 @@ import { Line } from '../../mm/charts';
 import { Empty } from '../../mm/States';
 import { Page, Sheet, Field, field, useModule, useAi, AiOffCard, NovaMark } from '../../mm/Page';
 import { addDays, shortDate, usd, num } from './util';
+import { sample } from './math';
 
 type Horizon = 30 | 60 | 90;
 type Scenario = { id: string; q: string; legend: string; events: (e: ForecastEvent[]) => ForecastEvent[]; daily?: (v: number) => number; note: string };
@@ -17,12 +18,6 @@ type Scenario = { id: string; q: string; legend: string; events: (e: ForecastEve
 const cents = (n: number) => `.${String(Math.round(Math.abs(n) * 100) % 100).padStart(2, '0')}`;
 const whole = (n: number) => `${n < 0 ? '−' : ''}$${Math.floor(Math.abs(n)).toLocaleString('en-US')}`;
 const signed = (n: number) => `${n >= 0 ? '+' : '−'}$${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-/** Every Nth day of the forecast up to the horizon, always keeping the last. Pure. */
-export function sample(days: Forecast['days'], horizon: number, max = 26) {
-  const step = Math.max(1, Math.ceil(horizon / max));
-  const out = days.filter((_, i) => i <= horizon && (i % step === 0 || i === horizon));
-  return out;
-}
 const kindOf = (e: ForecastEvent) => (e.label.startsWith('Invoice: ') ? { c: 'Invoice', k: 'neutral' as const } : e.label.startsWith('Subscription: ') ? { c: 'Subscription', k: 'neutral' as const } : { c: e.amount >= 0 ? 'Recurring income' : 'Recurring bill', k: 'neutral' as const });
 const cleanLabel = (l: string) => l.replace(/^(Invoice|Subscription): /, '');
 
