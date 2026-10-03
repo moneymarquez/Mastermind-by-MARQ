@@ -83,8 +83,11 @@ export function BackRow({ back = 'All modules', backTo = 'modules' }: { back?: s
  *  the 24px title; wide gets the 28px title with actions on the right.
  *  `fab` is the module's primary action: a floating button on phone, the
  *  primary header button on wide. `more` is a full view opened from ⋯. */
-export function Page({ title, sub, back = 'All modules', backTo = 'modules', right, fab, menu = [], more, children, client }: {
+export function Page({ title, sub, back = 'All modules', backTo = 'modules', onBack, right, fab, menu = [], more, children, client }: {
   title: ReactNode; sub?: ReactNode; back?: string; backTo?: string;
+  /** Back within the screen (a detail view's "All briefs"), instead of
+   *  navigating to backTo. Also shows on wide, where there's no phone row. */
+  onBack?: () => void;
   right?: { t: string; onClick: () => void }; fab?: { t: string; onClick: () => void };
   menu?: PageAction[]; more?: { label: string; render: () => ReactNode }; children: ReactNode; client?: boolean;
 }) {
@@ -106,7 +109,7 @@ export function Page({ title, sub, back = 'All modules', backTo = 'modules', rig
     <div style={{ display: 'flex', flexDirection: 'column', gap: phone ? 0 : 20, minWidth: 0 }}>
       {phone && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0 14px' }}>
-          <button onClick={() => nav(backTo)} style={{ display: 'flex', alignItems: 'center', gap: 2, height: 40, marginLeft: -6, padding: 0, border: 0, background: 'transparent', color: 'var(--text-secondary)', fontSize: 15, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>
+          <button onClick={() => (onBack ? onBack() : nav(backTo))} style={{ display: 'flex', alignItems: 'center', gap: 2, height: 40, marginLeft: -6, padding: 0, border: 0, background: 'transparent', color: 'var(--text-secondary)', fontSize: 15, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>
             <GChevronLeft size={22} />{back}
           </button>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -114,6 +117,11 @@ export function Page({ title, sub, back = 'All modules', backTo = 'modules', rig
             {dots}
           </div>
         </div>
+      )}
+      {!phone && onBack && (
+        <button onClick={onBack} style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 2, height: 32, marginLeft: -6, marginBottom: -12, padding: 0, border: 0, background: 'transparent', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>
+          <GChevronLeft size={18} />{back}
+        </button>
       )}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, marginBottom: phone ? 20 : 0, flexWrap: phone ? 'nowrap' : 'wrap' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>

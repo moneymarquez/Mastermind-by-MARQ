@@ -17,8 +17,11 @@ import { useBrandLabRounds } from '../../data/useBrandLabRounds';
 import BrandLabRounds from './BrandLabRounds';
 import BrandLabApprovalNotes from './BrandLabApprovalNotes';
 import BrandLabLearning from './BrandLabLearning';
-import { useClients } from '../../data/useClients';
-import ClientSelector from '../ClientSelector';
+import { Page, useModule } from '../mm/Page';
+import Card from '../mm/Card';
+import Row from '../mm/Row';
+import Stat from '../mm/Stat';
+import { Empty } from '../mm/States';
 
 interface Props {
   homeHeadStyle: CSSProperties;
@@ -180,12 +183,12 @@ function StepCard({
   );
 }
 
-export default function BrandLabScreen({ homeHeadStyle, homeSubStyle, selectedClientId, onSelectClient }: Props) {
+export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
+  const phone = useModule().device === 'phone';
   const { briefs, loading, addBrief, updateBrief, removeBrief, saveConcepts, pinConcept, saveStep } = useBrandLab();
   const { projects, patch: patchProject } = useScalingProjects();
   const nichesApi = useNiches();
   const crm = useClientCRM();
-  const clientsApi = useClients();
 
   const [showForm, setShowForm] = useState(false);
   const [showNiches, setShowNiches] = useState(false);
@@ -303,12 +306,10 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle, selectedCl
 
   if (active) {
     return (
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={ghostBtn} onClick={() => setActiveId(null)}>← All briefs</span>
-        </div>
-        <div style={{ ...homeHeadStyle, marginTop: 12 }}>{active.business || active.direction}</div>
-        <div style={homeSubStyle}>{active.audience ? `For: ${active.audience}` : 'A visual design-direction generator — not a site builder.'}</div>
+      <Page title={active.business || active.direction} sub={active.audience ? `For: ${active.audience}` : 'Brand Lab'} back="All briefs" onBack={() => setActiveId(null)}
+        menu={[{ t: 'Delete brief', danger: true, onClick: () => { if (window.confirm('Delete this brief and its rounds?')) { void removeBrief(active.id); setActiveId(null); } } }]}>
+        <StageStrip b={active} />
+        <div>
 
         {generating && <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 12 }}>Nova is working on it…</div>}
         {aiError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 12 }}>{aiError}</div>}
@@ -611,61 +612,60 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle, selectedCl
             )}
           </div>
         )}
-      </div>
+        </div>
+      </Page>
     );
   }
 
+  const inStage = (n: number) => briefs.filter((b) => stageOf(b) === n);
+  const list = (
+    <Card title="Briefs" meta={String(briefs.length)} flush wide={!phone}>
+      {briefs.length ? <div>{briefs.map((b, i) => {
+        const st = stageOf(b);
+        return <Row key={b.id} first={i === 0} name={b.business || b.direction} meta={[b.niche_slug ? nichesApi.bySlug(b.niche_slug)?.name ?? b.niche_slug : null, b.audience].filter(Boolean).join(' · ') || undefined}
+          chip={st === 3 ? `Approved · ${b.rounds_to_approval ?? 0} ${b.rounds_to_approval === 1 ? 'round' : 'rounds'}` : STAGE_NAMES[st]} k={st === 3 ? 'good' : st === 2 ? 'accent' : 'neutral'} amt={b.pinned_concept_id ? '★ Pinned' : undefined} onClick={() => setActiveId(b.id)} />;
+      })}</div> : <div style={{ padding: '10px 0 14px', fontSize: 14, color: 'var(--text-tertiary)' }}>No briefs yet.</div>}
+    </Card>
+  );
+
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <div style={homeHeadStyle}>Brand Lab</div>
-          <div style={homeSubStyle}>A visual design-direction generator — not a site builder. Distinct layout concepts, pick a favorite, prep it for handoff.</div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={ghostBtn} onClick={() => setShowNiches(true)}>Niche library{nichesApi.niches.length ? ` (${nichesApi.niches.length})` : ''}</span>
-          <div style={primaryBtn} onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : '+ New brief'}</div>
-        </div>
-      </div>
-
-      <div style={{ marginTop: 20 }}>
-        <ClientSelector
-          clients={clientsApi.clients}
-          loading={clientsApi.loading}
-          error={clientsApi.error}
-          selectedId={selectedClientId}
-          onSelect={onSelectClient}
-          onCreate={clientsApi.createClient}
-          emptyHint="Briefs below aren't filtered by this yet — it links a client to a new brief in the form."
-        />
-      </div>
-
-      {showForm && (
-        <BrandLabIntakeForm niches={nichesApi.niches} clients={crm.clients} onSubmit={submitNewBrief} onCancel={() => setShowForm(false)} />
-      )}
-
-      <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', maxWidth: 640 }}>
-        {briefs.map((b) => (
-          <div
-            key={b.id}
-            onClick={() => setActiveId(b.id)}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)', cursor: 'pointer' }}
-          >
-            <div>
-              <span style={{ fontSize: 'var(--text-body-lg)', color: 'var(--text-quaternary)' }}>{b.business || b.direction}</span>
-              {b.design_locked_at && <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--success)', marginLeft: 10 }}>design locked · {b.rounds_to_approval} round{b.rounds_to_approval === 1 ? '' : 's'}</span>}
-              {!b.design_locked_at && b.spec_approved_at && <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', marginLeft: 10 }}>spec approved</span>}
-              {b.pinned_concept_id && <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--warning)', marginLeft: 10 }}>★ pinned</span>}
-            </div>
-            <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }} onClick={(e) => { e.stopPropagation(); removeBrief(b.id); }}>Delete</span>
+    <Page title="Brand Lab" sub="Intake → spec review → rounds → approval. Design direction, not a site builder."
+      fab={{ t: 'Brief', onClick: () => setShowForm(true) }}
+      menu={[{ t: `Niche library${nichesApi.niches.length ? ` (${nichesApi.niches.length})` : ''}`, onClick: () => setShowNiches(true) }]}>
+      {showForm && <BrandLabIntakeForm niches={nichesApi.niches} clients={crm.clients} onSubmit={submitNewBrief} onCancel={() => setShowForm(false)} />}
+      {!loading && briefs.length === 0 && !showForm ? <Empty text="No brand projects yet. Start one from an intake: an idea, a call transcript, or an existing client." cta="New brief" onCta={() => setShowForm(true)} /> : (<>
+        {!phone && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 16 }}>
+            <Stat label="Projects" value={String(briefs.length - inStage(3).length)} pill="In progress" />
+            <Stat label="Spec review" value={String(inStage(1).length)} pill="Waiting on approval" k={inStage(1).length ? 'warn' : 'neutral'} />
+            <Stat label="In rounds" value={String(inStage(2).length)} pill="Design rounds" />
+            <Stat label="Approved" value={String(inStage(3).length)} pill="Design locked" k={inStage(3).length ? 'good' : 'neutral'} />
           </div>
-        ))}
-        {!loading && briefs.length === 0 && (
-          <div style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>No briefs yet.</div>
         )}
-      </div>
-
+        {list}
+      </>)}
       <BrandLabLearning briefs={briefs} niches={nichesApi.niches} />
+    </Page>
+  );
+}
+
+const STAGE_NAMES = ['Intake', 'Spec review', 'Rounds', 'Approval'];
+/** Where a brief is in intake → spec review → rounds → approval. */
+function stageOf(b: { functional_spec: unknown; spec_approved_at: string | null; design_locked_at: string | null }): number {
+  return b.design_locked_at ? 3 : b.spec_approved_at ? 2 : b.functional_spec ? 1 : 0;
+}
+
+/** The design's 4-step progress strip at the top of a brief. */
+function StageStrip({ b }: { b: Parameters<typeof stageOf>[0] }) {
+  const st = stageOf(b);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 4 }}>
+        {STAGE_NAMES.map((n, i) => <div key={n} style={{ height: 4, borderRadius: 2, background: i < st || st === 3 ? 'var(--accent)' : i === st ? 'var(--accent-soft)' : 'var(--surface-3)' }} />)}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 4, fontSize: 11.5, fontWeight: 500 }}>
+        {STAGE_NAMES.map((n, i) => <span key={n} style={{ color: i === st ? 'var(--text)' : 'var(--text-tertiary)' }}>{n}</span>)}
+      </div>
     </div>
   );
 }
