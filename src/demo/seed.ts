@@ -297,7 +297,7 @@ export function buildSeed(): Record<string, Row[]> {
     { id: uid('sprj'), name: 'Website', idea_session_id: null, brand_lab_brief_id: null, website_url: 'https://junipertacos.demo', scaling_plan_id: null, invoice_document_id: null, status: 'delivered', client_name: 'Juniper Tacos', client_email: 'hola@junipertacos.demo', video_path: null, delivered_at: iso(-20), created_at: iso(-50), updated_at: iso(-20) },
   ]);
   T('delivery_log', []);
-  T('client_invoices', [{ id: uid('cinv'), client_id: clients[0].id, amount_cents: 235000, status: 'paid', description: 'Build + first month', created_at: iso(-6), paid_at: iso(-4) }]);
+  T('client_invoices', [{ id: uid('cinv'), client_id: clients[0].id, pricing_item_id: null, sequence_index: 1, amount: 2350, line_items: null, product_sheet_intro: null, invoice_number: 41, due_date: dayStr(-5), stripe_invoice_url: null, status: 'paid', description: 'Build + first month', created_at: iso(-6), paid_at: iso(-4) }]);
   T('services', []); T('client_pricing_items', []); T('pricing_template_items', []);
 
   // ── Dispatch: a two-person crew, this morning's run, one overdue ─────

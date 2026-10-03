@@ -1,119 +1,137 @@
 import { useEffect, useState } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useClientPortalData } from '../data/useClientPortalData';
 import type { AssignedModule, TicketWithOptions } from '../data/useClientPortalData';
 import type { ClientDeliverable, ClientInvoice, ClientReport, ClientTicketKind, DeliverableKind } from '../data/types';
 import { DELIVERABLE_KINDS, TICKET_KINDS } from '../data/types';
 import InvoiceDocument, { money } from '../components/InvoiceDocument';
 import ProgressSpine from '../components/ProgressSpine';
+import Chip from '../components/mm/Chip';
+import type { ChipKind } from '../components/mm/Chip';
+import Row from '../components/mm/Row';
+import { Line } from '../components/mm/charts';
 
 interface Props {
   onSignOut?: () => void;
-  /** Owner's read-only preview (Client Modules) — pins the data hook to
+  /** Owner's read-only preview (Client Modules): pins the data hook to
    *  one client and turns every write into a no-op. */
   previewClientId?: string | null;
 }
 
-type Tab = 'home' | 'guides' | 'changes' | 'requests' | 'invoices' | 'messages';
+type Tab = 'home' | 'progress' | 'numbers' | 'help';
 
-// ── Styles ─────────────────────────────────────────────────────────────
-// Mobile first: one column, 16px inputs, content padded past the tab bar
-// plus the safe-area inset (additive, never carved out of a fixed height).
-// The shell is position:relative with an absolute tab bar so the same
-// component renders correctly inside the owner's preview frame.
+// ── Styles (design handoff: MM 4 Clients, teal = --client-accent) ──────
+// Mobile first, one column, 16px inputs. The shell is position:relative
+// with an absolute tab bar so it also renders inside the owner's preview.
 const TAB_BAR = 64;
 const page: CSSProperties = { position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)', color: 'var(--text)', overflow: 'hidden' };
-const scroll: CSSProperties = { flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: `24px 18px calc(${TAB_BAR + 28}px + env(safe-area-inset-bottom))` };
-const container: CSSProperties = { maxWidth: 680, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 12 };
-const card: CSSProperties = { background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 18 };
-const sectionTitle: CSSProperties = { fontSize: 'var(--text-label)', fontWeight: 700, color: 'var(--text)', margin: '20px 0 4px' };
-const muted: CSSProperties = { fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)', lineHeight: 1.55 };
-const body: CSSProperties = { fontSize: 'var(--text-body)', color: 'var(--text)', lineHeight: 1.6, whiteSpace: 'pre-wrap' };
-const eyebrow: CSSProperties = { ...muted, textTransform: 'uppercase', letterSpacing: 0.3, fontSize: 'var(--text-micro)', fontWeight: 700 };
-const primaryBtn: CSSProperties = { padding: '12px 20px', borderRadius: 'var(--radius-pill)', border: 'none', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' };
-const ghostBtn: CSSProperties = { padding: '9px 15px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-2)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', textDecoration: 'none' };
-const input: CSSProperties = { width: '100%', boxSizing: 'border-box', background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-md)', padding: '12px 14px', color: 'var(--text)', fontSize: 16, outline: 'none', fontFamily: 'inherit', lineHeight: 1.5 };
-const pill = (color: string): CSSProperties => ({ fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', borderRadius: 'var(--radius-pill)', padding: '3px 9px', color, border: `1px solid color-mix(in srgb, ${color} 40%, transparent)`, whiteSpace: 'nowrap' });
-const disabled = (off: boolean): CSSProperties => (off ? { opacity: 0.5, pointerEvents: 'none' } : {});
-
-function invoiceColor(status: ClientInvoice['status']): string {
-  if (status === 'paid') return 'var(--success)';
-  if (status === 'void') return 'var(--text-tertiary)';
-  return 'var(--danger)';
-}
+const scroll: CSSProperties = { flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: `16px 16px calc(${TAB_BAR + 28}px + env(safe-area-inset-bottom))` };
+const container: CSSProperties = { maxWidth: 640, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 };
+const cardS: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 };
+const muted: CSSProperties = { fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 };
+const body: CSSProperties = { fontSize: 15, color: 'var(--text)', lineHeight: 1.55, whiteSpace: 'pre-wrap', margin: 0 };
+const small: CSSProperties = { fontSize: 12.5, fontWeight: 500, color: 'var(--text-tertiary)' };
+const label: CSSProperties = { fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' };
+const teal: CSSProperties = { height: 46, padding: '0 18px', borderRadius: 8, border: 0, background: 'var(--client-accent)', color: 'var(--bg)', fontSize: 15, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' };
+const ghost: CSSProperties = { height: 46, padding: '0 16px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 15, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' };
+const input: CSSProperties = { width: '100%', boxSizing: 'border-box', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px', color: 'var(--text)', fontSize: 16, outline: 'none', fontFamily: 'inherit', lineHeight: 1.45 };
+const off = (o: boolean): CSSProperties => (o ? { opacity: 0.5, pointerEvents: 'none' } : {});
 
 function ticketKindFor(kind: DeliverableKind): ClientTicketKind {
   if (kind === 'website' || kind === 'brand') return 'design';
   if (kind === 'payments' || kind === 'other') return 'system';
   return 'marketing';
 }
-
 function fmtDate(iso: string | null | undefined): string {
   if (!iso) return '';
   const d = new Date(iso.length === 10 ? `${iso}T00:00:00` : iso);
   return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
-
-function Empty({ children }: { children: React.ReactNode }) {
-  return <div style={{ ...card, ...muted, borderStyle: 'dashed' }}>{children}</div>;
+const invoiceChip = (s: ClientInvoice['status']): { l: string; k: ChipKind } =>
+  s === 'paid' ? { l: 'Paid', k: 'good' } : s === 'void' ? { l: 'Void', k: 'neutral' } : s === 'overdue' ? { l: 'Overdue', k: 'bad' } : s === 'sent' ? { l: 'Due', k: 'warn' } : { l: s, k: 'neutral' };
+const deliverableChip = (d: ClientDeliverable): { l: string; k: ChipKind } =>
+  d.status === 'live' ? { l: 'Live', k: 'good' } : d.status === 'review' ? (d.approved_at ? { l: 'Approved', k: 'good' } : { l: 'In review', k: 'client' }) : { l: 'In progress', k: 'neutral' };
+function ticketStatus(t: TicketWithOptions): { l: string; k: ChipKind } {
+  if (t.status === 'resolved') return { l: 'Resolved', k: 'good' };
+  if (t.status === 'options_sent') return { l: 'Your pick', k: 'client' };
+  return { l: 'With Marq', k: 'neutral' };
 }
 
+function Card({ title, meta, flush, accent, children }: { title?: ReactNode; meta?: ReactNode; flush?: boolean; accent?: boolean; children: ReactNode }) {
+  return (
+    <section style={{ ...cardS, ...(flush ? { padding: '18px 18px 4px', gap: 4 } : {}), ...(accent ? { borderColor: 'color-mix(in srgb, var(--client-accent) 40%, var(--border))' } : {}) }}>
+      {(title || meta) && <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
+        <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, letterSpacing: '-0.015em' }}>{title}</span>
+        {meta && <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{meta}</span>}
+      </div>}
+      {children}
+    </section>
+  );
+}
+const Empty = ({ children }: { children: ReactNode }) => <div style={{ ...cardS, ...muted, borderStyle: 'dashed', background: 'transparent' }}>{children}</div>;
+const Back = ({ children, onClick }: { children: ReactNode; onClick: () => void }) => (
+  <button onClick={onClick} style={{ alignSelf: 'flex-start', height: 36, marginLeft: -4, padding: 0, border: 0, background: 'transparent', color: 'var(--text-secondary)', fontSize: 15, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>‹ {children}</button>
+);
+const H1 = ({ children, sub }: { children: ReactNode; sub?: ReactNode }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <h1 style={{ margin: 0, color: 'var(--text)', fontSize: 26, fontWeight: 700, letterSpacing: '-0.035em', lineHeight: 1.15, overflowWrap: 'anywhere' }}>{children}</h1>
+    {sub && <p style={{ margin: 0, fontSize: 15, lineHeight: 1.45, color: 'var(--text-secondary)' }}>{sub}</p>}
+  </div>
+);
+
 // ── Numbers ─────────────────────────────────────────────────────────────
-// Real data only: baseline is the first PUBLISHED monthly report, current
-// is the latest. A metric shows only if at least one of the two has a
-// value; no reports at all is an honest empty state that names what's
-// needed. Nothing here is ever estimated or filled in.
+// Real data only: published monthly reports, oldest first. The lead metric
+// is the first one with a value; the sentence under it compares with the
+// month before, and nothing is estimated or filled in.
 const METRICS: { key: keyof ClientReport; label: string }[] = [
-  { key: 'gbp_views', label: 'Google profile views' },
   { key: 'gbp_calls', label: 'Calls from Google' },
+  { key: 'gbp_views', label: 'Google profile views' },
   { key: 'gbp_directions', label: 'Direction requests' },
   { key: 'reach', label: 'Reach' },
   { key: 'engagement_count', label: 'Engagements' },
   { key: 'followers_end', label: 'Followers' },
 ];
+const val = (r: ClientReport | undefined, k: keyof ClientReport) => (r ? (r[k] as number | null) : null);
 
 function Numbers({ reports }: { reports: ClientReport[] }) {
   if (reports.length === 0) {
-    return (
-      <Empty>
-        Nothing to show yet. Your numbers appear here once the first monthly report is published — it captures your baseline (Google profile views, calls, direction requests, reach) so every later month is measured against where you started. No data source is connected yet, so nothing is being estimated.
-      </Empty>
-    );
+    return <Empty>Nothing to show yet. Your numbers appear here once the first monthly report is published. It records where you started (Google profile views, calls, direction requests, reach), so every later month is measured against it.</Empty>;
   }
-  const baseline = reports[0];
-  const current = reports[reports.length - 1];
-  const rows = METRICS
-    .map((m) => ({ ...m, b: baseline[m.key] as number | null, c: current[m.key] as number | null }))
-    .filter((r) => r.b !== null || r.c !== null);
-  if (rows.length === 0) {
-    return <Empty>Reports exist for {baseline.period_label}{reports.length > 1 ? ` through ${current.period_label}` : ''}, but no metrics were recorded in them yet.</Empty>;
-  }
-  const same = baseline.id === current.id;
+  const cur = reports[reports.length - 1], prev = reports.length > 1 ? reports[reports.length - 2] : undefined, first = reports[0];
+  const present = METRICS.filter((m) => reports.some((r) => val(r, m.key) !== null));
+  if (!present.length) return <Empty>Reports exist for {first.period_label}{reports.length > 1 ? ` through ${cur.period_label}` : ''}, but no numbers were recorded in them yet.</Empty>;
+  const lead = present.find((m) => val(cur, m.key) !== null) ?? present[0];
+  const lc = val(cur, lead.key), lp = val(prev, lead.key);
+  const series = reports.map((r) => val(r, lead.key)).filter((v): v is number => v !== null);
+  const sentence = lc === null ? `Not recorded for ${cur.period_label}.`
+    : lp === null ? (prev ? `${prev.period_label} wasn't recorded, so there's nothing to compare yet.` : `This is your starting point. Next month is measured against it.`)
+    : lc === lp ? `The same as ${prev!.period_label}.`
+    : `That's ${Math.abs(lc - lp).toLocaleString()} ${lc > lp ? 'more' : 'fewer'} than ${prev!.period_label}.`;
+  const rest = present.filter((m) => m.key !== lead.key);
   return (
-    <div style={card}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, ...muted, marginBottom: 10 }}>
-        <span>Baseline: {baseline.period_label}</span>
-        {!same && <span>Now: {current.period_label}</span>}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {rows.map((r) => {
-          const delta = r.b !== null && r.c !== null && !same ? r.c - r.b : null;
-          return (
-            <div key={r.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
-              <span style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)' }}>{r.label}</span>
-              <span style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
-                {!same && <span style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>{r.b === null ? '—' : r.b.toLocaleString()}</span>}
-                <span style={{ fontSize: 'var(--text-subhead)', fontWeight: 700, color: 'var(--text)' }}>{r.c === null ? '—' : r.c.toLocaleString()}</span>
-                {delta !== null && delta !== 0 && (
-                  <span style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, color: delta > 0 ? 'var(--success)' : 'var(--danger)' }}>{delta > 0 ? '▲' : '▼'}{Math.abs(delta).toLocaleString()}</span>
-                )}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-      {current.roi_snapshot && <div style={{ ...body, marginTop: 14, fontSize: 'var(--text-body-sm)' }}>{current.roi_snapshot}</div>}
-    </div>
+    <>
+      <section style={{ ...cardS, padding: 20, gap: 14 }}>
+        <span style={label}>{lead.label}</span>
+        <span style={{ color: 'var(--text)', fontSize: 46, fontWeight: 600, letterSpacing: '-0.04em', lineHeight: 1 }}>{lc === null ? '—' : lc.toLocaleString()}</span>
+        <p style={{ ...body, textWrap: 'pretty' } as CSSProperties}>{sentence}{cur.roi_snapshot ? ` ${cur.roi_snapshot}` : ''}</p>
+        {series.length >= 2 && <Line vals={series} labels={[first.period_label, cur.period_label]} color="client" h={120} />}
+      </section>
+      {rest.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {rest.map((m) => {
+            const c = val(cur, m.key), p = val(prev, m.key), d = c !== null && p !== null ? c - p : null;
+            return (
+              <div key={m.key} style={{ ...cardS, padding: 14, gap: 6 }}>
+                <span style={label}>{m.label}</span>
+                <span style={{ color: 'var(--text)', fontSize: 26, fontWeight: 600, letterSpacing: '-0.04em', lineHeight: 1.1 }}>{c === null ? '—' : c.toLocaleString()}</span>
+                {d !== null && d !== 0 && <span style={{ alignSelf: 'flex-start', padding: '2px 8px', borderRadius: 999, fontSize: 12, fontWeight: 600, color: d > 0 ? 'var(--success)' : 'var(--danger)', background: `color-mix(in srgb, ${d > 0 ? 'var(--success)' : 'var(--danger)'} 14%, transparent)` }}>{d > 0 ? '↑' : '↓'} {Math.abs(d).toLocaleString()}</span>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {cur.upcoming_plan && <Card title="What's next" meta={cur.period_label}><p style={body}>{cur.upcoming_plan}</p></Card>}
+    </>
   );
 }
 
@@ -123,37 +141,24 @@ function GuideDetail({ item, readOnly, onBack, onToggleDone }: { item: AssignedM
   const done = !!item.completed_at;
   return (
     <div style={container}>
-      <span style={{ ...ghostBtn, alignSelf: 'flex-start' }} onClick={onBack}>← All guides</span>
-      <div style={{ fontSize: 'var(--text-head)', fontWeight: 700, marginTop: 6 }}>{m.title}</div>
-      <div style={card}>
-        <div style={eyebrow}>What it is</div>
-        <div style={{ ...body, marginTop: 4 }}>{m.what_it_is}</div>
-        <div style={{ ...eyebrow, marginTop: 14 }}>Why it matters</div>
-        <div style={{ ...body, marginTop: 4 }}>{m.why_it_matters}</div>
-      </div>
-      {m.video_url && (
-        <a href={m.video_url} target="_blank" rel="noreferrer" style={{ ...ghostBtn, alignSelf: 'flex-start' }}>▶ Watch the 90-second walkthrough</a>
-      )}
-      <div style={card}>
-        <div style={{ ...eyebrow, marginBottom: 8 }}>Steps</div>
-        <ol style={{ margin: 0, paddingLeft: 22, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {m.steps.map((s, i) => <li key={i} style={{ ...body, fontSize: 'var(--text-body)' }}>{s}</li>)}
-        </ol>
-      </div>
-      <div style={{ ...card, borderColor: done ? 'color-mix(in srgb, var(--success) 45%, transparent)' : 'var(--border)' }}>
-        <div style={eyebrow}>You're done when</div>
-        <div style={{ ...body, marginTop: 4 }}>{m.done_when}</div>
-        <div style={{ ...(done ? ghostBtn : primaryBtn), marginTop: 14, ...disabled(readOnly) }} onClick={() => onToggleDone(!done)}>{done ? 'Done ✓ — tap to undo' : 'Mark done'}</div>
-      </div>
+      <Back onClick={onBack}>Progress</Back>
+      <H1>{m.title}</H1>
+      <Card title="What it is"><p style={body}>{m.what_it_is}</p><span style={label}>Why it matters</span><p style={body}>{m.why_it_matters}</p></Card>
+      {m.video_url && <a href={m.video_url} target="_blank" rel="noreferrer" style={{ ...ghost, alignSelf: 'flex-start' }}>Watch the 90-second walkthrough</a>}
+      <Card title="Steps" meta={`${m.steps.length}`}>
+        <ol style={{ margin: 0, paddingLeft: 22, display: 'flex', flexDirection: 'column', gap: 10 }}>{m.steps.map((s, i) => <li key={i} style={body}>{s}</li>)}</ol>
+      </Card>
+      <Card title="You're done when" accent={done}>
+        <p style={body}>{m.done_when}</p>
+        <button style={{ ...(done ? ghost : teal), ...off(readOnly) }} onClick={() => onToggleDone(!done)}>{done ? 'Done ✓ · tap to undo' : 'Mark done'}</button>
+      </Card>
     </div>
   );
 }
 
-// ── Requests (tickets) ──────────────────────────────────────────────────
+// ── Tickets ─────────────────────────────────────────────────────────────
 function TicketForm({ deliverables, presetDeliverable, readOnly, onSubmit, onCancel }: {
-  deliverables: ClientDeliverable[];
-  presetDeliverable: ClientDeliverable | null;
-  readOnly: boolean;
+  deliverables: ClientDeliverable[]; presetDeliverable: ClientDeliverable | null; readOnly: boolean;
   onSubmit: (input: { kind: ClientTicketKind; title: string; avoid: string; prefer: string; deliverable_id: string | null }) => Promise<string | null>;
   onCancel: () => void;
 }) {
@@ -165,55 +170,24 @@ function TicketForm({ deliverables, presetDeliverable, readOnly, onSubmit, onCan
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const ready = title.trim().length > 0 && avoid.trim().length > 0 && prefer.trim().length > 0;
-
-  const submit = async () => {
-    setBusy(true);
-    const err = await onSubmit({ kind, title, avoid, prefer, deliverable_id: deliverableId || null });
-    setBusy(false);
-    if (err) setError(err);
-  };
-
+  const submit = async () => { setBusy(true); const err = await onSubmit({ kind, title, avoid, prefer, deliverable_id: deliverableId || null }); setBusy(false); if (err) setError(err); };
+  const req = <span style={{ color: 'var(--danger)' }}>Required</span>;
+  const fieldBox = (l: ReactNode, el: ReactNode, hint?: string) => <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}><span style={label}>{l}</span>{el}{hint && <span style={small}>{hint}</span>}</div>;
   return (
     <div style={container}>
-      <span style={{ ...ghostBtn, alignSelf: 'flex-start' }} onClick={onCancel}>← Back</span>
-      <div style={{ fontSize: 'var(--text-head)', fontWeight: 700, marginTop: 6 }}>Ask for a change</div>
-      <div style={muted}>Two things are required: what to avoid, and what you'd prefer instead. That's what lets Marq come back with real options instead of a guess. "I don't like it" on its own can't be sent.</div>
-      <div style={card}>
-        <div style={eyebrow}>What kind of change</div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-          {TICKET_KINDS.map((k) => (
-            <span key={k.key} onClick={() => setKind(k.key)} style={{ ...ghostBtn, borderColor: kind === k.key ? 'var(--text)' : 'var(--border-2)', color: kind === k.key ? 'var(--text)' : 'var(--text-secondary)' }}>{k.label}</span>
-          ))}
-        </div>
-        {deliverables.length > 0 && (
-          <>
-            <div style={{ ...eyebrow, marginTop: 14 }}>About (optional)</div>
-            <select style={{ ...input, marginTop: 6 }} value={deliverableId} onChange={(e) => setDeliverableId(e.target.value)}>
-              <option value="">— nothing specific —</option>
-              {deliverables.map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}
-            </select>
-          </>
-        )}
-        <div style={{ ...eyebrow, marginTop: 14 }}>Short title</div>
-        <input style={{ ...input, marginTop: 6 }} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. The homepage headline" />
-        <div style={{ ...eyebrow, marginTop: 14 }}>What to avoid <span style={{ color: 'var(--danger)' }}>· required</span></div>
-        <textarea style={{ ...input, marginTop: 6, minHeight: 84, resize: 'vertical' }} value={avoid} onChange={(e) => setAvoid(e.target.value)} placeholder="What specifically isn't working — the thing to steer away from" />
-        <div style={{ ...eyebrow, marginTop: 14 }}>What you'd prefer <span style={{ color: 'var(--danger)' }}>· required</span></div>
-        <textarea style={{ ...input, marginTop: 6, minHeight: 84, resize: 'vertical' }} value={prefer} onChange={(e) => setPrefer(e.target.value)} placeholder="What you'd rather see — a direction, an example, a feeling" />
-        {error && <div style={{ ...muted, color: 'var(--danger)', marginTop: 10 }}>{error}</div>}
-        <div style={{ display: 'flex', gap: 10, marginTop: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ ...primaryBtn, ...disabled(!ready || busy || readOnly) }} onClick={submit}>{busy ? 'Sending…' : 'Send to Marq'}</span>
-          {!ready && <span style={muted}>Fill in both required fields to send.</span>}
-        </div>
+      <Back onClick={onCancel}>Help</Back>
+      <H1 sub="We'll reply here and by email">New ticket</H1>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {TICKET_KINDS.map((k) => <button key={k.key} onClick={() => setKind(k.key)} style={{ height: 34, padding: '0 14px', borderRadius: 999, border: `1px solid ${kind === k.key ? 'var(--client-accent)' : 'var(--border)'}`, background: kind === k.key ? 'color-mix(in srgb, var(--client-accent) 14%, var(--surface))' : 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>{k.label}</button>)}
       </div>
+      {deliverables.length > 0 && fieldBox('About (optional)', <select style={input} value={deliverableId} onChange={(e) => setDeliverableId(e.target.value)}><option value="">Nothing specific</option>{deliverables.map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}</select>)}
+      {fieldBox("What's going on?", <input style={input} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="The Book now button doesn't show on my phone" />)}
+      {fieldBox(<>What should we avoid? {req}</>, <textarea style={{ ...input, minHeight: 84, resize: 'vertical' }} value={avoid} onChange={(e) => setAvoid(e.target.value)} placeholder="Don't change the colors or move the phone number" />)}
+      {fieldBox(<>What would you prefer? {req}</>, <textarea style={{ ...input, minHeight: 84, resize: 'vertical', ...(avoid.trim() && !prefer.trim() ? { border: '1.5px solid var(--client-accent)' } : {}) }} value={prefer} onChange={(e) => setPrefer(e.target.value)} placeholder="For example: the same button as desktop, pinned to the bottom" />, 'This helps us get it right the first time.')}
+      {error && <span style={{ fontSize: 14, color: 'var(--danger)' }}>{error}</span>}
+      <button style={{ ...(ready ? teal : { ...teal, background: 'var(--surface-3)', color: 'var(--text-tertiary)' }), height: 52, fontSize: 16, ...off(!ready || busy || readOnly) }} onClick={submit}>{busy ? 'Sending…' : 'Send ticket'}</button>
     </div>
   );
-}
-
-function ticketStatus(t: TicketWithOptions): { label: string; color: string } {
-  if (t.status === 'resolved') return { label: 'Resolved', color: 'var(--success)' };
-  if (t.status === 'options_sent') return { label: 'Your pick', color: 'var(--warning)' };
-  return { label: 'With Marq', color: 'var(--text-tertiary)' };
 }
 
 function TicketDetail({ ticket, deliverable, readOnly, onBack, onChoose }: { ticket: TicketWithOptions; deliverable: ClientDeliverable | null; readOnly: boolean; onBack: () => void; onChoose: (optionId: string) => void }) {
@@ -221,40 +195,29 @@ function TicketDetail({ ticket, deliverable, readOnly, onBack, onChoose }: { tic
   const chosen = ticket.options.find((o) => o.chosen_at);
   return (
     <div style={container}>
-      <span style={{ ...ghostBtn, alignSelf: 'flex-start' }} onClick={onBack}>← All requests</span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
-        <div style={{ fontSize: 'var(--text-head)', fontWeight: 700 }}>{ticket.title}</div>
-        <span style={pill(st.color)}>{st.label}</span>
-      </div>
-      <div style={muted}>{TICKET_KINDS.find((k) => k.key === ticket.kind)?.label}{deliverable ? ` · about ${deliverable.title}` : ''} · sent {fmtDate(ticket.created_at)}</div>
-      <div style={card}>
-        <div style={eyebrow}>Avoid</div>
-        <div style={{ ...body, marginTop: 4 }}>{ticket.avoid}</div>
-        <div style={{ ...eyebrow, marginTop: 14 }}>Prefer</div>
-        <div style={{ ...body, marginTop: 4 }}>{ticket.prefer}</div>
-      </div>
-      {ticket.status === 'open' && <Empty>Marq has this. You'll get two or three options to choose between here — not a single redo.</Empty>}
-      {ticket.options.length > 0 && (
-        <>
-          <div style={sectionTitle}>{ticket.status === 'resolved' ? 'What you chose' : 'Pick one'}</div>
-          {ticket.owner_note && <div style={{ ...card, ...body, fontSize: 'var(--text-body-sm)' }}>{ticket.owner_note}</div>}
-          {ticket.options.map((o, i) => {
-            const isChosen = !!o.chosen_at;
-            const dim = ticket.status === 'resolved' && !isChosen;
-            return (
-              <div key={o.id} style={{ ...card, opacity: dim ? 0.55 : 1, borderColor: isChosen ? 'color-mix(in srgb, var(--success) 45%, transparent)' : 'var(--border)' }}>
-                <div style={eyebrow}>Option {i + 1}{isChosen ? ' · chosen' : ''}</div>
-                <div style={{ ...body, marginTop: 4 }}>{o.body}</div>
-                <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
-                  {o.link_url && <a href={o.link_url} target="_blank" rel="noreferrer" style={ghostBtn}>See it ↗</a>}
-                  {ticket.status === 'options_sent' && <span style={{ ...primaryBtn, ...disabled(readOnly) }} onClick={() => onChoose(o.id)}>Go with this one</span>}
-                </div>
+      <Back onClick={onBack}>Help</Back>
+      <H1 sub={[TICKET_KINDS.find((k) => k.key === ticket.kind)?.label, deliverable ? `about ${deliverable.title}` : null, `sent ${fmtDate(ticket.created_at)}`].filter(Boolean).join(' · ')}>{ticket.title}</H1>
+      <div><Chip k={st.k}>{st.l}</Chip></div>
+      <Card><span style={label}>Avoid</span><p style={body}>{ticket.avoid}</p><span style={label}>Prefer</span><p style={body}>{ticket.prefer}</p></Card>
+      {ticket.status === 'open' && <Empty>Marq has this. You'll get two or three options to choose between here, not a single redo.</Empty>}
+      {ticket.options.length > 0 && <>
+        <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>{ticket.status === 'resolved' ? 'What you chose' : 'Pick one'}</span>
+        {ticket.owner_note && <Card><p style={body}>{ticket.owner_note}</p></Card>}
+        {ticket.options.map((o, i) => {
+          const isChosen = !!o.chosen_at;
+          return (
+            <section key={o.id} style={{ ...cardS, opacity: ticket.status === 'resolved' && !isChosen ? 0.55 : 1, ...(isChosen ? { borderColor: 'color-mix(in srgb, var(--client-accent) 50%, var(--border))' } : {}) }}>
+              <span style={label}>Option {i + 1}{isChosen ? ' · chosen' : ''}</span>
+              <p style={body}>{o.body}</p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {o.link_url && <a href={o.link_url} target="_blank" rel="noreferrer" style={ghost}>See it</a>}
+                {ticket.status === 'options_sent' && <button style={{ ...teal, ...off(readOnly) }} onClick={() => onChoose(o.id)}>Go with this one</button>}
               </div>
-            );
-          })}
-          {ticket.status === 'resolved' && !chosen && <div style={muted}>Closed by Marq.</div>}
-        </>
-      )}
+            </section>
+          );
+        })}
+        {ticket.status === 'resolved' && !chosen && <span style={muted}>Closed by Marq.</span>}
+      </>}
     </div>
   );
 }
@@ -267,357 +230,263 @@ export default function ClientPortal({ onSignOut, previewClientId = null }: Prop
   const [guideId, setGuideId] = useState<string | null>(null);
   const [invoiceId, setInvoiceId] = useState<string | null>(null);
   const [ticketId, setTicketId] = useState<string | null>(null);
+  const [deliverableId, setDeliverableId] = useState<string | null>(null);
   const [ticketForm, setTicketForm] = useState<{ open: boolean; deliverable: ClientDeliverable | null }>({ open: false, deliverable: null });
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
 
-  // The portal is its own place: /portal in the address bar, nothing of
-  // the owner tool. Cosmetic — App.tsx routes on role, not path. Skipped
-  // in the owner's preview, which lives inside the owner tool.
+  // The portal is its own place: /portal in the address bar. Cosmetic;
+  // App.tsx routes on role. Skipped in the owner's preview.
   useEffect(() => {
     if (!readOnly && window.location.pathname !== '/portal') window.history.replaceState(null, '', '/portal');
   }, [readOnly]);
-
   useEffect(() => {
-    if (tab === 'messages') data.markOwnerMessagesRead();
+    if (tab === 'help') data.markOwnerMessagesRead();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, messages.length]);
 
   if (data.loading) return <div style={page} />;
-
   if (!client) {
     return (
-      <div style={page}>
-        <div style={scroll}>
-          <div style={container}>
-            <div style={card}>Nothing set up for this login yet — check back soon, or reach out to Marq.</div>
-            {onSignOut && <span style={{ ...ghostBtn, alignSelf: 'flex-start' }} onClick={onSignOut}>Sign out</span>}
-          </div>
-        </div>
-      </div>
+      <div style={page}><div style={scroll}><div style={container}>
+        <Empty>Nothing set up for this login yet. Check back soon, or reach out to Marq.</Empty>
+        {onSignOut && <button style={{ ...ghost, alignSelf: 'flex-start' }} onClick={onSignOut}>Sign out</button>}
+      </div></div></div>
     );
   }
 
   const unreadFromOwner = messages.filter((m) => m.sender === 'owner' && !m.read_at).length;
-  const awaitingPick = tickets.filter((t) => t.status === 'options_sent').length;
+  const awaiting = tickets.filter((t) => t.status === 'options_sent');
   const doneCount = modules.filter((m) => m.completed_at).length;
   const handoff = !!settings?.handoff_mode;
   const openGuide = modules.find((m) => m.id === guideId) ?? null;
   const openInvoice = invoices.find((i) => i.id === invoiceId) ?? null;
   const openTicket = tickets.find((t) => t.id === ticketId) ?? null;
+  const openDeliverable = deliverables.find((d) => d.id === deliverableId) ?? null;
   const toReview = deliverables.filter((d) => d.status === 'review' && !d.approved_at);
+  const unpaid = invoices.filter((i) => i.status === 'sent' || i.status === 'overdue');
+  const first = (client.contact_name ?? '').trim().split(/\s+/)[0] || client.business_name;
+  const initials = client.business_name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+  const activeIdx = spine.findIndex((s) => s.state === 'active');
+  const curStation = spine[activeIdx >= 0 ? activeIdx : Math.max(0, spine.filter((s) => s.state === 'done').length - 1)];
+  const nextStation = spine.find((s) => s.state === 'next');
+  const needCount = toReview.length + awaiting.length + unpaid.length;
 
-  const openGuideAt = (item: AssignedModule) => {
-    setGuideId(item.id);
-    data.markOpened(item.id);
-  };
+  const go = (t: Tab) => { setTab(t); setGuideId(null); setInvoiceId(null); setTicketId(null); setDeliverableId(null); setTicketForm({ open: false, deliverable: null }); };
+  const startTicket = (d: ClientDeliverable | null) => { go('help'); setTicketForm({ open: true, deliverable: d }); };
+  const send = async () => { if (!draft.trim()) return; setSending(true); await data.sendMessage(draft); setDraft(''); setSending(false); };
 
-  const startTicket = (deliverable: ClientDeliverable | null) => {
-    setTicketForm({ open: true, deliverable });
-    setTicketId(null);
-    setTab('requests');
-  };
-
-  const send = async () => {
-    if (!draft.trim()) return;
-    setSending(true);
-    await data.sendMessage(draft);
-    setDraft('');
-    setSending(false);
-  };
-
-  const renderHome = () => (
-    <div style={container}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', minWidth: 0 }}>
-          {settings?.logo_url && <img src={settings.logo_url} alt="" style={{ width: 48, height: 48, borderRadius: 12, objectFit: 'cover', border: '1px solid var(--border)', flexShrink: 0 }} />}
-          <div style={{ minWidth: 0 }}>
-            <div style={muted}>Welcome back</div>
-            <div style={{ fontSize: 'var(--text-head)', fontWeight: 700, marginTop: 2, overflowWrap: 'anywhere' }}>{client.business_name}</div>
-          </div>
-        </div>
-        {onSignOut && !readOnly && <span style={{ ...muted, cursor: 'pointer', flexShrink: 0 }} onClick={onSignOut}>Sign out</span>}
+  const ask = (
+    <Card title="Ask a quick question">
+      <textarea style={{ ...input, minHeight: 64, resize: 'vertical' }} placeholder="Type your question…" value={draft} onChange={(e) => setDraft(e.target.value)} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+        <span style={small}>Goes straight to Marq. Want something changed? Open a ticket.</span>
+        <button style={{ ...teal, height: 40, fontSize: 14, ...off(sending || !draft.trim() || readOnly) }} onClick={send}>{sending ? 'Sending…' : 'Send'}</button>
       </div>
-
-      {/* The spine first — the answer to "is anything happening" before
-          they scroll or ask. */}
-      <div style={card}>
-        <div style={{ ...eyebrow, marginBottom: 12 }}>Where things stand</div>
-        <ProgressSpine stations={spine} />
-      </div>
-
-      {toReview.length > 0 && (
-        <div style={{ ...card, border: '1px solid color-mix(in srgb, var(--warning) 50%, transparent)', background: 'color-mix(in srgb, var(--warning) 7%, transparent)' }}>
-          <div style={{ fontSize: 'var(--text-body)', fontWeight: 700 }}>{toReview.length === 1 ? 'One thing needs your OK' : `${toReview.length} things need your OK`}</div>
-          <div style={{ ...muted, marginTop: 4 }}>Nothing goes live until you've seen it. Scroll to “What we built” to approve or ask for changes.</div>
-        </div>
-      )}
-
-      {handoff && (
-        <div style={{ ...card, border: '1px solid color-mix(in srgb, var(--success) 45%, transparent)', background: 'color-mix(in srgb, var(--success) 8%, transparent)' }}>
-          <div style={{ fontSize: 'var(--text-body)', fontWeight: 700, color: 'var(--success)' }}>You're running this now</div>
-          <div style={{ ...muted, marginTop: 4 }}>
-            {modules.length === 0 ? 'Your guides are being assigned.' : `${doneCount} of ${modules.length} guides done.`}
-            {settings?.handoff_checkin_on ? ` Marq checks in with you on ${settings.handoff_checkin_on}.` : ''}
-          </div>
-          {modules.length > 0 && <span style={{ ...primaryBtn, marginTop: 12 }} onClick={() => setTab('guides')}>Open the guides</span>}
-        </div>
-      )}
-
-      {settings?.welcome_text ? (
-        <div style={{ ...card, ...body }}>{settings.welcome_text}</div>
-      ) : (
-        <Empty>Marq hasn't written your welcome note yet.</Empty>
-      )}
-
-      {/* The teach-back frame, stated once, on day one. */}
-      <div style={card}>
-        <div style={eyebrow}>How this works</div>
-        <div style={{ ...body, marginTop: 4, fontSize: 'var(--text-body-sm)' }}>
-          Made by Marq builds the thing, then teaches you to run it. Strategy and the build stay with Marq. The day-to-day — taking payments, posting, answering reviews, reading your numbers — gets handed to you one short guide at a time, so you're never dependent on anyone for the parts you can own. That's the plan from day one, not a surprise in month three.
-        </div>
-      </div>
-
-      {settings?.next_steps && (
-        <div style={card}>
-          <div style={eyebrow}>What happens next</div>
-          <div style={{ ...body, marginTop: 4 }}>{settings.next_steps}</div>
-        </div>
-      )}
-
-      <div style={sectionTitle}>What we built</div>
-      {deliverables.length === 0 && <Empty>Nothing delivered yet — each piece shows up here with what it is and why it matters for {client.business_name}.</Empty>}
-      {deliverables.map((d) => {
-        const color = d.status === 'live' ? 'var(--success)' : d.status === 'review' ? 'var(--warning)' : 'var(--text-tertiary)';
-        const needsOk = d.status === 'review' && !d.approved_at;
-        return (
-          <div key={d.id} style={{ ...card, borderColor: needsOk ? 'color-mix(in srgb, var(--warning) 50%, transparent)' : 'var(--border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-              <div style={{ minWidth: 0 }}>
-                <div style={eyebrow}>{DELIVERABLE_KINDS.find((k) => k.key === d.kind)?.label ?? d.kind}</div>
-                <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 700, marginTop: 2 }}>{d.title}</div>
-              </div>
-              <span style={pill(color)}>{d.status === 'in_progress' ? 'in progress' : d.status === 'review' ? (d.approved_at ? 'approved' : 'your OK') : d.status}</span>
-            </div>
-            {d.what_it_is && <div style={{ ...body, marginTop: 10 }}>{d.what_it_is}</div>}
-            {d.why_it_matters && (
-              <div style={{ marginTop: 10, paddingLeft: 12, borderLeft: '2px solid var(--border-2)' }}>
-                <div style={eyebrow}>Why it matters for you</div>
-                <div style={{ ...body, marginTop: 2, fontSize: 'var(--text-body-sm)' }}>{d.why_it_matters}</div>
-              </div>
-            )}
-            <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-              {d.link_url && <a href={d.link_url} target="_blank" rel="noreferrer" style={ghostBtn}>Open ↗</a>}
-              {needsOk && (
-                <>
-                  <span style={{ ...primaryBtn, ...disabled(readOnly) }} onClick={() => data.approveDeliverable(d.id)}>Looks good — approve</span>
-                  <span style={{ ...ghostBtn, ...disabled(readOnly) }} onClick={() => startTicket(d)}>Ask for changes</span>
-                </>
-              )}
-              {d.status === 'review' && d.approved_at && <span style={muted}>You approved this {fmtDate(d.approved_at)}.</span>}
-            </div>
-          </div>
-        );
-      })}
-
-      <div style={sectionTitle}>Your numbers</div>
-      <Numbers reports={reports} />
-    </div>
+    </Card>
   );
 
-  const renderGuides = () => {
+  const deliverableDetail = (d: ClientDeliverable) => {
+    const chip = deliverableChip(d), needsOk = d.status === 'review' && !d.approved_at;
+    return (
+      <div style={container}>
+        <Back onClick={() => setDeliverableId(null)}>Home</Back>
+        <H1 sub={DELIVERABLE_KINDS.find((k) => k.key === d.kind)?.label ?? d.kind}>{d.title}</H1>
+        <div><Chip k={chip.k}>{chip.l}</Chip></div>
+        {d.what_it_is && <Card title="What it is"><p style={body}>{d.what_it_is}</p></Card>}
+        {d.why_it_matters && <Card title="Why it matters for you"><p style={body}>{d.why_it_matters}</p></Card>}
+        {d.link_url && <a href={d.link_url} target="_blank" rel="noreferrer" style={ghost}>Open it</a>}
+        {needsOk && <>
+          <button style={{ ...teal, ...off(readOnly) }} onClick={() => data.approveDeliverable(d.id)}>Looks good, approve</button>
+          <button style={{ ...ghost, ...off(readOnly) }} onClick={() => startTicket(d)}>Ask for changes</button>
+        </>}
+        {d.status === 'review' && d.approved_at && <span style={muted}>You approved this {fmtDate(d.approved_at)}.</span>}
+      </div>
+    );
+  };
+
+  const renderHome = () => {
+    if (openDeliverable) return deliverableDetail(openDeliverable);
+    const need = toReview[0];
+    return (
+      <div style={container}>
+        <H1 sub={needCount ? `${curStation ? `${curStation.label}: ${curStation.detail || 'in progress'}. ` : ''}${needCount === 1 ? 'One thing needs you.' : `${needCount} things need you.`}` : curStation ? `${curStation.label}. Nothing needs you right now.` : 'Nothing needs you right now.'}>Welcome back, {first}</H1>
+        {need && (
+          <Card accent>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--client-accent)' }}>Needs you{toReview.length > 1 ? ` · 1 of ${toReview.length}` : ''}</span>
+            <span style={{ color: 'var(--text)', fontSize: 17, fontWeight: 600, letterSpacing: '-0.02em' }}>Approve {need.title}</span>
+            <span style={muted}>Take a look and approve, or tell us what to change. Nothing goes live until you approve.</span>
+            <button style={teal} onClick={() => setDeliverableId(need.id)}>Review and approve</button>
+          </Card>
+        )}
+        {!need && awaiting[0] && (
+          <Card accent>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--client-accent)' }}>Needs you</span>
+            <span style={{ color: 'var(--text)', fontSize: 17, fontWeight: 600, letterSpacing: '-0.02em' }}>Pick an option: {awaiting[0].title}</span>
+            <span style={muted}>Marq sent {awaiting[0].options.length} options. Choose the one you like.</span>
+            <button style={teal} onClick={() => { go('help'); setTicketId(awaiting[0].id); }}>See the options</button>
+          </Card>
+        )}
+        {spine.length > 0 && (
+          <Card title="Where we are" meta={curStation ? `Step ${spine.indexOf(curStation) + 1} of ${spine.length}` : undefined}>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${spine.length},1fr)`, gap: 4 }}>
+              {spine.map((s) => <div key={s.key} style={{ height: 6, borderRadius: 3, background: s.state === 'done' ? 'var(--client-accent)' : s.state === 'active' ? 'color-mix(in srgb, var(--client-accent) 45%, var(--surface-3))' : 'var(--surface-3)' }} />)}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>
+              <span style={{ color: 'var(--text)' }}>{curStation?.label}</span>{nextStation && <span>Next: {nextStation.label}</span>}
+            </div>
+          </Card>
+        )}
+        {handoff && (
+          <Card title="You're running this now" meta={modules.length ? `${doneCount} of ${modules.length} guides` : undefined} accent>
+            <span style={muted}>{modules.length ? 'Short guides for the parts you own.' : 'Your guides are being assigned.'}{settings?.handoff_checkin_on ? ` Marq checks in on ${settings.handoff_checkin_on}.` : ''}</span>
+            {modules.length > 0 && <button style={teal} onClick={() => go('progress')}>Open the guides</button>}
+          </Card>
+        )}
+        <Card title="What we built" meta={deliverables.length ? `${deliverables.length} ${deliverables.length === 1 ? 'piece' : 'pieces'}` : undefined} flush>
+          {deliverables.length ? <div>{deliverables.map((d, i) => { const c = deliverableChip(d); return <Row key={d.id} first={i === 0} name={d.title} meta={DELIVERABLE_KINDS.find((k) => k.key === d.kind)?.label ?? d.kind} chip={c.l} k={c.k} onClick={() => setDeliverableId(d.id)} />; })}</div>
+            : <span style={{ ...muted, paddingBottom: 14 }}>Nothing delivered yet. Each piece shows up here with what it is and why it matters for {client.business_name}.</span>}
+        </Card>
+        {settings?.welcome_text && <Card title="From Marq"><p style={body}>{settings.welcome_text}</p></Card>}
+        {settings?.next_steps && <Card title="What happens next"><p style={body}>{settings.next_steps}</p></Card>}
+        {ask}
+      </div>
+    );
+  };
+
+  const renderProgress = () => {
     if (openGuide) return <GuideDetail item={openGuide} readOnly={readOnly} onBack={() => setGuideId(null)} onToggleDone={(done) => data.setCompleted(openGuide.id, done)} />;
     return (
       <div style={container}>
-        <div style={{ fontSize: 'var(--text-head)', fontWeight: 700 }}>How to run it</div>
-        <div style={muted}>Short guides for the parts you run yourself. Each one ends with how you know you're done.</div>
-        {modules.length > 0 && (
-          <div style={{ ...muted, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'var(--surface-4)', overflow: 'hidden' }}>
-              <div style={{ width: `${modules.length ? (doneCount / modules.length) * 100 : 0}%`, height: '100%', background: 'var(--success)' }} />
-            </div>
-            <span>{doneCount}/{modules.length} done</span>
-          </div>
-        )}
-        {modules.length === 0 && <Empty>No guides assigned yet. They're matched to what was actually built for you, so they show up as each piece goes live.</Empty>}
-        {modules.map((m) => (
-          <div key={m.id} style={{ ...card, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, borderColor: m.completed_at ? 'color-mix(in srgb, var(--success) 45%, transparent)' : 'var(--border)' }} onClick={() => openGuideAt(m)}>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 'var(--text-body)', fontWeight: 600 }}>{m.module.title}</div>
-              <div style={{ ...muted, marginTop: 2 }}>{m.completed_at ? 'Done' : m.opened_at ? 'Started' : 'New'}{m.module.video_url ? ' · video' : ''} · {m.module.steps.length} steps</div>
-            </div>
-            <span style={{ color: m.completed_at ? 'var(--success)' : 'var(--text-tertiary)', fontWeight: 700 }}>{m.completed_at ? '✓' : '›'}</span>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderChanges = () => (
-    <div style={container}>
-      <div style={{ fontSize: 'var(--text-head)', fontWeight: 700 }}>What's changed</div>
-      <div style={muted}>Everything that's shipped for {client.business_name}, newest first — what changed, when, and why.</div>
-      {changelog.length === 0 && <Empty>Nothing logged yet. The first line lands here the moment something ships.</Empty>}
-      {changelog.map((e) => (
-        <div key={e.id} style={{ display: 'flex', gap: 14 }}>
-          <div style={{ ...muted, width: 52, flexShrink: 0, paddingTop: 2 }}>{fmtDate(e.happened_on)}</div>
-          <div style={{ flex: 1, minWidth: 0, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
-            <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, overflowWrap: 'anywhere' }}>{e.what}</div>
-            {e.why && <div style={{ ...muted, marginTop: 3, overflowWrap: 'anywhere' }}>{e.why}</div>}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
-  const renderRequests = () => {
-    if (ticketForm.open) {
-      return (
-        <TicketForm
-          deliverables={deliverables}
-          presetDeliverable={ticketForm.deliverable}
-          readOnly={readOnly}
-          onCancel={() => setTicketForm({ open: false, deliverable: null })}
-          onSubmit={async (input) => {
-            const err = await data.fileTicket(input);
-            if (!err) setTicketForm({ open: false, deliverable: null });
-            return err;
-          }}
-        />
-      );
-    }
-    if (openTicket) {
-      return <TicketDetail ticket={openTicket} deliverable={deliverables.find((d) => d.id === openTicket.deliverable_id) ?? null} readOnly={readOnly} onBack={() => setTicketId(null)} onChoose={(optionId) => data.chooseOption(openTicket.id, optionId)} />;
-    }
-    return (
-      <div style={container}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-          <div style={{ fontSize: 'var(--text-head)', fontWeight: 700 }}>Requests</div>
-          <span style={{ ...primaryBtn, padding: '9px 16px', fontSize: 'var(--text-body-sm)' }} onClick={() => startTicket(null)}>+ Ask for a change</span>
-        </div>
-        <div style={muted}>Design, marketing, or system changes. You say what to avoid and what you'd prefer; Marq comes back with two or three options and you pick. Quick questions go in Messages instead.</div>
-        {tickets.length === 0 && <Empty>No requests yet.</Empty>}
-        {tickets.map((t) => {
-          const st = ticketStatus(t);
-          return (
-            <div key={t.id} style={{ ...card, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }} onClick={() => setTicketId(t.id)}>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, overflowWrap: 'anywhere' }}>{t.title}</div>
-                <div style={{ ...muted, marginTop: 2 }}>{TICKET_KINDS.find((k) => k.key === t.kind)?.label} · {fmtDate(t.created_at)}{t.status === 'options_sent' ? ` · ${t.options.length} options waiting` : ''}</div>
+        <H1 sub={`Where things stand for ${client.business_name}`}>Progress</H1>
+        <Card title="Where we are"><ProgressSpine stations={spine} /></Card>
+        <Card title="How to run it" meta={modules.length ? `${doneCount} of ${modules.length} done` : undefined} flush>
+          {modules.length ? <div>{modules.map((m, i) => <Row key={m.id} first={i === 0} name={m.module.title} meta={`${m.module.steps.length} steps${m.module.video_url ? ' · video' : ''}`} chip={m.completed_at ? 'Done' : m.opened_at ? 'Started' : 'New'} k={m.completed_at ? 'good' : m.opened_at ? 'client' : 'neutral'} onClick={() => { setGuideId(m.id); data.markOpened(m.id); }} />)}</div>
+            : <span style={{ ...muted, paddingBottom: 14 }}>No guides yet. They're matched to what was built for you and show up as each piece goes live.</span>}
+        </Card>
+        <Card title="What's changed" meta={changelog.length ? `${changelog.length}` : undefined}>
+          {changelog.length ? changelog.map((e, i) => (
+            <div key={e.id} style={{ display: 'flex', gap: 14, paddingTop: i ? 12 : 0, borderTop: i ? '1px solid var(--grid)' : 'none' }}>
+              <span style={{ ...small, width: 48, flex: 'none', paddingTop: 2 }}>{fmtDate(e.happened_on)}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)', overflowWrap: 'anywhere' }}>{e.what}</div>
+                {e.why && <div style={{ ...muted, marginTop: 2, overflowWrap: 'anywhere' }}>{e.why}</div>}
               </div>
-              <span style={pill(st.color)}>{st.label}</span>
             </div>
-          );
-        })}
+          )) : <span style={muted}>Nothing logged yet. The first line lands here the moment something ships.</span>}
+        </Card>
+        <Card title="How this works">
+          <p style={{ ...body, fontSize: 14, color: 'var(--text-secondary)' }}>Made by Marq builds it, then teaches you to run it. Strategy and the build stay with Marq. The day-to-day (taking payments, posting, answering reviews, reading your numbers) is handed to you one short guide at a time, so you're never stuck waiting on anyone for the parts you can own.</p>
+        </Card>
       </div>
     );
   };
 
-  const renderInvoices = () => {
+  const renderNumbers = () => {
     if (openInvoice) {
       return (
         <div style={container}>
-          <span style={{ ...ghostBtn, alignSelf: 'flex-start' }} onClick={() => setInvoiceId(null)}>← All invoices</span>
+          <Back onClick={() => setInvoiceId(null)}>Numbers</Back>
           <InvoiceDocument
-            from={data.providerProfile?.business_name || undefined}
-            businessAddress={data.providerProfile?.business_address || undefined}
-            businessEmail={data.providerProfile?.business_email || undefined}
-            businessPhone={data.providerProfile?.business_phone || undefined}
-            businessWebsite={data.providerProfile?.website || undefined}
-            billTo={client.business_name}
-            description={openInvoice.description}
-            amount={openInvoice.amount}
-            dueDate={openInvoice.due_date}
-            invoiceNumber={openInvoice.invoice_number}
-            status={openInvoice.status}
-            paidAt={openInvoice.paid_at}
+            from={data.providerProfile?.business_name || undefined} businessAddress={data.providerProfile?.business_address || undefined}
+            businessEmail={data.providerProfile?.business_email || undefined} businessPhone={data.providerProfile?.business_phone || undefined}
+            businessWebsite={data.providerProfile?.website || undefined} billTo={client.business_name} description={openInvoice.description}
+            amount={openInvoice.amount} dueDate={openInvoice.due_date} invoiceNumber={openInvoice.invoice_number} status={openInvoice.status} paidAt={openInvoice.paid_at}
           />
-          {openInvoice.status !== 'paid' && openInvoice.status !== 'void' && openInvoice.stripe_invoice_url && (
-            <a href={openInvoice.stripe_invoice_url} target="_blank" rel="noreferrer" style={{ ...primaryBtn, alignSelf: 'flex-start' }}>Pay now</a>
-          )}
+          {openInvoice.status !== 'paid' && openInvoice.status !== 'void' && openInvoice.stripe_invoice_url && <a href={openInvoice.stripe_invoice_url} target="_blank" rel="noreferrer" style={teal}>Pay now</a>}
         </div>
       );
     }
+    const latest = reports[reports.length - 1];
     return (
       <div style={container}>
-        <div style={{ fontSize: 'var(--text-head)', fontWeight: 700 }}>Invoices</div>
-        {invoices.length === 0 && <Empty>Nothing sent yet.</Empty>}
-        {invoices.map((inv) => (
-          <div key={inv.id} style={{ ...card, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, cursor: 'pointer' }} onClick={() => setInvoiceId(inv.id)}>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 'var(--text-body)', fontWeight: 600 }}>{inv.description}</div>
-              <div style={{ ...muted, marginTop: 3 }}>{money(inv.amount)}{inv.due_date ? ` · due ${inv.due_date}` : ''} · #{inv.invoice_number}</div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-              <span style={pill(invoiceColor(inv.status))}>{inv.status}</span>
-              {inv.status !== 'paid' && inv.status !== 'void' && inv.stripe_invoice_url && (
-                <a href={inv.stripe_invoice_url} target="_blank" rel="noreferrer" style={{ ...primaryBtn, padding: '9px 16px', fontSize: 'var(--text-body-sm)' }} onClick={(e) => e.stopPropagation()}>Pay</a>
-              )}
-            </div>
-          </div>
-        ))}
+        <H1 sub={latest ? `${latest.period_label} · updated ${fmtDate(latest.updated_at)}` : 'Monthly reports land here'}>Your numbers</H1>
+        <Numbers reports={reports} />
+        <Card title="Invoices" meta={unpaid.length ? `${unpaid.length} due` : invoices.length ? 'All paid' : undefined} flush>
+          {invoices.length ? <div>{invoices.map((inv, i) => { const c = invoiceChip(inv.status); return <Row key={inv.id} first={i === 0} name={inv.description} meta={inv.due_date ? `Due ${fmtDate(inv.due_date)}` : `#${inv.invoice_number}`} chip={c.l} k={c.k} amt={money(Number(inv.amount) || 0)} dim={inv.status === 'paid' || inv.status === 'void'} onClick={() => setInvoiceId(inv.id)} />; })}</div>
+            : <span style={{ ...muted, paddingBottom: 14 }}>Nothing sent yet.</span>}
+        </Card>
       </div>
     );
   };
 
-  const renderMessages = () => (
-    <div style={container}>
-      <div style={{ fontSize: 'var(--text-head)', fontWeight: 700 }}>Messages</div>
-      <div style={muted}>Quick questions, anything small. Marq sees these right away. Want something changed? Use Requests — it gets you options, faster.</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {messages.length === 0 && <Empty>No messages yet. Ask anything — a question, a problem, a photo you want on the site.</Empty>}
-        {messages.map((m) => {
-          const mine = m.sender === 'client';
-          return (
-            <div key={m.id} style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '85%', padding: '10px 14px', borderRadius: 16, background: mine ? 'var(--text)' : 'var(--surface-2)', color: mine ? 'var(--bg)' : 'var(--text)', border: mine ? 'none' : '1px solid var(--border)' }}>
-              <div style={{ fontSize: 'var(--text-body)', lineHeight: 1.5, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{m.body}</div>
-              <div style={{ fontSize: 'var(--text-tiny)', opacity: 0.6, marginTop: 4 }}>{mine ? 'You' : 'Marq'} · {new Date(m.created_at).toLocaleString()}</div>
-            </div>
-          );
-        })}
+  const renderHelp = () => {
+    if (ticketForm.open) {
+      return <TicketForm deliverables={deliverables} presetDeliverable={ticketForm.deliverable} readOnly={readOnly} onCancel={() => setTicketForm({ open: false, deliverable: null })}
+        onSubmit={async (input) => { const err = await data.fileTicket(input); if (!err) setTicketForm({ open: false, deliverable: null }); return err; }} />;
+    }
+    if (openTicket) return <TicketDetail ticket={openTicket} deliverable={deliverables.find((d) => d.id === openTicket.deliverable_id) ?? null} readOnly={readOnly} onBack={() => setTicketId(null)} onChoose={(optionId) => data.chooseOption(openTicket.id, optionId)} />;
+    return (
+      <div style={container}>
+        <H1 sub="Quick questions go to Messages. Changes go in a ticket, and you get two or three options back.">Help</H1>
+        <button style={teal} onClick={() => startTicket(null)}>New ticket</button>
+        <Card title="Tickets" meta={tickets.length ? `${tickets.length}` : undefined} flush>
+          {tickets.length ? <div>{tickets.map((t, i) => { const st = ticketStatus(t); return <Row key={t.id} first={i === 0} name={t.title} meta={[TICKET_KINDS.find((k) => k.key === t.kind)?.label, fmtDate(t.created_at), t.status === 'options_sent' ? `${t.options.length} options` : null].filter(Boolean).join(' · ')} chip={st.l} k={st.k} onClick={() => setTicketId(t.id)} />; })}</div>
+            : <span style={{ ...muted, paddingBottom: 14 }}>No tickets yet.</span>}
+        </Card>
+        <Card title="Messages" meta={messages.length ? `${messages.length}` : undefined}>
+          {messages.length === 0 && <span style={muted}>No messages yet. Ask anything: a question, a problem, a photo you want on the site.</span>}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {messages.map((m) => {
+              const mine = m.sender === 'client';
+              return (
+                <div key={m.id} style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '85%', padding: '10px 14px', borderRadius: mine ? '16px 16px 4px 16px' : '16px 16px 16px 4px', background: mine ? 'color-mix(in srgb, var(--client-accent) 18%, var(--surface))' : 'var(--surface-2)', border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: 15, lineHeight: 1.5, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', color: 'var(--text)' }}>{m.body}</div>
+                  <div style={{ ...small, marginTop: 4 }}>{mine ? 'You' : 'Marq'} · {new Date(m.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+            <textarea style={{ ...input, minHeight: 48, maxHeight: 160, resize: 'vertical', flex: 1 }} placeholder="Write a message…" value={draft} onChange={(e) => setDraft(e.target.value)} />
+            <button style={{ ...teal, ...off(sending || !draft.trim() || readOnly) }} onClick={send}>Send</button>
+          </div>
+        </Card>
+        {onSignOut && !readOnly && <button style={{ ...ghost, color: 'var(--danger)' }} onClick={onSignOut}>Sign out</button>}
       </div>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-        <textarea style={{ ...input, minHeight: 48, maxHeight: 160, resize: 'vertical', flex: 1 }} placeholder="Write a message…" value={draft} onChange={(e) => setDraft(e.target.value)} />
-        <span style={{ ...primaryBtn, ...disabled(sending || !draft.trim() || readOnly) }} onClick={send}>Send</span>
-      </div>
-    </div>
-  );
+    );
+  };
 
-  const tabs: { key: Tab; label: string; badge?: number }[] = [
-    { key: 'home', label: 'Home', badge: toReview.length },
-    { key: 'guides', label: 'Guides', badge: handoff && modules.length ? modules.length - doneCount : 0 },
-    { key: 'changes', label: 'Changes' },
-    { key: 'requests', label: 'Requests', badge: awaitingPick },
-    { key: 'invoices', label: 'Invoices', badge: invoices.filter((i) => i.status === 'sent' || i.status === 'overdue').length },
-    { key: 'messages', label: 'Messages', badge: unreadFromOwner },
+  const tabs: { key: Tab; label: string; badge: number; icon: ReactNode }[] = [
+    { key: 'home', label: 'Home', badge: toReview.length, icon: <path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z" /> },
+    { key: 'progress', label: 'Progress', badge: handoff && modules.length ? modules.length - doneCount : 0, icon: <><circle cx="12" cy="12" r="8" /><path d="M12 8v4l3 2" /></> },
+    { key: 'numbers', label: 'Numbers', badge: unpaid.length, icon: <path d="M5 20V10M12 20V4M19 20v-7" /> },
+    { key: 'help', label: 'Help', badge: awaiting.length + unreadFromOwner, icon: <><circle cx="12" cy="12" r="8" /><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01" /></> },
   ];
 
   return (
     <div style={page}>
       {readOnly && (
-        <div style={{ flexShrink: 0, padding: '8px 14px', fontSize: 'var(--text-caption)', color: 'var(--warning)', background: 'color-mix(in srgb, var(--warning) 10%, transparent)', borderBottom: '1px solid color-mix(in srgb, var(--warning) 35%, transparent)' }}>
-          Preview — exactly what {client.business_name} sees. Actions are disabled here.
+        <div style={{ flexShrink: 0, padding: '8px 14px', fontSize: 12.5, fontWeight: 500, color: 'var(--client-accent)', background: 'color-mix(in srgb, var(--client-accent) 10%, transparent)', borderBottom: '1px solid color-mix(in srgb, var(--client-accent) 30%, transparent)' }}>
+          Preview: exactly what {client.business_name} sees. Actions are off here.
         </div>
       )}
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+          {settings?.logo_url
+            ? <img src={settings.logo_url} alt="" style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border)' }} />
+            : <div style={{ width: 32, height: 32, borderRadius: 8, background: 'color-mix(in srgb, var(--client-accent) 20%, var(--surface-3))', color: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600 }}>{initials}</div>}
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15, minWidth: 0 }}>
+            <span style={{ color: 'var(--text)', fontSize: 14, fontWeight: 600, letterSpacing: '-0.015em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{client.business_name}</span>
+            <span style={{ color: 'var(--text-tertiary)', fontSize: 11.5, fontWeight: 500 }}>Client portal · by MARQ</span>
+          </div>
+        </div>
+      </div>
       <div style={scroll}>
         {tab === 'home' && renderHome()}
-        {tab === 'guides' && renderGuides()}
-        {tab === 'changes' && renderChanges()}
-        {tab === 'requests' && renderRequests()}
-        {tab === 'invoices' && renderInvoices()}
-        {tab === 'messages' && renderMessages()}
+        {tab === 'progress' && renderProgress()}
+        {tab === 'numbers' && renderNumbers()}
+        {tab === 'help' && renderHelp()}
       </div>
-      <nav style={{ position: 'absolute', left: 0, right: 0, bottom: 0, background: 'var(--surface-2)', borderTop: '1px solid var(--border)', paddingBottom: 'env(safe-area-inset-bottom)', display: 'flex', zIndex: 10 }}>
+      <nav style={{ position: 'absolute', left: 0, right: 0, bottom: 0, background: 'var(--surface)', borderTop: '1px solid var(--border)', paddingBottom: 'env(safe-area-inset-bottom)', display: 'flex', zIndex: 10 }}>
         {tabs.map((t) => {
           const active = tab === t.key;
           return (
-            <div key={t.key} onClick={() => { setTab(t.key); setGuideId(null); setInvoiceId(null); setTicketId(null); setTicketForm({ open: false, deliverable: null }); }} style={{ flex: 1, height: TAB_BAR, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, cursor: 'pointer', color: active ? 'var(--text)' : 'var(--text-tertiary)', position: 'relative', minWidth: 0 }}>
-              <div style={{ width: 22, height: 3, borderRadius: 2, background: active ? 'var(--text)' : 'transparent' }} />
-              <span style={{ fontSize: 12, fontWeight: active ? 700 : 500, whiteSpace: 'nowrap' }}>{t.label}</span>
-              {!!t.badge && (
-                <span style={{ position: 'absolute', top: 10, right: 'calc(50% - 26px)', minWidth: 16, height: 16, borderRadius: 8, background: 'var(--danger)', color: 'var(--text-on-color)', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{t.badge}</span>
-              )}
-            </div>
+            <button key={t.key} onClick={() => go(t.key)} aria-current={active ? 'page' : undefined} style={{ flex: 1, height: TAB_BAR, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, border: 0, background: 'transparent', fontFamily: 'inherit', cursor: 'pointer', color: active ? 'var(--text)' : 'var(--text-tertiary)', position: 'relative', minWidth: 0 }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--client-accent)' : 'var(--text-tertiary)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>{t.icon}</svg>
+              <span style={{ fontSize: 11, fontWeight: 500 }}>{t.label}</span>
+              {t.badge > 0 && <span style={{ position: 'absolute', top: 8, left: 'calc(50% + 6px)', minWidth: 16, height: 16, borderRadius: 8, background: 'var(--client-accent)', color: 'var(--bg)', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{t.badge}</span>}
+            </button>
           );
         })}
       </nav>
