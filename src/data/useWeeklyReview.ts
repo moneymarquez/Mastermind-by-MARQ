@@ -10,7 +10,15 @@ export interface WeeklyReview {
   summary: string;
   recommended_actions: string[];
   generated_at: string;
+  // schema_118 — the self-written review. Absent until that's run.
+  went_well?: string | null;
+  didnt?: string | null;
+  one_change?: string | null;
+  rating?: number | null;
+  submitted_at?: string | null;
 }
+
+export type SelfReview = { went_well: string; didnt: string; one_change: string; rating: number | null };
 
 interface ReviewResult {
   summary: string;
@@ -127,5 +135,31 @@ export function useWeeklyReview() {
     }
   };
 
-  return { reviews, loading, generating, error, generateCurrentWeek };
+  /** Nova's draft for a given week (Sunday start). */
+  const draftFor = async (weekStartStr: string) => {
+    setGenerating(true);
+    setError('');
+    try {
+      await generateFor(weekStartStr);
+      await load();
+    } catch (e) {
+      setError(e instanceof AiError ? e.message : 'Could not draft the review.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  /** Saves your own answers and rating for a week. Leaves Nova's draft as is. */
+  const saveSelf = async (weekStartStr: string, r: SelfReview): Promise<string | null> => {
+    const existing = reviews.find((x) => x.week_start === weekStartStr);
+    const { error: err } = await supabase.from('weekly_reviews').upsert(
+      { week_start: weekStartStr, summary: existing?.summary ?? '', ...r, submitted_at: new Date().toISOString() },
+      { onConflict: 'user_id,week_start' }
+    );
+    if (err) return /column|schema cache/i.test(err.message) ? 'Saving your own review needs supabase/schema_118_weekly_review_self.sql run first.' : err.message;
+    await load();
+    return null;
+  };
+
+  return { reviews, loading, generating, error, generateCurrentWeek, draftFor, saveSelf };
 }

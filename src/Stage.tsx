@@ -68,7 +68,7 @@ const MarketingScreen = lazyScreen(() => import('./components/screens/MarketingS
 const ContentCreationScreen = lazyScreen(() => import('./components/screens/ContentCreationScreen'));
 const SwipeFileScreen = lazyScreen(() => import('./components/screens/SwipeFileScreen'));
 const DecisionLogV2 = lazyScreen(() => import('./components/screens/v2/DecisionLogV2'));
-const WeeklyReviewScreen = lazyScreen(() => import('./components/screens/WeeklyReviewScreen'));
+const WeeklyReviewV2 = lazyScreen(() => import('./components/screens/v2/WeeklyReviewV2'));
 const CashFlowScreen = lazyScreen(() => import('./components/screens/CashFlowScreen'));
 const PatternDetectionScreen = lazyScreen(() => import('./components/screens/PatternDetectionScreen'));
 const VoiceCaptureScreen = lazyScreen(() => import('./components/screens/VoiceCaptureScreen'));
@@ -474,9 +474,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'decisions' && <DecisionLogV2 />}
 
-        {state.screen === 'weekly-review' && (
-          <WeeklyReviewScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'weekly-review' && <WeeklyReviewV2 />}
 
         {state.screen === 'cashflow' && (
           <CashFlowScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
