@@ -71,7 +71,7 @@ const DecisionLogV2 = lazyScreen(() => import('./components/screens/v2/DecisionL
 const WeeklyReviewV2 = lazyScreen(() => import('./components/screens/v2/WeeklyReviewV2'));
 const CashFlowV2 = lazyScreen(() => import('./components/screens/v2/CashFlowV2'));
 const PatternsV2 = lazyScreen(() => import('./components/screens/v2/PatternsV2'));
-const VoiceCaptureScreen = lazyScreen(() => import('./components/screens/VoiceCaptureScreen'));
+const VoiceCaptureV2 = lazyScreen(() => import('./components/screens/v2/VoiceCaptureV2'));
 const ManageModulesScreen = lazyScreen(() => import('./components/screens/ManageModulesScreen'));
 const EditHomeWidgetsScreen = lazyScreen(() => import('./components/screens/EditHomeWidgetsScreen'));
 const GrantAccessScreen = lazyScreen(() => import('./components/screens/GrantAccessScreen'));
@@ -484,9 +484,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <DispatchScreen isMobile={isMobile} onBack={() => actions.navigateTo('home')} dockBottom={`calc(${PHONE_TAB_H + 10}px + max(env(safe-area-inset-bottom), 20px))`} />
         )}
 
-        {state.screen === 'voice-capture' && (
-          <VoiceCaptureScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'voice-capture' && <VoiceCaptureV2 />}
 
         {state.screen === 'manage-modules' && (
           <ManageModulesScreen

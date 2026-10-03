@@ -143,5 +143,24 @@ export function useVoiceCapture() {
     setFiled(null);
   };
 
-  return { listening, transcript, processing, filed, error, start, stop, refileAs, discard };
+  /** Typed instead of spoken: Nova classifies and files it the same way. */
+  const fileText = (text: string) => { setTranscript(text); return process(text); };
+
+  /** No AI: you pick where it goes and it's filed as typed. */
+  const fileAs = async (type: CaptureType, text: string) => {
+    if (!text.trim()) return;
+    setProcessing(true);
+    setError('');
+    try {
+      setTranscript(text);
+      const { id, table } = await fileByType(type, {}, text.trim());
+      setFiled({ type, table, id, summary: text.trim(), fields: {} });
+    } catch {
+      setError('Could not file that.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  return { listening, transcript, processing, filed, error, start, stop, refileAs, discard, fileText, fileAs };
 }
