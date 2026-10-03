@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { readPins } from '../../../data/homePins';
 import type { CSSProperties, ReactNode } from 'react';
 import '../../shell/shell.css';
 import type { Device } from '../../shell/Shell';
@@ -36,9 +37,6 @@ export interface HomeV2Props {
 }
 
 const TEMP_K: Record<string, ChipKind> = { hot: 'hot', warm: 'warm', cold: 'cold' };
-const PIN_KEY = 'mm-pinned';
-export const DEFAULT_PINS = ['budgeting', 'daily-plan', 'goals', 'sobriety'];
-export function readPins(): string[] { try { const v = JSON.parse(localStorage.getItem(PIN_KEY) ?? 'null') as string[] | null; return Array.isArray(v) ? v.slice(0, 4) : DEFAULT_PINS; } catch { return DEFAULT_PINS; } }
 const greet = (h: number) => (h < 5 ? 'Still up' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening');
 const initials = (s: string) => s.split(/[\s.@]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '··';
 
