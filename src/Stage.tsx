@@ -47,7 +47,7 @@ const ClientCRMScreen = lazyScreen(() => import('./components/screens/ClientCRMS
 const IdeaMakerScreen = lazyScreen(() => import('./components/screens/IdeaMakerScreen'));
 const BrandLabScreen = lazyScreen(() => import('./components/screens/BrandLabScreen'));
 const ScheduleV2 = lazyScreen(() => import('./components/screens/v2/ScheduleV2'));
-const ContactsScreen = lazyScreen(() => import('./components/screens/ContactsScreen'));
+const ContactsV2 = lazyScreen(() => import('./components/screens/v2/ContactsV2'));
 const OpeningClosingV2 = lazyScreen(() => import('./components/screens/v2/OpeningClosingV2'));
 const NotificationSettingsScreen = lazyScreen(() => import('./components/screens/NotificationSettingsScreen'));
 const MorningDigestScreen = lazyScreen(() => import('./components/screens/MorningDigestScreen'));
@@ -368,9 +368,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'schedule' && <ScheduleV2 />}
 
-        {state.screen === 'contacts' && (
-          <ContactsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'contacts' && <ContactsV2 />}
 
         {state.screen === 'opening-closing' && <OpeningClosingV2 />}
 
