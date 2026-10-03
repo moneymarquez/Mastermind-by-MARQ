@@ -1,38 +1,42 @@
 import type { CSSProperties } from 'react';
+import Card from '../mm/Card';
+import Chip from '../mm/Chip';
+import { Page, useModule } from '../mm/Page';
 
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
 }
 
-const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 20 };
-
 const PHASES: { title: string; desc: string }[] = [
-  { title: 'Phase 1 — Embedded terminal', desc: 'A browser-based terminal (via something like WebContainers or a remote dev sandbox), scoped to a project directory inside Mastermind.' },
-  { title: 'Phase 2 — Live preview pane', desc: 'A running preview alongside the terminal, so changes show up as they happen — no separate deploy just to look at something.' },
-  { title: 'Phase 3 — One-click deploy', desc: 'Deploy straight from that preview to Cloudflare — a new project or a subdomain under the existing account, no manual steps.' },
-  { title: 'Phase 4 — Domain attach/purchase', desc: 'Attach an existing domain or buy one, from inside the builder, so a finished site can go live on its real domain without leaving the app.' },
+  { title: 'Embedded terminal', desc: 'A browser terminal (WebContainers or a remote sandbox) scoped to a project folder inside Mastermind.' },
+  { title: 'Live preview pane', desc: 'A running preview beside the terminal, so changes show as they happen. No deploy just to look at something.' },
+  { title: 'One-click deploy', desc: 'Deploy from the preview to Cloudflare: a new project or a subdomain under the existing account, no manual steps.' },
+  { title: 'Domain attach or purchase', desc: 'Attach a domain you own or buy one inside the builder, so a finished site goes live on its real domain.' },
 ];
 
-export default function WebsiteBuilderRoadmapScreen({ homeHeadStyle, homeSubStyle }: Props) {
+/** Not built yet. The roadmap, honestly labelled, in the redesign's frame. */
+export default function WebsiteBuilderRoadmapScreen(_: Props) {
+  const { device } = useModule();
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-        <div style={homeHeadStyle}>Website / App Builder</div>
-        <div style={{ padding: '3px 10px', borderRadius: 'var(--radius-pill)', background: 'var(--tint-chip)', border: '1px solid var(--tint-chip-line)', color: 'var(--text-secondary)', fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>
-          In planning
+    <Page title="Website / App Builder" sub="Build, preview and deploy sites and apps">
+      <div style={{ alignSelf: 'flex-start' }}><Chip k="neutral">In planning</Chip></div>
+      <Card title="Roadmap" meta={`${PHASES.length} phases`} wide={device !== 'phone'} style={{ maxWidth: 720 }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {PHASES.map((p, i) => (
+            <div key={p.title} style={{ display: 'flex', gap: 12 }}>
+              <div style={{ width: 22, flex: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ width: 22, height: 22, borderRadius: '50%', border: '1.5px solid var(--border)', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)' }}>{i + 1}</div>
+                <div style={{ flex: 1, width: 2, minHeight: 12, background: i === PHASES.length - 1 ? 'transparent' : 'var(--grid)' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3, padding: '1px 0 16px' }}>
+                <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>{p.title}</span>
+                <span style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--text-secondary)' }}>{p.desc}</span>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
-      <div style={homeSubStyle}>Build and preview sites/apps live, then deploy — real backend work, not a tonight feature.</div>
-
-      <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 620 }}>
-        {PHASES.map((p) => (
-          <div key={p.title} style={cardStyle}>
-            <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: 'var(--text)' }}>{p.title}</div>
-            <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>{p.desc}</div>
-          </div>
-        ))}
-      </div>
-    </div>
+      </Card>
+    </Page>
   );
 }

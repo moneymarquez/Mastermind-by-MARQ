@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { Question } from '../../data/scalingPlannerQuestions';
 import type { QuestionnaireStatus } from '../../data/types';
+import { Page, useModule, useAi, AiOffCard, NovaMark, area } from '../mm/Page';
+import Card from '../mm/Card';
+import Chip from '../mm/Chip';
+import { Empty } from '../mm/States';
 
 interface Row {
   id: string;
@@ -33,18 +37,6 @@ interface Props<T extends Row> {
   newLabel: string;
 }
 
-const textareaStyle: CSSProperties = {
-  width: '100%', minHeight: 96, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)',
-  padding: '12px 14px', color: 'var(--text)', fontSize: 'var(--text-label)', outline: 'none', resize: 'vertical', fontFamily: 'inherit',
-};
-const primaryBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 'var(--radius-pill)',
-  background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer',
-};
-const ghostBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 'var(--radius-pill)',
-  border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 'var(--text-body)', cursor: 'pointer',
-};
 
 export default function QuestionnaireFlow<T extends Row>({
   homeHeadStyle, homeSubStyle, title, subtitle, flagNote, badge, questions, rows, loading,
@@ -63,131 +55,95 @@ export default function QuestionnaireFlow<T extends Row>({
     if (active) setDraft(active.answers[questions[step]?.key] ?? '');
   }, [active, step, questions]);
 
-  const flagStyle: CSSProperties = { fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', marginTop: 14, maxWidth: 560, lineHeight: 1.5 };
+  const { device } = useModule();
+  const phone = device === 'phone';
+  const ai = useAi();
+  void homeHeadStyle; void homeSubStyle;
+  const sub = badge ? `${subtitle} · ${badge}` : subtitle;
 
   if (!active) {
     return (
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <div style={homeHeadStyle}>{title}</div>
-              {badge && (
-                <div style={{ padding: '3px 10px', borderRadius: 'var(--radius-pill)', background: 'color-mix(in srgb, var(--warning) 13%, transparent)', border: '1px solid color-mix(in srgb, var(--warning) 33%, transparent)', color: 'var(--warning)', fontSize: 'var(--text-micro)', fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase' }}>
-                  {badge}
-                </div>
-              )}
+      <Page title={title} sub={sub} fab={{ t: newLabel, onClick: () => void start() }}>
+        {ai === false && <AiOffCard text="Answers save as you go. Nova writes the result once AI is connected." />}
+        {!loading && rows.length === 0 ? <Empty text={flagNote} cta={newLabel} onCta={() => void start()} /> : (
+          <>
+            <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, color: 'var(--text-tertiary)', maxWidth: 640 }}>{flagNote}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: phone ? 'minmax(0,1fr)' : 'repeat(auto-fill,minmax(280px,1fr))', gap: phone ? 12 : 16 }}>
+              {rows.map((row) => {
+                const n = Object.values(row.answers).filter((v) => v?.trim()).length;
+                const done = row.status === 'complete';
+                return (
+                  <section key={row.id} role="button" tabIndex={0} onClick={() => setActiveId(row.id)} onKeyDown={(e) => { if (e.key === 'Enter') setActiveId(row.id); }}
+                    style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column', gap: 12, cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
+                      <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, minWidth: 0 }}>{itemLabel(row)}</span>
+                      <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    </div>
+                    <div style={{ height: 8, borderRadius: 999, background: 'var(--surface-3)', overflow: 'hidden' }}><div style={{ width: `${done ? 100 : (n / questions.length) * 100}%`, height: '100%', background: 'var(--accent)', borderRadius: 999 }} /></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                      <Chip k={done ? 'good' : 'warn'}>{done ? 'Complete' : `${n} of ${questions.length} answered`}</Chip>
+                      <button className="mm-btn" style={{ height: 30, fontSize: 12.5, color: 'var(--danger)' }} onClick={(e) => { e.stopPropagation(); if (window.confirm(`Delete ${itemLabel(row)}?`)) void remove(row.id); }}>Delete</button>
+                    </div>
+                  </section>
+                );
+              })}
             </div>
-            <div style={homeSubStyle}>{subtitle}</div>
-          </div>
-          <div style={primaryBtn} onClick={start}>+ {newLabel}</div>
-        </div>
-        <div style={flagStyle}>{flagNote}</div>
-
-        <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', maxWidth: 640 }}>
-          {rows.map((row) => (
-            <div
-              key={row.id}
-              onClick={() => setActiveId(row.id)}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--surface-3)', background: 'var(--surface-2)', cursor: 'pointer' }}
-            >
-              <div>
-                <div style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--text)' }}>{itemLabel(row)}</div>
-                <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginTop: 2 }}>
-                  {row.status === 'complete' ? 'Complete' : `In progress · step ${Object.keys(row.answers).length + 1} of ${questions.length}`}
-                </div>
-              </div>
-              <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-tertiary)' }} onClick={(e) => { e.stopPropagation(); remove(row.id); }}>Delete</span>
-            </div>
-          ))}
-          {!loading && rows.length === 0 && (
-            <div style={{ padding: 18, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}>Nothing started yet.</div>
-          )}
-        </div>
-      </div>
+          </>
+        )}
+      </Page>
     );
   }
 
   const text = getText(active);
   if (active.status === 'complete' && text) {
     return (
-      <div>
-        <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 'var(--text-body)', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 18 }} onClick={() => setActiveId(null)}>
-          ← Back to list
-        </div>
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 28, maxWidth: 680 }}>
-          <div style={{ fontSize: 'var(--text-body-lg)', color: 'var(--text)', whiteSpace: 'pre-wrap', lineHeight: 1.7, fontFamily: 'var(--font-mono)' }}>{text}</div>
-        </div>
-      </div>
+      <Page title={itemLabel(active)} sub={title} menu={[{ t: 'Delete', danger: true, onClick: () => { if (window.confirm('Delete this?')) { void remove(active.id); setActiveId(null); } } }]}>
+        <button className="mm-btn" style={{ alignSelf: 'flex-start' }} onClick={() => setActiveId(null)}>‹ All</button>
+        <Card wide={!phone}>
+          <NovaMark title="Written by Nova from your answers" />
+          <div style={{ fontSize: 15, lineHeight: 1.65, color: 'var(--text)', whiteSpace: 'pre-wrap', maxWidth: 720 }}>{text}</div>
+        </Card>
+      </Page>
     );
   }
 
   const q = questions[step];
   const isLast = step === questions.length - 1;
+  const next = async () => {
+    await saveAnswer(active.id, q.key, draft);
+    if (!isLast) { setStep(step + 1); return; }
+    setGenerating(true);
+    setGenError('');
+    try {
+      const out = await generate({ ...active.answers, [q.key]: draft });
+      await complete(active.id, out);
+    } catch {
+      setGenError(ai === false ? 'Your answers are saved. Nova writes this once AI is connected.' : "Nova couldn't write this. Try again in a moment.");
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   return (
-    <div>
-      <div style={{ display: 'inline-flex', alignItems: 'center', fontSize: 'var(--text-body)', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 18 }} onClick={() => setActiveId(null)}>
-        ← Back to list
-      </div>
-      <div style={homeSubStyle}>Step {step + 1} of {questions.length}</div>
-      <div style={{ height: 4, background: 'var(--border)', borderRadius: 'var(--radius-pill)', marginTop: 10, marginBottom: 24, maxWidth: 480, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${((step + 1) / questions.length) * 100}%`, background: 'var(--text)' }} />
-      </div>
-
-      {q.phase && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-          <span style={{ fontSize: 'var(--text-nano)', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>{q.phase}</span>
-          {q.priority && (
-            <span style={{ fontSize: 'var(--text-nano)', fontWeight: 700, letterSpacing: '0.05em', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)', padding: '2px 8px' }}>
-              {q.priority}
-            </span>
-          )}
-        </div>
-      )}
-      <div style={{ fontSize: 'var(--text-title)', fontWeight: 600, color: 'var(--text)', marginBottom: 14, maxWidth: 560 }}>{q.prompt}</div>
-      <textarea style={{ ...textareaStyle, maxWidth: 560 }} value={draft} onChange={(e) => setDraft(e.target.value)} autoFocus />
-      {q.insight && (
-        <div style={{ marginTop: 14, maxWidth: 560, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px 14px' }}>
-          <div style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-secondary)', fontStyle: 'italic', lineHeight: 1.5 }}>{q.insight}</div>
-          {q.study && <div style={{ fontSize: 'var(--text-micro)', color: 'var(--text-tertiary)', marginTop: 6 }}>Study: {q.study}</div>}
-        </div>
-      )}
-
-      <div style={{ display: 'flex', gap: 10, marginTop: 18, alignItems: 'center' }}>
-        {step > 0 && (
-          <div
-            style={{ ...ghostBtn, pointerEvents: generating ? 'none' : 'auto', opacity: generating ? 0.5 : 1 }}
-            onClick={async () => { await saveAnswer(active.id, q.key, draft); setStep(step - 1); }}
-          >
-            Back
+    <Page title={itemLabel(active)} sub={`${title} · step ${step + 1} of ${questions.length}`}>
+      <button className="mm-btn" style={{ alignSelf: 'flex-start' }} onClick={() => setActiveId(null)}>‹ All</button>
+      <div style={{ height: 8, borderRadius: 999, background: 'var(--surface-3)', overflow: 'hidden', maxWidth: 720 }}><div style={{ width: `${((step + 1) / questions.length) * 100}%`, height: '100%', background: 'var(--accent)', borderRadius: 999 }} /></div>
+      <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 24, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 720 }}>
+        {q.phase && <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)' }}>{q.phase}</span>{q.priority && <Chip k={/crit/i.test(q.priority) ? 'warn' : 'neutral'}>{q.priority[0].toUpperCase() + q.priority.slice(1).toLowerCase()}</Chip>}</div>}
+        <span style={{ color: 'var(--text)', fontSize: phone ? 19 : 22, fontWeight: 600, letterSpacing: '-0.025em', lineHeight: 1.3 }}>{q.prompt}</span>
+        <textarea value={draft} onChange={(e) => setDraft(e.target.value)} autoFocus style={{ ...area, height: 140, fontSize: 16 }} />
+        {q.insight && (
+          <div style={{ padding: 12, borderRadius: 10, background: 'var(--surface-3)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--text-secondary)' }}>{q.insight}</span>
+            {q.study && <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Study: {q.study}</span>}
           </div>
         )}
-        <div
-          style={{ ...primaryBtn, pointerEvents: generating ? 'none' : 'auto', opacity: generating ? 0.6 : 1 }}
-          onClick={async () => {
-            await saveAnswer(active.id, q.key, draft);
-            if (isLast) {
-              setGenerating(true);
-              setGenError('');
-              const merged = { ...active.answers, [q.key]: draft };
-              try {
-                const text = await generate(merged);
-                await complete(active.id, text);
-              } catch {
-                setGenError("Nova couldn't generate this — try again in a moment.");
-              } finally {
-                setGenerating(false);
-              }
-            } else {
-              setStep(step + 1);
-            }
-          }}
-        >
-          {isLast ? (generating ? 'Generating…' : 'Generate') : 'Next'}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          {step > 0 && <button className="mm-btn" style={{ height: 44 }} disabled={generating} onClick={async () => { await saveAnswer(active.id, q.key, draft); setStep(step - 1); }}>Back</button>}
+          <button className="mm-btn mm-btn--primary" style={{ height: 44, minWidth: 120 }} disabled={generating} onClick={() => void next()}>{isLast ? (generating ? 'Writing…' : 'Finish') : 'Next'}</button>
+          {genError && <span style={{ fontSize: 13, color: ai === false ? 'var(--text-secondary)' : 'var(--danger)' }}>{genError}</span>}
         </div>
-        {genError && <span style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)' }}>{genError}</span>}
-      </div>
-    </div>
+      </section>
+    </Page>
   );
 }
