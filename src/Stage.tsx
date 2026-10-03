@@ -39,7 +39,7 @@ const BrainScreen = lazyScreen(() => import('./components/screens/brain/BrainScr
 const EcomScreen = lazyScreen(() => import('./components/screens/ecom/EcomScreen'));
 const ScalingStartScreen = lazyScreen(() => import('./components/screens/ScalingStartScreen'));
 const ClientDeliveryScreen = lazyScreen(() => import('./components/screens/ClientDeliveryScreen'));
-const SupportInboxScreen = lazyScreen(() => import('./components/screens/SupportInboxScreen'));
+const SupportInboxV2 = lazyScreen(() => import('./components/screens/v2/SupportInboxV2'));
 const LegalScreen = lazyScreen(() => import('./components/screens/LegalScreen'));
 const ScalingPlannerScreen = lazyScreen(() => import('./components/screens/ScalingPlannerScreen'));
 const BusinessAuditsScreen = lazyScreen(() => import('./components/screens/BusinessAuditsScreen'));
@@ -305,14 +305,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'support-inbox' && (
-          <SupportInboxScreen
-            homeHeadStyle={vm.homeHeadStyle}
-            homeSubStyle={vm.homeSubStyle}
-            onOpenClient={(clientId) => {
-              setClientFocus(clientId);
-              actions.navigateTo('client-modules');
-            }}
-          />
+          <SupportInboxV2 onOpenClient={(clientId) => { setClientFocus(clientId); actions.navigateTo('client-modules'); }} />
         )}
 
         {state.screen === 'leads' && (
