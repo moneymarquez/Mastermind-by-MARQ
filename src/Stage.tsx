@@ -30,7 +30,7 @@ const DispatchScreen = lazyScreen(() => import('./dispatch/DispatchScreen'));
 const DispatchLayer = lazyScreen(() => import('./dispatch/DispatchLayer'));
 const ClientModulesV2 = lazyScreen(() => import('./components/screens/v2/ClientModulesV2'));
 const DialingV2 = lazyScreen(() => import('./components/screens/v2/DialingV2'));
-const StickySpotScreen = lazyScreen(() => import('./components/screens/StickySpotScreen'));
+const StickySpotV2 = lazyScreen(() => import('./components/screens/v2/StickySpotV2'));
 const SobrietyV2 = lazyScreen(() => import('./components/screens/v2/SobrietyV2'));
 const FitnessV2 = lazyScreen(() => import('./components/screens/v2/FitnessV2'));
 const GoalsV2 = lazyScreen(() => import('./components/screens/v2/GoalsV2'));
@@ -81,7 +81,7 @@ const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 // Screens still on their pre-redesign layout: on phone they get the shared
 // back row so every module navigates the same way. Remove one from here
 // as it moves onto the mm/Page frame.
-const LEGACY_SCREENS = new Set(['sticky-spot', 'brain', 'delivery', 'legal', 'brand-lab', 'setup', 'playbooks', 'morning-digest', 'notification-settings', 'streaming', 'stocks', 'leadflow', 'ecommerce', 'account-settings', 'prompt-voice-settings', 'budgeting', 'marketing', 'content', 'changelog', 'swipe-file', 'manage-modules', 'edit-home-widgets', 'grant-access']);
+const LEGACY_SCREENS = new Set(['brain', 'delivery', 'legal', 'brand-lab', 'setup', 'playbooks', 'morning-digest', 'notification-settings', 'streaming', 'stocks', 'leadflow', 'ecommerce', 'account-settings', 'prompt-voice-settings', 'budgeting', 'marketing', 'content', 'changelog', 'swipe-file', 'manage-modules', 'edit-home-widgets', 'grant-access']);
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
@@ -276,17 +276,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'dialing' && <DialingV2 />}
 
-        {state.screen === 'sticky-spot' && (
-          <StickySpotScreen
-            newIdeaText={state.newIdeaText}
-            newIdeaEst={state.newIdeaEst}
-            onNewIdeaText={actions.onNewIdeaText}
-            onNewIdeaEst={actions.onNewIdeaEst}
-            onAdd={actions.addStickyIdea}
-            stickyIdeas={state.stickyIdeas}
-            onRemove={actions.removeStickyIdea}
-          />
-        )}
+        {state.screen === 'sticky-spot' && <StickySpotV2 />}
 
         {state.screen === 'sobriety' && <SobrietyV2 />}
 
