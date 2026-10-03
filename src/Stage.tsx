@@ -28,7 +28,7 @@ const DemoTour = lazyScreen(() => import('./demo/DemoTour'));
 const ChangelogScreen = lazyScreen(() => import('./components/screens/ChangelogScreen'));
 const DispatchScreen = lazyScreen(() => import('./dispatch/DispatchScreen'));
 const DispatchLayer = lazyScreen(() => import('./dispatch/DispatchLayer'));
-const ClientModulesScreen = lazyScreen(() => import('./components/screens/ClientModulesScreen'));
+const ClientModulesV2 = lazyScreen(() => import('./components/screens/v2/ClientModulesV2'));
 const DialingV2 = lazyScreen(() => import('./components/screens/v2/DialingV2'));
 const StickySpotScreen = lazyScreen(() => import('./components/screens/StickySpotScreen'));
 const SobrietyV2 = lazyScreen(() => import('./components/screens/v2/SobrietyV2'));
@@ -343,15 +343,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'client-modules' && (
-          <ClientModulesScreen
-            homeHeadStyle={vm.homeHeadStyle}
-            homeSubStyle={vm.homeSubStyle}
-            focusClientId={clientFocus}
-            onClearFocus={() => setClientFocus(null)}
-            onChanged={ownerInbox.reload}
-            selectedClientId={selectedClientId}
-            onSelectClient={setSelectedClientId}
-          />
+          <ClientModulesV2 focusClientId={clientFocus} onClearFocus={() => setClientFocus(null)} onChanged={ownerInbox.reload} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} />
         )}
 
         {state.screen === 'audits' && (
