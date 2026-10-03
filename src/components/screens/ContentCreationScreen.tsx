@@ -23,20 +23,22 @@ import PlanTab from './content/PlanTab';
 import OfficeView from '../office/OfficeView';
 import EngineBar from './ecom/EngineBar';
 import WorkersTab from './ecom/WorkersTab';
-import { Pill, btn, panel } from './ecom/ecomShared';
+import { panel } from './ecom/ecomShared';
+import ContentOverview from './content/ContentOverview';
+import { Page, Tabs } from '../mm/Page';
 import { useSocialAccounts, useContentItems, useInspiration, useClips, useLatestAudits } from '../../data/useContentEngine';
 import InspirationTab from './content/InspirationTab';
 import StudioTab from './content/StudioTab';
 import LatestAudits from './content/LatestAudits';
 
 type EngineTab = 'accounts' | 'plan' | 'studio' | 'inspiration' | 'workers' | 'growth';
-const ENGINE_TABS: { id: EngineTab; label: string; icon: string }[] = [
-  { id: 'accounts', label: 'Accounts', icon: '👤' },
-  { id: 'plan', label: 'Plan', icon: '📅' },
-  { id: 'studio', label: 'Studio', icon: '🎬' },
-  { id: 'inspiration', label: 'Inspiration', icon: '💡' },
-  { id: 'workers', label: 'Workers', icon: '🤖' },
-  { id: 'growth', label: 'Growth plans', icon: '📈' },
+const ENGINE_TABS: { id: EngineTab; label: string }[] = [
+  { id: 'accounts', label: 'Accounts' },
+  { id: 'plan', label: 'Plan' },
+  { id: 'studio', label: 'Studio' },
+  { id: 'inspiration', label: 'Inspiration' },
+  { id: 'workers', label: 'Workers' },
+  { id: 'growth', label: 'Growth plans' },
 ];
 const enginePanel: CSSProperties = { ...panel, marginTop: 16 };
 
@@ -169,7 +171,7 @@ function composeGrowthPrompt(plan: ContentGrowthPlan, clientName: string, planCh
   return lines.join('\n');
 }
 
-export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, selectedClientId, onSelectClient, onAskNova }: Props) {
+export default function ContentCreationScreen({ selectedClientId, onSelectClient, onAskNova }: Props) {
   const { clients, loading, error, createClient } = useClients();
   const selected = clients.find((c) => c.id === selectedClientId) ?? null;
   const growth = useContentGrowth();
@@ -210,25 +212,15 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
   const latestAudit = auditsApi.audits[0] ?? null;
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
-        <div>
-          <div style={homeHeadStyle}>Content</div>
-          <div style={homeSubStyle}>Accounts, the week's plan, studio, inspiration — you film raw clips and approve; workers do the rest.</div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-          <button style={btn('ghost')} onClick={() => setOfficeOpen(true)}>🏢 View Office</button>
-          {(engineTab === 'accounts' || engineTab === 'plan') && (
-            <button style={btn('primary')} onClick={() => setNewOpen(true)}>＋ {engineTab === 'accounts' ? 'Account' : 'Post idea'}</button>
-          )}
-        </div>
-      </div>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 18 }}>
-        {ENGINE_TABS.map((t) => <Pill key={t.id} active={engineTab === t.id} onClick={() => { setEngineTab(t.id); setNewOpen(false); }}><span>{t.icon}</span>{t.label}</Pill>)}
-        <div style={{ flex: 1 }} />
+    <Page title="Content" sub="Accounts, the week's plan, studio and inspiration. You film and approve; workers do the rest."
+      menu={[{ t: 'View Office', onClick: () => setOfficeOpen(true) }]}
+      fab={engineTab === 'accounts' || engineTab === 'plan' ? { t: engineTab === 'accounts' ? 'Account' : 'Post idea', onClick: () => setNewOpen(true) } : undefined}>
+      <Tabs tabs={ENGINE_TABS} value={engineTab} onChange={(t) => { setEngineTab(t); setNewOpen(false); }} />
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
         <EngineBar domain="content" onDecided={() => { void inspiration.reload(); void clips.reload(); void latestAudits.reload(); void contentItems.reload(); void social.reload(); }} />
       </div>
-
+      {engineTab === 'accounts' && <ContentOverview accounts={social.accounts} items={contentItems.items} posts={social.posts} onOpenPlan={() => setEngineTab('plan')} />}
+      <div>
       {officeOpen && <OfficeView domain="content" onClose={() => setOfficeOpen(false)} />}
       {engineTab === 'accounts' && <LatestAudits audits={latestAudits.audits} accounts={social.accounts} />}
       {engineTab === 'accounts' && <div style={enginePanel}><AccountsTab api={social} items={contentItems.items} newOpen={newOpen} onCloseNew={() => setNewOpen(false)} onOpenPlan={() => setEngineTab('plan')} /></div>}
@@ -411,6 +403,7 @@ export default function ContentCreationScreen({ homeHeadStyle, homeSubStyle, sel
         </div>
       )}
       </>)}
-    </div>
+      </div>
+    </Page>
   );
 }
