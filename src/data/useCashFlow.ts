@@ -4,7 +4,7 @@ import { computeInvoiceTotal } from './invoiceAmount';
 import { dateStr } from './time';
 import { askClaude, AiError } from '../lib/ai';
 
-interface ForecastEvent {
+export interface ForecastEvent {
   date: string;
   amount: number; // signed: positive = income, negative = expense
   label: string;
@@ -87,7 +87,7 @@ async function gatherEvents(today: string, horizonEnd: string): Promise<{ events
   return { events, startingBalance: Number(settingsRes.data?.current_balance ?? 0), avgDailyVariableExpense };
 }
 
-function buildForecast(today: string, startingBalance: number, avgDailyVariableExpense: number, events: ForecastEvent[]): Forecast {
+export function buildForecast(today: string, startingBalance: number, avgDailyVariableExpense: number, events: ForecastEvent[]): Forecast {
   const days: ForecastDay[] = [];
   let balance = startingBalance;
   let firstShortfall: { date: string; drivers: string[] } | null = null;
@@ -116,6 +116,7 @@ function buildForecast(today: string, startingBalance: number, avgDailyVariableE
 
 export function useCashFlow() {
   const [forecast, setForecast] = useState<Forecast | null>(null);
+  const [events, setEvents] = useState<ForecastEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [scenarioAnswer, setScenarioAnswer] = useState('');
   const [scenarioLoading, setScenarioLoading] = useState(false);
@@ -126,6 +127,7 @@ export function useCashFlow() {
     const today = dateStr(new Date());
     const horizonEnd = addDays(today, 90);
     const { events, startingBalance, avgDailyVariableExpense } = await gatherEvents(today, horizonEnd);
+    setEvents(events);
     setForecast(buildForecast(today, startingBalance, avgDailyVariableExpense, events));
     setLoading(false);
   }, []);
@@ -167,5 +169,5 @@ export function useCashFlow() {
     }
   };
 
-  return { forecast, loading, setStartingBalance, askScenario, scenarioAnswer, scenarioLoading, scenarioError };
+  return { forecast, events, loading, setStartingBalance, askScenario, scenarioAnswer, scenarioLoading, scenarioError };
 }

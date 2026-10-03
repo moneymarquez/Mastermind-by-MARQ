@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from 'react';
 /** Charts (design handoff: MM Bars, MM Donut). Same rules: current bar
  *  accent + labelled, others accent-soft, tap for a tooltip, 3 gridlines;
  *  donut max 4 slices with 3px gaps, last = Other, tap to highlight. */
-const fmt = (v: number, pre: string, suf: string, dec: number) => pre + v.toLocaleString('en-US', { maximumFractionDigits: dec, minimumFractionDigits: dec }) + suf;
-const compact = (v: number, pre: string, suf: string) => (v >= 1000 ? `${pre}${(v / 1000).toFixed(v % 1000 ? 1 : 0).replace('.0', '')}k${suf}` : `${pre}${Math.round(v * 10) / 10}${suf}`);
+// Negative values put the sign before the prefix: −$560, not $-560.
+const fmt = (v: number, pre: string, suf: string, dec: number) => (v < 0 ? '−' : '') + pre + Math.abs(v).toLocaleString('en-US', { maximumFractionDigits: dec, minimumFractionDigits: dec }) + suf;
+const compact = (v: number, pre: string, suf: string) => { const a = Math.abs(v), sg = v < 0 ? '−' : ''; return a >= 1000 ? `${sg}${pre}${(a / 1000).toFixed(a % 1000 ? 1 : 0).replace('.0', '')}k${suf}` : `${sg}${pre}${Math.round(a * 10) / 10}${suf}`; };
 
 /** A "nice" axis max: 1.15× the data, rounded up to an even step. Pure. */
 export function niceMax(vals: number[], given?: number): number {
@@ -140,7 +141,7 @@ export function Line({ vals, alt, today = -1, labels = [], pts, pre = '', suf = 
         {today >= 0 && today < n - 1 && <>
           <path d={seg(vals, today, n - 1)} fill="none" stroke={col} strokeWidth="2" strokeDasharray="5 5" strokeLinecap="round" />
           <line x1={X(today)} x2={X(today)} y1="6" y2={bot} stroke="var(--text-tertiary)" strokeDasharray="2 3" />
-          <text x={X(today)} y="10" fontSize="10.5" fontWeight="500" fill="var(--text-secondary)" textAnchor="middle">Today</text>
+          {today > 0 && <text x={X(today)} y="10" fontSize="10.5" fontWeight="500" fill="var(--text-secondary)" textAnchor="middle">Today</text>}
         </>}
         <circle cx={ex} cy={ey} r="4" fill="var(--surface)" stroke={col} strokeWidth="2" />
         <text x={ex - 8} y={ey - 10} fontSize="12" fontWeight="600" fill="var(--text)" textAnchor="end">{end ?? f(vals[n - 1])}</text>
