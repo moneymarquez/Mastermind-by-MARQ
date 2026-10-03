@@ -53,7 +53,7 @@ const NotificationSettingsScreen = lazyScreen(() => import('./components/screens
 const MorningDigestScreen = lazyScreen(() => import('./components/screens/MorningDigestScreen'));
 const SetupScreen = lazyScreen(() => import('./components/screens/SetupScreen'));
 const PlaybooksScreen = lazyScreen(() => import('./components/screens/PlaybooksScreen'));
-const StreamingScreen = lazyScreen(() => import('./components/screens/StreamingScreen'));
+const StreamingV2 = lazyScreen(() => import('./components/screens/v2/StreamingV2'));
 const StocksScreen = lazyScreen(() => import('./components/screens/StocksScreen'));
 const LeadFlowScreen = lazyScreen(() => import('./components/screens/LeadFlowScreen'));
 const AccountSettingsScreen = lazyScreen(() => import('./components/screens/AccountSettingsScreen'));
@@ -81,7 +81,7 @@ const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 // Screens still on their pre-redesign layout: on phone they get the shared
 // back row so every module navigates the same way. Remove one from here
 // as it moves onto the mm/Page frame.
-const LEGACY_SCREENS = new Set(['brain', 'delivery', 'legal', 'brand-lab', 'setup', 'playbooks', 'morning-digest', 'notification-settings', 'streaming', 'leadflow', 'ecommerce', 'account-settings', 'prompt-voice-settings', 'budgeting', 'marketing', 'content', 'changelog', 'swipe-file', 'manage-modules', 'edit-home-widgets', 'grant-access']);
+const LEGACY_SCREENS = new Set(['brain', 'delivery', 'legal', 'brand-lab', 'setup', 'playbooks', 'morning-digest', 'notification-settings', 'leadflow', 'ecommerce', 'account-settings', 'prompt-voice-settings', 'budgeting', 'marketing', 'content', 'changelog', 'swipe-file', 'manage-modules', 'edit-home-widgets', 'grant-access']);
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
@@ -359,9 +359,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <NotificationSettingsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
-        {state.screen === 'streaming' && (
-          <StreamingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} isOwner={isOwner} />
-        )}
+        {state.screen === 'streaming' && <StreamingV2 isOwner={isOwner} />}
 
         {state.screen === 'stocks' && (
           <StocksScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
