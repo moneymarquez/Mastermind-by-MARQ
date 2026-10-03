@@ -3,7 +3,6 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { lazyScreen } from './lib/lazyScreen';
 import type { CSSProperties } from 'react';
 import NovaPanel from './components/NovaPanel';
-import { useBender } from './data/useBender';
 import { useNavModulePrefs } from './data/useNavModulePrefs';
 import { useOwnerInbox } from './data/useOwnerInbox';
 import { HomeExtras } from './components/screens/home/HomeExtras';
@@ -35,7 +34,7 @@ const StickySpotScreen = lazyScreen(() => import('./components/screens/StickySpo
 const SobrietyV2 = lazyScreen(() => import('./components/screens/v2/SobrietyV2'));
 const FitnessScreen = lazyScreen(() => import('./components/screens/FitnessScreen'));
 const GoalsV2 = lazyScreen(() => import('./components/screens/v2/GoalsV2'));
-const MentalHealthScreen = lazyScreen(() => import('./components/screens/MentalHealthScreen'));
+const MentalHealthV2 = lazyScreen(() => import('./components/screens/v2/MentalHealthV2'));
 const BrainScreen = lazyScreen(() => import('./components/screens/brain/BrainScreen'));
 const EcomScreen = lazyScreen(() => import('./components/screens/ecom/EcomScreen'));
 const ScalingStartScreen = lazyScreen(() => import('./components/screens/ScalingStartScreen'));
@@ -178,7 +177,6 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // over. Phone: a full screen above the tab bar.
   const novaDock = device === 'desktop' && state.novaOpen ? NOVA_DOCK_W : 0;
   const shellNav = (id: string) => { setNotifOpen(false); if (state.novaOpen && device !== 'desktop') actions.closeNova(); actions.navigateTo(id); };
-  const bender = useBender();
   const moduleCtx: ModuleCtxValue = { device, novaOpen: state.novaOpen, isOwner, nav: shellNav, askNova: (p?: string) => { if (p) askNovaWithPrompt(p); else if (!state.novaOpen) actions.openNova(); } };
 
   // A real set name always wins, regardless of owner status — per-account
@@ -296,9 +294,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'goals' && <GoalsV2 />}
 
-        {state.screen === 'mental' && (
-          <MentalHealthScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} activeBender={bender.activeBender} />
-        )}
+        {state.screen === 'mental' && <MentalHealthV2 />}
 
         {state.screen === 'brain' && (
           <BrainScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onNavigate={actions.navigateTo} />

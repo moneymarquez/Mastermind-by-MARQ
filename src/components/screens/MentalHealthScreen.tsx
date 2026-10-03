@@ -29,7 +29,7 @@ function profileContext(answers: Record<string, string>): string {
   return `\n\nWhat you know about him from his profile (use this to make your response land accurately, not generically — don't quote it back verbatim):\n${lines.join('\n')}`;
 }
 
-async function reflectOnCheckin(mood: Mood, note: string, activeBender: BenderSession | null, profileAnswers: Record<string, string>): Promise<string> {
+export async function reflectOnCheckin(mood: Mood, note: string, activeBender: BenderSession | null, profileAnswers: Record<string, string>): Promise<string> {
   const benderContext = activeBender
     ? `\n\nContext: a bender has been active since ${new Date(activeBender.started_at).toLocaleDateString()}${activeBender.description ? ` (${activeBender.description})` : ''}. Read his mood/energy in that context — don't treat lower energy or a rough mood as unusual or alarming right now, and don't bring up the bender itself unprompted unless it's clearly relevant to what he wrote.`
     : '';
