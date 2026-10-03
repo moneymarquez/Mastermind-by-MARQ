@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="display:flex; flex-direction:column; gap:{{ gap }}px; min-width:0; font-family:Inter, system-ui, sans-serif; font-variant-numeric:tabular-nums;">
+  <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+    <div style="border:1px solid var(--border); border-radius:16px; padding:40px 20px; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; background-color:var(--surface-2); background-image:linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size:22px 22px;">
+      <span style="color:var(--text); font-size:17px; font-weight:600; letter-spacing:-0.02em;">No new leads yet</span>
+      <p style="margin:0; font-size:15px; line-height:1.45; max-width:300px; text-wrap:pretty;">Leads land here the moment they come in from email, your website and audit forms, calls, or LeadFlow.</p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+        <span style="height:44px; display:flex; align-items:center; padding:0 16px; border-radius:8px; background:var(--text); color:var(--bg); font-size:14px; font-weight:600;">Check lead sources</span>
+        <span style="height:44px; display:flex; align-items:center; padding:0 16px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:14px; font-weight:500;">Open in LeadFlow ↗</span>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ notEmpty }}" hint-placeholder-val="{{ true }}">
+    <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:{{ tileGap }}px;">
+      <dc-import name="MM Stat" label="New today" value="6" pill="↑ 2 vs. average" k="good" hint-size="100%,110px"></dc-import>
+      <dc-import name="MM Stat" label="Waiting on me" value="{{ waitingCount }}" pill="1 over an hour" k="bad" hint-size="100%,110px"></dc-import>
+      <dc-import name="MM Stat" label="Replied within 1 hour" value="71%" pill="10 of 14 this week" k="neutral" hint-size="100%,110px"></dc-import>
+    </div>
+    <sc-if value="{{ noai }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:var(--surface);">
+        <span style="font-size:13.5px; line-height:1.4;">AI isn't connected, so leads aren't scored hot, warm, or cold yet.</span>
+        <span style="flex:none; height:36px; display:flex; align-items:center; padding:0 12px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:500;">Connect AI</span>
+      </div>
+    </sc-if>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+      <div style="display:flex; gap:2px; padding:3px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border);">
+        <sc-for list="{{ filters }}" as="f" hint-placeholder-count="3"><span onClick="{{ f.tap }}" style="height:{{ fh }}px; display:flex; align-items:center; padding:0 13px; border-radius:999px; font-size:13px; font-weight:500; background:{{ f.bg }}; color:{{ f.c }}; cursor:pointer; white-space:nowrap;">{{ f.l }}</span></sc-for>
+      </div>
+      <span style="height:{{ fh }}px; display:flex; align-items:center; gap:6px; padding:0 12px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:500; cursor:pointer; white-space:nowrap;">Open in LeadFlow<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"></path><path d="M8 7h9v9"></path></svg></span>
+    </div>
+
+    <sc-if value="{{ isPhone }}" hint-placeholder-val="{{ true }}">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:4px 18px; box-shadow:var(--card-shadow);">
+        <sc-for list="{{ leads }}" as="l" hint-placeholder-count="5">
+          <dc-import name="MM Lead" n="{{ l.n }}" biz="{{ l.biz }}" src="{{ l.src }}" ago="{{ l.ago }}" temp="{{ l.temp }}" waiting="{{ l.waiting }}" urgent="{{ l.urgent }}" actions="true" top="{{ l.top }}" on-dismiss="{{ l.dismiss }}" hint-size="100%,150px"></dc-import>
+        </sc-for>
+        <sc-if value="{{ allGone }}" hint-placeholder-val="{{ false }}"><p style="margin:0; padding:24px 0; text-align:center; font-size:14px;">Nothing here. You're caught up.</p></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isWide }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid; grid-template-columns:{{ cols }}; gap:16px; align-items:start;">
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--card-shadow); overflow:hidden; min-width:0;">
+          <div style="display:grid; grid-template-columns:{{ tc }}; gap:14px; padding:10px 18px; background:var(--surface-2); font-size:12px; font-weight:500; color:var(--text-tertiary);"><span>Lead</span><span>Source</span><span>Temperature</span><span style="text-align:right;">Quick actions</span></div>
+          <sc-for list="{{ leads }}" as="l" hint-placeholder-count="6">
+            <div style="display:grid; grid-template-columns:{{ tc }}; gap:14px; align-items:center; padding:12px 18px; border-top:1px solid var(--grid);" style-hover="background:var(--surface-2);">
+              <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                <div style="width:32px; height:32px; flex:none; border-radius:50%; background:var(--surface-3); display:flex; align-items:center; justify-content:center; color:var(--text); font-size:11.5px; font-weight:600;">{{ l.ini }}</div>
+                <div style="display:flex; flex-direction:column; min-width:0;"><span style="color:var(--text); font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ l.n }}</span><span style="font-size:12.5px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ l.biz }}</span></div>
+              </div>
+              <div style="display:flex; flex-direction:column; min-width:0;"><span style="color:var(--text); font-size:13.5px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ l.src }}</span><span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">{{ l.ago }}</span></div>
+              <div style="display:flex; flex-direction:column; align-items:flex-start; gap:4px;">
+                <dc-import name="MM Chip" t="{{ l.tempT }}" k="{{ l.temp }}" hint-size="64px,22px"></dc-import>
+                <sc-if value="{{ l.hasWait }}" hint-placeholder-val="{{ false }}"><dc-import name="MM Chip" t="{{ l.waiting }}" k="{{ l.waitK }}" hint-size="90px,22px"></dc-import></sc-if>
+              </div>
+              <div style="display:flex; justify-content:flex-end; gap:6px;">
+                <span style="height:32px; display:flex; align-items:center; padding:0 10px; border-radius:8px; background:var(--text); color:var(--bg); font-size:12.5px; font-weight:600; cursor:pointer;">Call</span>
+                <span style="height:32px; display:flex; align-items:center; padding:0 10px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:12.5px; font-weight:500; cursor:pointer;">Reply</span>
+                <span onClick="{{ l.crm }}" style="height:32px; display:flex; align-items:center; padding:0 10px; border-radius:8px; border:1px solid var(--border); color:{{ l.crmC }}; font-size:12.5px; font-weight:500; cursor:pointer; white-space:nowrap;">{{ l.crmT }}</span>
+                <span onClick="{{ l.dismiss }}" style="height:32px; display:flex; align-items:center; padding:0 10px; border-radius:8px; border:1px solid var(--border); color:var(--text-secondary); font-size:12.5px; font-weight:500; cursor:pointer;">Dismiss</span>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ allGone }}" hint-placeholder-val="{{ false }}"><p style="margin:0; padding:28px; text-align:center; font-size:14px; border-top:1px solid var(--grid);">Nothing here. You're caught up.</p></sc-if>
+        </div>
+        <div style="display:grid; grid-template-columns:{{ sideCols }}; gap:16px; min-width:0;">
+          <dc-import name="MM Card" title="Where leads came from" meta="This week · 16" hint-size="100%,200px">
+            <dc-import name="MM Donut" names="Website and audit,Email,LeadFlow,Calls" vals="6,5,3,2" pre="" center="This week" hint-size="100%,124px"></dc-import>
+          </dc-import>
+          <dc-import name="MM Card" title="Time to first reply" meta="Minutes · goal under 60" hint-size="100%,220px">
+            <dc-import name="MM Bars" vals="22,48,35,18,74,41,26" labels="Wed,Thu,Fri,Sat,Sun,Mon,Today" pre="" suf="m" h="120" hint-size="100%,164px"></dc-import>
+          </dc-import>
+        </div>
+      </div>
+    </sc-if>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1100,&quot;height&quot;:800},&quot;size&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;phone&quot;,&quot;ipad&quot;,&quot;desktop&quot;],&quot;default&quot;:&quot;desktop&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;lstate&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;empty&quot;,&quot;noai&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { gone: {}, crm: {}, filter: 'All' };
+  renderVals() {
+    const p = this.props, s = this.state, size = p.size || 'phone', isPhone = size === 'phone', isDesk = size === 'desktop';
+    const ls = p.lstate || 'normal', noai = ls === 'noai';
+    const RAW = [
+      ['l1', 'Lena Ortiz', 'Bloom Studio', 'Inbound email', '12 min ago', 'hot', 'Waiting 12 min', false],
+      ['l2', 'Marcus Hill', 'Hill & Co. Plumbing', 'Audit form · scored 48', '38 min ago', 'warm', 'Waiting 38 min', false],
+      ['l3', 'Priya Nair', 'Nair Wellness', 'Website form', '1 h ago', 'warm', '', false],
+      ['l4', 'Jordan Park', 'Park Fitness', 'Audit form · scored 54', '2 h ago', 'hot', 'Waiting 2 h', true],
+      ['l5', 'Tom Becker', 'Becker Auto', 'Missed call · voicemail', '3 h ago', 'cold', 'Waiting 3 h', false],
+      ['l6', 'Ana Silva', 'Silva Bakery', 'LeadFlow', '5 h ago', 'warm', '', false],
+    ];
+    const T = { hot: 'Hot', warm: 'Warm', cold: 'Cold', neutral: 'Unscored' };
+    const live = RAW.filter(r => !s.gone[r[0]]);
+    const shown = live.filter(r => s.filter === 'All' || (s.filter === 'Hot' ? r[5] === 'hot' : !!r[6]));
+    const leads = shown.map(([id, n, biz, src, ago, temp, waiting, urgent], i) => {
+      const t = noai ? 'neutral' : temp;
+      return {
+        n, biz, src, ago, temp: t, tempT: T[t], waiting, urgent, hasWait: !!waiting, waitK: urgent ? 'bad' : 'warn', top: i === 0 ? 'none' : '',
+        ini: n.split(' ').map(w => w[0]).join(''),
+        dismiss: () => this.setState(st => ({ gone: { ...st.gone, [id]: true } })),
+        crm: () => this.setState(st => ({ crm: { ...st.crm, [id]: true } })), crmT: s.crm[id] ? 'In CRM ✓' : 'Add to CRM', crmC: s.crm[id] ? 'var(--success)' : 'var(--text)',
+      };
+    });
+    const cnt = { All: live.length, Hot: live.filter(r => r[5] === 'hot').length, Waiting: live.filter(r => r[6]).length };
+    const filters = (noai ? ['All', 'Waiting'] : ['All', 'Hot', 'Waiting']).map(l => ({ l: `${l} ${cnt[l]}`, bg: s.filter === l ? 'var(--text)' : 'transparent', c: s.filter === l ? 'var(--bg)' : 'var(--text-secondary)', tap: () => this.setState({ filter: l }) }));
+    return {
+      isEmpty: ls === 'empty', notEmpty: ls !== 'empty', noai, isPhone, isWide: !isPhone, leads, filters, allGone: leads.length === 0,
+      waitingCount: String(cnt.Waiting), gap: isPhone ? 16 : 16, tileGap: isPhone ? 8 : 16, fh: isPhone ? 40 : 34,
+      cols: isDesk ? 'minmax(0,2fr) minmax(0,1fr)' : 'minmax(0,1fr)', sideCols: isDesk ? 'minmax(0,1fr)' : 'repeat(2,minmax(0,1fr))',
+      tc: 'minmax(0,1.4fr) minmax(0,1fr) 96px 268px',
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="position:relative; width:{{ size }}px; height:{{ size }}px; flex:none; font-family:Inter, system-ui, sans-serif; font-variant-numeric:tabular-nums;">
+  <svg width="{{ size }}" height="{{ size }}" viewBox="{{ vb }}" style="transform:rotate(-90deg);">
+    <sc-for list="{{ rings }}" as="r" hint-placeholder-count="1">
+      <circle cx="{{ c }}" cy="{{ c }}" r="{{ r.r }}" fill="none" stroke="var(--surface-3)" stroke-width="{{ sw }}"></circle>
+      <circle cx="{{ c }}" cy="{{ c }}" r="{{ r.r }}" fill="none" stroke="{{ r.col }}" stroke-width="{{ sw }}" stroke-linecap="round" stroke-dasharray="{{ r.da }}"></circle>
+    </sc-for>
+  </svg>
+  <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+    <span style="color:var(--text); font-size:{{ fs }}px; font-weight:600; letter-spacing:-0.04em; line-height:1.1;">{{ center }}</span>
+    <span style="font-size:11px; font-weight:500; color:var(--text-tertiary);">{{ sub }}</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:140,&quot;height&quot;:140},&quot;pcts&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;0.82,0.64,0.5&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;center&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;1,640&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;sub&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;of 2,300 kcal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;size&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:132,&quot;tsType&quot;:&quot;number&quot;},&quot;sw&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:10,&quot;tsType&quot;:&quot;number&quot;},&quot;fs&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;tsType&quot;:&quot;number&quot;},&quot;color&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;accent&quot;,&quot;good&quot;,&quot;warn&quot;,&quot;client&quot;],&quot;default&quot;:&quot;accent&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props, S = Number(p.size || 132), sw = Number(p.sw || 10), pcts = String(p.pcts || '0.5').split(',').map(Number);
+    const one = pcts.length === 1;
+    const base = { accent: 'var(--accent)', good: 'var(--success)', warn: 'var(--warning)', client: 'var(--client-accent)' }[p.color] || 'var(--accent)';
+    const cols = one ? [base] : ['var(--cat-1)', 'var(--cat-2)', 'var(--cat-3)'];
+    const rings = pcts.map((v, i) => { const r = S / 2 - sw / 2 - i * (sw + 4); const C = 2 * Math.PI * r; return { r: r.toFixed(1), col: cols[i], da: `${(Math.min(v, 1) * C).toFixed(1)} ${C.toFixed(1)}` }; });
+    return { size: S, vb: `0 0 ${S} ${S}`, c: S / 2, sw, rings, fs: Number(p.fs || (S > 110 ? 22 : 15)) };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="display:flex; flex-direction:column; gap:10px; font-family:Inter, system-ui, sans-serif; font-variant-numeric:tabular-nums;">
+  <sc-if value="{{ hasLabel }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px;">
+      <span style="color:var(--text); font-size:15px; font-weight:500; letter-spacing:-0.01em;">{{ label }}</span>
+      <span style="font-size:13px; font-weight:500; white-space:nowrap;"><span style="color:var(--text);">{{ val }}</span> of {{ max }}</span>
+    </div>
+  </sc-if>
+  <div style="position:relative; height:26px; padding-top:4px;">
+    <div style="height:8px; border-radius:999px; background:var(--surface-3); overflow:hidden;"><div style="width:{{ fill }}%; height:100%; background:{{ col }}; border-radius:999px;"></div></div>
+    <div style="position:absolute; left:{{ mark }}%; top:0; width:2px; height:16px; margin-left:-1px; background:var(--text); border-radius:1px;"></div>
+    <span style="position:absolute; left:{{ mark }}%; top:18px; transform:translateX(-50%); font-size:10.5px; font-weight:500; color:var(--text-tertiary); white-space:nowrap;">{{ markLabel }}</span>
+  </div>
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:4px;">
+    <dc-import name="MM Chip" t="{{ chip }}" k="{{ k }}" hint-size="120px,22px"></dc-import>
+    <span style="font-size:12px; font-weight:500; color:var(--text-tertiary); text-align:right;">{{ note }}</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:322,&quot;height&quot;:110},&quot;label&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Save $10,000&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;val&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;$6,200&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;max&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;$10,000&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;fill&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:62,&quot;tsType&quot;:&quot;number&quot;},&quot;mark&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:70,&quot;tsType&quot;:&quot;number&quot;},&quot;markLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Today&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;chip&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Behind pace by $800&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;k&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;good&quot;,&quot;warn&quot;,&quot;bad&quot;,&quot;neutral&quot;],&quot;default&quot;:&quot;warn&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;note&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;color&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;accent&quot;,&quot;client&quot;],&quot;default&quot;:&quot;accent&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props;
+    return { hasLabel: !!p.label, fill: Math.min(100, Number(p.fill || 0)), mark: Number(p.mark || 0), markLabel: p.markLabel || 'Today', col: p.color === 'client' ? 'var(--client-accent)' : 'var(--accent)' };
+  }
+}
+</script>
+</body>
+</html>

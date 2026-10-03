@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:#897cdc;text-decoration:none}a:hover{color:#f4f4f6}</style>
+</helmet>
+<section id="4" style="background:{{ pg.bg }}; padding:56px 64px 96px; display:flex; flex-direction:column; gap:64px; font-family:Inter, system-ui, sans-serif; color:{{ pg.t2 }}; min-height:100vh;">
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:24px; max-width:2960px;">
+    <div style="display:flex; flex-direction:column; gap:8px; max-width:960px;">
+      <span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">Masterminds by MARQ · Inbox, Leads, Notifications · all figures and messages are example data</span>
+      <h1 style="margin:0; color:{{ pg.t1 }}; font-size:40px; font-weight:700; letter-spacing:-0.04em;">Inbox and Leads, one tap away</h1>
+      <p style="margin:0; font-size:15px; line-height:1.5; text-wrap:pretty;">On iPad and desktop, Inbox and Leads sit under Home and Nova in the sidebar, each with a count badge: blurple for unread, red only when something is urgent. On phone, Inbox has its own tab with Leads as a second tab inside it. Every frame works: open messages, send a drafted reply, dismiss leads, open the bell. Each size shows twice: once in the current theme, once in the other.</p>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="font-size:13px; font-weight:500;">Theme</span>
+      <div style="display:flex; gap:2px; padding:3px; border-radius:999px; background:{{ pg.s2 }}; border:1px solid {{ pg.border }};">
+        <sc-for list="{{ opts }}" as="o" hint-placeholder-count="3"><span onClick="{{ o.tap }}" style="padding:7px 14px; border-radius:999px; font-size:13px; font-weight:500; background:{{ o.bg }}; color:{{ o.c }}; cursor:pointer;">{{ o.l }}</span></sc-for>
+      </div>
+    </div>
+  </div>
+
+  <sc-for list="{{ blocks }}" as="b" hint-placeholder-count="2">
+    <div id="{{ b.id }}" style="display:flex; flex-direction:column; gap:40px;">
+      <div style="display:flex; align-items:baseline; gap:12px; padding-bottom:12px; border-bottom:1px solid {{ pg.border }};">
+        <span style="color:{{ pg.t1 }}; font-size:28px; font-weight:700; letter-spacing:-0.035em;">{{ b.title }}</span>
+        <span style="font-size:14px; color:{{ pg.t3 }};">{{ b.note }}</span>
+      </div>
+      <sc-for list="{{ b.sizes }}" as="z" hint-placeholder-count="2">
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <span style="color:{{ pg.t1 }}; font-size:16px; font-weight:600; letter-spacing:-0.015em;">{{ z.label }}</span>
+          <div style="display:flex; gap:48px; align-items:flex-start;">
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">{{ labelA }}</span>
+              <dc-import name="MM App" size="{{ z.size }}" screen="{{ b.screen }}" msg="{{ z.msg }}" mode="global" hint-size="{{ z.hint }}"></dc-import>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">{{ labelB }}</span>
+              <dc-import name="MM App" size="{{ z.size }}" screen="{{ b.screen }}" msg="{{ z.msg }}" mode="invert" hint-size="{{ z.hint }}"></dc-import>
+            </div>
+            <sc-if value="{{ z.extra }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:10px;">
+                <span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">{{ z.extraLabel }}</span>
+                <dc-import name="MM App" size="phone" screen="{{ z.extraScreen }}" msg="{{ z.extraMsg }}" mode="global" hint-size="392px,1400px"></dc-import>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-for>
+
+  <div id="notifications" style="display:flex; flex-direction:column; gap:40px;">
+    <div style="display:flex; align-items:baseline; gap:12px; padding-bottom:12px; border-bottom:1px solid {{ pg.border }};">
+      <span style="color:{{ pg.t1 }}; font-size:28px; font-weight:700; letter-spacing:-0.035em;">Notifications</span>
+      <span style="font-size:14px; color:{{ pg.t3 }};">The bell opens a panel grouped as New leads, Inbox, Bills and deadlines, and Clients. Tap any item to jump to it.</span>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:48px; align-items:flex-start;">
+      <div style="display:flex; flex-direction:column; gap:10px;"><span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">Desktop · bell open over Home</span><dc-import name="MM App" size="desktop" screen="home" notif="true" hint-size="1442px,1200px"></dc-import></div>
+      <div style="display:flex; flex-direction:column; gap:10px;"><span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">iPad · bell open over Inbox</span><dc-import name="MM App" size="ipad" screen="inbox" notif="true" mode="invert" hint-size="1026px,900px"></dc-import></div>
+      <div style="display:flex; flex-direction:column; gap:10px;"><span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">Phone · bell open</span><dc-import name="MM App" size="phone" screen="home" notif="true" hint-size="392px,1700px"></dc-import></div>
+    </div>
+  </div>
+
+  <div id="states" style="display:flex; flex-direction:column; gap:40px;">
+    <div style="display:flex; align-items:baseline; gap:12px; padding-bottom:12px; border-bottom:1px solid {{ pg.border }};">
+      <span style="color:{{ pg.t1 }}; font-size:28px; font-weight:700; letter-spacing:-0.035em;">States</span>
+      <span style="font-size:14px; color:{{ pg.t3 }};">Caught up, no inbox connected, AI not connected, no leads yet.</span>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:40px; align-items:flex-start;">
+      <div style="display:flex; flex-direction:column; gap:10px;"><span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">Inbox · you're caught up</span><dc-import name="MM App" size="phone" screen="inbox" istate="empty" hint-size="392px,846px"></dc-import></div>
+      <div style="display:flex; flex-direction:column; gap:10px;"><span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">Inbox · no inbox connected</span><dc-import name="MM App" size="phone" screen="inbox" istate="none" hint-size="392px,846px"></dc-import></div>
+      <div style="display:flex; flex-direction:column; gap:10px;"><span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">Inbox · AI not connected</span><dc-import name="MM App" size="phone" screen="inbox" istate="noai" lstate="noai" hint-size="392px,1400px"></dc-import></div>
+      <div style="display:flex; flex-direction:column; gap:10px;"><span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">Leads · none yet</span><dc-import name="MM App" size="phone" screen="leads" lstate="empty" hint-size="392px,846px"></dc-import></div>
+      <div style="display:flex; flex-direction:column; gap:10px;"><span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">Leads · AI not connected</span><dc-import name="MM App" size="phone" screen="leads" lstate="noai" hint-size="392px,1400px"></dc-import></div>
+      <div style="display:flex; flex-direction:column; gap:10px;"><span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">Desktop · AI not connected: unsorted, no drafts</span><dc-import name="MM App" size="desktop" screen="inbox" istate="noai" hint-size="1442px,1000px"></dc-import></div>
+      <div style="display:flex; flex-direction:column; gap:10px;"><span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">iPad · no inbox connected</span><dc-import name="MM App" size="ipad" screen="inbox" istate="none" hint-size="1026px,800px"></dc-import></div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() {
+    this._mm = () => this.forceUpdate();
+    window.addEventListener('mm-theme', this._mm);
+    this._mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+    if (this._mq && this._mq.addEventListener) this._mq.addEventListener('change', this._mm);
+  }
+  componentWillUnmount() { window.removeEventListener('mm-theme', this._mm); if (this._mq && this._mq.removeEventListener) this._mq.removeEventListener('change', this._mm); }
+  pref() { try { return localStorage.getItem('mm-theme') || 'dark'; } catch (e) { return 'dark'; } }
+  renderVals() {
+    const pref = this.pref(), r = pref === 'system' ? (this._mq && this._mq.matches ? 'light' : 'dark') : pref, dark = r === 'dark';
+    const pg = dark ? { bg: '#08080a', s2: '#101014', border: '#25252d', t1: '#f4f4f6', t2: '#9a9ca8', t3: '#6b6d78', sel: '#f4f4f6', selT: '#0b0b0d' } : { bg: '#e6e6ec', s2: '#f2f2f5', border: '#d6d6de', t1: '#121216', t2: '#5b5d69', t3: '#80828d', sel: '#121216', selT: '#ffffff' };
+    const set = t => () => { try { localStorage.setItem('mm-theme', t); } catch (e) {} window.dispatchEvent(new Event('mm-theme')); };
+    const opts = [['dark', 'Dark'], ['light', 'Light'], ['system', 'System']].map(([k, l]) => ({ l, tap: set(k), bg: pref === k ? pg.sel : 'transparent', c: pref === k ? pg.selT : pg.t2 }));
+    const Z = (label, size, hint, extra) => ({ label, size, hint, msg: '', extra: !!extra, ...(extra || {}) });
+    return {
+      pg, opts, labelA: (dark ? 'Dark' : 'Light') + ' · current theme', labelB: (dark ? 'Light' : 'Dark') + ' · for comparison',
+      blocks: [
+        { id: 'inbox', title: 'Inbox', screen: 'inbox', note: 'One feed from every inbox and the client portal. Split view on iPad and desktop. Nothing sends until you tap Send.', sizes: [Z('Desktop · 1440', 'desktop', '1442px,1000px'), Z('iPad · 1024', 'ipad', '1026px,900px'), Z('Phone · 390', 'phone', '392px,1400px', { extraLabel: 'Phone · message open with drafted reply', extraScreen: 'inbox', extraMsg: 'm1' })] },
+        { id: 'leads', title: 'Leads', screen: 'leads', note: 'Live feed from email, website and audit forms, calls, and LeadFlow. Quick actions on every lead.', sizes: [Z('Desktop · 1440', 'desktop', '1442px,1100px'), Z('iPad · 1024', 'ipad', '1026px,1300px'), Z('Phone · 390', 'phone', '392px,1600px', { extraLabel: 'Home · New leads card near the top', extraScreen: 'home', extraMsg: '' })] },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

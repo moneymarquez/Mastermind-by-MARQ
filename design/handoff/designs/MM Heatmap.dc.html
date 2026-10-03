@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="display:flex; flex-direction:column; gap:10px; font-family:Inter, system-ui, sans-serif;">
+  <div style="display:grid; grid-template-rows:repeat({{ rows }}, auto); grid-template-columns:repeat({{ cols }}, minmax(0,1fr)); grid-auto-flow:{{ flow }}; gap:4px;">
+    <sc-for list="{{ cells }}" as="c" hint-placeholder-count="28">
+      <div title="{{ c.t }}" style="aspect-ratio:1; border-radius:4px; background:{{ c.bg }}; border:{{ c.b }}; box-sizing:border-box; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:500; color:{{ c.fc }};">{{ c.n }}</div>
+    </sc-for>
+  </div>
+  <div style="display:flex; align-items:center; justify-content:space-between; font-size:11px; font-weight:500; color:var(--text-tertiary);">
+    <span>{{ caption }}</span>
+    <div style="display:flex; align-items:center; gap:4px;">
+      <span>{{ lo }}</span>
+      <span style="width:10px; height:10px; border-radius:3px; background:var(--surface-3);"></span>
+      <span style="width:10px; height:10px; border-radius:3px; background:var(--accent-soft);"></span>
+      <span style="width:10px; height:10px; border-radius:3px; background:color-mix(in srgb, var(--accent) 65%, var(--surface));"></span>
+      <span style="width:10px; height:10px; border-radius:3px; background:var(--accent);"></span>
+      <span>{{ hi }}</span>
+      <sc-if value="{{ hasSlip }}" hint-placeholder-val="{{ false }}"><span style="width:10px; height:10px; border-radius:3px; border:1.5px solid var(--danger); box-sizing:border-box; margin-left:6px;"></span><span>{{ slipLabel }}</span></sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:322,&quot;height&quot;:200},&quot;cells&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;3333333333x33333332333333333&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;flow&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;column&quot;,&quot;row&quot;],&quot;default&quot;:&quot;column&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;numbers&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;caption&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;lo&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Less&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;hi&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;More&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;slip&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props, str = String(p.cells || ''), row = p.flow === 'row';
+    const bgs = ['var(--surface-3)', 'var(--accent-soft)', 'color-mix(in srgb, var(--accent) 65%, var(--surface))', 'var(--accent)'];
+    const nums = p.numbers === true || p.numbers === 'true', start = Number(p.start || 1);
+    const cells = [...str].map((ch, i) => {
+      if (ch === '_') return { bg: 'transparent', b: 'none', n: '', t: '' };
+      const lvl = ch === 'x' ? 0 : ch === '.' ? -1 : Number(ch);
+      return { bg: lvl < 0 ? 'transparent' : bgs[lvl], b: ch === 'x' ? '1.5px solid var(--danger)' : ch === '.' ? '1px dashed var(--border)' : 'none', n: nums ? String(start + i - (str.slice(0, i).match(/_/g) || []).length) : '', fc: lvl >= 2 ? 'var(--bg)' : 'var(--text-tertiary)', t: '' };
+    });
+    const n = cells.length, R = row ? Math.ceil(n / 7) : 7, C = row ? 7 : Math.ceil(n / 7);
+    return { cells, rows: R, cols: C, flow: row ? 'row' : 'column', caption: p.caption || '', lo: p.lo ?? 'Less', hi: p.hi ?? 'More', hasSlip: !!p.slip, slipLabel: p.slip || '' };
+  }
+}
+</script>
+</body>
+</html>

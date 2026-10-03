@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="display:flex; align-items:center; gap:16px; font-family:Inter, system-ui, sans-serif; font-variant-numeric:tabular-nums;">
+  <div style="position:relative; width:124px; height:124px; flex:none;">
+    <svg width="124" height="124" viewBox="0 0 124 124" style="transform:rotate(-90deg);">
+      <sc-for list="{{ sl }}" as="s" hint-placeholder-count="4">
+        <circle onClick="{{ s.tap }}" cx="62" cy="62" r="48" fill="none" stroke="{{ s.c }}" stroke-width="{{ s.sw }}" stroke-dasharray="{{ s.da }}" stroke-dashoffset="{{ s.off }}" opacity="{{ s.op }}" style="cursor:pointer;"></circle>
+      </sc-for>
+    </svg>
+    <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none;">
+      <span style="font-size:11px; font-weight:500; color:var(--text-tertiary);">{{ cl }}</span>
+      <span style="color:var(--text); font-size:15px; font-weight:600; letter-spacing:-0.03em;">{{ cv }}</span>
+    </div>
+  </div>
+  <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;">
+    <sc-for list="{{ sl }}" as="s" hint-placeholder-count="4">
+      <div onClick="{{ s.tap }}" style="display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:8px; background:{{ s.rb }}; cursor:pointer;">
+        <span style="width:8px; height:8px; border-radius:2px; background:{{ s.c }}; flex:none;"></span>
+        <span style="flex:1; min-width:0; font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ s.n }}</span>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; line-height:1.2;">
+          <span style="color:var(--text); font-size:13px; font-weight:600; letter-spacing:-0.02em;">{{ s.a }}</span>
+          <span style="font-size:11px; font-weight:500; color:var(--text-tertiary);">{{ s.p }}</span>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:322,&quot;height&quot;:140},&quot;names&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Housing,Food,Transport,Other&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;vals&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;1850,812,486,1064.8&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;pre&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;$&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;suf&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;dec&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;tsType&quot;:&quot;number&quot;},&quot;center&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Total&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;total&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;client&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { sel: null };
+  renderVals() {
+    const p = this.props, names = String(p.names || '').split(','), vals = String(p.vals || '').split(',').map(Number).slice(0, 4);
+    const total = vals.reduce((a, b) => a + b, 0), C = 2 * Math.PI * 48, gap = 3, pre = p.pre || '', suf = p.suf || '', dec = Number(p.dec ?? 0);
+    const f = v => pre + v.toLocaleString('en-US', { maximumFractionDigits: dec, minimumFractionDigits: dec }) + suf;
+    const cols = p.client ? ['var(--client-accent)', 'var(--cat-2)', 'var(--cat-3)', 'var(--cat-other)'] : ['var(--cat-1)', 'var(--cat-2)', 'var(--cat-3)', 'var(--cat-other)'];
+    const s = this.state.sel; let acc = 0;
+    const sl = vals.map((v, i) => {
+      const len = v / total * C, c = (i === vals.length - 1 && vals.length === 4) || names[i] === 'Other' ? 'var(--cat-other)' : cols[i];
+      const o = { n: names[i], c, a: f(v), p: (v / total * 100).toFixed(1) + '%', da: `${(len - gap).toFixed(2)} ${(C - len + gap).toFixed(2)}`, off: (-acc).toFixed(2), sw: s === i ? 18 : 14, op: s != null && s !== i ? 0.3 : 1, rb: s === i ? 'var(--surface-3)' : 'transparent', tap: () => this.setState({ sel: s === i ? null : i }) };
+      acc += len; return o;
+    });
+    return { sl, cl: s != null ? names[s] : (p.center || 'Total'), cv: s != null ? sl[s].a : (p.total || f(total)) };
+  }
+}
+</script>
+</body>
+</html>

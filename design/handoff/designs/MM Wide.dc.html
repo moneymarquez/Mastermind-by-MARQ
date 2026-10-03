@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="display:flex; flex-direction:column; gap:16px; min-width:0; font-family:Inter, system-ui, sans-serif; font-variant-numeric:tabular-nums;">
+  <sc-if value="{{ hasTop }}" hint-placeholder-val="{{ true }}">
+    <div style="display:grid; grid-template-columns:{{ topCols }}; gap:16px;">
+      <sc-if value="{{ hasHero }}" hint-placeholder-val="{{ true }}">
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; gap:12px; min-width:0;">
+          <span style="font-size:13px; font-weight:500;">{{ hero.label }}</span>
+          <div style="display:flex; align-items:baseline; gap:8px; color:var(--text); font-size:46px; font-weight:600; letter-spacing:-0.04em; line-height:1;">{{ hero.value }}<span style="font-size:22px; color:var(--text-tertiary); letter-spacing:-0.02em;">{{ hero.cents }}</span></div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;"><dc-import name="MM Chip" t="{{ hero.chip }}" k="{{ hero.k }}" hint-size="90px,22px"></dc-import><span style="font-size:13px; color:var(--text-tertiary); font-weight:500;">{{ hero.note }}</span></div>
+          <sc-if value="{{ hero.hasLine }}" hint-placeholder-val="{{ false }}"><div style="margin-top:auto;"><dc-import name="MM Line" vals="{{ hero.vals }}" today="{{ hero.today }}" labels="{{ hero.labels }}" pre="{{ hero.pre }}" color="{{ hero.color }}" w="{{ heroW }}" h="120" hint-size="100%,120px"></dc-import></div></sc-if>
+          <sc-if value="{{ hero.hasPace }}" hint-placeholder-val="{{ false }}"><div style="margin-top:auto; padding-top:12px; border-top:1px solid var(--grid);"><dc-import name="MM Pace" label="{{ hero.pLabel }}" val="{{ hero.pVal }}" max="{{ hero.pMax }}" fill="{{ hero.pFill }}" mark="{{ hero.pMark }}" chip="{{ hero.pChip }}" k="{{ hero.pK }}" note="{{ hero.pNote }}" color="{{ hero.color }}" hint-size="100%,90px"></dc-import></div></sc-if>
+        </div>
+      </sc-if>
+      <div style="display:grid; grid-template-columns:{{ statCols }}; gap:16px; min-width:0;">
+        <sc-for list="{{ stats }}" as="x" hint-placeholder-count="4"><dc-import name="MM Stat" label="{{ x.l }}" value="{{ x.v }}" pill="{{ x.p }}" k="{{ x.k }}" hint-size="100%,110px"></dc-import></sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasCharts }}" hint-placeholder-val="{{ true }}">
+    <div style="display:grid; grid-template-columns:{{ chartCols }}; gap:16px; align-items:start;">
+      <sc-for list="{{ charts }}" as="c" hint-placeholder-count="3">
+        <div style="grid-column:{{ c.span }}; min-width:0;">
+          <dc-import name="MM Card" title="{{ c.title }}" meta="{{ c.meta }}" flush="{{ c.flush }}" hint-size="100%,240px">
+            <div style="display:flex; flex-direction:column; gap:12px; min-width:0;">
+              <sc-if value="{{ c.isBars }}" hint-placeholder-val="{{ false }}"><dc-import name="MM Bars" vals="{{ c.vals }}" labels="{{ c.labels }}" pre="{{ c.pre }}" suf="{{ c.suf }}" top="{{ c.top }}" cur="{{ c.cur }}" max="{{ c.max }}" color="{{ c.color }}" h="140" hint-size="100%,184px"></dc-import></sc-if>
+              <sc-if value="{{ c.isLine }}" hint-placeholder-val="{{ false }}"><dc-import name="MM Line" vals="{{ c.vals }}" alt="{{ c.alt }}" today="{{ c.today }}" labels="{{ c.labels }}" pre="{{ c.pre }}" suf="{{ c.suf }}" dec="{{ c.dec }}" min="{{ c.min }}" max="{{ c.max }}" color="{{ c.color }}" w="{{ c.w }}" h="150" hint-size="100%,150px"></dc-import></sc-if>
+              <sc-if value="{{ c.isDonut }}" hint-placeholder-val="{{ false }}"><dc-import name="MM Donut" names="{{ c.names }}" vals="{{ c.vals }}" pre="{{ c.pre }}" center="{{ c.center }}" total="{{ c.total }}" client="{{ c.client }}" hint-size="100%,124px"></dc-import></sc-if>
+              <sc-if value="{{ c.isPace }}" hint-placeholder-val="{{ false }}">
+                <sc-for list="{{ c.paces }}" as="pp" hint-placeholder-count="2"><div style="padding-bottom:4px;"><dc-import name="MM Pace" label="{{ pp.label }}" val="{{ pp.val }}" max="{{ pp.max }}" fill="{{ pp.fill }}" mark="{{ pp.mark }}" chip="{{ pp.chip }}" k="{{ pp.k }}" note="{{ pp.note }}" hint-size="100%,90px"></dc-import></div></sc-for>
+              </sc-if>
+              <sc-if value="{{ c.isRing }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex; align-items:center; gap:18px;">
+                  <dc-import name="MM Ring" pcts="{{ c.pcts }}" center="{{ c.center }}" sub="{{ c.sub }}" size="120" color="{{ c.color }}" hint-size="120px,120px"></dc-import>
+                  <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:10px;">
+                    <sc-for list="{{ c.legend }}" as="lg" hint-placeholder-count="3"><div style="display:flex; justify-content:space-between; gap:8px; font-size:13px; font-weight:500;"><span style="display:flex; align-items:center; gap:7px;"><span style="width:8px; height:8px; border-radius:2px; background:{{ lg.c }};"></span>{{ lg.n }}</span><span style="color:var(--text); font-weight:600;">{{ lg.v }}</span></div></sc-for>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ c.isHeat }}" hint-placeholder-val="{{ false }}"><dc-import name="MM Heatmap" cells="{{ c.cells }}" flow="{{ c.flow }}" numbers="{{ c.numbers }}" lo="{{ c.lo }}" hi="{{ c.hi }}" slip="{{ c.slip }}" caption="{{ c.caption }}" hint-size="100%,200px"></dc-import></sc-if>
+              <sc-if value="{{ c.isMeters }}" hint-placeholder-val="{{ false }}">
+                <sc-for list="{{ c.meters }}" as="m" hint-placeholder-count="5"><div style="display:flex; align-items:center; gap:10px;"><span style="width:120px; font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ m.n }}</span><div style="flex:1; height:8px; border-radius:999px; background:var(--surface-3); overflow:hidden;"><div style="width:{{ m.w }}%; height:100%; border-radius:999px; background:{{ m.c }};"></div></div><span style="width:44px; text-align:right; color:var(--text); font-size:13px; font-weight:600;">{{ m.v }}</span></div></sc-for>
+              </sc-if>
+              <sc-if value="{{ c.isRows }}" hint-placeholder-val="{{ false }}">
+                <div><sc-for list="{{ c.rows }}" as="r" hint-placeholder-count="3"><dc-import name="MM Row" n="{{ r.n }}" meta="{{ r.m }}" chip="{{ r.c }}" k="{{ r.k }}" amt="{{ r.a }}" sub="{{ r.s }}" dim="{{ r.dim }}" hint-size="100%,70px"></dc-import></sc-for></div>
+              </sc-if>
+              <sc-if value="{{ c.isTimeline }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex; flex-direction:column;">
+                  <sc-for list="{{ c.steps }}" as="s" hint-placeholder-count="5">
+                    <div style="display:flex; gap:12px;">
+                      <div style="width:22px; flex:none; display:flex; flex-direction:column; align-items:center;"><div style="width:22px; height:22px; border-radius:50%; box-sizing:border-box; background:{{ s.bg }}; border:{{ s.b }}; display:flex; align-items:center; justify-content:center; color:var(--bg); font-size:11px; font-weight:700;">{{ s.mark }}</div><div style="flex:1; width:2px; min-height:12px; background:{{ s.line }};"></div></div>
+                      <div style="flex:1; display:flex; justify-content:space-between; gap:8px; padding:1px 0 14px;"><div style="display:flex; flex-direction:column; gap:2px; min-width:0;"><span style="color:{{ s.tc }}; font-size:14.5px; font-weight:500;">{{ s.n }}</span><span style="font-size:12.5px;">{{ s.d }}</span></div><sc-if value="{{ s.hasChip }}" hint-placeholder-val="{{ false }}"><dc-import name="MM Chip" t="{{ s.chip }}" k="{{ s.k }}" hint-size="80px,22px"></dc-import></sc-if></div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ c.isTiles }}" hint-placeholder-val="{{ false }}">
+                <div style="display:grid; grid-template-columns:repeat({{ c.n }}, minmax(0,1fr)); gap:8px;">
+                  <sc-for list="{{ c.tiles }}" as="tl" hint-placeholder-count="4"><div style="padding:12px; border-radius:10px; background:{{ tl.bg }}; border:{{ tl.b }}; display:flex; flex-direction:column; gap:3px; min-width:0;"><span style="font-size:12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ tl.l }}</span><span style="color:var(--text); font-size:20px; font-weight:600; letter-spacing:-0.03em;">{{ tl.v }}</span><span style="font-size:11.5px; font-weight:500; color:{{ tl.dc }};">{{ tl.d }}</span></div></sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ c.isText }}" hint-placeholder-val="{{ false }}">
+                <sc-if value="{{ c.nova }}" hint-placeholder-val="{{ false }}"><div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; color:var(--text);"><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg>Nova</div></sc-if>
+                <sc-for list="{{ c.paras }}" as="pa" hint-placeholder-count="1"><p style="margin:0; font-size:15px; line-height:1.5; color:var(--text-secondary); text-wrap:pretty;">{{ pa }}</p></sc-for>
+              </sc-if>
+              <sc-if value="{{ c.hasActions }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex; gap:8px; flex-wrap:wrap;"><sc-for list="{{ c.actions }}" as="ac" hint-placeholder-count="2"><span style="height:38px; display:flex; align-items:center; padding:0 14px; border-radius:8px; background:{{ ac.bg }}; border:{{ ac.b }}; color:{{ ac.c }}; font-size:13.5px; font-weight:{{ ac.w }}; white-space:nowrap; cursor:pointer;">{{ ac.t }}</span></sc-for></div>
+              </sc-if>
+            </div>
+          </dc-import>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasTable }}" hint-placeholder-val="{{ false }}">
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--card-shadow); overflow:hidden; min-width:0;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 20px;"><span style="color:var(--text); font-size:15px; font-weight:600; letter-spacing:-0.015em;">{{ table.title }}</span><span style="font-size:12.5px; font-weight:500; color:var(--text-tertiary);">{{ table.meta }}</span></div>
+      <div style="display:grid; grid-template-columns:{{ table.cols }}; gap:14px; padding:9px 20px; border-top:1px solid var(--grid); background:var(--surface-2); font-size:12px; font-weight:500; color:var(--text-tertiary);">
+        <sc-for list="{{ table.head }}" as="h" hint-placeholder-count="5"><span style="text-align:{{ h.al }}; white-space:nowrap;">{{ h.t }}</span></sc-for>
+      </div>
+      <sc-for list="{{ table.rows }}" as="row" hint-placeholder-count="5">
+        <div style="display:grid; grid-template-columns:{{ table.cols }}; gap:14px; align-items:center; min-height:50px; padding:0 20px; border-top:1px solid var(--grid); font-size:14px;" style-hover="background:var(--surface-2);">
+          <sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="5">
+            <div style="min-width:0; text-align:{{ cell.al }}; display:flex; justify-content:{{ cell.jc }};">
+              <sc-if value="{{ cell.chip }}" hint-placeholder-val="{{ false }}"><dc-import name="MM Chip" t="{{ cell.t }}" k="{{ cell.k }}" hint-size="90px,22px"></dc-import></sc-if>
+              <sc-if value="{{ cell.plain }}" hint-placeholder-val="{{ true }}"><span style="color:{{ cell.c }}; font-weight:{{ cell.w }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:{{ cell.ls }};">{{ cell.t }}</span></sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasSplit }}" hint-placeholder-val="{{ false }}">
+    <div style="display:grid; grid-template-columns:{{ splitCols }}; height:{{ splitH }}px; background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; box-shadow:var(--card-shadow); min-width:0;">
+      <div style="display:flex; flex-direction:column; min-width:0; min-height:0; border-right:1px solid var(--grid);">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 14px; flex:none;">
+          <div style="flex:1; display:flex; align-items:center; gap:8px; height:34px; padding:0 10px; border-radius:8px; background:var(--surface-2); border:1px solid var(--border); color:var(--text-tertiary); font-size:13px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>{{ split.search }}</div>
+          <span style="height:34px; display:flex; align-items:center; padding:0 12px; border-radius:8px; background:var(--text); color:var(--bg); font-size:13px; font-weight:600; white-space:nowrap;">{{ split.add }}</span>
+        </div>
+        <div style="flex:1; min-height:0; overflow-y:auto;">
+          <sc-for list="{{ split.rows }}" as="r" hint-placeholder-count="6">
+            <div onClick="{{ r.tap }}" style="display:flex; align-items:center; gap:10px; padding:12px 14px; border-top:1px solid var(--grid); background:{{ r.bg }}; cursor:pointer;" style-hover="background:var(--surface-2);">
+              <div style="width:32px; height:32px; flex:none; border-radius:{{ r.avR }}; background:var(--surface-3); display:flex; align-items:center; justify-content:center; color:var(--text); font-size:11.5px; font-weight:600;">{{ r.ini }}</div>
+              <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
+                <div style="display:flex; justify-content:space-between; gap:8px;"><span style="color:var(--text); font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.n }}</span><span style="font-size:12px; font-weight:500; color:var(--text-tertiary); white-space:nowrap;">{{ r.a }}</span></div>
+                <div style="display:flex; align-items:center; gap:6px; min-width:0;"><dc-import name="MM Chip" t="{{ r.c }}" k="{{ r.k }}" hint-size="80px,22px"></dc-import><span style="font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.m }}</span></div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:18px; padding:22px 26px; min-width:0; min-height:0; overflow-y:auto;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+          <div style="display:flex; flex-direction:column; gap:6px; min-width:0;">
+            <h2 style="margin:0; color:var(--text); font-size:22px; font-weight:700; letter-spacing:-0.03em; line-height:1.2;">{{ det.n }}</h2>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;"><dc-import name="MM Chip" t="{{ det.c }}" k="{{ det.k }}" hint-size="80px,22px"></dc-import><span style="font-size:13px; font-weight:500;">{{ det.m }}</span></div>
+          </div>
+          <span style="color:var(--text); font-size:22px; font-weight:600; letter-spacing:-0.03em; white-space:nowrap;">{{ det.big }}</span>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;"><sc-for list="{{ det.actions }}" as="ac" hint-placeholder-count="3"><span style="height:38px; display:flex; align-items:center; padding:0 14px; border-radius:8px; background:{{ ac.bg }}; border:{{ ac.b }}; color:{{ ac.c }}; font-size:13.5px; font-weight:{{ ac.w }}; cursor:pointer;">{{ ac.t }}</span></sc-for></div>
+        <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border:1px solid var(--border); border-radius:12px; overflow:hidden;">
+          <sc-for list="{{ det.fields }}" as="f" hint-placeholder-count="6"><div style="display:flex; flex-direction:column; gap:2px; padding:10px 14px; border-top:{{ f.bt }}; border-left:{{ f.bl }};"><span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">{{ f.l }}</span><span style="color:var(--text); font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ f.v }}</span></div></sc-for>
+        </div>
+        <sc-for list="{{ det.body }}" as="pa" hint-placeholder-count="1"><p style="margin:0; color:var(--text); font-size:15px; line-height:1.55; text-wrap:pretty;">{{ pa }}</p></sc-for>
+        <sc-if value="{{ det.hasNote }}" hint-placeholder-val="{{ false }}"><div style="padding:12px 14px; border-radius:10px; background:var(--surface-2); border:1px solid var(--border); display:flex; gap:8px; font-size:14px; line-height:1.45;"><svg style="flex:none; margin-top:3px;" width="13" height="13" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg><span>{{ det.note }}</span></div></sc-if>
+        <sc-if value="{{ det.hasLog }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; flex-direction:column; gap:10px;"><span style="font-size:13px; font-weight:500;">{{ det.logTitle }}</span>
+            <sc-for list="{{ det.log }}" as="lg" hint-placeholder-count="3"><div style="display:grid; grid-template-columns:72px minmax(0,1fr); gap:10px; font-size:14px;"><span style="font-size:12.5px; font-weight:500; color:var(--text-tertiary);">{{ lg.d }}</span><span style="color:var(--text); line-height:1.4;">{{ lg.t }}</span></div></sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1130,&quot;height&quot;:900},&quot;module&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Contacts&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;size&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;ipad&quot;,&quot;desktop&quot;],&quot;default&quot;:&quot;desktop&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;nova&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { sel: 0 };
+  spec(name) {
+    const S = (l, v, p, k) => ({ l, v, p, k: k || 'neutral' });
+    const B = (title, meta, vals, labels, o) => ({ type: 'bars', title, meta, vals, labels, ...(o || {}) });
+    const Ln = (title, meta, vals, labels, o) => ({ type: 'line', title, meta, vals, labels, ...(o || {}) });
+    const Dn = (title, meta, names, vals, o) => ({ type: 'donut', title, meta, names, vals, ...(o || {}) });
+    const Pc = (title, meta, paces) => ({ type: 'pace', title, meta, paces });
+    const Rg = (title, meta, pcts, center, sub, legend, o) => ({ type: 'ring', title, meta, pcts, center, sub, legend, ...(o || {}) });
+    const Ht = (title, meta, cells, o) => ({ type: 'heat', title, meta, cells, ...(o || {}) });
+    const Mt = (title, meta, meters, o) => ({ type: 'meters', title, meta, meters, ...(o || {}) });
+    const Rw = (title, meta, rows, o) => ({ type: 'rows', title, meta, flush: 'true', rows, ...(o || {}) });
+    const Tl = (title, meta, steps, cur, o) => ({ type: 'timeline', title, meta, steps, cur, ...(o || {}) });
+    const Ti = (title, meta, tiles, o) => ({ type: 'tiles', title, meta, tiles, ...(o || {}) });
+    const Tx = (title, meta, paras, o) => ({ type: 'text', title, meta, paras, nova: true, ...(o || {}) });
+    const H = (label, value, cents, chip, k, note, o) => ({ label, value, cents: cents || '', chip, k, note, ...(o || {}) });
+    const T = (title, meta, head, cols, rows) => ({ title, meta, head, cols, rows });
+    const SP = (search, add, rows) => ({ search, add, rows });
+    const sober = (() => { let s = ''; for (let i = 0; i < 84; i++) s += (i === 35 || (i < 35 && i % 9 === 4)) ? 'x' : '3'; return s; })();
+    const M = {
+      'Daily Plan': { stats: [S('Focus time', '4.5h', 'Goal 4h', 'good'), S('Habits', '2 of 4', '2 left today'), S('Calls made', '61', 'Calling hour done', 'good'), S('Next up', '11:00', 'Harbor Dental review', 'warn')],
+        charts: [Tl('Today', 'Built by Nova from Schedule, Goals, and habits', [['Push day', '7:00 · Fitness'], ['Opening checklist', '8:30 · 12 steps'], ['Calling hour', '9:00 · 61 calls'], ['Harbor Dental review', '11:00 · Zoom', 'In 20 min', 'warn'], ['Lunch · log your meal', '12:30 · Macros & Meals'], ['Brand Lab: round 2 for Bloom', '2:00 · deep work'], ['Front desk shift', '4:00 – 11:00 PM'], ['Closing checklist + check-in', '10:45 PM']], 3, { span: 2 }),
+          Tx('Why this order', '', ['Calls go before 10 because your connect rate is about twice as high then.', 'Deep work sits after lunch, when you log the fewest interruptions.'], { actions: [['Replan my day', 1], ['Move a block', 0]] }),
+          B('Focus hours', 'Last 7 days', '3.5,4,2.5,5,4.5,3,4.5', 'Wed,Thu,Fri,Sat,Sun,Mon,Today', { pre: '', suf: 'h' })] },
+      'Macros & Meals': { stats: [S('Calories', '1,640', '660 left'), S('Protein', '118 g', 'of 160 g'), S('Water', '6 of 10', 'glasses'), S('Logged', '3 meals', 'Dinner not yet')],
+        charts: [Rg('Calories', 'Target 2,300', '0.74,0.65,0.65', '1,640', '660 left', [['Protein', '118 / 160 g', 'var(--cat-1)'], ['Carbs', '162 / 250 g', 'var(--cat-2)'], ['Fat', '52 / 80 g', 'var(--cat-3)']]),
+          B('This week', 'Calories per day', '2210,2480,1980,2350,2600,2120,1640', 'Wed,Thu,Fri,Sat,Sun,Mon,Today', { pre: '', top: '1,640' }),
+          Tx('Symptoms', 'Today', ['Low energy at 3 PM. Bloated after lunch.', 'Bloating followed a dairy-heavy lunch 3 of the last 4 times.']),
+          Rw('Meals', '3 logged', [['Greek yogurt bowl', 'Breakfast · 7:40 AM', 'P 32 · C 48 · F 11', 'neutral', '420'], ['Chicken burrito bowl', 'Lunch · 12:50 PM', 'P 54 · C 82 · F 28', 'neutral', '780'], ['Protein bar', 'Snack · 3:30 PM', 'P 20 · C 22 · F 9', 'neutral', '220'], ['Dinner', 'Not logged yet', 'Add photo', 'accent', '—']], { span: 'span 2' })] },
+      'Sobriety': { hero: H('Clean streak', '47', 'days', 'Longest yet: 61 days', 'neutral', 'Since Aug 6', { pace: ['Next milestone: 60 days', '47', '60', 78, 0, '13 to go', 'neutral', 'Sep 4 → Oct 5'] }),
+        stats: [S('Clean days · 90', '86', '2 slips', 'neutral'), S('Check-ins', '41 of 47', '6 missed'), S('Bender Mode', '2 uses', 'Both held', 'good'), S('Money kept', '$1,410', 'vs. your old average', 'good')],
+        charts: [Ht('Last 12 weeks', 'Each square is a day', sober, { hi: 'Clean', lo: '', slip: 'Slip', caption: 'Jul 1 – Sep 22', span: 'span 2' }),
+          Tx('Evening check-in', 'Tonight', ["It's Tuesday, which has been an easy night for you. How's it looking?"], { actions: [['Good', 0], ['Tough', 0], ['Need help', 0]] }),
+          Rw('Bender Mode journal', '2 entries', [['Sep 19 · Friday', 'Walked it off', 'Craving 6 of 10', 'warn', ''], ['Sep 12 · Friday', 'Called Dev', 'Craving 4 of 10', 'neutral', '']])] },
+      'Goals': { stats: [S('Active contracts', '3', '2 on pace', 'good'), S('Behind', '1', 'Tax savings', 'warn'), S('Done this year', '4', '↑ 1 vs last year', 'good'), S('Next check-in', 'Fri', 'Weekly Review')],
+        charts: [Pc('Contracts', 'Pace is where you should be today', [['Save $10,000 for taxes', '$6,200', '$10,000', 62, 73, 'Behind pace by $1,100', 'warn', 'By Dec 31'], ['Sign 12 new clients', '9', '12', 75, 73, 'On pace', 'good', 'By Dec 31'], ['Run a half marathon', '9 mi', '13.1 mi', 69, 70, 'On pace', 'good', 'Nov 15']]),
+          Tx('Next steps', 'Nova', ['Taxes: move $400 this Friday, then pause one subscription.', 'Clients: follow up with the 4 warm leads from last week.', 'Running: 10-mile long run this Sunday.']),
+          Ln('Tax savings', 'Actual vs. plan', '1200,1800,2400,2800,3400,4000,4600,5000,5600,6200,7000,7800,8600,9400,10000', 'Jun,Dec', { today: 9, pre: '$' })] },
+      'Mental Health': { stats: [S('30-day average', '3.5', '↑ 0.4 vs Aug', 'good'), S('Check-ins', '26 of 30', '4 missed'), S('Low days', '2', 'Both after short sleep', 'warn'), S('Today', '4', 'Good')],
+        charts: [Ln('Mood', 'Last 30 days · 1 to 5', '3,3.5,3,2.5,3,3.5,4,3.5,3,2,2.5,3,3.5,4,4,3.5,3,3.5,4,4.5,4,3.5,3,3.5,4,4,3.5,4,4.5,4', 'Aug 24,Sep 8,Today', { min: 1, max: 5, dec: 1, span: 'span 2' }),
+          Tx('Reflection', '', ['Your low days followed nights under 6 hours of sleep 2 out of 2 times this month. Want a wind-down reminder at 10:30?'], { actions: [['Set reminder', 1]] }),
+          Dn('What you tagged', '30 days', 'Busy,Slept well,Anxious,Other', '14,11,6,9', { pre: '', center: 'Tags' })] },
+      'Dispatch': { stats: [S('Open tasks', '6', 'Across 3 people'), S('Overdue', '1', 'Jordan', 'bad'), S('Done this week', '26', '↑ 5', 'good'), S('Assigned by voice', '72%', 'Of all tasks')],
+        charts: [Rw('Me', '3 open', [['Call Sam back', 'Ridgeline Roofing', 'Due Thu', 'neutral', ''], ['Approve Bloom logo round', 'Brand Lab', 'Due today', 'warn', ''], ['Send Harbor recap', 'Client Modules', 'Done', 'good', '']]),
+          Rw('Jordan', '2 open', [['Send Ridgeline invoice', 'Invoicing', 'Due Thu', 'neutral', ''], ['Update price sheet', 'E-commerce', '1 day overdue', 'bad', '']]),
+          Rw('Priya', '1 open', [['Cut launch video', 'Content Creation', 'Due Fri', 'neutral', '']]),
+          Mt('Done this week', 'Leaderboard', [['Priya', 11, 11], ['Me', 9, 11], ['Jordan', 6, 11]], { span: 'span 2' }),
+          Tx('Hold to talk', '', ['"Jordan, send the Ridgeline invoice by Thursday." Who: Jordan · What: Send Ridgeline invoice · By: Thu, Sep 24'], { nova: false, actions: [['Hold to talk', 1], ['Type a task', 0]] })] },
+      'Brain': { hero: H('Follow-through score', '68', 'of 100', 'Fast opener, slow closer', 'accent', 'Assessed Aug 30', { pace: ['Calling hour streak', '12', '14 days', 86, 100, 'Made 12 of 14 days', 'good', 'Last 2 weeks'] }),
+        stats: [S('Best hour', '10 AM', '24% connect', 'good'), S('Worst hour', '12 PM', '9% connect'), S('Close rate', '18%', '↓ from 22%', 'bad'), S('Follow-ups sent', '81%', 'Within 24 h')],
+        charts: [Mt('Your profile', '5 traits', [['Opening', 82, 100], ['Discovery', 64, 100], ['Objections', 51, 100], ['Closing', 47, 100], ['Follow-through', 72, 100]]),
+          B('Connect rate by hour', 'Last 30 days', '14,22,24,18,9,11,15,13,10', '8,9,10,11,12,1,2,3,4', { pre: '', suf: '%', cur: 2 }),
+          Tx('Pattern', '', ['You lose most deals at the price step. Practice the two-option close before Thursday.'], { actions: [['Retake assessment', 0]] })] },
+      'Schedule': { stats: [S('Events today', '4', 'Next 11:00', 'warn'), S('Shift hours', '21', 'This week'), S('Free blocks', '3', 'Over 1 hour'), S('Booked by clients', '2', 'This week')],
+        charts: [Ht('September', 'Darker days are busier', '_1231202312213121032213321210', { flow: 'row', numbers: 'true', lo: 'Free', hi: 'Packed' }),
+          Tl('Tue, Sep 22', '4 events', [['Calling hour', '9:00 – 10:00 AM'], ['Harbor Dental review', '11:00 AM · Zoom', 'In 20 min', 'warn'], ['Lunch', '12:30 PM'], ['Front desk shift', '4:00 – 11:00 PM', 'Shift', 'neutral']], 1),
+          B('Shift hours', 'Last 6 weeks', '18,24,21,14,21,21', 'Aug 17,24,31,Sep 7,14,21', { pre: '', suf: 'h' })] },
+      'Decision Log': { split: SP('Search decisions', 'Log decision', [
+          { n: 'Raise Ridgeline to $2,400', ini: 'DL', m: 'Aug 22', c: 'Review due', k: 'warn', a: 'Today', big: '', fields: [['Decided', 'Aug 22, 2:10 PM'], ['Review on', 'Sep 22'], ['Confidence', '7 of 10'], ['Area', 'Pricing']], body: ['Why: scope doubled after the second round of revisions.', 'Expected: they agree, maybe ask for a payment plan.'], note: 'Decisions logged after 10 PM went badly 2 of 3 times. This one was made at 2 PM.', actions: [['Good call', 0], ['Mixed', 0], ['Bad call', 0]] },
+          { n: 'Hire a part-time VA', ini: 'DL', m: 'Sep 18', c: 'Review Oct 18', k: 'neutral', a: 'Sep 18', fields: [['Decided', 'Sep 18'], ['Review on', 'Oct 18'], ['Confidence', '6 of 10'], ['Area', 'Team']], body: ['Why: inbox and invoicing eat 6 hours a week.'], actions: [['Edit', 0]] },
+          { n: 'Skip the trade show', ini: 'DL', m: 'Aug 30', c: 'Good call', k: 'good', a: 'Aug 30', fields: [['Decided', 'Aug 30'], ['Reviewed', 'Sep 20'], ['Confidence', '8 of 10'], ['Area', 'Marketing']], body: ['Saved $1,400. Leads came from the audit form instead.'], actions: [['Edit', 0]] },
+          { n: 'Buy a $300 leads list', ini: 'DL', m: 'Aug 12', c: 'Bad call', k: 'bad', a: 'Aug 12', fields: [['Decided', 'Aug 12, 11:20 PM'], ['Reviewed', 'Sep 12'], ['Confidence', '5 of 10'], ['Area', 'Sales']], body: ['2 connects from 400 numbers.'], actions: [['Edit', 0]] },
+          { n: 'Move calls to mornings', ini: 'DL', m: 'Aug 3', c: 'Good call', k: 'good', a: 'Aug 3', fields: [['Decided', 'Aug 3'], ['Reviewed', 'Sep 3'], ['Confidence', '7 of 10'], ['Area', 'Sales']], body: ['Connect rate went from 14% to 23%.'], actions: [['Edit', 0]] }]),
+        statsAfter: true, stats: [S('Logged', '14', 'This year'), S('Good calls', '7 of 12', 'Reviewed', 'good'), S('Late-night calls', '2 of 3 bad', 'After 10 PM', 'bad'), S('Due for review', '1', 'Today', 'warn')] },
+      'Weekly Review': { stats: [S('Calls made', '212', '↑ 18', 'good'), S('Spent', '$1,180', '↑ $90', 'bad'), S('Clean days', '7 of 7', 'Streak 45', 'good'), S('Week rating', '7', 'You gave it', 'neutral')],
+        charts: [Ti('Your numbers', 'Pulled from 6 modules', [['Workouts', '3 of 4', 'Missed Thu'], ['Mood avg', '3.6', '↑ 0.3', 'good'], ['Clients signed', '1', 'Bloom Studio'], ['Focus hours', '27', 'Goal 25', 'good'], ['Leads replied', '10 of 14', 'Within 1 h'], ['Goals', '2 of 3', 'on pace']], { n: 3, span: 'span 2' }),
+          B('Week ratings', 'Last 8 weeks', '6,5,7,8,6,4,6,7', '31,32,33,34,35,36,37,38', { pre: '', max: 10 }),
+          Tx('Be honest', 'Only you see this', ['What went well: hit the calling hour all 5 weekdays. Signed Bloom.', "What didn't: overspent on food twice after late shifts.", 'One change: meal prep Sunday.'], { nova: false, span: 'span 2', actions: [['Submit review', 1]] }),
+          Tx('Nova draft', 'Off until AI is funded', ['With AI on, Nova drafts a first pass from your numbers. You always write the final review.'], { nova: false })] },
+      'Cash-Flow Forecast': { hero: H('Projected balance on Nov 21', '$8,420', '.55', '↑ $2,110', 'good', 'from $6,310 today', { line: ['5200,4800,4650,6100,5900,5600,5400,6900,6500,6310,6000,5800,7400,7100,6800,6600,8100,7800,7500,7300,8800,8500,8300,8100,8420', 9, 'Sep 1,Today,Nov 21', '$'] }),
+        stats: [S('In, next 30 days', '+$4,800', '3 payments', 'good'), S('Out, next 30 days', '−$4,210', 'Rent, taxes, bills'), S('Lowest point', '$5,800', 'Oct 6', 'warn'), S('Runway', '4.1 mo', 'At current spend')],
+        charts: [Ln('What if I land 2 more retainers?', 'Scenario vs. current', '6310,6000,5800,7400,7100,6800,6600,8100,7800,7500,7300,8800,8500,8300,8100,8420', 'Today,Nov 21', { alt: '6310,6000,5800,8600,8300,8000,7800,9300,9000,8700,8500,11200,10900,10700,10500,10820', today: 0, pre: '$', span: 'span 2' }),
+          Tx('Scenarios', 'Ask anything', ['2 more retainers ends at $10,820, $2,400 higher.', 'Cutting food 30% adds about $250 a month.', 'If Harbor pays 30 days late, the low point drops to $4,600 on Oct 6.'], { actions: [['What if I…', 1]] }),
+          Rw('Coming up', 'Next 30 days', [['Harbor Dental retainer', 'Oct 1', 'Expected', 'neutral', '+$1,200.00'], ['Rent', 'Oct 1', 'Autopay', 'neutral', '−$1,850.00'], ['Ridgeline invoice', 'Oct 5', 'Sent', 'neutral', '+$2,400.00'], ['Quarterly taxes', 'Oct 15', 'Due Oct 15', 'warn', '−$1,600.00']], { span: 'span 3' })] },
+      'Patterns': { stats: [S('Links found', '3', 'From 7 modules'), S('Strongest', 'r = −0.42', 'Sleep vs. spending'), S('Days of data', '42'), S('Needs more data', '1', 'Sobriety vs. spending', 'warn')],
+        charts: [Ln('Sleep (hours)', 'Last 30 days', '6.5,7,5.5,6,7.5,8,5,6.5,7,7.5,6,5.5,7,8,7.5,6,5,6.5,7,7.5,8,6,6.5,7,5.5,6,7,7.5,8,7', 'Aug 24,Today', { dec: 1, suf: 'h' }), Ln('Spending the next day', 'Same 30 days', '62,48,104,88,40,36,126,70,52,44,96,118,58,34,40,84,132,66,50,46,32,90,72,54,110,86,60,44,30,48', 'Aug 24,Today', { pre: '$' }),
+          Tx('What it means', '', ['After nights under 6 hours, you spent $38 more the next day on average.', 'Moderate link · r = −0.42. Patterns show links, not causes.']),
+          Mt('Calling hour vs. next-day mood', 'Average mood, 1 to 5', [['Made it (22 days)', 3.9, 5], ['Skipped it (8 days)', 3.1, 5]], { span: 'span 2' }),
+          Pc('Sobriety vs. spending', 'Needs 30 days of both', [['Data collected', '18 days', '30 days', 60, 60, 'Not enough data yet', 'neutral', '12 to go']])] },
+      'Voice Capture': { stats: [S('Captured today', '4', 'All filed', 'good'), S('This week', '23'), S('Undone', '1', 'Wrong module'), S('Most filed to', 'Budgeting', '9 this week')],
+        charts: [Tx('Hold to talk', '', ['"Lunch at Chipotle, twenty-three forty…"', 'Release to file. You can undo anything for 24 hours.'], { nova: false, actions: [['Hold to talk', 1]] }),
+          Rw('Just filed', 'Today', [['Lunch at Chipotle', '10:12 AM', 'Budgeting · Food', 'accent', '$23.40'], ['Call Sam back Thursday', '9:58 AM', 'Dispatch · Me', 'accent', 'Thu'], ['Lena Ortiz, Bloom Studio', '9:40 AM', 'Contacts', 'accent', 'New'], ['Raise rates in January', '8:15 AM', 'Decision Log', 'accent', 'Logged']], { span: 'span 2' }),
+          Dn('Where captures went', 'This week · 23', 'Budgeting,Dispatch,Contacts,Other', '9,7,4,3', { pre: '', center: 'Filed' })] },
+      'Opening / Closing': { stats: [S('Tonight', '7 of 12', '5 steps left', 'neutral'), S('Due by', '11:15 PM', 'On time', 'good'), S('Last 7 closes', '6 on time', '1 late', 'warn'), S('Avg. close time', '24 min')],
+        charts: [Rg('Closing', 'Front desk', '0.583', '7/12', 'done', [['Done', '7', 'var(--accent)'], ['Left', '5', 'var(--surface-3)']]),
+          Tl('Checklist', '12 steps', [['Count the drawer', '10:05'], ['Run end-of-day report', '10:09'], ['Lock the side door', '10:13'], ['Wipe down the front desk', '10:17'], ['Restock forms', '10:21'], ['Empty trash', '10:25'], ["Back up the day's files", '10:29'], ["Set out tomorrow's schedule", ''], ['Turn off lobby lights', ''], ['Set the alarm', '']], 7, { span: 'span 2' }),
+          B('Minutes to close', 'Last 7 shifts', '22,26,31,21,24,38,23', 'Tue,Wed,Thu,Sat,Sun,Mon,Today', { pre: '', suf: 'm' })] },
+      'Fitness': { stats: [S('This month', '9 of 12', 'On pace', 'good'), S('Bench top set', '185 lb', '↑ 10 lb', 'good'), S('Week', '3 of 8', 'Plan by Nova'), S('Today', 'Push day', '45 min')],
+        charts: [Rw("Today · Push day", '5 exercises', [['Bench press', '4 × 6', '185 lb', 'neutral', ''], ['Incline dumbbell press', '3 × 10', '60 lb', 'neutral', ''], ['Overhead press', '3 × 8', '95 lb', 'neutral', ''], ['Cable fly', '3 × 12', '', 'neutral', ''], ['Triceps pushdown', '3 × 12', '', 'neutral', '']], { actions: [['Start workout', 1]] }),
+          Ln('Bench top set', 'Last 8 weeks', '155,160,160,165,170,175,180,185', 'Aug 1,Today', { suf: ' lb' }),
+          Rw('Library', '24 workouts', [['Pull day', '45 min', 'Strength', 'neutral', '', 'Last: Sep 19'], ['Legs', '50 min', 'Strength', 'neutral', '', 'Last: Sep 17'], ['Easy run, 3 mi', '30 min', 'Cardio', 'neutral', '', 'Last: Sep 20']])] },
+      'Dialing': { hero: H('Calls this session', '61', 'of 80 goal', 'On pace', 'good', '18 min left', { pace: ['Session goal', '61', '80', 76, 70, 'On pace', 'good', 'Calling hour 9:00–10:00'] }),
+        stats: [S('Calls per hour', '64', '↑ 9 vs last week', 'good'), S('Connect rate', '23%', '14 of 61'), S('Booked', '3', 'Meetings today', 'good'), S('Callbacks due', '7', '2 this hour', 'warn')],
+        charts: [Dn('Outcomes', 'Today', 'No answer,Voicemail,Connected,Booked', '31,16,11,3', { pre: '', center: '61 calls' }), B('Calls per hour', 'Last 7 sessions', '48,55,52,60,58,55,64', 'Tue,Wed,Thu,Fri,Mon,Tue,Today', { pre: '' }),
+          Rw('Up next', '19 in queue', [['Becker Auto', 'Tom Becker', 'Callback 9:45', 'warn', '(512) 555-0143'], ['Silva Bakery', 'Ana Silva', 'New · LeadFlow', 'accent', '(512) 555-0178'], ['Lakeview Vet', 'Front desk', '2nd attempt', 'neutral', '(512) 555-0122']], { actions: [['Start dialing', 1]] })] },
+      'Contacts': { split: SP('Search name, business, phone', 'Contact', [
+          { n: 'Marcus Hill', ini: 'MH', m: 'Hill & Co. Plumbing', c: 'Booked', k: 'good', a: 'Today', big: '48 / 100', fields: [['Stage', 'Meeting booked'], ['Phone', '(512) 555-0109'], ['Email', 'marcus@hillplumbing.com'], ['Website', 'hillplumbing.com'], ['Source', 'Audit form'], ['Next step', 'Walkthrough Thu 2 PM']], body: ['Audit score 48. Weakest: no online booking, slow site.'], log: [['Today', 'Booked walkthrough from call'], ['Today', 'Call · 4:52 · recording saved'], ['Sep 12', 'Voicemail'], ['Sep 10', 'Took the business audit']], actions: [['Call', 1], ['Text', 0], ['Email', 0], ['To CRM', 0]] },
+          { n: 'Priya Nair', ini: 'PN', m: 'Nair Wellness', c: 'Call back', k: 'warn', a: 'Today', big: '', fields: [['Stage', 'Discovery'], ['Phone', '(512) 555-0131'], ['Email', 'priya@nairwellness.com'], ['Website', 'nairwellness.com'], ['Source', 'Website form'], ['Next step', 'Call back Thu']], body: ['Wants booking added to existing site.'], log: [['Today', 'Call · 2:08 · asked to call back Thu']], actions: [['Call', 1], ['Text', 0], ['Email', 0]] },
+          { n: 'Ana Silva', ini: 'AS', m: 'Silva Bakery', c: 'Never called', k: 'neutral', a: 'New', fields: [['Stage', 'New'], ['Phone', '(512) 555-0178'], ['Source', 'LeadFlow'], ['Next step', 'First call']], body: [], log: [['Today', 'Added from LeadFlow']], actions: [['Call', 1]] },
+          { n: 'Tom Becker', ini: 'TB', m: 'Becker Auto', c: 'Not interested', k: 'neutral', a: 'Yesterday', fields: [['Stage', 'Closed · not now'], ['Phone', '(512) 555-0143'], ['Source', 'Missed call'], ['Next step', 'Retry in 90 days']], body: [], log: [['Yesterday', 'Call · 0:47 · not interested']], actions: [['Call', 1]] },
+          { n: 'Dana Lee', ini: 'DL', m: 'Harbor Dental', c: 'Client', k: 'client', a: 'Sep 18', fields: [['Stage', 'Active client'], ['Phone', '(512) 555-0190'], ['Email', 'dana@harbordental.com'], ['Retainer', '$1,200/mo']], body: [], log: [['Today', 'Portal question: move the review'], ['Yesterday', 'Ticket #14 opened']], actions: [['Call', 1], ['Open client', 0]] },
+          { n: 'Owen Clark', ini: 'OC', m: 'Clark Law', c: 'No answer ×3', k: 'neutral', a: 'Sep 2', fields: [['Stage', 'Client'], ['Phone', '(512) 555-0155']], body: [], log: [['Sep 2', 'No answer']], actions: [['Call', 1]] }]),
+        stats: [S('Contacts', '1,284'), S('Callback due', '7', 'Today', 'warn'), S('Never called', '312'), S('Clients', '6', 'Linked', 'neutral')], statsAfter: true },
+      'Call Recordings': { stats: [S('This month', '212', 'Recordings'), S('Total time', '9.4 h'), S('Booked from calls', '11', 'good'), S('Avg. length', '2:40')],
+        charts: [Tx('Marcus Hill · Today 9:31 AM · 4:52', 'Now playing', ['Summary: wants online booking before spring. Price question at 3:40. Booked a walkthrough Thursday 2 PM.'], { span: 'span 2', actions: [['Play', 1], ['−15s', 0], ['+15s', 0], ['Open contact', 0]] }),
+          Dn('Outcomes', 'This month', 'Connected,Booked,Call back,Not interested', '96,11,58,47', { pre: '', center: 'Calls' })],
+        table: T('Library', 'Linked to contacts', ['Contact', 'Business', 'When', 'Outcome', 'Length'], 'minmax(0,1.2fr) minmax(0,1.2fr) 110px 130px 70px', [['Marcus Hill', 'Hill & Co. Plumbing', 'Today', ['Booked', 'good'], '4:52'], ['Priya Nair', 'Nair Wellness', 'Today', ['Call back', 'warn'], '2:08'], ['Tom Becker', 'Becker Auto', 'Yesterday', ['Not interested', 'neutral'], '0:47'], ['Lakeview Vet', 'Front desk', 'Yesterday', ['Connected', 'neutral'], '1:30'], ['Jordan Park', 'Park Fitness', 'Sep 20', ['Booked', 'good'], '6:12']]) },
+      'Client Modules': { split: SP('Search clients', 'New client', [
+          { n: 'Harbor Dental', ini: 'HD', m: '2 tickets · Today', c: 'Review', k: 'accent', a: '$1,200/mo', big: 'Step 4 of 6', fields: [['Project', 'Website + booking'], ['Started', 'Jul 8'], ['Contact', 'Dana Lee'], ['Launch', 'Oct 6'], ['Open tickets', '2'], ['Handoff', 'After step 6']], body: [], note: 'Ticket #14 is waiting on you. A drafted reply is in Inbox.', logTitle: 'Change log · shown to client', log: [['Sep 21', 'Booking page moved to review.'], ['Sep 18', 'Holiday hours added to the site and Google.'], ['Sep 9', 'New staff photos on the team page.']], actions: [['Preview as client', 2], ['Message', 0], ['Hand off', 0]] },
+          { n: 'Ridgeline Roofing', ini: 'RR', m: '1 ticket · Today', c: 'Building', k: 'neutral', a: '$2,400 build', big: 'Step 3 of 6', fields: [['Project', 'Quote form + site'], ['Started', 'Aug 25'], ['Contact', 'Sam Ruiz'], ['Go-live', 'Sep 24']], body: [], logTitle: 'Change log', log: [['Sep 20', 'Service area map drafted.']], actions: [['Preview as client', 2], ['Message', 0]] },
+          { n: 'Bloom Studio', ini: 'BS', m: 'No tickets · Yesterday', c: 'Kickoff', k: 'neutral', a: '$6,800', big: 'Step 1 of 6', fields: [['Project', 'Rebrand + site'], ['Contact', 'Lena Ortiz'], ['Launch', 'March']], body: [], actions: [['Preview as client', 2]] },
+          { n: 'Clark Law', ini: 'CL', m: '1 ticket · Sep 19', c: 'Review', k: 'accent', a: '$1,500/mo', big: 'Step 4 of 6', fields: [['Project', 'Website'], ['Contact', 'Owen Clark']], body: [], actions: [['Preview as client', 2]] },
+          { n: 'Nair Wellness', ini: 'NW', m: 'No tickets · Sep 17', c: 'Building', k: 'neutral', a: '$900/mo', big: 'Step 3 of 6', fields: [['Project', 'Booking'], ['Contact', 'Priya Nair']], body: [], actions: [['Preview as client', 2]] },
+          { n: 'Silva Bakery', ini: 'SB', m: 'No tickets · Aug 30', c: 'Handed off', k: 'good', a: '$300/mo', big: 'Done', fields: [['Project', 'Brand + site'], ['Contact', 'Ana Silva']], body: [], actions: [['Preview as client', 2]] }]),
+        stats: [S('Monthly retainers', '$7,200', '↑ $1,200', 'good'), S('Open tickets', '4', '1 waiting on you', 'warn'), S('In review', '2', 'Harbor, Clark'), S('Handed off', '1', 'This quarter', 'good')], statsAfter: true },
+      'Client Portal': { client: true, hero: H('Appointments booked online', '38', '', '↑ 14 vs August', 'good', 'Most came in after 6 PM', { line: ['9,12,11,14,18,16,21,24,22,27,31,38', '', 'Jul,Aug,Sep', ''], color: 'client' }),
+        stats: [S('Website visits', '2,410', '↑ 18%', 'good'), S('Calls from Google', '64', '↑ 9', 'good'), S('Project step', '4 of 6', 'Review'), S('Next invoice', '$1,200', 'Oct 1')],
+        charts: [Tx('Needs you', 'Harbor Dental', ['Approve the new booking page. It goes live after you approve.'], { nova: false, actions: [['Review and approve', 3]] }),
+          B('Bookings by week', 'September', '7,9,10,12', 'Wk 1,Wk 2,Wk 3,Wk 4', { pre: '', color: 'client' }),
+          Rw('What we built', '3 pieces', [['New website', 'harbordental.com', 'In review', 'client', ''], ['Online booking', 'Book now button', 'In review', 'client', ''], ['Google profile refresh', 'Photos, hours', 'Live', 'good', '']]),
+          Rw('Invoices', 'Paid through Sep', [['October retainer', 'Due Oct 1', 'Upcoming', 'neutral', '$1,200.00'], ['September retainer', 'Sep 1', 'Paid', 'good', '$1,200.00', '', 'true'], ['Build, final half', 'Aug 15', 'Paid', 'good', '$2,400.00', '', 'true']]),
+          Tx('Ask a quick question', 'Usually answered within a few hours', ['Type your question… Tickets ask what to avoid and what you would prefer, so we get it right the first time.'], { nova: false, actions: [['Ask a question', 3], ['New ticket', 0]] })] },
+      'Start': { stats: [S('In progress', '1', 'Bloom Studio'), S('Step', '2 of 5', 'Scope'), S('Estimate', '$6,800', '5–6 weeks'), S('From lead', 'Lena Ortiz', 'Inbound email')],
+        charts: [Tl('Guided new-client flow', 'Bloom Studio', [['Intake', 'From Leads · Sep 22'], ['Scope', 'Logo, signage, 6-page site', 'Now', 'accent'], ['Pricing', '$6,800 estimate'], ['Proposal + contract', 'Sends to client portal'], ['Kickoff', 'Book the first call']], 1),
+          Rw('Scope', '3 of 5 picked', [['Logo and brand kit', 'Picked', 'Included', 'accent', '$2,400'], ['Signage files', 'Picked', 'Included', 'accent', '$800'], ['Website, 6 pages', 'Picked', 'Included', 'accent', '$3,600'], ['Online booking', 'Optional', 'Not included', 'neutral', '$900'], ['Monthly care plan', 'Optional', 'Not included', 'neutral', '$300/mo']], { actions: [['Continue to pricing', 1]] }),
+          Tx('Drafted from the lead', '', ["Lena's email mentions a March opening, signage, and the website. Nova pre-picked those three. Booking is optional."])] },
+      'Show Your Work': { stats: [S('Packages sent', '4', 'This quarter'), S('Portfolio pieces', '9', '2 new', 'good'), S('Views', '312', 'Portfolio page'), S('Leads from portfolio', '3', 'good')],
+        charts: [Rw('Harbor Dental · launch package', 'Draft', [['Site walkthrough video', '', 'Ready', 'good', ''], ['Login and passwords', '', 'Ready', 'good', ''], ['Before / after report', '', 'Drafting', 'neutral', ''], ['Care guide PDF', '', 'Not started', 'neutral', '']], { actions: [['Send to client portal', 1]] }),
+          Ti('Portfolio', '4 featured', [['Harbor Dental', 'Site', 'Website + booking'], ['Silva Bakery', 'Brand', 'Brand + site'], ['Clark Law', 'Site', 'Website'], ['Nair Wellness', 'App', 'Booking']], { n: 2, span: 'span 2' })] },
+      'Support Inbox': { split: SP('Search support', 'Open Inbox', [
+          { n: 'Harbor Dental', ini: 'HD', m: 'Ticket #14 · Booking button', c: 'Bug · draft ready', k: 'accent', a: 'Yesterday', big: '', fields: [['From', 'Dana Lee · portal'], ['Avoid', "Don't change colors or phone"], ['Prefer', 'Pinned Book now button'], ['Sorted', 'Support · bug']], body: ["On my iPhone the Book now button doesn't show up on the home page."], note: 'Draft: Thanks Dana. I can see it on iPhone Safari too. The fix ships today, pinned to the bottom as you asked.', actions: [['Send', 1], ['Edit', 0], ['Discard', 0]] },
+          { n: 'Ridgeline Roofing', ini: 'RR', m: 'Re: quote form go-live', c: 'Question · draft ready', k: 'accent', a: '8:51', fields: [['From', 'Sam Ruiz'], ['Inbox', 'madebymarquez.com']], body: ['Any update on Thursday? Our crew starts the fall push Monday.'], note: "Draft: Yes, it goes live Thursday. I'll send a preview link tomorrow by noon.", actions: [['Send', 1], ['Edit', 0]] },
+          { n: 'Clark Law', ini: 'CL', m: 'Ticket #9 · New attorney bio', c: 'Change request', k: 'neutral', a: 'Sep 19', fields: [['From', 'Owen Clark · portal']], body: ['Please add Maria to the team page.'], actions: [['Reply', 1]] },
+          { n: 'Nair Wellness', ini: 'NW', m: 'Invoice question', c: 'Billing · draft ready', k: 'accent', a: 'Sep 18', fields: [['From', 'Priya Nair']], body: ['Can I switch to paying quarterly?'], note: 'Draft: Yes. I can bill $2,700 every quarter starting October.', actions: [['Send', 1], ['Edit', 0]] }]),
+        stats: [S('Open', '4', '1 urgent', 'bad'), S('Drafts ready', '3'), S('Median reply', '2.1 h', '↓ 40 min', 'good'), S('Closed this week', '9', 'good')], statsAfter: true },
+      'Website / App Builder': { hero: H('Ridgeline Roofing roadmap', '7', 'of 12 done', '1 behind', 'warn', 'Go-live Thu, Sep 24', { pace: ['Roadmap', '7', '12', 58, 66, '1 behind', 'warn', 'Due today: Quote form'] }),
+        stats: [S('Builds in progress', '3'), S('Due this week', '4', '1 late', 'warn'), S('Shipped this month', '11', 'good'), S('Avg. build', '5.5 wk')],
+        charts: [Rw('Doing', '2', [['Quote form', 'Ridgeline', 'Due Thu', 'warn', ''], ['Service area map', 'Ridgeline', 'Due Fri', 'neutral', '']]), Rw('Next', '3', [['Reviews widget', 'Ridgeline', 'Oct 1', 'neutral', ''], ['Speed pass', 'Ridgeline', 'Oct 2', 'neutral', ''], ['Booking flow', 'Nair Wellness', 'Oct 3', 'neutral', '']]), Rw('Done', '7', [['Home page', 'Ridgeline', 'Sep 12', 'good', '', '', 'true'], ['Services pages', 'Ridgeline', 'Sep 16', 'good', '', '', 'true']])] },
+      'Scaling Planner': { hero: H('Monthly recurring revenue', '$7,200', '', 'Behind pace by $900', 'warn', 'Goal $15,000 by June', { line: ['3600,4200,4800,5400,6000,7200,8100,9300,10500,12000,13500,15000', 5, 'Apr,Sep,Jun', '$'] }),
+        stats: [S('New clients needed', '7'), S('Discovery calls', '~28', 'At 25% close'), S('Per month', '1–2', 'clients'), S('Hours per week', '+9', 'at full load', 'warn')],
+        charts: [Dn('Revenue mix', 'Today', 'Retainers,Builds,Care plans,Other', '4800,1500,600,300', { center: 'Monthly', total: '$7,200' }), B('MRR by month', 'Apr – Sep', '3600,4200,4800,5400,6000,7200', 'Apr,May,Jun,Jul,Aug,Sep'), Tx('What it takes', '', ['At a $1,200 average, you need 7 more retainers. One per month from discovery keeps you on pace if 25% of calls close.'])] },
+      'Business Audits': { stats: [S('Audits run', '24', 'This quarter'), S('Avg. score', '57'), S('Became clients', '5', '21%', 'good'), S('Waiting on you', '2', 'Send report', 'warn')],
+        charts: [Rg('Park Fitness', 'Audit · Sep 21', '0.54', '54', 'of 100', [['Score', '54', 'var(--warning)'], ['Biggest gap', 'Booking', 'var(--danger)'], ['Fix adds', '~12 pts', 'var(--accent)']], { color: 'warn', actions: [['Send report', 1], ['Add to CRM', 0]] }),
+          Mt('Breakdown', '6 areas', [['Booking', 22, 100, 'var(--danger)'], ['Website speed', 48, 100, 'var(--warning)'], ['Google profile', 71, 100], ['Reviews', 64, 100], ['Social', 52, 100, 'var(--warning)'], ['Follow-up', 66, 100]], { span: 'span 2' })],
+        table: T('Recent audits', '24 this quarter', ['Business', 'Score', 'Weakest area', 'Status', 'Date'], 'minmax(0,1.4fr) 70px minmax(0,1fr) 130px 80px', [['Park Fitness', '54', 'Booking', ['Report not sent', 'warn'], 'Sep 21'], ['Hill & Co. Plumbing', '48', 'Booking', ['Meeting booked', 'good'], 'Sep 10'], ['Lakeview Vet', '61', 'Reviews', ['Report sent', 'neutral'], 'Sep 8'], ['Clark Law', '70', 'Speed', ['Client', 'client'], 'Aug 2']]) },
+      'Client CRM': { split: SP('Search deals', 'New deal', [
+          { n: 'Bloom Studio', ini: 'BS', m: 'Rebrand + site', c: 'Pricing', k: 'accent', a: '$6,800', big: '$6,800', fields: [['Stage', 'Pricing · proposal sent'], ['Contact', 'Lena Ortiz'], ['Sent', 'Sep 21'], ['Viewed', '3 times'], ['Source', 'Inbound email'], ['Close by', 'Oct 1']], body: [], note: 'Viewed 3 times in a day. A short follow-up today usually closes faster.', logTitle: 'Pipeline', log: [['Sep 22', 'Discovery call'], ['Sep 21', 'Proposal sent'], ['Sep 21', 'Viewed ×3']], actions: [['Follow up', 1], ['Send invoice', 0]] },
+          { n: 'Park Fitness', ini: 'PF', m: 'Booking fix', c: 'Pricing', k: 'accent', a: '$2,400', big: '$2,400', fields: [['Stage', 'Draft proposal'], ['Contact', 'Jordan Park'], ['Source', 'Audit (54)']], body: [], actions: [['Send proposal', 1]] },
+          { n: 'Hill & Co. Plumbing', ini: 'HC', m: 'Booking + site', c: 'Discovery', k: 'neutral', a: '$4,200', big: '$4,200', fields: [['Stage', 'Walkthrough Thu 2 PM'], ['Contact', 'Marcus Hill']], body: [], actions: [['Open contact', 0]] },
+          { n: 'Ridgeline Roofing', ini: 'RR', m: 'Quote form + site', c: 'Invoice', k: 'warn', a: '$2,400', big: '$2,400', fields: [['Stage', 'Invoice sent'], ['Due', 'Oct 5']], body: [], actions: [['Open invoice', 0]] },
+          { n: 'Harbor Dental', ini: 'HD', m: 'Retainer', c: 'Active', k: 'good', a: '$1,200/mo', big: '$1,200/mo', fields: [['Stage', 'Active'], ['Since', 'Jul 8']], body: [], actions: [['Open client', 0]] }]),
+        stats: [S('Discovery', '4', '$14k'), S('Pricing', '2', '$9.2k', 'neutral'), S('Invoice', '1', '$2.4k', 'warn'), S('Active', '6', '$7.2k/mo', 'good')], statsAfter: true },
+      'Brand Lab': { stats: [S('Projects', '2', 'Bloom, Silva refresh'), S('Round', '2 of 3', 'Bloom Studio'), S('Feedback waiting', '1', 'From portal', 'warn'), S('Approved', '1', 'Silva Bakery', 'good')],
+        charts: [Tl('Bloom Studio', 'Intake → spec review → rounds → approval', [['Intake', 'Sep 22'], ['Spec review', 'Approved Sep 23'], ['Rounds', 'Round 2 of 3', 'Now', 'accent'], ['Approval', 'Planned Oct 3']], 2),
+          Ti('Round 2 concepts', '2 concepts', [['Concept A', 'Passed', ''], ['Concept B', 'Favorite', 'Client pick', 'good']], { n: 2 }),
+          Tx('Client feedback', 'From portal · Lena Ortiz', ['"Love B. Can the leaf be smaller and the type a little warmer?"'], { nova: false, actions: [['Upload round 3', 1]] })] },
+      'Idea Maker': { stats: [S('Ideas saved', '18'), S('Turned into offers', '3', 'good'), S('This week', '4'), S('Open threads', '2')],
+        charts: [Tx('A cheap entry offer for dentists?', 'Thread · today', ['Booking audit, $199: a 30-minute review with a written fix list. Leads into the $900 booking build.', 'Google profile tune-up, $450: photos, hours, services, and a review request flow.', 'Free audit, paid fix: keep the audit free, price the top fix at a flat rate.', 'You: The second, but under $500.'], { span: 'span 2', actions: [['Reply to Nova', 1], ['Save as offer', 0]] }),
+          Rw('Saved ideas', '18', [['Booking audit, $199', 'Dentists', 'Offer', 'good', ''], ['Care plan bundle', 'All clients', 'Drafting', 'neutral', ''], ['Referral credit', 'Clients', 'Idea', 'neutral', '']])] },
+      'Invoicing': { split: SP('Search invoices', 'Invoice', [
+          { n: 'Clark Law', ini: 'CL', m: 'INV-0042', c: '9 days overdue', k: 'bad', a: '$1,500.00', big: '$1,500.00', fields: [['Issued', 'Sep 1'], ['Due', 'Sep 13'], ['For', 'September retainer'], ['Sent to', 'owen@clarklaw.com'], ['Reminders', '1 sent'], ['Method', 'Card or ACH']], body: [], note: 'Draft reminder: Hi Owen, a quick nudge on September. Here is the pay link again.', logTitle: 'History', log: [['Sep 1', 'Sent'], ['Sep 14', 'Reminder 1'], ['Sep 18', 'Viewed']], actions: [['Send reminder', 1], ['Mark paid', 0], ['Download PDF', 0]] },
+          { n: 'Ridgeline Roofing', ini: 'RR', m: 'INV-0045', c: 'Due Oct 5', k: 'neutral', a: '$2,400.00', big: '$2,400.00', fields: [['Issued', 'Sep 21'], ['Due', 'Oct 5'], ['For', 'Build, first half']], body: [], actions: [['Mark paid', 0], ['Download PDF', 0]] },
+          { n: 'Harbor Dental', ini: 'HD', m: 'INV-0046', c: 'Due Oct 1', k: 'neutral', a: '$1,200.00', big: '$1,200.00', fields: [['Issued', 'Sep 22'], ['Due', 'Oct 1'], ['For', 'October retainer']], body: [], actions: [['Mark paid', 0]] },
+          { n: 'Nair Wellness', ini: 'NW', m: 'INV-0044', c: 'Paid Sep 15', k: 'good', a: '$900.00', big: '$900.00', fields: [['Issued', 'Sep 1'], ['Paid', 'Sep 15']], body: [], actions: [['Download PDF', 0]] }]),
+        stats: [S('Outstanding', '$5,100', '3 invoices'), S('Overdue', '$1,500', '1 invoice', 'bad'), S('Paid in Sep', '$6,900', '↓ $500', 'neutral'), S('Avg. days to pay', '11', '↓ 3', 'good')], statsAfter: true },
+      'Marketing': { stats: [S('Leads from marketing', '11', '↑ 4 this month', 'good'), S('Spend', '$240', '$22 per lead'), S('Live campaigns', '2'), S('Content in pipeline', '9')],
+        charts: [Rw('Campaigns', '3', [['Free audit for dentists', 'Email + LinkedIn', 'Live', 'live', '6 leads'], ['Before / after reels', 'Instagram', 'Live', 'live', '3 leads'], ['Holiday hours reminder', 'Clients', 'Scheduled Nov 1', 'neutral', '']]),
+          Ti('Content pipeline', '9 pieces', [['Ideas', '4', ''], ['Drafting', '2', ''], ['Review', '2', ''], ['Posted', '1', '']], { n: 4 }),
+          B('Leads by week', 'From marketing', '1,2,1,3,2,2', 'Aug 17,24,31,Sep 7,14,21', { pre: '' })] },
+      'Content Creation': { stats: [S('Launch kits', '3'), S('Pieces done', '8 of 24'), S('Due this week', '3', 'Ridgeline', 'warn'), S('Posted', '5', 'This month')],
+        charts: [Pc('Launch kits', 'Per client', [['Harbor Dental · Oct 6', '5', '8 pieces', 63, 60, 'On track', 'good', 'Launch post, patient email done'], ['Ridgeline Roofing · Sep 24', '3', '6 pieces', 50, 80, 'Behind', 'warn', 'Before / after due'], ['Bloom Studio · March', '0', '10 pieces', 0, 5, 'Not started', 'neutral', '']]),
+          Rw('Due this week', '3', [['Ridgeline before / after', 'Content', 'Due Wed', 'warn', ''], ['Ridgeline announcement', 'Content', 'Ready', 'good', ''], ['Harbor reel', 'Content', 'Drafting', 'neutral', '']])] },
+      'Stocks': { hero: H('Paper portfolio', '$10,842', '.16', '↑ 8.4%', 'good', 'since Jul 1 start of $10,000', { line: ['10000,10120,9980,10240,10310,10180,10420,10560,10490,10710,10620,10842', '', 'Jul 1,Today', '$'], color: 'good' }),
+        stats: [S('Today', '+$6.90', '↑ 0.06%', 'good'), S('Best', 'AAPL', '↑ 3.1%', 'good'), S('Worst', 'SHOP', '↓ 1.8%', 'bad'), S('Cash', '$3,978', 'Paper money')],
+        charts: [Dn('Allocation', '4 holdings', 'AAPL,VTI,SHOP,Cash', '2712,2511.9,1640,3978.26', { dec: 0 }), Tx("Today's commentary", '', ['SHOP is your only loser this week and now 15% of the portfolio. You said no single pick over 20%, so you are still inside your rule.', 'Practice only. Not financial advice.']), Ln('SHOP', 'Last 30 days', '88,86,89,85,84,86,83,82,84,81,83,82', 'Aug 23,Today', { pre: '$' })],
+        table: T('Positions', 'Paper trading · no real money', ['Symbol', 'Shares', 'Price', 'Today', 'Value'], '90px 70px 90px 100px minmax(0,1fr)', [['AAPL', '12', '$226.00', ['↑ 3.1%', 'good'], '$2,712.00'], ['VTI', '9', '$279.10', ['↑ 0.6%', 'good'], '$2,511.90'], ['SHOP', '20', '$82.00', ['↓ 1.8%', 'bad'], '$1,640.00'], ['Cash', '—', '—', ['Available', 'neutral'], '$3,978.26']]) },
+      'Streaming': { stats: [S('Planned this week', '3'), S('Ideas', '14'), S('Avg. viewers', '42', '↑ 8', 'good'), S('Leads from streams', '2', 'good')],
+        charts: [Ht('September', 'Stream days', '_..3..3..3..3...3..3..3.3..3...', { flow: 'row', numbers: 'true', lo: '', hi: 'Streamed' }),
+          Rw('Idea bank', '14 ideas', [['Building a client site live', 'Tue 8 PM', 'Scheduled', 'accent', ''], ['Roast my website', 'Thu 8 PM', 'Scheduled', 'accent', ''], ['Cold calling, unedited', 'Idea', 'Needs a date', 'neutral', ''], ['Q&A: pricing your first client', 'Idea', 'Needs a date', 'neutral', '']], { span: 'span 2' })] },
+      'E-commerce': { hero: H('Revenue · 30 days', '$3,180', '', '↑ 22%', 'good', 'Both brands', { line: ['520,610,580,740,690,820', '', 'Aug 17,Sep 21', '$'] }),
+        stats: [S('Orders', '71', '↑ 12', 'good'), S('Conversion', '2.8%'), S('Ad return', '3.1×', 'good'), S('Waiting on you', '3', 'Approvals', 'warn')],
+        charts: [Tl('Field & Fold · 10-step pipeline', 'Step 7', [['Idea', ''], ['Research', ''], ['Name', ''], ['Brand kit', ''], ['Supplier', ''], ['Samples', ''], ['Product sheets', '2 to approve', 'Now', 'warn'], ['Store', ''], ['Launch', ''], ['Scale', '']], 6),
+          Rw('Approvals', '3', [['Linen tote · product sheet', 'Field & Fold', 'Needs approval', 'warn', ''], ['Ad set, 3 images', 'Field & Fold', 'Needs approval', 'warn', ''], ['Price change to $34', 'Night Shift Candle Co.', 'Needs approval', 'warn', '']], { actions: [['Review all', 1]] }),
+          Rw('AI workers', '3 running', [['Listing writer', 'Product sheets', 'Working', 'live', '4 done'], ['Ad maker', 'Images + copy', 'Waiting on approval', 'warn', '3 ready'], ['Review responder', 'Drafts only', 'Idle', 'neutral', '']])] },
+      'Sticky Spot': { stats: [S('Made this month', '$165', '2 done', 'good'), S('In play', '$550', '3 ideas'), S('Fastest', 'Babysit', 'Sat · $90'), S('Ideas', '5')],
+        charts: [Rw('Fast-cash list', '5 ideas', [['Sell the old monitor', 'Marketplace · listed Sep 20', 'Listed', 'neutral', '$120'], ['Weekend website fix', 'Owen asked about his menu page', 'Quoted', 'accent', '$250'], ['Flip the bike', 'Needs new tubes first', 'Idea', 'neutral', '$180'], ['Babysit Saturday', 'Confirmed', 'Booked', 'good', '$90'], ['Spare desk chair', 'Sep 14', 'Done', 'good', '$75', '', 'true']], { span: 'span 2' }),
+          B('Side cash by month', 'Last 6', '120,40,210,90,180,165', 'Apr,May,Jun,Jul,Aug,Sep')] },
+    };
+    return M[name];
+  }
+  renderVals() {
+    const p = this.props, size = p.size || 'desktop', isDesk = size === 'desktop', nova = p.nova === true || p.nova === 'true';
+    const sp = this.spec(p.module) || { stats: [] };
+    const three = isDesk && !nova;
+    const act = (list) => (list || []).map(([t, v]) => ({ t, bg: v === 1 ? 'var(--text)' : v === 3 ? 'var(--client-accent)' : 'transparent', b: v === 1 || v === 3 ? 'none' : v === 2 ? '1px solid color-mix(in srgb, var(--client-accent) 50%, var(--border))' : '1px solid var(--border)', c: v === 1 || v === 3 ? 'var(--bg)' : v === 2 ? 'var(--client-accent)' : 'var(--text)', w: v ? 600 : 500 }));
+    const charts = (sp.charts || []).map(c => {
+      const o = { title: c.title, meta: c.meta || '', flush: c.flush || 'false', hasActions: !!c.actions, actions: act(c.actions) };
+      const span = c.span === 'span 3' ? (three ? 'span 3' : '1 / -1') : c.span === 'span 2' || c.span === 2 ? (three ? 'span 2' : '1 / -1') : 'auto';
+      o.span = span;
+      o.w = span === 'auto' ? 322 : (three && span === 'span 2' ? 690 : 700);
+      o['is' + { bars: 'Bars', line: 'Line', donut: 'Donut', pace: 'Pace', ring: 'Ring', heat: 'Heat', meters: 'Meters', rows: 'Rows', timeline: 'Timeline', tiles: 'Tiles', text: 'Text' }[c.type]] = true;
+      if (c.type === 'bars') Object.assign(o, { vals: c.vals, labels: c.labels, pre: c.pre ?? '$', suf: c.suf || '', top: c.top || '', cur: c.cur ?? String(c.vals.split(',').length - 1), max: c.max || 0, color: c.color || 'accent' });
+      if (c.type === 'line') Object.assign(o, { vals: c.vals, alt: c.alt || '', today: c.today ?? -1, labels: c.labels, pre: c.pre || '', suf: c.suf || '', dec: c.dec || 0, min: c.min, max: c.max, color: c.color || 'accent' });
+      if (c.type === 'donut') Object.assign(o, { names: c.names, vals: c.vals, pre: c.pre ?? '$', center: c.center || 'Total', total: c.total || '', client: !!c.client });
+      if (c.type === 'pace') o.paces = c.paces.map(([label, val, max, fill, mark, chip, k, note]) => ({ label, val, max, fill, mark, chip, k, note }));
+      if (c.type === 'ring') Object.assign(o, { pcts: c.pcts, center: c.center, sub: c.sub, color: c.color || 'accent', legend: c.legend.map(([n, v, cc]) => ({ n, v, c: cc })) });
+      if (c.type === 'heat') Object.assign(o, { cells: c.cells, flow: c.flow || 'column', numbers: c.numbers || 'false', lo: c.lo ?? 'Less', hi: c.hi ?? 'More', slip: c.slip || '', caption: c.caption || '' });
+      if (c.type === 'meters') o.meters = c.meters.map(([n, v, max, col]) => ({ n, v: String(v), w: (v / max * 100).toFixed(1), c: col || 'var(--accent)' }));
+      if (c.type === 'rows') o.rows = c.rows.map(([n, m, cc, k, a, s, dim]) => ({ n, m, c: cc, k, a, s: s || '', dim: dim || 'false' }));
+      if (c.type === 'timeline') o.steps = c.steps.map(([n, d, chip, k], i, arr) => { const done = i < c.cur, cur = i === c.cur; return { n, d, chip, k, hasChip: !!chip, mark: done ? '✓' : '', bg: done ? 'var(--accent)' : 'transparent', b: done ? 'none' : cur ? '2px solid var(--accent)' : '1.5px solid var(--border)', line: i === arr.length - 1 ? 'transparent' : done ? 'var(--accent)' : 'var(--grid)', tc: i > c.cur ? 'var(--text-secondary)' : 'var(--text)' }; });
+      if (c.type === 'tiles') Object.assign(o, { n: String(c.n || 2), tiles: c.tiles.map(([l, v, d, k]) => ({ l, v, d: d || '', dc: k === 'good' ? 'var(--success)' : 'var(--text-tertiary)', bg: k === 'good' ? 'color-mix(in srgb, var(--accent) 10%, var(--surface))' : 'var(--surface-3)', b: k === 'good' ? '1.5px solid var(--accent)' : '1.5px solid transparent' })) });
+      if (c.type === 'text') Object.assign(o, { paras: c.paras, nova: c.nova !== false });
+      return o;
+    });
+    const h = sp.hero;
+    const hero = h ? { ...h, hasLine: !!h.line, hasPace: !!h.pace, color: h.color || 'accent',
+      vals: h.line ? h.line[0] : '', today: h.line && h.line[1] !== '' ? h.line[1] : -1, labels: h.line ? h.line[2] : '', pre: h.line ? h.line[3] : '',
+      ...(h.pace ? { pLabel: h.pace[0], pVal: h.pace[1], pMax: h.pace[2], pFill: h.pace[3], pMark: h.pace[4], pChip: h.pace[5], pK: h.pace[6], pNote: h.pace[7] } : {}) } : {};
+    let table = null;
+    if (sp.table) {
+      const tb = sp.table, last = tb.head.length - 1;
+      table = { title: tb.title, meta: tb.meta, cols: tb.cols, head: tb.head.map((t, i) => ({ t, al: i === last ? 'right' : 'left' })),
+        rows: tb.rows.map(r => ({ cells: r.map((c, i) => { const chip = Array.isArray(c); return { chip, plain: !chip, t: chip ? c[0] : c, k: chip ? c[1] : '', al: i === last ? 'right' : 'left', jc: i === last ? 'flex-end' : 'flex-start', c: i === 0 || i === last ? 'var(--text)' : 'var(--text-secondary)', w: i === 0 || i === last ? 600 : 500, ls: i === last ? '-0.02em' : '0' }; }) })) };
+    }
+    let split = null, det = {};
+    if (sp.split) {
+      const sel = Math.min(this.state.sel, sp.split.rows.length - 1);
+      split = { search: sp.split.search, add: sp.split.add, rows: sp.split.rows.map((r, i) => ({ ...r, avR: '50%', bg: i === sel ? 'var(--surface-3)' : 'transparent', tap: () => this.setState({ sel: i }) })) };
+      const r = sp.split.rows[sel];
+      det = { ...r, big: r.big || r.a, fields: r.fields.map(([l, v], i) => ({ l, v, bt: i > 1 ? '1px solid var(--grid)' : 'none', bl: i % 2 ? '1px solid var(--grid)' : 'none' })), body: r.body || [], hasNote: !!r.note, hasLog: !!(r.log && r.log.length), logTitle: r.logTitle || 'Activity', log: (r.log || []).map(([d, t]) => ({ d, t })), actions: act(r.actions) };
+    }
+    return {
+      hasTop: !!(h || (sp.stats && sp.stats.length)), hasHero: !!h, hero, heroW: isDesk ? (nova ? 420 : 600) : 360,
+      topCols: h ? (isDesk ? 'minmax(0,1.35fr) minmax(0,1fr)' : 'minmax(0,1.2fr) minmax(0,1fr)') : 'minmax(0,1fr)',
+      statCols: h ? 'repeat(2,minmax(0,1fr))' : 'repeat(4,minmax(0,1fr))', stats: (sp.stats || []).map(x => x),
+      hasCharts: charts.length > 0, charts, chartCols: three ? 'repeat(3,minmax(0,1fr))' : 'repeat(2,minmax(0,1fr))',
+      hasTable: !!table, table: table || { head: [], rows: [] },
+      hasSplit: !!split, split: split || { rows: [] }, det, splitCols: isDesk ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', splitH: isDesk ? 640 : 600,
+    };
+  }
+}
+</script>
+</body>
+</html>

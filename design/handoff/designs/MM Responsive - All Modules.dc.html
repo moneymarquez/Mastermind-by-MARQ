@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:#897cdc;text-decoration:none}a:hover{color:#f4f4f6}</style>
+</helmet>
+<section id="all" style="background:{{ pg.bg }}; padding:56px 64px 96px; display:flex; flex-direction:column; gap:64px; font-family:Inter, system-ui, sans-serif; color:{{ pg.t2 }}; min-height:100vh;">
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:24px; max-width:3200px;">
+    <div style="display:flex; flex-direction:column; gap:8px; max-width:980px;">
+      <span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">Masterminds by MARQ · iPad and desktop · all figures are example data</span>
+      <h1 style="margin:0; color:{{ pg.t1 }}; font-size:40px; font-weight:700; letter-spacing:-0.04em;">Every module on iPad and desktop</h1>
+      <p style="margin:0; font-size:15px; line-height:1.5; text-wrap:pretty;">Every module at iPad 1024, grouped like the sidebar. The five list-and-detail modules also show at desktop 1440 as split views. Each frame is the live app: use the sidebar to jump anywhere, open Nova, or flip the theme. Home, Budgeting, Inbox, and Leads are on their own pages.</p>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="font-size:13px; font-weight:500;">Theme</span>
+      <div style="display:flex; gap:2px; padding:3px; border-radius:999px; background:{{ pg.s2 }}; border:1px solid {{ pg.border }};">
+        <sc-for list="{{ opts }}" as="o" hint-placeholder-count="3"><span onClick="{{ o.tap }}" style="padding:7px 14px; border-radius:999px; font-size:13px; font-weight:500; background:{{ o.bg }}; color:{{ o.c }}; cursor:pointer;">{{ o.l }}</span></sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div id="split-views" style="display:flex; flex-direction:column; gap:28px;">
+    <div style="display:flex; align-items:baseline; gap:12px; padding-bottom:12px; border-bottom:1px solid {{ pg.border }};">
+      <span style="color:{{ pg.t1 }}; font-size:28px; font-weight:700; letter-spacing:-0.035em;">Split views · desktop</span>
+      <span style="font-size:14px; color:{{ pg.t3 }};">List on the left, the selected record on the right. Click any row.</span>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:48px; align-items:flex-start;">
+      <sc-for list="{{ splits }}" as="m" hint-placeholder-count="5">
+        <div style="display:flex; flex-direction:column; gap:10px;"><span style="color:{{ pg.t1 }}; font-size:16px; font-weight:600;">{{ m.n }}</span><dc-import name="MM App" size="desktop" module="{{ m.n }}" group="{{ m.g }}" hint-size="1442px,1000px"></dc-import></div>
+      </sc-for>
+    </div>
+  </div>
+
+  <sc-for list="{{ cats }}" as="c" hint-placeholder-count="5">
+    <div id="{{ c.id }}" style="display:flex; flex-direction:column; gap:28px;">
+      <div style="display:flex; align-items:baseline; gap:12px; padding-bottom:12px; border-bottom:1px solid {{ pg.border }};">
+        <span style="color:{{ pg.t1 }}; font-size:28px; font-weight:700; letter-spacing:-0.035em;">{{ c.g }} · iPad</span>
+        <span style="font-size:14px; color:{{ pg.t3 }};">{{ c.note }}</span>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:48px; align-items:flex-start;">
+        <sc-for list="{{ c.mods }}" as="m" hint-placeholder-count="4">
+          <div style="display:flex; flex-direction:column; gap:10px;"><span style="color:{{ pg.t1 }}; font-size:16px; font-weight:600;">{{ m.n }}</span><dc-import name="MM App" size="ipad" module="{{ m.n }}" group="{{ c.g }}" hint-size="1026px,1100px"></dc-import></div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-for>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this._mm = () => this.forceUpdate(); window.addEventListener('mm-theme', this._mm); }
+  componentWillUnmount() { window.removeEventListener('mm-theme', this._mm); }
+  renderVals() {
+    let pref = 'dark'; try { pref = localStorage.getItem('mm-theme') || 'dark'; } catch (e) {}
+    const r = pref === 'system' ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : pref, dark = r === 'dark';
+    const pg = dark ? { bg: '#08080a', s2: '#101014', border: '#25252d', t1: '#f4f4f6', t2: '#9a9ca8', t3: '#6b6d78', sel: '#f4f4f6', selT: '#0b0b0d' } : { bg: '#e6e6ec', s2: '#f2f2f5', border: '#d6d6de', t1: '#121216', t2: '#5b5d69', t3: '#80828d', sel: '#121216', selT: '#ffffff' };
+    const set = t => () => { try { localStorage.setItem('mm-theme', t); } catch (e) {} window.dispatchEvent(new Event('mm-theme')); };
+    const opts = [['dark', 'Dark'], ['light', 'Light'], ['system', 'System']].map(([k, l]) => ({ l, tap: set(k), bg: pref === k ? pg.sel : 'transparent', c: pref === k ? pg.selT : pg.t2 }));
+    const C = [
+      ['Personal', 'personal', '15 modules (Budgeting has its own page)', ['Daily Plan', 'Macros & Meals', 'Sobriety', 'Goals', 'Mental Health', 'Dispatch', 'Brain', 'Schedule', 'Decision Log', 'Weekly Review', 'Cash-Flow Forecast', 'Patterns', 'Voice Capture', 'Opening / Closing', 'Fitness']],
+      ['Cold Calling', 'cold-calling', '3 modules', ['Dialing', 'Contacts', 'Call Recordings']],
+      ['Clients', 'clients', 'Operator side and what the client sees', ['Client Modules', 'Client Portal']],
+      ['Scaling', 'scaling', '12 owner-only modules', ['Start', 'Show Your Work', 'Support Inbox', 'Website / App Builder', 'Scaling Planner', 'Business Audits', 'Client CRM', 'Brand Lab', 'Idea Maker', 'Invoicing', 'Marketing', 'Content Creation']],
+      ['Side Hustles', 'side-hustles', '4 modules', ['Stocks', 'Streaming', 'E-commerce', 'Sticky Spot']],
+    ];
+    const cats = C.map(([g, id, note, mods]) => ({ g, id, note, mods: mods.map(n => ({ n })) }));
+    const splits = [['Contacts', 'Cold Calling'], ['Client CRM', 'Scaling'], ['Support Inbox', 'Scaling'], ['Decision Log', 'Personal'], ['Invoicing', 'Scaling']].map(([n, g]) => ({ n, g }));
+    return { pg, opts, cats, splits };
+  }
+}
+</script>
+</body>
+</html>

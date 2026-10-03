@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:#897cdc;text-decoration:none}a:hover{color:#f4f4f6}</style>
+</helmet>
+<section id="3" style="background:{{ pg.bg }}; padding:56px 64px 96px; display:flex; flex-direction:column; gap:56px; font-family:Inter, system-ui, sans-serif; color:{{ pg.t2 }}; min-height:100vh;">
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:24px; max-width:2960px;">
+    <div style="display:flex; flex-direction:column; gap:8px; max-width:900px;">
+      <span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">Masterminds by MARQ · Responsive pattern · all figures are example data</span>
+      <h1 style="margin:0; color:{{ pg.t1 }}; font-size:40px; font-weight:700; letter-spacing:-0.04em;">Home + Budgeting at three sizes</h1>
+      <p style="margin:0; font-size:15px; line-height:1.5; text-wrap:pretty;">Phone 390, iPad 1024, desktop 1440. Each size shows twice: the left frame uses the current theme and the right frame shows the other one. The sun/moon button in any header, or Settings → Appearance, switches every screen at once. On iPad and desktop the sidebar groups collapse, Nova opens on the right, and tapping Budgeting or Home switches screens.</p>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="font-size:13px; font-weight:500;">Theme</span>
+      <div style="display:flex; gap:2px; padding:3px; border-radius:999px; background:{{ pg.s2 }}; border:1px solid {{ pg.border }};">
+        <sc-for list="{{ opts }}" as="o" hint-placeholder-count="3"><span onClick="{{ o.tap }}" style="padding:7px 14px; border-radius:999px; font-size:13px; font-weight:500; background:{{ o.bg }}; color:{{ o.c }}; cursor:pointer;">{{ o.l }}</span></sc-for>
+      </div>
+    </div>
+  </div>
+
+  <sc-for list="{{ blocks }}" as="b" hint-placeholder-count="2">
+    <div id="{{ b.id }}" style="display:flex; flex-direction:column; gap:40px;">
+      <div style="display:flex; align-items:baseline; gap:12px; padding-bottom:12px; border-bottom:1px solid {{ pg.border }};">
+        <span style="color:{{ pg.t1 }}; font-size:28px; font-weight:700; letter-spacing:-0.035em;">{{ b.title }}</span>
+        <span style="font-size:14px; color:{{ pg.t3 }};">{{ b.note }}</span>
+      </div>
+      <sc-for list="{{ sizes }}" as="z" hint-placeholder-count="3">
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <span style="color:{{ pg.t1 }}; font-size:16px; font-weight:600; letter-spacing:-0.015em;">{{ z.label }}</span>
+          <div style="display:flex; gap:48px; align-items:flex-start;">
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">{{ labelA }} · current theme</span>
+              <dc-import name="MM App" size="{{ z.size }}" screen="{{ b.screen }}" mode="global" hint-size="{{ z.hint }}"></dc-import>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">{{ labelB }} · for comparison</span>
+              <dc-import name="MM App" size="{{ z.size }}" screen="{{ b.screen }}" mode="invert" hint-size="{{ z.hint }}"></dc-import>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-for>
+
+  <div id="nova-panel" style="display:flex; flex-direction:column; gap:40px;">
+    <div style="display:flex; align-items:baseline; gap:12px; padding-bottom:12px; border-bottom:1px solid {{ pg.border }};">
+      <span style="color:{{ pg.t1 }}; font-size:28px; font-weight:700; letter-spacing:-0.035em;">Nova panel and Settings</span>
+      <span style="font-size:14px; color:{{ pg.t3 }};">On desktop, Nova pushes the dashboard to two columns. On iPad it slides over the content.</span>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:48px; align-items:flex-start;">
+      <div style="display:flex; flex-direction:column; gap:10px;"><span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">Desktop · Budget with Nova open</span><dc-import name="MM App" size="desktop" screen="budget" nova="true" hint-size="1442px,1200px"></dc-import></div>
+      <div style="display:flex; flex-direction:column; gap:10px;"><span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">iPad · Home with Nova open</span><dc-import name="MM App" size="ipad" screen="home" nova="true" hint-size="1026px,1000px"></dc-import></div>
+      <div style="display:flex; flex-direction:column; gap:10px;"><span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">iPad · Settings → Appearance</span><dc-import name="MM App" size="ipad" screen="settings" hint-size="1026px,800px"></dc-import></div>
+      <div style="display:flex; flex-direction:column; gap:10px;"><span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">Phone · Settings</span><dc-import name="MM App" size="phone" screen="settings" hint-size="392px,846px"></dc-import></div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() {
+    this._mm = () => this.forceUpdate();
+    window.addEventListener('mm-theme', this._mm);
+    this._mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+    if (this._mq && this._mq.addEventListener) this._mq.addEventListener('change', this._mm);
+  }
+  componentWillUnmount() { window.removeEventListener('mm-theme', this._mm); if (this._mq && this._mq.removeEventListener) this._mq.removeEventListener('change', this._mm); }
+  pref() { try { return localStorage.getItem('mm-theme') || 'dark'; } catch (e) { return 'dark'; } }
+  renderVals() {
+    const pref = this.pref(), r = pref === 'system' ? (this._mq && this._mq.matches ? 'light' : 'dark') : pref, dark = r === 'dark';
+    const pg = dark ? { bg: '#08080a', s2: '#101014', border: '#25252d', t1: '#f4f4f6', t2: '#9a9ca8', t3: '#6b6d78', sel: '#f4f4f6', selT: '#0b0b0d' } : { bg: '#e6e6ec', s2: '#f2f2f5', border: '#d6d6de', t1: '#121216', t2: '#5b5d69', t3: '#80828d', sel: '#121216', selT: '#ffffff' };
+    const set = t => () => { try { localStorage.setItem('mm-theme', t); } catch (e) {} window.dispatchEvent(new Event('mm-theme')); };
+    const opts = [['dark', 'Dark'], ['light', 'Light'], ['system', 'System']].map(([k, l]) => ({ l, tap: set(k), bg: pref === k ? pg.sel : 'transparent', c: pref === k ? pg.selT : pg.t2 }));
+    return {
+      pg, opts, labelA: dark ? 'Dark' : 'Light', labelB: dark ? 'Light' : 'Dark',
+      blocks: [{ id: 'home', title: 'Home', screen: 'home', note: 'Hero and stats on top; attention, today, and brief side by side; pinned modules in a row' }, { id: 'budget', title: 'Budgeting', screen: 'budget', note: 'Hero with pace, stat tiles, three charts across, bills as a full table' }],
+      sizes: [{ label: 'Desktop · 1440', size: 'desktop', hint: '1442px,1200px' }, { label: 'iPad · 1024', size: 'ipad', hint: '1026px,1100px' }, { label: 'Phone · 390', size: 'phone', hint: '392px,1900px' }],
+    };
+  }
+}
+</script>
+</body>
+</html>

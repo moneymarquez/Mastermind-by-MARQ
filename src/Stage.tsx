@@ -34,7 +34,7 @@ const DialingScreen = lazyScreen(() => import('./components/screens/DialingScree
 const StickySpotScreen = lazyScreen(() => import('./components/screens/StickySpotScreen'));
 const SobrietyV2 = lazyScreen(() => import('./components/screens/v2/SobrietyV2'));
 const FitnessScreen = lazyScreen(() => import('./components/screens/FitnessScreen'));
-const GoalsScreen = lazyScreen(() => import('./components/screens/GoalsScreen'));
+const GoalsV2 = lazyScreen(() => import('./components/screens/v2/GoalsV2'));
 const MentalHealthScreen = lazyScreen(() => import('./components/screens/MentalHealthScreen'));
 const BrainScreen = lazyScreen(() => import('./components/screens/brain/BrainScreen'));
 const EcomScreen = lazyScreen(() => import('./components/screens/ecom/EcomScreen'));
@@ -294,9 +294,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'macros' && <MacrosV2 />}
 
-        {state.screen === 'goals' && (
-          <GoalsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'goals' && <GoalsV2 />}
 
         {state.screen === 'mental' && (
           <MentalHealthScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} activeBender={bender.activeBender} />

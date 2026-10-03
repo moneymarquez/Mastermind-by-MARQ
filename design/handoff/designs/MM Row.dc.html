@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-top:1px solid var(--grid); min-width:0;">
+  <sc-if value="{{ hasAv }}" hint-placeholder-val="{{ false }}">
+    <div style="width:34px; height:34px; flex:none; border-radius:{{ avR }}; background:var(--surface-3); display:flex; align-items:center; justify-content:center; color:var(--text-secondary); font-size:12px; font-weight:600;">{{ av }}</div>
+  </sc-if>
+  <div style="flex:1; display:flex; flex-direction:column; gap:6px; min-width:0;">
+    <div style="display:flex; align-items:baseline; gap:6px; min-width:0;">
+      <span style="color:var(--text); font-size:15px; font-weight:500; letter-spacing:-0.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ n }}</span>
+      <span style="font-size:12px; color:var(--text-tertiary); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ meta }}</span>
+    </div>
+    <sc-if value="{{ hasChip }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex; gap:6px; align-items:center;">
+        <dc-import name="MM Chip" t="{{ chip }}" k="{{ k }}" hint-size="90px,22px"></dc-import>
+        <sc-if value="{{ hasNote }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px; color:var(--text-tertiary); font-weight:500; white-space:nowrap;">{{ note }}</span></sc-if>
+      </div>
+    </sc-if>
+  </div>
+  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex:none;">
+    <span style="color:{{ ac }}; font-size:15px; font-weight:600; letter-spacing:-0.02em;">{{ amt }}</span>
+    <sc-if value="{{ hasSub }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px; color:var(--text-tertiary); font-weight:500;">{{ sub }}</span></sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:358,&quot;height&quot;:80},&quot;name&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Rent&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;meta&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Checking ••4471&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;chip&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Paid&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;k&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;good&quot;,&quot;warn&quot;,&quot;bad&quot;,&quot;neutral&quot;,&quot;accent&quot;,&quot;client&quot;,&quot;live&quot;,&quot;lock&quot;],&quot;default&quot;:&quot;good&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;note&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;amt&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;$1,850.00&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;sub&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;av&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;square&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;dim&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props, dim = p.dim === true || p.dim === 'true';
+    return { hasAv: !!p.av, avR: p.square ? '10px' : '50%', hasChip: !!p.chip, hasNote: !!p.note, hasSub: !!p.sub, ac: dim ? 'var(--text-secondary)' : 'var(--text)' };
+  }
+}
+</script>
+</body>
+</html>

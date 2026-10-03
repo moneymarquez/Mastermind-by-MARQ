@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="--bg:{{ t.bg }}; --surface:{{ t.surface }}; --surface-2:{{ t.s2 }}; --surface-3:{{ t.s3 }}; --border:{{ t.border }}; --grid:{{ t.grid }}; --text:{{ t.text }}; --text-secondary:{{ t.t2 }}; --text-tertiary:{{ t.t3 }}; --accent:{{ t.accent }}; --success:{{ t.success }}; --warning:{{ t.warning }}; --danger:{{ t.danger }}; --client-accent:{{ t.client }}; width:390px; display:flex; flex-direction:column; gap:12px; font-family:Inter, system-ui, sans-serif; color:var(--text-secondary); -webkit-font-smoothing:antialiased;">
+  <span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">Empty state</span>
+  <div style="border:1px solid var(--border); border-radius:16px; padding:26px 18px; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; background-color:var(--surface-2); background-image:linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size:22px 22px;">
+    <p style="margin:0; font-size:15px; line-height:1.45; letter-spacing:-0.01em; max-width:280px; text-wrap:pretty;">{{ empty }}</p>
+    <div style="display:flex; align-items:center; gap:6px; height:42px; padding:0 16px; border-radius:8px; background:var(--text); color:var(--bg); font-size:14px; font-weight:600;">{{ cta }}</div>
+  </div>
+  <sc-if value="{{ hasAi }}" hint-placeholder-val="{{ true }}">
+    <span style="font-size:12px; font-weight:500; color:var(--text-tertiary); padding-top:6px;">AI not connected yet</span>
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="color:var(--text); font-size:15px; font-weight:600; letter-spacing:-0.015em;">{{ aiTitle }}</span>
+        <dc-import name="MM Chip" t="Not connected" k="neutral" hint-size="110px,22px"></dc-import>
+      </div>
+      <p style="margin:0; font-size:15px; line-height:1.45; letter-spacing:-0.01em; text-wrap:pretty;">{{ ai }}</p>
+      <div style="align-self:flex-start; height:40px; display:flex; align-items:center; padding:0 14px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Connect AI</div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:380},&quot;empty&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;No entries yet.&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;cta&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Add the first one&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;aiTitle&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Nova&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;ai&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  componentDidMount() { this._mm = () => this.forceUpdate(); window.addEventListener('mm-theme', this._mm); }
+  componentWillUnmount() { window.removeEventListener('mm-theme', this._mm); }
+  renderVals() {
+    let t = 'dark'; try { t = window.__mmForce || localStorage.getItem('mm-theme') || 'dark'; } catch (e) {}
+    if (t === 'system') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    const D = { bg: '#0b0b0d', surface: '#131318', s2: '#101014', s3: '#1b1b21', border: '#25252d', grid: '#202027', text: '#f4f4f6', t2: '#9a9ca8', t3: '#6b6d78', accent: '#897cdc', success: '#3fcb7f', warning: '#e0b25e', danger: '#e2707f', client: '#4fb3ac' };
+    const L = { bg: '#f4f4f6', surface: '#ffffff', s2: '#f2f2f5', s3: '#ebebef', border: '#e3e3ea', grid: '#ececf1', text: '#121216', t2: '#5b5d69', t3: '#80828d', accent: '#705bcd', success: '#17915a', warning: '#a26f0c', danger: '#c13f55', client: '#2f8f88' };
+    return { t: t === 'light' ? L : D, hasAi: !!this.props.ai, aiTitle: this.props.aiTitle || 'Nova' };
+  }
+}
+</script>
+</body>
+</html>

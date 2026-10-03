@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="display:flex; flex-direction:column; gap:16px; min-width:0; font-family:Inter, system-ui, sans-serif; font-variant-numeric:tabular-nums;">
+  <sc-if value="{{ showPhoneHead }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; flex-direction:column; gap:4px;">
+      <h1 style="margin:0; color:var(--text); font-size:24px; font-weight:700; letter-spacing:-0.035em;">Inbox</h1>
+      <span style="font-size:13px; font-weight:500; color:var(--text-tertiary);">{{ phoneSub }}</span>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px; padding:3px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border);">
+      <sc-for list="{{ ptabs }}" as="t" hint-placeholder-count="2">
+        <span onClick="{{ t.tap }}" style="height:40px; display:flex; align-items:center; justify-content:center; gap:7px; border-radius:999px; font-size:14px; font-weight:500; background:{{ t.bg }}; color:{{ t.c }}; cursor:pointer;">{{ t.l }}<span style="min-width:18px; height:18px; padding:0 5px; box-sizing:border-box; border-radius:999px; background:{{ t.bb }}; color:var(--bg); font-size:11px; font-weight:600; display:flex; align-items:center; justify-content:center;">{{ t.n }}</span></span>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ showLeads }}" hint-placeholder-val="{{ false }}">
+    <dc-import name="MM Leads" size="phone" lstate="{{ lstate }}" hint-size="100%,900px"></dc-import>
+  </sc-if>
+
+  <sc-if value="{{ showMail }}" hint-placeholder-val="{{ true }}">
+    <sc-if value="{{ isNone }}" hint-placeholder-val="{{ false }}">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px 22px; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; box-shadow:var(--card-shadow);">
+        <div style="width:48px; height:48px; border-radius:12px; background:var(--surface-3); display:flex; align-items:center; justify-content:center; color:var(--text-secondary);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 13h5l1.5 3h5l1.5-3h5"></path><path d="M5.5 5h13L21 13v6H3v-6z"></path></svg></div>
+        <span style="color:var(--text); font-size:17px; font-weight:600; letter-spacing:-0.02em;">Connect your first inbox</span>
+        <p style="margin:0; font-size:15px; line-height:1.45; max-width:340px; text-wrap:pretty;">Pull every address into one feed: mastermindsbymarq.com, madebymarquez.com, and your personal mail. Client portal questions and tickets already show up here.</p>
+        <div style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:300px;">
+          <span style="height:46px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:var(--text); color:var(--bg); font-size:15px; font-weight:600;">Connect Google Workspace</span>
+          <span style="height:46px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:15px; font-weight:500;">Connect Microsoft 365</span>
+          <span style="height:46px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:15px; font-weight:500;">Other (IMAP)</span>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ hasMail }}" hint-placeholder-val="{{ true }}">
+      <sc-if value="{{ noai }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:var(--surface);">
+          <span style="font-size:13.5px; line-height:1.4;">AI isn't connected, so messages arrive unsorted with no drafted replies.</span>
+          <span style="flex:none; height:36px; display:flex; align-items:center; padding:0 12px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:500;">Connect AI</span>
+        </div>
+      </sc-if>
+      <div style="display:{{ shellDisplay }}; grid-template-columns:{{ shellCols }}; height:{{ shellH }}; background:{{ shellBg }}; border:{{ shellBorder }}; border-radius:16px; overflow:hidden; box-shadow:{{ shellShadow }}; min-width:0;">
+
+        <div style="display:{{ listDisplay }}; flex-direction:column; min-width:0; min-height:0; border-right:{{ listBR }}; gap:{{ listGap }}px;">
+          <div style="display:flex; gap:6px; padding:{{ fPad }}; overflow-x:{{ fOver }}; flex-wrap:{{ fWrap }}; margin:{{ fMargin }}; flex:none; scrollbar-width:none;">
+            <sc-for list="{{ filters }}" as="f" hint-placeholder-count="8">
+              <span onClick="{{ f.tap }}" style="flex:none; height:{{ chipH }}px; display:flex; align-items:center; gap:6px; padding:0 12px; border-radius:999px; font-size:13px; font-weight:500; white-space:nowrap; cursor:pointer; background:{{ f.bg }}; color:{{ f.c }}; border:{{ f.b }}; box-sizing:border-box;">{{ f.l }}<sc-if value="{{ f.hasN }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px; color:{{ f.nc }};">{{ f.n }}</span></sc-if></span>
+            </sc-for>
+          </div>
+          <div style="flex:1; min-height:0; overflow-y:{{ listOver }}; background:var(--surface); border:{{ listCardB }}; border-radius:{{ listCardR }}; box-shadow:{{ listCardS }};">
+            <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:48px 20px; display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center;">
+                <div style="width:44px; height:44px; border-radius:50%; background:color-mix(in srgb, var(--success) 14%, transparent); display:flex; align-items:center; justify-content:center; color:var(--success);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></div>
+                <span style="color:var(--text); font-size:17px; font-weight:600; letter-spacing:-0.02em;">You're caught up</span>
+                <span style="font-size:14px; line-height:1.45; max-width:260px;">Nothing new across your 4 inboxes. New mail, portal questions, and tickets land here.</span>
+              </div>
+            </sc-if>
+            <sc-for list="{{ rows }}" as="m" hint-placeholder-count="6">
+              <div onClick="{{ m.open }}" style="display:flex; gap:10px; padding:12px 14px 12px 10px; background:{{ m.bg }}; border-top:{{ m.bt }}; cursor:pointer;" style-hover="background:var(--surface-2);">
+                <div style="width:8px; flex:none; padding-top:7px; display:flex; justify-content:center;"><div style="width:7px; height:7px; border-radius:50%; background:{{ m.dot }};"></div></div>
+                <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:3px;">
+                  <div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px;">
+                    <span style="color:var(--text); font-size:14.5px; font-weight:{{ m.fw }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ m.from }}</span>
+                    <span style="font-size:12px; font-weight:500; color:var(--text-tertiary); white-space:nowrap;">{{ m.time }}</span>
+                  </div>
+                  <span style="color:{{ m.sc }}; font-size:14px; font-weight:{{ m.fw }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ m.subj }}</span>
+                  <span style="font-size:13px; color:var(--text-tertiary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ m.prev }}</span>
+                  <div style="display:flex; align-items:center; gap:6px; padding-top:4px; flex-wrap:wrap;">
+                    <span style="padding:1px 7px; border-radius:4px; border:1px solid {{ m.tagB }}; color:{{ m.tagC }}; font-size:11.5px; font-weight:500; line-height:17px; white-space:nowrap;">{{ m.src }}</span>
+                    <sc-if value="{{ m.hasCat }}" hint-placeholder-val="{{ false }}"><dc-import name="MM Chip" t="{{ m.cat }}" k="{{ m.catK }}" hint-size="60px,22px"></dc-import></sc-if>
+                    <sc-if value="{{ m.hasDraft }}" hint-placeholder-val="{{ false }}"><span style="display:flex; align-items:center; gap:4px; font-size:11.5px; font-weight:500; color:var(--accent);"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg>Draft ready</span></sc-if>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:{{ detDisplay }}; flex-direction:column; min-width:0; min-height:0; overflow-y:{{ listOver }};">
+          <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex; flex-direction:column; gap:18px; padding:{{ detPad }};">
+              <sc-if value="{{ isPhone }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ back }}" style="display:flex; align-items:center; gap:2px; height:44px; margin:-8px 0 -10px -6px; color:var(--text-secondary); font-size:15px; font-weight:500; cursor:pointer; align-self:flex-start;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>Inbox</div>
+              </sc-if>
+              <div style="display:flex; flex-direction:column; gap:10px;">
+                <h2 style="margin:0; color:var(--text); font-size:{{ subjFs }}px; font-weight:700; letter-spacing:-0.03em; line-height:1.2; text-wrap:balance;">{{ sel.subj }}</h2>
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <span style="padding:1px 7px; border-radius:4px; border:1px solid {{ sel.tagB }}; color:{{ sel.tagC }}; font-size:11.5px; font-weight:500; line-height:17px;">{{ sel.src }}</span>
+                  <sc-if value="{{ sel.hasCat }}" hint-placeholder-val="{{ false }}"><dc-import name="MM Chip" t="{{ sel.catLong }}" k="{{ sel.catK }}" hint-size="110px,22px"></dc-import></sc-if>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-top:1px solid var(--grid); border-bottom:1px solid var(--grid);">
+                <div style="width:38px; height:38px; flex:none; border-radius:50%; background:var(--surface-3); display:flex; align-items:center; justify-content:center; color:var(--text); font-size:12.5px; font-weight:600;">{{ sel.ini }}</div>
+                <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;"><span style="color:var(--text); font-size:14.5px; font-weight:600;">{{ sel.from }}<span style="color:var(--text-tertiary); font-weight:500;"> · {{ sel.org }}</span></span><span style="font-size:12.5px; color:var(--text-tertiary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ sel.email }} → {{ sel.to }}</span></div>
+                <span style="font-size:12.5px; font-weight:500; color:var(--text-tertiary); white-space:nowrap;">{{ sel.time }}</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <sc-for list="{{ sel.body }}" as="para" hint-placeholder-count="2"><p style="margin:0; color:var(--text); font-size:15px; line-height:1.55; text-wrap:pretty;">{{ para }}</p></sc-for>
+              </div>
+              <sc-if value="{{ sel.isTicket }}" hint-placeholder-val="{{ false }}">
+                <div style="display:grid; grid-template-columns:{{ tixCols }}; gap:10px;">
+                  <div style="padding:12px; border-radius:10px; background:var(--surface-3); display:flex; flex-direction:column; gap:4px;"><span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">What to avoid</span><span style="color:var(--text); font-size:14px; line-height:1.45;">{{ sel.avoid }}</span></div>
+                  <div style="padding:12px; border-radius:10px; background:var(--surface-3); display:flex; flex-direction:column; gap:4px;"><span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">What they'd prefer</span><span style="color:var(--text); font-size:14px; line-height:1.45;">{{ sel.prefer }}</span></div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ showDraft }}" hint-placeholder-val="{{ true }}">
+                <div style="border-radius:14px; border:1px solid var(--border); background:var(--surface-2); padding:16px; display:flex; flex-direction:column; gap:12px;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                    <span style="display:flex; align-items:center; gap:6px; color:var(--text); font-size:13.5px; font-weight:600;"><svg width="13" height="13" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg>Nova drafted a reply</span>
+                    <span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">From {{ sel.to }}</span>
+                  </div>
+                  <div style="padding:12px 14px; border-radius:8px; background:var(--surface); border:1px solid var(--border); color:var(--text); font-size:15px; line-height:1.55; white-space:pre-wrap;">{{ sel.draft }}</div>
+                  <div style="display:flex; gap:8px;">
+                    <span onClick="{{ send }}" style="height:44px; flex:{{ sendFlex }}; display:flex; align-items:center; justify-content:center; gap:6px; padding:0 18px; border-radius:8px; background:var(--text); color:var(--bg); font-size:15px; font-weight:600; cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 20 4l-6 16-3-7z"></path></svg>Send</span>
+                    <span style="height:44px; display:flex; align-items:center; padding:0 16px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500; cursor:pointer;">Edit</span>
+                    <span onClick="{{ discard }}" style="height:44px; display:flex; align-items:center; padding:0 16px; border-radius:8px; border:1px solid var(--border); color:var(--text-secondary); font-size:14px; font-weight:500; cursor:pointer;">Discard</span>
+                  </div>
+                  <span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">Nothing sends until you tap Send.</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{ showSent }}" hint-placeholder-val="{{ false }}">
+                <div style="border-radius:14px; border:1px solid var(--border); background:var(--surface-2); padding:16px; display:flex; flex-direction:column; gap:10px;">
+                  <div style="display:flex; align-items:center; justify-content:space-between;"><span style="color:var(--text); font-size:13.5px; font-weight:600;">Your reply</span><dc-import name="MM Chip" t="Sent just now" k="good" hint-size="100px,22px"></dc-import></div>
+                  <div style="color:var(--text-secondary); font-size:14.5px; line-height:1.55; white-space:pre-wrap;">{{ sel.draft }}</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ showCompose }}" hint-placeholder-val="{{ false }}">
+                <div style="border-radius:14px; border:1px solid var(--border); background:var(--surface-2); padding:16px; display:flex; flex-direction:column; gap:12px;">
+                  <span style="font-size:13px; font-weight:500;">{{ composeNote }}</span>
+                  <div style="min-height:72px; padding:12px 14px; border-radius:8px; background:var(--surface); border:1px solid var(--border); color:var(--text-tertiary); font-size:15px; box-sizing:border-box;">Write a reply…</div>
+                  <div style="display:flex; gap:8px;"><span style="height:44px; display:flex; align-items:center; padding:0 18px; border-radius:8px; background:var(--surface-3); color:var(--text-tertiary); font-size:15px; font-weight:600;">Send</span></div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{ noSelWide }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:40px; font-size:14px; color:var(--text-tertiary);">Nothing open</div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1100,&quot;height&quot;:800},&quot;size&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;phone&quot;,&quot;ipad&quot;,&quot;desktop&quot;],&quot;default&quot;:&quot;desktop&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;istate&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;empty&quot;,&quot;none&quot;,&quot;noai&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;lstate&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;empty&quot;,&quot;noai&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;target&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;inbox||&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    const t = this.parse(p.target);
+    const wide = (p.size || 'phone') !== 'phone';
+    this.state = { tab: t.tab, filter: 'All', sel: t.msg || (wide ? 'm1' : null), sent: {}, discarded: {}, read: {} };
+  }
+  parse(x) { const [tab, msg] = String(x || 'inbox||').split('|'); return { tab: tab === 'leads' ? 'leads' : 'inbox', msg: msg || null }; }
+  componentDidUpdate(prev) {
+    if (prev.target !== this.props.target) { const t = this.parse(this.props.target); this.setState({ tab: t.tab, sel: t.msg || this.state.sel }); }
+  }
+  renderVals() {
+    const p = this.props, s = this.state, size = p.size || 'phone', isPhone = size === 'phone', isDesk = size === 'desktop';
+    const is = p.istate || 'normal', noai = is === 'noai';
+    const M = [
+      { id: 'm1', from: 'Lena Ortiz', org: 'Bloom Studio', email: 'lena@bloomstudio.co', to: 'hello@mastermindsbymarq.com', subj: 'Quote for a full rebrand?', prev: "We're opening a second location in March and want the whole brand refreshed before then.", time: '9:42 AM', src: 'mastermindsbymarq.com', srcKey: 'mm', cat: 'Lead', unread: true,
+        body: ["Hi Marq,", "We're opening a second location in March and want the whole brand refreshed before then: logo, signage, and the website. A friend at Harbor Dental sent us your way.", "What would something like that cost, and how long does it take?", "Lena"],
+        draft: "Hi Lena,\n\nCongrats on the second location. A full rebrand like this usually takes 5 to 6 weeks, so March is very doable.\n\nCould you do a 20-minute call Thursday at 10 or 2? I'll bring examples from two similar studios.\n\nMarq" },
+      { id: 'm2', from: 'Dana Lee', org: 'Harbor Dental', email: 'Client portal', to: 'Client portal', subj: 'Can we move the review to 11:30?', prev: 'Something came up with a patient at 11. Would 11:30 still work for you?', time: '9:15 AM', src: 'Portal · question', srcKey: 'portal', cat: 'Client', unread: true,
+        body: ['Something came up with a patient at 11. Would 11:30 still work for you? Same Zoom link is fine.'],
+        draft: "Hi Dana, 11:30 works. I've moved the invite, same Zoom link. See you then." },
+      { id: 'm3', from: 'Sam Ruiz', org: 'Ridgeline Roofing', email: 'sam@ridgelineroofing.com', to: 'marq@madebymarquez.com', subj: 'Re: quote form go-live', prev: 'Any update on Thursday? Our crew starts the fall push Monday and we want the form live.', time: '8:51 AM', src: 'madebymarquez.com', srcKey: 'mbm', cat: 'Client', unread: true,
+        body: ['Any update on Thursday? Our crew starts the fall push Monday and we want the form live before then.', 'Sam'],
+        draft: "Hi Sam,\n\nYes, the new quote form goes live Thursday. I'll send you a preview link tomorrow by noon so you can try it first.\n\nMarq" },
+      { id: 'm5', from: 'Dana Lee', org: 'Harbor Dental', email: 'Client portal', to: 'Client portal', subj: 'Ticket #14 · Booking button missing on mobile', prev: "On my iPhone the Book now button doesn't show up on the home page.", time: 'Yesterday', src: 'Portal · ticket', srcKey: 'portal', cat: 'Support', unread: true, ticket: true,
+        avoid: "Don't change the colors or move the phone number.", prefer: 'The same Book now button as desktop, pinned to the bottom of the screen.',
+        body: ["On my iPhone the Book now button doesn't show up on the home page. It's fine on my laptop. Two patients mentioned it this week."],
+        draft: "Thanks Dana. I can see it on iPhone Safari too. The fix ships today, with the button pinned to the bottom as you asked. I'll confirm here once it's live." },
+      { id: 'm6', from: 'Mom', org: 'Personal', email: 'rosa.marquez@example.com', to: 'marq.personal@example.com', subj: 'Sunday dinner?', prev: "Are you coming Sunday? Dad's making the pozole.", time: 'Yesterday', src: 'Personal', srcKey: 'personal', cat: 'Other', unread: true,
+        body: ["Are you coming Sunday? Dad's making the pozole. Bring the tupperware back please."], draft: "I'll be there at 6. Tupperware's in the car already." },
+      { id: 'm4', from: 'Stripe', org: 'Payouts', email: 'notifications@stripe.com', to: 'hello@mastermindsbymarq.com', subj: 'Your $1,200.00 payout is on the way', prev: 'Expected to arrive in your account on Sep 24.', time: '8:02 AM', src: 'mastermindsbymarq.com', srcKey: 'mm', cat: 'Billing', unread: false,
+        body: ['A payout of $1,200.00 is on the way to your checking account ending in 4471.', 'Expected arrival: Thursday, Sep 24.'], draft: '' },
+      { id: 'm7', from: 'Jordan Park', org: 'Park Fitness', email: 'jordan@parkfitness.com', to: 'hello@mastermindsbymarq.com', subj: 'Saw my audit score. Can we talk?', prev: 'Got a 54 on the business audit. Want help with the booking side.', time: 'Yesterday', src: 'mastermindsbymarq.com', srcKey: 'mm', cat: 'Lead', unread: false,
+        body: ['Got a 54 on the business audit. The booking section was the worst part. Want help with that before January.', 'Jordan'],
+        draft: "Hi Jordan,\n\nThanks for taking the audit. Booking is the quickest win on your report. I have time Wednesday at 1 or Friday at 10 to walk through it.\n\nMarq" },
+      { id: 'm8', from: 'Google Workspace', org: 'Billing', email: 'payments-noreply@google.com', to: 'marq@madebymarquez.com', subj: 'Your September invoice is ready', prev: '$14.40 will be charged to Visa ending in 8812.', time: 'Sep 20', src: 'madebymarquez.com', srcKey: 'mbm', cat: 'Billing', unread: false,
+        body: ['Your invoice for September is ready. $14.40 will be charged to Visa ending in 8812.'], draft: '' },
+    ];
+    const catK = { Lead: 'accent', Client: 'client', Support: 'neutral', Billing: 'neutral', Other: 'neutral' };
+    const catLong = { Lead: 'Sorted: Lead', Client: 'Sorted: Client', Support: 'Sorted: Support', Billing: 'Sorted: Billing', Other: 'Sorted: Other' };
+    const unreadOf = m => m.unread && !s.read[m.id];
+    const F = [['All', m => true], ['Unread', unreadOf]].concat(noai ? [] : [['Leads', m => m.cat === 'Lead'], ['Clients', m => m.cat === 'Client'], ['Support', m => m.cat === 'Support']])
+      .concat([['mastermindsbymarq.com', m => m.srcKey === 'mm', 1], ['madebymarquez.com', m => m.srcKey === 'mbm', 1], ['Personal', m => m.srcKey === 'personal', 1], ['Client portal', m => m.srcKey === 'portal', 1]]);
+    const all = is === 'empty' ? [] : M;
+    const fn = (F.find(f => f[0] === s.filter) || F[0])[1];
+    const list = all.filter(fn);
+    const filters = F.map(([l, f, src]) => { const on = s.filter === l, n = all.filter(f).filter(src ? () => true : unreadOf).length; return { l, n: String(n), hasN: l !== 'All' && n > 0, bg: on ? 'var(--text)' : src ? 'transparent' : 'var(--surface-2)', c: on ? 'var(--bg)' : 'var(--text-secondary)', nc: on ? 'var(--bg)' : 'var(--text-tertiary)', b: on ? '1px solid var(--text)' : '1px solid var(--border)', tap: () => this.setState({ filter: l }) }; });
+    const decor = m => ({ ...m, tagB: m.srcKey === 'portal' ? 'color-mix(in srgb, var(--client-accent) 45%, transparent)' : 'var(--border)', tagC: m.srcKey === 'portal' ? 'var(--client-accent)' : 'var(--text-secondary)', hasCat: !noai, catK: catK[m.cat], catLong: catLong[m.cat] });
+    const rows = list.map((m, i) => { const d = decor(m), u = unreadOf(m), on = s.sel === m.id && !isPhone; return { ...d, bt: i ? '1px solid var(--grid)' : 'none', bg: on ? 'var(--surface-3)' : 'transparent', dot: u ? 'var(--accent)' : 'transparent', fw: u ? 600 : 500, sc: u ? 'var(--text)' : 'var(--text-secondary)', hasDraft: !noai && !!m.draft && !s.sent[m.id] && !s.discarded[m.id], open: () => this.setState(st => ({ sel: m.id, read: { ...st.read, [m.id]: true } })) }; });
+    const selM = all.find(m => m.id === s.sel);
+    const sel = selM ? { ...decor(selM), ini: selM.from.split(' ').map(w => w[0]).join('').slice(0, 2), isTicket: !!selM.ticket } : { body: [] };
+    const hasDraft = !!(selM && selM.draft) && !noai;
+    const sent = selM && s.sent[selM.id], disc = selM && s.discarded[selM.id];
+    const phoneDetail = isPhone && !!selM;
+    const unreadN = M.filter(unreadOf).length;
+    const ptabs = [['inbox', 'Inbox', is === 'empty' || is === 'none' ? '0' : String(unreadN), 'var(--accent)'], ['leads', 'Leads', p.lstate === 'empty' ? '0' : '4', 'var(--danger)']].map(([k, l, n, bb]) => ({ l, n, bb: n === '0' ? 'var(--text-tertiary)' : bb, bg: s.tab === k ? 'var(--text)' : 'transparent', c: s.tab === k ? 'var(--bg)' : 'var(--text-secondary)', tap: () => this.setState({ tab: k }) }));
+    const mail = !isPhone || s.tab === 'inbox';
+    return {
+      showPhoneHead: isPhone && !phoneDetail, phoneSub: is === 'none' ? 'No inboxes connected · Example data' : '4 inboxes + client portal · Example data', ptabs,
+      showLeads: isPhone && s.tab === 'leads', lstate: p.lstate || 'normal', showMail: mail,
+      isNone: is === 'none', hasMail: is !== 'none', noai, isEmpty: is === 'empty', isPhone, filters, rows,
+      shellDisplay: isPhone ? 'flex' : 'grid', shellCols: isDesk ? '400px minmax(0,1fr)' : '340px minmax(0,1fr)', shellH: isPhone ? 'auto' : (isDesk ? '720px' : '640px'),
+      shellBg: isPhone ? 'transparent' : 'var(--surface)', shellBorder: isPhone ? 'none' : '1px solid var(--border)', shellShadow: isPhone ? 'none' : 'var(--card-shadow)',
+      listDisplay: phoneDetail ? 'none' : 'flex', listBR: isPhone ? 'none' : '1px solid var(--grid)', listGap: isPhone ? 12 : 0,
+      fPad: isPhone ? '0 16px' : '12px 12px', fMargin: isPhone ? '0 -16px' : '0', fOver: isPhone ? 'auto' : 'visible', fWrap: isPhone ? 'nowrap' : 'wrap', chipH: isPhone ? 40 : 30,
+      listOver: isPhone ? 'visible' : 'auto', listCardB: isPhone ? '1px solid var(--border)' : 'none', listCardR: isPhone ? '16px' : '0', listCardS: isPhone ? 'var(--card-shadow)' : 'none',
+      detDisplay: isPhone ? (phoneDetail ? 'flex' : 'none') : 'flex', detPad: isPhone ? '0' : '22px 26px', subjFs: isPhone ? 22 : 22,
+      hasSel: !!selM, noSelWide: !selM && !isPhone, sel, tixCols: isPhone ? '1fr' : '1fr 1fr',
+      showDraft: hasDraft && !sent && !disc, showSent: hasDraft && !!sent, showCompose: !!selM && (!hasDraft || !!disc) && !sent,
+      composeNote: noai ? "AI drafts are off. Write your own reply." : (disc ? 'Draft discarded.' : 'No reply needed, but you can write one.'),
+      sendFlex: isPhone ? '1' : 'none',
+      send: () => this.setState(st => ({ sent: { ...st.sent, [s.sel]: true } })), discard: () => this.setState(st => ({ discarded: { ...st.discarded, [s.sel]: true } })),
+      back: () => this.setState({ sel: null }),
+    };
+  }
+}
+</script>
+</body>
+</html>

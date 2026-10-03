@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<script>window.__mmForce = 'light';</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#e6e6ec;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:#705bcd;text-decoration:none}a:hover{color:#121216}</style>
+</helmet>
+<section id="p7" style="background:#e6e6ec; padding:56px 64px 96px; display:flex; flex-direction:column; gap:48px; font-family:Inter, system-ui, sans-serif; color:#5b5d69; min-height:100vh;">
+  <div style="display:flex; flex-direction:column; gap:8px; max-width:900px;">
+    <span style="font-size:13px; font-weight:500; color:#80828d;">Masterminds by MARQ · Light mode · all figures are example data</span>
+    <h1 style="margin:0; color:#121216; font-size:40px; font-weight:700; letter-spacing:-0.04em;">Light mode</h1>
+    <p style="margin:0; font-size:15px; line-height:1.5; text-wrap:pretty;">This page is locked to light so you can review it on its own. White cards with hairline borders, no shadows, and blurple stays the one accent. Every other page switches with the sun/moon toggle.</p>
+  </div>
+  <div style="display:flex; flex-wrap:wrap; gap:64px 48px; align-items:flex-start;">
+    <div style="display:flex; flex-direction:column; gap:12px;"><span style="color:#121216; font-size:18px; font-weight:600;">Home</span><dc-import name="MM App" size="phone" screen="home" mode="light" hint-size="392px,1700px"></dc-import></div>
+    <div style="display:flex; flex-direction:column; gap:12px;"><span style="color:#121216; font-size:18px; font-weight:600;">Budgeting</span><dc-import name="MM App" size="phone" screen="budget" mode="light" hint-size="392px,1900px"></dc-import></div>
+    <div style="display:flex; flex-direction:column; gap:12px;"><span style="color:#121216; font-size:18px; font-weight:600;">Inbox</span><dc-import name="MM App" size="phone" screen="inbox" mode="light" hint-size="392px,1400px"></dc-import></div>
+    <div style="display:flex; flex-direction:column; gap:12px;"><span style="color:#121216; font-size:18px; font-weight:600;">Page 1 · Billing</span><dc-import name="MM 1 System" pick="billing" light="true" hint-size="392px,1200px"></dc-import></div>
+    <div style="display:flex; flex-direction:column; gap:12px;"><span style="color:#121216; font-size:18px; font-weight:600;">Page 2 · Cash-Flow Forecast</span><dc-import name="MM 2 Personal" pick="cash" light="true" hint-size="392px,1500px"></dc-import></div>
+    <div style="display:flex; flex-direction:column; gap:12px;"><span style="color:#121216; font-size:18px; font-weight:600;">Page 3 · Contacts</span><dc-import name="MM 3 Cold Calling" pick="contacts" hint-size="820px,1300px"></dc-import></div>
+    <div style="display:flex; flex-direction:column; gap:12px;"><span style="color:#121216; font-size:18px; font-weight:600;">Page 4 · Client Portal</span><dc-import name="MM 4 Clients" pick="client_portal" hint-size="1240px,1500px"></dc-import></div>
+    <div style="display:flex; flex-direction:column; gap:12px;"><span style="color:#121216; font-size:18px; font-weight:600;">Page 5 · Invoicing</span><dc-import name="MM 5 Scaling" pick="invoicing" hint-size="392px,1100px"></dc-import></div>
+    <div style="display:flex; flex-direction:column; gap:12px;"><span style="color:#121216; font-size:18px; font-weight:600;">Page 6 · Stocks</span><dc-import name="MM 6 Side Hustles" pick="stocks" hint-size="392px,1300px"></dc-import></div>
+    <div style="display:flex; flex-direction:column; gap:12px;"><span style="color:#121216; font-size:18px; font-weight:600;">Desktop · Inbox split view</span><dc-import name="MM App" size="desktop" screen="inbox" mode="light" hint-size="1442px,1000px"></dc-import></div>
+  </div>
+</section>
+</x-dc>
+</body>
+</html>

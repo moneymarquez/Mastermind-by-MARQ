@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:#897cdc;text-decoration:none}a:hover{color:#f4f4f6}</style>
+</helmet>
+<section id="p3" style="background:{{ secBg }}; padding:{{ secPad }}; display:flex; flex-direction:column; gap:48px; font-family:Inter, system-ui, sans-serif; color:{{ pg.t2 }}; font-variant-numeric:tabular-nums; min-height:{{ secMin }};">
+  <div style="display:{{ headD }}; flex-direction:column; gap:8px; max-width:900px;">
+    <span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">Masterminds by MARQ · Page 3 of 6 · all figures are example data</span>
+    <h1 style="margin:0; color:{{ pg.t1 }}; font-size:40px; font-weight:700; letter-spacing:-0.04em;">Cold Calling</h1>
+    <p style="margin:0; font-size:15px; line-height:1.45;">Dialing, Contacts, and Call Recordings. Phone frames follow the light/dark toggle on any page.</p>
+  </div>
+  <div style="display:flex; flex-wrap:wrap; gap:72px 56px; align-items:flex-start;">
+
+    <div id="dialing" style="display:{{ show.dialing }}; flex-direction:column; gap:14px;">
+      <div style="display:flex; flex-direction:column; gap:2px;"><span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Dialing</span><span style="font-size:13px; color:{{ pg.t3 }};">Session stats, live dialer with outcomes, queue</span></div>
+      <div style="display:flex; gap:32px; align-items:flex-start;">
+        <dc-import name="MM Phone" back="Modules" title="Dialing" sub="Calling hour · 9:00–10:00 · Example data" tab="all" full="true" hint-size="392px,1500px">
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; gap:12px;">
+            <span style="font-size:13px; font-weight:500;">Calls this session</span>
+            <div style="display:flex; align-items:baseline; gap:8px; color:var(--text); font-size:46px; font-weight:600; letter-spacing:-0.04em; line-height:1;">61<span style="font-size:20px; color:var(--text-tertiary); letter-spacing:-0.02em;">of 80 goal</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><dc-import name="MM Chip" t="On pace" k="good" hint-size="70px,22px"></dc-import><span style="font-size:13px; color:var(--text-tertiary); font-weight:500;">18 min left</span></div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <dc-import name="MM Stat" label="Calls per hour" value="64" pill="↑ 9 vs last week" k="good" hint-size="100%,100px"></dc-import>
+            <dc-import name="MM Stat" label="Connect rate" value="23%" pill="14 of 61" k="neutral" hint-size="100%,100px"></dc-import>
+          </div>
+          <dc-import name="MM Card" title="Outcomes" meta="Today" hint-size="100%,190px">
+            <dc-import name="MM Donut" names="No answer,Voicemail,Connected,Booked" vals="31,16,11,3" pre="" center="61 calls" hint-size="100%,124px"></dc-import>
+          </dc-import>
+          <dc-import name="MM Card" title="Calls per hour" meta="Last 7 sessions" hint-size="100%,220px">
+            <dc-import name="MM Bars" vals="48,55,52,60,58,55,64" labels="Tue,Wed,Thu,Fri,Mon,Tue,Today" pre="" hint-size="100%,164px"></dc-import>
+          </dc-import>
+          <dc-import name="MM Card" title="Up next" meta="19 in queue" flush="true" hint-size="100%,300px">
+            <div>
+              <dc-import name="MM Row" n="Becker Auto" meta="Tom Becker" chip="Callback 9:45" k="warn" amt="(512) 555-0143" av="BA" square="true" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Silva Bakery" meta="Ana Silva" chip="New · LeadFlow" k="accent" amt="(512) 555-0178" av="SB" square="true" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Lakeview Vet" meta="Front desk" chip="2nd attempt" k="neutral" amt="(512) 555-0122" av="LV" square="true" hint-size="100%,70px"></dc-import>
+            </div>
+          </dc-import>
+        </dc-import>
+        <dc-import name="MM Phone" tabs="none" back="End session" nova="false" title="" hint-size="392px,846px">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px 0 4px; text-align:center;">
+            <div style="width:72px; height:72px; border-radius:50%; background:var(--surface-3); display:flex; align-items:center; justify-content:center; color:var(--text); font-size:22px; font-weight:600;">MH</div>
+            <span style="color:var(--text); font-size:24px; font-weight:700; letter-spacing:-0.035em;">Marcus Hill</span>
+            <span style="font-size:14px;">Hill &amp; Co. Plumbing · (512) 555-0109</span>
+            <div style="display:flex; align-items:center; gap:8px; padding-top:4px;"><dc-import name="MM Chip" t="Connected" k="live" hint-size="90px,22px"></dc-import><span style="color:var(--text); font-size:15px; font-weight:600;">02:14</span></div>
+          </div>
+          <dc-import name="MM Card" title="Notes for this call" meta="From Contacts" hint-size="100%,140px">
+            <p style="margin:0; font-size:14px; line-height:1.45;">Audit score 48. Weakest: no online booking, slow site. Spoke to his office manager Sept 12; said call back after the 20th.</p>
+          </dc-import>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <span style="font-size:13px; font-weight:500;">Log outcome</span>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <span style="height:52px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:var(--text); color:var(--bg); font-size:15px; font-weight:600;">Booked meeting</span>
+              <span style="height:52px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:15px; font-weight:500;">Call back</span>
+              <span style="height:52px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:15px; font-weight:500;">Not interested</span>
+              <span style="height:52px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:15px; font-weight:500;">Voicemail</span>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+            <span style="height:56px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; border-radius:12px; background:var(--surface); border:1px solid var(--border); color:var(--text); font-size:12px; font-weight:500;">Mute</span>
+            <span style="height:56px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; border-radius:12px; background:var(--surface); border:1px solid var(--border); color:var(--text); font-size:12px; font-weight:500;">Recording</span>
+            <span style="height:56px; display:flex; align-items:center; justify-content:center; border-radius:12px; background:var(--danger); color:#fff; font-size:15px; font-weight:600;">Hang up</span>
+          </div>
+        </dc-import>
+      </div>
+      <dc-import name="MM States" empty="Your call queue is empty. Add contacts or pull new leads in to start a session." cta="Add to queue" ai="Without AI, calls aren't summarized and notes aren't pre-filled. Dialing, outcomes, and stats still work." hint-size="390px,380px"></dc-import>
+    </div>
+
+    <div id="contacts" style="display:{{ show.contacts }}; flex-direction:column; gap:14px;">
+      <div style="display:flex; flex-direction:column; gap:2px;"><span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Contacts</span><span style="font-size:13px; color:{{ pg.t3 }};">Dense list and dense record</span></div>
+      <div style="display:flex; gap:32px; align-items:flex-start;">
+        <dc-import name="MM Phone" back="Modules" title="Contacts" sub="1,284 contacts · Example data" tab="all" fab="Contact" full="true" hint-size="392px,1100px">
+          <div style="display:flex; align-items:center; gap:10px; height:46px; padding:0 14px; border-radius:8px; background:var(--surface-2); border:1px solid var(--border); color:var(--text-tertiary); font-size:16px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>Search name, business, phone</div>
+          <div style="display:flex; gap:6px; overflow-x:auto; margin:0 -16px; padding:0 16px;">
+            <span style="flex:none; height:40px; display:flex; align-items:center; padding:0 14px; border-radius:999px; background:var(--text); color:var(--bg); font-size:13px; font-weight:500;">All</span>
+            <span style="flex:none; height:40px; display:flex; align-items:center; padding:0 14px; border-radius:999px; border:1px solid var(--border); font-size:13px; font-weight:500;">Callback due 7</span>
+            <span style="flex:none; height:40px; display:flex; align-items:center; padding:0 14px; border-radius:999px; border:1px solid var(--border); font-size:13px; font-weight:500;">Never called 312</span>
+            <span style="flex:none; height:40px; display:flex; align-items:center; padding:0 14px; border-radius:999px; border:1px solid var(--border); font-size:13px; font-weight:500;">Clients 6</span>
+          </div>
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:0 14px;">
+            <sc-for list="{{ contacts }}" as="c" hint-placeholder-count="7">
+              <div style="display:grid; grid-template-columns:34px minmax(0,1fr) auto; gap:10px; align-items:center; padding:10px 0; border-top:{{ c.bt }};">
+                <div style="width:34px; height:34px; border-radius:50%; background:var(--surface-3); display:flex; align-items:center; justify-content:center; color:var(--text); font-size:11.5px; font-weight:600;">{{ c.ini }}</div>
+                <div style="display:flex; flex-direction:column; gap:1px; min-width:0;"><span style="color:var(--text); font-size:14.5px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ c.n }}</span><span style="font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ c.biz }} · {{ c.last }}</span></div>
+                <dc-import name="MM Chip" t="{{ c.st }}" k="{{ c.k }}" hint-size="80px,22px"></dc-import>
+              </div>
+            </sc-for>
+          </div>
+        </dc-import>
+        <dc-import name="MM Phone" back="Contacts" title="Marcus Hill" sub="Owner · Hill &amp; Co. Plumbing" tab="all" full="true" hint-size="392px,1250px">
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px;">
+            <span style="height:52px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:var(--text); color:var(--bg); font-size:13px; font-weight:600;">Call</span>
+            <span style="height:52px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:500;">Text</span>
+            <span style="height:52px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:500;">Email</span>
+            <span style="height:52px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:500;">To CRM</span>
+          </div>
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden;">
+            <sc-for list="{{ fields }}" as="f" hint-placeholder-count="8">
+              <div style="display:grid; grid-template-columns:112px minmax(0,1fr); gap:10px; align-items:center; min-height:42px; padding:0 14px; border-top:{{ f.bt }}; font-size:13.5px;">
+                <span style="color:var(--text-tertiary); font-weight:500;">{{ f.l }}</span>
+                <span style="color:var(--text); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ f.v }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <dc-import name="MM Card" title="Activity" meta="5 touches" hint-size="100%,330px">
+            <div style="display:flex; flex-direction:column;">
+              <sc-for list="{{ activity }}" as="a" hint-placeholder-count="5">
+                <div style="display:flex; gap:10px;">
+                  <div style="width:12px; flex:none; display:flex; flex-direction:column; align-items:center;"><div style="margin-top:5px; width:8px; height:8px; border-radius:50%; background:{{ a.dot }};"></div><div style="flex:1; width:1px; background:var(--grid);"></div></div>
+                  <div style="flex:1; display:flex; flex-direction:column; gap:2px; padding-bottom:14px;"><span style="color:var(--text); font-size:14px; font-weight:500;">{{ a.t }}</span><span style="font-size:12.5px;">{{ a.d }}</span></div>
+                </div>
+              </sc-for>
+            </div>
+          </dc-import>
+        </dc-import>
+      </div>
+      <dc-import name="MM States" empty="No contacts yet. Import a CSV or add your first one." cta="Import contacts" ai="Without AI, contacts aren't enriched with business details. Everything you enter still saves." hint-size="390px,380px"></dc-import>
+    </div>
+
+    <div id="recordings" style="display:{{ show.recordings }}; flex-direction:column; gap:14px;">
+      <div style="display:flex; flex-direction:column; gap:2px;"><span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Call Recordings</span><span style="font-size:13px; color:{{ pg.t3 }};">Library linked to contacts, playback</span></div>
+      <dc-import name="MM Phone" back="Modules" title="Call Recordings" sub="212 this month · Example data" tab="all" full="true" hint-size="392px,1250px">
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; gap:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:baseline;"><span style="color:var(--text); font-size:15px; font-weight:600;">Marcus Hill</span><span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">Today 9:31 AM · 4:52</span></div>
+          <div style="display:flex; align-items:center; gap:2px; height:44px;">
+            <sc-for list="{{ wave }}" as="w" hint-placeholder-count="48"><div style="flex:1; height:{{ w.h }}px; border-radius:1px; background:{{ w.c }};"></div></sc-for>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:500; color:var(--text-tertiary);"><span>2:14</span><span>4:52</span></div>
+          <div style="display:flex; align-items:center; justify-content:center; gap:20px;">
+            <span style="font-size:13px; font-weight:500; color:var(--text);">−15s</span>
+            <div style="width:56px; height:56px; border-radius:50%; background:var(--text); display:flex; align-items:center; justify-content:center; color:var(--bg);"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg></div>
+            <span style="font-size:13px; font-weight:500; color:var(--text);">+15s</span>
+          </div>
+          <div style="padding:12px; border-radius:10px; background:var(--surface-3); font-size:14px; line-height:1.45;"><span style="color:var(--text);">Summary:</span> wants online booking before spring. Price question at 3:40. Booked a walkthrough Thursday 2 PM.</div>
+        </div>
+        <dc-import name="MM Card" title="Recent" meta="Linked to contacts" flush="true" hint-size="100%,380px">
+          <div>
+            <dc-import name="MM Row" n="Marcus Hill" meta="Hill &amp; Co." chip="Booked" k="good" amt="4:52" sub="Today" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Priya Nair" meta="Nair Wellness" chip="Call back" k="warn" amt="2:08" sub="Today" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Tom Becker" meta="Becker Auto" chip="Not interested" k="neutral" amt="0:47" sub="Yesterday" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Lakeview Vet" meta="Front desk" chip="Connected" k="neutral" amt="1:30" sub="Yesterday" hint-size="100%,70px"></dc-import>
+          </div>
+        </dc-import>
+      </dc-import>
+      <dc-import name="MM States" empty="No recordings yet. Turn on recording in Dialing and calls save here." cta="Turn on recording" ai="Summaries need AI. Recordings and playback still work." hint-size="390px,380px"></dc-import>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this._mm = () => this.forceUpdate(); window.addEventListener('mm-theme', this._mm); }
+  componentWillUnmount() { window.removeEventListener('mm-theme', this._mm); }
+  pk(pg) { const p = this.props.pick, ids = ["dialing","contacts","recordings"], show = {}; ids.forEach(i => show[i] = !p || p === i ? 'flex' : 'none'); return { show, headD: p ? 'none' : 'flex', secBg: p ? 'transparent' : pg.bg, secPad: p ? '0' : '56px 64px 96px', secMin: p ? '0' : '100vh' }; }
+  renderVals() {
+    let t = 'dark'; try { t = window.__mmForce || localStorage.getItem('mm-theme') || 'dark'; } catch (e) {}
+    if (t === 'system') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    const pg = t === 'dark' ? { bg: '#08080a', t1: '#f4f4f6', t2: '#9a9ca8', t3: '#6b6d78' } : { bg: '#e6e6ec', t1: '#121216', t2: '#5b5d69', t3: '#80828d' };
+    const contacts = [['Marcus Hill', 'Hill & Co. Plumbing', 'Called today', 'Booked', 'good'], ['Priya Nair', 'Nair Wellness', 'Called today', 'Call back', 'warn'], ['Ana Silva', 'Silva Bakery', 'New', 'Never called', 'neutral'], ['Tom Becker', 'Becker Auto', 'Yesterday', 'Not interested', 'neutral'], ['Dana Lee', 'Harbor Dental', 'Sep 18', 'Client', 'client'], ['Sam Ruiz', 'Ridgeline Roofing', 'Sep 15', 'Client', 'client'], ['Owen Clark', 'Clark Law', 'Sep 2', 'No answer ×3', 'neutral']]
+      .map(([n, biz, last, st, k], i) => ({ n, biz, last, st, k, ini: n.split(' ').map(w => w[0]).join(''), bt: i ? '1px solid var(--grid)' : 'none' }));
+    const fields = [['Stage', 'Meeting booked'], ['Phone', '(512) 555-0109'], ['Email', 'marcus@hillplumbing.com'], ['Website', 'hillplumbing.com'], ['Audit score', '48 of 100'], ['Source', 'Audit form'], ['Last call', 'Today · 4:52 · booked'], ['Next step', 'Walkthrough Thu 2 PM']]
+      .map(([l, v], i) => ({ l, v, bt: i ? '1px solid var(--grid)' : 'none' }));
+    const activity = [['Booked walkthrough', 'Today 9:36 AM · from call', 'var(--success)'], ['Call · 4:52', 'Today 9:31 AM · recording saved', 'var(--accent)'], ['Call · voicemail', 'Sep 12 · left message', 'var(--text-tertiary)'], ['Took the business audit', 'Sep 10 · scored 48', 'var(--text-tertiary)'], ['Added from audit form', 'Sep 10', 'var(--text-tertiary)']].map(([t, d, dot]) => ({ t, d, dot }));
+    const wave = Array.from({ length: 48 }, (_, i) => ({ h: 6 + Math.round(Math.abs(Math.sin(i * 1.3) * 26 + Math.sin(i * 0.4) * 10)), c: i < 22 ? 'var(--accent)' : 'var(--surface-3)' }));
+    return { ...this.pk(pg), pg, contacts, fields, activity, wave };
+  }
+}
+</script>
+</body>
+</html>

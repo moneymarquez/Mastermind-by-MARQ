@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:#897cdc;text-decoration:none}a:hover{color:#f4f4f6}</style>
+</helmet>
+<section id="p4" style="background:{{ secBg }}; padding:{{ secPad }}; display:flex; flex-direction:column; gap:48px; font-family:Inter, system-ui, sans-serif; color:{{ pg.t2 }}; font-variant-numeric:tabular-nums; min-height:{{ secMin }};">
+  <div style="display:{{ headD }}; flex-direction:column; gap:8px; max-width:900px;">
+    <span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">Masterminds by MARQ · Page 4 of 6 · all figures are example data</span>
+    <h1 style="margin:0; color:{{ pg.t1 }}; font-size:40px; font-weight:700; letter-spacing:-0.04em;">Clients and Client Portal</h1>
+    <p style="margin:0; font-size:15px; line-height:1.45;">Your side of each client, and what the client sees. The portal uses the teal client accent so it never reads as your own workspace.</p>
+  </div>
+
+  <div id="client-modules" style="display:{{ show.client_modules }}; flex-direction:column; gap:14px;">
+    <div style="display:flex; flex-direction:column; gap:2px;"><span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Client Modules · operator side</span><span style="font-size:13px; color:{{ pg.t3 }};">Every client with stage, tickets, and last activity; then one client's detail</span></div>
+    <div style="display:flex; flex-wrap:wrap; gap:32px; align-items:flex-start;">
+      <dc-import name="MM Phone" back="Modules" title="Clients" sub="6 active · Example data" tab="all" full="true" hint-size="392px,1250px">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <dc-import name="MM Stat" label="Monthly retainers" value="$7,200" pill="↑ $1,200" k="good" hint-size="100%,100px"></dc-import>
+          <dc-import name="MM Stat" label="Open tickets" value="4" pill="1 waiting on you" k="warn" hint-size="100%,100px"></dc-import>
+        </div>
+        <dc-import name="MM Card" title="Pipeline" meta="6 clients" hint-size="100%,130px">
+          <div style="display:flex; height:10px; border-radius:999px; overflow:hidden; gap:2px;">
+            <div style="flex:1; background:var(--cat-other);"></div><div style="flex:2; background:var(--cat-3);"></div><div style="flex:2; background:var(--accent);"></div><div style="flex:1; background:var(--success);"></div>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px; font-size:12px; font-weight:500;">
+            <span><span style="color:var(--text); font-weight:600;">1</span> Kickoff</span><span><span style="color:var(--text); font-weight:600;">2</span> Building</span><span><span style="color:var(--text); font-weight:600;">2</span> Review</span><span><span style="color:var(--text); font-weight:600;">1</span> Handed off</span>
+          </div>
+        </dc-import>
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:0 14px;">
+          <sc-for list="{{ clients }}" as="c" hint-placeholder-count="6">
+            <div style="display:flex; flex-direction:column; gap:7px; padding:12px 0; border-top:{{ c.bt }};">
+              <div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px;"><span style="color:var(--text); font-size:15px; font-weight:600;">{{ c.n }}</span><span style="font-size:12px; font-weight:500; color:var(--text-tertiary); white-space:nowrap;">{{ c.last }}</span></div>
+              <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                <dc-import name="MM Chip" t="{{ c.stage }}" k="{{ c.sk }}" hint-size="80px,22px"></dc-import>
+                <dc-import name="MM Chip" t="{{ c.tix }}" k="{{ c.tk }}" hint-size="80px,22px"></dc-import>
+                <span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">{{ c.fee }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </dc-import>
+
+      <dc-import name="MM Phone" back="Clients" title="Harbor Dental" sub="Website + booking · started Jul 8" tab="all" full="true" hint-size="392px,1650px">
+        <div style="display:flex; gap:8px;">
+          <span style="flex:1; height:46px; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:8px; border:1px solid color-mix(in srgb, var(--client-accent) 50%, var(--border)); color:var(--client-accent); font-size:14px; font-weight:600;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>Preview as client</span>
+          <span style="height:46px; display:flex; align-items:center; padding:0 14px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Message</span>
+        </div>
+        <dc-import name="MM Card" title="Progress" meta="Step 4 of 6" hint-size="100%,380px">
+          <div style="display:flex; flex-direction:column;">
+            <sc-for list="{{ spine }}" as="s" hint-placeholder-count="6">
+              <div style="display:flex; gap:12px;">
+                <div style="width:22px; flex:none; display:flex; flex-direction:column; align-items:center;">
+                  <div style="width:22px; height:22px; border-radius:50%; box-sizing:border-box; background:{{ s.bg }}; border:{{ s.b }}; display:flex; align-items:center; justify-content:center; color:var(--bg); font-size:11px; font-weight:700;">{{ s.mark }}</div>
+                  <div style="flex:1; width:2px; min-height:14px; background:{{ s.line }};"></div>
+                </div>
+                <div style="flex:1; display:flex; flex-direction:column; gap:2px; padding:1px 0 16px;"><span style="color:{{ s.tc }}; font-size:14.5px; font-weight:500;">{{ s.n }}</span><span style="font-size:12.5px;">{{ s.d }}</span></div>
+              </div>
+            </sc-for>
+          </div>
+        </dc-import>
+        <dc-import name="MM Card" title="Tickets" meta="2 open" flush="true" hint-size="100%,230px">
+          <div>
+            <dc-import name="MM Row" n="#14 Booking button on mobile" meta="Yesterday" chip="Waiting on you" k="warn" amt="" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="#13 Update holiday hours" meta="Sep 18" chip="In progress" k="neutral" amt="" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="#12 New staff photos" meta="Sep 9" chip="Done" k="good" amt="" dim="true" hint-size="100%,70px"></dc-import>
+          </div>
+        </dc-import>
+        <dc-import name="MM Card" title="Change log" meta="Shown to client" hint-size="100%,230px">
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <sc-for list="{{ changes }}" as="c" hint-placeholder-count="3">
+              <div style="display:grid; grid-template-columns:52px minmax(0,1fr); gap:10px; font-size:14px;"><span style="font-size:12.5px; font-weight:500; color:var(--text-tertiary);">{{ c.d }}</span><span style="color:var(--text); line-height:1.4;">{{ c.t }}</span></div>
+            </sc-for>
+          </div>
+        </dc-import>
+        <dc-import name="MM Card" title="Handoff" hint-size="100%,140px">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+            <div style="display:flex; flex-direction:column; gap:2px;"><span style="color:var(--text); font-size:15px; font-weight:500;">Hand off to client</span><span style="font-size:12.5px; line-height:1.4;">Gives Dana full control and moves billing to maintenance.</span></div>
+            <div style="width:44px; height:26px; flex:none; border-radius:999px; background:var(--surface-3); position:relative;"><div style="position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:var(--text-tertiary);"></div></div>
+          </div>
+          <span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">Unlocks after step 6 is approved.</span>
+        </dc-import>
+      </dc-import>
+    </div>
+    <dc-import name="MM States" empty="No clients yet. Sign one through Start or Client CRM and they show up here." cta="Start a new client" ai="Without AI, ticket summaries and change-log drafts are off. You can still write them yourself." hint-size="390px,380px"></dc-import>
+  </div>
+
+  <div id="client-portal" style="display:{{ show.client_portal }}; flex-direction:column; gap:14px;">
+    <div style="display:flex; flex-direction:column; gap:2px;"><span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Client Portal · what Harbor Dental sees</span><span style="font-size:13px; color:{{ pg.t3 }};">Teal accent, calm reports, no internal jargon</span></div>
+    <div style="display:flex; flex-wrap:wrap; gap:32px; align-items:flex-start;">
+      <dc-import name="MM Phone" tabs="portal" tab="home" full="true" title="" hint-size="392px,1450px">
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <h1 style="margin:0; color:var(--text); font-size:26px; font-weight:700; letter-spacing:-0.035em; line-height:1.15;">Welcome back, Dana</h1>
+          <p style="margin:0; font-size:15px; line-height:1.45;">Your new site is in review. One thing needs you this week.</p>
+        </div>
+        <div style="background:var(--surface); border:1px solid color-mix(in srgb, var(--client-accent) 40%, var(--border)); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:12px;">
+          <span style="font-size:13px; font-weight:500; color:var(--client-accent);">Needs you</span>
+          <span style="color:var(--text); font-size:17px; font-weight:600; letter-spacing:-0.02em;">Approve the new booking page</span>
+          <span style="font-size:14px; line-height:1.45;">Take a look and approve, or tell us what to change. It goes live after you approve.</span>
+          <span style="height:46px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:var(--client-accent); color:var(--bg); font-size:15px; font-weight:600;">Review and approve</span>
+        </div>
+        <dc-import name="MM Card" title="Where we are" meta="Step 4 of 6" hint-size="100%,150px">
+          <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:4px;">
+            <sc-for list="{{ spine }}" as="s" hint-placeholder-count="6"><div style="height:6px; border-radius:3px; background:{{ s.pbar }};"></div></sc-for>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:500;"><span style="color:var(--text);">Review</span><span>Next: Launch · Oct 6</span></div>
+        </dc-import>
+        <dc-import name="MM Card" title="What we built" meta="3 pieces" flush="true" hint-size="100%,250px">
+          <div>
+            <dc-import name="MM Row" n="New website" meta="harbordental.com" chip="In review" k="client" amt="" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Online booking" meta="Book now button" chip="In review" k="client" amt="" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Google profile refresh" meta="Photos, hours" chip="Live" k="good" amt="" hint-size="100%,70px"></dc-import>
+          </div>
+        </dc-import>
+        <dc-import name="MM Card" title="Ask a quick question" hint-size="100%,170px">
+          <div style="min-height:64px; padding:12px 14px; border-radius:8px; background:var(--surface-2); border:1px solid var(--border); color:var(--text-tertiary); font-size:15px; box-sizing:border-box;">Type your question…</div>
+          <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:12.5px; font-weight:500; color:var(--text-tertiary);">Marq usually replies within a few hours</span><span style="height:40px; display:flex; align-items:center; padding:0 16px; border-radius:8px; background:var(--client-accent); color:var(--bg); font-size:14px; font-weight:600;">Send</span></div>
+        </dc-import>
+      </dc-import>
+
+      <dc-import name="MM Phone" tabs="portal" tab="numbers" full="true" title="Your numbers" sub="September · updated this morning" hint-size="392px,1250px">
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; display:flex; flex-direction:column; gap:14px;">
+          <span style="font-size:13px; font-weight:500;">Appointments booked online</span>
+          <div style="display:flex; align-items:baseline; color:var(--text); font-size:46px; font-weight:600; letter-spacing:-0.04em; line-height:1;">38</div>
+          <p style="margin:0; font-size:15px; line-height:1.55; color:var(--text); text-wrap:pretty;">That's 14 more than August. Most came in after 6 PM, when the front desk is closed, which is exactly what online booking is for.</p>
+          <dc-import name="MM Line" vals="9,12,11,14,18,16,21,24,22,27,31,38" labels="Jul,Aug,Sep" color="client" h="120" hint-size="322px,120px"></dc-import>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <dc-import name="MM Stat" label="Website visits" value="2,410" pill="↑ 18%" k="good" hint-size="100%,100px"></dc-import>
+          <dc-import name="MM Stat" label="Calls from Google" value="64" pill="↑ 9" k="good" hint-size="100%,100px"></dc-import>
+        </div>
+        <dc-import name="MM Card" title="Bookings by week" meta="September" hint-size="100%,220px">
+          <dc-import name="MM Bars" vals="7,9,10,12" labels="Wk 1,Wk 2,Wk 3,Wk 4" pre="" color="client" hint-size="100%,164px"></dc-import>
+        </dc-import>
+        <dc-import name="MM Card" title="Invoices" meta="Paid through Sep" flush="true" hint-size="100%,230px">
+          <div>
+            <dc-import name="MM Row" n="October retainer" meta="Due Oct 1" chip="Upcoming" k="neutral" amt="$1,200.00" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="September retainer" meta="Sep 1" chip="Paid" k="good" amt="$1,200.00" dim="true" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Build, final half" meta="Aug 15" chip="Paid" k="good" amt="$2,400.00" dim="true" hint-size="100%,70px"></dc-import>
+          </div>
+        </dc-import>
+      </dc-import>
+
+      <dc-import name="MM Phone" tabs="portal" tab="help" back="Help" nova="false" title="New ticket" sub="We'll reply here and by email" hint-size="392px,846px">
+        <div style="display:flex; flex-direction:column; gap:6px;"><span style="font-size:13px; font-weight:500;">What's going on?</span><div style="padding:12px 14px; border-radius:8px; background:var(--surface-2); border:1px solid var(--border); color:var(--text); font-size:15px; line-height:1.45;">The Book now button doesn't show on my iPhone.</div></div>
+        <div style="display:flex; flex-direction:column; gap:6px;"><span style="font-size:13px; font-weight:500;">What should we avoid? <span style="color:var(--danger);">Required</span></span><div style="padding:12px 14px; border-radius:8px; background:var(--surface-2); border:1px solid var(--border); color:var(--text); font-size:15px; line-height:1.45;">Don't change the colors or move the phone number.</div></div>
+        <div style="display:flex; flex-direction:column; gap:6px;"><span style="font-size:13px; font-weight:500;">What would you prefer? <span style="color:var(--danger);">Required</span></span><div style="min-height:72px; padding:12px 14px; border-radius:8px; background:var(--surface-2); border:1.5px solid var(--client-accent); color:var(--text-tertiary); font-size:15px; box-sizing:border-box;">For example: the same button as desktop, pinned to the bottom</div><span style="font-size:12.5px; font-weight:500; color:var(--text-tertiary);">This helps us get it right the first time.</span></div>
+        <div style="display:flex; flex-direction:column; gap:6px;"><span style="font-size:13px; font-weight:500;">Screenshot (optional)</span><div style="height:64px; border-radius:8px; border:1px dashed var(--border); display:flex; align-items:center; justify-content:center; font-size:14px;">Add a photo</div></div>
+        <span style="height:52px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:var(--surface-3); color:var(--text-tertiary); font-size:16px; font-weight:600;">Send ticket</span>
+      </dc-import>
+    </div>
+    <dc-import name="MM States" empty="Nothing to show yet. Your progress and numbers appear here once your project starts." cta="Message Marq" ai="Plain-language summaries of your numbers need AI. The charts and figures still update." hint-size="390px,380px"></dc-import>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this._mm = () => this.forceUpdate(); window.addEventListener('mm-theme', this._mm); }
+  componentWillUnmount() { window.removeEventListener('mm-theme', this._mm); }
+  pk(pg) { const p = this.props.pick, ids = ["client_modules","client_portal"], show = {}; ids.forEach(i => show[i] = !p || p === i ? 'flex' : 'none'); return { show, headD: p ? 'none' : 'flex', secBg: p ? 'transparent' : pg.bg, secPad: p ? '0' : '56px 64px 96px', secMin: p ? '0' : '100vh' }; }
+  renderVals() {
+    let t = 'dark'; try { t = window.__mmForce || localStorage.getItem('mm-theme') || 'dark'; } catch (e) {}
+    if (t === 'system') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    const pg = t === 'dark' ? { bg: '#08080a', t1: '#f4f4f6', t2: '#9a9ca8', t3: '#6b6d78' } : { bg: '#e6e6ec', t1: '#121216', t2: '#5b5d69', t3: '#80828d' };
+    const stK = { Kickoff: 'neutral', Building: 'neutral', Review: 'accent', 'Handed off': 'good' };
+    const clients = [['Harbor Dental', 'Review', 2, 'Today', '$1,200/mo'], ['Ridgeline Roofing', 'Building', 1, 'Today', '$2,400 build'], ['Bloom Studio', 'Kickoff', 0, 'Yesterday', '$6,800 rebrand'], ['Clark Law', 'Review', 1, 'Sep 19', '$1,500/mo'], ['Nair Wellness', 'Building', 0, 'Sep 17', '$900/mo'], ['Silva Bakery', 'Handed off', 0, 'Aug 30', '$300/mo maint.']]
+      .map(([n, stage, tx, last, fee], i) => ({ n, stage, sk: stK[stage], tix: tx ? `${tx} ticket${tx > 1 ? 's' : ''}` : 'No tickets', tk: tx ? 'warn' : 'neutral', last, fee, bt: i ? '1px solid var(--grid)' : 'none' }));
+    const steps = [['Kickoff call', 'Jul 8'], ['Brand and content', 'Jul 22'], ['Build', 'Aug 30'], ['Review', 'In progress · waiting on approval'], ['Launch', 'Planned Oct 6'], ['Handoff', 'Planned Oct 20']];
+    const spine = steps.map(([n, d], i) => {
+      const done = i < 3, cur = i === 3;
+      return { n, d, mark: done ? '✓' : '', bg: done ? 'var(--accent)' : 'transparent', b: done ? 'none' : cur ? '2px solid var(--accent)' : '1.5px solid var(--border)', line: i === 5 ? 'transparent' : done ? 'var(--accent)' : 'var(--grid)', tc: i > 3 ? 'var(--text-secondary)' : 'var(--text)', pbar: i <= 3 ? 'var(--client-accent)' : 'var(--surface-3)' };
+    });
+    const changes = [['Sep 21', 'Booking page moved to review.'], ['Sep 18', 'Holiday hours added to the site and Google.'], ['Sep 9', 'New staff photos on the team page.']].map(([d, t2]) => ({ d, t: t2 }));
+    return { ...this.pk(pg), pg, clients, spine, changes };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0b0b0d;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:#897cdc;text-decoration:none}a:hover{color:#f4f4f6}</style>
+</helmet>
+<section id="p2" style="--bg:#0b0b0d; --surface:#131318; --surface-2:#101014; --surface-3:#1b1b21; --border:#25252d; --grid:#202027; --text:#f4f4f6; --text-secondary:#9a9ca8; --text-tertiary:#6b6d78; --accent:#897cdc; --accent-soft:#393453; --accent-wash:rgba(137,124,220,.12); --success:#3fcb7f; --warning:#e0b25e; --danger:#e2707f; --client-accent:#4fb3ac; --cat-1:#897cdc; --cat-2:#ce7a3b; --cat-3:#0094bc; --cat-other:#4a4c56; --card-shadow:0 0 40px rgba(0,0,0,.18); background:{{ pageBg }}; padding:{{ pagePad }}; display:flex; flex-direction:column; gap:48px; font-family:Inter, system-ui, sans-serif; color:#9a9ca8; font-variant-numeric:tabular-nums;">
+  <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex; flex-direction:column; gap:8px; max-width:900px;">
+      <span style="font-size:13px; font-weight:500; color:#6b6d78;">Masterminds by MARQ · Page 2 of 6 · all figures are example data</span>
+      <h1 style="margin:0; color:#f4f4f6; font-size:40px; font-weight:700; letter-spacing:-0.04em;">Personal</h1>
+      <p style="margin:0; font-size:15px; line-height:1.45;">16 modules for running your day, body, money, and head. Each one shows its main screen, its empty state, and its AI-off state.</p>
+    </div>
+  </sc-if>
+  <div style="display:flex; flex-wrap:wrap; gap:72px 56px; align-items:flex-start;">
+
+    <sc-if value="{{ s.plan }}" hint-placeholder-val="{{ true }}">
+      <div id="daily-plan" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Daily Plan</span><span style="font-size:13px; color:#6b6d78;">Timeline built from schedule, goals, and habits</span></div></sc-if>
+        <dc-import name="MM Phone" back="Home" title="Today" sub="Tue, Sep 22 · built by Nova · Example data" right="Replan" tab="home" full="true" light="{{ light }}" hint-size="392px,1250px">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <dc-import name="MM Stat" label="Focus time" value="4.5h" pill="Goal 4h" k="good" hint-size="100%,100px"></dc-import>
+            <dc-import name="MM Stat" label="Habits" value="2 of 4" pill="2 left today" k="neutral" hint-size="100%,100px"></dc-import>
+          </div>
+          <dc-import name="MM Card" title="Timeline" meta="Now 10:40 AM" hint-size="100%,700px">
+            <div style="display:flex; flex-direction:column;">
+              <sc-for list="{{ plan }}" as="e" hint-placeholder-count="8">
+                <sc-if value="{{ e.now }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex; align-items:center; gap:8px; margin:6px 0;"><span style="width:44px; text-align:right; font-size:11px; font-weight:600; color:var(--text);">10:40</span><div style="width:12px; display:flex; justify-content:center;"><div style="width:8px; height:8px; border-radius:50%; background:var(--accent);"></div></div><div style="flex:1; height:1px; background:var(--accent);"></div><span style="font-size:11px; font-weight:500; color:var(--text);">Now</span></div>
+                </sc-if>
+                <sc-if value="{{ e.item }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex; gap:8px;">
+                    <span style="width:44px; flex:none; text-align:right; padding-top:12px; font-size:12px; font-weight:500; color:var(--text-tertiary);">{{ e.t }}</span>
+                    <div style="width:12px; flex:none; display:flex; flex-direction:column; align-items:center;"><div style="margin-top:16px; width:8px; height:8px; border-radius:50%; box-sizing:border-box; background:{{ e.dot }}; border:1.5px solid {{ e.db }};"></div><div style="flex:1; width:1px; background:var(--grid);"></div></div>
+                    <div style="flex:1; min-width:0; margin:3px 0; padding:10px 12px; border-radius:10px; background:{{ e.bg }}; display:flex; justify-content:space-between; gap:8px; align-items:center;">
+                      <div style="display:flex; flex-direction:column; gap:2px; min-width:0;"><span style="color:{{ e.tc }}; font-size:14px; font-weight:500; letter-spacing:-0.01em; text-decoration:{{ e.td }};">{{ e.n }}</span><span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">{{ e.m }}</span></div>
+                      <sc-if value="{{ e.done }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+                    </div>
+                  </div>
+                </sc-if>
+              </sc-for>
+            </div>
+          </dc-import>
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; color:var(--text);"><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg>Why this order</div>
+            <p style="margin:0; font-size:15px; line-height:1.45;">Calls go before 10 because your connect rate is about twice as high then. Deep work sits after lunch, when you've logged the fewest interruptions.</p>
+          </div>
+        </dc-import>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="No plan yet. Add your schedule or a goal and Nova builds today from it." cta="Build today's plan" ai="Without AI, Daily Plan lists your schedule and habits in time order, and you arrange the day yourself." hint-size="390px,380px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.macros }}" hint-placeholder-val="{{ true }}">
+      <div id="macros" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Macros &amp; Meals</span><span style="font-size:13px; color:#6b6d78;">Photo logging, macro rings, water, symptoms</span></div></sc-if>
+        <dc-import name="MM Phone" back="All modules" title="Macros &amp; Meals" sub="Today · Example data" tab="all" fab="Log meal" full="true" light="{{ light }}" hint-size="392px,1500px">
+          <dc-import name="MM Card" title="Calories" meta="Target 2,300" hint-size="100%,190px">
+            <div style="display:flex; align-items:center; gap:18px;">
+              <dc-import name="MM Ring" pcts="0.74,0.65,0.65" center="1,640" sub="660 left" size="132" hint-size="132px,132px"></dc-import>
+              <div style="flex:1; display:flex; flex-direction:column; gap:12px;">
+                <sc-for list="{{ macros }}" as="m" hint-placeholder-count="3">
+                  <div style="display:flex; flex-direction:column; gap:2px;">
+                    <div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:2px; background:{{ m.c }};"></span><span style="font-size:13px; font-weight:500;">{{ m.n }}</span></div>
+                    <span style="font-size:13px; font-weight:500; color:var(--text-tertiary); padding-left:14px;"><span style="color:var(--text); font-weight:600;">{{ m.v }}</span> / {{ m.t }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </dc-import>
+          <dc-import name="MM Card" title="Water" meta="6 of 10 glasses" hint-size="100%,100px">
+            <div style="display:grid; grid-template-columns:repeat(10,1fr); gap:5px;">
+              <sc-for list="{{ water }}" as="w" hint-placeholder-count="10"><div style="height:28px; border-radius:6px; background:{{ w.bg }};"></div></sc-for>
+            </div>
+          </dc-import>
+          <dc-import name="MM Card" title="Meals" meta="3 logged" hint-size="100%,330px">
+            <div style="display:flex; flex-direction:column;">
+              <sc-for list="{{ meals }}" as="m" hint-placeholder-count="4">
+                <div style="display:flex; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--grid);">
+                  <div style="width:48px; height:48px; flex:none; border-radius:10px; background:repeating-linear-gradient(135deg, var(--surface-3) 0 6px, var(--surface-2) 6px 12px); display:flex; align-items:center; justify-content:center; font-family:ui-monospace, monospace; font-size:8.5px; color:var(--text-tertiary);">{{ m.ph }}</div>
+                  <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;"><span style="color:{{ m.tc }}; font-size:15px; font-weight:500;">{{ m.n }}</span><span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">{{ m.m }}</span></div>
+                  <span style="color:var(--text); font-size:15px; font-weight:600; letter-spacing:-0.02em;">{{ m.k }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </dc-import>
+          <dc-import name="MM Card" title="This week" meta="Calories per day" hint-size="100%,210px">
+            <dc-import name="MM Bars" vals="2210,2480,1980,2350,2600,2120,1640" labels="Wed,Thu,Fri,Sat,Sun,Mon,Today" top="1,640" hint-size="100%,164px"></dc-import>
+          </dc-import>
+          <dc-import name="MM Card" title="Symptoms" meta="Today" hint-size="100%,150px">
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+              <span style="padding:7px 12px; border-radius:999px; background:var(--surface-3); color:var(--text); font-size:13px; font-weight:500;">Low energy · 3 PM</span>
+              <span style="padding:7px 12px; border-radius:999px; background:var(--surface-3); color:var(--text); font-size:13px; font-weight:500;">Bloated · after lunch</span>
+              <span style="padding:7px 12px; border-radius:999px; border:1px dashed var(--border); font-size:13px; font-weight:500;">+ Add</span>
+            </div>
+            <p style="margin:0; font-size:14px; line-height:1.45;"><span style="color:var(--text);">Nova:</span> bloating followed a dairy-heavy lunch 3 of the last 4 times.</p>
+          </dc-import>
+        </dc-import>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="No meals logged today. Snap a photo and the macros fill in." cta="Log first meal" ai="Photo recognition needs AI. You can still log meals by typing them, and the rings still fill." hint-size="390px,380px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.sobriety }}" hint-placeholder-val="{{ true }}">
+      <div id="sobriety" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Sobriety</span><span style="font-size:13px; color:#6b6d78;">Streak, clean-day heatmap, Bender Mode, check-ins</span></div></sc-if>
+        <dc-import name="MM Phone" back="All modules" title="Sobriety" sub="Private to you · Example data" tab="all" full="true" light="{{ light }}" hint-size="392px,1450px">
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; gap:12px;">
+            <span style="font-size:13px; font-weight:500;">Clean streak</span>
+            <div style="display:flex; align-items:baseline; gap:8px; color:var(--text); font-size:46px; font-weight:600; letter-spacing:-0.04em; line-height:1;">47<span style="font-size:22px; color:var(--text-tertiary); letter-spacing:-0.02em;">days</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><dc-import name="MM Chip" t="Longest yet: 61 days" k="neutral" hint-size="140px,22px"></dc-import><span style="font-size:13px; color:var(--text-tertiary); font-weight:500;">Since Aug 6</span></div>
+            <div style="display:flex; flex-direction:column; gap:6px; padding-top:6px;">
+              <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:500;"><span>Next milestone: 60 days</span><span style="color:var(--text);">13 to go</span></div>
+              <div style="height:8px; border-radius:999px; background:var(--surface-3); overflow:hidden;"><div style="width:78%; height:100%; background:var(--accent); border-radius:999px;"></div></div>
+            </div>
+          </div>
+          <dc-import name="MM Card" title="Last 12 weeks" meta="Each square is a day" hint-size="100%,250px">
+            <dc-import name="MM Heatmap" cells="{{ soberCells }}" lo="" hi="Clean" slip="Slip" caption="Jul 1 – Sep 22" hint-size="100%,190px"></dc-import>
+          </dc-import>
+          <dc-import name="MM Card" title="Bender Mode" meta="For the hard nights" hint-size="100%,330px">
+            <p style="margin:0; font-size:15px; line-height:1.45;">Locks purchases over $50, messages your support person, and opens a guided journal until morning.</p>
+            <div style="height:44px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:15px; font-weight:500;">Turn on Bender Mode</div>
+            <div style="display:flex; flex-direction:column;">
+              <dc-import name="MM Row" n="Sep 19 · Friday" meta="Journal" chip="Craving 6 of 10" k="warn" amt="Walked it off" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Sep 12 · Friday" meta="Journal" chip="Craving 4 of 10" k="neutral" amt="Called Dev" hint-size="100%,70px"></dc-import>
+            </div>
+          </dc-import>
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; color:var(--text);"><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg>Evening check-in</div>
+            <p style="margin:0; font-size:15px; line-height:1.45;">It's Tuesday, which has been an easy night for you. How's it looking?</p>
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px;">
+              <span style="height:42px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Good</span>
+              <span style="height:42px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Tough</span>
+              <span style="height:42px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Need help</span>
+            </div>
+          </div>
+        </dc-import>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="Set your start date to begin a streak. Nothing here is shared unless you choose to." cta="Set start date" ai="AI check-ins are off. Your streak, heatmap, Bender Mode, and journal all still work." hint-size="390px,380px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.goals }}" hint-placeholder-val="{{ true }}">
+      <div id="goals" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Goals</span><span style="font-size:13px; color:#6b6d78;">Living contracts with AI paths and pace</span></div></sc-if>
+        <dc-import name="MM Phone" back="All modules" title="Goals" sub="3 active contracts · Example data" tab="all" fab="New goal" full="true" light="{{ light }}" hint-size="392px,1250px">
+          <sc-for list="{{ goals }}" as="g" hint-placeholder-count="3">
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; gap:14px;">
+              <div style="display:flex; justify-content:space-between; align-items:baseline;"><span style="color:var(--text); font-size:15px; font-weight:600; letter-spacing:-0.015em;">{{ g.n }}</span><span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">{{ g.by }}</span></div>
+              <div style="padding:12px; border-radius:10px; background:var(--surface-3); font-size:14px; line-height:1.45;">{{ g.terms }}</div>
+              <dc-import name="MM Pace" val="{{ g.v }}" max="{{ g.max }}" fill="{{ g.fill }}" mark="{{ g.mark }}" chip="{{ g.chip }}" k="{{ g.k }}" note="{{ g.note }}" hint-size="100%,70px"></dc-import>
+              <div style="display:flex; gap:8px; align-items:flex-start; padding-top:10px; border-top:1px solid var(--grid);">
+                <svg style="flex:none; margin-top:3px;" width="13" height="13" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg>
+                <span style="font-size:14px; line-height:1.45;"><span style="color:var(--text);">Next step:</span> {{ g.path }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </dc-import>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="No goals yet. Write one as a contract: what, by when, and what happens if you miss." cta="Write a goal" ai="Without AI, goals still track pace. Nova's suggested next steps are off." hint-size="390px,380px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.mental }}" hint-placeholder-val="{{ true }}">
+      <div id="mental-health" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Mental Health</span><span style="font-size:13px; color:#6b6d78;">Daily check-in, mood over time, AI reflection</span></div></sc-if>
+        <dc-import name="MM Phone" back="All modules" title="Mental Health" sub="Private to you · Example data" tab="all" full="true" light="{{ light }}" hint-size="392px,1250px">
+          <dc-import name="MM Card" title="How are you right now?" meta="Today" hint-size="100%,200px">
+            <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px;">
+              <sc-for list="{{ moods }}" as="m" hint-placeholder-count="5">
+                <div style="height:58px; border-radius:10px; background:{{ m.bg }}; border:{{ m.b }}; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;"><span style="color:var(--text); font-size:17px; font-weight:600;">{{ m.v }}</span><span style="font-size:10.5px; font-weight:500; color:var(--text-tertiary);">{{ m.l }}</span></div>
+              </sc-for>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+              <span style="padding:6px 11px; border-radius:999px; background:var(--text); color:var(--bg); font-size:13px; font-weight:500;">Slept well</span>
+              <span style="padding:6px 11px; border-radius:999px; background:var(--text); color:var(--bg); font-size:13px; font-weight:500;">Busy</span>
+              <span style="padding:6px 11px; border-radius:999px; border:1px solid var(--border); font-size:13px; font-weight:500;">Anxious</span>
+              <span style="padding:6px 11px; border-radius:999px; border:1px solid var(--border); font-size:13px; font-weight:500;">Lonely</span>
+            </div>
+          </dc-import>
+          <dc-import name="MM Card" title="Mood" meta="Last 30 days · 1 to 5" hint-size="100%,200px">
+            <dc-import name="MM Line" vals="3,3.5,3,2.5,3,3.5,4,3.5,3,2,2.5,3,3.5,4,4,3.5,3,3.5,4,4.5,4,3.5,3,3.5,4,4,3.5,4,4.5,4" min="1" max="5" dec="1" labels="Aug 24,Sep 8,Today" h="140" hint-size="322px,140px"></dc-import>
+          </dc-import>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <dc-import name="MM Stat" label="30-day average" value="3.5" pill="↑ 0.4 vs Aug" k="good" hint-size="100%,100px"></dc-import>
+            <dc-import name="MM Stat" label="Check-ins" value="26 of 30" pill="4 missed" k="neutral" hint-size="100%,100px"></dc-import>
+          </div>
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; color:var(--text);"><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg>Reflection</div>
+            <p style="margin:0; font-size:15px; line-height:1.45;">Your low days (2 or under) followed nights under 6 hours of sleep 2 out of 2 times this month. Want a wind-down reminder at 10:30?</p>
+            <span style="align-self:flex-start; height:38px; display:flex; align-items:center; padding:0 14px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Set reminder</span>
+          </div>
+        </dc-import>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="No check-ins yet. One tap a day is enough to start seeing your pattern." cta="Check in now" ai="AI reflections are off. Check-ins and your mood chart still work." hint-size="390px,380px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.dispatch }}" hint-placeholder-val="{{ true }}">
+      <div id="dispatch" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Dispatch</span><span style="font-size:13px; color:#6b6d78;">Hold to talk, assign who by when, live board</span></div></sc-if>
+        <dc-import name="MM Phone" back="All modules" title="Dispatch" sub="Team of 3 · Example data" tab="all" full="true" light="{{ light }}" hint-size="392px,1500px">
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:22px 18px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; align-items:center; gap:14px;">
+            <div style="width:96px; height:96px; border-radius:50%; background:var(--text); display:flex; align-items:center; justify-content:center; color:var(--bg); box-shadow:0 0 0 8px var(--surface-3);"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path></svg></div>
+            <span style="color:var(--text); font-size:15px; font-weight:600;">Hold to talk</span>
+            <div style="align-self:stretch; padding:12px; border-radius:10px; background:var(--surface-3); display:flex; flex-direction:column; gap:10px;">
+              <span style="font-size:14px; line-height:1.45; color:var(--text);">"Jordan, send the Ridgeline invoice by Thursday."</span>
+              <div style="display:grid; grid-template-columns:auto 1fr; gap:6px 12px; font-size:13px; font-weight:500;"><span style="color:var(--text-tertiary);">Who</span><span style="color:var(--text);">Jordan</span><span style="color:var(--text-tertiary);">What</span><span style="color:var(--text);">Send Ridgeline invoice</span><span style="color:var(--text-tertiary);">By</span><span style="color:var(--text);">Thu, Sep 24</span></div>
+            </div>
+            <div style="align-self:stretch; display:grid; grid-template-columns:1fr 1fr; gap:8px;"><span style="height:42px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:var(--text); color:var(--bg); font-size:14px; font-weight:600;">Assign</span><span style="height:42px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Edit</span></div>
+          </div>
+          <sc-for list="{{ board }}" as="p" hint-placeholder-count="3">
+            <dc-import name="MM Card" title="{{ p.who }}" meta="{{ p.meta }}" flush="true" hint-size="100%,200px">
+              <div style="display:flex; flex-direction:column;">
+                <sc-for list="{{ p.tasks }}" as="t" hint-placeholder-count="2">
+                  <dc-import name="MM Row" n="{{ t.n }}" meta="{{ t.m }}" chip="{{ t.c }}" k="{{ t.k }}" amt="" hint-size="100%,70px"></dc-import>
+                </sc-for>
+              </div>
+            </dc-import>
+          </sc-for>
+          <dc-import name="MM Card" title="Done this week" meta="Leaderboard" hint-size="100%,170px">
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              <sc-for list="{{ leaders }}" as="l" hint-placeholder-count="3">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span style="width:14px; font-size:12px; font-weight:600; color:var(--text-tertiary);">{{ l.r }}</span>
+                  <span style="width:56px; color:var(--text); font-size:14px; font-weight:500;">{{ l.n }}</span>
+                  <div style="flex:1; height:8px; border-radius:999px; background:var(--surface-3); overflow:hidden;"><div style="width:{{ l.w }}%; height:100%; background:{{ l.c }}; border-radius:999px;"></div></div>
+                  <span style="width:24px; text-align:right; color:var(--text); font-size:14px; font-weight:600;">{{ l.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </dc-import>
+        </dc-import>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="Nothing dispatched yet. Hold the button and say who does what by when." cta="Hold to talk" ai="Voice parsing needs AI. You can still type a task and pick who and when." hint-size="390px,380px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.brain }}" hint-placeholder-val="{{ true }}">
+      <div id="brain" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Brain</span><span style="font-size:13px; color:#6b6d78;">4-minute assessment, results profile, calling-hour check-in, patterns</span></div></sc-if>
+        <dc-import name="MM Phone" back="All modules" title="Brain" sub="Sales and follow-through · Example data" tab="all" full="true" light="{{ light }}" hint-size="392px,1400px">
+          <dc-import name="MM Card" title="Your profile" meta="Assessed Aug 30" hint-size="100%,380px">
+            <div style="display:flex; align-items:center; gap:16px;">
+              <dc-import name="MM Ring" pcts="0.68" center="68" sub="of 100" size="96" sw="8" hint-size="96px,96px"></dc-import>
+              <div style="display:flex; flex-direction:column; gap:4px;"><span style="color:var(--text); font-size:18px; font-weight:600; letter-spacing:-0.025em;">Fast opener, slow closer</span><span style="font-size:13px; line-height:1.4;">You start strong and lose deals in the last two steps.</span></div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <sc-for list="{{ traits }}" as="t" hint-placeholder-count="5">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span style="width:96px; font-size:13px; font-weight:500;">{{ t.n }}</span>
+                  <div style="flex:1; height:8px; border-radius:999px; background:var(--surface-3); overflow:hidden;"><div style="width:{{ t.v }}%; height:100%; background:{{ t.c }}; border-radius:999px;"></div></div>
+                  <span style="width:24px; text-align:right; color:var(--text); font-size:13px; font-weight:600;">{{ t.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <span style="height:40px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Retake the 4-minute assessment</span>
+          </dc-import>
+          <dc-import name="MM Card" title="Calling hour check-in" meta="Today" hint-size="100%,150px">
+            <span style="font-size:15px;">Did you make your calling hour?</span>
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px; padding:3px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border);">
+              <span style="padding:8px 0; text-align:center; border-radius:999px; font-size:13px; font-weight:500; background:var(--text); color:var(--bg);">Yes</span>
+              <span style="padding:8px 0; text-align:center; border-radius:999px; font-size:13px; font-weight:500;">Partly</span>
+              <span style="padding:8px 0; text-align:center; border-radius:999px; font-size:13px; font-weight:500;">No</span>
+            </div>
+            <dc-import name="MM Chip" t="12 of the last 14 days" k="good" hint-size="150px,22px"></dc-import>
+          </dc-import>
+          <dc-import name="MM Card" title="Connect rate by hour" meta="Last 30 days" hint-size="100%,210px">
+            <dc-import name="MM Bars" vals="14,22,24,18,9,11,15,13,10" labels="8,9,10,11,12,1,2,3,4" cur="2" suf="%" pre="" hint-size="100%,164px"></dc-import>
+          </dc-import>
+        </dc-import>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="Take the 4-minute assessment to get your profile." cta="Start assessment" ai="Profile scoring needs AI. Your daily check-ins and calling patterns still record." hint-size="390px,380px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.schedule }}" hint-placeholder-val="{{ true }}">
+      <div id="schedule" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Schedule</span><span style="font-size:13px; color:#6b6d78;">Month, day view with drag-to-create, shifts</span></div></sc-if>
+        <div style="display:flex; gap:32px; align-items:flex-start;">
+          <dc-import name="MM Phone" back="All modules" title="September" sub="Schedule · Example data" right="Today" tab="all" full="true" light="{{ light }}" hint-size="392px,1300px">
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px; padding:3px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border);">
+              <span style="padding:8px 0; text-align:center; border-radius:999px; font-size:13px; font-weight:500; background:var(--text); color:var(--bg);">Month</span>
+              <span style="padding:8px 0; text-align:center; border-radius:999px; font-size:13px; font-weight:500;">Day</span>
+              <span style="padding:8px 0; text-align:center; border-radius:999px; font-size:13px; font-weight:500;">Shifts</span>
+            </div>
+            <dc-import name="MM Card" hint-size="100%,340px">
+              <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; font-size:11px; font-weight:500; color:var(--text-tertiary); text-align:center;"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+              <dc-import name="MM Heatmap" cells="_1231202312213121032213321210" flow="row" numbers="true" lo="Free" hi="Packed" caption="Darker days are busier" hint-size="100%,260px"></dc-import>
+            </dc-import>
+            <dc-import name="MM Card" title="Tue, Sep 22" meta="4 events" flush="true" hint-size="100%,300px">
+              <div>
+                <dc-import name="MM Row" n="Calling hour" meta="9:00 – 10:00 AM" chip="Done" k="good" amt="" hint-size="100%,70px"></dc-import>
+                <dc-import name="MM Row" n="Harbor Dental review" meta="11:00 AM · Zoom" chip="In 20 min" k="warn" amt="" hint-size="100%,70px"></dc-import>
+                <dc-import name="MM Row" n="Front desk shift" meta="4:00 – 11:00 PM" chip="Shift" k="neutral" amt="" hint-size="100%,70px"></dc-import>
+              </div>
+            </dc-import>
+            <dc-import name="MM Card" title="Shifts this week" meta="21 hours" hint-size="100%,170px">
+              <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px;">
+                <sc-for list="{{ shifts }}" as="d" hint-placeholder-count="7">
+                  <div style="display:flex; flex-direction:column; align-items:center; gap:6px;"><span style="font-size:11px; font-weight:500; color:var(--text-tertiary);">{{ d.d }}</span><div style="width:100%; height:64px; border-radius:8px; background:{{ d.bg }}; display:flex; align-items:flex-end; justify-content:center; padding-bottom:6px; box-sizing:border-box; font-size:10.5px; font-weight:600; color:{{ d.c }};">{{ d.h }}</div></div>
+                </sc-for>
+              </div>
+            </dc-import>
+          </dc-import>
+          <dc-import name="MM Phone" back="September" title="Tue, Sep 22" sub="Day view · Example data" tab="all" fab="Event" light="{{ light }}" hint-size="392px,846px">
+            <div style="position:relative; height:616px; margin-left:40px;">
+              <sc-for list="{{ hours }}" as="h" hint-placeholder-count="11">
+                <div style="position:absolute; left:-40px; right:0; top:{{ h.y }}px; display:flex; align-items:flex-start; gap:8px;"><span style="width:32px; text-align:right; font-size:10.5px; font-weight:500; color:var(--text-tertiary); margin-top:-6px;">{{ h.l }}</span><div style="flex:1; height:1px; background:var(--grid);"></div></div>
+              </sc-for>
+              <div style="position:absolute; left:0; right:0; top:56px; height:54px; border-radius:8px; background:var(--surface-3); padding:8px 10px; box-sizing:border-box;"><div style="color:var(--text-secondary); font-size:13px; font-weight:500; text-decoration:line-through;">Calling hour</div><div style="font-size:11px; color:var(--text-tertiary);">9:00 – 10:00</div></div>
+              <div style="position:absolute; left:0; right:0; top:168px; height:54px; border-radius:8px; background:color-mix(in srgb, var(--accent) 16%, var(--surface)); border-left:0; padding:8px 10px; box-sizing:border-box;"><div style="color:var(--text); font-size:13px; font-weight:500;">Harbor Dental review</div><div style="font-size:11px; color:var(--text-secondary);">11:00 – 12:00 · Zoom</div></div>
+              <div style="position:absolute; left:0; right:0; top:252px; height:40px; border-radius:8px; background:var(--surface-3); padding:6px 10px; box-sizing:border-box;"><div style="color:var(--text); font-size:13px; font-weight:500;">Lunch</div></div>
+              <div style="position:absolute; left:0; right:0; top:336px; height:56px; border-radius:8px; border:1.5px dashed var(--accent); background:var(--accent-wash); padding:8px 10px; box-sizing:border-box;"><div style="color:var(--text); font-size:13px; font-weight:500;">New event</div><div style="font-size:11px; color:var(--text-secondary);">2:00 – 3:00 PM · drag to adjust</div><div style="position:absolute; left:50%; bottom:-5px; width:28px; height:8px; margin-left:-14px; border-radius:4px; background:var(--accent);"></div></div>
+              <div style="position:absolute; left:0; right:0; top:448px; height:168px; border-radius:8px 8px 0 0; background:var(--surface-3); padding:8px 10px; box-sizing:border-box;"><div style="color:var(--text); font-size:13px; font-weight:500;">Front desk shift</div><div style="font-size:11px; color:var(--text-tertiary);">4:00 – 11:00 PM</div></div>
+              <div style="position:absolute; left:-6px; right:0; top:149px; display:flex; align-items:center;"><div style="width:8px; height:8px; border-radius:50%; background:var(--accent);"></div><div style="flex:1; height:1.5px; background:var(--accent);"></div></div>
+            </div>
+          </dc-import>
+        </div>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="Your calendar is clear. Drag on the day view to add your first event." cta="Add event" ai="Smart scheduling is off. Nova won't suggest times, but your calendar works the same." hint-size="390px,380px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.budget }}" hint-placeholder-val="{{ true }}">
+      <div id="budgeting" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Budgeting</span><span style="font-size:13px; color:#6b6d78;">Kept from round one</span></div></sc-if>
+        <dc-import name="MM App" size="phone" screen="budget" hint-size="392px,1900px"></dc-import>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="No spending yet this month. Add an expense or connect an account." cta="Add expense" ai="Nova's spending notes are off. Your budget, pace, and bills still work." hint-size="390px,380px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.decisions }}" hint-placeholder-val="{{ true }}">
+      <div id="decision-log" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Decision Log</span><span style="font-size:13px; color:#6b6d78;">Decisions with reasoning, review later, pattern view</span></div></sc-if>
+        <dc-import name="MM Phone" back="All modules" title="Decision Log" sub="14 decisions · Example data" tab="all" fab="Log decision" full="true" light="{{ light }}" hint-size="392px,1400px">
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; font-weight:500;">Ready to review</span><dc-import name="MM Chip" t="Due today" k="warn" hint-size="80px,22px"></dc-import></div>
+            <span style="color:var(--text); font-size:18px; font-weight:600; letter-spacing:-0.025em;">Raise Ridgeline's price to $2,400</span>
+            <div style="display:grid; grid-template-columns:auto 1fr; gap:8px 12px; font-size:14px; line-height:1.4;"><span style="color:var(--text-tertiary);">Why</span><span>Scope doubled after the second round of revisions.</span><span style="color:var(--text-tertiary);">Expected</span><span>They agree, maybe ask for a payment plan.</span><span style="color:var(--text-tertiary);">Decided</span><span>Aug 22, 2:10 PM</span></div>
+            <span style="font-size:13px; font-weight:500;">How did it turn out?</span>
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px;"><span style="height:42px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Good call</span><span style="height:42px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Mixed</span><span style="height:42px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Bad call</span></div>
+          </div>
+          <dc-import name="MM Card" title="How they turned out" meta="12 reviewed" hint-size="100%,200px">
+            <dc-import name="MM Donut" names="Good call,Mixed,Bad call" vals="7,3,2" pre="" center="Reviewed" hint-size="100%,124px"></dc-import>
+            <div style="padding:12px; border-radius:10px; background:var(--surface-3); font-size:14px; line-height:1.45;">Decisions logged after 10 PM went badly 2 of 3 times. Daytime ones: 0 of 9.</div>
+          </dc-import>
+          <dc-import name="MM Card" title="Recent" flush="true" hint-size="100%,330px">
+            <div>
+              <dc-import name="MM Row" n="Hire a part-time VA" meta="Sep 18" chip="Review Oct 18" k="neutral" amt="" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Skip the trade show" meta="Aug 30" chip="Good call" k="good" amt="" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Buy a $300 leads list" meta="Aug 12" chip="Bad call" k="bad" amt="" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Move calls to mornings" meta="Aug 3" chip="Good call" k="good" amt="" hint-size="100%,70px"></dc-import>
+            </div>
+          </dc-import>
+        </dc-import>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="No decisions logged. Write down a call you're making and why, then review it in 30 days." cta="Log a decision" ai="Nova's pattern notes are off. Your log, reviews, and outcome chart still work." hint-size="390px,380px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.review }}" hint-placeholder-val="{{ true }}">
+      <div id="weekly-review" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Weekly Review</span><span style="font-size:13px; color:#6b6d78;">Self-written, numbers pulled from every active module</span></div></sc-if>
+        <dc-import name="MM Phone" back="All modules" title="Week 38" sub="Sep 14 – 20 · Example data" right="Submit" tab="all" full="true" light="{{ light }}" hint-size="392px,1450px">
+          <dc-import name="MM Card" title="Your numbers" meta="From 6 modules" hint-size="100%,300px">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <sc-for list="{{ weekNums }}" as="w" hint-placeholder-count="6">
+                <div style="padding:12px; border-radius:10px; background:var(--surface-3); display:flex; flex-direction:column; gap:4px;">
+                  <span style="font-size:12px; font-weight:500;">{{ w.l }}</span>
+                  <span style="color:var(--text); font-size:20px; font-weight:600; letter-spacing:-0.035em;">{{ w.v }}</span>
+                  <span style="font-size:11.5px; font-weight:500; color:{{ w.c }};">{{ w.d }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </dc-import>
+          <dc-import name="MM Card" title="Be honest" meta="Only you see this" hint-size="100%,420px">
+            <sc-for list="{{ prompts }}" as="p" hint-placeholder-count="3">
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <span style="font-size:13px; font-weight:500;">{{ p.q }}</span>
+                <div style="padding:12px; border-radius:8px; background:var(--surface-2); border:1px solid var(--border); color:var(--text); font-size:15px; line-height:1.45;">{{ p.a }}</div>
+              </div>
+            </sc-for>
+          </dc-import>
+          <dc-import name="MM Card" title="Rate the week" meta="You gave it 7" hint-size="100%,230px">
+            <dc-import name="MM Bars" vals="6,5,7,8,6,4,6,7" labels="31,32,33,34,35,36,37,38" pre="" max="10" hint-size="100%,164px"></dc-import>
+          </dc-import>
+        </dc-import>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="Your first review opens Sunday. It pulls the week's numbers from every active module." cta="Pick review day" ai="No AI summary draft this week. You write the review; the numbers still fill in." hint-size="390px,380px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.cash }}" hint-placeholder-val="{{ true }}">
+      <div id="cash-flow" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Cash-Flow Forecast</span><span style="font-size:13px; color:#6b6d78;">Actual solid, forecast dashed, what-if scenarios</span></div></sc-if>
+        <dc-import name="MM Phone" back="All modules" title="Cash-Flow Forecast" sub="All accounts · Example data" tab="all" full="true" light="{{ light }}" hint-size="392px,1500px">
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px; padding:3px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border);">
+            <span style="padding:8px 0; text-align:center; border-radius:999px; font-size:13px; font-weight:500;">30 days</span>
+            <span style="padding:8px 0; text-align:center; border-radius:999px; font-size:13px; font-weight:500; background:var(--text); color:var(--bg);">60 days</span>
+            <span style="padding:8px 0; text-align:center; border-radius:999px; font-size:13px; font-weight:500;">90 days</span>
+          </div>
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; gap:12px;">
+            <span style="font-size:13px; font-weight:500;">Projected balance on Nov 21</span>
+            <div style="display:flex; align-items:baseline; color:var(--text); font-size:46px; font-weight:600; letter-spacing:-0.04em; line-height:1;">$8,420<span style="font-size:22px; color:var(--text-tertiary);">.55</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><span style="padding:3px 8px; border-radius:999px; font-size:12px; font-weight:600; color:var(--success); background:color-mix(in srgb, var(--success) 14%, transparent);">↑ $2,110</span><span style="font-size:13px; color:var(--text-tertiary); font-weight:500;">from $6,310 today</span></div>
+            <dc-import name="MM Line" vals="{{ cashVals }}" today="9" labels="Sep 1,Nov 21" pts="{{ cashPts }}" pre="$" h="150" hint-size="322px,150px"></dc-import>
+          </div>
+          <dc-import name="MM Card" title="What if…" meta="Scenarios" hint-size="100%,420px">
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <span style="padding:10px 12px; border-radius:8px; background:var(--text); color:var(--bg); font-size:14px; font-weight:500;">What if I land 2 more retainers?</span>
+              <span style="padding:10px 12px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">What if I cut food spending 30%?</span>
+              <span style="padding:10px 12px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">What if Harbor pays 30 days late?</span>
+            </div>
+            <dc-import name="MM Line" vals="{{ cashVals }}" alt="{{ cashAlt }}" today="9" labels="Today,Nov 21" pre="$" h="130" hint-size="322px,130px"></dc-import>
+            <div style="display:flex; gap:14px; font-size:12px; font-weight:500;"><span style="display:flex; align-items:center; gap:6px;"><span style="width:14px; height:2px; background:var(--accent);"></span>Current</span><span style="display:flex; align-items:center; gap:6px;"><span style="width:14px; height:0; border-top:2px dashed var(--cat-3);"></span>2 more retainers</span></div>
+            <p style="margin:0; font-size:14px; line-height:1.45;">Ends at <span style="color:var(--text);">$10,820</span>, $2,400 higher. Assumes $1,200 retainers starting Oct 1 and Nov 1.</p>
+          </dc-import>
+          <dc-import name="MM Card" title="Coming up" meta="Next 30 days" flush="true" hint-size="100%,330px">
+            <div>
+              <dc-import name="MM Row" n="Harbor Dental retainer" meta="Oct 1" chip="Expected" k="neutral" amt="+$1,200.00" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Rent" meta="Oct 1" chip="Autopay" k="neutral" amt="−$1,850.00" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Ridgeline invoice" meta="Oct 5" chip="Sent" k="neutral" amt="+$2,400.00" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Quarterly taxes" meta="Oct 15" chip="Due Oct 15" k="warn" amt="−$1,600.00" hint-size="100%,70px"></dc-import>
+            </div>
+          </dc-import>
+        </dc-import>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="Add your income and bills, or connect an account, to see a forecast." cta="Add income" ai="What-if scenarios need AI. The projection still runs on your bills and income." hint-size="390px,380px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.patterns }}" hint-placeholder-val="{{ true }}">
+      <div id="patterns" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Patterns</span><span style="font-size:13px; color:#6b6d78;">Real correlations across modules</span></div></sc-if>
+        <dc-import name="MM Phone" back="All modules" title="Patterns" sub="7 modules · 42 days of data · Example data" tab="all" full="true" light="{{ light }}" hint-size="392px,1350px">
+          <dc-import name="MM Card" title="Sleep vs. spending" meta="42 days" hint-size="100%,330px">
+            <svg width="322" height="190" viewBox="0 0 322 190" style="display:block; overflow:visible;">
+              <line x1="30" x2="322" y1="10" y2="10" stroke="var(--grid)"></line><line x1="30" x2="322" y1="85" y2="85" stroke="var(--grid)"></line><line x1="30" x2="322" y1="160" y2="160" stroke="var(--grid)"></line>
+              <text x="0" y="14" font-size="10.5" font-weight="500" fill="var(--text-tertiary)">$140</text><text x="0" y="89" font-size="10.5" font-weight="500" fill="var(--text-tertiary)">$80</text><text x="0" y="164" font-size="10.5" font-weight="500" fill="var(--text-tertiary)">$20</text>
+              <sc-for list="{{ scatter }}" as="d" hint-placeholder-count="20"><circle cx="{{ d.x }}" cy="{{ d.y }}" r="4" fill="var(--accent)" opacity="0.75"></circle></sc-for>
+              <line x1="{{ trend.x1 }}" y1="{{ trend.y1 }}" x2="{{ trend.x2 }}" y2="{{ trend.y2 }}" stroke="var(--text-secondary)" stroke-width="1.5" stroke-dasharray="4 4"></line>
+              <text x="30" y="184" font-size="10.5" font-weight="500" fill="var(--text-tertiary)">4.5 h sleep</text><text x="322" y="184" font-size="10.5" font-weight="500" fill="var(--text-tertiary)" text-anchor="end">8.5 h</text>
+            </svg>
+            <p style="margin:0; font-size:15px; line-height:1.45;">After nights under 6 hours, you spent <span style="color:var(--text);">$38 more</span> the next day on average.</p>
+            <div style="display:flex; align-items:center; gap:8px;"><dc-import name="MM Chip" t="Moderate link" k="neutral" hint-size="100px,22px"></dc-import><span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">r = −0.42 · Budgeting + Sleep</span></div>
+          </dc-import>
+          <dc-import name="MM Card" title="Calling hour vs. next-day mood" meta="30 days" hint-size="100%,200px">
+            <div style="display:flex; flex-direction:column; gap:14px;">
+              <div style="display:flex; flex-direction:column; gap:6px;"><div style="display:flex; justify-content:space-between; font-size:13px; font-weight:500;"><span>Made the calling hour</span><span style="color:var(--text);">3.9</span></div><div style="height:10px; border-radius:999px; background:var(--surface-3);"><div style="width:78%; height:100%; border-radius:999px; background:var(--accent);"></div></div></div>
+              <div style="display:flex; flex-direction:column; gap:6px;"><div style="display:flex; justify-content:space-between; font-size:13px; font-weight:500;"><span>Skipped it</span><span style="color:var(--text);">3.1</span></div><div style="height:10px; border-radius:999px; background:var(--surface-3);"><div style="width:62%; height:100%; border-radius:999px; background:var(--accent-soft);"></div></div></div>
+            </div>
+            <span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">Average mood, 1 to 5 · 22 days made, 8 skipped</span>
+          </dc-import>
+          <div style="border:1px solid var(--border); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:10px; background-color:var(--surface-2); background-image:linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size:22px 22px;">
+            <span style="color:var(--text); font-size:15px; font-weight:600;">Sobriety vs. spending</span>
+            <span style="font-size:14px; line-height:1.45;">Needs 30 days of both. You're at 18.</span>
+            <div style="height:6px; border-radius:999px; background:var(--surface-3);"><div style="width:60%; height:100%; border-radius:999px; background:var(--text-tertiary);"></div></div>
+          </div>
+          <span style="font-size:12px; font-weight:500; color:var(--text-tertiary); text-align:center;">Patterns show links, not causes.</span>
+        </dc-import>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="Patterns appear after 30 days of data in at least two modules. You're at 12 days." cta="See what's tracked" ai="Finding patterns needs AI. Comparisons you set up yourself still update." hint-size="390px,380px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.voice }}" hint-placeholder-val="{{ true }}">
+      <div id="voice-capture" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Voice Capture</span><span style="font-size:13px; color:#6b6d78;">Speak it, see where it got filed</span></div></sc-if>
+        <dc-import name="MM Phone" back="All modules" title="Voice Capture" sub="Say it once · Example data" tab="all" full="true" light="{{ light }}" hint-size="392px,1150px">
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:26px 18px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; align-items:center; gap:16px;">
+            <div style="display:flex; align-items:center; gap:3px; height:36px;">
+              <sc-for list="{{ wave }}" as="w" hint-placeholder-count="28"><div style="width:3px; height:{{ w.h }}px; border-radius:2px; background:{{ w.c }};"></div></sc-for>
+            </div>
+            <span style="font-size:17px; line-height:1.45; color:var(--text); text-align:center; letter-spacing:-0.015em;">"Lunch at Chipotle, twenty-three forty…"</span>
+            <div style="width:112px; height:112px; border-radius:50%; background:var(--text); display:flex; align-items:center; justify-content:center; color:var(--bg); box-shadow:0 0 0 10px var(--surface-3);"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path></svg></div>
+            <span style="font-size:13px; font-weight:500;">Listening · release to file</span>
+          </div>
+          <dc-import name="MM Card" title="Just filed" meta="Today" flush="true" hint-size="100%,380px">
+            <div>
+              <dc-import name="MM Row" n="Lunch at Chipotle" meta="10:12 AM" chip="Budgeting · Food" k="accent" amt="$23.40" sub="Undo" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Call Sam back Thursday" meta="9:58 AM" chip="Dispatch · Me" k="accent" amt="Thu" sub="Undo" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Lena Ortiz, Bloom Studio" meta="9:40 AM" chip="Contacts" k="accent" amt="New" sub="Undo" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Raise rates in January" meta="8:15 AM" chip="Decision Log" k="accent" amt="Logged" sub="Undo" hint-size="100%,70px"></dc-import>
+            </div>
+          </dc-import>
+        </dc-import>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="Nothing captured yet. Hold the button and say a task, expense, contact, or decision." cta="Hold to talk" ai="Filing by voice needs AI. You can still type a quick note and choose where it goes." hint-size="390px,380px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.openclose }}" hint-placeholder-val="{{ true }}">
+      <div id="opening-closing" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Opening / Closing</span><span style="font-size:13px; color:#6b6d78;">Shift checklist, progress, push reminders</span></div></sc-if>
+        <dc-import name="MM Phone" back="All modules" title="Closing" sub="Front desk · Tonight · Example data" tab="all" full="true" light="{{ light }}" hint-size="392px,1450px">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px; padding:3px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border);">
+            <span style="padding:8px 0; text-align:center; border-radius:999px; font-size:13px; font-weight:500;">Opening</span>
+            <span style="padding:8px 0; text-align:center; border-radius:999px; font-size:13px; font-weight:500; background:var(--text); color:var(--bg);">Closing</span>
+          </div>
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--card-shadow); display:flex; align-items:center; gap:18px;">
+            <dc-import name="MM Ring" pcts="0.583" center="7/12" sub="done" size="104" sw="9" hint-size="104px,104px"></dc-import>
+            <div style="display:flex; flex-direction:column; gap:8px;"><span style="color:var(--text); font-size:18px; font-weight:600; letter-spacing:-0.025em;">5 steps left</span><span style="font-size:13px; font-weight:500;">Due by 11:15 PM</span><dc-import name="MM Chip" t="On time" k="good" hint-size="70px,22px"></dc-import></div>
+          </div>
+          <dc-import name="MM Card" title="Checklist" meta="12 steps" hint-size="100%,560px">
+            <div style="display:flex; flex-direction:column;">
+              <sc-for list="{{ checklist }}" as="c" hint-placeholder-count="12">
+                <div style="display:flex; align-items:center; gap:12px; min-height:44px; border-top:{{ c.div }};">
+                  <div style="width:22px; height:22px; flex:none; border-radius:6px; box-sizing:border-box; background:{{ c.bg }}; border:{{ c.b }}; display:flex; align-items:center; justify-content:center;"><sc-if value="{{ c.done }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if></div>
+                  <span style="flex:1; font-size:15px; color:{{ c.tc }};">{{ c.n }}</span>
+                  <span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">{{ c.t }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </dc-import>
+          <dc-import name="MM Card" title="Reminders" hint-size="100%,140px">
+            <div style="display:flex; justify-content:space-between; align-items:center;"><div style="display:flex; flex-direction:column;"><span style="color:var(--text); font-size:15px; font-weight:500;">Push at 10:45 PM</span><span style="font-size:12px; color:var(--text-tertiary);">If steps are still open</span></div><div style="width:44px; height:26px; border-radius:999px; background:var(--accent); position:relative;"><div style="position:absolute; top:3px; left:21px; width:20px; height:20px; border-radius:50%; background:#fff;"></div></div></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding-top:12px; border-top:1px solid var(--grid);"><span style="color:var(--text); font-size:15px; font-weight:500;">Last 7 closes</span><span style="font-size:13px; font-weight:500;">6 on time · 1 late</span></div>
+          </dc-import>
+        </dc-import>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="No checklist yet. Add the steps you do at every opening or closing." cta="Build a checklist" ai="Nova's checklist suggestions are off. Your checklist and reminders work the same." hint-size="390px,380px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.fitness }}" hint-placeholder-val="{{ true }}">
+      <div id="fitness" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Fitness</span><span style="font-size:13px; color:#6b6d78;">AI plan, library, live workout mode</span></div></sc-if>
+        <div style="display:flex; gap:32px; align-items:flex-start;">
+          <dc-import name="MM Phone" back="All modules" title="Fitness" sub="Week 3 of 8 · built by Nova · Example data" tab="all" full="true" light="{{ light }}" hint-size="392px,1300px">
+            <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:6px;">
+              <sc-for list="{{ week }}" as="d" hint-placeholder-count="7">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 0; border-radius:10px; background:{{ d.bg }}; border:{{ d.b }}; box-sizing:border-box;">
+                  <span style="font-size:11px; font-weight:500; color:var(--text-tertiary);">{{ d.d }}</span>
+                  <span style="color:{{ d.tc }}; font-size:15px; font-weight:600;">{{ d.n }}</span>
+                  <div style="width:6px; height:6px; border-radius:50%; background:{{ d.dot }};"></div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; gap:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; font-weight:500;">Today</span><span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">45 min · 5 exercises</span></div>
+              <span style="color:var(--text); font-size:24px; font-weight:700; letter-spacing:-0.035em;">Push day</span>
+              <div style="display:flex; flex-direction:column;">
+                <sc-for list="{{ exercises }}" as="x" hint-placeholder-count="5">
+                  <div style="display:flex; justify-content:space-between; padding:10px 0; border-top:1px solid var(--grid); font-size:14px;"><span style="color:var(--text);">{{ x.n }}</span><span style="font-weight:500;">{{ x.s }}</span></div>
+                </sc-for>
+              </div>
+              <div style="height:48px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:var(--text); color:var(--bg); font-size:15px; font-weight:600;">Start workout</div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <dc-import name="MM Stat" label="This month" value="9 of 12" pill="On pace" k="good" hint-size="100%,100px"></dc-import>
+              <dc-import name="MM Stat" label="Bench top set" value="185 lb" pill="↑ 10 lb" k="good" hint-size="100%,100px"></dc-import>
+            </div>
+            <dc-import name="MM Card" title="Library" meta="24 workouts" flush="true" hint-size="100%,260px">
+              <div>
+                <dc-import name="MM Row" n="Pull day" meta="45 min" chip="Strength" k="neutral" amt="" sub="Last: Sep 19" hint-size="100%,70px"></dc-import>
+                <dc-import name="MM Row" n="Legs" meta="50 min" chip="Strength" k="neutral" amt="" sub="Last: Sep 17" hint-size="100%,70px"></dc-import>
+                <dc-import name="MM Row" n="Easy run, 3 mi" meta="30 min" chip="Cardio" k="neutral" amt="" sub="Last: Sep 20" hint-size="100%,70px"></dc-import>
+              </div>
+            </dc-import>
+          </dc-import>
+          <dc-import name="MM Phone" tabs="none" back="End workout" nova="false" title="Bench press" sub="Push day · exercise 1 of 5" light="{{ light }}" hint-size="392px,846px">
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; display:flex; flex-direction:column; align-items:center; gap:10px;">
+              <span style="font-size:13px; font-weight:500;">Elapsed</span>
+              <span style="color:var(--text); font-size:46px; font-weight:600; letter-spacing:-0.04em; line-height:1;">18:42</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:18px; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px;">
+              <dc-import name="MM Ring" pcts="0.5" center="0:45" sub="rest left" size="104" sw="9" hint-size="104px,104px"></dc-import>
+              <div style="display:flex; flex-direction:column; gap:4px;"><span style="font-size:13px; font-weight:500;">Up next</span><span style="color:var(--text); font-size:18px; font-weight:600; letter-spacing:-0.025em;">Set 3 of 4</span><span style="font-size:13px;">185 lb × 6</span></div>
+            </div>
+            <dc-import name="MM Card" title="Sets" hint-size="100%,250px">
+              <div style="display:grid; grid-template-columns:40px 1fr 1fr 28px; row-gap:0; font-size:14px;">
+                <span style="font-size:12px; color:var(--text-tertiary); padding-bottom:8px;">Set</span><span style="font-size:12px; color:var(--text-tertiary);">Weight</span><span style="font-size:12px; color:var(--text-tertiary);">Reps</span><span></span>
+                <sc-for list="{{ sets }}" as="x" hint-placeholder-count="4">
+                  <span style="padding:10px 0; border-top:1px solid var(--grid); color:var(--text-tertiary);">{{ x.n }}</span><span style="padding:10px 0; border-top:1px solid var(--grid); color:{{ x.tc }}; font-weight:500;">{{ x.w }}</span><span style="padding:10px 0; border-top:1px solid var(--grid); color:{{ x.tc }}; font-weight:500;">{{ x.r }}</span><span style="padding:10px 0; border-top:1px solid var(--grid); color:var(--success);">{{ x.c }}</span>
+                </sc-for>
+              </div>
+            </dc-import>
+            <div style="display:grid; grid-template-columns:1fr 2fr; gap:8px;"><span style="height:52px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:15px; font-weight:500;">Skip rest</span><span style="height:52px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:var(--text); color:var(--bg); font-size:15px; font-weight:600;">Finish set</span></div>
+          </dc-import>
+        </div>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="No plan yet. Tell Nova your goal and schedule and it builds week one." cta="Build my plan" ai="AI plans are off. Pick workouts from the library and log sets by hand." hint-size="390px,380px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;pick&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;light&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const pick = this.props.pick, ids = ['plan', 'macros', 'sobriety', 'goals', 'mental', 'dispatch', 'brain', 'schedule', 'budget', 'decisions', 'review', 'cash', 'patterns', 'voice', 'openclose', 'fitness'], s = {};
+    ids.forEach(i => s[i] = !pick || pick === i);
+    const light = this.props.light === true || this.props.light === 'true';
+    const E = (t, n, m, st) => ({ item: true, t, n, m, done: st === 'done', dot: st === 'done' ? 'var(--text-tertiary)' : st === 'next' ? 'var(--accent)' : 'transparent', db: st === 'done' ? 'var(--text-tertiary)' : st === 'next' ? 'var(--accent)' : 'var(--text-tertiary)', bg: st === 'next' ? 'color-mix(in srgb, var(--accent) 12%, var(--surface))' : 'var(--surface-3)', tc: st === 'done' ? 'var(--text-secondary)' : 'var(--text)', td: 'none' });
+    const plan = [E('7:00', 'Push day', 'Fitness · 45 min', 'done'), E('8:30', 'Opening checklist', 'Opening / Closing · 12 steps', 'done'), E('9:00', 'Calling hour', 'Dialing · 61 calls made', 'done'), { now: true }, E('11:00', 'Harbor Dental review', 'Client Modules · Zoom', 'next'), E('12:30', 'Lunch · log your meal', 'Macros & Meals', ''), E('2:00', 'Brand Lab: round 2 for Bloom', 'Deep work · 2 h', ''), E('4:00', 'Front desk shift', 'Schedule · until 11 PM', ''), E('10:45', 'Closing checklist + check-in', 'Opening / Closing · Sobriety', '')];
+    const macros = [{ n: 'Protein', v: '118 g', t: '160 g', c: 'var(--cat-1)' }, { n: 'Carbs', v: '162 g', t: '250 g', c: 'var(--cat-2)' }, { n: 'Fat', v: '52 g', t: '80 g', c: 'var(--cat-3)' }];
+    const water = Array.from({ length: 10 }, (_, i) => ({ bg: i < 6 ? 'var(--accent)' : 'var(--surface-3)' }));
+    const meals = [{ ph: 'photo', n: 'Greek yogurt bowl', m: 'Breakfast · 7:40 AM · P 32 C 48 F 11', k: '420', tc: 'var(--text)' }, { ph: 'photo', n: 'Chicken burrito bowl', m: 'Lunch · 12:50 PM · P 54 C 82 F 28', k: '780', tc: 'var(--text)' }, { ph: 'photo', n: 'Protein bar', m: 'Snack · 3:30 PM · P 20 C 22 F 9', k: '220', tc: 'var(--text)' }, { ph: '+', n: 'Dinner', m: 'Not logged yet', k: '—', tc: 'var(--text-tertiary)' }];
+    let soberCells = ''; for (let i = 0; i < 84; i++) soberCells += i === 35 ? 'x' : i > 83 ? '.' : (i < 35 && i % 9 === 4 ? 'x' : '3');
+    const goals = [
+      { n: 'Save $10,000 for taxes', by: 'By Dec 31', terms: 'I move $400 every Friday. If I miss one, I move $500 the next week.', v: '$6,200', max: '$10,000', fill: 62, mark: 73, chip: 'Behind pace by $1,100', k: 'warn', note: 'Day 266 of 365', path: 'move $400 this Friday, then pick one subscription to pause.' },
+      { n: 'Sign 12 new clients', by: 'By Dec 31', terms: 'I book 3 discovery calls a week. Miss a week and I make 20 extra calls Saturday.', v: '9', max: '12', fill: 75, mark: 73, chip: 'On pace', k: 'good', note: '3 to go', path: 'follow up with the 4 warm leads from last week.' },
+      { n: 'Run a half marathon', by: 'Nov 15', terms: 'Three runs a week, long run on Sunday. Skip one and Sunday gets a mile longer.', v: '9 mi', max: '13.1 mi', fill: 69, mark: 70, chip: 'On pace', k: 'good', note: 'Longest run so far', path: '10-mile long run this Sunday.' },
+    ];
+    const moods = [['1', 'Awful'], ['2', 'Low'], ['3', 'Okay'], ['4', 'Good'], ['5', 'Great']].map(([v, l]) => ({ v, l, bg: v === '4' ? 'color-mix(in srgb, var(--accent) 14%, var(--surface))' : 'var(--surface-3)', b: v === '4' ? '1.5px solid var(--accent)' : '1.5px solid transparent' }));
+    const T = (n, m, c, k) => ({ n, m, c, k });
+    const board = [
+      { who: 'Me', meta: '3 open', tasks: [T('Call Sam back', 'Ridgeline Roofing', 'Due Thu', 'neutral'), T('Approve Bloom logo round', 'Brand Lab', 'Due today', 'warn'), T('Send Harbor recap', 'Client Modules', 'Done', 'good')] },
+      { who: 'Jordan', meta: '2 open', tasks: [T('Send Ridgeline invoice', 'Invoicing', 'Due Thu', 'neutral'), T('Update price sheet', 'E-commerce', '1 day overdue', 'bad')] },
+      { who: 'Priya', meta: '1 open', tasks: [T('Cut launch video', 'Content Creation', 'Due Fri', 'neutral')] },
+    ];
+    const leaders = [['1', 'Priya', 11], ['2', 'Me', 9], ['3', 'Jordan', 6]].map(([r, n, v], i) => ({ r, n, v, w: v / 11 * 100, c: i === 0 ? 'var(--accent)' : 'var(--accent-soft)' }));
+    const traits = [['Opening', 82], ['Discovery', 64], ['Objections', 51], ['Closing', 47], ['Follow-through', 72]].map(([n, v]) => ({ n, v, c: 'var(--accent)' }));
+    const shifts = [['M', ''], ['T', '4–11'], ['W', ''], ['T', '4–11'], ['F', ''], ['S', '10–6'], ['S', '']].map(([d, h]) => ({ d, h, bg: h ? 'var(--accent-soft)' : 'var(--surface-3)', c: 'var(--text)' }));
+    const hours = Array.from({ length: 11 }, (_, i) => { const h = 8 + i; return { y: i * 56, l: (h > 12 ? h - 12 : h) + (h >= 12 ? ' PM' : ' AM') }; });
+    const weekNums = [['Calls made', '212', '↑ 18 vs last week', 'var(--success)'], ['Spent', '$1,180', '↑ $90 vs last week', 'var(--danger)'], ['Clean days', '7 of 7', 'Streak: 45', 'var(--text-tertiary)'], ['Workouts', '3 of 4', 'Missed Thursday', 'var(--text-tertiary)'], ['Mood average', '3.6', '↑ 0.3', 'var(--success)'], ['Clients signed', '1', 'Bloom Studio', 'var(--text-tertiary)']].map(([l, v, d, c]) => ({ l, v, d, c }));
+    const prompts = [{ q: 'What went well?', a: 'Hit the calling hour all 5 weekdays. Signed Bloom.' }, { q: "What didn't?", a: 'Overspent on food twice after late shifts. Skipped Thursday\'s workout.' }, { q: 'One change for next week', a: 'Meal prep Sunday so late shifts have dinner ready.' }];
+    const cashVals = '5200,4800,4650,6100,5900,5600,5400,6900,6500,6310,6000,5800,7400,7100,6800,6600,8100,7800,7500,7300,8800,8500,8300,8100,8420';
+    const cashAlt = '5200,4800,4650,6100,5900,5600,5400,6900,6500,6310,6000,5800,8600,8300,8000,7800,9300,9000,8700,8500,11200,10900,10700,10500,10820';
+    const d0 = new Date(2026, 8, 1); const cashPts = Array.from({ length: 25 }, (_, i) => { const d = new Date(d0.getTime() + i * 3.4 * 864e5); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }).join(',');
+    const pts = [[4.6, 128], [5, 110], [5.2, 96], [5.4, 118], [5.5, 84], [5.8, 92], [5.9, 70], [6, 102], [6.2, 64], [6.3, 78], [6.5, 58], [6.6, 88], [6.8, 52], [7, 66], [7, 44], [7.2, 72], [7.3, 48], [7.5, 38], [7.6, 60], [7.8, 42], [8, 34], [8.1, 56], [8.3, 30], [8.4, 46]];
+    const X = h => 30 + (h - 4.5) / 4 * 292, Y = v => 160 - (v - 20) / 120 * 150;
+    const mx = pts.reduce((a, p) => a + p[0], 0) / pts.length, my = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+    const sl = pts.reduce((a, p) => a + (p[0] - mx) * (p[1] - my), 0) / pts.reduce((a, p) => a + (p[0] - mx) ** 2, 0);
+    const scatter = pts.map(p => ({ x: X(p[0]).toFixed(1), y: Y(p[1]).toFixed(1) }));
+    const trend = { x1: X(4.6), y1: Y(my + sl * (4.6 - mx)), x2: X(8.4), y2: Y(my + sl * (8.4 - mx)) };
+    const wave = Array.from({ length: 28 }, (_, i) => ({ h: 6 + Math.round(Math.abs(Math.sin(i * 1.7) * 22 + Math.sin(i * 0.6) * 8)), c: i < 20 ? 'var(--accent)' : 'var(--surface-3)' }));
+    const cl = ['Count the drawer', 'Run end-of-day report', 'Lock the side door', 'Wipe down the front desk', 'Restock forms', 'Empty trash', 'Back up the day\'s files', 'Set out tomorrow\'s schedule', 'Turn off lobby lights', 'Set the alarm', 'Text the manager', 'Lock the front door'];
+    const checklist = cl.map((n, i) => ({ n, done: i < 7, bg: i < 7 ? 'var(--accent)' : 'transparent', b: i < 7 ? 'none' : '1.5px solid var(--text-tertiary)', tc: i < 7 ? 'var(--text-tertiary)' : 'var(--text)', t: i < 7 ? `10:${String(5 + i * 4).padStart(2, '0')}` : '', div: i ? '1px solid var(--grid)' : 'none' }));
+    const week = [['M', '21', 'done'], ['T', '22', 'today'], ['W', '23', ''], ['T', '24', ''], ['F', '25', 'rest'], ['S', '26', ''], ['S', '27', '']].map(([d, n, st]) => ({ d, n, bg: st === 'today' ? 'color-mix(in srgb, var(--accent) 12%, var(--surface))' : 'var(--surface)', b: st === 'today' ? '1.5px solid var(--accent)' : '1px solid var(--border)', tc: st === 'rest' ? 'var(--text-tertiary)' : 'var(--text)', dot: st === 'done' ? 'var(--success)' : st === 'rest' ? 'transparent' : 'var(--text-tertiary)' }));
+    const exercises = [['Bench press', '4 × 6'], ['Incline dumbbell press', '3 × 10'], ['Overhead press', '3 × 8'], ['Cable fly', '3 × 12'], ['Triceps pushdown', '3 × 12']].map(([n, s]) => ({ n, s }));
+    const sets = [['1', '165 lb', '8', '✓'], ['2', '185 lb', '6', '✓'], ['3', '185 lb', '6', ''], ['4', '185 lb', '6', '']].map(([n, w, r, c]) => ({ n, w, r, c, tc: c ? 'var(--text-secondary)' : 'var(--text)' }));
+    return { s, light, showHead: !pick, states: !pick, pageBg: pick ? 'transparent' : '#0b0b0d', pagePad: pick ? '0' : '56px 64px', plan, macros, water, meals, soberCells, goals, moods, board, leaders, traits, shifts, hours, weekNums, prompts, cashVals, cashAlt, cashPts, scatter, trend, wave, checklist, week, exercises, sets };
+  }
+}
+</script>
+</body>
+</html>

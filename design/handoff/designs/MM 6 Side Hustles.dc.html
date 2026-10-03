@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:#897cdc;text-decoration:none}a:hover{color:#f4f4f6}</style>
+</helmet>
+<section id="p6" style="background:{{ secBg }}; padding:{{ secPad }}; display:flex; flex-direction:column; gap:48px; font-family:Inter, system-ui, sans-serif; color:{{ pg.t2 }}; font-variant-numeric:tabular-nums; min-height:{{ secMin }};">
+  <div style="display:{{ headD }}; flex-direction:column; gap:8px; max-width:900px;">
+    <span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">Masterminds by MARQ · Page 6 of 6 · all figures are example data</span>
+    <h1 style="margin:0; color:{{ pg.t1 }}; font-size:40px; font-weight:700; letter-spacing:-0.04em;">Side Hustles</h1>
+    <p style="margin:0; font-size:15px; line-height:1.45;">Stocks (paper trading only), Streaming, E-commerce, and Sticky Spot.</p>
+  </div>
+  <div style="display:flex; flex-wrap:wrap; gap:72px 48px; align-items:flex-start;">
+
+    <div id="stocks" style="display:{{ show.stocks }}; flex-direction:column; gap:14px;">
+      <span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Stocks</span>
+      <dc-import name="MM Phone" back="Modules" title="Stocks" sub="Paper trading · no real money · Example data" tab="all" full="true" hint-size="392px,1250px">
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; gap:12px;">
+          <span style="font-size:13px; font-weight:500;">Paper portfolio</span>
+          <div style="display:flex; align-items:baseline; color:var(--text); font-size:46px; font-weight:600; letter-spacing:-0.04em; line-height:1;">$10,842<span style="font-size:22px; color:var(--text-tertiary);">.16</span></div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="padding:3px 8px; border-radius:999px; font-size:12px; font-weight:600; color:var(--success); background:color-mix(in srgb, var(--success) 14%, transparent);">↑ 8.4%</span><span style="font-size:13px; color:var(--text-tertiary); font-weight:500;">since Jul 1 start of $10,000</span></div>
+          <dc-import name="MM Line" vals="10000,10120,9980,10240,10310,10180,10420,10560,10490,10710,10620,10842" labels="Jul 1,Today" pre="$" h="130" color="good" hint-size="322px,130px"></dc-import>
+        </div>
+        <dc-import name="MM Card" title="Positions" meta="4 holdings" flush="true" hint-size="100%,320px">
+          <div>
+            <dc-import name="MM Row" n="AAPL" meta="12 shares" chip="↑ 3.1%" k="good" amt="$2,712.00" sub="today +$18.40" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="VTI" meta="9 shares" chip="↑ 0.6%" k="good" amt="$2,511.90" sub="today +$4.10" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="SHOP" meta="20 shares" chip="↓ 1.8%" k="bad" amt="$1,640.00" sub="today −$29.60" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Cash" meta="Paper" chip="Available" k="neutral" amt="$3,978.26" hint-size="100%,70px"></dc-import>
+          </div>
+        </dc-import>
+        <dc-import name="MM Card" title="Allocation" hint-size="100%,190px">
+          <dc-import name="MM Donut" names="AAPL,VTI,SHOP,Cash" vals="2712,2511.9,1640,3978.26" hint-size="100%,124px"></dc-import>
+        </dc-import>
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; color:var(--text);"><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg>Today's commentary</div>
+          <p style="margin:0; font-size:15px; line-height:1.45;">SHOP is your only loser this week and now 15% of the portfolio. You said you wanted no single pick over 20%, so you're still inside your rule.</p>
+          <span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">Practice only. Not financial advice.</span>
+        </div>
+      </dc-import>
+      <dc-import name="MM States" empty="Start a paper portfolio with pretend money and practice without risk." cta="Start with $10,000" ai="Daily commentary needs AI. Prices, positions, and charts still update." hint-size="390px,380px"></dc-import>
+    </div>
+
+    <div id="streaming" style="display:{{ show.streaming }}; flex-direction:column; gap:14px;">
+      <span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Streaming</span>
+      <dc-import name="MM Phone" back="Modules" title="Streaming" sub="Idea bank and calendar · Example data" tab="all" fab="Idea" full="true" hint-size="392px,1100px">
+        <dc-import name="MM Card" title="This week" meta="3 streams planned" hint-size="100%,170px">
+          <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px;">
+            <sc-for list="{{ streamWeek }}" as="d" hint-placeholder-count="7"><div style="display:flex; flex-direction:column; align-items:center; gap:6px;"><span style="font-size:11px; font-weight:500; color:var(--text-tertiary);">{{ d.d }}</span><div style="width:100%; height:64px; border-radius:8px; background:{{ d.bg }}; display:flex; align-items:flex-end; justify-content:center; padding-bottom:6px; box-sizing:border-box; font-size:10.5px; font-weight:600; color:var(--text);">{{ d.t }}</div></div></sc-for>
+          </div>
+        </dc-import>
+        <dc-import name="MM Card" title="Idea bank" meta="14 ideas" flush="true" hint-size="100%,330px">
+          <div>
+            <dc-import name="MM Row" n="Building a client site live" meta="Tue 8 PM" chip="Scheduled" k="accent" amt="" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Roast my website, viewers' sites" meta="Thu 8 PM" chip="Scheduled" k="accent" amt="" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Cold calling, unedited" meta="Idea" chip="Needs a date" k="neutral" amt="" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Q&amp;A: pricing your first client" meta="Idea" chip="Needs a date" k="neutral" amt="" hint-size="100%,70px"></dc-import>
+          </div>
+        </dc-import>
+      </dc-import>
+      <dc-import name="MM States" empty="No stream ideas yet. Jot one down and put it on the calendar." cta="Add an idea" ai="Without AI, titles and outlines aren't suggested. Your ideas and calendar still work." hint-size="390px,380px"></dc-import>
+    </div>
+
+    <div id="ecommerce" style="display:{{ show.ecommerce }}; flex-direction:column; gap:14px;">
+      <span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">E-commerce</span>
+      <div style="display:flex; gap:32px; align-items:flex-start;">
+        <dc-import name="MM Phone" back="Modules" title="E-commerce" sub="2 brands · Example data" tab="all" full="true" hint-size="392px,1300px">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <dc-import name="MM Stat" label="Revenue · 30 days" value="$3,180" pill="↑ 22%" k="good" hint-size="100%,100px"></dc-import>
+            <dc-import name="MM Stat" label="Waiting on you" value="3" pill="Approvals" k="warn" hint-size="100%,100px"></dc-import>
+          </div>
+          <dc-import name="MM Card" title="Revenue by week" meta="Both brands" hint-size="100%,220px"><dc-import name="MM Bars" vals="520,610,580,740,690,820" labels="Aug 17,24,31,Sep 7,14,21" hint-size="100%,164px"></dc-import></dc-import>
+          <sc-for list="{{ brands }}" as="b" hint-placeholder-count="2">
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:10px;">
+              <div style="display:flex; justify-content:space-between; align-items:baseline;"><span style="color:var(--text); font-size:15px; font-weight:600;">{{ b.n }}</span><span style="font-size:12.5px; font-weight:500;">{{ b.m }}</span></div>
+              <div style="display:grid; grid-template-columns:repeat(10,1fr); gap:3px;"><sc-for list="{{ b.steps }}" as="s" hint-placeholder-count="10"><div style="height:6px; border-radius:2px; background:{{ s.c }};"></div></sc-for></div>
+              <div style="display:flex; justify-content:space-between; font-size:12.5px; font-weight:500;"><span>Step {{ b.at }} of 10 · {{ b.stepName }}</span><span style="color:var(--text);">{{ b.prod }}</span></div>
+            </div>
+          </sc-for>
+          <dc-import name="MM Card" title="Approvals" meta="3" flush="true" hint-size="100%,250px">
+            <div>
+              <dc-import name="MM Row" n="Linen tote · product sheet" meta="Field &amp; Fold" chip="Needs approval" k="warn" amt="" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Ad set, 3 images" meta="Field &amp; Fold" chip="Needs approval" k="warn" amt="" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Price change to $34" meta="Night Shift Candle Co." chip="Needs approval" k="warn" amt="" hint-size="100%,70px"></dc-import>
+            </div>
+          </dc-import>
+        </dc-import>
+        <dc-import name="MM Phone" back="E-commerce" title="Field &amp; Fold" sub="Brand pipeline and AI workers · Example data" tab="all" full="true" hint-size="392px,1300px">
+          <dc-import name="MM Card" title="10-step pipeline" meta="Step 7" hint-size="100%,560px">
+            <div style="display:flex; flex-direction:column;">
+              <sc-for list="{{ pipeline }}" as="s" hint-placeholder-count="10">
+                <div style="display:flex; align-items:center; gap:12px; min-height:44px; border-top:{{ s.bt }};">
+                  <div style="width:22px; height:22px; flex:none; border-radius:50%; box-sizing:border-box; background:{{ s.bg }}; border:{{ s.b }}; display:flex; align-items:center; justify-content:center; color:var(--bg); font-size:11px; font-weight:700;">{{ s.mark }}</div>
+                  <span style="flex:1; color:{{ s.tc }}; font-size:14.5px; font-weight:500;">{{ s.n }}</span>
+                  <sc-if value="{{ s.hasChip }}" hint-placeholder-val="{{ false }}"><dc-import name="MM Chip" t="{{ s.chip }}" k="{{ s.k }}" hint-size="80px,22px"></dc-import></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </dc-import>
+          <dc-import name="MM Card" title="AI workers" meta="3 running" flush="true" hint-size="100%,250px">
+            <div>
+              <dc-import name="MM Row" n="Listing writer" meta="Product sheets" chip="Working" k="live" amt="4 done" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Ad maker" meta="Images + copy" chip="Waiting on approval" k="warn" amt="3 ready" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Review responder" meta="Drafts only" chip="Idle" k="neutral" amt="" hint-size="100%,70px"></dc-import>
+            </div>
+          </dc-import>
+          <dc-import name="MM Card" title="Performance" meta="30 days" hint-size="100%,140px">
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px;">
+              <div style="display:flex; flex-direction:column; gap:2px;"><span style="font-size:12px; font-weight:500;">Orders</span><span style="color:var(--text); font-size:20px; font-weight:600;">71</span></div>
+              <div style="display:flex; flex-direction:column; gap:2px;"><span style="font-size:12px; font-weight:500;">Conversion</span><span style="color:var(--text); font-size:20px; font-weight:600;">2.8%</span></div>
+              <div style="display:flex; flex-direction:column; gap:2px;"><span style="font-size:12px; font-weight:500;">Ad return</span><span style="color:var(--text); font-size:20px; font-weight:600;">3.1×</span></div>
+            </div>
+          </dc-import>
+        </dc-import>
+      </div>
+      <dc-import name="MM States" empty="No brands yet. Start one and walk it through the 10-step pipeline." cta="Start a brand" ai="AI workers are off without AI. The pipeline, approvals, and numbers still work by hand." hint-size="390px,380px"></dc-import>
+    </div>
+
+    <div id="sticky-spot" style="display:{{ show.sticky_spot }}; flex-direction:column; gap:14px;">
+      <span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Sticky Spot</span>
+      <dc-import name="MM Phone" back="Modules" title="Sticky Spot" sub="Fast-cash ideas · Example data" tab="all" fab="Idea" full="true" hint-size="392px,900px">
+        <sc-for list="{{ sticky }}" as="s" hint-placeholder-count="5">
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px 16px; display:flex; align-items:center; gap:12px;">
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:3px;"><span style="color:var(--text); font-size:15px; font-weight:500;">{{ s.n }}</span><span style="font-size:12.5px;">{{ s.d }}</span></div>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;"><span style="color:var(--text); font-size:15px; font-weight:600;">{{ s.v }}</span><dc-import name="MM Chip" t="{{ s.t }}" k="{{ s.k }}" hint-size="70px,22px"></dc-import></div>
+          </div>
+        </sc-for>
+      </dc-import>
+      <dc-import name="MM States" empty="Nothing here yet. Jot down quick ways to make money this week." cta="Add an idea" ai="Without AI, ideas aren't sized or suggested. Your list still works." hint-size="390px,380px"></dc-import>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this._mm = () => this.forceUpdate(); window.addEventListener('mm-theme', this._mm); }
+  componentWillUnmount() { window.removeEventListener('mm-theme', this._mm); }
+  pk(pg) { const p = this.props.pick, ids = ["stocks","streaming","ecommerce","sticky_spot"], show = {}; ids.forEach(i => show[i] = !p || p === i ? 'flex' : 'none'); return { show, headD: p ? 'none' : 'flex', secBg: p ? 'transparent' : pg.bg, secPad: p ? '0' : '56px 64px 96px', secMin: p ? '0' : '100vh' }; }
+  renderVals() {
+    let t = 'dark'; try { t = window.__mmForce || localStorage.getItem('mm-theme') || 'dark'; } catch (e) {}
+    if (t === 'system') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    const pg = t === 'dark' ? { bg: '#08080a', t1: '#f4f4f6', t2: '#9a9ca8', t3: '#6b6d78' } : { bg: '#e6e6ec', t1: '#121216', t2: '#5b5d69', t3: '#80828d' };
+    const streamWeek = [['M', ''], ['T', '8 PM'], ['W', ''], ['T', '8 PM'], ['F', ''], ['S', '2 PM'], ['S', '']].map(([d, tt]) => ({ d, t: tt, bg: tt ? 'var(--accent-soft)' : 'var(--surface-3)' }));
+    const names = ['Idea', 'Research', 'Name', 'Brand kit', 'Supplier', 'Samples', 'Product sheets', 'Store', 'Launch', 'Scale'];
+    const mk = at => names.map((_, i) => ({ c: i < at - 1 ? 'var(--accent)' : i === at - 1 ? 'var(--accent-soft)' : 'var(--surface-3)' }));
+    const brands = [{ n: 'Field & Fold', m: 'Linen goods · $2,140', at: 7, stepName: 'Product sheets', prod: '6 products', steps: mk(7) }, { n: 'Night Shift Candle Co.', m: 'Candles · $1,040', at: 10, stepName: 'Scale', prod: '9 products', steps: mk(10) }];
+    const pipeline = names.map((n, i) => {
+      const done = i < 6, cur = i === 6;
+      return { n, mark: done ? '✓' : String(i + 1), bg: done ? 'var(--accent)' : 'transparent', b: done ? 'none' : cur ? '2px solid var(--accent)' : '1.5px solid var(--border)', tc: i > 6 ? 'var(--text-secondary)' : 'var(--text)', bt: i ? '1px solid var(--grid)' : 'none', hasChip: cur, chip: '2 to approve', k: 'warn' };
+    });
+    pipeline.forEach(p => { if (p.mark !== '✓' && p.bg === 'transparent' && p.b.indexOf('2px') < 0) p.mark = ''; });
+    const sticky = [['Sell the old monitor', 'Marketplace · listed Sep 20', '$120', 'Listed', 'neutral'], ['Weekend website fix for a friend', 'Owen asked about his menu page', '$250', 'Quoted', 'accent'], ['Flip the bike in the garage', 'Needs new tubes first', '$180', 'Idea', 'neutral'], ['Sold: spare desk chair', 'Sep 14', '$75', 'Done', 'good'], ['Babysit Saturday for the Parks', 'Confirmed', '$90', 'Booked', 'good']].map(([n, d, v, tt, k]) => ({ n, d, v, t: tt, k }));
+    return { ...this.pk(pg), pg, streamWeek, brands, pipeline, sticky };
+  }
+}
+</script>
+</body>
+</html>

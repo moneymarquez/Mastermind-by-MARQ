@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="--bg:{{ t.bg }}; --surface:{{ t.surface }}; --surface-2:{{ t.s2 }}; --surface-3:{{ t.s3 }}; --border:{{ t.border }}; --grid:{{ t.grid }}; --text:{{ t.text }}; --text-secondary:{{ t.t2 }}; --text-tertiary:{{ t.t3 }}; --accent:{{ t.accent }}; --accent-soft:{{ t.soft }}; --accent-wash:{{ t.wash }}; --success:{{ t.success }}; --warning:{{ t.warning }}; --danger:{{ t.danger }}; --client-accent:{{ t.client }}; --cat-1:{{ t.c1 }}; --cat-2:{{ t.c2 }}; --cat-3:{{ t.c3 }}; --cat-other:{{ t.co }}; --card-shadow:{{ t.shadow }}; display:flex; font-family:Inter, system-ui, sans-serif; color:var(--text-secondary); font-variant-numeric:tabular-nums; -webkit-font-smoothing:antialiased; text-align:left;">
+
+<sc-if value="{{ isPhone }}" hint-placeholder-val="{{ true }}">
+  <div style="width:390px; flex:none; min-height:844px; position:relative; display:flex; flex-direction:column; background:var(--bg); border:1px solid var(--border); border-radius:44px; overflow:hidden;">
+    <div style="height:47px; flex:none; display:flex; align-items:center; justify-content:space-between; padding:0 30px 0 34px; color:var(--text); font-size:15px; font-weight:600;">
+      <span>9:41</span>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="display:flex; align-items:flex-end; gap:2px; height:11px;"><div style="width:3px; height:4px; border-radius:1px; background:var(--text);"></div><div style="width:3px; height:6px; border-radius:1px; background:var(--text);"></div><div style="width:3px; height:8px; border-radius:1px; background:var(--text);"></div><div style="width:3px; height:11px; border-radius:1px; background:var(--text);"></div></div>
+        <div style="width:24px; height:12px; border:1px solid var(--text-tertiary); border-radius:4px; padding:1.5px; box-sizing:border-box;"><div style="width:70%; height:100%; background:var(--text); border-radius:1.5px;"></div></div>
+      </div>
+    </div>
+    <div style="flex:1; padding:0 16px 180px; display:flex; flex-direction:column; gap:20px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding-top:8px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:30px; height:30px; border-radius:8px; background:var(--surface-3); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text); font-size:13px; font-weight:700;">M</div>
+          <div style="display:flex; flex-direction:column; line-height:1.15;"><span style="color:var(--text); font-size:14px; font-weight:600; letter-spacing:-0.015em;">Masterminds</span><span style="color:var(--text-tertiary); font-size:11.5px; font-weight:500;">by MARQ</span></div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <div onClick="{{ toggleTheme }}" title="{{ toggleLabel }}" style="width:40px; height:40px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-secondary); cursor:pointer;">
+            <sc-if value="{{ isDark }}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"></path></svg></sc-if>
+            <sc-if value="{{ isLight }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg></sc-if>
+          </div>
+          <div style="width:40px; height:40px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-secondary);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></div>
+          <div onClick="{{ toggleNotif }}" style="width:40px; height:40px; border-radius:8px; border:1px solid var(--border); background:{{ bellBg }}; display:flex; align-items:center; justify-content:center; color:var(--text-secondary); position:relative; cursor:pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><div style="position:absolute; top:9px; right:10px; width:7px; height:7px; border-radius:50%; background:var(--danger); border:1.5px solid var(--bg);"></div></div>
+        </div>
+      </div>
+      <sc-if value="{{ showTitle }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <h1 style="margin:0; color:var(--text); font-size:24px; font-weight:700; letter-spacing:-0.035em;">{{ title }}</h1>
+          <span style="font-size:13px; font-weight:500; color:var(--text-tertiary);">{{ sub }}</span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; gap:12px;">
+          <span style="font-size:13px; font-weight:500;">Left to spend in September</span>
+          <div style="display:flex; align-items:baseline; color:var(--text); font-size:46px; font-weight:600; letter-spacing:-0.04em; line-height:1;">$987<span style="font-size:22px; color:var(--text-tertiary); letter-spacing:-0.02em;">.20</span></div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="padding:3px 8px; border-radius:999px; font-size:12px; font-weight:600; color:var(--danger); background:color-mix(in srgb, var(--danger) 14%, transparent);">↑ $186 spent</span><span style="font-size:13px; color:var(--text-tertiary); font-weight:500;">vs. last week</span></div>
+          <div style="position:relative; height:56px;">
+            <svg width="100%" height="56" viewBox="0 0 322 56" preserveAspectRatio="none" style="display:block;"><path d="{{ hs.area }}" fill="var(--accent-wash)"></path><path d="{{ hs.line }}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path></svg>
+            <div style="position:absolute; left:{{ hs.ex }}%; top:{{ hs.ey }}px; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; border-radius:50%; background:var(--surface); border:2px solid var(--accent); box-sizing:border-box;"></div>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding-top:10px; border-top:1px solid var(--grid);">
+            <span style="font-size:12px; color:var(--text-tertiary); font-weight:500;">8 days left · about $123 a day</span>
+            <div onClick="{{ goBudget }}" style="padding:8px 12px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:500; cursor:pointer;">Open budget</div>
+          </div>
+        </div>
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px 18px 4px; box-shadow:var(--card-shadow); display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="display:flex; align-items:center; gap:8px; color:var(--text); font-size:15px; font-weight:600; letter-spacing:-0.015em;">New leads<sc-if value="{{ hasLeadBadge }}" hint-placeholder-val="{{ true }}"><span style="min-width:18px; height:18px; padding:0 5px; box-sizing:border-box; border-radius:999px; background:var(--danger); color:var(--bg); font-size:11px; font-weight:600; display:flex; align-items:center; justify-content:center;">4</span></sc-if></span>
+            <span onClick="{{ goLeads }}" style="height:40px; display:flex; align-items:center; color:var(--text); font-size:13px; font-weight:500; cursor:pointer;">See all</span>
+          </div>
+          <sc-for list="{{ homeLeads }}" as="l" hint-placeholder-count="3"><dc-import name="MM Lead" n="{{ l.n }}" biz="{{ l.biz }}" src="{{ l.src }}" ago="{{ l.ago }}" temp="{{ l.temp }}" waiting="{{ l.waiting }}" urgent="{{ l.urgent }}" top="{{ l.top }}" on-open="{{ goLeads }}" hint-size="100%,90px"></dc-import></sc-for>
+        </div>
+        <dc-import name="MM Card" title="Needs attention" meta="3 items" flush="true" hint-size="100%,250px">
+          <div><sc-for list="{{ attention }}" as="r" hint-placeholder-count="3"><dc-import name="MM Row" n="{{ r.n }}" meta="{{ r.m }}" chip="{{ r.c }}" k="{{ r.k }}" amt="{{ r.a }}" hint-size="100%,70px"></dc-import></sc-for></div>
+        </dc-import>
+        <dc-import name="MM Card" title="Daily brief" meta="" hint-size="100%,170px">
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <dc-import name="MM Chip" t="Paused" k="neutral" hint-size="70px,22px"></dc-import>
+            <p style="margin:0; font-size:15px; line-height:1.45; text-wrap:pretty;">AI isn't funded on this workspace, so the written brief is paused. Every number above still updates live.</p>
+            <div style="align-self:flex-start; padding:10px 14px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Turn on AI</div>
+          </div>
+        </dc-import>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <span style="color:var(--text); font-size:15px; font-weight:600; letter-spacing:-0.015em;">Pinned</span>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <sc-for list="{{ pinned }}" as="p" hint-placeholder-count="4">
+              <div onClick="{{ p.tap }}" style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:14px; cursor:pointer;">
+                <div style="width:32px; height:32px; border-radius:10px; background:var(--surface-3); display:flex; align-items:center; justify-content:center; color:{{ p.ic }}; font-size:12px; font-weight:600;">{{ p.g }}</div>
+                <div style="display:flex; flex-direction:column; gap:2px;"><span style="color:var(--text); font-size:14px; font-weight:600; letter-spacing:-0.015em;">{{ p.n }}</span><span style="font-size:12px; color:var(--text-tertiary); font-weight:500;">{{ p.m }}</span></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isBudget }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; gap:12px;">
+          <span style="font-size:13px; font-weight:500;">Spent in September</span>
+          <div style="display:flex; align-items:baseline; color:var(--text); font-size:46px; font-weight:600; letter-spacing:-0.04em; line-height:1;">$4,212<span style="font-size:22px; color:var(--text-tertiary); letter-spacing:-0.02em;">.80</span></div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="padding:3px 8px; border-radius:999px; font-size:12px; font-weight:600; color:var(--danger); background:color-mix(in srgb, var(--danger) 14%, transparent);">↑ $186</span><span style="font-size:13px; color:var(--text-tertiary); font-weight:500;">this week</span></div>
+          <div style="position:relative; height:56px;">
+            <svg width="100%" height="56" viewBox="0 0 322 56" preserveAspectRatio="none" style="display:block;"><path d="{{ ss.area }}" fill="var(--accent-wash)"></path><path d="{{ ss.line }}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path></svg>
+            <div style="position:absolute; left:{{ ss.ex }}%; top:{{ ss.ey }}px; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; border-radius:50%; background:var(--surface); border:2px solid var(--accent); box-sizing:border-box;"></div>
+          </div>
+        </div>
+        <dc-import name="MM Card" title="" hint-size="100%,120px">
+          <dc-import name="MM Pace" label="Pace" val="$4,212.80" max="$5,200.00" fill="81" mark="73.3" chip="Behind pace by $400" k="warn" note="Day 22 of 30 · target $3,813" hint-size="100%,90px"></dc-import>
+        </dc-import>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <sc-for list="{{ bStats }}" as="x" hint-placeholder-count="4"><dc-import name="MM Stat" label="{{ x.l }}" value="{{ x.v }}" pill="{{ x.p }}" k="{{ x.k }}" hint-size="100%,100px"></dc-import></sc-for>
+        </div>
+        <dc-import name="MM Card" title="Monthly spending" meta="Last 6 months" hint-size="100%,220px">
+          <dc-import name="MM Bars" vals="4880,5140,4620,5310,4960,4212.8" labels="Apr,May,Jun,Jul,Aug,Sep" top="$4,213" hint-size="100%,164px"></dc-import>
+        </dc-import>
+        <dc-import name="MM Card" title="Where it went" meta="September" hint-size="100%,190px">
+          <dc-import name="MM Donut" names="Housing,Food,Transport,Other" vals="1850,812,486,1064.8" dec="2" total="$4,212.80" hint-size="100%,124px"></dc-import>
+        </dc-import>
+        <dc-import name="MM Card" title="Bills" meta="" flush="true" hint-size="100%,420px">
+          <div style="display:flex; flex-direction:column;">
+            <div style="display:flex; gap:2px; padding:3px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border); align-self:flex-start; margin:4px 0 12px;">
+              <sc-for list="{{ billFilters }}" as="f" hint-placeholder-count="3"><span onClick="{{ f.tap }}" style="padding:6px 12px; border-radius:999px; font-size:12px; font-weight:500; background:{{ f.bg }}; color:{{ f.c }}; cursor:pointer;">{{ f.l }}</span></sc-for>
+            </div>
+            <sc-for list="{{ bills }}" as="b" hint-placeholder-count="5"><dc-import name="MM Row" n="{{ b.n }}" meta="{{ b.ref }}" chip="{{ b.chip }}" k="{{ b.k }}" amt="{{ b.amt }}" dim="{{ b.paid }}" hint-size="100%,70px"></dc-import></sc-for>
+            <div style="display:flex; justify-content:space-between; padding:12px 0; border-top:1px solid var(--grid); font-size:13px; font-weight:500;"><span>Still to pay this month</span><span style="color:var(--text);">$413.18</span></div>
+          </div>
+        </dc-import>
+      </sc-if>
+
+      <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+        <dc-import name="MM Card" title="Appearance" meta="" hint-size="100%,140px">
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px; padding:3px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border);">
+              <sc-for list="{{ themeOpts }}" as="o" hint-placeholder-count="3"><span onClick="{{ o.tap }}" style="height:38px; display:flex; align-items:center; justify-content:center; border-radius:999px; font-size:13px; font-weight:500; background:{{ o.bg }}; color:{{ o.c }}; cursor:pointer;">{{ o.l }}</span></sc-for>
+            </div>
+            <span style="font-size:12.5px; font-weight:500; color:var(--text-tertiary);">{{ themeNote }}</span>
+          </div>
+        </dc-import>
+        <sc-for list="{{ settings }}" as="g" hint-placeholder-count="3">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <span style="font-size:13px; font-weight:500; padding-left:2px;">{{ g.title }}</span>
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden;">
+              <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3"><div style="display:flex; align-items:center; gap:10px; min-height:50px; padding:0 14px; border-top:{{ r.div }};"><span style="flex:1; color:var(--text); font-size:15px; font-weight:500;">{{ r.l }}</span><span style="font-size:14px; color:var(--text-tertiary); font-weight:500;">{{ r.v }}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></div></sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </sc-if>
+
+      <sc-if value="{{ isAll }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ goSettings }}" style="background:var(--surface); border:1px solid var(--border); border-radius:16px; display:flex; align-items:center; gap:10px; min-height:52px; padding:0 14px; cursor:pointer;"><span style="flex:1; color:var(--text); font-size:15px; font-weight:500;">Settings</span><span style="font-size:14px; color:var(--text-tertiary);">Appearance, modules, billing</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></div>
+        <sc-for list="{{ groups }}" as="g" hint-placeholder-count="5">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; justify-content:space-between; padding:0 2px;"><span style="color:var(--text); font-size:15px; font-weight:600; letter-spacing:-0.015em;">{{ g.title }}</span><span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">{{ g.count }}</span></div>
+            <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px;">
+              <sc-for list="{{ g.items }}" as="m" hint-placeholder-count="6">
+                <div onClick="{{ m.tap }}" style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:12px; min-height:88px; box-sizing:border-box; cursor:pointer;">
+                  <div style="width:30px; height:30px; border-radius:10px; background:var(--surface-3); display:flex; align-items:center; justify-content:center; color:var(--text-secondary); font-size:11px; font-weight:600;">{{ m.g }}</div>
+                  <span style="color:var(--text); font-size:12.5px; font-weight:500; line-height:1.25;">{{ m.n }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </sc-if>
+
+      <sc-if value="{{ isInbox }}" hint-placeholder-val="{{ false }}">
+        <dc-import name="MM Inbox" size="phone" istate="{{ istate }}" lstate="{{ lstate }}" target="{{ inboxTarget }}" hint-size="100%,900px"></dc-import>
+      </sc-if>
+
+      <sc-if value="{{ isNovaS }}" hint-placeholder-val="{{ false }}">
+        <div style="align-self:flex-end; max-width:78%; padding:11px 14px; border-radius:16px 16px 4px 16px; background:var(--surface-3); color:var(--text); font-size:15px; line-height:1.45;">Can I afford the $640 camera this month?</div>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; color:var(--text);"><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg>Nova</div>
+          <p style="margin:0; font-size:15px; line-height:1.5; text-wrap:pretty;">Not without going over. You have $987 left for 8 days and you're already $400 behind pace. Buying it would put September $53 over budget.</p>
+          <dc-import name="MM Card" title="September spending" meta="From Budgeting" hint-size="100%,150px"><dc-import name="MM Pace" val="$4,213" max="$5,200" fill="81" mark="73.3" chip="Behind pace by $400" k="warn" note="Day 22 of 30" hint-size="100%,70px"></dc-import></dc-import>
+          <p style="margin:0; font-size:15px; line-height:1.5;">October starts with $5,200. If you wait 9 days you can buy it and stay on pace.</p>
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <span style="height:40px; display:flex; align-items:center; padding:0 14px; border-radius:999px; border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:500;">Remind me Oct 1</span>
+            <span style="height:40px; display:flex; align-items:center; padding:0 14px; border-radius:999px; border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:500;">Log it in Decision Log</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isOther }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid var(--border); border-radius:16px; padding:32px 18px; display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; background-color:var(--surface-2); background-image:linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size:22px 22px;">
+          <p style="margin:0; font-size:15px; line-height:1.45; max-width:280px;">{{ otherNote }}</p>
+          <div onClick="{{ goHome }}" style="height:40px; display:flex; align-items:center; padding:0 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:14px; font-weight:500; cursor:pointer;">Back to Home</div>
+        </div>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ isBudget }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute; right:16px; bottom:100px; z-index:5; display:flex; align-items:center; gap:6px; height:48px; padding:0 18px; border-radius:8px; background:var(--text); color:var(--bg); font-size:15px; font-weight:600; box-shadow:0 0 40px rgba(0,0,0,.25); cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Add expense</div>
+    </sc-if>
+    <sc-if value="{{ isNovaS }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute; left:0; right:0; bottom:84px; z-index:5; padding:10px 16px; background:color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter:blur(16px); border-top:1px solid var(--border); display:flex; gap:8px;">
+        <div style="flex:1; height:46px; border-radius:8px; background:var(--surface-2); border:1px solid var(--border); display:flex; align-items:center; padding:0 14px; color:var(--text-tertiary); font-size:16px;">Ask Nova anything</div>
+        <div style="width:46px; height:46px; border-radius:8px; background:var(--text); display:flex; align-items:center; justify-content:center; color:var(--bg);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path></svg></div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ notifOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute; inset:0; z-index:9; background:rgba(0,0,0,.45);">
+        <div onClick="{{ toggleNotif }}" style="position:absolute; inset:0;"></div>
+        <div style="position:absolute; top:100px; left:10px; right:10px;"><dc-import name="MM Notif" size="phone" on-go="{{ notifGo }}" on-close="{{ toggleNotif }}" hint-size="100%,560px"></dc-import></div>
+      </div>
+    </sc-if>
+    <div style="position:absolute; left:0; right:0; bottom:0; z-index:6; height:84px; background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border-top:1px solid var(--border); display:flex; padding:8px 8px 0;">
+      <sc-for list="{{ tabs }}" as="it" hint-placeholder-count="4">
+        <div onClick="{{ it.tap }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:48px; justify-content:center; cursor:pointer;">
+          <div style="color:{{ it.ic }}; height:22px; display:flex; align-items:center; position:relative;">
+            <sc-if value="{{ it.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="position:absolute; top:-5px; left:13px; min-width:18px; height:18px; padding:0 5px; box-sizing:border-box; border-radius:999px; background:{{ it.bb }}; color:var(--bg); font-size:11px; font-weight:600; display:flex; align-items:center; justify-content:center; border:2px solid var(--bg);">{{ it.badge }}</span></sc-if>
+            <sc-if value="{{ it.home }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"></path></svg></sc-if>
+            <sc-if value="{{ it.inbox }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 13h5l1.5 3h5l1.5-3h5"></path><path d="M5.5 5h13L21 13v6H3v-6z"></path></svg></sc-if>
+            <sc-if value="{{ it.nova }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg></sc-if>
+            <sc-if value="{{ it.all }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="7" height="7" rx="2"></rect><rect x="13.5" y="3.5" width="7" height="7" rx="2"></rect><rect x="3.5" y="13.5" width="7" height="7" rx="2"></rect><rect x="13.5" y="13.5" width="7" height="7" rx="2"></rect></svg></sc-if>
+          </div>
+          <span style="font-size:11px; font-weight:500; color:{{ it.lc }};">{{ it.label }}</span>
+        </div>
+      </sc-for>
+      <div style="position:absolute; left:50%; bottom:8px; width:134px; height:5px; margin-left:-67px; border-radius:3px; background:var(--text);"></div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isWide }}" hint-placeholder-val="{{ false }}">
+  <div style="width:{{ W }}px; flex:none; min-height:{{ H }}px; display:flex; flex-direction:column; background:var(--bg); border:1px solid var(--border); border-radius:{{ R }}px; overflow:hidden;">
+    <sc-if value="{{ isIpad }}" hint-placeholder-val="{{ false }}">
+      <div style="height:26px; flex:none; display:flex; align-items:center; justify-content:space-between; padding:0 22px; color:var(--text); font-size:12px; font-weight:600; background:var(--surface-2);">
+        <span>9:41  Tue Sep 22</span>
+        <div style="display:flex; align-items:center; gap:6px;"><span>78%</span><div style="width:22px; height:11px; border:1px solid var(--text-tertiary); border-radius:3px; padding:1.5px; box-sizing:border-box;"><div style="width:78%; height:100%; background:var(--text); border-radius:1px;"></div></div></div>
+      </div>
+    </sc-if>
+    <div style="flex:1; display:flex; position:relative; min-height:0;">
+
+      <div style="width:{{ sbW }}px; flex:none; background:var(--surface-2); border-right:1px solid var(--border); display:flex; flex-direction:column; gap:14px; padding:14px 10px; box-sizing:border-box;">
+        <div style="display:flex; align-items:center; gap:10px; padding:2px 6px;">
+          <div style="width:28px; height:28px; border-radius:8px; background:var(--surface-3); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text); font-size:12px; font-weight:700;">M</div>
+          <div style="flex:1; display:flex; flex-direction:column; line-height:1.15; min-width:0;"><span style="color:var(--text); font-size:14px; font-weight:600; letter-spacing:-0.015em;">MARQ Studio</span><span style="color:var(--text-tertiary); font-size:11.5px; font-weight:500;">Masterminds</span></div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5"></path><path d="m7 15 5 5 5-5"></path></svg>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; height:{{ rowH }}px; padding:0 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text-tertiary); font-size:13.5px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <span style="flex:1;">Search</span>
+          <sc-if value="{{ isDesk }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px; font-weight:500; padding:1px 6px; border-radius:4px; border:1px solid var(--border);">⌘K</span></sc-if>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:2px;">
+          <sc-for list="{{ topNav }}" as="n" hint-placeholder-count="4">
+            <div onClick="{{ n.tap }}" style="display:flex; align-items:center; gap:10px; height:{{ rowH }}px; padding:0 10px; border-radius:8px; background:{{ n.bg }}; color:{{ n.c }}; font-size:14px; font-weight:500; cursor:pointer;" style-hover="background:var(--surface-3);">
+              <sc-if value="{{ n.isHome }}" hint-placeholder-val="{{ false }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"></path></svg></sc-if>
+              <sc-if value="{{ n.isNova }}" hint-placeholder-val="{{ false }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg></sc-if>
+              <sc-if value="{{ n.isInbox }}" hint-placeholder-val="{{ false }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 13h5l1.5 3h5l1.5-3h5"></path><path d="M5.5 5h13L21 13v6H3v-6z"></path></svg></sc-if>
+              <sc-if value="{{ n.isLeads }}" hint-placeholder-val="{{ false }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M13 3 5 13.5h6L10 21l8-10.5h-6z"></path></svg></sc-if>
+              <span style="flex:1;">{{ n.l }}</span>
+              <sc-if value="{{ n.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="min-width:18px; height:18px; padding:0 5px; box-sizing:border-box; border-radius:999px; background:{{ n.bb }}; color:var(--bg); font-size:11px; font-weight:600; display:flex; align-items:center; justify-content:center;">{{ n.badge }}</span></sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <sc-for list="{{ groups }}" as="g" hint-placeholder-count="5">
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <div onClick="{{ g.toggle }}" style="display:flex; align-items:center; gap:6px; height:30px; padding:0 10px; border-radius:6px; color:var(--text-tertiary); font-size:12.5px; font-weight:500; cursor:pointer;" style-hover="color:var(--text-secondary);">
+                <svg style="transform:rotate({{ g.rot }}deg); transition:transform .15s;" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg>
+                <span style="flex:1;">{{ g.title }}</span>
+                <span style="font-size:11.5px;">{{ g.count }}</span>
+              </div>
+              <sc-if value="{{ g.open }}" hint-placeholder-val="{{ false }}">
+                <sc-for list="{{ g.items }}" as="m" hint-placeholder-count="4">
+                  <div onClick="{{ m.tap }}" style="display:flex; align-items:center; gap:10px; height:{{ rowH }}px; padding:0 10px; border-radius:8px; background:{{ m.bg }}; color:{{ m.c }}; font-size:14px; font-weight:500; letter-spacing:-0.01em; cursor:pointer;" style-hover="background:var(--surface-3);">
+                    <div style="width:20px; height:20px; flex:none; border-radius:6px; background:{{ m.gb }}; color:{{ m.gc }}; display:flex; align-items:center; justify-content:center; font-size:8.5px; font-weight:700; letter-spacing:-0.02em;">{{ m.g }}</div>
+                    <span style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ m.n }}</span>
+                  </div>
+                </sc-for>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="flex:1;"></div>
+        <div style="display:flex; flex-direction:column; gap:2px; padding-top:10px; border-top:1px solid var(--grid);">
+          <div onClick="{{ goSettings }}" style="display:flex; align-items:center; gap:10px; height:{{ rowH }}px; padding:0 10px; border-radius:8px; background:{{ setBg }}; color:{{ setC }}; font-size:14px; font-weight:500; cursor:pointer;" style-hover="background:var(--surface-3);">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10"></path><path d="M18 7h2"></path><circle cx="16" cy="7" r="2"></circle><path d="M4 17h2"></path><path d="M10 17h10"></path><circle cx="8" cy="17" r="2"></circle></svg>Settings
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; height:44px; padding:0 10px;">
+            <div style="width:26px; height:26px; border-radius:50%; background:var(--surface-3); display:flex; align-items:center; justify-content:center; color:var(--text); font-size:11px; font-weight:600;">MQ</div>
+            <div style="display:flex; flex-direction:column; line-height:1.2;"><span style="color:var(--text); font-size:13px; font-weight:500;">Marq</span><span style="font-size:11.5px; color:var(--text-tertiary);">Owner</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:1; min-width:0; display:flex; flex-direction:column;">
+        <div style="height:56px; flex:none; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 {{ pad }}px; border-bottom:1px solid var(--grid);">
+          <div style="display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:500; min-width:0;">
+            <sc-if value="{{ hasCrumb }}" hint-placeholder-val="{{ false }}"><span style="color:var(--text-tertiary);">{{ crumb }}</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></sc-if>
+            <span style="color:var(--text);">{{ crumbHere }}</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <sc-if value="{{ isDesk }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; align-items:center; gap:8px; width:220px; height:36px; padding:0 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--text-tertiary); font-size:13.5px; box-sizing:border-box;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><span style="flex:1;">Search everything</span><span style="font-size:11px; padding:1px 6px; border-radius:4px; border:1px solid var(--border);">⌘K</span></div>
+            </sc-if>
+            <div onClick="{{ toggleTheme }}" title="{{ toggleLabel }}" style="width:{{ btn }}px; height:{{ btn }}px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-secondary); cursor:pointer;" style-hover="background:var(--surface-3);">
+              <sc-if value="{{ isDark }}" hint-placeholder-val="{{ true }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"></path></svg></sc-if>
+              <sc-if value="{{ isLight }}" hint-placeholder-val="{{ false }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg></sc-if>
+            </div>
+            <div onClick="{{ toggleNotif }}" style="width:{{ btn }}px; height:{{ btn }}px; border-radius:8px; border:1px solid var(--border); background:{{ bellBg }}; display:flex; align-items:center; justify-content:center; color:var(--text-secondary); position:relative; cursor:pointer;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><div style="position:absolute; top:8px; right:9px; width:7px; height:7px; border-radius:50%; background:var(--danger); border:1.5px solid var(--bg);"></div></div>
+            <div onClick="{{ toggleNova }}" style="height:{{ btn }}px; padding:0 12px; border-radius:8px; border:1px solid var(--border); background:{{ novaBtnBg }}; display:flex; align-items:center; gap:6px; color:var(--text); font-size:13.5px; font-weight:500; cursor:pointer;"><svg width="15" height="15" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg>Ask Nova</div>
+          </div>
+        </div>
+
+        <div style="flex:1; padding:{{ pad }}px; display:flex; flex-direction:column; gap:20px;">
+          <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px;">
+            <div style="display:flex; flex-direction:column; gap:4px; min-width:0;">
+              <h1 style="margin:0; color:var(--text); font-size:28px; font-weight:700; letter-spacing:-0.035em; line-height:1.15;">{{ title }}</h1>
+              <span style="font-size:13px; font-weight:500; color:var(--text-tertiary);">{{ sub }}</span>
+            </div>
+            <sc-if value="{{ isBudget }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div style="display:flex; align-items:center; gap:2px; height:{{ btn }}px; padding:0 4px; border-radius:999px; border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:500; box-sizing:border-box;"><span style="width:26px; text-align:center; color:var(--text-tertiary);">‹</span><span>Sep 2026</span><span style="width:26px; text-align:center; color:var(--text-tertiary);">›</span></div>
+                <div style="display:flex; align-items:center; gap:6px; height:{{ btn }}px; padding:0 14px; border-radius:8px; background:var(--text); color:var(--bg); font-size:14px; font-weight:600; cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Add expense</div>
+              </div>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid; grid-template-columns:{{ L.r1 }}; gap:16px;">
+              <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; gap:12px; min-width:0;">
+                <span style="font-size:13px; font-weight:500;">Left to spend in September</span>
+                <div style="display:flex; align-items:baseline; color:var(--text); font-size:46px; font-weight:600; letter-spacing:-0.04em; line-height:1;">$987<span style="font-size:22px; color:var(--text-tertiary); letter-spacing:-0.02em;">.20</span></div>
+                <div style="display:flex; align-items:center; gap:8px;"><span style="padding:3px 8px; border-radius:999px; font-size:12px; font-weight:600; color:var(--danger); background:color-mix(in srgb, var(--danger) 14%, transparent);">↑ $186 spent</span><span style="font-size:13px; color:var(--text-tertiary); font-weight:500;">vs. last week</span></div>
+                <div style="position:relative; height:64px; margin-top:auto;">
+                  <svg width="100%" height="64" viewBox="0 0 322 64" preserveAspectRatio="none" style="display:block;"><path d="{{ hsW.area }}" fill="var(--accent-wash)"></path><path d="{{ hsW.line }}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path></svg>
+                  <div style="position:absolute; left:{{ hsW.ex }}%; top:{{ hsW.ey }}px; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; border-radius:50%; background:var(--surface); border:2px solid var(--accent); box-sizing:border-box;"></div>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; padding-top:10px; border-top:1px solid var(--grid);">
+                  <span style="font-size:12px; color:var(--text-tertiary); font-weight:500;">8 days left · about $123 a day</span>
+                  <div onClick="{{ goBudget }}" style="padding:8px 12px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:500; cursor:pointer;">Open budget</div>
+                </div>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px;">
+                <sc-for list="{{ hStats }}" as="x" hint-placeholder-count="4"><dc-import name="MM Stat" label="{{ x.l }}" value="{{ x.v }}" pill="{{ x.p }}" k="{{ x.k }}" hint-size="100%,110px"></dc-import></sc-for>
+              </div>
+            </div>
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px 20px 6px; box-shadow:var(--card-shadow); display:flex; flex-direction:column;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="display:flex; align-items:center; gap:8px; color:var(--text); font-size:15px; font-weight:600; letter-spacing:-0.015em;">New leads<sc-if value="{{ hasLeadBadge }}" hint-placeholder-val="{{ true }}"><span style="min-width:18px; height:18px; padding:0 5px; box-sizing:border-box; border-radius:999px; background:var(--danger); color:var(--bg); font-size:11px; font-weight:600; display:flex; align-items:center; justify-content:center;">4</span><span style="font-size:12.5px; font-weight:500; color:var(--text-tertiary);">waiting on you</span></sc-if></span>
+                <span onClick="{{ goLeads }}" style="height:32px; display:flex; align-items:center; padding:0 10px; border-radius:8px; color:var(--text); font-size:13px; font-weight:500; cursor:pointer;" style-hover="background:var(--surface-3);">See all 6</span>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px;">
+                <sc-for list="{{ homeLeadsW }}" as="l" hint-placeholder-count="3"><dc-import name="MM Lead" n="{{ l.n }}" biz="{{ l.biz }}" src="{{ l.src }}" ago="{{ l.ago }}" temp="{{ l.temp }}" waiting="{{ l.waiting }}" urgent="{{ l.urgent }}" top="none" on-open="{{ goLeads }}" hint-size="100%,90px"></dc-import></sc-for>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:{{ L.r2 }}; gap:16px; align-items:start;">
+              <dc-import name="MM Card" title="Needs attention" meta="3 items" flush="true" hint-size="100%,250px">
+                <div><sc-for list="{{ attention }}" as="r" hint-placeholder-count="3"><dc-import name="MM Row" n="{{ r.n }}" meta="{{ r.m }}" chip="{{ r.c }}" k="{{ r.k }}" amt="{{ r.a }}" hint-size="100%,70px"></dc-import></sc-for></div>
+              </dc-import>
+              <dc-import name="MM Card" title="Today" meta="From Daily Plan" flush="true" hint-size="100%,280px">
+                <div style="display:flex; flex-direction:column;">
+                  <sc-for list="{{ today }}" as="e" hint-placeholder-count="5">
+                    <div style="display:grid; grid-template-columns:44px minmax(0,1fr) auto; gap:10px; align-items:center; padding:11px 0; border-top:1px solid var(--grid);">
+                      <span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">{{ e.t }}</span>
+                      <div style="display:flex; flex-direction:column; gap:2px; min-width:0;"><span style="color:{{ e.tc }}; font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ e.n }}</span><span style="font-size:12px; font-weight:500; color:var(--text-tertiary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ e.m }}</span></div>
+                      <sc-if value="{{ e.hasChip }}" hint-placeholder-val="{{ false }}"><dc-import name="MM Chip" t="{{ e.c }}" k="{{ e.k }}" hint-size="70px,22px"></dc-import></sc-if>
+                    </div>
+                  </sc-for>
+                </div>
+              </dc-import>
+              <dc-import name="MM Card" title="Daily brief" meta="" hint-size="100%,170px">
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                  <dc-import name="MM Chip" t="Paused" k="neutral" hint-size="70px,22px"></dc-import>
+                  <p style="margin:0; font-size:15px; line-height:1.45; text-wrap:pretty;">AI isn't funded on this workspace, so the written brief is paused. Every number on this page still updates live.</p>
+                  <div style="align-self:flex-start; padding:10px 14px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Turn on AI</div>
+                </div>
+              </dc-import>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <span style="color:var(--text); font-size:15px; font-weight:600; letter-spacing:-0.015em;">Pinned</span>
+              <div style="display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px;">
+                <sc-for list="{{ pinned }}" as="p" hint-placeholder-count="4">
+                  <div onClick="{{ p.tap }}" style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; display:flex; align-items:center; gap:12px; cursor:pointer; min-width:0;" style-hover="border-color:var(--text-tertiary);">
+                    <div style="width:36px; height:36px; flex:none; border-radius:10px; background:var(--surface-3); display:flex; align-items:center; justify-content:center; color:{{ p.ic }}; font-size:12px; font-weight:600;">{{ p.g }}</div>
+                    <div style="display:flex; flex-direction:column; gap:2px; min-width:0;"><span style="color:var(--text); font-size:14px; font-weight:600; letter-spacing:-0.015em;">{{ p.n }}</span><span style="font-size:12px; color:var(--text-tertiary); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ p.m }}</span></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isBudget }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid; grid-template-columns:{{ L.r1 }}; gap:16px;">
+              <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; gap:12px; min-width:0;">
+                <span style="font-size:13px; font-weight:500;">Spent in September</span>
+                <div style="display:flex; align-items:baseline; color:var(--text); font-size:46px; font-weight:600; letter-spacing:-0.04em; line-height:1;">$4,212<span style="font-size:22px; color:var(--text-tertiary); letter-spacing:-0.02em;">.80</span></div>
+                <div style="display:flex; align-items:center; gap:8px;"><span style="padding:3px 8px; border-radius:999px; font-size:12px; font-weight:600; color:var(--danger); background:color-mix(in srgb, var(--danger) 14%, transparent);">↑ $186</span><span style="font-size:13px; color:var(--text-tertiary); font-weight:500;">this week</span></div>
+                <div style="position:relative; height:56px;">
+                  <svg width="100%" height="56" viewBox="0 0 322 56" preserveAspectRatio="none" style="display:block;"><path d="{{ ss.area }}" fill="var(--accent-wash)"></path><path d="{{ ss.line }}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path></svg>
+                  <div style="position:absolute; left:{{ ss.ex }}%; top:{{ ss.ey }}px; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; border-radius:50%; background:var(--surface); border:2px solid var(--accent); box-sizing:border-box;"></div>
+                </div>
+                <div style="padding-top:14px; border-top:1px solid var(--grid);">
+                  <dc-import name="MM Pace" label="Pace" val="$4,212.80" max="$5,200.00" fill="81" mark="73.3" chip="Behind pace by $400" k="warn" note="Day 22 of 30 · target $3,813" hint-size="100%,90px"></dc-import>
+                </div>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px;">
+                <sc-for list="{{ bStats }}" as="x" hint-placeholder-count="4"><dc-import name="MM Stat" label="{{ x.l }}" value="{{ x.v }}" pill="{{ x.p }}" k="{{ x.k }}" hint-size="100%,110px"></dc-import></sc-for>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:{{ L.b2 }}; gap:16px; align-items:stretch;">
+              <dc-import name="MM Card" title="Monthly spending" meta="Last 6 months · tap a bar" hint-size="100%,250px">
+                <dc-import name="MM Bars" vals="4880,5140,4620,5310,4960,4212.8" labels="Apr,May,Jun,Jul,Aug,Sep" top="$4,213" h="150" hint-size="100%,194px"></dc-import>
+              </dc-import>
+              <dc-import name="MM Card" title="Where it went" meta="Tap a slice" hint-size="100%,250px">
+                <div style="display:flex; flex:1; align-items:center;"><dc-import name="MM Donut" names="Housing,Food,Transport,Other" vals="1850,812,486,1064.8" dec="2" total="$4,212.80" hint-size="100%,124px"></dc-import></div>
+              </dc-import>
+              <div style="grid-column:{{ L.catSpan }}; min-width:0;">
+                <dc-import name="MM Card" title="Category budgets" meta="$5,200 total" hint-size="100%,250px">
+                  <div style="display:grid; grid-template-columns:{{ L.catCols }}; gap:14px 28px;">
+                    <sc-for list="{{ cats }}" as="c" hint-placeholder-count="4">
+                      <div style="display:flex; flex-direction:column; gap:7px;">
+                        <div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px;"><span style="display:flex; align-items:center; gap:7px; color:var(--text); font-size:14px; font-weight:500;"><span style="width:8px; height:8px; border-radius:2px; background:{{ c.col }};"></span>{{ c.n }}</span><span style="font-size:12.5px; font-weight:500; white-space:nowrap;"><span style="color:var(--text);">{{ c.v }}</span> of {{ c.b }}</span></div>
+                        <div style="height:6px; border-radius:999px; background:var(--surface-3); overflow:hidden;"><div style="width:{{ c.w }}%; height:100%; border-radius:999px; background:{{ c.bar }};"></div></div>
+                        <dc-import name="MM Chip" t="{{ c.chip }}" k="{{ c.k }}" hint-size="90px,22px"></dc-import>
+                      </div>
+                    </sc-for>
+                  </div>
+                </dc-import>
+              </div>
+            </div>
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; overflow:hidden;">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 20px;">
+                <div style="display:flex; align-items:center; gap:14px;">
+                  <span style="color:var(--text); font-size:15px; font-weight:600; letter-spacing:-0.015em;">Bills</span>
+                  <div style="display:flex; gap:2px; padding:3px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border);">
+                    <sc-for list="{{ billFilters }}" as="f" hint-placeholder-count="3"><span onClick="{{ f.tap }}" style="padding:6px 12px; border-radius:999px; font-size:12px; font-weight:500; background:{{ f.bg }}; color:{{ f.c }}; cursor:pointer;">{{ f.l }}</span></sc-for>
+                  </div>
+                </div>
+                <span style="font-size:13px; font-weight:500;">Still to pay <span style="color:var(--text); font-weight:600;">$413.18</span></span>
+              </div>
+              <div style="display:grid; grid-template-columns:{{ L.bc }}; gap:12px; padding:9px 20px; border-top:1px solid var(--grid); background:var(--surface-2); font-size:12px; font-weight:500; color:var(--text-tertiary);">
+                <span>Bill</span><span style="display:{{ L.dOnly }};">Category</span><span>Account</span><span>Due</span><span>Status</span><span style="display:{{ L.dOnly }};">Autopay</span><span style="text-align:right;">Amount</span>
+              </div>
+              <sc-for list="{{ bills }}" as="b" hint-placeholder-count="5">
+                <div style="display:grid; grid-template-columns:{{ L.bc }}; gap:12px; align-items:center; min-height:52px; padding:0 20px; border-top:1px solid var(--grid); font-size:14px;" style-hover="background:var(--surface-2);">
+                  <span style="color:var(--text); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ b.n }}</span>
+                  <span style="display:{{ L.dOnly }};">{{ b.cat }}</span>
+                  <span style="white-space:nowrap;">{{ b.ref }}</span>
+                  <span style="white-space:nowrap;">{{ b.due }}</span>
+                  <div><dc-import name="MM Chip" t="{{ b.chip }}" k="{{ b.k }}" hint-size="100px,22px"></dc-import></div>
+                  <span style="display:{{ L.dOnly }};">{{ b.auto }}</span>
+                  <span style="text-align:right; color:{{ b.ac }}; font-weight:600; letter-spacing:-0.02em;">{{ b.amt }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; align-items:start;">
+              <div style="display:flex; flex-direction:column; gap:16px;">
+                <dc-import name="MM Card" title="Appearance" meta="Applies to every screen" hint-size="100%,150px">
+                  <div style="display:flex; flex-direction:column; gap:10px;">
+                    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px; padding:3px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border);">
+                      <sc-for list="{{ themeOpts }}" as="o" hint-placeholder-count="3"><span onClick="{{ o.tap }}" style="height:36px; display:flex; align-items:center; justify-content:center; border-radius:999px; font-size:13px; font-weight:500; background:{{ o.bg }}; color:{{ o.c }}; cursor:pointer;">{{ o.l }}</span></sc-for>
+                    </div>
+                    <span style="font-size:12.5px; font-weight:500; color:var(--text-tertiary);">{{ themeNote }}</span>
+                  </div>
+                </dc-import>
+                <sc-for list="{{ settingsL }}" as="g" hint-placeholder-count="1">
+                  <div style="display:flex; flex-direction:column; gap:8px;">
+                    <span style="font-size:13px; font-weight:500; padding-left:2px;">{{ g.title }}</span>
+                    <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden;">
+                      <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3"><div style="display:flex; align-items:center; gap:10px; min-height:48px; padding:0 16px; border-top:{{ r.div }};"><span style="flex:1; color:var(--text); font-size:14.5px; font-weight:500;">{{ r.l }}</span><span style="font-size:13.5px; color:var(--text-tertiary); font-weight:500;">{{ r.v }}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></div></sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:16px;">
+                <sc-for list="{{ settingsR }}" as="g" hint-placeholder-count="2">
+                  <div style="display:flex; flex-direction:column; gap:8px;">
+                    <span style="font-size:13px; font-weight:500; padding-left:2px;">{{ g.title }}</span>
+                    <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden;">
+                      <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3"><div style="display:flex; align-items:center; gap:10px; min-height:48px; padding:0 16px; border-top:{{ r.div }};"><span style="flex:1; color:var(--text); font-size:14.5px; font-weight:500;">{{ r.l }}</span><span style="font-size:13.5px; color:var(--text-tertiary); font-weight:500;">{{ r.v }}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></div></sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isInbox }}" hint-placeholder-val="{{ false }}">
+            <dc-import name="MM Inbox" size="{{ size }}" istate="{{ istate }}" lstate="{{ lstate }}" target="{{ inboxTarget }}" hint-size="100%,720px"></dc-import>
+          </sc-if>
+          <sc-if value="{{ isLeadsW }}" hint-placeholder-val="{{ false }}">
+            <dc-import name="MM Leads" size="{{ size }}" lstate="{{ lstate }}" hint-size="100%,700px"></dc-import>
+          </sc-if>
+
+          <sc-if value="{{ isOther }}" hint-placeholder-val="{{ false }}">
+            <dc-import name="MM Wide" module="{{ otherName }}" size="{{ size }}" nova="{{ novaOpen }}" hint-size="100%,900px"></dc-import>
+          </sc-if>
+          <sc-if value="{{ isOtherNone }}" hint-placeholder-val="{{ false }}">
+            <div style="border:1px solid var(--border); border-radius:16px; padding:56px 24px; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; background-color:var(--surface-2); background-image:linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size:22px 22px;">
+              <p style="margin:0; font-size:15px; line-height:1.45; max-width:380px;">{{ otherNote }}</p>
+              <div onClick="{{ goHome }}" style="height:40px; display:flex; align-items:center; padding:0 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:14px; font-weight:500; cursor:pointer;">Back to Home</div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <sc-if value="{{ notifOpen }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ toggleNotif }}" style="position:absolute; inset:0; z-index:9;"></div>
+        <div style="position:absolute; top:52px; right:{{ notifR }}px; z-index:10;"><dc-import name="MM Notif" size="wide" on-go="{{ notifGo }}" on-close="{{ toggleNotif }}" hint-size="384px,600px"></dc-import></div>
+      </sc-if>
+
+      <sc-if value="{{ novaOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="width:360px; flex:none; position:{{ npPos }}; top:0; right:0; bottom:0; z-index:8; border-left:1px solid var(--border); background:var(--surface-2); box-shadow:{{ npShadow }}; display:flex; flex-direction:column;">
+          <div style="height:56px; flex:none; display:flex; align-items:center; justify-content:space-between; padding:0 16px; border-bottom:1px solid var(--grid);">
+            <div style="display:flex; align-items:center; gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg><span style="color:var(--text); font-size:15px; font-weight:600;">Nova</span><dc-import name="MM Chip" t="{{ novaCtx }}" k="neutral" hint-size="120px,22px"></dc-import></div>
+            <div onClick="{{ toggleNova }}" style="width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--text-secondary); cursor:pointer;" style-hover="background:var(--surface-3);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></div>
+          </div>
+          <div style="flex:1; padding:16px; display:flex; flex-direction:column; gap:14px;">
+            <div style="align-self:flex-end; max-width:82%; padding:10px 13px; border-radius:16px 16px 4px 16px; background:var(--surface-3); color:var(--text); font-size:14.5px; line-height:1.45;">Can I afford the $640 camera this month?</div>
+            <p style="margin:0; font-size:14.5px; line-height:1.5; color:var(--text-secondary);">Not without going over. You have $987 left for 8 days and you're $400 behind pace. Buying it puts September $53 over budget.</p>
+            <dc-import name="MM Card" title="September spending" meta="Budgeting" hint-size="100%,150px">
+              <dc-import name="MM Pace" val="$4,213" max="$5,200" fill="81" mark="73.3" chip="Behind pace by $400" k="warn" note="Day 22 of 30" hint-size="100%,70px"></dc-import>
+            </dc-import>
+            <p style="margin:0; font-size:14.5px; line-height:1.5;">October starts with $5,200. Wait 9 days and you can buy it and stay on pace.</p>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+              <span style="padding:7px 11px; border-radius:999px; border:1px solid var(--border); color:var(--text); font-size:12.5px; font-weight:500;">Remind me Oct 1</span>
+              <span style="padding:7px 11px; border-radius:999px; border:1px solid var(--border); color:var(--text); font-size:12.5px; font-weight:500;">Log in Decision Log</span>
+              <span style="padding:7px 11px; border-radius:999px; border:1px solid var(--border); color:var(--text); font-size:12.5px; font-weight:500;">Where can I cut?</span>
+            </div>
+          </div>
+          <div style="padding:12px 16px 16px; border-top:1px solid var(--grid); display:flex; gap:8px;">
+            <div style="flex:1; height:42px; border-radius:8px; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; padding:0 12px; color:var(--text-tertiary); font-size:14px;">Ask about this page</div>
+            <div style="width:42px; height:42px; border-radius:8px; background:var(--text); display:flex; align-items:center; justify-content:center; color:var(--bg);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path></svg></div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1442,&quot;height&quot;:1100},&quot;size&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;phone&quot;,&quot;ipad&quot;,&quot;desktop&quot;],&quot;default&quot;:&quot;desktop&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;budget&quot;,&quot;settings&quot;,&quot;inbox&quot;,&quot;leads&quot;,&quot;nova&quot;,&quot;all&quot;],&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;global&quot;,&quot;invert&quot;,&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;global&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;nova&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;notif&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;istate&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;empty&quot;,&quot;none&quot;,&quot;noai&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;lstate&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;empty&quot;,&quot;noai&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;msg&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { screen: this.props.module ? 'other' : (this.props.screen || 'home'), other: this.props.module || null, otherGroup: this.props.group || '', billFilter: 'All', nova: this.props.nova === true || this.props.nova === 'true', notif: this.props.notif === true || this.props.notif === 'true', jump: 0, target: this.props.msg || '', ptab: this.props.screen === 'leads' ? 'leads' : 'inbox', open: { Personal: !this.props.group || this.props.group === 'Personal', 'Cold Calling': this.props.group === 'Cold Calling', Clients: this.props.group === 'Clients', Scaling: this.props.group === 'Scaling', 'Side Hustles': this.props.group === 'Side Hustles' } };
+  componentDidMount() {
+    this._mm = () => this.forceUpdate();
+    window.addEventListener('mm-theme', this._mm);
+    this._mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+    if (this._mq && this._mq.addEventListener) this._mq.addEventListener('change', this._mm);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('mm-theme', this._mm);
+    if (this._mq && this._mq.removeEventListener) this._mq.removeEventListener('change', this._mm);
+  }
+  pref() { try { return window.__mmForce || localStorage.getItem('mm-theme') || 'dark'; } catch (e) { return 'dark'; } }
+  sys() { return this._mq && this._mq.matches ? 'light' : 'dark'; }
+  resolved() { const t = this.pref(); return t === 'system' ? this.sys() : t; }
+  setTheme(t) { try { localStorage.setItem('mm-theme', t); } catch (e) {} window.dispatchEvent(new Event('mm-theme')); }
+  spark(vals, min, max, H) {
+    const W = 322, pad = 4;
+    const pts = vals.map((v, i) => ({ x: pad + (i / (vals.length - 1)) * (W - pad * 2), y: pad + (1 - (v - min) / (max - min)) * (H - pad * 2) }));
+    const line = pts.map((p, i) => (i ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ');
+    const l = pts[pts.length - 1];
+    return { line, area: line + ` L${l.x.toFixed(1)} ${H} L${pts[0].x.toFixed(1)} ${H} Z`, ex: (l.x / W * 100).toFixed(2), ey: l.y.toFixed(1) };
+  }
+  renderVals() {
+    const p = this.props, s = this.state;
+    const size = p.size || 'phone', isPhone = size === 'phone', isIpad = size === 'ipad', isDesk = size === 'desktop';
+    const mode = p.mode || 'global';
+    let r = this.resolved();
+    if (mode === 'invert') r = r === 'dark' ? 'light' : 'dark'; else if (mode === 'dark' || mode === 'light') r = mode;
+    const dark = r === 'dark';
+    const D = { bg: '#0b0b0d', surface: '#131318', s2: '#101014', s3: '#1b1b21', border: '#25252d', grid: '#202027', text: '#f4f4f6', t2: '#9a9ca8', t3: '#6b6d78', accent: '#897cdc', soft: '#393453', wash: 'rgba(137,124,220,.12)', success: '#3fcb7f', warning: '#e0b25e', danger: '#e2707f', client: '#4fb3ac', c1: '#897cdc', c2: '#ce7a3b', c3: '#0094bc', co: '#4a4c56', shadow: '0 0 40px rgba(0,0,0,.18)' };
+    const Lt = { bg: '#f4f4f6', surface: '#ffffff', s2: '#f2f2f5', s3: '#ebebef', border: '#e3e3ea', grid: '#ececf1', text: '#121216', t2: '#5b5d69', t3: '#80828d', accent: '#705bcd', soft: '#dcd6f5', wash: 'rgba(112,91,205,.10)', success: '#17915a', warning: '#a26f0c', danger: '#c13f55', client: '#2f8f88', c1: '#705bcd', c2: '#c56c21', c3: '#007dae', co: '#c9cad3', shadow: 'none' };
+
+    const go = screen => () => this.setState({ screen, other: null, notif: false });
+    const goOther = (n, g) => () => this.setState({ screen: 'other', other: n, otherGroup: g, notif: false });
+    const goInbox = (tab, target) => () => this.setState(st => ({ screen: isPhone || tab === 'inbox' ? 'inbox' : 'leads', ptab: tab, target: target || '', jump: st.jump + 1, other: null, notif: false }));
+    const scr = s.screen;
+    const fmt = n => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const istate = p.istate || 'normal', lstate = p.lstate || 'normal';
+
+    const cum = [1912, 1985, 2040, 2130, 2188, 2260, 2391, 2450, 2512, 2604, 2688, 2745, 2860, 2934, 3012, 3150, 3388, 3466, 3720, 3890, 4026, 4212.8];
+    const left = cum.map(v => 5200 - v);
+    const hs = this.spark(left, 900, 3400, 56), hsW = this.spark(left, 900, 3400, 64), ss = this.spark(cum, 1800, 4300, 56);
+
+    const MODS = { Personal: ['Daily Plan', 'Macros & Meals', 'Sobriety', 'Goals', 'Mental Health', 'Dispatch', 'Brain', 'Schedule', 'Budgeting', 'Decision Log', 'Weekly Review', 'Cash-Flow Forecast', 'Patterns', 'Voice Capture', 'Opening / Closing', 'Fitness'], 'Cold Calling': ['Dialing', 'Contacts', 'Call Recordings'], Clients: ['Client Modules', 'Client Portal'], Scaling: ['Start', 'Show Your Work', 'Support Inbox', 'Website / App Builder', 'Scaling Planner', 'Business Audits', 'Client CRM', 'Brand Lab', 'Idea Maker', 'Invoicing', 'Marketing', 'Content Creation'], 'Side Hustles': ['Stocks', 'Streaming', 'E-commerce', 'Sticky Spot'] };
+    const groupOf = n => Object.keys(MODS).find(g => MODS[g].includes(n)) || '';
+    const glyph = n => { const w = n.split(/[\s\-\/&]+/).filter(Boolean); return (w.length > 1 ? w[0][0] + w[1][0] : n.slice(0, 2)).toUpperCase(); };
+    const activeName = scr === 'budget' ? 'Budgeting' : scr === 'other' ? s.other : null;
+    const groups = Object.keys(MODS).map(title => {
+      const open = !!s.open[title];
+      return {
+        title, open, rot: open ? 90 : 0, count: title === 'Scaling' ? `${MODS[title].length} · owner` : String(MODS[title].length),
+        toggle: () => this.setState(st => ({ open: { ...st.open, [title]: !st.open[title] } })),
+        items: MODS[title].map(n => { const a = n === activeName; return { n, g: glyph(n), bg: a ? 'var(--surface-3)' : 'transparent', c: a ? 'var(--text)' : 'var(--text-secondary)', gb: a ? 'var(--accent-soft)' : 'var(--surface-3)', gc: a ? 'var(--accent)' : 'var(--text-tertiary)', tap: n === 'Budgeting' ? go('budget') : goOther(n, title) }; }),
+      };
+    });
+    const novaOpen = !isPhone && s.nova;
+    const toggleNova = () => this.setState(st => ({ nova: !st.nova }));
+    const inboxBadge = istate === 'empty' || istate === 'none' ? '' : '5', leadsBadge = lstate === 'empty' ? '' : '4';
+    const topNav = [
+      { l: 'Home', isHome: true, tap: go('home'), on: scr === 'home' },
+      { l: 'Nova', isNova: true, tap: toggleNova, on: novaOpen },
+      { l: 'Inbox', isInbox: true, tap: goInbox('inbox'), on: scr === 'inbox', badge: inboxBadge, bb: 'var(--accent)' },
+      { l: 'Leads', isLeads: true, tap: goInbox('leads'), on: scr === 'leads', badge: leadsBadge, bb: 'var(--danger)' },
+    ].map(n => ({ ...n, hasBadge: !!n.badge, bg: n.on ? 'var(--surface-3)' : 'transparent', c: n.on ? 'var(--text)' : 'var(--text-secondary)' }));
+    const notifGo = to => {
+      if (to === 'leads') goInbox('leads')();
+      else if (/^m\d/.test(to)) goInbox('inbox', to)();
+      else if (to === 'budget') go('budget')();
+      else goOther(to, groupOf(to))();
+    };
+
+    const LD = [['Lena Ortiz', 'Bloom Studio', 'Inbound email', '12 min ago', 'hot', 'Waiting 12 min', false], ['Marcus Hill', 'Hill & Co. Plumbing', 'Audit form', '38 min ago', 'warm', 'Waiting 38 min', false], ['Priya Nair', 'Nair Wellness', 'Website form', '1 h ago', 'warm', '', false]];
+    const homeLeads = LD.map(([n, biz, src, ago, temp, waiting, urgent], i) => ({ n, biz, src, ago, temp: lstate === 'noai' ? 'neutral' : temp, waiting, urgent, top: i ? '' : 'none' }));
+
+    const ch = (n, m, c, k, a) => ({ n, m, c, k, a });
+    const attention = [ch('Car insurance', 'Bill', '3 days overdue', 'bad', '$186.00'), ch('Electric', 'Bill', 'Due Sep 28', 'warn', '$142.18'), ch('Spending', 'Budget', 'Behind pace by $400', 'warn', '$4,212.80')];
+    const today = [['9:00', 'Calling hour', 'Dialing · 61 calls', 'Done', 'good', 1], ['11:00', 'Harbor Dental review', 'Client Modules · Zoom', 'In 20 min', 'warn', 0], ['12:30', 'Lunch · log your meal', 'Macros & Meals', '', '', 0], ['2:00', 'Bloom logo, round 2', 'Brand Lab · 2 h', '', '', 0], ['4:00', 'Front desk shift', 'Schedule · until 11 PM', '', '', 0]].map(([t, n, m, c, k, d]) => ({ t, n, m, c, k, hasChip: !!c, tc: d ? 'var(--text-secondary)' : 'var(--text)' }));
+    const pinned = [{ g: 'BU', n: 'Budgeting', m: '$987 left', tap: go('budget'), ic: 'var(--accent)' }, { g: 'DP', n: 'Daily Plan', m: 'Next: 11:00 review', tap: goOther('Daily Plan', 'Personal'), ic: 'var(--text-secondary)' }, { g: 'GO', n: 'Goals', m: '2 of 3 on pace', tap: goOther('Goals', 'Personal'), ic: 'var(--text-secondary)' }, { g: 'SO', n: 'Sobriety', m: '47 days', tap: goOther('Sobriety', 'Personal'), ic: 'var(--text-secondary)' }];
+    const st = (l, v, pp, k) => ({ l, v, p: pp, k });
+    const hStats = [st('Calls today', '61', '↑ 12 vs average', 'good'), st('Clean streak', '47 days', 'Longest: 61', 'neutral'), st('Goals', '2 of 3', '1 behind pace', 'warn'), st('Open tickets', '4', '1 waiting on you', 'neutral')];
+    const bStats = [st('Income', '$6,450', '↑ 4.2%', 'good'), st('Left to spend', '$987', '$123 a day', 'neutral'), st('Saved', '$1,120', '↑ $220', 'good'), st('Bills due', '$413', '1 overdue', 'bad')];
+
+    const cats = [['Housing', 1850, 1850, 'var(--cat-1)'], ['Food', 812, 700, 'var(--cat-2)'], ['Transport', 486, 550, 'var(--cat-3)'], ['Other', 1064.8, 2100, 'var(--cat-other)']].map(([n, v, b, col]) => {
+      const over = v > b, full = v === b;
+      return { n, col, v: '$' + v.toLocaleString('en-US', { maximumFractionDigits: 2 }), b: '$' + b.toLocaleString('en-US'), w: Math.min(100, v / b * 100).toFixed(1), bar: over ? 'var(--danger)' : 'var(--accent)', chip: over ? `Over by $${Math.round(v - b)}` : full ? 'Fully spent' : `$${Math.round(b - v).toLocaleString('en-US')} left`, k: over ? 'bad' : 'neutral' };
+    });
+    const billData = [['Car insurance', 'Card ••2290', 'Insurance', 'Sep 19', 'bad', '3 days overdue', 'Off', 186], ['Electric', 'Checking ••4471', 'Utilities', 'Sep 28', 'warn', 'Due in 6 days', 'On', 142.18], ['Phone', 'Card ••2290', 'Utilities', 'Oct 2', 'neutral', 'Due Oct 2', 'On', 85], ['Rent', 'Checking ••4471', 'Housing', 'Sep 1', 'good', 'Paid Sep 1', 'On', 1850], ['Internet', 'Card ••2290', 'Utilities', 'Sep 9', 'good', 'Paid Sep 9', 'On', 70]];
+    const bills = billData.filter(b => s.billFilter === 'All' || (s.billFilter === 'Paid' ? b[4] === 'good' : b[4] !== 'good')).map(([n, ref, cat, due, k, chip, auto, amt]) => ({ n, ref, cat, due, k, chip, auto, amt: '$' + fmt(amt), paid: k === 'good', ac: k === 'good' ? 'var(--text-secondary)' : 'var(--text)' }));
+    const billFilters = ['All', 'Unpaid', 'Paid'].map(l => ({ l, bg: s.billFilter === l ? 'var(--text)' : 'transparent', c: s.billFilter === l ? 'var(--bg)' : 'var(--text-secondary)', tap: () => this.setState({ billFilter: l }) }));
+
+    const pref = this.pref();
+    const themeOpts = [['dark', 'Dark'], ['light', 'Light'], ['system', 'System']].map(([k, l]) => ({ l, bg: pref === k ? 'var(--text)' : 'transparent', c: pref === k ? 'var(--bg)' : 'var(--text-secondary)', tap: () => this.setTheme(k) }));
+    const themeNote = pref === 'system' ? `Matches your device. Right now that's ${this.sys() === 'light' ? 'Light' : 'Dark'}.` : 'Every screen switches at once. You can also use the sun/moon button in the header.';
+    const rows = list => list.map(([l, v], i) => ({ l, v, div: i ? '1px solid var(--grid)' : 'none' }));
+    const sg = [
+      { title: 'Modules', rows: rows([['Manage modules', '21 on'], ['Connected inboxes', '3 + portal'], ['Playbooks', '4'], ['Notifications', 'On']]) },
+      { title: 'Account', rows: rows([['Profile', 'Marq'], ['Workspace', 'MARQ Studio'], ['Role', 'Owner'], ['Security', 'Face ID']]) },
+      { title: 'Billing', rows: rows([['Plan', 'Mastermind · $19.99/mo'], ['Nova AI credits', 'Not funded'], ['Invoices', '3']]) },
+    ];
+
+    const titles = { home: ['Good morning', 'Tuesday, Sep 22 · Example data'], budget: ['Budget', 'September 2026 · Example data'], settings: ['Settings', 'marq@example.com'], all: ['Modules', '37 modules · Example data'], inbox: ['Inbox', istate === 'none' ? 'No inboxes connected yet' : 'mastermindsbymarq.com, madebymarquez.com, personal, and client portal · Example data'], leads: ['Leads', 'Every new lead, as it comes in · Example data'], nova: ['Nova', 'Reads every module you have on'] };
+    const [title, sub] = scr === 'other' ? [s.other, s.otherGroup] : titles[scr];
+    const otherNote = scr === 'other' ? (s.otherGroup === 'Personal' ? `${s.other}'s phone design is on Page 2. On iPad and desktop it opens as a full dashboard.` : `${s.other}'s phone design is on its category page. On iPad and desktop it opens as a full dashboard.`) : '';
+    const crumbMap = { home: ['', 'Home'], budget: ['Personal', 'Budgeting'], settings: ['', 'Settings'], all: ['', 'Modules'], inbox: ['', 'Inbox'], leads: ['', 'Leads'], nova: ['', 'Nova'], other: [s.otherGroup, s.other] };
+    if (scr === 'other' && !s.otherGroup && s.other) crumbMap.other = [groupOf(s.other), s.other];
+    const [crumb, crumbHere] = crumbMap[scr];
+
+    const tabKey = scr === 'home' ? 'home' : (scr === 'inbox' || scr === 'leads') ? 'inbox' : scr === 'nova' ? 'nova' : 'all';
+    const phoneBadge = String((inboxBadge ? 5 : 0) + (leadsBadge ? 4 : 0));
+    const tabs = [['home', 'Home', go('home')], ['inbox', 'Inbox', goInbox(s.ptab)], ['nova', 'Nova', go('nova')], ['all', 'Modules', go('all')]].map(([k, label, tap]) => ({ label, tap, [k]: true, hasBadge: k === 'inbox' && phoneBadge !== '0', badge: phoneBadge, bb: leadsBadge ? 'var(--danger)' : 'var(--accent)', ic: tabKey === k ? 'var(--accent)' : 'var(--text-tertiary)', lc: tabKey === k ? 'var(--text)' : 'var(--text-tertiary)' }));
+
+    const three = isDesk && !novaOpen;
+    const L = {
+      r1: isDesk ? 'minmax(0,1.35fr) minmax(0,1fr)' : 'minmax(0,1.2fr) minmax(0,1fr)',
+      r2: three ? 'repeat(3,minmax(0,1fr))' : 'repeat(2,minmax(0,1fr))',
+      b2: three ? 'minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr)' : 'repeat(2,minmax(0,1fr))',
+      catSpan: three ? 'auto' : '1 / -1', catCols: three ? '1fr' : 'repeat(2,minmax(0,1fr))',
+      bc: isDesk ? 'minmax(0,1.5fr) minmax(0,1fr) minmax(0,1.2fr) 70px minmax(0,1.3fr) 70px 100px' : 'minmax(0,1.4fr) minmax(0,1.2fr) 64px minmax(0,1.3fr) 96px',
+      dOnly: isDesk ? 'block' : 'none',
+    };
+
+    return {
+      t: dark ? D : Lt, isDark: dark, isLight: !dark, toggleLabel: dark ? 'Switch to light' : 'Switch to dark',
+      toggleTheme: () => this.setTheme(this.resolved() === 'dark' ? 'light' : 'dark'),
+      size, isPhone, isWide: !isPhone, isIpad, isDesk,
+      W: isDesk ? 1440 : 1024, H: isDesk ? 900 : 768, R: isDesk ? 12 : 24, sbW: isDesk ? 248 : 232, pad: isDesk ? 32 : 24, rowH: isDesk ? 34 : 40, btn: isDesk ? 36 : 40,
+      isHome: scr === 'home', isBudget: scr === 'budget', isSettings: scr === 'settings', isOther: scr === 'other' && (isPhone || !!s.other), otherName: s.other || '', isOtherNone: false, isAll: scr === 'all',
+      isInbox: scr === 'inbox' || (isPhone && scr === 'leads'), isLeadsW: !isPhone && scr === 'leads', isNovaS: isPhone && scr === 'nova',
+      showTitle: !(isPhone && (scr === 'inbox' || scr === 'leads')),
+      istate, lstate, inboxTarget: `${s.ptab}|${s.target}|${s.jump}`,
+      title, sub, otherNote, crumb, crumbHere, hasCrumb: !!crumb,
+      goBudget: go('budget'), goHome: go('home'), goSettings: go('settings'), goLeads: goInbox('leads'),
+      setBg: scr === 'settings' ? 'var(--surface-3)' : 'transparent', setC: scr === 'settings' ? 'var(--text)' : 'var(--text-secondary)',
+      hs, hsW, ss, groups, topNav, attention, today, pinned, hStats, bStats, cats, bills, billFilters, tabs, L,
+      homeLeads, homeLeadsW: homeLeads, hasLeadBadge: !!leadsBadge,
+      themeOpts, themeNote, settings: sg, settingsL: sg.slice(0, 1), settingsR: sg.slice(1),
+      notifOpen: s.notif, toggleNotif: () => this.setState(st2 => ({ notif: !st2.notif })), notifGo, bellBg: s.notif ? 'var(--surface-3)' : 'transparent', notifR: isDesk && novaOpen ? 376 : 16,
+      novaOpen, toggleNova, novaBtnBg: novaOpen ? 'var(--surface-3)' : 'transparent', npPos: isDesk ? 'relative' : 'absolute', npShadow: isDesk ? 'none' : '0 0 40px rgba(0,0,0,.25)',
+      novaCtx: 'Looking at ' + (crumbHere || 'this page'),
+    };
+  }
+}
+</script>
+</body>
+</html>

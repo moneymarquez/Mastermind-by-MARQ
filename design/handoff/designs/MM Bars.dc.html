@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="position:relative; height:{{ boxH }}px; display:flex; padding-left:32px; font-family:Inter, system-ui, sans-serif; font-variant-numeric:tabular-nums;">
+  <sc-for list="{{ grid }}" as="g" hint-placeholder-count="3">
+    <div style="position:absolute; left:0; right:0; bottom:{{ g.b }}px; display:flex; align-items:center; gap:6px; pointer-events:none;">
+      <span style="width:26px; font-size:10.5px; font-weight:500; color:var(--text-tertiary); text-align:right;">{{ g.l }}</span>
+      <div style="flex:1; height:1px; background:var(--grid);"></div>
+    </div>
+  </sc-for>
+  <sc-for list="{{ bars }}" as="b" hint-placeholder-count="6">
+    <div onClick="{{ b.tap }}" style="flex:1; min-width:0; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding-bottom:22px; cursor:pointer;">
+      <sc-if value="{{ b.top }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px; font-weight:600; color:var(--text); margin-bottom:6px; letter-spacing:-0.02em; white-space:nowrap;">{{ b.v }}</span></sc-if>
+      <sc-if value="{{ b.tip }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; bottom:{{ b.tb }}px; white-space:nowrap; padding:6px 9px; border-radius:8px; background:var(--surface-3); border:1px solid var(--border); color:var(--text); font-size:12px; font-weight:500; z-index:3;">{{ b.tt }}</div></sc-if>
+      <div style="width:{{ bw }}px; max-width:90%; height:{{ b.h }}px; background:{{ b.bg }}; border-radius:4px 4px 0 0; position:relative; z-index:1;"></div>
+      <span style="position:absolute; bottom:3px; font-size:10.5px; font-weight:500; white-space:nowrap; color:{{ b.lc }};">{{ b.l }}</span>
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:322,&quot;height&quot;:170},&quot;vals&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;4880,5140,4620,5310,4960,4212.8&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;labels&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Apr,May,Jun,Jul,Aug,Sep&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;cur&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:5,&quot;tsType&quot;:&quot;number&quot;},&quot;pre&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;$&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;suf&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;h&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:120,&quot;tsType&quot;:&quot;number&quot;},&quot;max&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:0,&quot;tsType&quot;:&quot;number&quot;},&quot;dec&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;tsType&quot;:&quot;number&quot;},&quot;top&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;color&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;accent&quot;,&quot;client&quot;],&quot;default&quot;:&quot;accent&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { sel: null };
+  renderVals() {
+    const p = this.props, vals = String(p.vals || '').split(',').map(Number), labels = String(p.labels || '').split(',');
+    const n = vals.length, cur = p.cur != null ? Number(p.cur) : n - 1, H = Number(p.h || 120), pre = p.pre || '', suf = p.suf || '';
+    const rawMax = Number(p.max) || Math.max(...vals) * 1.15;
+    const mag = Math.pow(10, Math.floor(Math.log10(rawMax || 1))), max = Math.ceil(rawMax / mag / 2) * mag * 2 || 1;
+    const c = v => v >= 1000 ? pre + (v / 1000).toFixed(v % 1000 ? 1 : 0).replace('.0', '') + 'k' + suf : pre + (Math.round(v * 10) / 10) + suf;
+    const full = v => pre + v.toLocaleString('en-US', { maximumFractionDigits: Number(p.dec ?? 0), minimumFractionDigits: Number(p.dec ?? 0) }) + suf;
+    const color = p.color === 'client' ? 'var(--client-accent)' : 'var(--accent)';
+    const soft = p.color === 'client' ? 'color-mix(in srgb, var(--client-accent) 30%, var(--surface))' : 'var(--accent-soft)';
+    const bars = vals.map((v, i) => {
+      const h = Math.max(2, Math.round(v / max * H)), on = i === cur, sel = this.state.sel === i;
+      return { h, v: p.top || full(v), l: labels[i] || '', top: on && !sel, tip: sel, tb: 22 + h + 6, tt: `${labels[i] || ''} · ${full(v)}`, bg: on || sel ? color : soft, lc: on || sel ? 'var(--text)' : 'var(--text-tertiary)', tap: () => this.setState({ sel: this.state.sel === i ? null : i }) };
+    });
+    const grid = [0, 0.5, 1].map(f => ({ b: 22 + f * H - 7, l: c(f * max) }));
+    return { bars, grid, boxH: H + 44, bw: Math.min(24, Math.floor(280 / n) - 8) };
+  }
+}
+</script>
+</body>
+</html>

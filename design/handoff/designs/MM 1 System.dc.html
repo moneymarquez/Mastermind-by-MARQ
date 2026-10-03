@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0b0b0d;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:#897cdc;text-decoration:none}a:hover{color:#f4f4f6}</style>
+</helmet>
+<section id="p1" style="--bg:#0b0b0d; --surface:#131318; --surface-2:#101014; --surface-3:#1b1b21; --border:#25252d; --grid:#202027; --text:#f4f4f6; --text-secondary:#9a9ca8; --text-tertiary:#6b6d78; --accent:#897cdc; --accent-soft:#393453; --accent-wash:rgba(137,124,220,.12); --success:#3fcb7f; --warning:#e0b25e; --danger:#e2707f; --client-accent:#4fb3ac; --cat-1:#897cdc; --cat-2:#ce7a3b; --cat-3:#0094bc; --cat-other:#4a4c56; --card-shadow:0 0 40px rgba(0,0,0,.18); background:{{ pageBg }}; padding:{{ pagePad }}; display:flex; flex-direction:column; gap:48px; font-family:Inter, system-ui, sans-serif; color:#9a9ca8; font-variant-numeric:tabular-nums;">
+  <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex; flex-direction:column; gap:8px; max-width:900px;">
+      <span style="font-size:13px; font-weight:500; color:#6b6d78;">Masterminds by MARQ · Page 1 of 6 · all figures are example data</span>
+      <h1 style="margin:0; color:#f4f4f6; font-size:40px; font-weight:700; letter-spacing:-0.04em;">System</h1>
+      <p style="margin:0; font-size:15px; line-height:1.45;">Home, navigation, Nova, settings, onboarding, and billing. Every phone is 390 wide. Charts respond to taps.</p>
+    </div>
+  </sc-if>
+  <div style="display:flex; flex-wrap:wrap; gap:64px 56px; align-items:flex-start;">
+
+    <sc-if value="{{ s.home }}" hint-placeholder-val="{{ true }}">
+      <div id="home" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Home</span><span style="font-size:13px; color:#6b6d78;">Kept from round one</span></div></sc-if>
+        <dc-import name="MM App" size="phone" screen="home" hint-size="392px,846px"></dc-import>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.nav }}" hint-placeholder-val="{{ true }}">
+      <div id="nav" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Navigation</span><span style="font-size:13px; color:#6b6d78;">Four tabs. Every module lives under All, grouped by category</span></div></sc-if>
+        <div style="display:flex; gap:32px; align-items:flex-start;">
+          <dc-import name="MM Phone" title="All modules" sub="37 modules · 21 on" tab="all" full="true" light="{{ light }}" hint-size="392px,1700px">
+            <div style="display:flex; align-items:center; gap:10px; height:46px; padding:0 14px; border-radius:8px; background:var(--surface-2); border:1px solid var(--border); color:var(--text-tertiary); font-size:16px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>Search 37 modules
+            </div>
+            <div style="display:flex; gap:2px; padding:3px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border); align-self:flex-start;">
+              <span style="padding:6px 14px; border-radius:999px; font-size:13px; font-weight:500; background:var(--text); color:var(--bg);">All</span>
+              <span style="padding:6px 14px; border-radius:999px; font-size:13px; font-weight:500;">Pinned</span>
+              <span style="padding:6px 14px; border-radius:999px; font-size:13px; font-weight:500;">Recent</span>
+            </div>
+            <sc-for list="{{ groups }}" as="g" hint-placeholder-count="5">
+              <div style="display:flex; flex-direction:column; gap:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:baseline; padding:0 2px;">
+                  <span style="color:var(--text); font-size:15px; font-weight:600; letter-spacing:-0.015em;">{{ g.title }}</span>
+                  <span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">{{ g.meta }}</span>
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px;">
+                  <sc-for list="{{ g.items }}" as="m" hint-placeholder-count="6">
+                    <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:12px; min-height:92px; box-sizing:border-box; opacity:{{ m.op }};">
+                      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div style="width:30px; height:30px; border-radius:10px; background:var(--surface-3); display:flex; align-items:center; justify-content:center; color:{{ m.ic }}; font-size:11.5px; font-weight:600; letter-spacing:-0.02em;">{{ m.g }}</div>
+                        <sc-if value="{{ m.lock }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></sc-if>
+                      </div>
+                      <span style="color:var(--text); font-size:12.5px; font-weight:500; letter-spacing:-0.01em; line-height:1.25;">{{ m.n }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </dc-import>
+        </div>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="No modules are turned on yet. Pick a few to fill this screen." cta="Pick modules" hint-size="390px,200px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.nova }}" hint-placeholder-val="{{ true }}">
+      <div id="nova" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Nova</span><span style="font-size:13px; color:#6b6d78;">The assistant: full chat, plus how it appears inside modules</span></div></sc-if>
+        <div style="display:flex; gap:32px; align-items:flex-start;">
+          <dc-import name="MM Phone" back="Home" nova="false" title="Nova" sub="Reads every module you've turned on" composer="Ask Nova anything" light="{{ light }}" hint-size="392px,846px">
+            <div style="align-self:flex-end; max-width:78%; padding:11px 14px; border-radius:16px 16px 4px 16px; background:var(--surface-3); color:var(--text); font-size:15px; line-height:1.45; letter-spacing:-0.01em;">Can I afford the $640 camera this month?</div>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; color:var(--text);"><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg>Nova</div>
+              <p style="margin:0; font-size:15px; line-height:1.5; letter-spacing:-0.01em; text-wrap:pretty;">Not without going over. You have $987 left for 8 days and you're already $400 behind pace. Buying it would put September $53 over budget.</p>
+              <dc-import name="MM Card" title="September spending" meta="From Budgeting" hint-size="100%,150px">
+                <dc-import name="MM Pace" val="$4,213" max="$5,200" fill="81" mark="73.3" chip="Behind pace by $400" k="warn" note="Day 22 of 30" hint-size="100%,70px"></dc-import>
+              </dc-import>
+              <p style="margin:0; font-size:15px; line-height:1.5; letter-spacing:-0.01em;">October starts with $5,200. If you wait 9 days you can buy it and stay on pace.</p>
+              <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                <span style="padding:8px 12px; border-radius:999px; border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:500;">Remind me Oct 1</span>
+                <span style="padding:8px 12px; border-radius:999px; border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:500;">Log it in Decision Log</span>
+                <span style="padding:8px 12px; border-radius:999px; border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:500;">Show where I can cut</span>
+              </div>
+            </div>
+          </dc-import>
+          <dc-import name="MM Phone" back="Home" title="Nova in modules" sub="Same voice, never in the way" tab="" full="true" light="{{ light }}" hint-size="392px,1100px">
+            <span style="font-size:12px; font-weight:500; color:var(--text-tertiary); margin-bottom:-10px;">Inline insight · Budgeting</span>
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:12px;">
+              <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; color:var(--text);"><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg>Nova noticed</div>
+              <p style="margin:0; font-size:15px; line-height:1.45;">Food is up 22% since you started late shifts. Most of it is after 9 PM.</p>
+              <div style="display:flex; gap:8px;"><span style="height:38px; display:flex; align-items:center; padding:0 14px; border-radius:8px; background:var(--text); color:var(--bg); font-size:14px; font-weight:600;">Set a food cap</span><span style="height:38px; display:flex; align-items:center; padding:0 14px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Dismiss</span></div>
+            </div>
+            <span style="font-size:12px; font-weight:500; color:var(--text-tertiary); margin-bottom:-10px;">Ask about a chart · Cash-Flow Forecast</span>
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;"><span style="color:var(--text); font-size:15px; font-weight:600;">Next 30 days</span><span style="display:flex; align-items:center; gap:5px; padding:5px 10px; border-radius:999px; border:1px solid var(--border); font-size:12px; font-weight:500; color:var(--text);"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg>Ask</span></div>
+              <dc-import name="MM Line" vals="3200,3050,2980,3400,3310,3150,4100,3980,3900,3720" today="4" labels="Sep 18,Oct 18" pre="$" h="120" hint-size="322px,120px"></dc-import>
+              <div style="padding:12px; border-radius:10px; background:var(--surface-3); font-size:14px; line-height:1.45;"><span style="color:var(--text);">Why does it jump on the 1st?</span> Harbor Dental's retainer ($1,200) lands Oct 1.</div>
+            </div>
+            <span style="font-size:12px; font-weight:500; color:var(--text-tertiary); margin-bottom:-10px;">Drafted for you · Support Inbox</span>
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;"><span style="color:var(--text); font-size:15px; font-weight:600;">Reply to Ridgeline Roofing</span><dc-import name="MM Chip" t="Draft" k="accent" hint-size="60px,22px"></dc-import></div>
+              <p style="margin:0; padding:12px; border-radius:10px; background:var(--surface-2); border:1px solid var(--border); font-size:14px; line-height:1.5;">Hi Sam, the new quote form goes live Thursday. I'll send a preview link tomorrow by noon.</p>
+              <div style="display:flex; gap:8px;"><span style="height:38px; display:flex; align-items:center; padding:0 14px; border-radius:8px; background:var(--text); color:var(--bg); font-size:14px; font-weight:600;">Send</span><span style="height:38px; display:flex; align-items:center; padding:0 14px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Edit</span></div>
+            </div>
+          </dc-import>
+        </div>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="No conversations yet. Ask about anything in your modules." cta="Ask Nova" ai="Nova needs AI credits to answer. Every module keeps working without it, and Nova's spots show this note instead." hint-size="390px,380px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.settings }}" hint-placeholder-val="{{ true }}">
+      <div id="settings" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Settings</span><span style="font-size:13px; color:#6b6d78;">Theme, modules, playbooks, account, billing</span></div></sc-if>
+        <div style="display:flex; gap:32px; align-items:flex-start;">
+          <dc-import name="MM Phone" back="Home" nova="false" title="Settings" sub="marq@example.com" tab="" full="true" light="{{ light }}" hint-size="392px,1100px">
+            <dc-import name="MM Card" title="Appearance" hint-size="100%,110px">
+              <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px; padding:3px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border);">
+                <span style="padding:8px 0; text-align:center; border-radius:999px; font-size:13px; font-weight:500; background:var(--text); color:var(--bg);">Dark</span>
+                <span style="padding:8px 0; text-align:center; border-radius:999px; font-size:13px; font-weight:500;">Light</span>
+                <span style="padding:8px 0; text-align:center; border-radius:999px; font-size:13px; font-weight:500;">System</span>
+              </div>
+            </dc-import>
+            <sc-for list="{{ settings }}" as="g" hint-placeholder-count="4">
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <span style="font-size:13px; font-weight:500; padding-left:2px;">{{ g.title }}</span>
+                <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden;">
+                  <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3">
+                    <div style="display:flex; align-items:center; gap:10px; min-height:50px; padding:0 14px; border-top:{{ r.div }};">
+                      <span style="flex:1; color:var(--text); font-size:15px; font-weight:500; letter-spacing:-0.01em;">{{ r.l }}</span>
+                      <span style="font-size:14px; color:var(--text-tertiary); font-weight:500;">{{ r.v }}</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+            <div style="height:46px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--danger); font-size:15px; font-weight:500;">Sign out</div>
+          </dc-import>
+          <dc-import name="MM Phone" back="Settings" nova="false" title="Manage modules" sub="Drag to reorder. Pinned ones show on Home" tab="" full="true" light="{{ light }}" hint-size="392px,1100px">
+            <sc-for list="{{ manage }}" as="g" hint-placeholder-count="3">
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; justify-content:space-between; padding:0 2px;"><span style="font-size:13px; font-weight:500;">{{ g.title }}</span><span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">{{ g.meta }}</span></div>
+                <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden;">
+                  <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="4">
+                    <div style="display:flex; align-items:center; gap:12px; min-height:54px; padding:0 14px; border-top:{{ r.div }};">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--text-tertiary)"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg>
+                      <div style="flex:1; display:flex; flex-direction:column; gap:1px;"><span style="color:var(--text); font-size:15px; font-weight:500;">{{ r.n }}</span><span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">{{ r.d }}</span></div>
+                      <div style="width:44px; height:26px; border-radius:999px; background:{{ r.tb }}; position:relative; flex:none;"><div style="position:absolute; top:3px; left:{{ r.kx }}px; width:20px; height:20px; border-radius:50%; background:{{ r.kb }};"></div></div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+            <dc-import name="MM Card" title="Playbooks" meta="4 saved" flush="true" hint-size="100%,240px">
+              <div>
+                <dc-import name="MM Row" n="Morning calling block" meta="Dialing · Schedule" chip="Runs weekdays 9 AM" k="neutral" amt="5 steps" hint-size="100%,70px"></dc-import>
+                <dc-import name="MM Row" n="New client kickoff" meta="Start · Client CRM" chip="Manual" k="neutral" amt="8 steps" hint-size="100%,70px"></dc-import>
+                <dc-import name="MM Row" n="Sunday reset" meta="Weekly Review · Budget" chip="Runs Sundays" k="neutral" amt="4 steps" hint-size="100%,70px"></dc-import>
+              </div>
+            </dc-import>
+          </dc-import>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.onboarding }}" hint-placeholder-val="{{ true }}">
+      <div id="onboarding" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Onboarding</span><span style="font-size:13px; color:#6b6d78;">Module picker. Owner-only modules show locked</span></div></sc-if>
+        <dc-import name="MM Phone" tabs="none" full="true" light="{{ light }}" hint-size="392px,1300px">
+          <div style="display:flex; flex-direction:column; gap:14px; padding-top:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:500;"><span>Step 2 of 3</span><span style="color:var(--text);">Skip</span></div>
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px;"><div style="height:4px; border-radius:2px; background:var(--accent);"></div><div style="height:4px; border-radius:2px; background:var(--accent);"></div><div style="height:4px; border-radius:2px; background:var(--surface-3);"></div></div>
+            <h1 style="margin:10px 0 0; color:var(--text); font-size:24px; font-weight:700; letter-spacing:-0.035em;">Pick your modules</h1>
+            <p style="margin:0; font-size:15px; line-height:1.45;">Start with what you'll use this week. You can change this anytime in Settings.</p>
+          </div>
+          <sc-for list="{{ pick }}" as="g" hint-placeholder-count="3">
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; justify-content:space-between; padding:0 2px;"><span style="font-size:13px; font-weight:500;">{{ g.title }}</span><span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">{{ g.meta }}</span></div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <sc-for list="{{ g.items }}" as="m" hint-placeholder-count="4">
+                  <div style="position:relative; background:{{ m.bg }}; border:{{ m.b }}; border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:6px; min-height:96px; box-sizing:border-box;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <span style="color:{{ m.tc }}; font-size:14px; font-weight:600; letter-spacing:-0.015em;">{{ m.n }}</span>
+                      <sc-if value="{{ m.on }}" hint-placeholder-val="{{ false }}"><div style="width:20px; height:20px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></div></sc-if>
+                      <sc-if value="{{ m.off }}" hint-placeholder-val="{{ false }}"><div style="width:20px; height:20px; border-radius:50%; border:1.5px solid var(--border); box-sizing:border-box;"></div></sc-if>
+                    </div>
+                    <span style="font-size:12.5px; line-height:1.35; font-weight:500; color:var(--text-tertiary);">{{ m.d }}</span>
+                    <sc-if value="{{ m.lock }}" hint-placeholder-val="{{ false }}"><div style="margin-top:auto;"><dc-import name="MM Chip" t="Owner only" k="lock" hint-size="90px,22px"></dc-import></div></sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+          <div style="display:flex; flex-direction:column; gap:10px; padding-top:4px;">
+            <div style="height:52px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:var(--text); color:var(--bg); font-size:16px; font-weight:600;">Continue with 7 modules</div>
+            <span style="text-align:center; font-size:12px; font-weight:500; color:var(--text-tertiary);">Owner-only modules unlock when you're the workspace owner</span>
+          </div>
+        </dc-import>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.billing }}" hint-placeholder-val="{{ true }}">
+      <div id="billing" style="display:flex; flex-direction:column; gap:14px;">
+        <sc-if value="{{ showHead }}" hint-placeholder-val="{{ true }}"><div style="display:flex; flex-direction:column; gap:2px;"><span style="color:#f4f4f6; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Billing</span><span style="font-size:13px; color:#6b6d78;">Mastermind is live. The next tier is announced, not listed</span></div></sc-if>
+        <dc-import name="MM Phone" back="Settings" nova="false" title="Billing" sub="Example data" tab="" full="true" light="{{ light }}" hint-size="392px,1150px">
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; font-weight:500;">Your plan</span><dc-import name="MM Chip" t="Live" k="live" hint-size="54px,22px"></dc-import></div>
+            <span style="color:var(--text); font-size:24px; font-weight:700; letter-spacing:-0.035em;">Mastermind</span>
+            <div style="display:flex; align-items:baseline; color:var(--text); font-size:46px; font-weight:600; letter-spacing:-0.04em; line-height:1;">$19<span style="font-size:22px; color:var(--text-tertiary);">.99</span><span style="font-size:15px; color:var(--text-tertiary); font-weight:500; letter-spacing:-0.01em; margin-left:6px;">/ month</span></div>
+            <span style="font-size:13px; font-weight:500; color:var(--text-tertiary);">Renews Oct 14 · Visa ••8812</span>
+            <div style="display:flex; gap:8px; padding-top:4px;"><span style="height:40px; display:flex; align-items:center; padding:0 14px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Change card</span><span style="height:40px; display:flex; align-items:center; padding:0 14px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Cancel plan</span></div>
+          </div>
+          <div style="background:var(--surface-2); border:1px dashed var(--border); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; font-weight:500;">Next tier</span><dc-import name="MM Chip" t="Coming soon" k="neutral" hint-size="100px,22px"></dc-import></div>
+            <div style="display:flex; align-items:baseline; color:var(--text-secondary); font-size:26px; font-weight:600; letter-spacing:-0.04em;">$49.99<span style="font-size:15px; color:var(--text-tertiary); font-weight:500; letter-spacing:-0.01em; margin-left:6px;">/ month</span></div>
+            <span style="height:40px; align-self:flex-start; display:flex; align-items:center; padding:0 14px; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Tell me when it opens</span>
+          </div>
+          <dc-import name="MM Card" title="Nova AI" meta="Separate from your plan" hint-size="100%,150px">
+            <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:15px;">Credits left</span><dc-import name="MM Chip" t="Not funded" k="neutral" hint-size="90px,22px"></dc-import></div>
+            <p style="margin:0; font-size:14px; line-height:1.45; color:var(--text-tertiary);">Without credits, AI features show a note and everything else keeps working.</p>
+            <span style="height:40px; align-self:flex-start; display:flex; align-items:center; padding:0 14px; border-radius:8px; background:var(--text); color:var(--bg); font-size:14px; font-weight:600;">Add AI credits</span>
+          </dc-import>
+          <dc-import name="MM Card" title="Invoices" meta="Last 3" flush="true" hint-size="100%,240px">
+            <div>
+              <dc-import name="MM Row" n="Sep 14, 2026" meta="Mastermind" chip="Paid" k="good" amt="$19.99" dim="true" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Aug 14, 2026" meta="Mastermind" chip="Paid" k="good" amt="$19.99" dim="true" hint-size="100%,70px"></dc-import>
+              <dc-import name="MM Row" n="Jul 14, 2026" meta="Mastermind" chip="Paid" k="good" amt="$19.99" dim="true" hint-size="100%,70px"></dc-import>
+            </div>
+          </dc-import>
+        </dc-import>
+        <sc-if value="{{ states }}" hint-placeholder-val="{{ true }}"><dc-import name="MM States" empty="No invoices yet. Your first one arrives a month after you start." cta="View plan" hint-size="390px,200px"></dc-import></sc-if>
+      </div>
+    </sc-if>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;pick&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;light&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const pick = this.props.pick, ids = ['home', 'nav', 'nova', 'settings', 'onboarding', 'billing'], s = {};
+    ids.forEach(i => s[i] = !pick || pick === i);
+    const light = this.props.light === true || this.props.light === 'true';
+    const T = (title, list, owner) => ({ title, meta: `${list.length} module${list.length > 1 ? 's' : ''}${owner ? ' · owner only' : ''}`, items: list.map(([g, n]) => ({ g, n, lock: !!owner, ic: 'var(--text-secondary)', op: 1 })) });
+    const groups = [
+      T('Personal', [['DP', 'Daily Plan'], ['MM', 'Macros & Meals'], ['SO', 'Sobriety'], ['GO', 'Goals'], ['MH', 'Mental Health'], ['DI', 'Dispatch'], ['BR', 'Brain'], ['SC', 'Schedule'], ['BU', 'Budgeting'], ['DL', 'Decision Log'], ['WR', 'Weekly Review'], ['CF', 'Cash-Flow Forecast'], ['PA', 'Patterns'], ['VC', 'Voice Capture'], ['OC', 'Opening / Closing'], ['FI', 'Fitness']]),
+      T('Cold calling', [['DL', 'Dialing'], ['CO', 'Contacts'], ['RE', 'Call Recordings']]),
+      T('Clients', [['CM', 'Client Modules'], ['CP', 'Client Portal']]),
+      T('Scaling', [['ST', 'Start'], ['SW', 'Show Your Work'], ['IN', 'Support Inbox'], ['WB', 'Website / App Builder'], ['SP', 'Scaling Planner'], ['AU', 'Business Audits'], ['CR', 'Client CRM'], ['BL', 'Brand Lab'], ['IM', 'Idea Maker'], ['IV', 'Invoicing'], ['MK', 'Marketing'], ['CC', 'Content Creation']], true),
+      T('Side hustles', [['SK', 'Stocks'], ['SM', 'Streaming'], ['EC', 'E-commerce'], ['SS', 'Sticky Spot']]),
+    ];
+    groups[0].items[8].ic = 'var(--accent)';
+    const rows = list => list.map(([l, v], i) => ({ l, v, div: i ? '1px solid var(--grid)' : 'none' }));
+    const settings = [
+      { title: 'Modules', rows: rows([['Manage modules', '21 on'], ['Playbooks', '4'], ['Notifications', 'On']]) },
+      { title: 'Account', rows: rows([['Profile', 'Marq'], ['Workspace', 'MARQ Studio'], ['Role', 'Owner'], ['Security', 'Face ID']]) },
+      { title: 'Billing', rows: rows([['Plan', 'Mastermind'], ['Nova AI credits', 'Not funded'], ['Invoices', '3']]) },
+      { title: 'Data', rows: rows([['Export everything', 'CSV'], ['Connected accounts', '2']]) },
+    ];
+    const tg = (n, d, on) => ({ n, d, tb: on ? 'var(--accent)' : 'var(--surface-3)', kx: on ? 21 : 3, kb: on ? '#fff' : 'var(--text-tertiary)' });
+    const div = l => l.map((r, i) => ({ ...r, div: i ? '1px solid var(--grid)' : 'none' }));
+    const manage = [
+      { title: 'Pinned to Home', meta: '4 max', rows: div([tg('Budgeting', 'Personal', true), tg('Client CRM', 'Scaling', true), tg('Dialing', 'Cold calling', true), tg('Client Portal', 'Clients', true)]) },
+      { title: 'Personal', meta: '9 of 16 on', rows: div([tg('Daily Plan', 'Uses Schedule and Goals', true), tg('Sobriety', 'Private by default', true), tg('Macros & Meals', 'Photo logging', false), tg('Fitness', 'Workout plans', false)]) },
+    ];
+    const P = (n, d, on, lock) => ({ n, d, on: !!on && !lock, off: !on && !lock, lock: !!lock, bg: lock ? 'var(--surface-2)' : on ? 'color-mix(in srgb, var(--accent) 8%, var(--surface))' : 'var(--surface)', b: on && !lock ? '1.5px solid var(--accent)' : '1px solid var(--border)', tc: lock ? 'var(--text-tertiary)' : 'var(--text)' });
+    const pick2 = [
+      { title: 'Personal', meta: '4 picked', items: [P('Budgeting', 'Spending, bills, pace', 1), P('Daily Plan', 'AI plan for your day', 1), P('Goals', 'Contracts with pace', 1), P('Schedule', 'Calendar and shifts', 1), P('Sobriety', 'Streaks and check-ins'), P('Fitness', 'Workouts and timer')] },
+      { title: 'Cold calling', meta: '2 picked', items: [P('Dialing', 'Queue and outcomes', 1), P('Contacts', 'Dense records', 1)] },
+      { title: 'Scaling', meta: 'Owner only', items: [P('Client CRM', 'Discovery to active', 0, 1), P('Invoicing', 'Send and track', 0, 1), P('Brand Lab', 'Rounds to approval', 0, 1), P('Support Inbox', 'AI-sorted mail', 0, 1)] },
+      { title: 'Side hustles', meta: '1 picked', items: [P('Stocks', 'Paper trading', 1), P('Sticky Spot', 'Fast-cash ideas')] },
+    ];
+    return { s, light, showHead: !pick, states: !pick, pageBg: pick ? 'transparent' : '#0b0b0d', pagePad: pick ? '0' : '56px 64px', groups, settings, manage, pick: pick2 };
+  }
+}
+</script>
+</body>
+</html>

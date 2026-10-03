@@ -139,7 +139,7 @@ function PathPicker({ goal, onChoose }: { goal: Goal; onChoose: (path: GoalPath)
   );
 }
 
-function GoalCard({
+export function GoalCard({
   goal, otherGoals, todayDialCount,
   onAddStep, onToggleStep, onRemoveStep, onSaveProgress, onDelete, onSaveCritique, onAddCheckin, onSaveGoalPlan, onCommitPath,
 }: {

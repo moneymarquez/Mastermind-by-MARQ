@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:#897cdc;text-decoration:none}a:hover{color:#f4f4f6}</style>
+</helmet>
+<section id="p5" style="background:{{ secBg }}; padding:{{ secPad }}; display:flex; flex-direction:column; gap:48px; font-family:Inter, system-ui, sans-serif; color:{{ pg.t2 }}; font-variant-numeric:tabular-nums; min-height:{{ secMin }};">
+  <div style="display:{{ headD }}; flex-direction:column; gap:8px; max-width:900px;">
+    <span style="font-size:13px; font-weight:500; color:{{ pg.t3 }};">Masterminds by MARQ · Page 5 of 6 · owner only · all figures are example data</span>
+    <h1 style="margin:0; color:{{ pg.t1 }}; font-size:40px; font-weight:700; letter-spacing:-0.04em;">Scaling</h1>
+    <p style="margin:0; font-size:15px; line-height:1.45;">Twelve owner-only modules for winning, delivering, and growing client work. Empty and AI-off states sit under each one.</p>
+  </div>
+  <div style="display:flex; flex-wrap:wrap; gap:72px 48px; align-items:flex-start;">
+
+    <div id="start" style="display:{{ show.start }}; flex-direction:column; gap:14px;">
+      <span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Start</span>
+      <dc-import name="MM Phone" tabs="none" back="Cancel" nova="false" title="New client" sub="Step 2 of 5 · Scope" full="true" hint-size="392px,1000px">
+        <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px;"><div style="height:4px; border-radius:2px; background:var(--accent);"></div><div style="height:4px; border-radius:2px; background:var(--accent);"></div><div style="height:4px; border-radius:2px; background:var(--surface-3);"></div><div style="height:4px; border-radius:2px; background:var(--surface-3);"></div><div style="height:4px; border-radius:2px; background:var(--surface-3);"></div></div>
+        <dc-import name="MM Card" title="Bloom Studio" meta="From Leads · Lena Ortiz" hint-size="100%,100px"><span style="font-size:14px; line-height:1.45;">Second location in March. Wants logo, signage, and website.</span></dc-import>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <span style="font-size:13px; font-weight:500;">What are we building?</span>
+          <sc-for list="{{ scope }}" as="s" hint-placeholder-count="5">
+            <div style="display:flex; align-items:center; gap:12px; min-height:52px; padding:0 14px; border-radius:12px; background:{{ s.bg }}; border:{{ s.b }};">
+              <div style="width:22px; height:22px; border-radius:6px; box-sizing:border-box; background:{{ s.cb }}; border:{{ s.cbb }}; display:flex; align-items:center; justify-content:center; color:var(--bg); font-size:12px; font-weight:700;">{{ s.mark }}</div>
+              <span style="flex:1; color:var(--text); font-size:15px; font-weight:500;">{{ s.n }}</span><span style="font-size:13px; font-weight:500;">{{ s.p }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:500; padding:4px 2px;"><span>Estimate</span><span style="color:var(--text); font-weight:600;">$6,800 · 5–6 weeks</span></div>
+        <span style="height:52px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:var(--text); color:var(--bg); font-size:16px; font-weight:600;">Continue to pricing</span>
+      </dc-import>
+      <dc-import name="MM States" empty="No client in progress. Start from a lead or a blank form." cta="Start a client" ai="Without AI, scope isn't drafted from the lead's message. Pick items yourself." hint-size="390px,380px"></dc-import>
+    </div>
+
+    <div id="show-your-work" style="display:{{ show.show_your_work }}; flex-direction:column; gap:14px;">
+      <span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Show Your Work</span>
+      <dc-import name="MM Phone" back="Modules" title="Show Your Work" sub="Delivery packages and portfolio · Example data" tab="all" full="true" hint-size="392px,1000px">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px; padding:3px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border);"><span style="height:38px; display:flex; align-items:center; justify-content:center; border-radius:999px; background:var(--text); color:var(--bg); font-size:13px; font-weight:500;">Packages</span><span style="height:38px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:500;">Portfolio</span></div>
+        <dc-import name="MM Card" title="Harbor Dental · launch package" meta="Draft" hint-size="100%,250px">
+          <sc-for list="{{ pkg }}" as="i" hint-placeholder-count="4"><div style="display:flex; justify-content:space-between; font-size:14px; padding:2px 0;"><span style="color:var(--text);">{{ i.n }}</span><dc-import name="MM Chip" t="{{ i.s }}" k="{{ i.k }}" hint-size="70px,22px"></dc-import></div></sc-for>
+          <span style="height:44px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:var(--text); color:var(--bg); font-size:14px; font-weight:600;">Send to client portal</span>
+        </dc-import>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <sc-for list="{{ portfolio }}" as="p" hint-placeholder-count="4">
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden;">
+              <div style="aspect-ratio:4/3; background:repeating-linear-gradient(135deg, var(--surface-3) 0 8px, var(--surface-2) 8px 16px); display:flex; align-items:center; justify-content:center; font-family:ui-monospace, monospace; font-size:10px; color:var(--text-tertiary);">screenshot</div>
+              <div style="padding:10px 12px; display:flex; flex-direction:column; gap:2px;"><span style="color:var(--text); font-size:13.5px; font-weight:600;">{{ p.n }}</span><span style="font-size:12px;">{{ p.d }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+      </dc-import>
+      <dc-import name="MM States" empty="Nothing to show yet. Finished client work collects here as packages and portfolio pieces." cta="Add a project" ai="Without AI, write-ups aren't drafted. Add your own captions." hint-size="390px,380px"></dc-import>
+    </div>
+
+    <div id="support-inbox" style="display:{{ show.support_inbox }}; flex-direction:column; gap:14px;">
+      <span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Support Inbox</span>
+      <dc-import name="MM Phone" back="Modules" title="Support Inbox" sub="Client support only · Example data" tab="all" full="true" hint-size="392px,1000px">
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px;">
+          <dc-import name="MM Stat" label="Open" value="4" pill="1 urgent" k="bad" hint-size="100%,100px"></dc-import>
+          <dc-import name="MM Stat" label="Drafts" value="3" pill="Ready" k="neutral" hint-size="100%,100px"></dc-import>
+          <dc-import name="MM Stat" label="Median reply" value="2.1h" pill="↓ 40 min" k="good" hint-size="100%,100px"></dc-import>
+        </div>
+        <dc-import name="MM Card" title="Sorted by Nova" flush="true" hint-size="100%,330px">
+          <div>
+            <dc-import name="MM Row" n="Harbor Dental" meta="Ticket #14" chip="Bug · draft ready" k="accent" amt="Yesterday" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Ridgeline Roofing" meta="Email" chip="Question · draft ready" k="accent" amt="8:51" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Clark Law" meta="Ticket #9" chip="Change request" k="neutral" amt="Sep 19" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Nair Wellness" meta="Email" chip="Billing · draft ready" k="accent" amt="Sep 18" hint-size="100%,70px"></dc-import>
+          </div>
+        </dc-import>
+        <p style="margin:0; font-size:13px; line-height:1.45; color:var(--text-tertiary);">Support Inbox is the client-support slice of the unified Inbox. Drafts never send without your tap.</p>
+      </dc-import>
+      <dc-import name="MM States" empty="No open support requests." cta="Open Inbox" ai="Without AI, requests arrive unsorted and with no drafts." hint-size="390px,380px"></dc-import>
+    </div>
+
+    <div id="builder" style="display:{{ show.builder }}; flex-direction:column; gap:14px;">
+      <span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Website / App Builder</span>
+      <dc-import name="MM Phone" back="Modules" title="Ridgeline Roofing" sub="Website roadmap · Example data" tab="all" full="true" hint-size="392px,1000px">
+        <dc-import name="MM Card" title="Roadmap" meta="7 of 12 done" hint-size="100%,140px">
+          <dc-import name="MM Pace" val="7" max="12" fill="58" mark="66" markLabel="Due today" chip="1 behind" k="warn" note="Go-live Thu, Sep 24" hint-size="100%,80px"></dc-import>
+        </dc-import>
+        <sc-for list="{{ roadmap }}" as="col" hint-placeholder-count="3">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; justify-content:space-between; padding:0 2px;"><span style="font-size:13px; font-weight:500;">{{ col.t }}</span><span style="font-size:12px; color:var(--text-tertiary);">{{ col.n }}</span></div>
+            <sc-for list="{{ col.items }}" as="i" hint-placeholder-count="2"><div style="padding:12px 14px; border-radius:12px; background:var(--surface); border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:8px;"><span style="color:var(--text); font-size:14px; font-weight:500;">{{ i.n }}</span><span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">{{ i.d }}</span></div></sc-for>
+          </div>
+        </sc-for>
+      </dc-import>
+      <dc-import name="MM States" empty="No builds yet. Start a roadmap from a signed client." cta="New roadmap" ai="Without AI, roadmaps aren't drafted from scope. Add steps by hand." hint-size="390px,380px"></dc-import>
+    </div>
+
+    <div id="scaling-planner" style="display:{{ show.scaling_planner }}; flex-direction:column; gap:14px;">
+      <span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Scaling Planner</span>
+      <dc-import name="MM Phone" back="Modules" title="Scaling Planner" sub="Goal: $15,000/mo by June · Example data" tab="all" full="true" hint-size="392px,1050px">
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; gap:12px;">
+          <span style="font-size:13px; font-weight:500;">Monthly recurring revenue</span>
+          <div style="display:flex; align-items:baseline; color:var(--text); font-size:46px; font-weight:600; letter-spacing:-0.04em; line-height:1;">$7,200</div>
+          <div style="display:flex; align-items:center; gap:8px;"><dc-import name="MM Chip" t="Behind pace by $900" k="warn" hint-size="130px,22px"></dc-import><span style="font-size:13px; color:var(--text-tertiary); font-weight:500;">of $15,000</span></div>
+          <dc-import name="MM Line" vals="3600,4200,4800,5400,6000,7200,8100,9300,10500,12000,13500,15000" today="5" labels="Apr,Sep,Jun" pre="$" h="130" hint-size="322px,130px"></dc-import>
+        </div>
+        <dc-import name="MM Card" title="What it takes" meta="At $1,200 average" hint-size="100%,220px">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <sc-for list="{{ takes }}" as="x" hint-placeholder-count="4"><div style="padding:12px; border-radius:10px; background:var(--surface-3); display:flex; flex-direction:column; gap:2px;"><span style="font-size:12px; font-weight:500;">{{ x.l }}</span><span style="color:var(--text); font-size:20px; font-weight:600; letter-spacing:-0.03em;">{{ x.v }}</span></div></sc-for>
+          </div>
+        </dc-import>
+      </dc-import>
+      <dc-import name="MM States" empty="Set a revenue goal and a date to see what it takes." cta="Set a goal" ai="Without AI, the planner still does the math; Nova's suggestions are off." hint-size="390px,380px"></dc-import>
+    </div>
+
+    <div id="audits" style="display:{{ show.audits }}; flex-direction:column; gap:14px;">
+      <span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Business Audits</span>
+      <dc-import name="MM Phone" back="Modules" title="Park Fitness" sub="Audit · Sep 21 · Example data" tab="all" full="true" hint-size="392px,1050px">
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--card-shadow); display:flex; align-items:center; gap:18px;">
+          <dc-import name="MM Ring" pcts="0.54" center="54" sub="of 100" size="112" color="warn" hint-size="112px,112px"></dc-import>
+          <div style="display:flex; flex-direction:column; gap:6px;"><span style="color:var(--text); font-size:18px; font-weight:600; letter-spacing:-0.025em;">Needs work</span><span style="font-size:13px; line-height:1.4;">Biggest gap: booking. Fixing it alone would add about 12 points.</span></div>
+        </div>
+        <dc-import name="MM Card" title="Breakdown" hint-size="100%,300px">
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <sc-for list="{{ audit }}" as="a" hint-placeholder-count="6">
+              <div style="display:flex; align-items:center; gap:10px;"><span style="width:110px; font-size:13px; font-weight:500;">{{ a.n }}</span><div style="flex:1; height:8px; border-radius:999px; background:var(--surface-3); overflow:hidden;"><div style="width:{{ a.v }}%; height:100%; border-radius:999px; background:{{ a.c }};"></div></div><span style="width:24px; text-align:right; color:var(--text); font-size:13px; font-weight:600;">{{ a.v }}</span></div>
+            </sc-for>
+          </div>
+        </dc-import>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;"><span style="height:46px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:var(--text); color:var(--bg); font-size:14px; font-weight:600;">Send report</span><span style="height:46px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Add to CRM</span></div>
+      </dc-import>
+      <dc-import name="MM States" empty="No audits yet. Share your audit form link or run one for a prospect." cta="Run an audit" ai="Scoring needs AI. You can still fill the checklist and score it yourself." hint-size="390px,380px"></dc-import>
+    </div>
+
+    <div id="client-crm" style="display:{{ show.client_crm }}; flex-direction:column; gap:14px;">
+      <span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Client CRM</span>
+      <dc-import name="MM Phone" back="Modules" title="Client CRM" sub="Discovery → pricing → invoice → active · Example data" tab="all" full="true" hint-size="392px,1150px">
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px;">
+          <sc-for list="{{ crmStages }}" as="c" hint-placeholder-count="4"><div style="padding:10px 8px; border-radius:10px; background:{{ c.bg }}; border:{{ c.b }}; display:flex; flex-direction:column; gap:2px;"><span style="font-size:11.5px; font-weight:500;">{{ c.n }}</span><span style="color:var(--text); font-size:18px; font-weight:600;">{{ c.v }}</span><span style="font-size:11px; color:var(--text-tertiary);">{{ c.amt }}</span></div></sc-for>
+        </div>
+        <span style="font-size:13px; font-weight:500;">Pricing · 2 deals</span>
+        <sc-for list="{{ deals }}" as="d" hint-placeholder-count="2">
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:baseline;"><span style="color:var(--text); font-size:15px; font-weight:600;">{{ d.n }}</span><span style="color:var(--text); font-size:15px; font-weight:600;">{{ d.v }}</span></div>
+            <span style="font-size:13px;">{{ d.d }}</span>
+            <div style="display:flex; gap:6px;"><dc-import name="MM Chip" t="{{ d.s }}" k="{{ d.k }}" hint-size="90px,22px"></dc-import></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;"><span style="height:44px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:var(--text); color:var(--bg); font-size:14px; font-weight:600;">{{ d.cta }}</span><span style="height:44px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); color:var(--text); font-size:14px; font-weight:500;">Open</span></div>
+          </div>
+        </sc-for>
+      </dc-import>
+      <dc-import name="MM States" empty="No deals yet. Add a lead to start discovery." cta="Add from Leads" ai="Without AI, proposals aren't drafted. Pricing and invoices still work." hint-size="390px,380px"></dc-import>
+    </div>
+
+    <div id="brand-lab" style="display:{{ show.brand_lab }}; flex-direction:column; gap:14px;">
+      <span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Brand Lab</span>
+      <dc-import name="MM Phone" back="Modules" title="Bloom Studio" sub="Brand Lab · Round 2 · Example data" tab="all" full="true" hint-size="392px,1100px">
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:4px;"><div style="height:4px; border-radius:2px; background:var(--accent);"></div><div style="height:4px; border-radius:2px; background:var(--accent);"></div><div style="height:4px; border-radius:2px; background:var(--accent-soft);"></div><div style="height:4px; border-radius:2px; background:var(--surface-3);"></div></div>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:4px; font-size:11.5px; font-weight:500;"><span>Intake</span><span>Spec review</span><span style="color:var(--text);">Rounds</span><span>Approval</span></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <sc-for list="{{ concepts }}" as="c" hint-placeholder-count="2">
+            <div style="background:var(--surface); border:{{ c.b }}; border-radius:16px; overflow:hidden;">
+              <div style="aspect-ratio:1; background:repeating-linear-gradient(135deg, var(--surface-3) 0 8px, var(--surface-2) 8px 16px); display:flex; align-items:center; justify-content:center; font-family:ui-monospace, monospace; font-size:10px; color:var(--text-tertiary);">logo concept</div>
+              <div style="padding:10px 12px; display:flex; flex-direction:column; gap:6px;"><span style="color:var(--text); font-size:13.5px; font-weight:600;">{{ c.n }}</span><dc-import name="MM Chip" t="{{ c.s }}" k="{{ c.k }}" hint-size="80px,22px"></dc-import></div>
+            </div>
+          </sc-for>
+        </div>
+        <dc-import name="MM Card" title="Client feedback" meta="From portal" hint-size="100%,140px"><p style="margin:0; font-size:14px; line-height:1.45; color:var(--text);">"Love B. Can the leaf be smaller and the type a little warmer?"</p><span style="font-size:12.5px;">Lena Ortiz · Yesterday</span></dc-import>
+        <span style="height:48px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:var(--text); color:var(--bg); font-size:15px; font-weight:600;">Upload round 3</span>
+      </dc-import>
+      <dc-import name="MM States" empty="No brand projects. Send an intake form to start one." cta="Send intake" ai="Without AI, intake answers aren't turned into a spec. Write the spec yourself." hint-size="390px,380px"></dc-import>
+    </div>
+
+    <div id="idea-maker" style="display:{{ show.idea_maker }}; flex-direction:column; gap:14px;">
+      <span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Idea Maker</span>
+      <dc-import name="MM Phone" back="Modules" nova="false" title="Idea Maker" sub="Back-and-forth with Nova" composer="Push back or build on it" hint-size="392px,846px">
+        <div style="align-self:flex-end; max-width:80%; padding:11px 14px; border-radius:16px 16px 4px 16px; background:var(--surface-3); color:var(--text); font-size:15px; line-height:1.45;">A cheap entry offer for dentists?</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <p style="margin:0; font-size:15px; line-height:1.5;">Three to react to:</p>
+          <sc-for list="{{ ideas }}" as="i" hint-placeholder-count="3"><div style="padding:12px 14px; border-radius:12px; background:var(--surface); border:1px solid var(--border); display:flex; flex-direction:column; gap:4px;"><span style="color:var(--text); font-size:14.5px; font-weight:600;">{{ i.n }}</span><span style="font-size:13.5px; line-height:1.4;">{{ i.d }}</span></div></sc-for>
+          <p style="margin:0; font-size:15px; line-height:1.5;">Which one fits how you want to work?</p>
+        </div>
+        <div style="align-self:flex-end; max-width:80%; padding:11px 14px; border-radius:16px 16px 4px 16px; background:var(--surface-3); color:var(--text); font-size:15px; line-height:1.45;">The second, but under $500.</div>
+      </dc-import>
+      <dc-import name="MM States" empty="No ideas yet. Start with a rough question." cta="Start an idea" ai="Idea Maker is a conversation with Nova, so it needs AI. Your saved ideas stay readable." hint-size="390px,380px"></dc-import>
+    </div>
+
+    <div id="invoicing" style="display:{{ show.invoicing }}; flex-direction:column; gap:14px;">
+      <span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Invoicing</span>
+      <dc-import name="MM Phone" back="Modules" title="Invoicing" sub="September · Example data" tab="all" fab="Invoice" full="true" hint-size="392px,1050px">
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--card-shadow); display:flex; flex-direction:column; gap:12px;">
+          <span style="font-size:13px; font-weight:500;">Outstanding</span>
+          <div style="display:flex; align-items:baseline; color:var(--text); font-size:46px; font-weight:600; letter-spacing:-0.04em; line-height:1;">$5,100<span style="font-size:22px; color:var(--text-tertiary);">.00</span></div>
+          <div style="display:flex; align-items:center; gap:8px;"><dc-import name="MM Chip" t="$1,500 overdue" k="bad" hint-size="110px,22px"></dc-import><span style="font-size:13px; color:var(--text-tertiary); font-weight:500;">3 invoices</span></div>
+        </div>
+        <dc-import name="MM Card" title="Paid by month" meta="Last 6" hint-size="100%,220px"><dc-import name="MM Bars" vals="4200,5100,4800,6600,7400,6900" labels="Apr,May,Jun,Jul,Aug,Sep" hint-size="100%,164px"></dc-import></dc-import>
+        <dc-import name="MM Card" title="Invoices" flush="true" hint-size="100%,320px">
+          <div>
+            <dc-import name="MM Row" n="Clark Law" meta="INV-0042" chip="9 days overdue" k="bad" amt="$1,500.00" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Ridgeline Roofing" meta="INV-0045" chip="Due Oct 5" k="neutral" amt="$2,400.00" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Harbor Dental" meta="INV-0046" chip="Due Oct 1" k="neutral" amt="$1,200.00" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Nair Wellness" meta="INV-0044" chip="Paid Sep 15" k="good" amt="$900.00" dim="true" hint-size="100%,70px"></dc-import>
+          </div>
+        </dc-import>
+      </dc-import>
+      <dc-import name="MM States" empty="No invoices yet. Create one from a signed deal." cta="New invoice" ai="Without AI, reminder emails aren't drafted. Invoices still send." hint-size="390px,380px"></dc-import>
+    </div>
+
+    <div id="marketing" style="display:{{ show.marketing }}; flex-direction:column; gap:14px;">
+      <span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Marketing</span>
+      <dc-import name="MM Phone" back="Modules" title="Marketing" sub="Campaigns, assets, content pipeline · Example data" tab="all" full="true" hint-size="392px,1050px">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <dc-import name="MM Stat" label="Leads from marketing" value="11" pill="↑ 4 this month" k="good" hint-size="100%,100px"></dc-import>
+          <dc-import name="MM Stat" label="Spend" value="$240" pill="$22 per lead" k="neutral" hint-size="100%,100px"></dc-import>
+        </div>
+        <dc-import name="MM Card" title="Campaigns" flush="true" hint-size="100%,250px">
+          <div>
+            <dc-import name="MM Row" n="Free audit for dentists" meta="Email + LinkedIn" chip="Live" k="live" amt="6 leads" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Before / after reels" meta="Instagram" chip="Live" k="live" amt="3 leads" hint-size="100%,70px"></dc-import>
+            <dc-import name="MM Row" n="Holiday hours reminder" meta="Clients" chip="Scheduled Nov 1" k="neutral" amt="" hint-size="100%,70px"></dc-import>
+          </div>
+        </dc-import>
+        <dc-import name="MM Card" title="Content pipeline" meta="9 pieces" hint-size="100%,170px">
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px;">
+            <sc-for list="{{ pipe }}" as="p" hint-placeholder-count="4"><div style="padding:10px 8px; border-radius:10px; background:var(--surface-3); display:flex; flex-direction:column; gap:2px;"><span style="font-size:11.5px; font-weight:500;">{{ p.n }}</span><span style="color:var(--text); font-size:20px; font-weight:600;">{{ p.v }}</span></div></sc-for>
+          </div>
+        </dc-import>
+      </dc-import>
+      <dc-import name="MM States" empty="No campaigns yet. Start with one offer and one channel." cta="New campaign" ai="Without AI, copy and post drafts are off. Write and schedule them yourself." hint-size="390px,380px"></dc-import>
+    </div>
+
+    <div id="content-creation" style="display:{{ show.content_creation }}; flex-direction:column; gap:14px;">
+      <span style="color:{{ pg.t1 }}; font-size:18px; font-weight:600; letter-spacing:-0.02em;">Content Creation</span>
+      <dc-import name="MM Phone" back="Modules" title="Launch kits" sub="Per client · Example data" tab="all" full="true" hint-size="392px,1000px">
+        <sc-for list="{{ kits }}" as="k" hint-placeholder-count="3">
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:baseline;"><span style="color:var(--text); font-size:15px; font-weight:600;">{{ k.n }}</span><span style="font-size:12px; font-weight:500; color:var(--text-tertiary);">{{ k.d }}</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:12.5px; font-weight:500;"><span>{{ k.done }} of {{ k.total }} pieces</span><span style="color:var(--text);">{{ k.pct }}%</span></div>
+            <div style="height:6px; border-radius:999px; background:var(--surface-3);"><div style="width:{{ k.pct }}%; height:100%; border-radius:999px; background:var(--accent);"></div></div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;"><sc-for list="{{ k.items }}" as="i" hint-placeholder-count="4"><dc-import name="MM Chip" t="{{ i.t }}" k="{{ i.k }}" hint-size="80px,22px"></dc-import></sc-for></div>
+          </div>
+        </sc-for>
+      </dc-import>
+      <dc-import name="MM States" empty="No launch kits yet. Create one when a client nears launch." cta="New launch kit" ai="Without AI, captions and announcement drafts are off." hint-size="390px,380px"></dc-import>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this._mm = () => this.forceUpdate(); window.addEventListener('mm-theme', this._mm); }
+  componentWillUnmount() { window.removeEventListener('mm-theme', this._mm); }
+  pk(pg) { const p = this.props.pick, ids = ["start","show_your_work","support_inbox","builder","scaling_planner","audits","client_crm","brand_lab","idea_maker","invoicing","marketing","content_creation"], show = {}; ids.forEach(i => show[i] = !p || p === i ? 'flex' : 'none'); return { show, headD: p ? 'none' : 'flex', secBg: p ? 'transparent' : pg.bg, secPad: p ? '0' : '56px 64px 96px', secMin: p ? '0' : '100vh' }; }
+  renderVals() {
+    let t = 'dark'; try { t = window.__mmForce || localStorage.getItem('mm-theme') || 'dark'; } catch (e) {}
+    if (t === 'system') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    const pg = t === 'dark' ? { bg: '#08080a', t1: '#f4f4f6', t2: '#9a9ca8', t3: '#6b6d78' } : { bg: '#e6e6ec', t1: '#121216', t2: '#5b5d69', t3: '#80828d' };
+    const scope = [['Logo and brand kit', '$2,400', 1], ['Signage files', '$800', 1], ['Website, 6 pages', '$3,600', 1], ['Online booking', '$900', 0], ['Monthly care plan', '$300/mo', 0]].map(([n, p, on]) => ({ n, p, mark: on ? '✓' : '', bg: on ? 'color-mix(in srgb, var(--accent) 8%, var(--surface))' : 'var(--surface)', b: on ? '1.5px solid var(--accent)' : '1px solid var(--border)', cb: on ? 'var(--accent)' : 'transparent', cbb: on ? 'none' : '1.5px solid var(--text-tertiary)' }));
+    const pkg = [['Site walkthrough video', 'Ready', 'good'], ['Login and passwords', 'Ready', 'good'], ['Before / after report', 'Drafting', 'neutral'], ['Care guide PDF', 'Not started', 'neutral']].map(([n, s, k]) => ({ n, s, k }));
+    const portfolio = [['Harbor Dental', 'Website + booking'], ['Silva Bakery', 'Brand + site'], ['Clark Law', 'Website'], ['Nair Wellness', 'Booking']].map(([n, d]) => ({ n, d }));
+    const roadmap = [{ t: 'Doing', n: '2', items: [{ n: 'Quote form', d: 'Due Thu' }, { n: 'Service area map', d: 'Due Fri' }] }, { t: 'Next', n: '3', items: [{ n: 'Reviews widget', d: 'Oct 1' }, { n: 'Speed pass', d: 'Oct 2' }] }, { t: 'Done', n: '7', items: [{ n: 'Home page', d: 'Sep 12' }] }];
+    const takes = [['New clients needed', '7'], ['Discovery calls', '~28'], ['Per month', '1–2 clients'], ['Hours per week', '+9']].map(([l, v]) => ({ l, v }));
+    const audit = [['Booking', 22, 'var(--danger)'], ['Website speed', 48, 'var(--warning)'], ['Google profile', 71, 'var(--accent)'], ['Reviews', 64, 'var(--accent)'], ['Social', 52, 'var(--warning)'], ['Follow-up', 66, 'var(--accent)']].map(([n, v, c]) => ({ n, v, c }));
+    const crmStages = [['Discovery', 4, '$14k'], ['Pricing', 2, '$9.2k'], ['Invoice', 1, '$2.4k'], ['Active', 6, '$7.2k/mo']].map(([n, v, amt], i) => ({ n, v: String(v), amt, bg: i === 1 ? 'color-mix(in srgb, var(--accent) 12%, var(--surface))' : 'var(--surface)', b: i === 1 ? '1.5px solid var(--accent)' : '1px solid var(--border)' }));
+    const deals = [{ n: 'Bloom Studio', v: '$6,800', d: 'Rebrand + site · proposal sent Sep 21', s: 'Viewed 3 times', k: 'accent', cta: 'Follow up' }, { n: 'Park Fitness', v: '$2,400', d: 'Booking fix · from audit (54)', s: 'Draft proposal', k: 'neutral', cta: 'Send proposal' }];
+    const concepts = [['Concept A', 'Passed', 'neutral', '1px solid var(--border)'], ['Concept B', 'Client favorite', 'good', '1.5px solid var(--accent)']].map(([n, s, k, b]) => ({ n, s, k, b }));
+    const ideas = [['Booking audit, $199', 'A 30-minute review with a written fix list. Leads into the $900 booking build.'], ['Google profile tune-up, $450', 'Photos, hours, services, and a review request flow. Done in a week.'], ['Free audit, paid fix', 'Keep the audit free, price the top fix at a flat rate.']].map(([n, d]) => ({ n, d }));
+    const pipe = [['Ideas', 4], ['Drafting', 2], ['Review', 2], ['Posted', 1]].map(([n, v]) => ({ n, v: String(v) }));
+    const kits = [{ n: 'Harbor Dental', d: 'Launch Oct 6', done: 5, total: 8, items: [['Launch post', 'good'], ['Email to patients', 'good'], ['Reel', 'neutral'], ['Google update', 'neutral']] }, { n: 'Ridgeline Roofing', d: 'Launch Sep 24', done: 3, total: 6, items: [['Announcement', 'good'], ['Before / after', 'warn'], ['Yard sign QR', 'neutral']] }, { n: 'Bloom Studio', d: 'Launch March', done: 0, total: 10, items: [['Not started', 'neutral']] }].map(k => ({ ...k, pct: Math.round(k.done / k.total * 100), items: k.items.map(([t2, kk]) => ({ t: t2, k: kk })) }));
+    return { ...this.pk(pg), pg, scope, pkg, portfolio, roadmap, takes, audit, crmStages, deals, concepts, ideas, pipe, kits };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="--bg:{{ t.bg }}; --surface:{{ t.surface }}; --surface-2:{{ t.s2 }}; --surface-3:{{ t.s3 }}; --border:{{ t.border }}; --grid:{{ t.grid }}; --text:{{ t.text }}; --text-secondary:{{ t.t2 }}; --text-tertiary:{{ t.t3 }}; --accent:{{ t.accent }}; --accent-soft:{{ t.soft }}; --accent-wash:{{ t.wash }}; --success:{{ t.success }}; --warning:{{ t.warning }}; --danger:{{ t.danger }}; --client-accent:{{ t.client }}; --cat-1:{{ t.c1 }}; --cat-2:{{ t.c2 }}; --cat-3:{{ t.c3 }}; --cat-other:{{ t.co }}; --card-shadow:{{ t.shadow }}; width:390px; height:{{ h }}; min-height:844px; position:relative; display:flex; flex-direction:column; background:var(--bg); border:1px solid var(--border); border-radius:44px; overflow:hidden; font-family:Inter, system-ui, sans-serif; color:var(--text-secondary); font-variant-numeric:tabular-nums; -webkit-font-smoothing:antialiased; text-align:left;">
+  <div style="height:47px; flex:none; display:flex; align-items:center; justify-content:space-between; padding:0 30px 0 34px; color:var(--text); font-size:15px; font-weight:600;">
+    <span>9:41</span>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <div style="display:flex; align-items:flex-end; gap:2px; height:11px;"><div style="width:3px; height:4px; border-radius:1px; background:var(--text);"></div><div style="width:3px; height:6px; border-radius:1px; background:var(--text);"></div><div style="width:3px; height:8px; border-radius:1px; background:var(--text);"></div><div style="width:3px; height:11px; border-radius:1px; background:var(--text);"></div></div>
+      <div style="width:24px; height:12px; border:1px solid var(--text-tertiary); border-radius:4px; padding:1.5px; box-sizing:border-box;"><div style="width:70%; height:100%; background:var(--text); border-radius:1.5px;"></div></div>
+    </div>
+  </div>
+  <div style="flex:1; min-height:0; overflow-y:auto; padding:0 16px {{ padB }}px;">
+    <sc-if value="{{ hasBack }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0 14px;">
+        <div style="display:flex; align-items:center; gap:2px; height:40px; color:var(--text-secondary); font-size:15px; font-weight:500; margin-left:-6px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>{{ back }}
+        </div>
+        <div style="display:flex; gap:8px;">
+          <sc-if value="{{ showNova }}" hint-placeholder-val="{{ true }}">
+            <div style="height:40px; padding:0 12px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; gap:6px; color:var(--text); font-size:13px; font-weight:500;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="var(--accent)"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg>Ask Nova
+            </div>
+          </sc-if>
+          <div style="width:40px; height:40px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-secondary);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isBrand }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0 18px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:30px; height:30px; border-radius:8px; background:var(--surface-3); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text); font-size:13px; font-weight:700;">M</div>
+          <div style="display:flex; flex-direction:column; line-height:1.15;"><span style="color:var(--text); font-size:14px; font-weight:600; letter-spacing:-0.015em;">Masterminds</span><span style="color:var(--text-tertiary); font-size:11.5px; font-weight:500;">by MARQ</span></div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <div style="width:40px; height:40px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-secondary);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></div>
+          <div style="width:40px; height:40px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-secondary);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg></div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isPortal }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0 18px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:30px; height:30px; border-radius:50%; background:color-mix(in srgb, var(--client-accent) 18%, transparent); display:flex; align-items:center; justify-content:center; color:var(--client-accent); font-size:12px; font-weight:600;">HD</div>
+          <div style="display:flex; flex-direction:column; line-height:1.15;"><span style="color:var(--text); font-size:14px; font-weight:600; letter-spacing:-0.015em;">Harbor Dental</span><span style="color:var(--text-tertiary); font-size:11.5px; font-weight:500;">Client portal · by MARQ</span></div>
+        </div>
+        <div style="width:40px; height:40px; border-radius:50%; background:var(--surface-3); display:flex; align-items:center; justify-content:center; color:var(--text); font-size:13px; font-weight:600;">DL</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ hasTitle }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:20px;">
+        <div style="display:flex; flex-direction:column; gap:4px; min-width:0;">
+          <h1 style="margin:0; color:var(--text); font-size:24px; font-weight:700; letter-spacing:-0.035em; line-height:1.15; text-wrap:balance;">{{ title }}</h1>
+          <span style="font-size:13px; font-weight:500; color:var(--text-tertiary);">{{ sub }}</span>
+        </div>
+        <sc-if value="{{ hasRight }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:none; display:flex; align-items:center; height:34px; padding:0 12px; border-radius:999px; border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:500;">{{ right }}</div>
+        </sc-if>
+      </div>
+    </sc-if>
+    <div style="display:flex; flex-direction:column; gap:20px;">{{ children }}</div>
+  </div>
+  <sc-if value="{{ hasFab }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute; right:16px; bottom:{{ fabB }}px; z-index:5; display:flex; align-items:center; gap:6px; height:48px; padding:0 18px; border-radius:8px; background:var(--text); color:var(--bg); font-size:15px; font-weight:600; box-shadow:0 0 40px rgba(0,0,0,.25);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>{{ fab }}
+    </div>
+  </sc-if>
+  <sc-if value="{{ hasComposer }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute; left:0; right:0; bottom:0; z-index:6; padding:10px 16px 30px; background:color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter:blur(16px); border-top:1px solid var(--border); display:flex; gap:8px; align-items:center;">
+      <div style="flex:1; height:46px; border-radius:8px; background:var(--surface-2); border:1px solid var(--border); display:flex; align-items:center; padding:0 14px; color:var(--text-tertiary); font-size:16px;">{{ composer }}</div>
+      <div style="width:46px; height:46px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-secondary);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path></svg></div>
+      <div style="width:46px; height:46px; border-radius:8px; background:var(--text); display:flex; align-items:center; justify-content:center; color:var(--bg);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path></svg></div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ hasTabs }}" hint-placeholder-val="{{ true }}">
+    <div style="position:absolute; left:0; right:0; bottom:0; z-index:6; height:84px; background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border-top:1px solid var(--border); display:flex; padding:8px 8px 0;">
+      <sc-for list="{{ tabItems }}" as="it" hint-placeholder-count="4">
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:48px; justify-content:center;">
+          <div style="color:{{ it.ic }}; height:22px; display:flex; align-items:center;">
+            <sc-if value="{{ it.home }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"></path></svg></sc-if>
+            <sc-if value="{{ it.budget }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20.5 13A8.5 8.5 0 1 1 11 3.5V13z"></path><path d="M14.5 3.6a8.5 8.5 0 0 1 5.9 5.9h-5.9z"></path></svg></sc-if>
+            <sc-if value="{{ it.clients }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0"></path><path d="M16 4.7a3.5 3.5 0 0 1 0 6.6"></path><path d="M21.5 20a6.5 6.5 0 0 0-3.5-5.8"></path></svg></sc-if>
+            <sc-if value="{{ it.inbox }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 13h5l1.5 3h5l1.5-3h5"></path><path d="M5.5 5h13L21 13v6H3v-6z"></path></svg></sc-if>
+            <sc-if value="{{ it.nova }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"></path></svg></sc-if>
+            <sc-if value="{{ it.all }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="7" height="7" rx="2"></rect><rect x="13.5" y="3.5" width="7" height="7" rx="2"></rect><rect x="3.5" y="13.5" width="7" height="7" rx="2"></rect><rect x="13.5" y="13.5" width="7" height="7" rx="2"></rect></svg></sc-if>
+            <sc-if value="{{ it.progress }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="6" cy="5" r="2"></circle><circle cx="6" cy="19" r="2"></circle><path d="M6 7v10"></path><path d="M11 5h9"></path><path d="M11 12h9"></path><path d="M11 19h6"></path></svg></sc-if>
+            <sc-if value="{{ it.numbers }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20V12"></path><path d="M12 20V5"></path><path d="M19 20v-9"></path></svg></sc-if>
+            <sc-if value="{{ it.help }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"></path></svg></sc-if>
+          </div>
+          <span style="font-size:11px; font-weight:500; color:{{ it.lc }};">{{ it.label }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+  <div style="position:absolute; left:50%; bottom:8px; width:134px; height:5px; margin-left:-67px; border-radius:3px; background:var(--text); z-index:7;"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:392,&quot;height&quot;:846},&quot;title&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Module&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;sub&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Example data&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;back&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;All modules&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;right&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;tab&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;budget&quot;,&quot;clients&quot;,&quot;all&quot;,&quot;progress&quot;,&quot;numbers&quot;,&quot;help&quot;,&quot;&quot;],&quot;default&quot;:&quot;all&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;tabs&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;app&quot;,&quot;portal&quot;,&quot;none&quot;],&quot;default&quot;:&quot;app&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;fab&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;composer&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;brand&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;nova&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;full&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;light&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;children&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;ReactNode&quot;}}">
+class Component extends DCLogic {
+  componentDidMount() { this._mm = () => this.forceUpdate(); window.addEventListener('mm-theme', this._mm); this._mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null; if (this._mq && this._mq.addEventListener) this._mq.addEventListener('change', this._mm); }
+  componentWillUnmount() { window.removeEventListener('mm-theme', this._mm); if (this._mq && this._mq.removeEventListener) this._mq.removeEventListener('change', this._mm); }
+  resolved() { let t = 'dark'; try { t = window.__mmForce || localStorage.getItem('mm-theme') || 'dark'; } catch (e) {} return t === 'system' ? (this._mq && this._mq.matches ? 'light' : 'dark') : t; }
+  renderVals() {
+    const p = this.props;
+    const D = { bg: '#0b0b0d', surface: '#131318', s2: '#101014', s3: '#1b1b21', border: '#25252d', grid: '#202027', text: '#f4f4f6', t2: '#9a9ca8', t3: '#6b6d78', accent: '#897cdc', soft: '#393453', wash: 'rgba(137,124,220,.12)', success: '#3fcb7f', warning: '#e0b25e', danger: '#e2707f', client: '#4fb3ac', c1: '#897cdc', c2: '#ce7a3b', c3: '#0094bc', co: '#4a4c56', shadow: '0 0 40px rgba(0,0,0,.18)' };
+    const L = { bg: '#f4f4f6', surface: '#ffffff', s2: '#f2f2f5', s3: '#ebebef', border: '#e3e3ea', grid: '#ececf1', text: '#121216', t2: '#5b5d69', t3: '#80828d', accent: '#705bcd', soft: '#dcd6f5', wash: 'rgba(112,91,205,.10)', success: '#17915a', warning: '#a26f0c', danger: '#c13f55', client: '#2f8f88', c1: '#705bcd', c2: '#c56c21', c3: '#007dae', co: '#c9cad3', shadow: 'none' };
+    const light = p.light === true || p.light === 'true' || this.resolved() === 'light';
+    const full = p.full === true || p.full === 'true';
+    const tabs = p.tabs || 'app';
+    const portal = tabs === 'portal';
+    const act = portal ? 'var(--client-accent)' : 'var(--accent)';
+    const defs = portal ? [['home', 'Home'], ['progress', 'Progress'], ['numbers', 'Numbers'], ['help', 'Help']] : [['home', 'Home'], ['inbox', 'Inbox'], ['nova', 'Nova'], ['all', 'Modules']];
+    const tabItems = defs.map(([k, label]) => ({ label, [k]: true, ic: p.tab === k ? act : 'var(--text-tertiary)', lc: p.tab === k ? 'var(--text)' : 'var(--text-tertiary)' }));
+    const hasComposer = !!p.composer, hasTabs = !hasComposer && tabs !== 'none';
+    const bottom = hasComposer ? 86 : hasTabs ? 84 : 20;
+    return {
+      t: light ? L : D, h: full ? 'auto' : '844px',
+      hasBack: !!p.back, showNova: p.nova !== 'false' && p.nova !== false,
+      isBrand: p.brand === true || p.brand === 'true', isPortal: portal && !p.back,
+      hasTitle: !!p.title, hasRight: !!p.right, hasFab: !!p.fab, fabB: bottom + 16,
+      padB: bottom + (p.fab ? 88 : 36), hasComposer, hasTabs, tabItems,
+    };
+  }
+}
+</script>
+</body>
+</html>
