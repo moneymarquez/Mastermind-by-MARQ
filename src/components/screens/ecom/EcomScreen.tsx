@@ -5,7 +5,9 @@ import { useEcomBrands, useEcomCounters, useApprovals } from '../../../data/useE
 import { useClients } from '../../../data/useClients';
 import { money } from '../../../data/ecom';
 import type { Brand } from '../../../data/ecom';
-import { E, Pill, TeachingEmpty, Drawer, Badge, btn, field } from './ecomShared';
+import { E, TeachingEmpty, Drawer, Badge, btn } from './ecomShared';
+import EcomOverview from './EcomOverview';
+import { Page, Tabs, field as mmField, useModule } from '../../mm/Page';
 import BrandsTab from './BrandsTab';
 import WorkersTab from './WorkersTab';
 import ApprovalsTab from './ApprovalsTab';
@@ -18,11 +20,12 @@ interface Props {
 }
 
 type Tab = 'brands' | 'sheets' | 'workers' | 'performance' | 'approvals';
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'brands', label: 'Brands', icon: '🏷️' },
-  { id: 'sheets', label: 'Product Sheets', icon: '📈' },
-  { id: 'workers', label: 'Workers', icon: '🤖' },
-  { id: 'performance', label: 'Performance', icon: '📊' },
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'brands', label: 'Brands' },
+  { id: 'sheets', label: 'Product sheets' },
+  { id: 'workers', label: 'Workers' },
+  { id: 'performance', label: 'Performance' },
+  { id: 'approvals', label: 'Approvals' },
 ];
 const DAILY_CAP_USD = 1;
 const SEEN_KEY = 'ecom_last_seen';
@@ -80,7 +83,8 @@ function useCostBreakdown(open: boolean) {
 /** The e-commerce shell (§3): top bar, status strip, four tabs, and the
  *  approvals inbox behind the strip. Same panel-in-the-dark-shell as
  *  LeadFlow, on purpose. */
-export default function EcomScreen({ homeHeadStyle, homeSubStyle }: Props) {
+export default function EcomScreen(_: Props) {
+  const phone = useModule().device === 'phone';
   const [tab, setTab] = useState<Tab>('brands');
   const [search, setSearch] = useState('');
   const [alertsOpen, setAlertsOpen] = useState(false);
@@ -96,50 +100,38 @@ export default function EcomScreen({ homeHeadStyle, homeSubStyle }: Props) {
   const breakdown = useCostBreakdown(costOpen);
   const refreshAll = () => { counters.reload(); approvals.reload(); since.reload(); };
 
-  const panelStyle: CSSProperties = { background: E.bg, borderRadius: 'var(--radius-3xl)', border: '1px solid var(--border)', marginTop: 24, color: E.text, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 560 };
-  const topBar: CSSProperties = { display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', background: E.surface, borderBottom: '1px solid var(--border)', padding: '12px 16px', flexShrink: 0 };
-  const iconBtn: CSSProperties = { ...btn('ghost'), padding: '8px 10px', position: 'relative' };
+  const iconBtn: CSSProperties = { height: 34, padding: '0 12px', borderRadius: 999, fontSize: 13, fontWeight: 500, position: 'relative' };
   const dot = (n: number, color: string) => n > 0 ? <span style={{ position: 'absolute', top: -6, right: -6, minWidth: 18, height: 18, borderRadius: 9, background: color, color: E.onAccent, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>{n}</span> : null;
   const monthCap = DAILY_CAP_USD * 31;
+  const sinceText = since.data && Object.keys(since.data.added).length
+    ? `Scout added ${Object.values(since.data.added).reduce((a, b) => a + b, 0)} (${Object.entries(since.data.added).map(([c, n]) => `${n} ${c}`).join(', ')})`
+    : since.data?.runs.length ? `${since.data.runs.length} run${since.data.runs.length === 1 ? '' : 's'} finished` : 'no worker runs';
 
   return (
-    <div>
-      <div style={homeHeadStyle}>E-commerce</div>
-      <div style={homeSubStyle}>Brands, product sheets, workers and performance — you steer, workers do the work, money never moves without your tap.</div>
-
-      <div style={panelStyle}>
-        <div style={topBar}>
-          {TABS.map((t) => <Pill key={t.id} active={tab === t.id} onClick={() => setTab(t.id)}><span>{t.icon}</span>{t.label}</Pill>)}
-          <div style={{ flex: 1 }} />
-          <input style={{ ...field, width: 180 }} placeholder="🔍 Search brands, products" value={search} onChange={(e) => setSearch(e.target.value)} />
-          <button style={iconBtn} title="Alerts" onClick={() => setAlertsOpen(true)}>🔔{dot(counters.unreadAlerts, E.red)}</button>
-          <button style={iconBtn} title="Cost this month" onClick={() => setCostOpen(true)}>💲 <span style={{ fontFamily: 'var(--font-mono)' }}>{money(counters.spentMonth)}</span></button>
-          <button style={btn('ghost')} onClick={() => setOfficeOpen(true)}>🏢 View Office</button>
-          <button style={btn('primary')} onClick={() => { setTab('brands'); setNewBrandOpen(true); }}>＋ New Brand</button>
-        </div>
-
-        {/* Status strip: what workers did since you last looked. Static in
-            Phase 1 — no workers yet — but the counts are real. */}
-        <div onClick={() => setTab('approvals')} style={{ background: E.sunk, borderBottom: '1px solid var(--border)', padding: '8px 16px', fontSize: 'var(--text-body)', color: E.muted, cursor: 'pointer', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ color: E.faint }}>Since {since.data ? new Date(since.data.since).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : 'you last looked'} —</span>
-          <span>{since.data && Object.keys(since.data.added).length
-            ? `Scout added ${Object.values(since.data.added).reduce((a, b) => a + b, 0)} (${Object.entries(since.data.added).map(([c, n]) => `${n} ${c}`).join(', ')})`
-            : since.data?.runs.length ? `${since.data.runs.length} run${since.data.runs.length === 1 ? '' : 's'} finished` : 'no worker runs'}{since.data?.failed ? ` · ${since.data.failed} failed` : ''}</span>
-          <span>· <strong style={{ color: counters.pendingApprovals ? E.amber : E.text }}>{counters.pendingApprovals}</strong> need your approval</span>
-          <span>· <strong style={{ color: counters.unreadAlerts ? E.red : E.text }}>{counters.unreadAlerts}</strong> alert{counters.unreadAlerts === 1 ? '' : 's'}</span>
-          <span>· <span style={{ fontFamily: 'var(--font-mono)' }}>{money(counters.spentToday)}</span> spent today</span>
-          <span style={{ marginLeft: 'auto', color: E.green, fontWeight: 600 }}>{tab === 'approvals' ? '' : 'Open approvals ▸'}</span>
-        </div>
-
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '1.5rem' }}>
-          {tab === 'brands' && <BrandsTab api={brands} clients={clients.clients} search={search} openBrandId={openBrandId} onOpenBrand={setOpenBrandId} newBrandOpen={newBrandOpen} onCloseNewBrand={() => setNewBrandOpen(false)} />}
-          {tab === 'sheets' && <ProductSheetsTab search={search} onBuildBrand={async (input) => { const b = await brands.createBrand({ ...input, steps: input.steps as Brand['steps'] }); if (b) { setTab('brands'); setOpenBrandId(b.id); } return b?.id ?? null; }} />}
-          {tab === 'workers' && <WorkersTab onRan={refreshAll} />}
-          {tab === 'performance' && (
-            <TeachingEmpty what="Performance — revenue, funnel by stage, flags and the Sunday checkup — fills from Shopify orders and post metrics." worker="Analytics + the Orchestrator's read loop" connection="Shopify custom app token, Instagram / TikTok" phase={7} />
-          )}
-          {tab === 'approvals' && <ApprovalsTab api={approvals} onDecided={refreshAll} />}
-        </div>
+    <Page title="E-commerce" sub="Brands, product sheets, workers and performance. Money never moves without your tap."
+      fab={{ t: 'Brand', onClick: () => { setTab('brands'); setOpenBrandId(null); setNewBrandOpen(true); } }}
+      menu={[{ t: 'View Office', onClick: () => setOfficeOpen(true) }]}>
+      <Tabs tabs={TABS.map((t) => (t.id === 'approvals' ? { ...t, badge: counters.pendingApprovals } : t))} value={tab} onChange={setTab} />
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <input style={{ ...mmField, height: 34, borderRadius: 999, flex: '1 1 140px', maxWidth: phone ? undefined : 320, fontSize: 14 }} placeholder="Search brands, products" value={search} onChange={(e) => setSearch(e.target.value)} />
+        {!phone && <div style={{ flex: 1 }} />}
+        <button className="mm-btn" style={iconBtn} onClick={() => setAlertsOpen(true)}>Alerts{dot(counters.unreadAlerts, E.red)}</button>
+        <button className="mm-btn" style={iconBtn} onClick={() => setCostOpen(true)}>Spend {money(counters.spentMonth)}</button>
+      </div>
+      <div style={{ fontSize: 13, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
+        Since {since.data ? new Date(since.data.since).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : 'you last looked'}: {sinceText}{since.data?.failed ? `, ${since.data.failed} failed` : ''} · {money(counters.spentToday)} spent today
+      </div>
+      {tab === 'brands' && !openBrandId && !newBrandOpen && (
+        <EcomOverview brands={brands.brands} orders30d={brands.orders30d} approvals={approvals.approvals} onOpenBrand={setOpenBrandId} onOpenApprovals={() => setTab('approvals')} />
+      )}
+      <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: phone ? 14 : 20, minWidth: 0 }}>
+        {tab === 'brands' && <BrandsTab api={brands} clients={clients.clients} search={search} openBrandId={openBrandId} onOpenBrand={setOpenBrandId} newBrandOpen={newBrandOpen} onCloseNewBrand={() => setNewBrandOpen(false)} />}
+        {tab === 'sheets' && <ProductSheetsTab search={search} onBuildBrand={async (input) => { const b = await brands.createBrand({ ...input, steps: input.steps as Brand['steps'] }); if (b) { setTab('brands'); setOpenBrandId(b.id); } return b?.id ?? null; }} />}
+        {tab === 'workers' && <WorkersTab onRan={refreshAll} />}
+        {tab === 'performance' && (
+          <TeachingEmpty what="Performance — revenue, funnel by stage, flags and the Sunday checkup — fills from Shopify orders and post metrics." worker="Analytics + the Orchestrator's read loop" connection="Shopify custom app token, Instagram / TikTok" phase={7} />
+        )}
+        {tab === 'approvals' && <ApprovalsTab api={approvals} onDecided={refreshAll} />}
       </div>
 
       <Drawer open={alertsOpen} onClose={() => setAlertsOpen(false)} title="Alerts" subtitle="Only things that need a human." width={440}>
@@ -173,6 +165,6 @@ export default function EcomScreen({ homeHeadStyle, homeSubStyle }: Props) {
         </div>
       </Drawer>
       {officeOpen && <OfficeView domain="ecom" onClose={() => { setOfficeOpen(false); refreshAll(); }} />}
-    </div>
+    </Page>
   );
 }
