@@ -81,7 +81,7 @@ const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 // Screens still on their pre-redesign layout: on phone they get the shared
 // back row so every module navigates the same way. Remove one from here
 // as it moves onto the mm/Page frame.
-const LEGACY_SCREENS = new Set(['brain', 'delivery', 'legal', 'brand-lab', 'setup', 'playbooks', 'morning-digest', 'notification-settings', 'leadflow', 'ecommerce', 'account-settings', 'prompt-voice-settings', 'budgeting', 'marketing', 'content', 'changelog', 'swipe-file', 'manage-modules', 'edit-home-widgets', 'grant-access']);
+const LEGACY_SCREENS = new Set(['brain', 'delivery', 'legal', 'brand-lab', 'setup', 'playbooks', 'morning-digest', 'notification-settings', 'leadflow', 'ecommerce', 'prompt-voice-settings', 'budgeting', 'marketing', 'content', 'changelog', 'swipe-file', 'manage-modules', 'edit-home-widgets', 'grant-access']);
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
