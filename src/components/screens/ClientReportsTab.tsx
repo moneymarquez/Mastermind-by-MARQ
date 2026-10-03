@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useClientReports } from '../../data/useClientReports';
 import type { ClientReport, ClientReportAsset, ReportAssetKind, ReportAssetStatus } from '../../data/types';
-import { cardStyle, inputStyle, selectStyle, primaryBtn, ghostBtn } from './ClientCRMScreen';
+import { cardStyle, inputStyle, selectStyle, primaryBtn, ghostBtn } from './clientStyles';
 
 interface Props {
   clientId: string;

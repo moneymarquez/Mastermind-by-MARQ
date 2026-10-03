@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { useClientCRM } from '../../data/useClientCRM';
 import type { ClientInvoice } from '../../data/types';
-import { cardStyle, inputStyle, primaryBtn, ghostBtn } from './ClientCRMScreen';
+import { cardStyle, inputStyle, primaryBtn, ghostBtn } from './clientStyles';
 import InvoiceDocument from '../InvoiceDocument';
 import ProductSheetDocument from '../ProductSheetDocument';
 import RecurringPlanDocument from '../RecurringPlanDocument';

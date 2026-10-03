@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import { useClientModulesOverview } from '../../data/useClientModulesOverview';
 import type { ClientOverviewRow } from '../../data/useClientModulesOverview';
 import { currentStation } from '../../data/clientSpine';
-import { cardStyle, ghostBtn, STAGES } from './ClientCRMScreen';
+import { cardStyle, ghostBtn, STAGES } from './clientStyles';
 import ClientPortalAdmin from './ClientPortalAdmin';
 
 interface Props {

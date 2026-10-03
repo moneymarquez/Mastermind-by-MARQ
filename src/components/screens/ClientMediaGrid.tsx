@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, DragEvent } from 'react';
 import { useClientMedia } from '../../data/useClientMedia';
 import type { ClientMediaCategory } from '../../data/types';
-import { cardStyle, ghostBtn, selectStyle } from './ClientCRMScreen';
+import { cardStyle, ghostBtn, selectStyle } from './clientStyles';
 import Icon from '../../Icon';
 
 interface Props {

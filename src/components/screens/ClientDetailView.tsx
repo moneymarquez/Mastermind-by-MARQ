@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import type { useClientCRM, CrmClientWithChildren } from '../../data/useClientCRM';
 import type { ClientStage, PricingCadence, ClientInvoice } from '../../data/types';
 import { AiError } from '../../lib/ai';
-import { STAGES, cardStyle, inputStyle, selectStyle, primaryBtn, ghostBtn, tabStyle } from './ClientCRMScreen';
+import { STAGES, cardStyle, inputStyle, selectStyle, primaryBtn, ghostBtn, tabStyle } from './clientStyles';
 import ClientReportsTab from './ClientReportsTab';
 import ClientPortalAdmin from './ClientPortalAdmin';
 import ClientMediaGrid from './ClientMediaGrid';

@@ -5,7 +5,7 @@ import type { BriefForPortal } from '../../data/useClientPortalAdmin';
 import type { TicketWithOptions } from '../../data/useClientPortalData';
 import type { ClientChangelogEntry, ClientDeliverable, CrmClient, DeliverableKind, DeliverableStatus, PortalModule } from '../../data/types';
 import { DELIVERABLE_KINDS, TICKET_KINDS } from '../../data/types';
-import { cardStyle, inputStyle, selectStyle, primaryBtn, ghostBtn } from './ClientCRMScreen';
+import { cardStyle, inputStyle, selectStyle, primaryBtn, ghostBtn } from './clientStyles';
 import ProgressSpine from '../ProgressSpine';
 import ClientPortal from '../../client-portal/ClientPortal';
 

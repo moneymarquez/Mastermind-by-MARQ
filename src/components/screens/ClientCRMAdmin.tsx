@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { useClientCRM } from '../../data/useClientCRM';
 import type { PricingCadence } from '../../data/types';
-import { cardStyle, inputStyle, selectStyle, primaryBtn, ghostBtn } from './ClientCRMScreen';
+import { cardStyle, inputStyle, selectStyle, primaryBtn, ghostBtn } from './clientStyles';
 
 interface AdminProps {
   crm: ReturnType<typeof useClientCRM>;

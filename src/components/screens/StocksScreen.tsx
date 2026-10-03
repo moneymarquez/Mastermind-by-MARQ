@@ -33,11 +33,15 @@ const pillButton = (variant: 'solid' | 'outline', danger?: boolean): CSSProperti
   border: variant === 'outline' ? `1px solid ${danger ? RED : 'var(--text)'}` : 'none',
 });
 
-function money(n: number): string {
+// A broker answer missing a field (not connected yet, demo data) shows a
+// dash instead of crashing the whole screen.
+function money(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return '—';
   const sign = n < 0 ? '-' : '';
   return `${sign}$${Math.abs(n).toFixed(2)}`;
 }
-function pct(n: number): string {
+function pct(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return '—';
   return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 }
 function pnlColor(n: number): string {

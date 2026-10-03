@@ -44,7 +44,11 @@ export function useStocksBot() {
     setAccountLoading(true);
     try {
       const res = await authedFetch('/api/stocks-account');
-      if (res.ok) setAccount(await res.json());
+      if (res.ok) {
+        // Fill any field the answer left out, so a partial reply can't crash the screen.
+        const a = (await res.json()) as Partial<StocksAccountStatus>;
+        setAccount({ connected: !!a.connected, equity: a.equity ?? 0, cash: a.cash ?? 0, dailyPl: a.dailyPl ?? 0, dailyPlPct: a.dailyPlPct ?? 0, positions: Array.isArray(a.positions) ? a.positions : [], news: Array.isArray(a.news) ? a.news : [] });
+      }
     } catch {
       // network hiccup — keep showing the last known account state
     } finally {

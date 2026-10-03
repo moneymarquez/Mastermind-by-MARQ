@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { useClientCRM } from '../../data/useClientCRM';
 import type { ClientInvoice, ClientInvoiceStatus } from '../../data/types';
-import { cardStyle, selectStyle } from './ClientCRMScreen';
+import { cardStyle, selectStyle } from './clientStyles';
 import InvoiceDetailView from './InvoiceDetailView';
 import ContextMenu from '../ContextMenu';
 import type { ContextMenuItem } from '../ContextMenu';

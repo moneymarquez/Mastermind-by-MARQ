@@ -1,7 +1,7 @@
 import { useCrmPipelineSnapshot } from '../../data/useCrmPipelineSnapshot';
 import type { HomeWidgetProps } from './types';
 import { cardShell } from './types';
-import { STAGES } from '../screens/ClientCRMScreen';
+import { STAGES } from '../screens/clientStyles';
 
 /** New in the widget-customization pass — owner-only (the registry marks
  *  it ownerOnly), off by default like the other new widgets. A quick
