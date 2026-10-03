@@ -58,7 +58,7 @@ const StocksScreen = lazyScreen(() => import('./components/screens/StocksScreen'
 const LeadFlowScreen = lazyScreen(() => import('./components/screens/LeadFlowScreen'));
 const AccountSettingsScreen = lazyScreen(() => import('./components/screens/AccountSettingsScreen'));
 const PromptVoiceSettingsScreen = lazyScreen(() => import('./components/screens/PromptVoiceSettingsScreen'));
-const CallRecordingsScreen = lazyScreen(() => import('./components/screens/CallRecordingsScreen'));
+const CallRecordingsV2 = lazyScreen(() => import('./components/screens/v2/CallRecordingsV2'));
 const WebsiteBuilderRoadmapScreen = lazyScreen(() => import('./components/screens/WebsiteBuilderRoadmapScreen'));
 const InvoicingScreen = lazyScreen(() => import('./components/screens/InvoicingScreen'));
 const DailyPlanV2 = lazyScreen(() => import('./components/screens/v2/DailyPlanV2'));
@@ -412,9 +412,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <PromptVoiceSettingsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
-        {state.screen === 'call-recordings' && (
-          <CallRecordingsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'call-recordings' && <CallRecordingsV2 />}
 
         {state.screen === 'website' && (
           <WebsiteBuilderRoadmapScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
