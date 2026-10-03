@@ -134,3 +134,27 @@ export function comparisons(s: Series, days: string[]): Comp[] {
   };
   return [moodSpend, callsMood, sobSpend, fitMood];
 }
+
+/** Outcomes that mean you reached a person (everything but no answer / voicemail). */
+const REACHED = new Set(['not_interested', 'call_back_later', 'appointment_set', 'not_qualified', 'dnc_remove']);
+/** Today's dialing numbers from the logged outcomes. Calls per hour runs
+ *  from the first call to the last (at least 15 minutes, so two quick dials
+ *  don't read as 480 an hour). Pure. */
+export function dialStats(rows: { outcome: string; logged_at: string }[]) {
+  const n = rows.length;
+  const reached = rows.filter((r) => REACHED.has(r.outcome)).length;
+  const booked = rows.filter((r) => r.outcome === 'appointment_set').length;
+  const ts = rows.map((r) => new Date(r.logged_at).getTime()).sort((a, b) => a - b);
+  const hours = n ? Math.max(0.25, (ts[n - 1] - ts[0]) / 3600000) : 0;
+  return {
+    n, reached, booked,
+    connectPct: n ? Math.round((reached / n) * 100) : 0,
+    perHour: n >= 2 ? Math.round(n / hours) : null,
+    donut: [
+      { name: 'No answer', value: rows.filter((r) => r.outcome === 'no_answer').length },
+      { name: 'Voicemail', value: rows.filter((r) => r.outcome === 'voicemail').length },
+      { name: 'Connected', value: reached - booked },
+      { name: 'Booked', value: booked },
+    ].filter((x) => x.value > 0),
+  };
+}

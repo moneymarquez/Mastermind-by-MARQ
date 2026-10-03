@@ -95,5 +95,5 @@ export function useCallOutcomes(dialingContacts: Contact[]) {
       }));
   })();
 
-  return { loading, activeQueue, completedToday, todayCount, logOutcome, undoOutcome, history };
+  return { loading, activeQueue, completedToday, todayCount, logOutcome, undoOutcome, history, latestByContact };
 }

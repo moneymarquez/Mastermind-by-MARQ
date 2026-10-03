@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { goalPace, splitTags, dailyMood, lateNight, weekNo, sample, pearson, strength, comparisons } from '../src/components/screens/v2/math';
+import { goalPace, splitTags, dailyMood, lateNight, weekNo, sample, pearson, strength, comparisons, dialStats } from '../src/components/screens/v2/math';
 import type { Series } from '../src/components/screens/v2/math';
 import type { Goal, MentalHealthCheckin } from '../src/data/types';
 
@@ -93,5 +93,19 @@ describe('patterns', () => {
     expect(c.kind).toBe('scatter');
     expect(c.text).toMatch(/more the next day/);
     expect(c.kind === 'scatter' && c.r! < -0.9).toBe(true);
+  });
+});
+
+describe('dialing', () => {
+  it('connect rate, booked and calls per hour', () => {
+    const at = (m: number) => new Date(Date.UTC(2026, 8, 1, 9, m)).toISOString();
+    const rows = [['no_answer', 0], ['voicemail', 10], ['appointment_set', 20], ['not_interested', 30], ['no_answer', 60]].map(([outcome, m]) => ({ outcome: outcome as string, logged_at: at(m as number) }));
+    const s = dialStats(rows);
+    expect(s.n).toBe(5);
+    expect(s.booked).toBe(1);
+    expect(s.connectPct).toBe(40);
+    expect(s.perHour).toBe(5);
+    expect(s.donut.map((d) => d.name)).toEqual(['No answer', 'Voicemail', 'Connected', 'Booked']);
+    expect(dialStats([{ outcome: 'no_answer', logged_at: at(0) }]).perHour).toBeNull();
   });
 });

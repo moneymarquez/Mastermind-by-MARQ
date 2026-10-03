@@ -29,7 +29,7 @@ const ChangelogScreen = lazyScreen(() => import('./components/screens/ChangelogS
 const DispatchScreen = lazyScreen(() => import('./dispatch/DispatchScreen'));
 const DispatchLayer = lazyScreen(() => import('./dispatch/DispatchLayer'));
 const ClientModulesScreen = lazyScreen(() => import('./components/screens/ClientModulesScreen'));
-const DialingScreen = lazyScreen(() => import('./components/screens/DialingScreen'));
+const DialingV2 = lazyScreen(() => import('./components/screens/v2/DialingV2'));
 const StickySpotScreen = lazyScreen(() => import('./components/screens/StickySpotScreen'));
 const SobrietyV2 = lazyScreen(() => import('./components/screens/v2/SobrietyV2'));
 const FitnessV2 = lazyScreen(() => import('./components/screens/v2/FitnessV2'));
@@ -268,9 +268,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
                 
         {state.screen === 'daily-plan' && <DailyPlanV2 />}
 
-        {state.screen === 'dialing' && (
-          <DialingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'dialing' && <DialingV2 />}
 
         {state.screen === 'sticky-spot' && (
           <StickySpotScreen
