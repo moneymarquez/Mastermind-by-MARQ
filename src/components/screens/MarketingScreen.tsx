@@ -44,16 +44,19 @@ import { useStageZero } from '../../data/useStageZero';
 import { m0LockMessage } from '../../data/stageZero';
 import OfficeView from '../office/OfficeView';
 import WorkersTab from './ecom/WorkersTab';
-import { Pill, panel, btn } from './ecom/ecomShared';
+import { panel } from './ecom/ecomShared';
+import MarketingOverview from './marketing/MarketingOverview';
+import { useInbound } from '../../data/useInbound';
+import { Page, Tabs } from '../mm/Page';
 
 type EngineTab = 'stage-zero' | 'campaigns' | 'scripts' | 'inbound' | 'lists' | 'workers';
-const ENGINE_TABS: { id: EngineTab; label: string; icon: string }[] = [
-  { id: 'stage-zero', label: 'Stage Zero', icon: '🧱' },
-  { id: 'campaigns', label: 'Campaigns', icon: '🎯' },
-  { id: 'scripts', label: 'Scripts', icon: '📞' },
-  { id: 'inbound', label: 'Inbound', icon: '📥' },
-  { id: 'lists', label: 'Lists', icon: '📋' },
-  { id: 'workers', label: 'Workers', icon: '🤖' },
+const ENGINE_TABS: { id: EngineTab; label: string }[] = [
+  { id: 'campaigns', label: 'Campaigns' },
+  { id: 'stage-zero', label: 'Stage Zero' },
+  { id: 'scripts', label: 'Scripts' },
+  { id: 'inbound', label: 'Inbound' },
+  { id: 'lists', label: 'Lists' },
+  { id: 'workers', label: 'Workers' },
 ];
 import CampaignCockpit from './marketing/CampaignCockpit';
 import type { CockpitFocus } from './marketing/CampaignCockpit';
@@ -186,7 +189,7 @@ function composeBriefPrompt(brief: MarketingBrief, clientName: string): string {
   return lines.join('\n');
 }
 
-export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedClientId, onSelectClient, pendingBriefClientId, onConsumePendingBrief, onAskNova, focusCampaignId, newCampaignForClientId, onConsumeCampaignFocus, onNavigate }: Props) {
+export default function MarketingScreen({ selectedClientId, onSelectClient, pendingBriefClientId, onConsumePendingBrief, onAskNova, focusCampaignId, newCampaignForClientId, onConsumeCampaignFocus, onNavigate }: Props) {
   // ── The campaign workflow (the tab's real surface) ─────────────────
   const campaignsApi = useCampaigns();
   const callGoal = useDailyCallGoal();
@@ -205,6 +208,7 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
   const [officeOpen, setOfficeOpen] = useState(false);
   const stageZero = useStageZero();
   const internalLock = m0LockMessage('madebymarq', stageZero.rows);
+  const inbound = useInbound();
 
   useEffect(() => {
     if (!focusCampaignId && !newCampaignForClientId) return;
@@ -345,30 +349,22 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
   useEffect(() => { if (pendingBriefClientId || activeBriefId) setShowLegacy(true); }, [pendingBriefClientId, activeBriefId]);
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
-        <div>
-          <div style={homeHeadStyle}>Marketing</div>
-          <div style={homeSubStyle}>Build a campaign, run it, see what came back.</div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-        <button style={btn('ghost')} onClick={() => setOfficeOpen(true)}>🏢 View Office</button>
+    <Page title="Marketing" sub="Campaigns, leads and the content pipeline" menu={[{ t: 'View Office', onClick: () => setOfficeOpen(true) }]}>
+      {officeOpen && <OfficeView domain="marketing" onClose={() => setOfficeOpen(false)} />}
+      <Tabs tabs={ENGINE_TABS} value={engineTab} onChange={setEngineTab} />
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
         <MarketingDeliverablesBadge
           deliverables={deliverablesApi.deliverables}
           loading={deliverablesApi.loading}
           clientNameById={clientNameById}
           onMarkDone={(id) => deliverablesApi.markDone(id)}
         />
-        </div>
-      </div>
-      {officeOpen && <OfficeView domain="marketing" onClose={() => setOfficeOpen(false)} />}
-
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 18 }}>
-        {ENGINE_TABS.map((t) => <Pill key={t.id} active={engineTab === t.id} onClick={() => setEngineTab(t.id)}><span>{t.icon}</span>{t.label}</Pill>)}
-        <div style={{ flex: 1 }} />
         <EngineBar domain="marketing" />
       </div>
-
+      {engineTab === 'campaigns' && !openCampaign && (
+        <MarketingOverview campaigns={campaignsApi.campaigns} pipeline={m.pipeline} inbound={inbound.rows} />
+      )}
+      <div>
       {engineTab === 'stage-zero' && <div style={{ marginTop: 16 }}><StageZeroTab api={stageZero} /></div>}
       {engineTab === 'scripts' && <div style={{ marginTop: 16 }}><ScriptsTab /></div>}
       {engineTab === 'inbound' && <div style={enginePanel}><InboundTab /></div>}
@@ -755,7 +751,8 @@ export default function MarketingScreen({ homeHeadStyle, homeSubStyle, selectedC
       )}
       </>)}
       </>)}
-    </div>
+      </div>
+    </Page>
   );
 }
 

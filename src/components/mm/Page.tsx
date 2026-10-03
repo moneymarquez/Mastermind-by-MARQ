@@ -227,3 +227,22 @@ export function ChoiceRow({ options, onPick, value }: { options: string[]; onPic
 }
 
 export const btnRow: CSSProperties = { display: 'flex', gap: 8, flexWrap: 'wrap' };
+
+/** Section switcher for workspaces with several views. Scrolls sideways
+ *  on phone instead of wrapping; the active view is the filled pill. */
+export function Tabs<T extends string>({ tabs, value, onChange }: { tabs: { id: T; label: string; badge?: number }[]; value: T; onChange: (id: T) => void }) {
+  return (
+    <div role="tablist" className="mm-scroll-x" style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', margin: '0 -2px', padding: '0 2px' }}>
+      {tabs.map((t) => {
+        const on = t.id === value;
+        return (
+          <button key={t.id} role="tab" aria-selected={on} onClick={() => onChange(t.id)}
+            style={{ flex: 'none', height: 34, padding: '0 14px', borderRadius: 999, border: `1px solid ${on ? 'var(--text)' : 'var(--border)'}`, background: on ? 'var(--text)' : 'var(--surface)', color: on ? 'var(--bg)' : 'var(--text)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            {t.label}
+            {!!t.badge && <span style={{ minWidth: 18, height: 18, borderRadius: 999, padding: '0 5px', background: on ? 'var(--bg)' : 'var(--accent)', color: on ? 'var(--text)' : '#fff', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{t.badge}</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
