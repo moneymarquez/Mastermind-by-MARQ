@@ -332,7 +332,7 @@ export function SearchPalette({ groups, onOpen, onClose }: { groups: ShellGroup[
 
 // ── Bits ──────────────────────────────────────────────────────────────
 export function Logo({ size = 30 }: { size?: number }) {
-  return <span aria-hidden="true" style={{ width: size, height: size, flex: 'none', borderRadius: 8, background: 'var(--surface-3)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)', fontSize: size * 0.42, fontWeight: 700, boxSizing: 'border-box' }}>M</span>;
+  return <span aria-hidden="true" className="mm-logo" style={{ width: size, height: size, flex: 'none', borderRadius: 8, background: 'var(--surface-3)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)', fontSize: size * 0.42, fontWeight: 700, boxSizing: 'border-box' }}>M</span>;
 }
 function Kbd({ children }: { children: string }) { return <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 6px', borderRadius: 4, border: '1px solid var(--border)', color: 'var(--text-tertiary)' }}>{children}</span>; }
 function Dot({ top, right }: { top: number; right: number }) { return <span style={{ position: 'absolute', top, right, width: 7, height: 7, borderRadius: '50%', background: 'var(--danger)', border: '1.5px solid var(--bg)' }} />; }

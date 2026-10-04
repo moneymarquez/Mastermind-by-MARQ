@@ -797,3 +797,6 @@ textarea.ap-input { min-height: 90px; resize: vertical; }
 [data-theme="light"] .mm-pdot[data-p="madeby"] { background: #3a74d0; }
 [data-theme="light"] .mm-pdot[data-p="content"] { background: #b03c96; }
 [data-theme="light"] .mm-pdot[data-p="ecommerce"] { background: #13878d; }
+/* The one other visible difference: outside Masterminds the "M" mark takes
+   the portal's accent, so you always know where you are at a glance. */
+[data-portal="madeby"] .mm-logo, [data-portal="content"] .mm-logo, [data-portal="ecommerce"] .mm-logo { background: var(--accent-soft) !important; color: var(--accent) !important; border-color: transparent !important; }
