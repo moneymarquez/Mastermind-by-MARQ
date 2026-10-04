@@ -40,3 +40,5 @@
 .of-envelope { position: fixed; z-index: 115; width: 18px; height: 12px; background: #fff7d6; border: 2px solid #111; pointer-events: none; }
 .of-envelope::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 6px; border-bottom: 2px solid #111; clip-path: polygon(0 0, 100% 0, 50% 100%); background: #f2e4a6; }
 @media (prefers-reduced-motion: reduce) { .of-sprite, .of-sprite[data-state="idle"], .of-monitor::after { animation: none !important; } }
+/* Redesign: labels over the scene read in the app's type, sentence case. */
+.of-room-label, .of-room-meta { font-family: inherit; text-transform: none; letter-spacing: 0; font-size: 10.5px; font-weight: 600; border-radius: 6px; }

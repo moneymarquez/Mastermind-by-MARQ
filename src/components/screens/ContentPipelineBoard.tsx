@@ -21,7 +21,7 @@ const inputStyle: CSSProperties = {
 };
 const itemCard: CSSProperties = { background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-lg)', padding: 12 };
 const primaryBtn: CSSProperties = {
-  padding: '9px 18px', borderRadius: 'var(--radius-pill)', border: 'none', background: 'var(--text)', color: 'var(--bg)',
+  padding: '9px 18px', borderRadius: 8, border: 'none', background: 'var(--text)', color: 'var(--bg)',
   fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
 };
 

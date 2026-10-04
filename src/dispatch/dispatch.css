@@ -212,3 +212,34 @@
   .dp-sheet, .dp-enter, .dp-review, .dp-toast, .dp-pop-panel { animation: dp-fade 200ms ease both !important; }
   .dp-shimmer { animation: none !important; }
 }
+
+/* Redesign: Dispatch's own pieces drawn in the handoff language — 8px
+   buttons, pill segmented control, sentence-case labels, Inter figures. */
+.dp-head h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.035em; }
+.dp-iconbtn { border-radius: 8px; border-color: var(--border); background: transparent; min-width: 40px; min-height: 40px; }
+.dp-label { font-size: 13px; letter-spacing: 0; text-transform: none; color: var(--text-secondary); font-weight: 500; }
+.dp-timer, .dp-time { font-family: inherit; font-variant-numeric: tabular-nums; }
+.dp-seg { border-radius: 999px; padding: 3px; gap: 2px; background: var(--surface-2); border-color: var(--border); }
+.dp-seg button { min-height: 36px; border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+.dp-seg button[aria-selected="true"] { background: var(--text); color: var(--bg); box-shadow: none; }
+.dp-card { border-color: var(--border); background: var(--surface); }
+.dp-row { border-radius: 12px; border-color: var(--border); background: var(--surface); }
+.dp-btn { border-radius: 8px; border-color: var(--border); font-size: 14px; }
+.dp-btn.primary { background: var(--text); color: var(--bg); }
+.dp-chip, .dp-person, .dp-datechip { border-color: var(--border); background: transparent; }
+.dp-pill { font-weight: 600; letter-spacing: 0; font-size: 12px; }
+.dp-cta { border-radius: 8px; min-height: 52px; background: var(--text); color: var(--bg); font-weight: 600; }
+.dp-stop { border-radius: 8px; }
+.dp-sheet { border-top-left-radius: 16px; border-top-right-radius: 16px; background: var(--surface); border-color: var(--border); }
+@media (min-width: 760px) { .dp-sheet { border-radius: 16px; } }
+.dp-pop-panel { border-radius: 16px 16px 0 0; background: var(--surface); border-color: var(--border); }
+@media (min-width: 760px) { .dp-pop-panel { border-radius: 16px; } }
+.dp-empty { border-color: var(--border); background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 22px 22px; }
+.dp-toast { border-radius: 8px; }
+.dp-review-head h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.02em; }
+.dp-field, .dp-textarea { border-radius: 8px; background: var(--surface-2); border-color: var(--border); font-size: 15px; }
+.dp-select { border-radius: 8px; border-color: var(--border); background: var(--surface-2); }
+.dp-ptab { border-radius: 12px; border-color: var(--border); background: var(--surface); }
+.dp-ptab .n { font-family: inherit; }
+.dp-col { border-radius: 16px; border-color: var(--border); background: var(--surface-2); }
+.dp-summary, .dp-widget-title { font-size: 13px; letter-spacing: 0; text-transform: none; color: var(--text-secondary); font-weight: 500; }

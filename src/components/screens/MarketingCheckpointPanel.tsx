@@ -17,15 +17,15 @@ const inputStyle: CSSProperties = {
   padding: '9px 12px', color: 'var(--text)', fontSize: 'var(--text-body)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
 };
 const ghostBtn: CSSProperties = {
-  padding: '7px 14px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border)', color: 'var(--text-secondary)',
+  padding: '7px 14px', borderRadius: 8, border: '1px solid var(--border)', color: 'var(--text-secondary)',
   fontSize: 'var(--text-small)', cursor: 'pointer',
 };
 const primaryBtn: CSSProperties = {
-  padding: '7px 14px', borderRadius: 'var(--radius-pill)', border: 'none', background: 'var(--text)', color: 'var(--bg)',
+  padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--text)', color: 'var(--bg)',
   fontSize: 'var(--text-small)', fontWeight: 600, cursor: 'pointer',
 };
 const dangerBtn: CSSProperties = {
-  padding: '7px 14px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--danger)', color: 'var(--danger)',
+  padding: '7px 14px', borderRadius: 8, border: '1px solid var(--danger)', color: 'var(--danger)',
   fontSize: 'var(--text-small)', fontWeight: 600, cursor: 'pointer',
 };
 

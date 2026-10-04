@@ -14,12 +14,12 @@ interface Props {
 const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 18 };
 const ghostBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 6,
-  padding: '7px 13px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-2)', background: 'var(--surface-3)',
+  padding: '7px 13px', borderRadius: 8, border: '1px solid var(--border-2)', background: 'var(--surface-3)',
   color: 'var(--text-secondary)', fontSize: 'var(--text-small)', fontWeight: 600, cursor: 'pointer',
 };
 const greenBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 6,
-  padding: '9px 16px', borderRadius: 'var(--radius-pill)', border: 'none', background: 'var(--success)', color: 'var(--text-on-success)',
+  padding: '9px 16px', borderRadius: 8, border: 'none', background: 'var(--success)', color: 'var(--text-on-success)',
   fontSize: 'var(--text-body-sm)', fontWeight: 700, cursor: 'pointer',
 };
 const activeChip: CSSProperties = { background: 'var(--text)', color: 'var(--bg)', border: 'none' };

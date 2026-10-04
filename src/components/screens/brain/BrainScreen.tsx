@@ -21,8 +21,8 @@ interface Props {
 }
 
 const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 20 };
-const primaryBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer', border: 'none' };
-const ghostBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-2)', color: 'var(--text-secondary)', fontSize: 'var(--text-body-sm)', fontWeight: 500, cursor: 'pointer', background: 'transparent' };
+const primaryBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 8, background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer', border: 'none' };
+const ghostBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8, border: '1px solid var(--border-2)', color: 'var(--text-secondary)', fontSize: 'var(--text-body-sm)', fontWeight: 500, cursor: 'pointer', background: 'transparent' };
 const labelStyle: CSSProperties = { fontSize: 'var(--text-tiny)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' };
 const sectionTitle: CSSProperties = { fontSize: 'var(--text-head)', fontWeight: 700, color: 'var(--text)', marginTop: 28, marginBottom: 10 };
 const TONE: Record<string, string> = { 'Runs hot': 'var(--warning)', 'Runs steady': 'var(--success)', 'Underused': 'var(--accent)' };

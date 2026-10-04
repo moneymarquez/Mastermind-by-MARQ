@@ -9,7 +9,7 @@ interface Props {
 }
 
 const chipStyle = (active: boolean): CSSProperties => ({
-  padding: '10px 16px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-body)', cursor: 'pointer',
+  padding: '10px 16px', borderRadius: 8, fontSize: 'var(--text-body)', cursor: 'pointer',
   border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? 'var(--tint-active)' : 'var(--surface)',
   color: active ? 'var(--text)' : 'var(--text-secondary)',
 });

@@ -16,7 +16,7 @@ const inputStyle: CSSProperties = {
 const labelStyle: CSSProperties = { fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 5, lineHeight: 1.4 };
 const fieldWrap: CSSProperties = { marginBottom: 14 };
 const primaryBtn: CSSProperties = {
-  padding: '7px 14px', borderRadius: 'var(--radius-pill)', border: 'none', background: 'var(--text)', color: 'var(--bg)',
+  padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--text)', color: 'var(--bg)',
   fontSize: 'var(--text-small)', fontWeight: 600, cursor: 'pointer',
 };
 

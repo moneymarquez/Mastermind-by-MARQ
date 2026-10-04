@@ -29,11 +29,11 @@ interface Props {
 
 const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 22 };
 const outcomeBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '7px 12px', borderRadius: 'var(--radius-pill)',
+  display: 'inline-flex', alignItems: 'center', padding: '7px 12px', borderRadius: 8,
   border: '1px solid var(--border)', color: 'var(--text-quaternary)', fontSize: 'var(--text-caption)', fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap',
 };
 const primaryBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 'var(--radius-pill)',
+  display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 8,
   background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
 };
 

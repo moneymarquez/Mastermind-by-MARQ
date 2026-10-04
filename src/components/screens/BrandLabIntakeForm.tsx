@@ -32,11 +32,11 @@ const input: CSSProperties = {
 };
 const textarea: CSSProperties = { ...input, resize: 'vertical', lineHeight: 1.5 };
 const primaryBtn: CSSProperties = {
-  alignSelf: 'flex-start', padding: '11px 18px', borderRadius: 'var(--radius-pill)', background: 'var(--text)',
+  alignSelf: 'flex-start', padding: '11px 18px', borderRadius: 8, background: 'var(--text)',
   color: 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer', border: 'none',
 };
 const chip = (active: boolean): CSSProperties => ({
-  padding: '9px 14px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-body-sm)', cursor: 'pointer',
+  padding: '9px 14px', borderRadius: 8, fontSize: 'var(--text-body-sm)', cursor: 'pointer',
   border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? 'color-mix(in srgb, var(--text) 8%, transparent)' : 'var(--surface)',
   color: active ? 'var(--text)' : 'var(--text-secondary)',
 });

@@ -29,11 +29,11 @@ const inputStyle: CSSProperties = {
 const labelStyle: CSSProperties = { fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 5, lineHeight: 1.4 };
 const fieldWrap: CSSProperties = { marginBottom: 14 };
 const ghostBtn: CSSProperties = {
-  padding: '7px 14px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border)', color: 'var(--text-secondary)',
+  padding: '7px 14px', borderRadius: 8, border: '1px solid var(--border)', color: 'var(--text-secondary)',
   fontSize: 'var(--text-small)', cursor: 'pointer',
 };
 const primaryBtn: CSSProperties = {
-  padding: '9px 18px', borderRadius: 'var(--radius-pill)', border: 'none', background: 'var(--text)', color: 'var(--bg)',
+  padding: '9px 18px', borderRadius: 8, border: 'none', background: 'var(--text)', color: 'var(--bg)',
   fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer',
 };
 const subhead: CSSProperties = { fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)', marginTop: 24, marginBottom: 4 };

@@ -5,6 +5,8 @@ import { openTyping } from '../../../dispatch/capture';
 import { dueLabel, isOverdue, localDate, PRIORITY_WORD } from '../../../dispatch/model';
 import type { DispatchTask } from '../../../dispatch/model';
 import DispatchScreen from '../../../dispatch/DispatchScreen';
+import People from '../../../dispatch/People';
+import '../../../dispatch/dispatch.css';
 import Card from '../../mm/Card';
 import Row from '../../mm/Row';
 import Stat from '../../mm/Stat';
@@ -77,7 +79,7 @@ export default function DispatchV2() {
       </div>
     </Card>
   );
-  const more = { label: 'Team and sessions', render: () => <DispatchScreen isMobile={phone} onBack={() => {}} dockBottom="24px" /> };
+  const more = { label: 'Team', render: () => <div className="dp" style={{ maxWidth: 'none' }}><People /></div> };
   const sub = d.members.length ? `Team of ${d.members.length + 1}` : 'Just you so far';
   if (!d.loading && d.tasks.length === 0) {
     return (

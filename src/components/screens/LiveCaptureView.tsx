@@ -23,7 +23,7 @@ const bigInput: CSSProperties = {
   outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box',
 };
 const navBtn = (primary: boolean): CSSProperties => ({
-  padding: '15px 26px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-subhead)', fontWeight: 600, cursor: 'pointer',
+  padding: '15px 26px', borderRadius: 8, fontSize: 'var(--text-subhead)', fontWeight: 600, cursor: 'pointer',
   border: primary ? 'none' : '1px solid var(--border-2)',
   background: primary ? 'var(--text)' : 'transparent',
   color: primary ? 'var(--bg)' : 'var(--text-secondary)',

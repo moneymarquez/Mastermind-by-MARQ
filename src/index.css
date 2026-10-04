@@ -767,3 +767,9 @@ textarea.ap-input { min-height: 90px; resize: vertical; }
    undo it everywhere except LeadFlow (owner-maintained, left as is). */
 #tour-content-panel [style*="text-transform: uppercase"]:not([data-legacy] *),
 [role="dialog"] [style*="text-transform: uppercase"] { text-transform: none !important; letter-spacing: normal !important; }
+
+/* Older sub-views style action buttons as pills; the handoff's buttons are
+   8px. Tabs, toggles and chips keep the pill. LeadFlow is left as is. */
+#tour-content-panel button[style*="var(--radius-pill)"]:not([role="tab"]):not([role="radio"]):not([aria-pressed]):not([data-legacy] *),
+#tour-content-panel [style*="var(--radius-pill)"][style*="background: var(--text)"]:not([data-legacy] *),
+[role="dialog"] button[style*="var(--radius-pill)"]:not([role="tab"]):not([aria-pressed]) { border-radius: 8px !important; }

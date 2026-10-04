@@ -24,11 +24,11 @@ const selectStyle: CSSProperties = {
 };
 const inputStyle: CSSProperties = { ...selectStyle };
 const primaryBtn: CSSProperties = {
-  padding: '9px 16px', borderRadius: 'var(--radius-pill)', border: 'none', background: 'var(--text)', color: 'var(--bg)',
+  padding: '9px 16px', borderRadius: 8, border: 'none', background: 'var(--text)', color: 'var(--bg)',
   fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
 };
 const ghostBtn: CSSProperties = {
-  padding: '9px 16px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border)', color: 'var(--text-secondary)',
+  padding: '9px 16px', borderRadius: 8, border: '1px solid var(--border)', color: 'var(--text-secondary)',
   fontSize: 'var(--text-body-sm)', cursor: 'pointer', whiteSpace: 'nowrap',
 };
 const badge: CSSProperties = {

@@ -5,7 +5,7 @@ import type { Trait, RegionId } from '../../../data/brain';
 import BrainVisual, { TONE } from '../brain/BrainVisual';
 import { useCallsToday } from '../../../data/useCallsToday';
 import { supabase } from '../../../lib/supabase';
-import BrainScreen from '../brain/BrainScreen';
+import { BrainMoreView } from './BrainMore';
 import Card from '../../mm/Card';
 import Chip from '../../mm/Chip';
 import Stat from '../../mm/Stat';
@@ -19,12 +19,13 @@ const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16];
 const h12 = (h: number) => String(((h + 11) % 12) + 1);
 
 export default function BrainV2() {
-  const { device, novaOpen, nav } = useModule();
+  const { device, novaOpen } = useModule();
   const phone = device === 'phone', three = device === 'desktop' && !novaOpen;
   const ai = useAi();
   const b = useBrain();
   const { callsToday } = useCallsToday();
   const [moreKey, setMoreKey] = useState(0);
+  const [moreMode, setMoreMode] = useState<'profile' | 'assess'>('profile');
   const [region, setRegion] = useState<RegionId>('prefrontal');
   const [hours, setHours] = useState<{ h: number; calls: number; conn: number }[]>([]);
   const today = ymd(new Date());
@@ -50,12 +51,12 @@ export default function BrainV2() {
   const best = withCalls.length ? withCalls.reduce((m, x) => (x.conn / x.calls > m.conn / m.calls ? x : m)) : null;
   const worst = withCalls.length ? withCalls.reduce((m, x) => (x.conn / x.calls < m.conn / m.calls ? x : m)) : null;
   const answer = useMemo(() => (todayC ? (todayC.score >= 5 ? 'Yes' : todayC.score >= 3 ? 'Partly' : 'No') : null), [todayC]);
-  const more = { label: a ? 'Full profile and assessment' : 'Take the assessment', render: () => <BrainScreen homeHeadStyle={{ display: 'none' }} homeSubStyle={{ display: 'none' }} onNavigate={nav} /> };
+  const more = { label: a ? 'Full profile and assessment' : 'Take the assessment', render: () => <BrainMoreView key={moreKey} start={moreMode} /> };
 
   if (!b.loading && !a) {
     return (
       <Page title="Brain" sub="Sales and follow-through" more={more} openMore={moreKey}>
-        <Empty text="Take the 4-minute assessment to get your profile." cta="Start assessment" onCta={() => setMoreKey((k) => k + 1)} />
+        <Empty text="Take the 4-minute assessment to get your profile." cta="Start assessment" onCta={() => { setMoreMode('assess'); setMoreKey((k) => k + 1); }} />
         {ai === false && <AiOffCard text="Profile scoring needs AI. Your daily check-ins and calling patterns still record." />}
       </Page>
     );
@@ -78,7 +79,7 @@ export default function BrainV2() {
           </div>
         ))}
       </div>
-      <button className="mm-btn" style={{ height: 40 }} onClick={() => setMoreKey((k) => k + 1)}>Retake the 4-minute assessment</button>
+      <button className="mm-btn" style={{ height: 40 }} onClick={() => { setMoreMode('assess'); setMoreKey((k) => k + 1); }}>Retake the 4-minute assessment</button>
     </Card>
   );
   const rr = s && t ? regionRead(region, s, t.primary) : null;

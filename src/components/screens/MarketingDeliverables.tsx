@@ -20,11 +20,11 @@ const inputStyle: CSSProperties = {
 };
 const row: CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, padding: '8px 0', borderTop: '1px solid var(--border)' };
 const ghostBtn: CSSProperties = {
-  padding: '5px 12px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border)', color: 'var(--text-secondary)',
+  padding: '5px 12px', borderRadius: 8, border: '1px solid var(--border)', color: 'var(--text-secondary)',
   fontSize: 'var(--text-small)', cursor: 'pointer', flexShrink: 0,
 };
 const primaryBtn: CSSProperties = {
-  padding: '7px 14px', borderRadius: 'var(--radius-pill)', border: 'none', background: 'var(--text)', color: 'var(--bg)',
+  padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--text)', color: 'var(--bg)',
   fontSize: 'var(--text-small)', fontWeight: 600, cursor: 'pointer',
 };
 

@@ -21,11 +21,11 @@ const input: CSSProperties = {
 };
 const textarea: CSSProperties = { ...input, minHeight: 90, resize: 'vertical', lineHeight: 1.5 };
 const primaryBtn: CSSProperties = {
-  padding: '10px 16px', borderRadius: 'var(--radius-pill)', border: 'none', background: 'var(--text)', color: 'var(--bg)',
+  padding: '10px 16px', borderRadius: 8, border: 'none', background: 'var(--text)', color: 'var(--bg)',
   fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer', flexShrink: 0,
 };
 const ghostBtn: CSSProperties = {
-  padding: '8px 14px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-2)', background: 'transparent',
+  padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border-2)', background: 'transparent',
   color: 'var(--text-secondary)', fontSize: 'var(--text-small)', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center',
 };
 const label: CSSProperties = { fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)', marginBottom: 6 };

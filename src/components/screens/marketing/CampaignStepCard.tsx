@@ -7,8 +7,8 @@ export const inputStyle: CSSProperties = {
   background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)', padding: '9px 12px',
   color: 'var(--text)', fontSize: 'var(--text-body)', outline: 'none', boxSizing: 'border-box',
 };
-export const primaryBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer', border: 'none' };
-export const ghostBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-2)', color: 'var(--text-secondary)', fontSize: 'var(--text-body-sm)', fontWeight: 500, cursor: 'pointer', background: 'transparent' };
+export const primaryBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 8, background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer', border: 'none' };
+export const ghostBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8, border: '1px solid var(--border-2)', color: 'var(--text-secondary)', fontSize: 'var(--text-body-sm)', fontWeight: 500, cursor: 'pointer', background: 'transparent' };
 export const labelStyle: CSSProperties = { fontSize: 'var(--text-tiny)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' };
 
 interface Props {

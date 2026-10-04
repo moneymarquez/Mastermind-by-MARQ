@@ -22,7 +22,7 @@ const inputStyle: CSSProperties = {
 };
 const textareaStyle: CSSProperties = { ...inputStyle, minHeight: 90, resize: 'vertical' };
 const primaryBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '12px 24px', borderRadius: 'var(--radius-pill)',
+  display: 'inline-flex', alignItems: 'center', padding: '12px 24px', borderRadius: 8,
   background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-label)', fontWeight: 600, cursor: 'pointer', border: 'none',
 };
 

@@ -21,7 +21,7 @@ const panelStyle: CSSProperties = {
 };
 const row: CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, padding: '8px 0', borderTop: '1px solid var(--border)' };
 const ghostBtn: CSSProperties = {
-  padding: '4px 10px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border)', color: 'var(--text-secondary)',
+  padding: '4px 10px', borderRadius: 8, border: '1px solid var(--border)', color: 'var(--text-secondary)',
   fontSize: 'var(--text-micro)', cursor: 'pointer', flexShrink: 0,
 };
 

@@ -15,7 +15,7 @@ const inputStyle: CSSProperties = {
 const groupLabel: CSSProperties = { fontSize: 'var(--text-tiny)', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 22, marginBottom: 10 };
 const fieldLabel: CSSProperties = { fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginBottom: 5 };
 const ghostBtn: CSSProperties = { fontSize: 'var(--text-small)', color: 'var(--text-secondary)', cursor: 'pointer' };
-const addBtn: CSSProperties = { display: 'inline-block', marginTop: 10, padding: '7px 14px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 'var(--text-small)', cursor: 'pointer' };
+const addBtn: CSSProperties = { display: 'inline-block', marginTop: 10, padding: '7px 14px', borderRadius: 8, border: '1px solid var(--border)', color: 'var(--text)', fontSize: 'var(--text-small)', cursor: 'pointer' };
 
 function s(v: unknown): string {
   return typeof v === 'string' ? v : '';

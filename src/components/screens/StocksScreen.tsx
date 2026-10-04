@@ -33,7 +33,7 @@ const tabStyle = (active: boolean): CSSProperties => ({
   background: active ? 'var(--tint-active)' : 'transparent', whiteSpace: 'nowrap',
 });
 const pillButton = (variant: 'solid' | 'outline', danger?: boolean): CSSProperties => ({
-  display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 'var(--radius-pill)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer',
+  display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 8, fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer',
   background: variant === 'solid' ? (danger ? RED : 'var(--text)') : 'transparent',
   color: variant === 'solid' ? 'var(--bg)' : danger ? RED : 'var(--text)',
   border: variant === 'outline' ? `1px solid ${danger ? RED : 'var(--text)'}` : 'none',

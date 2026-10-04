@@ -26,11 +26,11 @@ const textarea: CSSProperties = {
   padding: '10px 12px', color: 'var(--text)', fontSize: 16, lineHeight: 1.5, outline: 'none', resize: 'vertical', fontFamily: 'inherit',
 };
 const primaryBtn: CSSProperties = {
-  padding: '11px 18px', borderRadius: 'var(--radius-pill)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)',
+  padding: '11px 18px', borderRadius: 8, background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)',
   fontWeight: 600, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center',
 };
 const ghostBtn: CSSProperties = {
-  padding: '8px 14px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-2)', background: 'transparent',
+  padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border-2)', background: 'transparent',
   color: 'var(--text-secondary)', fontSize: 'var(--text-small)', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center',
 };
 const h: CSSProperties = { fontSize: 'var(--text-caption)', letterSpacing: 0.4, textTransform: 'uppercase', color: 'var(--text-tertiary)', fontWeight: 700, margin: '12px 0 6px' };

@@ -27,7 +27,7 @@ export default function WorkoutLibraryView({ fitness }: Props) {
   const [session, setSession] = useState<WorkoutLibraryItem | null>(null);
 
   const chipStyle = (active: boolean): CSSProperties => ({
-    padding: '7px 14px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 'var(--text-body-sm)', fontWeight: 600, whiteSpace: 'nowrap',
+    padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 'var(--text-body-sm)', fontWeight: 600, whiteSpace: 'nowrap',
     border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, color: active ? 'var(--text)' : 'var(--text-tertiary)',
     background: active ? 'var(--tint-active)' : 'transparent',
   });
