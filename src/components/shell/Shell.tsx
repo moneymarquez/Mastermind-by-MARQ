@@ -3,6 +3,8 @@ import type { CSSProperties } from 'react';
 import './shell.css';
 import { GHome, GInbox, GNova, GGrid, GSun, GMoon, GSearch, GBell, GBolt, GChevron, GUpDown, GSliders, GLock, GMenu, GClose } from './glyphs';
 import type { ShellGroup } from './nav';
+import { portalName } from '../../portals.config';
+import type { PortalKey } from '../../portals.config';
 import Chip from '../mm/Chip';
 import type { Notif, NotifGroup } from '../../data/useNotifications';
 import { fmtAgo } from '../../data/useLeadFeed';
@@ -20,17 +22,60 @@ export const NOVA_DOCK_W = 360;
 const SAFE_BOTTOM = 'max(env(safe-area-inset-bottom), 20px)';
 
 export interface Badges { inbox: number; leads: number; urgent: boolean }
+/** The current portal and the ones this account can open. */
+export interface PortalNav { current: PortalKey; list: PortalKey[]; onSwitch: (k: PortalKey) => void }
+
+/** Portal menu: one row per accessible portal, accent dot, check on the
+ *  current one. A popover under the sidebar header; a bottom sheet on phone. */
+function PortalMenu({ portal, sheet, onClose }: { portal: PortalNav; sheet: boolean; onClose: () => void }) {
+  const rows = portal.list.map((k) => (
+    <button key={k} role="menuitemradio" aria-checked={k === portal.current} className="mm-nav-row" style={{ height: sheet ? 52 : 38, gap: 10 }} onClick={() => { onClose(); if (k !== portal.current) portal.onSwitch(k); }}>
+      <span className="mm-pdot" data-p={k} />
+      <span style={{ flex: 1, textAlign: 'left' }}>{portalName(k)}</span>
+      {k === portal.current && <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" stroke="var(--text)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+    </button>
+  ));
+  if (sheet) {
+    return (
+      <>
+        <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'var(--mm-scrim)' }} />
+        <div role="menu" aria-label="Portals" className="mm-anim" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 121, background: 'var(--surface)', borderTop: '1px solid var(--border)', borderRadius: '20px 20px 0 0', padding: `10px 12px calc(12px + ${SAFE_BOTTOM})`, display: 'flex', flexDirection: 'column', gap: 2, animation: 'mmSheetUp .2s ease', boxShadow: '0 -20px 60px rgba(0,0,0,.35)' }}>
+          <span style={{ alignSelf: 'center', width: 36, height: 4, borderRadius: 999, background: 'var(--border-2)', marginBottom: 8 }} />
+          <span style={{ padding: '0 10px 8px', color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>Switch portal</span>
+          {rows}
+        </div>
+      </>
+    );
+  }
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+      <div role="menu" aria-label="Portals" className="mm-anim" style={{ position: 'absolute', top: 52, left: 10, right: 10, zIndex: 41, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 4, display: 'flex', flexDirection: 'column', gap: 2, boxShadow: '0 18px 50px -14px rgba(0,0,0,.5)', animation: 'mmPanelIn .15s ease' }}>
+        {rows}
+      </div>
+    </>
+  );
+}
 
 // ── Phone ─────────────────────────────────────────────────────────────
-export function PhoneHeader({ onMenu, onHome, onSearch, onBell, bellDot, bellOpen }: { onMenu: () => void; onHome: () => void; onSearch: () => void; onBell: () => void; bellDot: boolean; bellOpen: boolean }) {
+export function PhoneHeader({ onMenu, onHome, onSearch, onBell, bellDot, bellOpen, portal, screenLabel }: { onMenu: () => void; onHome: () => void; onSearch: () => void; onBell: () => void; bellDot: boolean; bellOpen: boolean; portal?: PortalKey; screenLabel?: string }) {
+  const inPortal = portal && portal !== 'masterminds';
   return (
     <header style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 29, height: `calc(${PHONE_HEADER_H}px + env(safe-area-inset-top))`, padding: '0 16px 10px', paddingTop: 'env(safe-area-inset-top)', boxSizing: 'border-box', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', background: 'color-mix(in srgb, var(--bg) 88%, transparent)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <button className="mm-icon-btn" style={{ width: 40, height: 40 }} onClick={onMenu} aria-label="Open menu"><GMenu size={20} /></button>
-        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15, userSelect: 'none' }}>
-          <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, letterSpacing: '-0.015em' }}>Masterminds</span>
-          <span style={{ color: 'var(--text-tertiary)', fontSize: 11.5, fontWeight: 500 }}>by MARQ</span>
-        </div>
+        {inPortal ? (
+          // Outside Masterminds the phone header is just the portal dot and the screen.
+          <div aria-label={`${portalName(portal)}, ${screenLabel ?? ''}`} style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, userSelect: 'none' }}>
+            <span className="mm-pdot" data-p={portal} />
+            <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, letterSpacing: '-0.015em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 150 }}>{screenLabel}</span>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15, userSelect: 'none' }}>
+            <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, letterSpacing: '-0.015em' }}>Masterminds</span>
+            <span style={{ color: 'var(--text-tertiary)', fontSize: 11.5, fontWeight: 500 }}>by MARQ</span>
+          </div>
+        )}
       </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <button className="mm-icon-btn" style={{ width: 40, height: 40 }} onClick={onSearch} aria-label="Search"><GSearch /></button>
@@ -98,12 +143,15 @@ export function ModulesGrid({ groups, onOpen }: { groups: ShellGroup[]; onOpen: 
 }
 
 // ── iPad / desktop ────────────────────────────────────────────────────
-export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName, isOwner, onNav: nav, onNova, onSearch, drawer }: { device: Device; screen: string; novaOpen: boolean; groups: ShellGroup[]; badges: Badges; ownerName: string; isOwner: boolean; onNav: (s: string) => void; onNova: () => void; onSearch: () => void;
+export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName, isOwner, onNav: nav, onNova, onSearch, portal, drawer }: { device: Device; screen: string; novaOpen: boolean; groups: ShellGroup[]; badges: Badges; ownerName: string; isOwner: boolean; onNav: (s: string) => void; onNova: () => void; onSearch: () => void; portal?: PortalNav;
   /** Phone: the same navigation as a slide-in drawer from the menu button. */
   drawer?: { onClose: () => void; dark: boolean; onToggleTheme: () => void } }) {
   const rowH = device === 'desktop' ? 34 : drawer ? 44 : 40;
   const onNav = (id: string) => { drawer?.onClose(); nav(id); };
   const { avatarUrl } = useAvatar();
+  const [portalMenu, setPortalMenu] = useState(false);
+  const canSwitch = !!portal && portal.list.length > 1;
+  const sub = portal && portal.current !== 'masterminds' ? portalName(portal.current) : 'by MARQ';
   const currentGroup = groups.find((g) => g.items.some((i) => i.id === screen))?.title;
   const [open, setOpen] = useState<Record<string, boolean>>(() => {
     try { const s = JSON.parse(localStorage.getItem('mm-sidebar-open') ?? 'null') as Record<string, boolean> | null; if (s) return s; } catch { /* default */ }
@@ -120,14 +168,19 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
   ];
   return (
     <aside aria-label={drawer ? 'Menu' : undefined} className={drawer ? 'mm-anim' : undefined} style={{ position: drawer ? 'fixed' : 'absolute', top: 0, left: 0, bottom: 0, width: drawer ? 'min(320px, 86vw)' : sidebarW(device), zIndex: drawer ? 96 : 30, background: 'var(--surface-2)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 14, padding: drawer ? 'calc(14px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom))' : '14px 10px', boxSizing: 'border-box', animation: drawer ? 'mmDrawerIn .2s ease' : undefined, boxShadow: drawer ? '0 0 60px rgba(0,0,0,.35)' : undefined }}>
-      <div {...demoLongPress} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '2px 6px', userSelect: 'none' }}>
-        <Logo size={28} />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', lineHeight: 1.15, minWidth: 0 }}>
-          <span style={{ color: 'var(--text)', fontSize: 14, fontWeight: 600, letterSpacing: '-0.015em' }}>Masterminds</span>
-          <span style={{ color: 'var(--text-tertiary)', fontSize: 11.5, fontWeight: 500 }}>by MARQ</span>
-        </div>
-        {drawer ? <button className="mm-icon-btn" aria-label="Close menu" onClick={drawer.onClose} style={{ width: 36, height: 36 }}><GClose size={16} /></button> : <GUpDown size={14} color="var(--text-tertiary)" />}
+      <div {...demoLongPress} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '2px 6px', userSelect: 'none' }}>
+        <button onClick={canSwitch ? () => setPortalMenu((v) => !v) : undefined} aria-haspopup={canSwitch ? 'menu' : undefined} aria-expanded={canSwitch ? portalMenu : undefined} aria-label={canSwitch ? `Portal: ${portalName(portal!.current)}. Switch portal` : undefined}
+          style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10, padding: 0, border: 0, background: 'transparent', fontFamily: 'inherit', textAlign: 'left', cursor: canSwitch ? 'pointer' : 'default' }}>
+          <Logo size={28} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', lineHeight: 1.15, minWidth: 0 }}>
+            <span style={{ color: 'var(--text)', fontSize: 14, fontWeight: 600, letterSpacing: '-0.015em' }}>Masterminds</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-tertiary)', fontSize: 11.5, fontWeight: 500 }}>{portal && portal.current !== 'masterminds' && <span className="mm-pdot" data-p={portal.current} style={{ width: 6, height: 6 }} />}{sub}</span>
+          </div>
+          {canSwitch && <GUpDown size={14} color="var(--text-tertiary)" />}
+        </button>
+        {drawer && <button className="mm-icon-btn" aria-label="Close menu" onClick={drawer.onClose} style={{ width: 36, height: 36 }}><GClose size={16} /></button>}
       </div>
+      {portalMenu && portal && <PortalMenu portal={portal} sheet={!!drawer} onClose={() => setPortalMenu(false)} />}
       <button onClick={() => { drawer?.onClose(); onSearch(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, height: rowH, padding: '0 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-tertiary)', fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit' }}>
         <GSearch size={15} /><span style={{ flex: 1, textAlign: 'left' }}>Search</span>
         {device === 'desktop' && <Kbd>⌘K</Kbd>}

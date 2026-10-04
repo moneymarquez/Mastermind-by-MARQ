@@ -34,6 +34,8 @@ export interface HomeV2Props {
   canOpen: (screen: string) => boolean; labelFor: (screen: string) => string;
   onNavigate: (screen: string) => void; onOpenLead: (id: string) => void;
   top?: ReactNode;
+  /** Masterminds only: one summary card per other accessible portal. */
+  portalCards?: ReactNode;
 }
 
 const TEMP_K: Record<string, ChipKind> = { hot: 'hot', warm: 'warm', cold: 'cold' };
@@ -292,7 +294,7 @@ export default function HomeV2(p: HomeV2Props) {
   if (phone) {
     return (
       <div className="mm-stagger" style={col}>
-        {head}{dayCard}{p.top}{hero}{stats}{leadCard}{attentionCard}{todayCard}{briefCard}{pinned}
+        {head}{dayCard}{p.portalCards}{p.top}{hero}{stats}{leadCard}{attentionCard}{todayCard}{briefCard}{pinned}
       </div>
     );
   }
@@ -303,6 +305,7 @@ export default function HomeV2(p: HomeV2Props) {
       {head}
       <div style={{ display: 'grid', gridTemplateColumns: threeColsTop ? 'minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(0, 1fr)', gap: 16 }}>{dayCard}{hero}{threeColsTop ? stats : null}</div>
       {!threeColsTop && stats}
+      {p.portalCards}
       {p.top}
       {leadCard}
       <div style={{ display: 'grid', gridTemplateColumns: threeCols ? 'repeat(3, minmax(0, 1fr))' : 'repeat(2, minmax(0, 1fr))', gap: 16, alignItems: 'start' }}>{attentionCard}{todayCard}{briefCard}</div>

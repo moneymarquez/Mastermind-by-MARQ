@@ -22,6 +22,9 @@ import { shellGroups, crumbFor } from './components/shell/nav';
 import { useLeadFeed } from './data/useLeadFeed';
 import { useNotifications } from './data/useNotifications';
 import { useResolvedTheme } from './data/useTheme';
+import { usePortal } from './data/usePortal';
+import PortalCards from './components/screens/home/PortalCards';
+import { portalName } from './portals.config';
 
 // Screens load on demand; Overview ships in the main bundle.
 const DemoTour = lazyScreen(() => import('./demo/DemoTour'));
@@ -173,8 +176,16 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   const vm = buildViewModel(state, actions.navigateTo, onSignOut, navAccess, isOwner, navPrefs.order);
   const { isMobile } = vm;
   const device = deviceFor(vm.stageWidth);
-  const groups = useMemo(() => shellGroups(navAccess, isOwner, navPrefs.order), [navAccess, isOwner, navPrefs.order]);
-  const moduleTiles = useMemo(() => shellGroups(navAccess, isOwner, navPrefs.order, { lockedPreview: true }), [navAccess, isOwner, navPrefs.order]);
+  // Portals: a display layer over canAccess. The nav shows only the current
+  // portal's modules; screenBlocked below never looks at the portal.
+  const { portal, accessible: portals, switchPortal } = usePortal(canAccess, state.screen, actions.navigateTo);
+  const portalNav = { current: portal, list: portals, onSwitch: (k: typeof portal) => { setNotifOpen(false); setMenuOpen(false); if (state.novaOpen && device !== 'desktop') actions.closeNova(); switchPortal(k); } };
+  const groups = useMemo(() => shellGroups(navAccess, isOwner, navPrefs.order, { portal }), [navAccess, isOwner, navPrefs.order, portal]);
+  const moduleTiles = useMemo(() => shellGroups(navAccess, isOwner, navPrefs.order, { lockedPreview: true, portal }), [navAccess, isOwner, navPrefs.order, portal]);
+  // Search reaches every accessible portal; opening a result in another
+  // portal switches to it like any deep link.
+  const searchGroups = useMemo(() => portals.flatMap((p) => shellGroups(navAccess, isOwner, navPrefs.order, { portal: p }).map((g) => ({ ...g, title: p === 'masterminds' ? g.title : portalName(p) }))), [navAccess, isOwner, navPrefs.order, portals]);
+  const crumb = crumbFor(state.screen, groups, portal);
   const badges = { inbox: ownerInbox.items.filter((i) => i.unread).length, leads: leadFeed.waiting, urgent: leadFeed.urgent > 0 };
   const toggleTheme = () => onThemeChange(resolvedTheme === 'dark' ? 'light' : 'dark');
   const toggleNova = () => (state.novaOpen ? actions.closeNova() : actions.openNova());
@@ -238,11 +249,11 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
     <div className="app-shine-bg" style={stageStyle}>
       {device === 'phone' ? (
         <>
-          <PhoneHeader onMenu={() => setMenuOpen(true)} onHome={() => shellNav('home')} onSearch={() => setSearchOpen(true)} onBell={() => setNotifOpen((v) => !v)} bellDot={notifs.unread > 0} bellOpen={notifOpen} />
+          <PhoneHeader portal={portal} screenLabel={crumb.label} onMenu={() => setMenuOpen(true)} onHome={() => shellNav('home')} onSearch={() => setSearchOpen(true)} onBell={() => setNotifOpen((v) => !v)} bellDot={notifs.unread > 0} bellOpen={notifOpen} />
           {menuOpen && (
             <>
               <div onClick={() => setMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 95, background: 'rgba(0,0,0,.45)' }} />
-              <AppSidebar device={device} screen={state.screen} novaOpen={state.novaOpen} groups={groups} badges={badges} ownerName={ownerDisplayName} isOwner={isOwner} onNav={shellNav} onNova={toggleNova} onSearch={() => setSearchOpen(true)}
+              <AppSidebar device={device} screen={state.screen} novaOpen={state.novaOpen} groups={groups} badges={badges} ownerName={ownerDisplayName} isOwner={isOwner} onNav={shellNav} onNova={toggleNova} onSearch={() => setSearchOpen(true)} portal={portalNav}
                 drawer={{ onClose: () => setMenuOpen(false), dark: resolvedTheme === 'dark', onToggleTheme: toggleTheme }} />
             </>
           )}
@@ -250,8 +261,8 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         </>
       ) : (
         <>
-          <AppSidebar device={device} screen={state.screen} novaOpen={state.novaOpen} groups={groups} badges={badges} ownerName={ownerDisplayName} isOwner={isOwner} onNav={shellNav} onNova={toggleNova} onSearch={() => setSearchOpen(true)} />
-          <AppTopBar device={device} left={sidebarW(device)} right={novaDock} crumb={crumbFor(state.screen, groups)} dark={resolvedTheme === 'dark'} novaOpen={state.novaOpen} bellDot={notifs.unread > 0} bellOpen={notifOpen} onToggleTheme={toggleTheme} onSearch={() => setSearchOpen(true)} onBell={() => setNotifOpen((v) => !v)} onNova={toggleNova} />
+          <AppSidebar device={device} screen={state.screen} novaOpen={state.novaOpen} groups={groups} badges={badges} ownerName={ownerDisplayName} isOwner={isOwner} onNav={shellNav} onNova={toggleNova} onSearch={() => setSearchOpen(true)} portal={portalNav} />
+          <AppTopBar device={device} left={sidebarW(device)} right={novaDock} crumb={crumb} dark={resolvedTheme === 'dark'} novaOpen={state.novaOpen} bellDot={notifs.unread > 0} bellOpen={notifOpen} onToggleTheme={toggleTheme} onSearch={() => setSearchOpen(true)} onBell={() => setNotifOpen((v) => !v)} onNova={toggleNova} />
         </>
       )}
 
@@ -274,8 +285,9 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         {LEGACY_SCREENS.has(state.screen) && <BackRow />}
         {state.screen === 'home' && (
           <HomeV2 device={device} isOwner={isOwner} novaOpen={state.novaOpen} leads={leadFeed.leads} leadsNow={leadFeed.now} inboxItems={ownerInbox.items}
-            canOpen={(id) => groups.some((g) => g.items.some((i) => i.id === id))} labelFor={(id) => groups.flatMap((g) => g.items).find((i) => i.id === id)?.label ?? id}
+            canOpen={(id) => searchGroups.some((g) => g.items.some((i) => i.id === id))} labelFor={(id) => searchGroups.flatMap((g) => g.items).find((i) => i.id === id)?.label ?? id}
             onNavigate={shellNav} onOpenLead={(ref) => { setInboxFocus({ tab: 'leads', ref }); shellNav(device === 'phone' ? 'inbox' : 'leads'); }}
+            portalCards={portal === 'masterminds' ? <PortalCards portals={portals} phone={device === 'phone'} onOpen={portalNav.onSwitch} /> : undefined}
             top={<HomeExtras currentUserId={currentUserId} onNavigate={shellNav} />} />
         )}
                 
@@ -467,7 +479,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         <NotificationsPanel device={device} items={notifs.items} isRead={notifs.isRead} now={leadFeed.now} onMarkAll={notifs.markAll} onClose={() => setNotifOpen(false)}
           onOpen={(n) => { notifs.markRead(n.id); setNotifOpen(false); if (n.target.screen === 'leads' || n.target.screen === 'inbox') { setInboxFocus({ tab: n.target.screen === 'leads' ? 'leads' : 'inbox', ref: n.target.ref }); shellNav(device !== 'phone' && n.target.screen === 'leads' ? 'leads' : 'inbox'); } else shellNav(n.target.screen); }} />
       )}
-      {searchOpen && <SearchPalette groups={groups} onOpen={shellNav} onClose={() => setSearchOpen(false)} />}
+      {searchOpen && <SearchPalette groups={searchGroups} onOpen={shellNav} onClose={() => setSearchOpen(false)} />}
 
       {state.novaOpen && (
         <NovaPanel

@@ -1,3 +1,5 @@
+import { portalOfModule } from './portals.config';
+import type { PortalKey } from './portals.config';
 import type { NavGroup, StickyIdea } from './types';
 import { MODULE_REGISTRY } from './modules.config';
 
@@ -135,14 +137,16 @@ function applyOrder(items: NavGroup['items'], orderOverride: Record<string, numb
 // codelab) are system-level and always pass through untouched. A group
 // whose items are entirely filtered out is dropped too, so a
 // fully-disabled category doesn't leave a bare header.
-export function buildNavData(canAccess: (moduleKey: string) => boolean, isOwner: boolean, orderOverride: Record<string, number> = {}): NavGroup[] {
+export function buildNavData(canAccess: (moduleKey: string) => boolean, isOwner: boolean, orderOverride: Record<string, number> = {}, portal?: PortalKey): NavGroup[] {
+  // With a portal, only that portal's modules (system rows always pass).
+  const inPortal = (moduleKey: string) => !portal || portalOfModule(moduleKey) === portal;
   return NAV_DATA.map((g) => ({
     ...g,
     items: applyOrder(
       g.items
         .filter((it) => {
           const moduleKey = NAV_ITEM_TO_MODULE[it.id];
-          return !moduleKey || canAccess(moduleKey);
+          return !moduleKey || (canAccess(moduleKey) && inPortal(moduleKey));
         })
         // Grant Access administers comped accounts for the whole app — the
         // owner-only screen it opens already enforces this server-side, but

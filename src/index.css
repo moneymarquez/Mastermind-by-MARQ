@@ -773,3 +773,27 @@ textarea.ap-input { min-height: 90px; resize: vertical; }
 #tour-content-panel button[style*="var(--radius-pill)"]:not([role="tab"]):not([role="radio"]):not([aria-pressed]):not([data-legacy] *),
 #tour-content-panel [style*="var(--radius-pill)"][style*="background: var(--text)"]:not([data-legacy] *),
 [role="dialog"] button[style*="var(--radius-pill)"]:not([role="tab"]):not([aria-pressed]) { border-radius: 8px !important; }
+
+/* ── Portals ─────────────────────────────────────────────────────────
+   One product, four portals. Only --accent, --accent-soft and
+   --accent-wash change per portal; Made by also moves chart slot 1 onto
+   its blue accent and slot 3 onto the Masterminds violet so the two
+   don't collide. Masterminds keeps the base values above. */
+[data-portal="madeby"] { --accent: #8db8f5; --accent-soft: #2d3c55; --accent-wash: rgba(141,184,245,.12); --cat-1: #8db8f5; --cat-3: #897cdc; }
+[data-theme="light"][data-portal="madeby"] { --accent: #3a74d0; --accent-soft: #d9e6fa; --accent-wash: rgba(58,116,208,.10); --cat-1: #3a74d0; --cat-3: #705bcd; }
+[data-portal="content"] { --accent: #d86cc4; --accent-soft: #4a2a45; --accent-wash: rgba(216,108,196,.12); }
+[data-theme="light"][data-portal="content"] { --accent: #b03c96; --accent-soft: #f4d9ee; --accent-wash: rgba(176,60,150,.10); }
+[data-portal="ecommerce"] { --accent: #3fc3c9; --accent-soft: #1d4547; --accent-wash: rgba(63,195,201,.12); }
+[data-theme="light"][data-portal="ecommerce"] { --accent: #13878d; --accent-soft: #d3eeef; --accent-wash: rgba(19,135,141,.10); }
+/* LeadFlow keeps its own look in every portal. */
+[data-portal] [data-legacy="leadflow"], [data-portal] .leadflow { --accent: #897cdc; --accent-soft: #393453; --accent-wash: rgba(137,124,220,.12); --cat-1: #897cdc; --cat-3: #0094bc; }
+[data-theme="light"][data-portal] [data-legacy="leadflow"], [data-theme="light"][data-portal] .leadflow { --accent: #705bcd; --accent-soft: #dcd6f5; --accent-wash: rgba(112,91,205,.10); --cat-1: #705bcd; --cat-3: #007dae; }
+/* Portal dots in the switcher always show each portal's own colour. */
+.mm-pdot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: #897cdc; }
+.mm-pdot[data-p="madeby"] { background: #8db8f5; }
+.mm-pdot[data-p="content"] { background: #d86cc4; }
+.mm-pdot[data-p="ecommerce"] { background: #3fc3c9; }
+[data-theme="light"] .mm-pdot { background: #705bcd; }
+[data-theme="light"] .mm-pdot[data-p="madeby"] { background: #3a74d0; }
+[data-theme="light"] .mm-pdot[data-p="content"] { background: #b03c96; }
+[data-theme="light"] .mm-pdot[data-p="ecommerce"] { background: #13878d; }

@@ -35,3 +35,4 @@
 @keyframes mmRingIn { from { stroke-dashoffset: var(--len); } }
 @keyframes mmAurora { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(6%, 4%) scale(1.08); } }
 @media (prefers-reduced-motion: reduce) { .mm-rise, .mm-stagger > * { animation: none; } }
+@keyframes mmSheetUp { from { transform: translateY(100%); } to { transform: none; } }
