@@ -126,6 +126,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   const resolvedTheme = useResolvedTheme();
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   // One-shot hand-off into Inbox / Leads from a notification or Home card.
   const [inboxFocus, setInboxFocus] = useState<{ tab: 'inbox' | 'leads'; ref?: string } | null>(null);
   useEffect(() => {
@@ -238,7 +239,14 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
     <div className="app-shine-bg" style={stageStyle}>
       {device === 'phone' ? (
         <>
-          <PhoneHeader dark={resolvedTheme === 'dark'} onToggleTheme={toggleTheme} onSearch={() => setSearchOpen(true)} onBell={() => setNotifOpen((v) => !v)} bellDot={notifs.unread > 0} bellOpen={notifOpen} />
+          <PhoneHeader onMenu={() => setMenuOpen(true)} onHome={() => shellNav('home')} onSearch={() => setSearchOpen(true)} onBell={() => setNotifOpen((v) => !v)} bellDot={notifs.unread > 0} bellOpen={notifOpen} />
+          {menuOpen && (
+            <>
+              <div onClick={() => setMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 95, background: 'rgba(0,0,0,.45)' }} />
+              <AppSidebar device={device} screen={state.screen} novaOpen={state.novaOpen} groups={groups} badges={badges} ownerName={ownerDisplayName} isOwner={isOwner} onNav={shellNav} onNova={toggleNova} onSearch={() => setSearchOpen(true)}
+                drawer={{ onClose: () => setMenuOpen(false), dark: resolvedTheme === 'dark', onToggleTheme: toggleTheme }} />
+            </>
+          )}
           <PhoneTabBar screen={state.screen} novaOpen={state.novaOpen} badges={badges} onNav={shellNav} onNova={toggleNova} />
         </>
       ) : (

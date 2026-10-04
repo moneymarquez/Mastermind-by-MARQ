@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useBrain } from '../../../data/useBrain';
-import { TYPE_NAME, breakdown, tendency, types } from '../../../data/brain';
-import type { Trait } from '../../../data/brain';
+import { TYPE_NAME, breakdown, tendency, types, REGIONS, regionRead } from '../../../data/brain';
+import type { Trait, RegionId } from '../../../data/brain';
+import BrainVisual, { TONE } from '../brain/BrainVisual';
 import { useCallsToday } from '../../../data/useCallsToday';
 import { supabase } from '../../../lib/supabase';
 import BrainScreen from '../brain/BrainScreen';
@@ -24,6 +25,7 @@ export default function BrainV2() {
   const b = useBrain();
   const { callsToday } = useCallsToday();
   const [moreKey, setMoreKey] = useState(0);
+  const [region, setRegion] = useState<RegionId>('prefrontal');
   const [hours, setHours] = useState<{ h: number; calls: number; conn: number }[]>([]);
   const today = ymd(new Date());
   useEffect(() => {
@@ -79,6 +81,25 @@ export default function BrainV2() {
       <button className="mm-btn" style={{ height: 40 }} onClick={() => setMoreKey((k) => k + 1)}>Retake the 4-minute assessment</button>
     </Card>
   );
+  const rr = s && t ? regionRead(region, s, t.primary) : null;
+  const reg = REGIONS.find((r) => r.id === region)!;
+  const map = s && t && rr && (
+    <Card title="Your patterns, mapped" meta="Tap a region" wide={!phone}>
+      <div style={{ margin: '-4px -6px 0' }}><BrainVisual scores={s} primary={t.primary} active={region} onSelect={setRegion} /></div>
+      <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)' }}>
+        {(['Runs hot', 'Runs steady', 'Underused'] as const).map((l) => <span key={l} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: TONE[l] }} />{l}</span>)}
+      </div>
+      <div key={region} className="mm-rise" style={{ padding: 14, borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', borderLeft: `3px solid ${TONE[rr.label]}`, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+          <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>{reg.name}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: TONE[rr.label] }}>{rr.label} · {rr.level} of 5</span>
+        </div>
+        <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)', fontWeight: 500 }}>{reg.handles}</span>
+        <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.5, color: 'var(--text-secondary)' }}>{rr.relate}</p>
+      </div>
+      <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>A model of your answers and check-ins, not a scan.</span>
+    </Card>
+  );
   const checkin = (
     <Card title="Calling hour check-in" meta="Today" wide={!phone}>
       <span style={{ fontSize: 15, color: 'var(--text-secondary)' }}>Did you make your calling hour?</span>
@@ -97,7 +118,7 @@ export default function BrainV2() {
   );
   return (
     <Page title="Brain" sub="Sales and follow-through" more={more} openMore={moreKey}>
-      {phone ? <>{profile}{checkin}{bars}</> : (
+      {phone ? <>{profile}{map}{checkin}{bars}</> : (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 16 }}>
             <Stat label="Best hour" value={best ? `${h12(best.h)} ${best.h < 12 ? 'AM' : 'PM'}` : '—'} pill={best ? `${Math.round((best.conn / best.calls) * 100)}% connect` : 'Not enough calls'} k={best ? 'good' : 'neutral'} />
@@ -106,7 +127,7 @@ export default function BrainV2() {
             <Stat label="Calls today" value={String(callsToday)} />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: three ? 'repeat(3,minmax(0,1fr))' : 'repeat(2,minmax(0,1fr))', gap: 16, alignItems: 'start' }}>
-            {profile}{bars}{checkin}
+            {profile}<div style={{ gridColumn: three ? 'span 2' : '1 / -1' }}>{map}</div>{bars}{checkin}
             {bd && <NovaCard title="Pattern" paras={[bd.costs[0] ?? ''].filter(Boolean)} aiOff="Profile scoring needs AI. Your daily check-ins and calling patterns still record." />}
           </div>
         </>

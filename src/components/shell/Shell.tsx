@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import './shell.css';
-import { GHome, GInbox, GNova, GGrid, GSun, GMoon, GSearch, GBell, GBolt, GChevron, GUpDown, GSliders, GLock } from './glyphs';
+import { GHome, GInbox, GNova, GGrid, GSun, GMoon, GSearch, GBell, GBolt, GChevron, GUpDown, GSliders, GLock, GMenu, GClose } from './glyphs';
 import type { ShellGroup } from './nav';
 import Chip from '../mm/Chip';
 import type { Notif, NotifGroup } from '../../data/useNotifications';
@@ -22,20 +22,20 @@ const SAFE_BOTTOM = 'max(env(safe-area-inset-bottom), 20px)';
 export interface Badges { inbox: number; leads: number; urgent: boolean }
 
 // ── Phone ─────────────────────────────────────────────────────────────
-export function PhoneHeader({ dark, onToggleTheme, onSearch, onBell, bellDot, bellOpen }: { dark: boolean; onToggleTheme: () => void; onSearch: () => void; onBell: () => void; bellDot: boolean; bellOpen: boolean }) {
+export function PhoneHeader({ onMenu, onHome, onSearch, onBell, bellDot, bellOpen }: { onMenu: () => void; onHome: () => void; onSearch: () => void; onBell: () => void; bellDot: boolean; bellOpen: boolean }) {
   return (
     <header style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 29, height: `calc(${PHONE_HEADER_H}px + env(safe-area-inset-top))`, padding: '0 16px 10px', paddingTop: 'env(safe-area-inset-top)', boxSizing: 'border-box', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', background: 'color-mix(in srgb, var(--bg) 88%, transparent)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
-      <div {...demoLongPress} style={{ display: 'flex', alignItems: 'center', gap: 10, userSelect: 'none', WebkitTouchCallout: 'none' }}>
-        <Logo size={30} />
-        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <button className="mm-icon-btn" style={{ width: 40, height: 40 }} onClick={onMenu} aria-label="Open menu"><GMenu size={20} /></button>
+        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15, userSelect: 'none' }}>
           <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, letterSpacing: '-0.015em' }}>Masterminds</span>
           <span style={{ color: 'var(--text-tertiary)', fontSize: 11.5, fontWeight: 500 }}>by MARQ</span>
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button className="mm-icon-btn" style={{ width: 40, height: 40 }} onClick={onToggleTheme} aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}>{dark ? <GSun /> : <GMoon />}</button>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <button className="mm-icon-btn" style={{ width: 40, height: 40 }} onClick={onSearch} aria-label="Search"><GSearch /></button>
         <button className="mm-icon-btn" data-on={bellOpen || undefined} style={{ width: 40, height: 40 }} onClick={onBell} aria-label="Notifications"><GBell />{bellDot && <Dot top={9} right={10} />}</button>
+        <button {...demoLongPress} onClick={onHome} aria-label="Home" style={{ padding: 0, border: 0, background: 'transparent', cursor: 'pointer', userSelect: 'none', WebkitTouchCallout: 'none' }}><Logo size={40} /></button>
       </div>
     </header>
   );
@@ -98,8 +98,11 @@ export function ModulesGrid({ groups, onOpen }: { groups: ShellGroup[]; onOpen: 
 }
 
 // ── iPad / desktop ────────────────────────────────────────────────────
-export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName, isOwner, onNav, onNova, onSearch }: { device: Device; screen: string; novaOpen: boolean; groups: ShellGroup[]; badges: Badges; ownerName: string; isOwner: boolean; onNav: (s: string) => void; onNova: () => void; onSearch: () => void }) {
-  const rowH = device === 'desktop' ? 34 : 40;
+export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName, isOwner, onNav: nav, onNova, onSearch, drawer }: { device: Device; screen: string; novaOpen: boolean; groups: ShellGroup[]; badges: Badges; ownerName: string; isOwner: boolean; onNav: (s: string) => void; onNova: () => void; onSearch: () => void;
+  /** Phone: the same navigation as a slide-in drawer from the menu button. */
+  drawer?: { onClose: () => void; dark: boolean; onToggleTheme: () => void } }) {
+  const rowH = device === 'desktop' ? 34 : drawer ? 44 : 40;
+  const onNav = (id: string) => { drawer?.onClose(); nav(id); };
   const { avatarUrl } = useAvatar();
   const currentGroup = groups.find((g) => g.items.some((i) => i.id === screen))?.title;
   const [open, setOpen] = useState<Record<string, boolean>>(() => {
@@ -116,23 +119,23 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
     ...(isOwner ? [{ id: 'leads', l: 'Leads', icon: <GBolt size={17} />, active: screen === 'leads', badge: badges.leads, urgent: badges.urgent }] : []),
   ];
   return (
-    <aside style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: sidebarW(device), zIndex: 30, background: 'var(--surface-2)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 14, padding: '14px 10px', boxSizing: 'border-box' }}>
+    <aside aria-label={drawer ? 'Menu' : undefined} className={drawer ? 'mm-anim' : undefined} style={{ position: drawer ? 'fixed' : 'absolute', top: 0, left: 0, bottom: 0, width: drawer ? 'min(320px, 86vw)' : sidebarW(device), zIndex: drawer ? 96 : 30, background: 'var(--surface-2)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 14, padding: drawer ? 'calc(14px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom))' : '14px 10px', boxSizing: 'border-box', animation: drawer ? 'mmDrawerIn .2s ease' : undefined, boxShadow: drawer ? '0 0 60px rgba(0,0,0,.35)' : undefined }}>
       <div {...demoLongPress} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '2px 6px', userSelect: 'none' }}>
         <Logo size={28} />
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', lineHeight: 1.15, minWidth: 0 }}>
           <span style={{ color: 'var(--text)', fontSize: 14, fontWeight: 600, letterSpacing: '-0.015em' }}>Masterminds</span>
           <span style={{ color: 'var(--text-tertiary)', fontSize: 11.5, fontWeight: 500 }}>by MARQ</span>
         </div>
-        <GUpDown size={14} color="var(--text-tertiary)" />
+        {drawer ? <button className="mm-icon-btn" aria-label="Close menu" onClick={drawer.onClose} style={{ width: 36, height: 36 }}><GClose size={16} /></button> : <GUpDown size={14} color="var(--text-tertiary)" />}
       </div>
-      <button onClick={onSearch} style={{ display: 'flex', alignItems: 'center', gap: 8, height: rowH, padding: '0 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-tertiary)', fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit' }}>
+      <button onClick={() => { drawer?.onClose(); onSearch(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, height: rowH, padding: '0 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-tertiary)', fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit' }}>
         <GSearch size={15} /><span style={{ flex: 1, textAlign: 'left' }}>Search</span>
         {device === 'desktop' && <Kbd>⌘K</Kbd>}
       </button>
       <div className="mm-scroll-y" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 14, margin: '0 -4px', padding: '0 4px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {top.map((n) => (
-            <button key={n.id} className="mm-nav-row" data-active={n.active || undefined} aria-current={n.active ? 'page' : undefined} style={{ height: rowH }} onClick={() => (n.id === 'nova' ? onNova() : onNav(n.id))}>
+            <button key={n.id} className="mm-nav-row" data-active={n.active || undefined} aria-current={n.active ? 'page' : undefined} style={{ height: rowH }} onClick={() => { if (n.id === 'nova') { drawer?.onClose(); onNova(); } else onNav(n.id); }}>
               {n.icon}<span style={{ flex: 1 }}>{n.l}</span>
               {!!n.badge && <Badge n={n.badge} urgent={!!n.urgent} />}
             </button>
@@ -160,6 +163,7 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingTop: 10, borderTop: '1px solid var(--grid)' }}>
+        {drawer && <button className="mm-nav-row" style={{ height: rowH }} onClick={drawer.onToggleTheme}>{drawer.dark ? <GSun size={17} /> : <GMoon size={17} />}{drawer.dark ? 'Light mode' : 'Dark mode'}</button>}
         <button className="mm-nav-row" data-active={screen === 'account-settings' || undefined} style={{ height: rowH }} onClick={() => onNav('account-settings')}><GSliders size={17} />Settings</button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, height: 44, padding: '0 10px' }}>
           {avatarUrl ? <img src={avatarUrl} alt="" style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover' }} /> : <span style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)', fontSize: 11, fontWeight: 600 }}>{initials(ownerName)}</span>}

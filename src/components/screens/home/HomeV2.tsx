@@ -38,6 +38,71 @@ export interface HomeV2Props {
 
 const TEMP_K: Record<string, ChipKind> = { hot: 'hot', warm: 'warm', cold: 'cold' };
 const greet = (h: number) => (h < 5 ? 'Still up' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening');
+/** Counts up from 0 to n once on mount (and on change). Respects reduced motion. */
+function useCountUp(n: number, ms = 750): number {
+  const [v, setV] = useState(n);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setV(n); return; }
+    let raf = 0; const t0 = performance.now();
+    const tick = (t: number) => { const k = Math.min(1, (t - t0) / ms); setV(n * (1 - Math.pow(1 - k, 3))); if (k < 1) raf = requestAnimationFrame(tick); };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [n, ms]);
+  return v;
+}
+const MILESTONES = [1, 3, 7, 14, 30, 60, 90, 180, 365, 730];
+const PIN_TINT = ['var(--accent)', 'var(--cat-2)', 'var(--cat-3)', 'var(--success)'];
+
+/** "Your day": three live rings (calls, plan, streak) on a slow aurora. */
+function DayCard({ phone, calls, goal, done, total, streak, onOpen }: { phone: boolean; calls: number; goal: number; done: number; total: number; streak: number; onOpen: (s: string) => void }) {
+  const next = MILESTONES.find((m) => m > streak) ?? streak + 100;
+  const rows = [
+    { k: 'dialing', l: 'Calls', v: calls, of: goal, sub: calls >= goal ? 'Goal hit' : `${Math.max(0, goal - calls)} to go`, c: 'var(--cat-1)' },
+    { k: 'daily-plan', l: 'Plan', v: done, of: total, sub: total ? (done === total ? 'All done' : `${total - done} left today`) : 'No plan yet', c: 'var(--cat-2)' },
+    { k: 'sobriety', l: 'Streak', v: streak, of: next, sub: `${next - streak} to ${next} days`, c: 'var(--cat-3)' },
+  ];
+  const S = phone ? 116 : 132, sw = phone ? 11 : 12;
+  const cv = useCountUp(calls), dv = useCountUp(done), sv = useCountUp(streak);
+  const shown = [cv, dv, sv];
+  const pct = Math.round((rows.reduce((a, r) => a + (r.of ? Math.min(1, r.v / r.of) : 0), 0) / 3) * 100);
+  return (
+    <section style={{ position: 'relative', overflow: 'hidden', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: 'var(--card-shadow)' }}>
+      <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', width: '70%', height: '140%', left: '-20%', top: '-60%', borderRadius: '50%', background: 'radial-gradient(closest-side, color-mix(in srgb, var(--accent) 22%, transparent), transparent)', animation: 'mmAurora 14s ease-in-out infinite' }} />
+        <div style={{ position: 'absolute', width: '60%', height: '120%', right: '-18%', bottom: '-70%', borderRadius: '50%', background: 'radial-gradient(closest-side, color-mix(in srgb, var(--cat-3) 16%, transparent), transparent)', animation: 'mmAurora 18s ease-in-out infinite reverse' }} />
+      </div>
+      <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, letterSpacing: '-0.015em' }}>Your day</span>
+        <span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-tertiary)' }}>{pct}% of today's targets</span>
+      </div>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: phone ? 18 : 24 }}>
+        <svg width={S} height={S} viewBox={`0 0 ${S} ${S}`} style={{ flex: 'none', transform: 'rotate(-90deg)' }} role="img" aria-label={rows.map((r) => `${r.l} ${r.v} of ${r.of}`).join(', ')}>
+          {rows.map((r, i) => {
+            const rad = S / 2 - sw / 2 - i * (sw + 4), C = 2 * Math.PI * rad, f = r.of ? Math.min(1, r.v / r.of) : 0;
+            return (
+              <g key={r.k}>
+                <circle cx={S / 2} cy={S / 2} r={rad} fill="none" stroke={`color-mix(in srgb, ${r.c} 16%, transparent)`} strokeWidth={sw} />
+                {f > 0 && <circle cx={S / 2} cy={S / 2} r={rad} fill="none" stroke={r.c} strokeWidth={sw} strokeLinecap="round" strokeDasharray={`${(f * C).toFixed(1)} ${C.toFixed(1)}`} style={{ '--len': `${(f * C).toFixed(1)}`, animation: `mmRingIn 1s cubic-bezier(.22,1,.36,1) ${i * 0.12}s both`, strokeDashoffset: 0 } as CSSProperties} />}
+              </g>
+            );
+          })}
+        </svg>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: phone ? 10 : 12 }}>
+          {rows.map((r, i) => (
+            <button key={r.k} onClick={() => onOpen(r.k)} style={{ display: 'flex', flexDirection: 'column', gap: 2, border: 0, background: 'transparent', padding: 0, textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <span style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: r.c, flex: 'none', alignSelf: 'center' }} />
+                <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>{r.l}</span>
+                <span style={{ color: 'var(--text)', fontSize: phone ? 17 : 19, fontWeight: 600, letterSpacing: '-0.03em' }}>{Math.round(shown[i])}<span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-tertiary)', letterSpacing: 0 }}> / {r.of}</span></span>
+              </span>
+              <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-tertiary)', paddingLeft: 14 }}>{r.sub}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 const initials = (s: string) => s.split(/[\s.@]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '··';
 
 export default function HomeV2(p: HomeV2Props) {
@@ -98,7 +163,8 @@ export default function HomeV2(p: HomeV2Props) {
   } as Record<string, string>)[id] ?? '';
 
   // ── Pieces ──────────────────────────────────────────────────────────
-  const { whole, cents } = splitMoney(mb.left);
+  const leftShown = useCountUp(mb.left);
+  const { whole, cents } = splitMoney(leftShown);
   const spark = sparkPaths(mb.remainingByDay.length ? mb.remainingByDay : [totalBudget], 322, desk ? 64 : 56);
   const hero = (
     <Card hero wide={!phone} style={{ gap: 12 }}>
@@ -202,9 +268,9 @@ export default function HomeV2(p: HomeV2Props) {
     <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, letterSpacing: '-0.015em' }}>Pinned</span>
       <div style={{ display: 'grid', gridTemplateColumns: phone ? '1fr 1fr' : 'repeat(4, minmax(0, 1fr))', gap: phone ? 10 : 16 }}>
-        {pins.map((id) => (
+        {pins.map((id, i) => (
           <button key={id} className="mm-tile" onClick={() => p.onNavigate(id)} style={phone ? undefined : { flexDirection: 'row', alignItems: 'center', minHeight: 64, gap: 12, padding: '12px 14px' }}>
-            <span style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: 11, fontWeight: 700, flex: 'none' }}>{glyphFor(p.labelFor(id))}</span>
+            <span style={{ width: 34, height: 34, borderRadius: 10, background: `color-mix(in srgb, ${PIN_TINT[i % 4]} 16%, var(--surface))`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: PIN_TINT[i % 4], fontSize: 11, fontWeight: 700, flex: 'none' }}>{glyphFor(p.labelFor(id))}</span>
             <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
               <span style={{ color: 'var(--text)', fontSize: 14, fontWeight: 600 }}>{p.labelFor(id)}</span>
               <span style={{ fontSize: 12, color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pinSub(id)}</span>
@@ -220,20 +286,24 @@ export default function HomeV2(p: HomeV2Props) {
       <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4 }}>{now.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</div>
     </div>
   );
+  const dayCard = <DayCard phone={phone} calls={callsToday} goal={callGoal} done={blocks.filter((b) => b.done).length} total={blocks.length} streak={sob.streak} onOpen={p.onNavigate} />;
   const col: CSSProperties = { display: 'flex', flexDirection: 'column', gap: phone ? 20 : 16 };
 
   if (phone) {
     return (
-      <div style={col}>
-        {head}{p.top}{hero}{leadCard}{attentionCard}{briefCard}{pinned}
+      <div className="mm-stagger" style={col}>
+        {head}{dayCard}{p.top}{hero}{stats}{leadCard}{attentionCard}{todayCard}{briefCard}{pinned}
       </div>
     );
   }
   const threeCols = desk && !p.novaOpen;
+  const threeColsTop = threeCols;
   return (
-    <div style={{ ...col, gap: 20 }}>
-      {head}{p.top}
-      <div style={{ display: 'grid', gridTemplateColumns: desk ? 'minmax(0, 1.35fr) minmax(0, 1fr)' : 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: 16 }}>{hero}{stats}</div>
+    <div className="mm-stagger" style={{ ...col, gap: 20 }}>
+      {head}
+      <div style={{ display: 'grid', gridTemplateColumns: threeColsTop ? 'minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(0, 1fr)', gap: 16 }}>{dayCard}{hero}{threeColsTop ? stats : null}</div>
+      {!threeColsTop && stats}
+      {p.top}
       {leadCard}
       <div style={{ display: 'grid', gridTemplateColumns: threeCols ? 'repeat(3, minmax(0, 1fr))' : 'repeat(2, minmax(0, 1fr))', gap: 16, alignItems: 'start' }}>{attentionCard}{todayCard}{briefCard}</div>
       {pinned}

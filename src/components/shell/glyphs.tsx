@@ -27,3 +27,4 @@ export const GArrowUp = (p: P) => svg(<><path d="M12 19V5" /><path d="m5 12 7-7 
 export const GLock = (p: P) => svg(<><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>, p);
 export const GCheck = (p: P) => svg(<path d="m5 12.5 4.5 4.5L19 7.5" />, p, { stroke: 2.2 });
 export const GMic = (p: P) => svg(<><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" /></>, p);
+export const GMenu = (p: P) => svg(<><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h10" /></>, p);

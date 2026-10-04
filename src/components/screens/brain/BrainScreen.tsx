@@ -25,7 +25,7 @@ const primaryBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center'
 const ghostBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-2)', color: 'var(--text-secondary)', fontSize: 'var(--text-body-sm)', fontWeight: 500, cursor: 'pointer', background: 'transparent' };
 const labelStyle: CSSProperties = { fontSize: 'var(--text-tiny)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' };
 const sectionTitle: CSSProperties = { fontSize: 'var(--text-head)', fontWeight: 700, color: 'var(--text)', marginTop: 28, marginBottom: 10 };
-const TONE: Record<string, string> = { 'Runs hot': 'var(--warning)', 'Runs steady': 'var(--success)', 'Underused': 'var(--text-tertiary)' };
+const TONE: Record<string, string> = { 'Runs hot': 'var(--warning)', 'Runs steady': 'var(--success)', 'Underused': 'var(--accent)' };
 
 function weekSeed(): number { const d = new Date(); return Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 1).getTime()) / (7 * 86400000)); }
 
