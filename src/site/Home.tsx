@@ -47,13 +47,22 @@ export default function Home() {
   const stillRef = useRef(still);
   stillRef.current = still;
 
-  // The pinned stage is sized to the *visible* screen (100svh), and every
+  // The pinned stage is sized in pixels to the *visible* screen, and every
   // measurement below reads the stage itself rather than window.innerHeight:
   // on iPad and iPhone Safari 100vh is taller than what's on screen while
   // the toolbars show, which pushed the logo band below the fold and threw
   // the laptop-glass math off the laptop.
   const stageRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
   const stageH = () => stageRef.current?.clientHeight || window.innerHeight;
+  /** Pins the stage to the height actually on screen (Safari's toolbars
+   *  included). The photo and the laptop glass both read this same box. */
+  const fitStage = () => {
+    const el = stageRef.current;
+    if (!el) return;
+    const h = Math.round(window.innerHeight);
+    if (el.style.height !== h + 'px') el.style.height = h + 'px';
+  };
   const stageW = () => stageRef.current?.clientWidth || window.innerWidth;
   const Z = () => stageH() * 1.8;
   const top = (el: HTMLElement) => el.getBoundingClientRect().top + window.scrollY;
@@ -81,6 +90,10 @@ export default function Home() {
     const k = st ? 0 : ease(pz), sc = Math.pow(Sc, k);
     const px = cx + (vw / 2 - cx) * k, py = cy + (vh / 2 - cy) * k;
     layer.style.transform = `translate3d(${px - cx * sc}px,${py - cy * sc}px,0) scale(${sc})`;
+    // The photo is sized and placed from the same numbers as the laptop glass
+    // (not by CSS object-fit), so the screen can never drift off the laptop.
+    const img = imgRef.current;
+    if (img) { img.style.left = ox + 'px'; img.style.top = oy + 'px'; img.style.width = IW * s0 + 'px'; img.style.height = IH * s0 + 'px'; }
     let gx = px - (sw * sc) / 2, gy = py - (sh * sc) / 2, gw = sw * sc, gh = sh * sc, op = 1;
     if (st && pz > 0.3) { gx = 0; gy = 0; gw = vw; gh = vh; op = clamp((pz - 0.3) / 0.25); }
     const L = Math.max(0, gx), T = Math.max(0, gy), R = Math.min(vw, gx + gw), B = Math.min(vh, gy + gh);
@@ -124,7 +137,8 @@ export default function Home() {
 
   useEffect(() => {
     let raf = 0;
-    const loop = () => { frame(); raf = requestAnimationFrame(loop); };
+    const loop = () => { fitStage(); frame(); raf = requestAnimationFrame(loop); };
+    fitStage();
     raf = requestAnimationFrame(loop);
     const onScroll = () => frame();
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -191,11 +205,11 @@ export default function Home() {
 
       {/* ── Cover + push-in. Everything up to the chapters lives inside the laptop screen. */}
       <div ref={wrapRef} data-nav="ink" style={S('position:relative; height:700vh;')}>
-        <div ref={stageRef} style={S('position:sticky; top:0; height:100vh; height:100svh; overflow:hidden; background:#c9d2dc;')}>
+        <div ref={stageRef} style={S('position:sticky; top:0; height:100vh; overflow:hidden; background:#c9d2dc;')}>
           <div ref={layerRef} style={S('position:absolute; left:0; top:0; width:100%; height:100%; transform-origin:0 0; will-change:transform;')}>
             <picture>
               <source type="image/webp" srcSet="/site/cover-1344.webp 1344w, /site/cover-2688.webp 2688w" sizes="100vw" />
-              <img src="/site/cover-2688.jpg" alt="A desk and chair alone on a mountain ledge above the clouds, a laptop open on the desk" fetchPriority="high" decoding="async" style={S('position:absolute; left:0; top:0; width:100%; height:100%; object-fit:cover; display:block; user-select:none;')} />
+              <img ref={imgRef} src="/site/cover-2688.jpg" alt="A desk and chair alone on a mountain ledge above the clouds, a laptop open on the desk" fetchPriority="high" decoding="async" style={S('position:absolute; left:0; top:0; width:100%; height:100%; max-width:none; display:block; user-select:none;')} />
             </picture>
           </div>
 

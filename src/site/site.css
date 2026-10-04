@@ -18,6 +18,8 @@
   --lp-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+/* No rubber-band bounce: over-scrolling past the top can't shift the cover. */
+html, body { overscroll-behavior-y: none; }
 html, body { margin: 0; background: var(--lp-onyx); font-family: var(--lp-sans); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 *, *::before, *::after { box-sizing: border-box; }
 a { color: var(--lp-cobalt); text-decoration: none; }
