@@ -47,7 +47,15 @@ export default function Home() {
   const stillRef = useRef(still);
   stillRef.current = still;
 
-  const Z = () => window.innerHeight * 1.8;
+  // The pinned stage is sized to the *visible* screen (100svh), and every
+  // measurement below reads the stage itself rather than window.innerHeight:
+  // on iPad and iPhone Safari 100vh is taller than what's on screen while
+  // the toolbars show, which pushed the logo band below the fold and threw
+  // the laptop-glass math off the laptop.
+  const stageRef = useRef<HTMLDivElement>(null);
+  const stageH = () => stageRef.current?.clientHeight || window.innerHeight;
+  const stageW = () => stageRef.current?.clientWidth || window.innerWidth;
+  const Z = () => stageH() * 1.8;
   const top = (el: HTMLElement) => el.getBoundingClientRect().top + window.scrollY;
 
   /** The pinned stretch is one screen, plus the push-in, plus however tall
@@ -55,14 +63,14 @@ export default function Home() {
   const syncHeight = () => {
     const c = contentRef.current, wr = wrapRef.current;
     if (!c || !wr) return;
-    const vh = window.innerHeight;
+    const vh = stageH();
     wr.style.height = Math.round(vh + Z() + Math.max(0, c.offsetHeight - vh)) + 'px';
   };
 
   const frame = () => {
     const wrap = wrapRef.current, layer = layerRef.current, scr = screenRef.current, inner = innerRef.current, content = contentRef.current, hero = heroRef.current;
     if (!wrap || !layer || !scr || !inner || !content || !hero) return;
-    const vw = window.innerWidth, vh = window.innerHeight, mob = vw < 700, st = stillRef.current;
+    const vw = stageW(), vh = stageH(), mob = vw < 700, st = stillRef.current;
     const z = Z(), scrolled = Math.max(0, -wrap.getBoundingClientRect().top), pz = clamp(scrolled / z);
     const maxIn = Math.max(0, content.offsetHeight - vh);
 
@@ -91,11 +99,11 @@ export default function Home() {
       stack.style.transform = `scale(${fit})`;
     }
     if (band) {
-      const deskBottom = oy + (SCR.t + 132) * s0, bh = band.offsetHeight || 0, short = vh < 780;
+      // Always fully on screen at load; on short screens it tightens up and
+      // may sit over the foot of the photo rather than drop below the fold.
+      const short = vh < 780;
       band.style.paddingTop = short ? (mob ? '22px' : '26px') : '';
       band.style.background = short ? 'linear-gradient(180deg,rgba(23,23,33,0) 0%,rgba(23,23,33,.85) 22%,#171721 48%)' : '';
-      const rest = vh - bh;
-      band.style.transform = rest < deskBottom ? `translate3d(0,${deskBottom - rest}px,0)` : 'none';
     }
     const hp = clamp(pz / 0.12);
     hero.style.opacity = String(1 - hp);
@@ -183,7 +191,7 @@ export default function Home() {
 
       {/* ── Cover + push-in. Everything up to the chapters lives inside the laptop screen. */}
       <div ref={wrapRef} data-nav="ink" style={S('position:relative; height:700vh;')}>
-        <div style={S('position:sticky; top:0; height:100vh; overflow:hidden; background:#c9d2dc;')}>
+        <div ref={stageRef} style={S('position:sticky; top:0; height:100vh; height:100svh; overflow:hidden; background:#c9d2dc;')}>
           <div ref={layerRef} style={S('position:absolute; left:0; top:0; width:100%; height:100%; transform-origin:0 0; will-change:transform;')}>
             <picture>
               <source type="image/webp" srcSet="/site/cover-1344.webp 1344w, /site/cover-2688.webp 2688w" sizes="100vw" />
@@ -192,7 +200,7 @@ export default function Home() {
           </div>
 
           <div ref={screenRef} style={S('position:absolute; left:0; top:0; width:0; height:0; overflow:hidden; background:#dde7f1; will-change:left,top,width,height;')}>
-            <div ref={innerRef} style={S('position:absolute; left:0; top:0; width:100vw; height:100vh; transform-origin:0 0; background:#dde7f1;')}>
+            <div ref={innerRef} style={S('position:absolute; left:0; top:0; width:100%; height:100%; transform-origin:0 0; background:#dde7f1;')}>
               <div ref={contentRef} style={S('position:absolute; left:0; right:0; top:0; will-change:transform;')}>
 
                 {/* Ask */}
