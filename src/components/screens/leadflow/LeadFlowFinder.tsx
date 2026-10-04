@@ -1,34 +1,29 @@
 import { useMemo, useState } from 'react';
-import type { CSSProperties } from 'react';
 import { useLeadflowLeads } from '../../../data/useLeadflow';
 import type { LeadflowLead } from '../../../data/useLeadflow';
-import { GREEN, US_STATES, NICHES } from './shared';
-import NotConnectedBanner from './NotConnectedBanner';
-import LeadCard from './LeadCard';
+import { US_STATES, NICHES } from './shared';
+import { LeadRecord } from './LeadCard';
+import { hasOwnerContact } from './leadLinks';
 import { ALL } from './leadFilters';
+import { fmtPhone, fmtIndustry, leadCategory, fmtReviewAge, tagSignal, tagLabel } from './format';
+import { Tag, TierMark, NotConnected, Banner, EmptyState, SkeletonRows, FilterButton, Lede } from './ui';
+import { WithRecord, HeaderAction, SidePanel, useRecordMode } from './layout';
 
 /** Where leads get researched before they're worth calling.
  *
- *  The morning job this is built for: filter down to one city, open each
- *  lead, chase the owner's real name and direct line through the registry
- *  and people-search links, then push it to the pool. So the card here is
- *  the same full card the pool and Dialing use — the owner fields are the
- *  entire point of the screen, not a detail view of it.
+ *  The morning job: filter to one city, open each lead, chase the owner's
+ *  real name and direct line through the registry and people-search links,
+ *  then push it to the pool. The record panel puts Owner first here,
+ *  because that is the entire point of the screen.
  */
 
 const TAGS = ['Hot', 'Warm', 'Not Ready'];
-
-const selectStyle: CSSProperties = {
-  padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid #e5e7eb',
-  background: '#fff', color: '#374151', fontSize: 'var(--text-body)', fontWeight: 600,
-};
-const modalInput: CSSProperties = {
-  width: '100%', padding: 10, borderRadius: 'var(--radius-sm)', border: '1px solid #e5e7eb',
-  marginBottom: 10, boxSizing: 'border-box',
-};
+const COLS = '36px minmax(160px,1.6fr) minmax(90px,1fr) minmax(70px,.7fr) 128px 70px 100px 100px 80px 112px';
+const BLANK = { business_name: '', phone: '', industry: NICHES[0], website_status: 'no_website', tag: 'Warm', state: '', city: '', pooled: false };
 
 export default function LeadFlowFinder() {
   const { leads, industries, places, loading, hasMore, notConnected, error, fetchLeads, addLead, updateLead, logCall } = useLeadflowLeads();
+  const sheet = useRecordMode() === 'sheet';
   const [industry, setIndustry] = useState(ALL);
   const [tag, setTag] = useState(ALL);
   const [state, setState] = useState(ALL);
@@ -36,166 +31,166 @@ export default function LeadFlowFinder() {
   const [page, setPage] = useState(0);
   const [openId, setOpenId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ business_name: '', phone: '', industry: NICHES[0], website_status: 'no_website', tag: 'Warm', state: '', city: '', pooled: false });
+  const [form, setForm] = useState(BLANK);
+  const [addErr, setAddErr] = useState('');
+  const [adding, setAdding] = useState(false);
 
-  // The state list comes from the cities endpoint rather than the static
-  // 50-state list: offering Wyoming when every lead is in Utah just means
-  // 49 ways to get an empty screen.
+  // States come from the cities endpoint, not the static 50: offering
+  // Wyoming when every lead is in Utah is 49 ways to an empty screen.
   const states = useMemo(() => {
     const counts = new Map<string, number>();
     for (const p of places) if (p.state) counts.set(p.state, (counts.get(p.state) ?? 0) + p.count);
     return [...counts.entries()].map(([value, count]) => ({ value, count })).sort((a, b) => b.count - a.count);
   }, [places]);
+  const cities = useMemo(() => places.filter((p) => state === ALL || p.state === state)
+    .map((p) => ({ value: p.city, label: state === ALL && p.state ? `${p.city}, ${p.state}` : p.city, count: p.count })), [places, state]);
 
-  const cities = useMemo(
-    () => places.filter((p) => state === ALL || p.state === state),
-    [places, state],
-  );
-
-  // Filtering is server-side — the finder pages 50 at a time, so narrowing
-  // only the loaded page would find Draper leads solely by luck of paging.
+  // Filtering is server-side: the finder pages 50 at a time, so narrowing
+  // only the loaded page would find Draper leads by luck of paging.
   const applyFilters = (ind: string, tg: string, st: string, ct: string) => {
     setPage(0);
     setOpenId(null);
     fetchLeads(0, true, { industry: ind, tag: tg, state: st, city: ct });
   };
-
   const chooseState = (next: string) => {
     setState(next);
-    // A city from the old state can't survive the switch, or the list goes
-    // empty with nothing on screen explaining why.
+    // A city from the old state can't survive the switch.
     const stillValid = next === ALL || places.some((p) => p.state === next && p.city === city);
     const nextCity = stillValid ? city : ALL;
     setCity(nextCity);
     applyFilters(industry, tag, next, nextCity);
   };
-
-  const loadMore = () => {
-    const next = page + 1;
-    setPage(next);
-    fetchLeads(next, false, { industry, tag, state, city });
-  };
+  const clearAll = () => { setState(ALL); setCity(ALL); setIndustry(ALL); setTag(ALL); applyFilters(ALL, ALL, ALL, ALL); };
+  const loadMore = () => { const next = page + 1; setPage(next); fetchLeads(next, false, { industry, tag, state, city }); };
 
   const doAddLead = async () => {
+    if (!form.business_name.trim() || adding) return;
+    setAdding(true);
+    setAddErr('');
     const created = await addLead(form);
-    if (created) {
-      setShowAdd(false);
-      setForm({ business_name: '', phone: '', industry: NICHES[0], website_status: 'no_website', tag: 'Warm', state: '', city: '', pooled: false });
-    }
+    setAdding(false);
+    if (created) { setShowAdd(false); setForm(BLANK); } else setAddErr('Could not add the lead. Check the connection and try again.');
   };
 
-  // Reads lead.pooled rather than a separate local list, so the button
-  // tells the truth after a reload instead of resetting to "not pooled"
-  // for leads that are already in there.
+  // Reads lead.pooled rather than a local list, so the button tells the
+  // truth after a reload.
   const togglePool = (lead: LeadflowLead) => updateLead(lead.id, { pooled: !lead.pooled });
-
   const pooledCount = leads.filter((l) => l.pooled).length;
+  const open = leads.find((l) => l.id === openId) ?? null;
+  const filtersOn = state !== ALL || city !== ALL || industry !== ALL || tag !== ALL;
+
+  const poolCell = (lead: LeadflowLead) => lead.pooled
+    ? <Tag s="info">In pool</Tag>
+    : <button className="lf-btn lf-btn--secondary lf-btn--xs" onClick={(e) => { e.stopPropagation(); void togglePool(lead); }}>Add to pool</button>;
+
+  const row = (lead: LeadflowLead) => {
+    const sel = openId === lead.id;
+    const openIt = () => setOpenId(sel && !sheet ? null : lead.id);
+    const tg = lead.tag ? <Tag s={tagSignal(lead.tag)}>{tagLabel(lead.tag)}</Tag> : null;
+    if (sheet) {
+      return (
+        <div key={lead.id} role="button" tabIndex={0} className="lf-row" aria-selected={sel} onClick={openIt} onKeyDown={(e) => e.key === 'Enter' && openIt()}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 4, padding: 12, minHeight: 0 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <TierMark tier={lead.tier} /><span className="lf-trunc" style={{ fontWeight: 500, flex: 1 }}>{lead.business_name}</span>{tg}
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
+            <span className="lf-label lf-trunc">{[leadCategory(lead), lead.city].filter(Boolean).join(' · ')}{lead.phone && <> · <span className="lf-mono">{fmtPhone(lead.phone)}</span></>}</span>
+            {poolCell(lead)}
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div key={lead.id} role="button" tabIndex={0} className="lf-row" aria-selected={sel} onClick={openIt} onKeyDown={(e) => e.key === 'Enter' && openIt()} style={{ gridTemplateColumns: COLS }}>
+        <TierMark tier={lead.tier} />
+        <span className="lf-trunc" style={{ fontWeight: 500, paddingRight: 8 }} title={lead.business_name}>{lead.business_name}</span>
+        <span className="lf-cell-2 lf-trunc">{leadCategory(lead)}</span>
+        <span className="lf-cell-2 lf-trunc">{lead.city}</span>
+        <span>{lead.phone ? <a className="lf-mono" href={`tel:${lead.phone.replace(/[^\d+]/g, '')}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: 13, color: 'var(--lf-text-secondary)' }}>{fmtPhone(lead.phone)}</a> : <span className="lf-label">None</span>}</span>
+        <span className="lf-num">{lead.review_count ?? ''}</span>
+        <span className="lf-mono" style={{ paddingLeft: 16, fontSize: 13, color: 'var(--lf-text-secondary)' }}>{fmtReviewAge(lead.days_since_last_review)}</span>
+        <span>{tg}</span>
+        <span>{hasOwnerContact(lead) ? <Tag s="info" title={lead.owner_phone ?? undefined}>On file</Tag> : <span className="lf-label" style={{ fontSize: 13 }}>None</span>}</span>
+        <span>{poolCell(lead)}</span>
+      </div>
+    );
+  };
+
+  const panel = open && (
+    <LeadRecord lead={open} onPatch={updateLead} onLogCall={logCall} onClose={() => setOpenId(null)} sheet={sheet} backLabel="Lead finder" ownerFirst
+      poolAction={{ label: open.pooled ? 'Remove from pool' : 'Add to pool', onClick: () => void togglePool(open) }} />
+  );
+
+  const set = (k: keyof typeof BLANK) => (e: { target: { value: string } }) => setForm({ ...form, [k]: e.target.value });
 
   return (
-    <div>
-      {notConnected && <NotConnectedBanner />}
-      {error && <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 'var(--radius-md)', padding: '10px 16px', marginBottom: '1rem', fontSize: 'var(--text-body)' }}>{error}</div>}
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 700 }}>Lead Finder</h1>
-          <p style={{ color: '#6b7280' }}>
-            Open a lead, track down the owner, then send it to the pool.
-            {pooledCount > 0 ? ` ${pooledCount} of these ${leads.length} are already pooled.` : ''}
-          </p>
+    <WithRecord panel={panel}>
+      <HeaderAction><button className="lf-btn lf-btn--primary" onClick={() => { setOpenId(null); setShowAdd(true); }}>Add lead</button></HeaderAction>
+      {notConnected && <NotConnected />}
+      {error && <Banner s="stop">{error}</Banner>}
+      <Lede>Open a lead, track down the owner, then send it to the pool.{pooledCount > 0 && <> <span className="lf-mono">{pooledCount}</span> of these {leads.length} are already pooled.</>}</Lede>
+      <div className="lf-panel" style={{ overflow: 'hidden' }}>
+        <div className="lf-toolbar">
+          <FilterButton label="City" value={city} allValue={ALL} allLabel="All cities" options={cities} onChange={(v) => { setCity(v); applyFilters(industry, tag, state, v); }} />
+          <FilterButton label="State" value={state} allValue={ALL} allLabel="All states" options={states} onChange={chooseState} />
+          <FilterButton label="Industry" value={industry} allValue={ALL} allLabel="All industries" options={industries.filter((i) => i !== ALL).map((i) => ({ value: i, label: fmtIndustry(i) }))} onChange={(v) => { setIndustry(v); applyFilters(v, tag, state, city); }} />
+          <FilterButton label="Tag" value={tag} allValue={ALL} allLabel="All tags" options={TAGS.map((t) => ({ value: t, label: tagLabel(t) }))} onChange={(v) => { setTag(v); applyFilters(industry, v, state, city); }} />
+          {filtersOn && <button className="lf-btn lf-btn--ghost" onClick={clearAll}>Clear</button>}
+          <div style={{ flex: 1 }} />
+          <span className="lf-mono" style={{ fontSize: 12, color: 'var(--lf-text-tertiary)' }}>{leads.length}{hasMore ? '+' : ''} result{leads.length === 1 ? '' : 's'}</span>
         </div>
-        <button onClick={() => setShowAdd(true)} style={{ background: GREEN, color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '10px 18px', cursor: 'pointer', fontWeight: 600 }}>+ Add Lead</button>
-      </div>
-
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-        <select value={state} onChange={(e) => chooseState(e.target.value)} style={selectStyle}>
-          <option value={ALL}>All states</option>
-          {states.map((s) => <option key={s.value} value={s.value}>{s.value} ({s.count})</option>)}
-        </select>
-        <select value={city} onChange={(e) => { setCity(e.target.value); applyFilters(industry, tag, state, e.target.value); }} style={selectStyle}>
-          <option value={ALL}>All cities</option>
-          {cities.map((c) => <option key={`${c.state}|${c.city}`} value={c.city}>{c.city}{state === ALL && c.state ? `, ${c.state}` : ''} ({c.count})</option>)}
-        </select>
-        <select value={industry} onChange={(e) => { setIndustry(e.target.value); applyFilters(e.target.value, tag, state, city); }} style={selectStyle}>
-          {industries.map((i) => <option key={i}>{i}</option>)}
-        </select>
-        <select value={tag} onChange={(e) => { setTag(e.target.value); applyFilters(industry, e.target.value, state, city); }} style={selectStyle}>
-          <option>{ALL}</option>
-          {TAGS.map((t) => <option key={t}>{t}</option>)}
-        </select>
-        {(state !== ALL || city !== ALL || industry !== ALL || tag !== ALL) && (
-          <button
-            onClick={() => { setState(ALL); setCity(ALL); setIndustry(ALL); setTag(ALL); applyFilters(ALL, ALL, ALL, ALL); }}
-            style={{ ...selectStyle, cursor: 'pointer', color: '#9ca3af' }}
-          >
-            Clear
-          </button>
+        {loading && leads.length === 0 ? <SkeletonRows cols={COLS} />
+          : leads.length === 0 ? (notConnected ? null : <EmptyState text="No leads match these filters." action={filtersOn ? 'Clear filters' : undefined} onAction={clearAll} />)
+          : (
+            <div style={{ overflowX: sheet ? 'visible' : 'auto' }}>
+              <div style={{ minWidth: sheet ? 0 : 1060 }}>
+                {!sheet && (
+                  <div className="lf-thead" style={{ gridTemplateColumns: COLS }}>
+                    <span>Tier</span><span>Business</span><span>Category</span><span>City</span><span>Phone</span><span style={{ textAlign: 'right' }}>Reviews</span>
+                    <span style={{ paddingLeft: 16 }}>Last review</span><span>Tag</span><span>Owner</span><span>Pool</span>
+                  </div>
+                )}
+                {leads.map(row)}
+              </div>
+            </div>
+          )}
+        {leads.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 44, padding: '0 12px', fontSize: 13, color: 'var(--lf-text-tertiary)' }}>
+            <span className="lf-mono">Showing {leads.length}</span>
+            {hasMore && <button className="lf-btn lf-btn--secondary lf-btn--sm" onClick={loadMore} disabled={loading}>{loading ? 'Loading…' : 'Load more'}</button>}
+          </div>
         )}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {leads.map((lead) => (
-          <LeadCard
-            key={lead.id}
-            lead={lead}
-            open={openId === lead.id}
-            onToggle={() => setOpenId(openId === lead.id ? null : lead.id)}
-            onPatch={updateLead}
-            onLogCall={logCall}
-            actions={
-              <button
-                onClick={() => togglePool(lead)}
-                style={{
-                  padding: '6px 14px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                  border: `1px solid ${lead.pooled ? GREEN : '#e5e7eb'}`,
-                  background: lead.pooled ? GREEN : '#fff',
-                  color: lead.pooled ? '#fff' : '#374151',
-                  fontSize: 'var(--text-body)', fontWeight: 600,
-                }}
-              >
-                {lead.pooled ? '✓ In Pool' : '+ Pool'}
-              </button>
-            }
-          />
-        ))}
-      </div>
-
-      {leads.length === 0 && !loading && !notConnected && <p style={{ color: '#9ca3af', textAlign: 'center', padding: '2rem' }}>No leads match these filters.</p>}
-
-      {hasMore && leads.length > 0 && (
-        <button onClick={loadMore} disabled={loading} style={{ width: '100%', marginTop: 10, background: '#f3f4f6', border: 'none', borderRadius: 'var(--radius-sm)', padding: 12, cursor: 'pointer', fontWeight: 600, color: '#374151' }}>
-          {loading ? 'Loading…' : 'Load more'}
-        </button>
-      )}
-
       {showAdd && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
-          <div style={{ background: '#fff', borderRadius: 'var(--radius-2xl)', padding: '2rem', width: 360, maxWidth: '95vw' }}>
-            <h3 style={{ marginBottom: '1rem' }}>Add Lead</h3>
-            <input placeholder="Business name" value={form.business_name} onChange={(e) => setForm({ ...form, business_name: e.target.value })} style={modalInput} />
-            <input placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} style={modalInput} />
-            <input placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} style={modalInput} />
-            <select value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} style={{ ...modalInput, padding: 10 }}>
-              {NICHES.map((n) => <option key={n} value={n}>{n.charAt(0).toUpperCase() + n.slice(1)}</option>)}
-            </select>
-            <select value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} style={{ ...modalInput, padding: 10 }}>
-              <option value="">Select State</option>
-              {US_STATES.map((s) => <option key={s}>{s}</option>)}
-            </select>
-            <select value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })} style={{ ...modalInput, padding: 10 }}>
-              {TAGS.map((t) => <option key={t}>{t}</option>)}
-            </select>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-body)', color: '#374151', marginBottom: 14, cursor: 'pointer' }}>
-              <input type="checkbox" checked={form.pooled} onChange={(e) => setForm({ ...form, pooled: e.target.checked })} />
-              Add straight to the Lead Pool
-            </label>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={doAddLead} style={{ flex: 1, background: GREEN, color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', padding: 10, cursor: 'pointer', fontWeight: 600 }}>Save</button>
-              <button onClick={() => setShowAdd(false)} style={{ flex: 1, background: '#f3f4f6', border: 'none', borderRadius: 'var(--radius-sm)', padding: 10, cursor: 'pointer' }}>Cancel</button>
-            </div>
-          </div>
-        </div>
+        <SidePanel title="Add lead" onClose={() => setShowAdd(false)} footer={<>
+          <button className="lf-btn lf-btn--secondary" onClick={() => setShowAdd(false)}>Cancel</button>
+          <button className="lf-btn lf-btn--primary" onClick={doAddLead} disabled={!form.business_name.trim() || adding}>{adding ? 'Adding…' : 'Add lead'}</button>
+        </>}>
+          <Field label="Business name"><input className="lf-input" value={form.business_name} onChange={set('business_name')} autoFocus /></Field>
+          <Field label="Phone"><input className="lf-input lf-mono" value={form.phone} onChange={set('phone')} inputMode="tel" placeholder="(801) 555-0142" /></Field>
+          <Field label="City"><input className="lf-input" value={form.city} onChange={set('city')} /></Field>
+          {/* War Room queues match industry exactly, so pick from the niche list. */}
+          <Field label="Industry"><select className="lf-input" value={form.industry} onChange={set('industry')}>{NICHES.map((n) => <option key={n} value={n}>{fmtIndustry(n)}</option>)}</select></Field>
+          <Field label="State"><select className="lf-input" value={form.state} onChange={set('state')}><option value="">Select state</option>{US_STATES.map((s) => <option key={s}>{s}</option>)}</select></Field>
+          <Field label="Tag"><select className="lf-input" value={form.tag} onChange={set('tag')}>{TAGS.map((t) => <option key={t} value={t}>{tagLabel(t)}</option>)}</select></Field>
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 14, color: 'var(--lf-text-secondary)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={form.pooled} onChange={(e) => setForm({ ...form, pooled: e.target.checked })} style={{ width: 16, height: 16, accentColor: 'var(--lf-accent)' }} />
+            Add straight to the lead pool
+          </label>
+          {addErr && <Banner s="stop">{addErr}</Banner>}
+        </SidePanel>
       )}
-    </div>
+    </WithRecord>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactElement }) {
+  return (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <span className="lf-label">{label}</span>
+      {children}
+    </label>
   );
 }

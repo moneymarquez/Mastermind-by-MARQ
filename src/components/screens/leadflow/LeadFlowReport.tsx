@@ -1,9 +1,25 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { generateLeadflowReport } from '../../../data/useLeadflow';
-import { GREEN } from './shared';
+import { Banner, PanelHead } from './ui';
+import { HeaderAction, useLfPhone } from './layout';
+
+/** The model's report is plain text with headings and bullets; render it as a
+ *  reading column. Headings are lines that end in ':' or start with '#'. */
+function renderReport(text: string): ReactNode[] {
+  return text.split('\n').map((raw, i) => {
+    const line = raw.trim();
+    if (!line) return null;
+    const h = line.match(/^#{1,4}\s*(.*)$/) ?? line.match(/^\*\*(.+?)\*\*:?$/) ?? (line.length < 60 && /:$/.test(line) && !/^[-•*\d]/.test(line) ? [line, line.replace(/:$/, '')] : null);
+    if (h) return <div key={i} style={{ fontSize: 15, fontWeight: 500, color: 'var(--lf-text)', marginTop: i ? 8 : 0 }}>{h[1].replace(/\*\*/g, '')}</div>;
+    return <div key={i}>{line.replace(/\*\*/g, '').replace(/^[-*]\s+/, '• ')}</div>;
+  });
+}
 
 export default function LeadFlowReport() {
+  const phone = useLfPhone();
   const [report, setReport] = useState<string | null>(null);
+  const [at, setAt] = useState<Date | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -12,33 +28,36 @@ export default function LeadFlowReport() {
     setError('');
     const res = await generateLeadflowReport();
     if (res.error) setError(res.error);
-    else setReport(res.text ?? 'Could not generate report.');
+    else { setReport(res.text ?? 'Could not generate report.'); setAt(new Date()); }
     setLoading(false);
   };
+  // The Worker answers with this when no AI key is funded; say so instead of
+  // offering a button that can't work.
+  const aiOff = /anthropic|api key|not configured|credit/i.test(error);
 
+  if (!report) {
+    return (
+      <>
+        {!aiOff && <HeaderAction><button className="lf-btn lf-btn--primary" onClick={generate} disabled={loading}>{loading ? 'Generating…' : "Generate today's report"}</button></HeaderAction>}
+        <div className="lf-panel" style={{ padding: phone ? 20 : 32, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 12 }}>
+          <div style={{ fontSize: 15, fontWeight: 500 }}>Sales report</div>
+          <div style={{ fontSize: 14, color: 'var(--lf-text-secondary)', maxWidth: 560 }}>A mentor-style daily debrief based on your live pipeline: what went well, what to improve, and your top 3 priorities for tomorrow.</div>
+          {aiOff
+            ? <Banner s="wait" title="AI isn't funded yet">The report needs the AI key on the Worker. Everything else in LeadFlow works without it.</Banner>
+            : <button className="lf-btn lf-btn--primary" onClick={generate} disabled={loading}>{loading ? 'Generating…' : "Generate today's report"}</button>}
+          {error && !aiOff && <Banner s="stop">{error}</Banner>}
+        </div>
+      </>
+    );
+  }
   return (
-    <div>
-      <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: 4 }}>AI Sales Report</h1>
-      <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>A mentor-style daily debrief based on your live pipeline.</p>
-      {error && <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 'var(--radius-md)', padding: '10px 16px', marginBottom: '1rem', fontSize: 'var(--text-body)' }}>{error}</div>}
-      {!report ? (
-        <div style={{ background: '#fff', borderRadius: 'var(--radius-2xl)', padding: '3rem', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.07)' }}>
-          <div style={{ fontSize: 48, marginBottom: '1rem' }}>🤖</div>
-          <h3 style={{ marginBottom: 8 }}>Generate today's report</h3>
-          <p style={{ color: '#6b7280', marginBottom: '2rem' }}>Your AI sales mentor reviews your pipeline and recent activity, then tells you what went well, what to fix, and your top 3 priorities for tomorrow.</p>
-          <button onClick={generate} disabled={loading} style={{ background: GREEN, color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', padding: '14px 32px', fontSize: 'var(--text-head)', fontWeight: 600, cursor: 'pointer' }}>
-            {loading ? 'Generating...' : '⚙️ Generate Daily Report'}
-          </button>
-        </div>
-      ) : (
-        <div style={{ background: '#fff', borderRadius: 'var(--radius-2xl)', padding: '2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.07)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: 8 }}>
-            <div><strong>Daily Sales Report</strong><br /><span style={{ color: '#6b7280', fontSize: 'var(--text-body)' }}>{new Date().toLocaleString()}</span></div>
-            <button onClick={generate} disabled={loading} style={{ background: '#f3f4f6', border: 'none', borderRadius: 'var(--radius-sm)', padding: '8px 16px', cursor: 'pointer' }}>{loading ? 'Regenerating...' : 'Regenerate'}</button>
-          </div>
-          <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, color: '#374151' }}>{report}</div>
-        </div>
-      )}
+    <div className="lf-panel">
+      <PanelHead title={<>Daily debrief <span className="lf-mono" style={{ fontSize: 12, color: 'var(--lf-text-tertiary)', fontWeight: 400, marginLeft: 8 }}>{at?.toISOString().slice(0, 10)}</span></>}
+        right={<button className="lf-btn lf-btn--ghost lf-btn--sm" onClick={generate} disabled={loading}>{loading ? 'Regenerating…' : 'Regenerate'}</button>} />
+      {error && <div style={{ padding: '12px 16px 0' }}><Banner s="stop">{error}</Banner></div>}
+      <div style={{ padding: phone ? '20px 16px' : '24px 32px' }}>
+        <div style={{ maxWidth: 680, fontSize: 15, lineHeight: 1.6, color: 'var(--lf-text-secondary)', display: 'flex', flexDirection: 'column', gap: 6 }}>{renderReport(report)}</div>
+      </div>
     </div>
   );
 }

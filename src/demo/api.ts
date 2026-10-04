@@ -28,7 +28,7 @@ function answer(url: URL, method: string, body: unknown = null): Response {
   if (p.startsWith('/api/leadflow/')) {
     if (p.endsWith('/history')) return ok([{ id: 'h1', action: 'enriched', industry: 'Food truck', created_at: new Date().toISOString(), business_name: 'Juniper Tacos' }]);
     if (p.endsWith('/messages')) return ok([]);
-    if (p.endsWith('/ai-report')) return ok({ report: 'Hot leads are food trucks and bakeries with no online ordering. Call them 4–6pm.' });
+    if (p.endsWith('/ai-report')) return ok({ text: 'What went well today:\n- Hot leads are food trucks and bakeries with no online ordering.\nWhat to improve:\n- Call them 4–6pm, after the lunch rush.\nTop 3 priorities for tomorrow:\n1. Work the Sandy bakeries.\n2. Chase two owner numbers.\n3. Send 20 to dialing.' });
     return ok({ ok: true });
   }
   if (p === '/api/daily-plan/today') {

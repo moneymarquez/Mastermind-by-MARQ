@@ -1,111 +1,92 @@
 import { useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { useLeadflowLeads } from '../../../data/useLeadflow';
-import { card, GREEN, TAG_COLORS } from './shared';
-import NotConnectedBanner from './NotConnectedBanner';
+import { fmtIndustry, fmtAgo, tagSignal, tagLabel } from './format';
+import { KpiStrip, NotConnected, Tag, Dot, Lede, PanelHead, SkeletonRows } from './ui';
+import { HeaderAction, useLfPhone } from './layout';
 
-function StatCard({ icon, bg, num, label }: { icon: string; bg: string; num: number; label: string }) {
-  return (
-    <div style={{ ...card, padding: '1.5rem', flex: 1 }}>
-      <div style={{ width: 40, height: 40, borderRadius: 'var(--radius-md)', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--text-title)', marginBottom: '1rem' }}>{icon}</div>
-      <div style={{ fontSize: '2.2rem', fontWeight: 700, letterSpacing: '-1px', marginBottom: 4 }}>{num}</div>
-      <div style={{ color: '#9ca3af', fontSize: 'var(--text-label)', fontWeight: 500 }}>{label}</div>
-    </div>
-  );
-}
-
-/** Time-of-day greeting (it used to say "Good morning, Cristopher" at any hour). */
+/** Time-of-day greeting. */
 function greeting(now = new Date()): string {
   const h = now.getHours();
   return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 }
 
 export default function LeadFlowDashboard({ onOpenFinder }: { onOpenFinder: () => void }) {
-  const { leads, counts, notConnected } = useLeadflowLeads();
+  const { leads, counts, loading, notConnected } = useLeadflowLeads();
+  const phone = useLfPhone();
 
   const industryData = useMemo(() => {
     const byInd: Record<string, number> = {};
-    for (const l of leads) {
-      if (l.industry) byInd[l.industry] = (byInd[l.industry] || 0) + 1;
-    }
+    for (const l of leads) if (l.industry) byInd[l.industry] = (byInd[l.industry] || 0) + 1;
     return Object.entries(byInd).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 10);
   }, [leads]);
+  const top = Math.max(1, ...industryData.map((d) => d.value));
 
-  const tempData = [
-    { name: 'Hot', value: counts.hot },
-    { name: 'Warm', value: counts.warm },
-    { name: 'Not Ready', value: counts.cold },
-  ].filter((d) => d.value > 0);
-
-  const recentLeads = leads.slice(0, 5);
+  const temp = [
+    { label: 'Hot', n: counts.hot, s: 'go' as const },
+    { label: 'Warm', n: counts.warm, s: 'wait' as const },
+    { label: 'Not ready', n: counts.cold, s: 'neu' as const },
+  ];
+  const tempTotal = temp.reduce((a, t) => a + t.n, 0);
+  const recent = leads.slice(0, 5);
+  const now = Date.now();
 
   return (
-    <div>
-      {notConnected && <NotConnectedBanner />}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
-        <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 4 }}>{greeting()}</h1>
-          <p style={{ color: '#9ca3af', fontSize: 'var(--text-subhead)' }}>Here's where your pipeline stands today.</p>
-        </div>
-        <button onClick={onOpenFinder} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 'var(--radius-md)', padding: '10px 18px', fontSize: 'var(--text-label)', fontWeight: 500, cursor: 'pointer' }}>View Lead Finder ↗</button>
-      </div>
+    <>
+      <HeaderAction><button className="lf-btn lf-btn--secondary" onClick={onOpenFinder}>View lead finder</button></HeaderAction>
+      {notConnected && <NotConnected />}
+      <Lede>{greeting()}. Here's where the pipeline stands.</Lede>
+      <KpiStrip compact={phone} items={[
+        { label: 'Total leads', value: counts.total, s: 'neu' },
+        { label: 'Hot', value: counts.hot, s: 'go' },
+        { label: 'Warm', value: counts.warm, s: 'wait' },
+        { label: 'Not ready', value: counts.cold, s: 'neu' },
+      ]} />
 
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        <StatCard icon="👥" bg="#f0fdf4" num={counts.total} label="Total Leads" />
-        <StatCard icon="🔥" bg="#fff1f1" num={counts.hot} label="Hot Leads" />
-        <StatCard icon="⚡" bg="#fffbeb" num={counts.warm} label="Warm Leads" />
-        <StatCard icon="❄️" bg="#eff6ff" num={counts.cold} label="Cold Leads" />
-      </div>
-
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        <div style={{ ...card, flex: 2, minWidth: 300, padding: '1.5rem' }}>
-          <div style={{ fontWeight: 700, fontSize: 'var(--text-head)', marginBottom: 4 }}>Leads by industry</div>
-          <div style={{ color: '#9ca3af', fontSize: 'var(--text-body)', marginBottom: '1.5rem' }}>Where your pipeline is concentrated</div>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={industryData}>
-              <XAxis dataKey="name" tick={{ fontSize: 'var(--text-tiny)', fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 'var(--text-tiny)', fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ borderRadius: 'var(--radius-sm)', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-              <Bar dataKey="value" fill={GREEN} radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+      <div style={{ display: 'grid', gridTemplateColumns: phone ? 'minmax(0,1fr)' : 'minmax(0,1.3fr) minmax(0,1fr)', gap: 16 }}>
+        <div className="lf-panel" style={{ padding: 16 }}>
+          <div style={{ fontSize: 15, fontWeight: 500 }}>Leads by industry</div>
+          <div className="lf-label" style={{ marginBottom: 12 }}>Top 10</div>
+          {industryData.length === 0 && <div style={{ fontSize: 14, color: 'var(--lf-text-tertiary)' }}>{loading ? 'Counting…' : 'No leads yet.'}</div>}
+          {industryData.map((b) => (
+            <div key={b.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0', fontSize: 13 }}>
+              <div className="lf-trunc" style={{ width: phone ? 110 : 140, color: 'var(--lf-text-secondary)' }} title={fmtIndustry(b.name)}>{fmtIndustry(b.name)}</div>
+              <div style={{ flex: 1 }}><div style={{ height: 10, borderRadius: 2, background: 'var(--lf-accent)', opacity: 0.8, width: `${(b.value / top) * 100}%` }} /></div>
+              <div className="lf-mono" style={{ width: 32, textAlign: 'right' }}>{b.value}</div>
+            </div>
+          ))}
         </div>
-        <div style={{ ...card, flex: 1, minWidth: 260, padding: '1.5rem' }}>
-          <div style={{ fontWeight: 700, fontSize: 'var(--text-head)', marginBottom: 4 }}>Pipeline temperature</div>
-          <div style={{ color: '#9ca3af', fontSize: 'var(--text-body)', marginBottom: '1rem' }}>How leads are tagged</div>
-          <ResponsiveContainer width="100%" height={180}>
-            <PieChart>
-              <Pie data={tempData} dataKey="value" innerRadius={55} outerRadius={85}>
-                {tempData.map((entry) => <Cell key={entry.name} fill={TAG_COLORS[entry.name]} />)}
-              </Pie>
-              <Tooltip contentStyle={{ borderRadius: 'var(--radius-sm)', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 4 }}>
-            {tempData.map((d) => (
-              <span key={d.name} style={{ fontSize: 'var(--text-small)', display: 'flex', alignItems: 'center', gap: 5, color: '#6b7280' }}>
-                <span style={{ width: 10, height: 10, borderRadius: '50%', background: TAG_COLORS[d.name], display: 'inline-block' }} />
-                {d.name} ({d.value})
-              </span>
+        <div className="lf-panel" style={{ padding: 16 }}>
+          <div style={{ fontSize: 15, fontWeight: 500 }}>Pipeline temperature</div>
+          <div className="lf-label" style={{ marginBottom: 12 }}>Hot, warm and not ready</div>
+          <div style={{ display: 'flex', height: 12, borderRadius: 3, overflow: 'hidden', gap: 2, background: tempTotal ? undefined : 'var(--lf-surface-2)' }} role="img" aria-label={temp.map((t) => `${t.label} ${t.n}`).join(', ')}>
+            {temp.filter((t) => t.n > 0).map((t) => <div key={t.label} style={{ flex: t.n, background: `var(--lf-${t.s}-dot)` }} />)}
+          </div>
+          <div style={{ marginTop: 12, fontSize: 13 }}>
+            {temp.map((t, i) => (
+              <div key={t.label} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderTop: i ? '1px solid var(--lf-border)' : 0 }}>
+                <Dot s={t.s} /><span style={{ flex: 1 }}>{t.label}</span>
+                <span className="lf-mono" style={{ width: 48, textAlign: 'right' }}>{t.n}</span>
+                <span className="lf-mono" style={{ width: 48, textAlign: 'right', color: 'var(--lf-text-tertiary)' }}>{tempTotal ? `${Math.round((t.n / tempTotal) * 100)}%` : '–'}</span>
+              </div>
             ))}
           </div>
         </div>
       </div>
 
-      <div style={{ ...card, padding: '1.5rem' }}>
-        <div style={{ fontWeight: 700, fontSize: 'var(--text-head)', marginBottom: 4 }}>Recent activity</div>
-        <div style={{ color: '#9ca3af', fontSize: 'var(--text-body)', marginBottom: '1.25rem' }}>Your latest lead touches</div>
-        {recentLeads.map((l, i) => (
-          <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: i < recentLeads.length - 1 ? '1px solid #f9fafb' : 'none' }}>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 'var(--text-label)' }}>{l.business_name}</div>
-              <div style={{ fontSize: 'var(--text-small)', color: '#9ca3af', marginTop: 2 }}>{l.industry}</div>
-            </div>
-            {l.tag && <span style={{ fontSize: 'var(--text-small)', background: TAG_COLORS[l.tag] + '18', color: TAG_COLORS[l.tag], borderRadius: 'var(--radius-3xl)', padding: '4px 12px', fontWeight: 600 }}>{l.tag}</span>}
+      <div className="lf-panel" style={{ overflow: 'hidden' }}>
+        <PanelHead title="Recent leads" right={<a href="#" onClick={(e) => { e.preventDefault(); onOpenFinder(); }} style={{ fontSize: 13 }}>Open lead finder →</a>} />
+        {loading && recent.length === 0 ? <SkeletonRows rows={5} cols="2fr 1.2fr 1fr 110px 80px" /> : recent.length === 0 ? (
+          <div style={{ padding: '24px 16px', fontSize: 14, color: 'var(--lf-text-secondary)' }}>No leads yet.</div>
+        ) : recent.map((l, i) => (
+          <div key={l.id} style={{ display: 'grid', gridTemplateColumns: phone ? 'minmax(0,1fr) auto' : 'minmax(0,2fr) minmax(0,1.2fr) minmax(0,1fr) 110px 80px', alignItems: 'center', minHeight: 44, padding: '0 16px', gap: 8, borderTop: i ? '1px solid var(--lf-border)' : 0, fontSize: 14 }}>
+            <span className="lf-trunc" style={{ fontWeight: 500 }}>{l.business_name}</span>
+            {!phone && <span className="lf-cell-2 lf-trunc">{fmtIndustry(l.category || l.industry)}</span>}
+            {!phone && <span className="lf-cell-2 lf-trunc">{l.city}</span>}
+            <span>{l.tag && <Tag s={tagSignal(l.tag)}>{tagLabel(l.tag)}</Tag>}</span>
+            {!phone && <span className="lf-mono" style={{ fontSize: 12, color: 'var(--lf-text-tertiary)', textAlign: 'right' }}>{fmtAgo(l.created_at, now)}</span>}
           </div>
         ))}
-        {recentLeads.length === 0 && !notConnected && <p style={{ color: '#9ca3af', textAlign: 'center', padding: '1.5rem' }}>No leads yet.</p>}
       </div>
-    </div>
+    </>
   );
 }

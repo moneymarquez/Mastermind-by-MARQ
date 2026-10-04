@@ -175,7 +175,7 @@ export function Sheet({ title, onClose, children, full, width = 440 }: { title: 
           <span style={{ flex: 1, color: 'var(--text)', fontSize: 17, fontWeight: 600, letterSpacing: '-0.02em' }}>{title}</span>
           <button aria-label="Close" className="mm-icon-btn" onClick={onClose} style={{ width: 34, height: 34 }}><GClose size={16} /></button>
         </div>
-        <div className="mm-scroll-y" style={{ flex: 1, minHeight: 0, padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>{children}</div>
+        <div className="mm-scroll-y mm-sheet-body" style={{ flex: 1, minHeight: 0, padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>{children}</div>
       </div>
     </>
   );

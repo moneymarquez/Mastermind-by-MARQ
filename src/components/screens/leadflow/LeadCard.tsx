@@ -1,25 +1,27 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { leadMediaUrl, sendLeadToCrm } from '../../../data/useLeadflow';
 import { timeToMinutes, minutesToTime } from '../../../data/time';
 import type { LeadflowLead } from '../../../data/useLeadflow';
-import { leadTheme, TIER_COLOR } from './leadTheme';
-import type { LeadSkin, LeadTheme } from './leadTheme';
+import { skinClass } from './leadTheme';
+import type { LeadSkin } from './leadTheme';
 import { LEAD_CALL_OUTCOMES, LEAD_OUTCOME_LABEL } from './leadOutcomes';
 import { celebrate } from '../../../lib/fxEvents';
 import {
   mapsUrl, streetViewUrl, websiteUrl, registryUrl, peopleSearchUrl,
-  bestOwnerGuess, staleLabel, leadImagePaths, isTouched, hasOwnerContact,
+  bestOwnerGuess, leadImagePaths, hasOwnerContact,
 } from './leadLinks';
+import { fmtPhone, telHref, leadCategory, leadTags, cityState, fmtReviewAge } from './format';
+import { Tag, TierMark, PhoneIcon, MoreMenu, Banner, Dot } from './ui';
+import './leadflow.css';
 
-/** One lead, rendered identically wherever it appears.
+/** One lead, rendered the same way wherever it appears.
  *
- *  This used to live inside LeadFlowPool. It moved out because the same
- *  information is needed in three places — Lead Finder (to research the
- *  owner), Lead Pool (to keep the stock), and Dialing (to actually make the
- *  call) — and three copies of a card this detailed would drift apart
- *  within a week. Everything colour-related comes from leadTheme so the
- *  Dialing copy can wear the app's own skin without forking the markup.
+ *  LeadFlow shows it as a table row plus a record panel (LeadRecord);
+ *  Dialing shows it as a card (LeadCard, default export) that opens into the
+ *  same record sections. One set of sections, so the owner fields, call log,
+ *  flag and CRM hand-off can't drift apart between the two. Colors come
+ *  only from --lf-* tokens; the skin picks the token set (leadTheme.ts).
  */
 
 export type PatchLead = (id: string, patch: Partial<LeadflowLead>) => Promise<boolean>;
@@ -27,282 +29,171 @@ export type LogCall = (lead: LeadflowLead, status: string) => Promise<boolean>;
 
 /** Signed thumbnails of the storefront, menu and food.
  *
- *  Signed on expand rather than for the whole pool: the URLs expire in an
- *  hour and most leads are never opened, so signing hundreds of leads' worth
- *  up front would be wasted round-trips against a TTL that outlives nothing. */
-function LeadGallery({ paths, t }: { paths: string[]; t: LeadTheme }) {
-  const [urls, setUrls] = useState<string[]>([]);
-
+ *  Signed on open rather than for the whole pool: the URLs expire in an
+ *  hour and most leads are never opened. The section is hidden when a lead
+ *  has no photos (fewer than half do). */
+function Photos({ paths }: { paths: string[] }) {
+  const [urls, setUrls] = useState<string[] | null>(null);
   useEffect(() => {
     let cancelled = false;
+    setUrls(null);
     (async () => {
       const signed = await Promise.all(paths.map((p) => leadMediaUrl(p)));
       if (!cancelled) setUrls(signed.filter((u): u is string => !!u));
     })();
     return () => { cancelled = true; };
   }, [paths]);
-
-  if (paths.length === 0) return null;
+  if (paths.length === 0 || (urls && urls.length === 0)) return null;
   return (
-    <div>
-      <div style={{ ...labelStyle(t), marginBottom: 6 }}>Photos</div>
-      {urls.length === 0 ? (
-        <div style={{ fontSize: 'var(--text-body)', color: t.faint }}>Loading photos…</div>
-      ) : (
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
-          {urls.map((u) => (
-            <a key={u} href={u} target="_blank" rel="noopener noreferrer" style={{ flex: '0 0 auto' }}>
-              <img src={u} alt="" loading="lazy" style={{ height: 120, borderRadius: 'var(--radius-sm)', border: `1px solid ${t.border}`, display: 'block' }} />
+    <Section title="Photos">
+      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
+        {urls === null
+          ? paths.slice(0, 4).map((p) => <div key={p} className="lf-skel" style={{ width: 96, height: 72, flex: 'none', borderRadius: 6 }} />)
+          : urls.map((u) => (
+            <a key={u} href={u} target="_blank" rel="noopener noreferrer" style={{ flex: 'none' }}>
+              <img src={u} alt="" loading="lazy" style={{ height: 96, borderRadius: 6, border: '1px solid var(--lf-border)', display: 'block' }} />
             </a>
           ))}
-        </div>
-      )}
+      </div>
+    </Section>
+  );
+}
+
+function Section({ title, children, id }: { title: string; children: ReactNode; id?: string }) {
+  return (
+    <div className="lf-sec" id={id}>
+      <div className="lf-sec-h">{title}</div>
+      {children}
     </div>
   );
 }
 
-/** Copies text, with visible confirmation.
- *
- *  Exists because the Utah registry search is a form POST behind a Cloudflare
- *  bot check — there's no query parameter to prefill a business name into, so
- *  the name has to travel by clipboard and get pasted. Reports failure rather
- *  than silently doing nothing: clipboard writes can be refused outright
- *  (permissions, a non-secure context), and a button that looks like it
- *  worked but didn't is worse than one that admits it. */
-function CopyButton({ text, label, t }: { text: string; label: string; t: LeadTheme }) {
+/** Copies text with visible confirmation, in words. Reports failure: a
+ *  clipboard write can be refused (permissions, insecure context). */
+function CopyButton({ text, label }: { text: string; label: string }) {
   const [state, setState] = useState<'idle' | 'ok' | 'fail'>('idle');
-
   useEffect(() => {
     if (state === 'idle') return;
     const timer = setTimeout(() => setState('idle'), 1600);
     return () => clearTimeout(timer);
   }, [state]);
-
   const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setState('ok');
-    } catch {
-      setState('fail');
-    }
+    try { await navigator.clipboard.writeText(text); setState('ok'); } catch { setState('fail'); }
   };
-
-  const face = state === 'ok' ? '✓ Copied' : state === 'fail' ? '✕ Copy blocked' : `📋 ${label}`;
   return (
-    <button
-      onClick={copy}
-      disabled={!text}
-      style={{
-        padding: '7px 12px', borderRadius: 'var(--radius-sm)', cursor: text ? 'pointer' : 'default',
-        border: `1px solid ${state === 'ok' ? '#16a34a' : t.border}`,
-        background: state === 'ok' ? 'rgba(22,163,74,0.10)' : t.buttonBg,
-        color: state === 'ok' ? '#16a34a' : state === 'fail' ? '#ef4444' : t.text,
-        fontSize: 'var(--text-body)', fontWeight: 600,
-      }}
-    >
-      {face}
+    <button className={`lf-btn lf-btn--secondary lf-btn--sm${state === 'ok' ? ' lf-btn--on' : ''}`} onClick={copy} disabled={!text}
+      style={state === 'fail' ? { color: 'var(--lf-stop-text)' } : undefined}>
+      {state === 'ok' ? 'Copied' : state === 'fail' ? 'Copy blocked' : label}
     </button>
   );
 }
 
-const linkBtnStyle = (t: LeadTheme): CSSProperties => ({
-  padding: '7px 12px', borderRadius: 'var(--radius-sm)', border: `1px solid ${t.border}`,
-  background: t.buttonBg, color: t.text, fontSize: 'var(--text-body)', fontWeight: 600,
-  textDecoration: 'none', display: 'inline-block',
-});
-
-const labelStyle = (t: LeadTheme): CSSProperties => ({
-  fontSize: 'var(--text-caption)', color: t.faint, fontWeight: 600,
-  textTransform: 'uppercase', letterSpacing: 0.3,
-});
-
-const fieldStyle = (t: LeadTheme): CSSProperties => ({
-  padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: `1px solid ${t.border}`,
-  background: t.fieldBg, color: t.text,
-  fontSize: 'var(--text-body)', fontFamily: 'inherit',
-});
-
-/** Log an attempt and keep notes on it. */
-function CallLogSection({ lead, onLogCall, onPatch, t }: {
-  lead: LeadflowLead; onLogCall: LogCall; onPatch: PatchLead; t: LeadTheme;
-}) {
-  const [notes, setNotes] = useState(lead.call_notes ?? '');
-  const [saving, setSaving] = useState('');
-
-  const log = async (status: string) => {
-    setSaving(status);
-    await onLogCall(lead, status);
-    setSaving('');
-  };
-
-  const lastCalled = lead.last_called_at ? new Date(lead.last_called_at).toLocaleDateString() : null;
-  const current = lead.status && lead.status !== 'new' ? lead.status : '';
-
-  return (
-    <div>
-      <div style={{ ...labelStyle(t), marginBottom: 6 }}>Call outcome</div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {LEAD_CALL_OUTCOMES.map((o) => {
-          const active = current === o.value;
-          return (
-            <button
-              key={o.value}
-              onClick={() => log(o.value)}
-              disabled={!!saving}
-              style={{
-                padding: '6px 12px', borderRadius: 'var(--radius-pill)', cursor: saving ? 'default' : 'pointer',
-                border: `1px solid ${active ? o.color : t.border}`,
-                background: active ? o.color : t.buttonBg,
-                color: active ? '#fff' : o.color,
-                fontSize: 'var(--text-body)', fontWeight: 600, opacity: saving && saving !== o.value ? 0.5 : 1,
-              }}
-            >
-              {saving === o.value ? '…' : o.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {(current || lead.call_count) && (
-        <div style={{ fontSize: 'var(--text-caption)', color: t.faint, marginTop: 6 }}>
-          {current ? LEAD_OUTCOME_LABEL[current] ?? current : 'Logged'}
-          {lead.call_count ? ` · ${lead.call_count} attempt${lead.call_count === 1 ? '' : 's'}` : ''}
-          {lastCalled ? ` · last ${lastCalled}` : ''}
-        </div>
-      )}
-
-      <textarea
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        onBlur={() => notes !== (lead.call_notes ?? '') && onPatch(lead.id, { call_notes: notes.trim() || null })}
-        placeholder="Call notes — who you spoke to, what they said, when to try again…"
-        style={{
-          ...fieldStyle(t), width: '100%', boxSizing: 'border-box', marginTop: 8,
-          minHeight: 70, resize: 'vertical',
-        }}
-      />
-    </div>
-  );
-}
-
-/** The owner's real name and direct line, typed in by hand.
- *
- *  This is the payoff of the registry and people-search links above it: the
- *  scraper can't get owner details, so the answer arrives through those and
- *  lands here. Saving a name and a direct number lights the OWNER ✓ marker
- *  on the card — which stays alongside GO TIME, because knowing who to ask
+/** The owner's real name and direct line, typed in by hand and saved on
+ *  blur. This is the payoff of the registry and people-search links: the
+ *  scraper can't get owner details. A name plus a direct number shows
+ *  "Owner on file", which sits beside Go time, because knowing who to ask
  *  for is not the same as having called them. */
-function OwnerSection({ lead, onPatch, t }: { lead: LeadflowLead; onPatch: PatchLead; t: LeadTheme }) {
+function OwnerSection({ lead, onPatch }: { lead: LeadflowLead; onPatch: PatchLead }) {
   const [name, setName] = useState(lead.owner_name ?? '');
   const [phone, setPhone] = useState(lead.owner_phone ?? '');
   const [email, setEmail] = useState(lead.owner_email ?? '');
   const guess = bestOwnerGuess(lead);
   const people = peopleSearchUrl(name, lead);
+  const reg = registryUrl(lead);
   const known = hasOwnerContact({ owner_name: name, owner_phone: phone });
-
   const save = (patch: Partial<LeadflowLead>) => onPatch(lead.id, patch);
 
   return (
-    <div>
-      <div style={{ ...labelStyle(t), marginBottom: 6 }}>
-        Owner contact {known && <span style={{ color: '#7c3aed' }}>· ✓ on file</span>}
-      </div>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onBlur={() => name !== (lead.owner_name ?? '') && save({ owner_name: name.trim() || null })}
-          placeholder="Owner name"
-          style={{ ...fieldStyle(t), flex: '1 1 200px' }}
-        />
-        <input
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          onBlur={() => phone !== (lead.owner_phone ?? '') && save({ owner_phone: phone.trim() || null })}
-          placeholder="Direct number"
-          style={{ ...fieldStyle(t), flex: '1 1 150px' }}
-        />
-        <input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          onBlur={() => email !== (lead.owner_email ?? '') && save({ owner_email: email.trim() || null })}
-          placeholder="Email (optional)"
-          style={{ ...fieldStyle(t), flex: '1 1 180px' }}
-        />
-      </div>
-
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 8 }}>
-        {phone.trim() && (
-          <a href={`tel:${phone.trim()}`} style={{ ...linkBtnStyle(t), color: '#7c3aed', borderColor: '#ddd6fe', background: 'rgba(124,58,237,0.08)' }}>
-            📞 Call owner direct
-          </a>
-        )}
-        <a
-          href={people ?? undefined}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-disabled={!people}
-          style={{
-            ...linkBtnStyle(t),
-            background: people ? t.accent : t.buttonBg,
-            color: people ? t.accentText : t.faint,
-            borderColor: people ? t.accent : t.border,
-            pointerEvents: people ? 'auto' : 'none',
-          }}
-        >
-          🔎 TruePeopleSearch
-        </a>
-      </div>
-
-      {!name && (guess || lead.registry_note) && (
-        <div style={{ fontSize: 'var(--text-caption)', color: t.faint, marginTop: 6 }}>
-          {guess ? `Registry suggested: ${guess}${lead.owner_is_agent_only ? ' (registered agent — may not be the owner)' : ''}` : lead.registry_note}
+    <Section title="Owner">
+      {known && <div style={{ marginBottom: 8 }}><Tag s="info">Owner on file</Tag></div>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <input className="lf-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Owner name" aria-label="Owner name"
+          onBlur={() => name !== (lead.owner_name ?? '') && save({ owner_name: name.trim() || null })} />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <input className="lf-input lf-mono" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Direct number" aria-label="Direct number" inputMode="tel" style={{ flex: '1 1 150px' }}
+            onBlur={() => phone !== (lead.owner_phone ?? '') && save({ owner_phone: phone.trim() || null })} />
+          <input className="lf-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email (optional)" aria-label="Owner email" inputMode="email" style={{ flex: '1 1 170px' }}
+            onBlur={() => email !== (lead.owner_email ?? '') && save({ owner_email: email.trim() || null })} />
         </div>
-      )}
-    </div>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+        {phone.trim() && <a className="lf-btn lf-btn--secondary lf-btn--sm" href={telHref(phone)}><PhoneIcon size={14} />Call owner direct</a>}
+        <a className="lf-btn lf-btn--secondary lf-btn--sm" href={people ?? undefined} target="_blank" rel="noopener noreferrer" aria-disabled={!people}>TruePeopleSearch</a>
+        {reg && (
+          // Copies on the way out too, so the one tap that opens the registry
+          // also leaves the name ready to paste into its form.
+          <a className="lf-btn lf-btn--secondary lf-btn--sm" href={reg} target="_blank" rel="noopener noreferrer"
+            onClick={() => { navigator.clipboard?.writeText(lead.business_name).catch(() => {}); }}>State registry</a>
+        )}
+      </div>
+      <div className="lf-label" style={{ marginTop: 8, lineHeight: 1.5 }}>
+        {reg && <div>Opening the registry copies “{lead.business_name}”. Paste it into Name, or use Principal Name to search an owner directly.</div>}
+        {!name && (guess || lead.registry_note) && (
+          <div>{guess ? `Registry suggested: ${guess}${lead.owner_is_agent_only ? ' (registered agent, may not be the owner)' : ''}` : lead.registry_note}</div>
+        )}
+      </div>
+    </Section>
   );
 }
 
-/** A manual "look at this one carefully" marker, with an optional reason. */
-function FlagSection({ lead, onPatch, t }: { lead: LeadflowLead; onPatch: PatchLead; t: LeadTheme }) {
-  const flagged = !!lead.flagged;
-  const [note, setNote] = useState(lead.flag_note ?? '');
+/** Log an attempt and keep notes on it. Logging sets the status, bumps
+ *  call_count and stamps last_called_at (the hooks' logCall). */
+function CallLogSection({ lead, onLogCall, onPatch }: { lead: LeadflowLead; onLogCall: LogCall; onPatch: PatchLead }) {
+  const [notes, setNotes] = useState(lead.call_notes ?? '');
+  const [saving, setSaving] = useState('');
+  const log = async (status: string) => { setSaving(status); await onLogCall(lead, status); setSaving(''); };
+  const lastCalled = lead.last_called_at ? new Date(lead.last_called_at).toLocaleDateString() : null;
+  const current = lead.status && lead.status !== 'new' ? lead.status : '';
 
   return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-      <button
-        onClick={() => onPatch(lead.id, { flagged: !flagged })}
-        style={{
-          padding: '7px 12px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-          border: `1px solid ${flagged ? '#fbbf24' : t.border}`,
-          background: flagged ? 'rgba(251,191,36,0.16)' : t.buttonBg,
-          color: flagged ? '#b45309' : t.text,
-          fontSize: 'var(--text-body)', fontWeight: 600,
-        }}
-      >
-        {flagged ? '🚩 Flagged' : '🏳 Flag this lead'}
-      </button>
-      {flagged && (
-        <input
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          onBlur={() => note !== (lead.flag_note ?? '') && onPatch(lead.id, { flag_note: note.trim() || null })}
-          placeholder="Why? e.g. gone quiet 4 yrs, check before calling"
-          style={{ ...fieldStyle(t), flex: '1 1 240px' }}
-        />
+    <Section title="Call log">
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }} role="group" aria-label="Call outcome">
+        {LEAD_CALL_OUTCOMES.map((o) => {
+          const active = current === o.value;
+          return (
+            <button key={o.value} onClick={() => log(o.value)} disabled={!!saving} aria-pressed={active}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6, height: 28, padding: '0 10px', borderRadius: 'var(--lf-r-ctl)',
+                border: `1px solid ${active ? `var(--lf-${o.signal}-dot)` : 'var(--lf-border-strong)'}`,
+                background: active ? `var(--lf-${o.signal}-fill)` : 'var(--lf-surface)',
+                color: active ? `var(--lf-${o.signal}-text)` : 'var(--lf-text)',
+                fontSize: 13, fontWeight: 500, cursor: saving ? 'default' : 'pointer', opacity: saving && saving !== o.value ? 0.5 : 1,
+                transition: 'background-color .12s, border-color .12s',
+              }}>
+              <Dot s={o.signal} />{saving === o.value ? 'Saving…' : o.label}
+            </button>
+          );
+        })}
+      </div>
+      {(current || !!lead.call_count) && (
+        <div className="lf-label" style={{ marginTop: 8 }}>
+          {current ? LEAD_OUTCOME_LABEL[current] ?? current : 'Logged'}
+          {lead.call_count ? <> · <span className="lf-mono">{lead.call_count}</span> attempt{lead.call_count === 1 ? '' : 's'}</> : null}
+          {lastCalled ? <> · last <span className="lf-mono">{lastCalled}</span></> : null}
+        </div>
       )}
-    </div>
+      <textarea className="lf-input" value={notes} onChange={(e) => setNotes(e.target.value)} aria-label="Call notes"
+        onBlur={() => notes !== (lead.call_notes ?? '') && onPatch(lead.id, { call_notes: notes.trim() || null })}
+        placeholder="Call notes: who you spoke to, what they said, when to try again…" style={{ width: '100%', marginTop: 10 }} />
+    </Section>
   );
 }
 
-/** Books the kickoff call and hands the lead to Client CRM in one step.
- *
- *  Pick a slot, press once: a crm_clients row is created carrying the lead's
- *  context, and a 'scalez' calendar event is booked — the same event type and
- *  details shape the Event Adder writes, so it renders identically on the
- *  Schedule and in Daily Plan. The transcript gets pasted into the CRM after
- *  the call; this only has to get the client and the meeting to exist. */
-function HandoffSection({ lead, t }: { lead: LeadflowLead; t: LeadTheme }) {
+/** Reason for a flag, shown only while the lead is flagged. */
+function FlagReason({ lead, onPatch }: { lead: LeadflowLead; onPatch: PatchLead }) {
+  const [note, setNote] = useState(lead.flag_note ?? '');
+  if (!lead.flagged) return null;
+  return (
+    <input className="lf-input" value={note} onChange={(e) => setNote(e.target.value)} aria-label="Why is this lead flagged"
+      onBlur={() => note !== (lead.flag_note ?? '') && onPatch(lead.id, { flag_note: note.trim() || null })}
+      placeholder="Why flagged? e.g. gone quiet 4 yrs, check before calling" style={{ width: '100%', marginTop: 10 }} />
+  );
+}
+
+/** Books the kickoff call and hands the lead to Client CRM in one step:
+ *  a crm_clients row carrying the lead's context, plus a 30-minute 'scalez'
+ *  event (the same shape the Event Adder writes). */
+function HandoffSection({ lead }: { lead: LeadflowLead }) {
   const tomorrow = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
@@ -319,8 +210,6 @@ function HandoffSection({ lead, t }: { lead: LeadflowLead; t: LeadTheme }) {
     setBusy(true);
     setErr('');
     try {
-      // 30 minutes, matching what EventAdderModal books for an undragged
-      // scalez appointment.
       await sendLeadToCrm(lead, date, time, minutesToTime(timeToMinutes(time) + 30));
       setDone(true);
       celebrate();
@@ -331,123 +220,149 @@ function HandoffSection({ lead, t }: { lead: LeadflowLead; t: LeadTheme }) {
     }
   };
 
-  if (done) {
-    return (
-      <div style={{ background: 'rgba(22,163,74,0.10)', border: '1px solid #bbf7d0', borderRadius: 'var(--radius-sm)', padding: '10px 12px', fontSize: 'var(--text-body)', color: '#16a34a' }}>
-        ✓ Sent to Client CRM, kickoff call booked. Drop the transcript on the client's CRM page after the call.
-      </div>
-    );
-  }
-
   return (
-    <div>
-      <div style={{ ...labelStyle(t), marginBottom: 6 }}>Send to Client CRM</div>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={fieldStyle(t)} />
-        <input type="time" value={time} onChange={(e) => setTime(e.target.value)} style={fieldStyle(t)} />
-        <button
-          onClick={send}
-          disabled={busy || !date || !time}
-          style={{
-            padding: '8px 16px', borderRadius: 'var(--radius-sm)', border: 'none',
-            background: busy || !date || !time ? t.border : t.accent,
-            color: busy || !date || !time ? t.faint : t.accentText,
-            fontSize: 'var(--text-body)', fontWeight: 700,
-            cursor: busy || !date || !time ? 'default' : 'pointer',
-          }}
-        >
-          {busy ? 'Sending…' : '→ Create client + book call'}
-        </button>
-      </div>
-      <div style={{ fontSize: 'var(--text-caption)', color: t.faint, marginTop: 6 }}>
-        Creates the client at stage “new lead” with this lead's details and notes, and books a 30-minute call on your schedule.
-      </div>
-      {err && <div style={{ fontSize: 'var(--text-body)', color: '#ef4444', marginTop: 6 }}>{err}</div>}
-    </div>
+    <Section title="Hand off to Client CRM" id={`lf-handoff-${lead.id}`}>
+      {done ? (
+        <Banner s="go" title="Sent to Client CRM">Kickoff call booked. Drop the transcript on the client's CRM page after the call.</Banner>
+      ) : (
+        <>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <input className="lf-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Call date" />
+            <input className="lf-input" type="time" value={time} onChange={(e) => setTime(e.target.value)} aria-label="Call time" />
+            <button className="lf-btn lf-btn--secondary" onClick={send} disabled={busy || !date || !time}>{busy ? 'Sending…' : 'Create client + book call'}</button>
+          </div>
+          <div className="lf-label" style={{ marginTop: 6 }}>Creates the client at stage “new lead” with this lead's details and notes, and books a 30-minute call.</div>
+          {err && <div style={{ marginTop: 8 }}><Banner s="stop">{err}</Banner></div>}
+        </>
+      )}
+    </Section>
   );
 }
 
-/** Everything known about a lead, and every field you can fill in on it. */
-export function LeadDetail({ lead, onLogCall, onPatch, skin = 'leadflow' }: {
-  lead: LeadflowLead; onLogCall: LogCall; onPatch: PatchLead; skin?: LeadSkin;
-}) {
-  const t = leadTheme(skin);
-  // Memoised because LeadGallery's effect keys off this array's identity:
-  // rebuilt inline it would be a new array on every render, so every
-  // keystroke in the name field below would re-sign every image.
+/** Everything known about a lead and every field you can fill in on it. */
+export function RecordBody({ lead, onPatch, onLogCall, ownerFirst }: { lead: LeadflowLead; onPatch: PatchLead; onLogCall: LogCall; ownerFirst?: boolean }) {
+  // Memoised: Photos keys its signing off this array's identity.
   const imagePaths = useMemo(() => leadImagePaths(lead), [lead]);
-
   const sv = streetViewUrl(lead);
   const site = websiteUrl(lead.website);
-  const reg = registryUrl(lead);
-  const stale = staleLabel(lead.days_since_last_review);
-  const label = labelStyle(t);
-  const linkBtn = linkBtnStyle(t);
+  const stale = fmtReviewAge(lead.days_since_last_review);
 
+  const contact = (
+    <Section title="Contact" key="contact">
+      <div className="lf-field"><div>Phone</div><div>{lead.phone ? <a className="lf-mono" href={telHref(lead.phone)} style={{ color: 'var(--lf-text)' }}>{fmtPhone(lead.phone)}</a> : <span style={{ color: 'var(--lf-text-tertiary)' }}>None</span>}</div></div>
+      {lead.address && <div className="lf-field"><div>Address</div><div>{lead.address}</div></div>}
+      {cityState(lead) && <div className="lf-field"><div>City</div><div>{cityState(lead)}</div></div>}
+      <div className="lf-field"><div>Website</div><div>{site ? <a href={site} target="_blank" rel="noopener noreferrer">{lead.website}</a> : <span style={{ color: 'var(--lf-text-tertiary)' }}>{lead.website_status === 'no_website' ? 'No website' : lead.website_status ? 'Has a site, address not on file' : 'None on file'}</span>}</div></div>
+    </Section>
+  );
+  const owner = <OwnerSection key="owner" lead={lead} onPatch={onPatch} />;
   return (
-    <div style={{ borderTop: `1px solid ${t.detailBorder}`, marginTop: 12, paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <LeadGallery paths={imagePaths} t={t} />
-      {lead.summary && <div style={{ fontSize: 'var(--text-body)', color: t.muted, lineHeight: 1.5 }}>{lead.summary}</div>}
-
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 24px', fontSize: 'var(--text-body)', color: t.text }}>
-        {lead.address && <div><div style={label}>Address</div>{lead.address}</div>}
-        {(lead.city || lead.state) && <div><div style={label}>City</div>{[lead.city, lead.state].filter(Boolean).join(', ')}</div>}
-        {lead.category && <div><div style={label}>Category</div>{lead.category}</div>}
-        {lead.fizzle_score != null && <div><div style={label}>Fizzle score</div>{lead.fizzle_score}{lead.tier ? ` · tier ${lead.tier}` : ''}</div>}
-        {stale && <div><div style={label}>Last review</div>{stale} ago</div>}
-        {lead.rating != null && <div><div style={label}>Rating</div>⭐ {lead.rating}{lead.review_count ? ` (${lead.review_count})` : ''}</div>}
-      </div>
-
-      {/* Why the scraper flagged this one — the actual talking points for the call. */}
-      {lead.fizzle_reasons && lead.fizzle_reasons.length > 0 && (
-        <div>
-          <div style={{ ...label, marginBottom: 4 }}>Why this lead</div>
-          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 'var(--text-body)', color: t.muted, lineHeight: 1.6 }}>
-            {lead.fizzle_reasons.map((r, i) => <li key={i}>{r}</li>)}
-          </ul>
-        </div>
+    <>
+      {ownerFirst ? <>{owner}{contact}</> : contact}
+      <CallLogSection lead={lead} onLogCall={onLogCall} onPatch={onPatch} />
+      {!ownerFirst && owner}
+      <Section title="Details">
+        {lead.fizzle_score != null && <div className="lf-field"><div>Fizzle score</div><div className="lf-mono">{lead.fizzle_score}{lead.tier ? ` · tier ${lead.tier}` : ''}</div></div>}
+        {lead.rating != null && <div className="lf-field"><div>Rating</div><div className="lf-mono">{lead.rating}{lead.review_count ? ` (${lead.review_count})` : ''}</div></div>}
+        {stale && <div className="lf-field"><div>Last review</div><div className="lf-mono">{stale}</div></div>}
+        {leadCategory(lead) && <div className="lf-field"><div>Category</div><div>{leadCategory(lead)}</div></div>}
+      </Section>
+      {(lead.summary || (lead.fizzle_reasons && lead.fizzle_reasons.length > 0)) && (
+        <Section title="Why this lead">
+          {lead.summary && <div style={{ fontSize: 14, color: 'var(--lf-text-secondary)', lineHeight: 1.6 }}>{lead.summary}</div>}
+          {lead.fizzle_reasons && lead.fizzle_reasons.length > 0 && (
+            <ul style={{ margin: lead.summary ? '8px 0 0' : 0, paddingLeft: 18, fontSize: 14, color: 'var(--lf-text-secondary)', lineHeight: 1.6 }}>
+              {lead.fizzle_reasons.map((r, i) => <li key={i}>{r}</li>)}
+            </ul>
+          )}
+        </Section>
       )}
-
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-        <a href={mapsUrl(lead)} target="_blank" rel="noopener noreferrer" style={linkBtn}>📍 Maps</a>
-        {sv && <a href={sv} target="_blank" rel="noopener noreferrer" style={linkBtn}>👁 Street View</a>}
-        {site && <a href={site} target="_blank" rel="noopener noreferrer" style={linkBtn}>🌐 Website</a>}
-        <CopyButton text={lead.business_name} label="Copy name" t={t} />
-        {reg && (
-          // Copies on the way out too, so the single tap that opens the
-          // registry also leaves the name ready to paste into its form.
-          <a
-            href={reg}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => { navigator.clipboard?.writeText(lead.business_name).catch(() => {}); }}
-            style={linkBtn}
-          >
-            🏛 State registry
-          </a>
-        )}
-      </div>
-      {reg && (
-        <div style={{ fontSize: 'var(--text-caption)', color: t.faint, marginTop: -6 }}>
-          Opening the registry copies “{lead.business_name}” — paste it into Name, or use Principal Name to search an owner directly.
+      <Photos paths={imagePaths} />
+      <Section title="Links">
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <a className="lf-btn lf-btn--secondary lf-btn--sm" href={mapsUrl(lead)} target="_blank" rel="noopener noreferrer">Maps</a>
+          {sv && <a className="lf-btn lf-btn--secondary lf-btn--sm" href={sv} target="_blank" rel="noopener noreferrer">Street View</a>}
+          {site && <a className="lf-btn lf-btn--secondary lf-btn--sm" href={site} target="_blank" rel="noopener noreferrer">Website</a>}
+          <CopyButton text={lead.business_name} label="Copy name" />
         </div>
-      )}
+      </Section>
+      <HandoffSection lead={lead} />
+    </>
+  );
+}
 
-      <OwnerSection lead={lead} onPatch={onPatch} t={t} />
-      <FlagSection lead={lead} onPatch={onPatch} t={t} />
-      <CallLogSection lead={lead} onLogCall={onLogCall} onPatch={onPatch} t={t} />
-      <HandoffSection lead={lead} t={t} />
+/** Name, meta line and signal tags. */
+export function RecordHeader({ lead, onClose, onBack, backLabel, onPatch }: { lead: LeadflowLead; onClose?: () => void; onBack?: () => void; backLabel?: string; onPatch: PatchLead }) {
+  return (
+    <div style={{ padding: 16, borderBottom: '1px solid var(--lf-border)' }}>
+      {onBack && <button className="lf-btn lf-btn--ghost lf-btn--sm" onClick={onBack} style={{ marginLeft: -10, marginBottom: 6, color: 'var(--lf-text-tertiary)' }}>‹ {backLabel ?? 'Back'}</button>}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', minWidth: 0 }}>
+          <TierMark tier={lead.tier} />
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.25 }}>{lead.business_name}</h2>
+        </div>
+        {onClose && <button className="lf-btn lf-btn--ghost lf-btn--sm" onClick={onClose} aria-label="Close record" style={{ fontSize: 18, color: 'var(--lf-text-tertiary)' }}>×</button>}
+      </div>
+      <div style={{ fontSize: 13, color: 'var(--lf-text-tertiary)', margin: '6px 0 10px' }}>{[leadCategory(lead), cityState(lead)].filter(Boolean).join(' · ')}</div>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{leadTags(lead).map((t) => <Tag key={t.label} s={t.s} title={t.title}>{t.label}</Tag>)}</div>
+      <FlagReason lead={lead} onPatch={onPatch} />
     </div>
   );
 }
 
-const badge = (bg: string, fg: string, bd: string): CSSProperties => ({
-  padding: '3px 9px', borderRadius: 'var(--radius-pill)',
-  background: bg, color: fg, border: `1px solid ${bd}`,
-  fontSize: 'var(--text-caption)', fontWeight: 800, letterSpacing: 0.3, whiteSpace: 'nowrap',
-});
+function CallButton({ lead, big }: { lead: LeadflowLead; big?: boolean }) {
+  const cls = `lf-btn lf-btn--primary${big ? ' lf-btn--call' : ''}`;
+  return lead.phone
+    ? <a className={cls} href={telHref(lead.phone)} style={{ flex: 1, minWidth: 0 }}><PhoneIcon />Call <span className="lf-mono">{fmtPhone(lead.phone)}</span></a>
+    : <button className={cls} disabled style={{ flex: 1 }}>No phone on file</button>;
+}
 
-/** The collapsed row plus, when open, the full detail beneath it. */
+/** The record panel: header, action bar, sections. `sheet` is the phone
+ *  layout: a back link on top and Call pinned at the bottom. */
+export function LeadRecord({ lead, onPatch, onLogCall, onClose, poolAction, ownerFirst, sheet, backLabel }: {
+  lead: LeadflowLead; onPatch: PatchLead; onLogCall: LogCall; onClose: () => void;
+  poolAction?: { label: string; onClick: () => void; danger?: boolean }; ownerFirst?: boolean; sheet?: boolean; backLabel?: string;
+}) {
+  const bodyRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { bodyRef.current?.scrollTo({ top: 0 }); }, [lead.id]);
+  const jumpToHandoff = () => document.getElementById(`lf-handoff-${lead.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const more = [
+    { label: 'Open in Maps', href: mapsUrl(lead) },
+    { label: 'Copy business name', onClick: () => { navigator.clipboard?.writeText(lead.business_name).catch(() => {}); } },
+    { label: 'Hand off to Client CRM', onClick: jumpToHandoff },
+  ];
+  const flagBtn = (
+    <button className={`lf-btn lf-btn--secondary${lead.flagged ? ' lf-btn--on' : ''}`} aria-pressed={!!lead.flagged} onClick={() => onPatch(lead.id, { flagged: !lead.flagged })}>
+      {lead.flagged ? 'Flagged' : 'Flag'}
+    </button>
+  );
+  const poolBtn = poolAction && <button className="lf-btn lf-btn--secondary" onClick={poolAction.onClick}>{poolAction.label}</button>;
+
+  return (
+    <section className={`lf-record${sheet ? ' lf-record--sheet' : ''}`} aria-label={`${lead.business_name} record`} style={{ height: '100%' }}>
+      <RecordHeader lead={lead} onClose={sheet ? undefined : onClose} onBack={sheet ? onClose : undefined} backLabel={backLabel} onPatch={onPatch} />
+      {sheet ? (
+        <div style={{ display: 'flex', gap: 8, padding: '12px 16px', borderBottom: '1px solid var(--lf-border)' }}>{poolBtn}{flagBtn}</div>
+      ) : (
+        <div style={{ display: 'flex', gap: 8, padding: '12px 16px', borderBottom: '1px solid var(--lf-border)', flexWrap: 'wrap' }}>
+          <CallButton lead={lead} />{poolBtn}{flagBtn}<MoreMenu items={more} />
+        </div>
+      )}
+      <div ref={bodyRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: sheet ? 96 : 0 }}>
+        <RecordBody key={lead.id} lead={lead} onPatch={onPatch} onLogCall={onLogCall} ownerFirst={ownerFirst} />
+      </div>
+      {sheet && (
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px 16px calc(12px + env(safe-area-inset-bottom))', background: 'var(--lf-surface)', borderTop: '1px solid var(--lf-border)', display: 'flex', gap: 8 }}>
+          <CallButton lead={lead} big />
+          <MoreMenu items={more} up buttonClass="lf-btn lf-btn--secondary lf-btn--call" />
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** Dialing's card: the collapsed lead plus, when open, the same record
+ *  sections LeadFlow's panel uses. Skin 'mastermind' wears V2 tokens. */
 export default function LeadCard({ lead, open, onToggle, onPatch, onLogCall, skin = 'leadflow', actions }: {
   lead: LeadflowLead;
   open: boolean;
@@ -457,93 +372,55 @@ export default function LeadCard({ lead, open, onToggle, onPatch, onLogCall, ski
   skin?: LeadSkin;
   actions?: ReactNode;
 }) {
-  const t = leadTheme(skin);
-  const touched = isTouched(lead);
+  const tags = leadTags(lead).filter((t) => !t.label.startsWith('Has website') && t.label !== 'No website');
+  const stale = fmtReviewAge(lead.days_since_last_review);
+  const meta = [leadCategory(lead), cityState(lead), lead.review_count ? `${lead.review_count} reviews` : '', stale ? `last review ${stale}` : ''].filter(Boolean).join(' · ');
   const ownerKnown = hasOwnerContact(lead);
-  const stale = staleLabel(lead.days_since_last_review);
+  const current = lead.status && lead.status !== 'new' ? lead.status : '';
 
   return (
-    <div style={{ ...t.card, borderRadius: 'var(--radius-lg)', padding: '1rem 1.25rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10 }}>
-        <div style={{ flex: '1 1 240px', cursor: 'pointer', minWidth: 0 }} onClick={onToggle}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            {lead.tier && (
-              <span style={{ fontSize: 'var(--text-caption)', fontWeight: 800, color: '#fff', background: TIER_COLOR[lead.tier] || '#9ca3af', borderRadius: 4, padding: '1px 6px' }}>{lead.tier}</span>
-            )}
-            <span style={{ fontWeight: 600, fontSize: 'var(--text-subhead)', color: t.text }}>{lead.business_name}</span>
-            {lead.fizzle_score != null && <span style={{ fontSize: 'var(--text-caption)', color: t.faint }}>{lead.fizzle_score}</span>}
-            {/* Sits on the title line, after the name and score: green when
-                nobody has touched this lead, blue once it's been worked. */}
-            <span style={touched
-              ? badge('rgba(37,99,235,0.14)', '#2563eb', '#93c5fd')
-              : badge('rgba(22,163,74,0.14)', '#15803d', '#86efac')}>
-              {touched ? 'RECYCLED' : 'GO TIME'}
-            </span>
-            {/* Sits alongside GO TIME rather than replacing it — having the
-                owner's number is research done, not a call made, so the lead
-                is still up for grabs. */}
-            {ownerKnown && (
-              <span title={lead.owner_phone ?? ''} style={badge('rgba(124,58,237,0.12)', '#7c3aed', '#ddd6fe')}>✓ OWNER</span>
-            )}
-            {lead.flagged && (
-              <span title={lead.flag_note ?? 'Flagged'} style={badge('rgba(251,191,36,0.18)', '#b45309', '#fbbf24')}>🚩 FLAGGED</span>
-            )}
-            {lead.dialing_queued && (
-              <span style={badge('rgba(124,58,237,0.10)', '#7c3aed', '#c4b5fd')}>☎ IN DIALING</span>
-            )}
-            {/* Lead Filter's tags: a chain or a duplicate is a dial to skip;
-                MULTI means an operator, which changes the script. */}
-            {lead.is_chain && (
-              <span title={lead.filter_note ?? ''} style={badge('rgba(220,38,38,0.12)', '#b91c1c', '#fca5a5')}>⛓ CHAIN{lead.chain_name ? ` · ${lead.chain_name.toUpperCase()}` : ''}</span>
-            )}
-            {lead.duplicate_of && !lead.is_chain && (
-              <span title={lead.filter_note ?? ''} style={badge('rgba(217,119,6,0.12)', '#b45309', '#fcd34d')}>⧉ DUPLICATE</span>
-            )}
-            {!lead.is_chain && !lead.duplicate_of && lead.business_size === 'multi' && (
-              <span title={lead.filter_note ?? ''} style={badge('rgba(37,99,235,0.10)', '#1d4ed8', '#93c5fd')}>MULTI-LOCATION</span>
-            )}
-          </div>
-
-          <div style={{ fontSize: 'var(--text-body)', color: t.faint, marginTop: 2 }}>
-            {/* City before state, both shown — "Sandy · UT" is what tells you
-                whether this lead belongs in today's session. */}
-            {[lead.category || lead.industry, [lead.city, lead.state].filter(Boolean).join(', ')].filter(Boolean).join(' · ')}
-            {lead.review_count ? ` · ⭐ ${lead.review_count}` : ''}
-            {stale ? ` · last review ${stale} ago` : ''}
-          </div>
-
-          {ownerKnown && lead.owner_phone && (
-            <a href={`tel:${lead.owner_phone}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: 'var(--text-body)', color: '#7c3aed', fontWeight: 700, textDecoration: 'none', marginTop: 4, display: 'block' }}>
-              📞 {lead.owner_name}: {lead.owner_phone}
-            </a>
-          )}
-          {lead.phone && (
-            <a href={`tel:${lead.phone}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: 'var(--text-body)', color: t.accent === 'var(--text)' ? t.text : t.accent, fontWeight: 600, textDecoration: 'none', marginTop: 4, display: 'inline-block' }}>
-              📞 {lead.phone}
-            </a>
-          )}
-          {touched && (
-            <div style={{ fontSize: 'var(--text-caption)', color: '#2563eb', marginTop: 4, fontWeight: 600 }}>
-              {lead.status && lead.status !== 'new' ? (LEAD_OUTCOME_LABEL[lead.status] ?? lead.status) : 'Worked'}
-              {lead.call_count ? ` · ${lead.call_count} attempt${lead.call_count === 1 ? '' : 's'}` : ''}
-              {lead.last_called_at ? ` · ${new Date(lead.last_called_at).toLocaleDateString()}` : ''}
-            </div>
-          )}
-          {touched && lead.call_notes && (
-            <div style={{ fontSize: 'var(--text-caption)', color: t.faint, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 420 }}>
-              {lead.call_notes}
-            </div>
-          )}
+    <div className={skinClass(skin)} style={{ background: 'var(--lf-surface)', border: '1px solid var(--lf-border)', borderRadius: 'var(--lf-r-panel)', overflow: 'hidden' }}>
+      <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <TierMark tier={lead.tier} />
+          <button onClick={onToggle} aria-expanded={open} style={{ all: 'unset', cursor: 'pointer', fontSize: 16, fontWeight: 600, color: 'var(--lf-text)', minWidth: 0 }}>{lead.business_name}</button>
+          {lead.fizzle_score != null && <span className="lf-mono" style={{ fontSize: 12, color: 'var(--lf-text-tertiary)' }}>{lead.fizzle_score}</span>}
+          {tags.map((t) => <Tag key={t.label} s={t.s} title={t.title}>{t.label}</Tag>)}
         </div>
-
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button onClick={onToggle} style={{ padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: `1px solid ${t.border}`, background: t.buttonBg, color: t.text, cursor: 'pointer', fontSize: 'var(--text-body)', fontWeight: 500 }}>
-            {open ? 'Less' : 'Details'}
-          </button>
+        {meta && <div style={{ fontSize: 13, color: 'var(--lf-text-tertiary)' }}>{meta}</div>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          {lead.phone && <a className="lf-mono" href={telHref(lead.phone)} style={{ fontSize: 20, fontWeight: 500, color: 'var(--lf-text)', textDecoration: 'none' }}>{fmtPhone(lead.phone)}</a>}
+          {lead.phone && <a className="lf-btn lf-btn--primary" href={telHref(lead.phone)}><PhoneIcon />Call</a>}
+          {ownerKnown && lead.owner_phone && <a className="lf-btn lf-btn--secondary" href={telHref(lead.owner_phone)}>{lead.owner_name}: <span className="lf-mono">{fmtPhone(lead.owner_phone)}</span></a>}
+          <div style={{ flex: 1 }} />
+          <button className="lf-btn lf-btn--secondary lf-btn--sm" onClick={onToggle}>{open ? 'Less' : 'Details'}</button>
           {actions}
         </div>
+        {!open && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {LEAD_CALL_OUTCOMES.map((o) => {
+              const active = current === o.value;
+              return (
+                <button key={o.value} onClick={() => onLogCall(lead, o.value)} aria-pressed={active}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 12px', borderRadius: 'var(--lf-r-ctl)', cursor: 'pointer', fontSize: 13, fontWeight: 500,
+                    border: `1px solid ${active ? `var(--lf-${o.signal}-dot)` : 'var(--lf-border-strong)'}`, background: active ? `var(--lf-${o.signal}-fill)` : 'transparent', color: active ? `var(--lf-${o.signal}-text)` : 'var(--lf-text)' }}>
+                  <Dot s={o.signal} />{o.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {!open && lead.call_notes && <div className="lf-trunc" style={{ fontSize: 12, color: 'var(--lf-text-tertiary)' }}>{lead.call_notes}</div>}
       </div>
-      {open && <LeadDetail lead={lead} onLogCall={onLogCall} onPatch={onPatch} skin={skin} />}
+      {open && (
+        <div style={{ borderTop: '1px solid var(--lf-border)' }}>
+          <RecordBody lead={lead} onPatch={onPatch} onLogCall={onLogCall} />
+          <div style={{ padding: '0 16px 16px' }}>
+            <button className={`lf-btn lf-btn--secondary lf-btn--sm${lead.flagged ? ' lf-btn--on' : ''}`} onClick={() => onPatch(lead.id, { flagged: !lead.flagged })}>{lead.flagged ? 'Flagged' : 'Flag this lead'}</button>
+            <FlagReason lead={lead} onPatch={onPatch} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

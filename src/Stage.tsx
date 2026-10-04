@@ -83,7 +83,7 @@ const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 // Screens still on their pre-redesign layout: on phone they get the shared
 // back row so every module navigates the same way. Remove one from here
 // as it moves onto the mm/Page frame.
-const LEGACY_SCREENS = new Set(['leadflow']);
+const LEGACY_SCREENS = new Set<string>([]);
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
@@ -212,6 +212,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // Grant Access has no module key but is owner-only; now that ?screen= deep
   // links work it must say so instead of rendering an empty page.
   const screenBlocked = routeModuleKey ? !canAccess(routeModuleKey) : state.screen === 'grant-access' && !isOwner;
+  const lfFull = state.screen === 'leadflow' && !screenBlocked;
 
   // Product tour — on-demand only (help icon or Settings), never
   // auto-started. Steps are filtered by the same canAccess used for
@@ -271,8 +272,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         style={{
           ...vm.contentStyle,
           left: device === 'phone' ? 0 : sidebarW(device), right: novaDock, transition: 'right .18s ease',
-          padding: device === 'phone' ? `calc(${PHONE_HEADER_H + 12}px + env(safe-area-inset-top)) 16px 0` : `${TOP_BAR_H + 28}px 32px 0`,
-          paddingBottom: device === 'phone' ? `calc(${PHONE_TAB_H + 28}px + max(env(safe-area-inset-bottom), 20px))` : '48px',
+          // LeadFlow paints its own canvas edge to edge and pads itself.
+          padding: lfFull ? (device === 'phone' ? `calc(${PHONE_HEADER_H}px + env(safe-area-inset-top)) 0 0` : `${TOP_BAR_H}px 0 0`)
+            : device === 'phone' ? `calc(${PHONE_HEADER_H + 12}px + env(safe-area-inset-top)) 16px 0` : `${TOP_BAR_H + 28}px 32px 0`,
+          paddingBottom: lfFull ? 0 : device === 'phone' ? `calc(${PHONE_TAB_H + 28}px + max(env(safe-area-inset-bottom), 20px))` : '48px',
         }}
       >
         {screenBlocked ? (
@@ -373,9 +376,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'leadflow' && (
-          <div data-legacy="leadflow">
-          <LeadFlowScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-          </div>
+          <LeadFlowScreen />
         )}
 
         {state.screen === 'ecommerce' && (

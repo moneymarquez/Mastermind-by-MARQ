@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { CSSProperties } from 'react';
+import type { ReactNode } from 'react';
+import { useLfPhone } from './layout';
 
 type Block =
   | { type: 'heading'; text: string }
@@ -172,127 +173,128 @@ const sections: Section[] = [
   },
 ];
 
-interface Theme { icon: string; color: string; }
-
-function getTheme(title: string): Theme {
-  const t = title.toLowerCase();
-  if (t.includes('pain')) return { icon: '🎯', color: '#dc2626' };
-  if (t.includes('close')) return { icon: '📈', color: '#16a34a' };
-  if (t.includes('entry')) return { icon: '🚪', color: '#2563eb' };
-  if (t.includes('open') || t.includes('talking') || t.includes('wall')) return { icon: '💬', color: '#2563eb' };
-  if (t.includes('reframe') || t.includes('residual') || t.includes('fomo') || t.includes('soft') || t.includes('transfer') || t.includes('mindset')) return { icon: '💡', color: '#7c3aed' };
-  if (t.includes('who they are')) return { icon: '👤', color: '#6b7280' };
-  return { icon: '✦', color: '#6b7280' };
+/** One block of playbook content, in the LeadFlow reading style. */
+function CopyScript({ lines }: { lines: { label: string; text: string }[] }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(lines.map((l) => `${l.label}: ${l.text}`).join('\n\n'));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch { /* clipboard refused */ }
+  };
+  return (
+    <div style={{ border: '1px solid var(--lf-border)', borderRadius: 'var(--lf-r-panel)', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px 6px 14px', borderBottom: '1px solid var(--lf-border)', background: 'var(--lf-surface-2)' }}>
+        <span className="lf-label">Call script</span>
+        <button className="lf-btn lf-btn--ghost lf-btn--xs" onClick={copy}>{copied ? 'Copied' : 'Copy'}</button>
+      </div>
+      {lines.map((line, j) => (
+        <div key={j} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '10px 14px', fontSize: 14, borderTop: j ? '1px solid var(--lf-border)' : 0 }}>
+          <span className="lf-label" style={{ width: 110, flex: 'none', paddingTop: 2 }}>{line.label}</span>
+          <span style={{ flex: '1 1 260px', color: 'var(--lf-text)', lineHeight: 1.55 }}>{line.text}</span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
-function renderBlock(block: Block, key: number, theme: Theme) {
-  if (block.type === 'para') {
-    return <p key={key} style={{ color: '#374151', lineHeight: 1.7, marginBottom: '0.85rem', fontSize: 'var(--text-label)' }}>{block.text}</p>;
-  }
-  if (block.type === 'quote') {
-    return <p key={key} style={{ fontStyle: 'italic', color: '#374151', lineHeight: 1.7, fontSize: 14.5, margin: '0.4rem 0' }}>{block.text}</p>;
-  }
-  if (block.type === 'callout') {
-    return <div key={key} style={{ background: '#111', color: '#fff', borderRadius: 'var(--radius-lg)', padding: '1.1rem 1.25rem', margin: '1rem 0', lineHeight: 1.7, fontSize: 'var(--text-label)' }}>{block.text}</div>;
-  }
-  if (block.type === 'entry') {
-    return (
-      <div key={key} style={{ background: '#f9fafb', borderRadius: 'var(--radius-md)', padding: '0.9rem 1.1rem', margin: '0.6rem 0' }}>
-        <div style={{ fontWeight: 700, fontSize: 'var(--text-small)', color: theme.color, marginBottom: 4 }}>{block.title}</div>
-        <p style={{ color: '#374151', margin: 0, fontSize: 'var(--text-body-lg)', lineHeight: 1.6 }}>{block.text}</p>
-      </div>
-    );
-  }
-  if (block.type === 'pain') {
-    return (
-      <div key={key} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '0.75rem 0' }}>
-        <div style={{ background: '#fff5f5', border: '1px solid #fecaca', borderRadius: 'var(--radius-md)', padding: '1rem' }}>
-          <div style={{ fontWeight: 700, fontSize: 'var(--text-small)', color: '#dc2626', marginBottom: 8 }}>EMOTIONAL PAIN</div>
-          {block.emotional.map((p, j) => (
-            <div key={j} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#dc2626', marginTop: 6, flexShrink: 0 }} />
-              <p style={{ fontSize: 'var(--text-body)', color: '#374151', margin: 0, lineHeight: 1.5 }}>{p}</p>
+const sentence = (t: string) => {
+  // Headings in the content are written in Title Case or CAPS; show sentence case.
+  const s = t.trim();
+  if (/^[A-Z0-9 '&—–:?-]+$/.test(s) && /[A-Z]{2}/.test(s)) return s.charAt(0) + s.slice(1).toLowerCase();
+  return s.split(' ').map((w, i) => (i === 0 || /^[A-Z]{2,}/.test(w) || /^'/.test(w) ? w : w.charAt(0).toLowerCase() + w.slice(1))).join(' ');
+};
+
+/** "ENTRY POINT 1 — The Empty Table Problem" → "1. The empty table problem". */
+const entryTitle = (t: string) => {
+  const m = t.match(/^ENTRY POINT (\d+)\s*[—–-]\s*(.*)$/i);
+  return m ? `${m[1]}. ${m[2]}` : sentence(t);
+};
+
+/** "THE CORE BELIEF: ..." → label + body, so the callout reads in sentence case. */
+const splitCallout = (t: string): [string, string] => {
+  const m = t.match(/^([A-Z][A-Z '&]+):\s*(.*)$/s);
+  return m ? [m[1].charAt(0) + m[1].slice(1).toLowerCase(), m[2]] : ['', t];
+};
+
+function renderBlock(block: Block, key: number): ReactNode {
+  switch (block.type) {
+    case 'heading':
+      return <h3 key={key} style={{ margin: '8px 0 0', fontSize: 15, fontWeight: 500, color: 'var(--lf-text)' }}>{sentence(block.text)}</h3>;
+    case 'para':
+      return <p key={key} style={{ margin: 0 }}>{block.text}</p>;
+    case 'quote':
+      return <blockquote key={key} style={{ margin: 0, borderLeft: '3px solid var(--lf-accent)', padding: '4px 0 4px 14px', color: 'var(--lf-text)' }}>{block.text}</blockquote>;
+    case 'callout': {
+      const [label, body] = splitCallout(block.text);
+      return (
+        <div key={key} className="lf-callout" style={{ fontSize: 15 }}>
+          {label && <div className="lf-label">{label}</div>}
+          <div style={{ marginTop: label ? 6 : 0, color: 'var(--lf-text)' }}>{body}</div>
+        </div>
+      );
+    }
+    case 'entry':
+      return (
+        <div key={key}>
+          <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--lf-text)' }}>{entryTitle(block.title)}</div>
+          <p style={{ margin: '4px 0 0' }}>{block.text}</p>
+        </div>
+      );
+    case 'pain': {
+      const rows = Math.max(block.emotional.length, block.financial.length);
+      return (
+        <div key={key} style={{ border: '1px solid var(--lf-border)', borderRadius: 'var(--lf-r-panel)', display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', overflow: 'hidden', fontSize: 14, lineHeight: 1.5 }}>
+          <div className="lf-label" style={{ padding: '8px 14px', fontWeight: 500, background: 'var(--lf-surface-2)', borderBottom: '1px solid var(--lf-border)' }}>Emotional pain</div>
+          <div className="lf-label" style={{ padding: '8px 14px', fontWeight: 500, background: 'var(--lf-surface-2)', borderBottom: '1px solid var(--lf-border)', borderLeft: '1px solid var(--lf-border)' }}>Financial pain</div>
+          {Array.from({ length: rows }, (_, r) => (
+            <div key={r} style={{ display: 'contents' }}>
+              <div style={{ padding: '10px 14px', borderTop: r ? '1px solid var(--lf-border)' : 0, color: 'var(--lf-text)' }}>{block.emotional[r] ?? ''}</div>
+              <div style={{ padding: '10px 14px', borderTop: r ? '1px solid var(--lf-border)' : 0, borderLeft: '1px solid var(--lf-border)', color: 'var(--lf-text)' }}>{block.financial[r] ?? ''}</div>
             </div>
           ))}
         </div>
-        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 'var(--radius-md)', padding: '1rem' }}>
-          <div style={{ fontWeight: 700, fontSize: 'var(--text-small)', color: '#d97706', marginBottom: 8 }}>FINANCIAL PAIN</div>
-          {block.financial.map((p, j) => (
-            <div key={j} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#d97706', marginTop: 6, flexShrink: 0 }} />
-              <p style={{ fontSize: 'var(--text-body)', color: '#374151', margin: 0, lineHeight: 1.5 }}>{p}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+      );
+    }
+    case 'script':
+      return <CopyScript key={key} lines={block.lines} />;
   }
-  if (block.type === 'script') {
-    return (
-      <div key={key} style={{ background: '#1e1e2e', borderRadius: 'var(--radius-lg)', padding: '1.1rem', margin: '0.75rem 0' }}>
-        <div style={{ fontSize: 'var(--text-tiny)', color: '#6b7280', fontWeight: 600, marginBottom: 10, letterSpacing: '0.05em' }}>CALL SCRIPT</div>
-        {block.lines.map((line, j) => (
-          <div key={j} style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 'var(--text-micro)', color: '#4ade80', fontWeight: 700, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{line.label}</div>
-            <div style={{ color: '#e2e8f0', fontSize: 'var(--text-body-lg)', lineHeight: 1.7, fontStyle: 'italic' }}>{line.text}</div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-  return null;
 }
-
-interface Group { title: string; items: Block[]; }
 
 export default function LeadFlowPlaybook() {
   const [active, setActive] = useState('mindset');
+  const phone = useLfPhone();
   const section = sections.find((s) => s.id === active) ?? sections[0];
 
-  const groups: Group[] = [];
-  let current: Group | null = null;
-  section.content.forEach((block) => {
-    if (block.type === 'heading') {
-      current = { title: block.text, items: [] };
-      groups.push(current);
-    } else if (current) {
-      current.items.push(block);
-    }
-  });
-
-  const scrollAreaStyle: CSSProperties = { flex: 1, overflowY: 'auto', padding: '2rem' };
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '1rem 0', marginBottom: '1rem', flexShrink: 0 }}>
-        {sections.map((s) => (
-          <button key={s.id} onClick={() => setActive(s.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 'var(--radius-pill)', border: active === s.id ? 'none' : '1px solid #e5e7eb', background: active === s.id ? '#16a34a' : '#fff', color: active === s.id ? '#fff' : '#374151', cursor: 'pointer', fontSize: 'var(--text-body)', fontWeight: active === s.id ? 600 : 500 }}>
-            <span>{s.emoji}</span>{s.title}
-          </button>
-        ))}
-      </div>
-
-      <div style={scrollAreaStyle}>
-        <div style={{ maxWidth: 760, margin: '0 auto' }}>
-          <div style={{ marginBottom: '2rem' }}>
-            <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: 4, color: '#111' }}>{section.title}</h1>
-            <p style={{ color: '#9ca3af', fontSize: 'var(--text-subhead)' }}>{section.subtitle}</p>
-          </div>
-
-          {groups.map((group, gi) => {
-            const theme = getTheme(group.title);
-            return (
-              <div key={gi} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 'var(--radius-2xl)', padding: '1.5rem', marginBottom: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                  <span style={{ fontSize: 'var(--text-subhead)' }}>{theme.icon}</span>
-                  <span style={{ fontSize: 'var(--text-small)', fontWeight: 700, letterSpacing: '0.06em', color: theme.color, textTransform: 'uppercase' }}>{group.title}</span>
-                </div>
-                {group.items.map((block, i) => renderBlock(block, i, theme))}
-              </div>
-            );
-          })}
+    <div className="lf-panel" style={{ display: 'grid', gridTemplateColumns: phone ? 'minmax(0,1fr)' : '240px minmax(0,1fr)', overflow: 'hidden' }}>
+      {phone ? (
+        <div style={{ padding: 12, borderBottom: '1px solid var(--lf-border)' }}>
+          <select className="lf-input" value={active} onChange={(e) => setActive(e.target.value)} aria-label="Playbook section" style={{ width: '100%' }}>
+            {sections.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
+          </select>
         </div>
-      </div>
+      ) : (
+        <nav aria-label="Playbook sections" style={{ borderRight: '1px solid var(--lf-border)' }}>
+          {sections.map((s, i) => (
+            <button key={s.id} onClick={() => setActive(s.id)} aria-current={active === s.id ? 'true' : undefined}
+              style={{ all: 'unset', boxSizing: 'border-box', display: 'block', width: '100%', padding: '10px 14px', borderTop: i ? '1px solid var(--lf-border)' : 0, background: active === s.id ? 'var(--lf-selected)' : 'transparent', cursor: 'pointer' }}>
+              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--lf-text)' }}>{s.title}</div>
+              <div className="lf-label">{s.subtitle}</div>
+            </button>
+          ))}
+        </nav>
+      )}
+      <article style={{ padding: phone ? '20px 16px' : '24px 32px' }}>
+        <div style={{ maxWidth: 680, fontSize: 15, lineHeight: 1.6, color: 'var(--lf-text-secondary)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500, color: 'var(--lf-text)', letterSpacing: '-0.015em' }}>{section.title}</h2>
+            <div className="lf-label" style={{ marginTop: 2 }}>{section.subtitle}</div>
+          </div>
+          {section.content.map((b, i) => renderBlock(b, i))}
+        </div>
+      </article>
     </div>
   );
 }

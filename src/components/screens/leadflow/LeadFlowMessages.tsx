@@ -1,61 +1,66 @@
 import { useState } from 'react';
 import { useLeadflowMessages } from '../../../data/useLeadflow';
-import { GREEN } from './shared';
-import NotConnectedBanner from './NotConnectedBanner';
+import { NotConnected } from './ui';
+import { useLfPhone } from './layout';
 
 const CONTACTS = [
-  { name: 'Michael', role: 'Visionary — Aurora' },
+  { name: 'Michael', role: 'Visionary, Aurora' },
   { name: 'Devin Cole', role: 'Solar Specialist Contact' },
   { name: 'Tony Marino', role: 'Restaurant Closer' },
 ];
 
+/** Quick notes for the people who help you close. */
 export default function LeadFlowMessages() {
+  const phone = useLfPhone();
   const [selected, setSelected] = useState(CONTACTS[0]);
   const [input, setInput] = useState('');
+  const [saving, setSaving] = useState(false);
   const { messages, notConnected, addMessage } = useLeadflowMessages(selected.name);
 
   const save = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || saving) return;
+    setSaving(true);
     const ok = await addMessage(input.trim());
+    setSaving(false);
     if (ok) setInput('');
   };
+  const avatar = (n: string, size = 32) => <span style={{ width: size, height: size, borderRadius: '50%', background: 'var(--lf-surface-2)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 500, flex: 'none' }}>{n[0]}</span>;
 
   return (
-    <div>
-      {notConnected && <NotConnectedBanner />}
-      <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: 4 }}>Messages</h1>
-      <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>Quick contact for the people who help you close.</p>
-      <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-        <div style={{ width: 220 }}>
-          {CONTACTS.map((c) => (
-            <div key={c.name} onClick={() => setSelected(c)} style={{ padding: '12px 16px', borderRadius: 'var(--radius-md)', marginBottom: 8, cursor: 'pointer', background: selected.name === c.name ? '#f0fdf4' : '#fff', border: selected.name === c.name ? '1px solid #bbf7d0' : '1px solid #e5e7eb' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ width: 36, height: 36, borderRadius: '50%', background: GREEN, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{c.name[0]}</span>
-                <div><strong style={{ fontSize: 'var(--text-label)' }}>{c.name}</strong><div style={{ fontSize: 'var(--text-small)', color: '#6b7280' }}>{c.role}</div></div>
-              </div>
-            </div>
+    <>
+      {notConnected && <NotConnected />}
+      <div className="lf-panel" style={{ display: 'grid', gridTemplateColumns: phone ? 'minmax(0,1fr)' : '260px minmax(0,1fr)', overflow: 'hidden', minHeight: 420 }}>
+        <div style={{ borderRight: phone ? 0 : '1px solid var(--lf-border)', borderBottom: phone ? '1px solid var(--lf-border)' : 0 }}>
+          {CONTACTS.map((c, k) => (
+            <button key={c.name} onClick={() => setSelected(c)} aria-current={selected.name === c.name ? 'true' : undefined}
+              style={{ all: 'unset', boxSizing: 'border-box', width: '100%', display: 'flex', gap: 10, alignItems: 'center', padding: '12px 14px', borderTop: k ? '1px solid var(--lf-border)' : 0, background: selected.name === c.name ? 'var(--lf-selected)' : 'transparent', cursor: 'pointer' }}>
+              {avatar(c.name)}
+              <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 14, fontWeight: 500 }}>{c.name}</div><div className="lf-label lf-trunc">{c.role}</div></div>
+              {selected.name === c.name && <span className="lf-mono" style={{ fontSize: 12, color: 'var(--lf-text-tertiary)' }}>{messages.length}</span>}
+            </button>
           ))}
         </div>
-        <div style={{ flex: 1, minWidth: 280, background: '#fff', borderRadius: 'var(--radius-lg)', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.07)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #f3f4f6' }}>
-            <span style={{ width: 40, height: 40, borderRadius: '50%', background: GREEN, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{selected.name[0]}</span>
-            <div><strong>{selected.name}</strong><div style={{ fontSize: 'var(--text-body)', color: '#6b7280' }}>{selected.role}</div></div>
+        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--lf-border)' }}>
+            <div style={{ fontSize: 15, fontWeight: 500 }}>{selected.name}</div>
+            <div className="lf-label">{selected.role}</div>
           </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ fontSize: 'var(--text-small)', color: '#6b7280', marginBottom: 8 }}>NOTES</div>
-            {messages.map((n) => (
-              <div key={n.id} style={{ padding: '10px 0', borderBottom: '1px solid #f3f4f6' }}>
-                <div style={{ fontSize: 'var(--text-label)' }}>{n.note}</div>
-                <div style={{ fontSize: 'var(--text-small)', color: '#9ca3af', marginTop: 2 }}>{new Date(n.created_at).toLocaleString()}</div>
-              </div>
-            ))}
+          <div style={{ flex: 1, padding: messages.length ? '0 16px' : '24px 16px' }}>
+            {messages.length === 0
+              ? <div style={{ fontSize: 14, color: 'var(--lf-text-secondary)' }}>No notes yet. Saved notes show up here with timestamps.</div>
+              : messages.map((n, i) => (
+                <div key={n.id} style={{ padding: '12px 0', borderTop: i ? '1px solid var(--lf-border)' : 0 }}>
+                  <div style={{ fontSize: 14, whiteSpace: 'pre-wrap' }}>{n.note}</div>
+                  <div className="lf-mono" style={{ fontSize: 12, color: 'var(--lf-text-tertiary)', marginTop: 4 }}>{new Date(n.created_at).toLocaleString()}</div>
+                </div>
+              ))}
           </div>
-          <textarea value={input} onChange={(e) => setInput(e.target.value)} placeholder={`Quick note or message to ${selected.name}...`} style={{ width: '100%', padding: 12, borderRadius: 'var(--radius-sm)', border: '1px solid #e5e7eb', resize: 'none', height: 80, boxSizing: 'border-box', marginBottom: 8 }} />
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button onClick={save} style={{ background: GREEN, color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '10px 20px', cursor: 'pointer', fontWeight: 600 }}>✉️ Save Note</button>
+          <div style={{ display: 'flex', gap: 8, padding: '12px 16px', borderTop: '1px solid var(--lf-border)', alignItems: 'flex-end' }}>
+            <textarea className="lf-input" value={input} onChange={(e) => setInput(e.target.value)} placeholder={`Write a note for ${selected.name}`} aria-label="Note" style={{ flex: 1, minHeight: 56 }} />
+            <button className="lf-btn lf-btn--primary" onClick={save} disabled={!input.trim() || saving}>{saving ? 'Saving…' : 'Save note'}</button>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

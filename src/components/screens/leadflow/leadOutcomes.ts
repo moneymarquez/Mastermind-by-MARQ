@@ -14,13 +14,14 @@
  *  Values must match the leads_status_check constraint (schema_090) — a
  *  value outside it is rejected outright by Postgres, not quietly ignored.
  */
-export const LEAD_CALL_OUTCOMES: { value: string; label: string; color: string }[] = [
-  { value: 'no_answer', label: 'No answer', color: '#6b7280' },
-  { value: 'voicemail', label: 'Left voicemail', color: '#6b7280' },
-  { value: 'gatekeeper', label: "Couldn't reach owner", color: '#ca8a04' },
-  { value: 'callback', label: 'Callback later', color: '#2563eb' },
-  { value: 'interested', label: 'Interested', color: '#16a34a' },
-  { value: 'not_interested', label: 'Not interested', color: '#ef4444' },
+/** `signal` is the LeadFlow signal each outcome wears (see format.ts). */
+export const LEAD_CALL_OUTCOMES: { value: string; label: string; color: string; signal: 'go' | 'wait' | 'stop' | 'info' | 'neu' }[] = [
+  { value: 'no_answer', color: '#6b7280', label: 'No answer', signal: 'neu' },
+  { value: 'voicemail', color: '#6b7280', label: 'Left voicemail', signal: 'neu' },
+  { value: 'gatekeeper', color: '#ca8a04', label: "Couldn't reach owner", signal: 'wait' },
+  { value: 'callback', color: '#2563eb', label: 'Callback later', signal: 'info' },
+  { value: 'interested', color: '#16a34a', label: 'Interested', signal: 'go' },
+  { value: 'not_interested', color: '#ef4444', label: 'Not interested', signal: 'stop' },
 ];
 
 export const LEAD_OUTCOME_LABEL: Record<string, string> = Object.fromEntries(

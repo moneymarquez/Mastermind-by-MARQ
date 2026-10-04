@@ -1,78 +1,75 @@
 import { useRef, useState } from 'react';
 import { parseCsv } from '../../../lib/csv';
 import { useLeadflowImport } from '../../../data/useLeadflow';
+import { Banner } from './ui';
 
-const GREEN = '#16a34a';
-
-/** Bulk-import a master CSV export into the shared LeadFlow pool — the
- *  file this app already produces/consumes (id, business_name, phone,
- *  ... matching the leads table's own columns 1:1). Dedupes by phone
- *  against the whole existing table rather than trusting a DB-level
- *  upsert, since that table has no unique constraint on phone to key one
- *  off of. See useLeadflowImport for the actual logic. */
+/** Bulk-import a master CSV export into the shared LeadFlow pool. Dedupes by
+ *  phone against the whole existing table (no unique constraint on phone to
+ *  upsert on); rows without a phone are skipped. See useLeadflowImport. */
 export default function LeadFlowImport() {
   const { progress, run } = useLeadflowImport();
   const [fileName, setFileName] = useState('');
+  const [drag, setDrag] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const onFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
+  const take = async (file: File | undefined) => {
     if (!file) return;
     setFileName(file.name);
-    const text = await file.text();
-    const rows = parseCsv(text);
+    const rows = parseCsv(await file.text());
     await run(rows);
   };
-
   const busy = progress.phase === 'checking' || progress.phase === 'importing';
+  const n = (v: number) => v.toLocaleString();
 
   return (
-    <div style={{ maxWidth: 640 }}>
-      <div style={{ fontSize: 'var(--text-body-lg)', fontWeight: 600, color: '#111' }}>Import master file</div>
-      <div style={{ fontSize: 'var(--text-body-sm)', color: '#6b7280', marginTop: 6, lineHeight: 1.5 }}>
-        Upload a CSV export of your leads (same columns as this table already uses). Every row is checked against
-        every existing lead by phone number first — anything already in the pool is skipped, never duplicated.
-        Rows with no phone number can't be deduped or dialed, so those are skipped too.
+    <div className="lf-panel" style={{ maxWidth: 640, padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div>
+        <div style={{ fontSize: 15, fontWeight: 500 }}>Import master file</div>
+        <div style={{ fontSize: 14, color: 'var(--lf-text-secondary)', marginTop: 4, lineHeight: 1.5 }}>
+          Upload a CSV export of your leads, same columns as the leads table. Every row is checked by phone against every existing lead first, so nothing already in the pool is duplicated. Rows without a phone can't be deduped or dialed, so they're skipped.
+        </div>
       </div>
+      <input ref={inputRef} type="file" accept=".csv,text/csv" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; void take(f); }} />
 
-      <input ref={inputRef} type="file" accept=".csv,text/csv" style={{ display: 'none' }} onChange={onFileSelected} />
-      <div
-        onClick={() => !busy && inputRef.current?.click()}
-        style={{
-          marginTop: 16, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 8,
-          background: busy ? '#e5e7eb' : GREEN, color: busy ? '#6b7280' : '#fff', fontWeight: 600, cursor: busy ? 'default' : 'pointer',
-        }}
-      >
-        {busy ? 'Working…' : 'Choose CSV file'}
-      </div>
-      {fileName && <div style={{ fontSize: 'var(--text-caption)', color: '#6b7280', marginTop: 8 }}>{fileName}</div>}
-
-      {progress.phase !== 'idle' && (
-        <div style={{ marginTop: 20, padding: 16, borderRadius: 10, background: '#f9fafb', border: '1px solid #e5e7eb' }}>
-          {progress.phase === 'checking' && (
-            <div style={{ fontSize: 'var(--text-body-sm)', color: '#374151' }}>
-              Checking against existing leads… {progress.existingChecked.toLocaleString()} checked so far.
-            </div>
-          )}
-          {progress.phase === 'importing' && (
-            <div style={{ fontSize: 'var(--text-body-sm)', color: '#374151' }}>
-              Importing new leads… {progress.importedCount.toLocaleString()} saved so far.
-            </div>
-          )}
-          {progress.phase === 'done' && (
-            <div style={{ fontSize: 'var(--text-body-sm)', color: '#111' }}>
-              <div style={{ fontWeight: 600, color: GREEN }}>Import complete.</div>
-              <div style={{ marginTop: 6 }}>{progress.importedCount.toLocaleString()} new leads added.</div>
-              <div>{progress.skippedCount.toLocaleString()} already in the pool, skipped.</div>
-              {progress.noPhoneCount > 0 && <div>{progress.noPhoneCount.toLocaleString()} had no phone number, skipped.</div>}
-            </div>
-          )}
-          {progress.phase === 'error' && (
-            <div style={{ fontSize: 'var(--text-body-sm)', color: '#dc2626' }}>{progress.error}</div>
-          )}
+      {!busy && progress.phase !== 'done' && (
+        <div onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); void take(e.dataTransfer.files?.[0]); }}
+          style={{ border: `1px dashed ${drag ? 'var(--lf-accent)' : 'var(--lf-border-strong)'}`, background: drag ? 'var(--lf-accent-wash)' : 'transparent', borderRadius: 'var(--lf-r-panel)', padding: 28, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10, transition: 'background-color .12s, border-color .12s' }}>
+          <button className="lf-btn lf-btn--secondary" onClick={() => inputRef.current?.click()}>Choose CSV file</button>
+          <span className="lf-label">or drop a .csv here</span>
+          {fileName && <span className="lf-mono" style={{ fontSize: 13 }}>{fileName}</span>}
         </div>
       )}
+
+      {busy && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {fileName && <div className="lf-mono" style={{ fontSize: 13 }}>{fileName}</div>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ flex: 1, height: 4, background: 'var(--lf-surface-2)', borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{ height: 4, background: 'var(--lf-accent)', borderRadius: 2, width: progress.phase === 'importing' && progress.totalRows ? `${Math.min(100, (progress.importedCount / Math.max(1, progress.totalRows)) * 100)}%` : '30%', transition: 'width .18s' }} />
+            </div>
+            <span className="lf-mono" style={{ fontSize: 13 }}>
+              {progress.phase === 'checking' ? `checking ${n(progress.existingChecked)}` : `importing ${n(progress.importedCount)}${progress.totalRows ? ` / ${n(progress.totalRows)}` : ''}`}
+            </span>
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--lf-text-tertiary)' }}>{progress.phase === 'checking' ? 'Checking against existing leads…' : 'Importing new leads…'}</div>
+        </div>
+      )}
+
+      {progress.phase === 'done' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <Banner s="go" title="Import complete" />
+          <div style={{ border: '1px solid var(--lf-border)', borderRadius: 'var(--lf-r-panel)' }}>
+            {[['Added', progress.importedCount], ['Skipped as duplicates', progress.skippedCount], ['Skipped without phone', progress.noPhoneCount]].map(([l, v], i) => (
+              <div key={l} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', borderTop: i ? '1px solid var(--lf-border)' : 0, fontSize: 14 }}>
+                <span style={{ color: 'var(--lf-text-secondary)' }}>{l}</span><span className="lf-mono">{n(v as number)}</span>
+              </div>
+            ))}
+          </div>
+          <button className="lf-btn lf-btn--secondary" style={{ alignSelf: 'flex-start' }} onClick={() => inputRef.current?.click()}>Import another file</button>
+        </div>
+      )}
+
+      {progress.phase === 'error' && <Banner s="stop">{progress.error}</Banner>}
     </div>
   );
 }
