@@ -172,7 +172,7 @@ export default function AccountSettingsScreen({ onSignOut, onStartTour, theme, o
       {appearance}
       {group('Modules', [
         { l: 'Manage modules', on: () => nav('manage-modules') },
-        { l: 'Home widgets', on: () => nav('edit-home-widgets') },
+        { l: 'Pinned to Home', on: () => nav('manage-modules') },
         { l: 'Playbooks', on: () => nav('playbooks') },
         { l: 'Notifications', on: () => nav('notification-settings') },
         { l: 'Nova voice and prompts', on: () => nav('prompt-voice-settings') },

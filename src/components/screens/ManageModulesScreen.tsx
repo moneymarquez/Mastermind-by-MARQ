@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { useModuleAccess } from '../../data/useModuleAccess';
 import { MODULE_REGISTRY } from '../../modules.config';
 import type { ModuleDef } from '../../modules.config';
+import Switch from '../mm/Switch';
 import { MAX_PINS, readPins, writePins } from '../../data/homePins';
 import { Page, field, useModule } from '../mm/Page';
 
@@ -116,15 +117,6 @@ function Name({ n, d, dim }: { n: string; d: string; dim?: boolean }) {
       <span style={{ color: dim ? 'var(--text-secondary)' : 'var(--text)', fontSize: 15, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n}</span>
       {d && <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)' }}>{d}</span>}
     </div>
-  );
-}
-
-function Switch({ on, onChange, label, disabled }: { on: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean }) {
-  return (
-    <button role="switch" aria-checked={on} aria-label={label} disabled={disabled} onClick={() => onChange(!on)}
-      style={{ width: 44, height: 26, borderRadius: 999, flex: 'none', border: 0, padding: 0, cursor: disabled ? 'default' : 'pointer', position: 'relative', background: on ? 'var(--accent)' : 'var(--surface-3)', opacity: disabled ? 0.6 : 1 }}>
-      <span style={{ position: 'absolute', top: 3, left: on ? 21 : 3, width: 20, height: 20, borderRadius: '50%', background: on ? '#fff' : 'var(--text-tertiary)', transition: 'left .15s ease' }} />
-    </button>
   );
 }
 

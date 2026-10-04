@@ -25,7 +25,7 @@ import { useResolvedTheme } from './data/useTheme';
 
 // Screens load on demand; Overview ships in the main bundle.
 const DemoTour = lazyScreen(() => import('./demo/DemoTour'));
-const ChangelogScreen = lazyScreen(() => import('./components/screens/ChangelogScreen'));
+const ChangelogV2 = lazyScreen(() => import('./components/screens/v2/ChangelogV2'));
 const DispatchV2 = lazyScreen(() => import('./components/screens/v2/DispatchV2'));
 const DispatchLayer = lazyScreen(() => import('./dispatch/DispatchLayer'));
 const ClientModulesV2 = lazyScreen(() => import('./components/screens/v2/ClientModulesV2'));
@@ -40,7 +40,7 @@ const EcomScreen = lazyScreen(() => import('./components/screens/ecom/EcomScreen
 const ScalingStartScreen = lazyScreen(() => import('./components/screens/ScalingStartScreen'));
 const ShowYourWorkV2 = lazyScreen(() => import('./components/screens/v2/ShowYourWorkV2'));
 const SupportInboxV2 = lazyScreen(() => import('./components/screens/v2/SupportInboxV2'));
-const LegalScreen = lazyScreen(() => import('./components/screens/LegalScreen'));
+const LegalV2 = lazyScreen(() => import('./components/screens/v2/LegalV2'));
 const ScalingPlannerScreen = lazyScreen(() => import('./components/screens/ScalingPlannerScreen'));
 const BusinessAuditsScreen = lazyScreen(() => import('./components/screens/BusinessAuditsScreen'));
 const ClientCRMV2 = lazyScreen(() => import('./components/screens/v2/ClientCRMV2'));
@@ -49,15 +49,15 @@ const BrandLabScreen = lazyScreen(() => import('./components/screens/BrandLabScr
 const ScheduleV2 = lazyScreen(() => import('./components/screens/v2/ScheduleV2'));
 const ContactsV2 = lazyScreen(() => import('./components/screens/v2/ContactsV2'));
 const OpeningClosingV2 = lazyScreen(() => import('./components/screens/v2/OpeningClosingV2'));
-const NotificationSettingsScreen = lazyScreen(() => import('./components/screens/NotificationSettingsScreen'));
-const MorningDigestScreen = lazyScreen(() => import('./components/screens/MorningDigestScreen'));
+const NotificationsV2 = lazyScreen(() => import('./components/screens/v2/NotificationsV2'));
+const MorningDigestV2 = lazyScreen(() => import('./components/screens/v2/MorningDigestV2'));
 const SetupScreen = lazyScreen(() => import('./components/screens/SetupScreen'));
-const PlaybooksScreen = lazyScreen(() => import('./components/screens/PlaybooksScreen'));
+const PlaybooksV2 = lazyScreen(() => import('./components/screens/v2/PlaybooksV2'));
 const StreamingV2 = lazyScreen(() => import('./components/screens/v2/StreamingV2'));
 const StocksScreen = lazyScreen(() => import('./components/screens/StocksScreen'));
 const LeadFlowScreen = lazyScreen(() => import('./components/screens/LeadFlowScreen'));
 const AccountSettingsScreen = lazyScreen(() => import('./components/screens/AccountSettingsScreen'));
-const PromptVoiceSettingsScreen = lazyScreen(() => import('./components/screens/PromptVoiceSettingsScreen'));
+const NovaVoiceV2 = lazyScreen(() => import('./components/screens/v2/NovaVoiceV2'));
 const CallRecordingsV2 = lazyScreen(() => import('./components/screens/v2/CallRecordingsV2'));
 const WebsiteBuilderRoadmapScreen = lazyScreen(() => import('./components/screens/WebsiteBuilderRoadmapScreen'));
 const InvoicingV2 = lazyScreen(() => import('./components/screens/v2/InvoicingV2'));
@@ -66,22 +66,21 @@ const MacrosV2 = lazyScreen(() => import('./components/screens/v2/MacrosV2'));
 const BudgetingScreen = lazyScreen(() => import('./components/screens/BudgetingScreen'));
 const MarketingScreen = lazyScreen(() => import('./components/screens/MarketingScreen'));
 const ContentCreationScreen = lazyScreen(() => import('./components/screens/ContentCreationScreen'));
-const SwipeFileScreen = lazyScreen(() => import('./components/screens/SwipeFileScreen'));
+const SwipeFileV2 = lazyScreen(() => import('./components/screens/v2/SwipeFileV2'));
 const DecisionLogV2 = lazyScreen(() => import('./components/screens/v2/DecisionLogV2'));
 const WeeklyReviewV2 = lazyScreen(() => import('./components/screens/v2/WeeklyReviewV2'));
 const CashFlowV2 = lazyScreen(() => import('./components/screens/v2/CashFlowV2'));
 const PatternsV2 = lazyScreen(() => import('./components/screens/v2/PatternsV2'));
 const VoiceCaptureV2 = lazyScreen(() => import('./components/screens/v2/VoiceCaptureV2'));
 const ManageModulesScreen = lazyScreen(() => import('./components/screens/ManageModulesScreen'));
-const EditHomeWidgetsScreen = lazyScreen(() => import('./components/screens/EditHomeWidgetsScreen'));
-const GrantAccessScreen = lazyScreen(() => import('./components/screens/GrantAccessScreen'));
+const GrantAccessV2 = lazyScreen(() => import('./components/screens/v2/GrantAccessV2'));
 const InboxScreen = lazyScreen(() => import('./components/screens/inbox/InboxScreen'));
 const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 
 // Screens still on their pre-redesign layout: on phone they get the shared
 // back row so every module navigates the same way. Remove one from here
 // as it moves onto the mm/Page frame.
-const LEGACY_SCREENS = new Set(['legal', 'setup', 'playbooks', 'morning-digest', 'notification-settings', 'leadflow', 'prompt-voice-settings', 'budgeting', 'changelog', 'swipe-file', 'edit-home-widgets', 'grant-access']);
+const LEGACY_SCREENS = new Set(['leadflow']);
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
@@ -313,9 +312,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             onOpenClient={(id: string) => { setClientFocus(id); actions.navigateTo('client-crm'); }} onOpenLeadFlow={() => actions.navigateTo('leadflow')} onNavigate={shellNav} />
         )}
                 
-        {state.screen === 'legal' && (
-          <LegalScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'legal' && <LegalV2 />}
 
         {state.screen === 'scaling-planner' && (
           <ScalingPlannerScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
@@ -351,17 +348,11 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <SetupScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onNavigate={actions.navigateTo} />
         )}
 
-        {state.screen === 'playbooks' && (
-          <PlaybooksScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'playbooks' && <PlaybooksV2 />}
 
-        {state.screen === 'morning-digest' && (
-          <MorningDigestScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'morning-digest' && <MorningDigestV2 />}
 
-        {state.screen === 'notification-settings' && (
-          <NotificationSettingsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'notification-settings' && <NotificationsV2 />}
 
         {state.screen === 'streaming' && <StreamingV2 isOwner={isOwner} />}
 
@@ -370,7 +361,9 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'leadflow' && (
+          <div data-legacy="leadflow">
           <LeadFlowScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+          </div>
         )}
 
         {state.screen === 'ecommerce' && (
@@ -381,9 +374,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <AccountSettingsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onSignOut={onSignOut} onStartTour={startTour} theme={theme} onThemeChange={onThemeChange} soundFx={soundFx} onSoundFxChange={onSoundFxChange} />
         )}
 
-        {state.screen === 'prompt-voice-settings' && (
-          <PromptVoiceSettingsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'prompt-voice-settings' && <NovaVoiceV2 />}
 
         {state.screen === 'call-recordings' && <CallRecordingsV2 />}
 
@@ -394,7 +385,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         {state.screen === 'invoicing' && <InvoicingV2 />}
 
         {state.screen === 'budgeting' && (
-          <BudgetingScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} device={device} />
+          <BudgetingScreen device={device} />
         )}
 
         {state.screen === 'marketing' && (
@@ -423,13 +414,9 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           />
         )}
 
-        {state.screen === 'changelog' && (
-          <ChangelogScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'changelog' && <ChangelogV2 />}
 
-        {state.screen === 'swipe-file' && (
-          <SwipeFileScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'swipe-file' && <SwipeFileV2 />}
 
         {state.screen === 'decisions' && <DecisionLogV2 />}
 
@@ -443,7 +430,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'voice-capture' && <VoiceCaptureV2 />}
 
-        {state.screen === 'manage-modules' && (
+        {(state.screen === 'manage-modules' || state.screen === 'edit-home-widgets') && (
           <ManageModulesScreen
             homeHeadStyle={vm.homeHeadStyle}
             homeSubStyle={vm.homeSubStyle}
@@ -457,19 +444,14 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           />
         )}
 
-        {state.screen === 'edit-home-widgets' && (
-          <EditHomeWidgetsScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} isOwner={isOwner} />
-        )}
-
+        
         {state.screen === 'modules' && <ModulesGrid groups={moduleTiles} onOpen={shellNav} />}
         {state.screen === 'inbox' && (
           <InboxScreen device={device} isOwner={isOwner} inbox={ownerInbox} feed={leadFeed} focus={inboxFocus} onFocusConsumed={() => setInboxFocus(null)}
             onOpenClient={(id: string) => { setClientFocus(id); actions.navigateTo('client-modules'); }} onOpenLeadFlow={() => actions.navigateTo('leadflow')} onNavigate={shellNav} />
         )}
 
-        {state.screen === 'grant-access' && isOwner && (
-          <GrantAccessScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
+        {state.screen === 'grant-access' && isOwner && <GrantAccessV2 />}
 
         {(state.screen === 'placeholder' || !BUILT_SCREENS.includes(state.screen)) && (
           <PlaceholderScreen isMobile={isMobile} label={state.placeholderLabel} note={state.placeholderNote} />

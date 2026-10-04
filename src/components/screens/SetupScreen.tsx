@@ -6,10 +6,11 @@ import type { SetupEntry } from '../../data/setupCatalog';
 import { WORKERS, AUTONOMY_LABEL } from '../../data/ecom';
 import { startCompany, usePlaybooks } from '../../data/useEngine';
 import { supabase } from '../../lib/supabase';
-import { E, Badge, Pill, TeachingEmpty, btn, field, label, panel, tint } from './ecom/ecomShared';
+import { E, Badge, TeachingEmpty, btn, field, label, tint } from './ecom/ecomShared';
+import { Page, Tabs } from '../mm/Page';
 import { askConfirm } from '../../lib/confirm';
 
-interface Props { homeHeadStyle: CSSProperties; homeSubStyle: CSSProperties; onNavigate?: (id: string) => void }
+interface Props { homeHeadStyle?: CSSProperties; homeSubStyle?: CSSProperties; onNavigate?: (id: string) => void }
 interface Status {
   owner: boolean; canWriteSecrets: boolean; encryption: string; replyWebhook: string; oauthRedirect: string;
   platform: { id: string; present: { secret: string; set: boolean }[] }[];
@@ -23,7 +24,7 @@ type Tab = 'platform' | 'accounts' | 'start';
  *  what breaks without it → input → live Test, green or red with the real
  *  error. Platform keys are admin-only Worker secrets; account connections
  *  are per user and sealed server-side. The last tab starts the company. */
-export default function SetupScreen({ homeHeadStyle, homeSubStyle, onNavigate }: Props) {
+export default function SetupScreen({ onNavigate }: Props) {
   const [status, setStatus] = useState<Status | null>(null);
   const [tab, setTab] = useState<Tab>('platform');
   const [flash, setFlash] = useState('');
@@ -45,15 +46,9 @@ export default function SetupScreen({ homeHeadStyle, homeSubStyle, onNavigate }:
   const conn = (id: string) => status?.connections?.find((c) => c.provider === id);
 
   return (
-    <div>
-      <div style={homeHeadStyle}>Setup</div>
-      <div style={homeSubStyle}>Everything Mastermind needs from the outside, one screen each: what it does, where to get it, and a live test.</div>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 18 }}>
-        {status?.owner !== false && <Pill active={tab === 'platform'} onClick={() => setTab('platform')}>🔑 Platform setup</Pill>}
-        <Pill active={tab === 'accounts'} onClick={() => setTab('accounts')}>🔗 My connections</Pill>
-        {status?.owner !== false && <Pill active={tab === 'start'} onClick={() => setTab('start')}>🏢 Start the company</Pill>}
-      </div>
-      <div style={{ ...panel, marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <Page title="Setup" sub="Everything Mastermind needs from the outside: what it does, where to get it, and a live test" back="Settings" backTo="account-settings">
+      <Tabs<Tab> tabs={[...(status?.owner !== false ? [{ id: 'platform' as Tab, label: 'Platform setup' }] : []), { id: 'accounts' as Tab, label: 'My connections' }, ...(status?.owner !== false ? [{ id: 'start' as Tab, label: 'Start the company' }] : [])]} value={tab} onChange={setTab} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {flash && <div style={{ ...E.card, padding: 10, borderColor: flash.startsWith('Connect failed') ? E.red : E.green, fontSize: 'var(--text-body)' }}>{flash}</div>}
         {loadError && <div style={{ color: E.red }}>Couldn't load Setup: {loadError} <button style={{ ...btn('ghost'), padding: '3px 10px', fontSize: 12, marginLeft: 6 }} onClick={load}>Retry</button></div>}
         {!status && !loadError && <div style={{ color: E.faint }}>Checking what's connected…</div>}
@@ -83,7 +78,7 @@ export default function SetupScreen({ homeHeadStyle, homeSubStyle, onNavigate }:
         )}
         {status && tab === 'start' && <StartCompany onNavigate={onNavigate} />}
       </div>
-    </div>
+    </Page>
   );
 }
 

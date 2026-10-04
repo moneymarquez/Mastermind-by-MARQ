@@ -653,6 +653,12 @@ textarea.ap-input { min-height: 90px; resize: vertical; }
   /* Figures are Inter with tabular numbers — no monospace in this look. */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'Inter', system-ui, -apple-system, sans-serif;
+  /* Legacy tokens still read by older sub-views, mapped onto the handoff
+     scale so nothing inside a redesigned screen looks like the old app. */
+  --radius-xs: 6px; --radius-sm: 8px; --radius-md: 8px; --radius-lg: 16px; --radius-xl: 16px; --radius-2xl: 16px; --radius-3xl: 16px;
+  --text-nano: 11px; --text-micro: 11.5px; --text-tiny: 12px; --text-caption: 12.5px; --text-small: 13px;
+  --text-body-sm: 14px; --text-body: 15px; --text-body-lg: 15px; --text-label: 15px;
+  --text-subhead: 17px; --text-head: 18px; --text-title: 22px; --text-stat: 26px; --text-display: 30px;
 
   /* Shape: cards 16, buttons + inputs 8, inner tiles 10–12. */
   --radius-xs: 4px;
@@ -749,3 +755,15 @@ textarea.ap-input { min-height: 90px; resize: vertical; }
   -webkit-font-smoothing: antialiased;
   color: var(--text-secondary);
 }
+
+/* Older button classes, drawn as the handoff's buttons. */
+.ap-btn { min-height: 38px; padding: 0 14px !important; border-radius: 8px !important; font-size: 14px !important; font-weight: 600 !important; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.ap-btn-primary { background: var(--text) !important; color: var(--bg) !important; border-color: var(--text) !important; }
+.ap-btn-primary:hover { opacity: .9; }
+.ap-btn-ghost { color: var(--text) !important; }
+.ap-btn-icon { width: 38px; padding: 0 !important; }
+
+/* Handoff labels are sentence case. Older sub-views set uppercase inline;
+   undo it everywhere except LeadFlow (owner-maintained, left as is). */
+#tour-content-panel [style*="text-transform: uppercase"]:not([data-legacy] *),
+[role="dialog"] [style*="text-transform: uppercase"] { text-transform: none !important; letter-spacing: normal !important; }
