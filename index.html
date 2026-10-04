@@ -2,6 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Signed-out visitors on the bare root see the public site (/home)
+      // before the app bundle downloads. The app itself stays at /?login and
+      // /?signup, and anything with a query or hash (deep links, Stripe and
+      // auth returns, demo, invites) or an installed app passes straight through.
+      (function () {
+        try {
+          if (location.pathname !== '/' || location.search || location.hash) return;
+          if ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone) return;
+          for (var i = 0; i < localStorage.length; i++) { if (/^sb-.*-auth-token$/.test(localStorage.key(i) || '')) return; }
+          location.replace('/home');
+        } catch (e) { /* storage blocked: show the app's sign-in */ }
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Marquez Mastermind</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />

@@ -12,8 +12,17 @@ function buildId(): string {
   try { return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch { return 'dev'; }
 }
 
+// The public marketing site: its own HTML pages, built beside the app but
+// never part of it (no app CSS, not in the service worker's precache).
+const SITE_PAGES = ['home', 'product', 'concepts', 'jobs', 'apply', 'team', 'refund', 'disclaimers', 'roadmap'];
+
 export default defineConfig({
   define: { __APP_BUILD__: JSON.stringify(buildId()) },
+  build: {
+    rollupOptions: {
+      input: Object.fromEntries([['main', 'index.html'], ...SITE_PAGES.map((p) => [p, `${p}.html`])]),
+    },
+  },
   plugins: [
     react(),
     // manifest.json is hand-written in public/ (exact content the app
@@ -34,7 +43,11 @@ export default defineConfig({
       // plan forms). Raised with headroom rather than re-bumped every time
       // a build item adds a few hundred KB; doesn't change what's cached,
       // just how large a single precached file is allowed to be.
-      injectManifest: { maximumFileSizeToCacheInBytes: 6 * 1024 * 1024 },
+      injectManifest: {
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+        // Keep the public site out of the app's offline cache.
+        globIgnores: ['**/node_modules/**', ...SITE_PAGES.map((p) => `${p}.html`), 'site/**', 'assets/site-*', 'assets/home-*'],
+      },
     }),
   ],
 })

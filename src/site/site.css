@@ -1,0 +1,49 @@
+/* Masterminds public site. Its own system (design: Masterminds Home v3):
+   Instrument Sans words, IBM Plex Mono numbers and labels, Mercury dark
+   sections (#171721 / #ededf3, one cobalt #5266eb action), Ventriloc warm
+   paper sections (#fbf9f4). Never imports the app's CSS; --lp-* tokens and
+   .lp-* classes only, so app skins can never reach in here. Inline styles in
+   the components carry the design's exact values; this file holds the
+   tokens, resets, hover states and keyframes. */
+
+:root {
+  --lp-ink: #100f12;
+  --lp-onyx: #171721;
+  --lp-ivory: #ededf3;
+  --lp-cobalt: #5266eb;
+  --lp-cobalt-hover: #4356d9;
+  --lp-paper: #fbf9f4;
+  --lp-paper-ink: #1b1a17;
+  --lp-sans: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --lp-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html, body { margin: 0; background: var(--lp-onyx); font-family: var(--lp-sans); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+*, *::before, *::after { box-sizing: border-box; }
+a { color: var(--lp-cobalt); text-decoration: none; }
+a:hover { color: #3f52d6; }
+button { font-family: var(--lp-sans); }
+img { max-width: none; }
+input::placeholder { color: rgba(23, 30, 48, .45); }
+:focus-visible { outline: 2px solid var(--lp-cobalt); outline-offset: 2px; }
+.lp-mono { font-family: var(--lp-mono); }
+
+/* Hover states from the design's style-hover attributes. */
+.lp-h-fade:hover { opacity: .65; color: inherit !important; }
+.lp-h-primary { transition: background-color .15s; }
+.lp-h-primary:hover { background: var(--lp-cobalt-hover) !important; color: #fff !important; }
+.lp-h-inv-navy:hover { background: #121826 !important; color: #fff !important; }
+.lp-h-inv-ivory:hover { background: #ededf3 !important; color: #171721 !important; }
+.lp-h-inv-ink:hover { background: #1b1a17 !important; color: #fbf9f4 !important; }
+.lp-h-ul:hover { color: #fff !important; text-decoration: underline; }
+.lp-h-inv-navy, .lp-h-inv-ivory, .lp-h-inv-ink { transition: background-color .15s, color .15s; }
+
+/* Sliding logo rows (Rootly). */
+@keyframes mmRight { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+.lp-fade-edges { overflow: hidden; mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%); -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%); }
+
+.lp-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; }
+}
