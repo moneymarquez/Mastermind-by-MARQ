@@ -57,6 +57,8 @@ export function buildSeed(): Record<string, Row[]> {
   ]);
   T('sobriety_checkins', Array.from({ length: 23 }, (_, i) => ({ id: uid('sobr'), checkin_date: dayStr(-i), drank: false, weed: false, nicotine: false, heavy: false, note: null, ai_insight: null })));
   T('fitness_workouts', [{ id: uid('work'), workout_date: dayStr(0), workout_type: 'Strength — push', duration_min: 48, distance_mi: null, notes: 'Bench 185×5' }, { id: uid('work'), workout_date: dayStr(-1), workout_type: 'Run', duration_min: 32, distance_mi: 3.1, notes: null }, { id: uid('work'), workout_date: dayStr(-3), workout_type: 'Strength — pull', duration_min: 45, distance_mi: null, notes: null }]);
+  T('brain_assessments', [{ id: uid('brna'), version: 2, answers: {}, scores: { D: 9, I: 7, S: 4, C: 3, CON: 1, STAB: 1 }, primary_type: 'D', secondary_type: 'I', created_at: iso(-33) }]);
+  T('brain_checkins', Array.from({ length: 14 }, (_, i) => ({ date: dayStr(-i - 1), score: i % 5 === 3 ? 1 : 5, note: null, hour_happened: i % 5 !== 3, dials: 30 + (i % 7) })));
   T('nutrition_targets', [{ id: uid('nutr'), active: true, daily_calories: 2400, daily_protein_g: 190, daily_carbs_g: 240, daily_fat_g: 75, start_date: dayStr(-30), rationale: 'Lean bulk while training 4×/week.' }]);
   T('meals', [
     { id: uid('meal'), meal_date: dayStr(0), meal_type: 'breakfast', source: 'home', calories: 540, protein_g: 42, carbs_g: 55, fat_g: 16, note: 'Eggs, oats, berries', log_method: 'photo' },

@@ -83,18 +83,21 @@ export function BackRow({ back = 'All modules', backTo = 'modules' }: { back?: s
  *  the 24px title; wide gets the 28px title with actions on the right.
  *  `fab` is the module's primary action: a floating button on phone, the
  *  primary header button on wide. `more` is a full view opened from ⋯. */
-export function Page({ title, sub, back = 'All modules', backTo = 'modules', onBack, right, fab, menu = [], more, children, client }: {
+export function Page({ title, sub, back = 'All modules', backTo = 'modules', onBack, right, fab, menu = [], more, openMore = 0, children, client }: {
   title: ReactNode; sub?: ReactNode; back?: string; backTo?: string;
   /** Back within the screen (a detail view's "All briefs"), instead of
    *  navigating to backTo. Also shows on wide, where there's no phone row. */
   onBack?: () => void;
   right?: { t: string; onClick: () => void }; fab?: { t: string; onClick: () => void };
   menu?: PageAction[]; more?: { label: string; render: () => ReactNode }; children: ReactNode; client?: boolean;
+  /** Bump to open the More view from a button inside the page. */
+  openMore?: number;
 }) {
   const { device, nav, askNova } = useModule();
   const phone = device === 'phone';
   const [menuOpen, setMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  useEffect(() => { if (openMore > 0) setMoreOpen(true); }, [openMore]);
   const items = [...menu, ...(more ? [{ t: more.label, onClick: () => setMoreOpen(true) }] : [])];
   const dots = items.length > 0 && (
     <div style={{ position: 'relative' }}>

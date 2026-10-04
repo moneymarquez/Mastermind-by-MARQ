@@ -26,7 +26,7 @@ import { useResolvedTheme } from './data/useTheme';
 // Screens load on demand; Overview ships in the main bundle.
 const DemoTour = lazyScreen(() => import('./demo/DemoTour'));
 const ChangelogScreen = lazyScreen(() => import('./components/screens/ChangelogScreen'));
-const DispatchScreen = lazyScreen(() => import('./dispatch/DispatchScreen'));
+const DispatchV2 = lazyScreen(() => import('./components/screens/v2/DispatchV2'));
 const DispatchLayer = lazyScreen(() => import('./dispatch/DispatchLayer'));
 const ClientModulesV2 = lazyScreen(() => import('./components/screens/v2/ClientModulesV2'));
 const DialingV2 = lazyScreen(() => import('./components/screens/v2/DialingV2'));
@@ -35,7 +35,7 @@ const SobrietyV2 = lazyScreen(() => import('./components/screens/v2/SobrietyV2')
 const FitnessV2 = lazyScreen(() => import('./components/screens/v2/FitnessV2'));
 const GoalsV2 = lazyScreen(() => import('./components/screens/v2/GoalsV2'));
 const MentalHealthV2 = lazyScreen(() => import('./components/screens/v2/MentalHealthV2'));
-const BrainScreen = lazyScreen(() => import('./components/screens/brain/BrainScreen'));
+const BrainV2 = lazyScreen(() => import('./components/screens/v2/BrainV2'));
 const EcomScreen = lazyScreen(() => import('./components/screens/ecom/EcomScreen'));
 const ScalingStartScreen = lazyScreen(() => import('./components/screens/ScalingStartScreen'));
 const ShowYourWorkV2 = lazyScreen(() => import('./components/screens/v2/ShowYourWorkV2'));
@@ -81,7 +81,7 @@ const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 // Screens still on their pre-redesign layout: on phone they get the shared
 // back row so every module navigates the same way. Remove one from here
 // as it moves onto the mm/Page frame.
-const LEGACY_SCREENS = new Set(['brain', 'legal', 'setup', 'playbooks', 'morning-digest', 'notification-settings', 'leadflow', 'prompt-voice-settings', 'budgeting', 'changelog', 'swipe-file', 'edit-home-widgets', 'grant-access']);
+const LEGACY_SCREENS = new Set(['legal', 'setup', 'playbooks', 'morning-digest', 'notification-settings', 'leadflow', 'prompt-voice-settings', 'budgeting', 'changelog', 'swipe-file', 'edit-home-widgets', 'grant-access']);
 
 const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
@@ -288,9 +288,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'mental' && <MentalHealthV2 />}
 
-        {state.screen === 'brain' && (
-          <BrainScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onNavigate={actions.navigateTo} />
-        )}
+        {state.screen === 'brain' && <BrainV2 />}
 
         {state.screen === 'scaling-start' && (
           <ScalingStartScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} onNavigate={actions.navigateTo} />
@@ -433,9 +431,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'patterns' && <PatternsV2 />}
 
-        {state.screen === 'dispatch' && (
-          <DispatchScreen isMobile={isMobile} onBack={() => actions.navigateTo('home')} dockBottom={`calc(${PHONE_TAB_H + 10}px + max(env(safe-area-inset-bottom), 20px))`} />
-        )}
+        {state.screen === 'dispatch' && <DispatchV2 />}
 
         {state.screen === 'voice-capture' && <VoiceCaptureV2 />}
 
