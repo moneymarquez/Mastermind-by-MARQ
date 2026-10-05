@@ -43,6 +43,7 @@ import { pushSubscription } from './handlers/push-subscription';
 import type { PushSubscriptionEnv } from './handlers/push-subscription';
 import { runMorningDigest, digestTest, digestStatus, digestReply } from './handlers/digest';
 import { runOrchestratorTick } from './lib/orchestrator';
+import { runPublisherTick } from './lib/publisher';
 import type { DigestEnv } from './handlers/digest';
 import { engineRoute } from './handlers/engine';
 import { setupRoute } from './handlers/setup';
@@ -64,7 +65,7 @@ interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEm
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx?: { waitUntil: (promise: Promise<unknown>) => void }): Promise<Response> {
     const url = new URL(request.url);
 
     if (url.pathname === '/api/save-broker-keys') return saveBrokerKeys(request, env);
@@ -108,7 +109,7 @@ export default {
     if (url.pathname === '/api/digest/reply') return digestReply(request, env);
 
     const engineMatch = url.pathname.match(/^\/api\/engine\/([a-z-]+)$/);
-    if (engineMatch) return engineRoute(request, env, engineMatch[1]);
+    if (engineMatch) return engineRoute(request, env, engineMatch[1], ctx);
     const setupMatch = url.pathname.match(/^\/api\/(?:setup|connect)\/([a-z/-]+)$/);
     if (setupMatch) return setupRoute(request, env, setupMatch[1]);
     const officeMatch = url.pathname.match(/^\/api\/office\/([a-z-]+)$/);
@@ -158,6 +159,7 @@ export default {
       ctx.waitUntil(runShiftReminders(env));
       ctx.waitUntil(runOrchestratorTick(env));
       ctx.waitUntil(runInboundWaitCheck(env));
+      ctx.waitUntil(runPublisherTick(env));
       return;
     }
     ctx.waitUntil(runStocksBot(env));

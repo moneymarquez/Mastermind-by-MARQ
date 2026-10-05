@@ -28,6 +28,8 @@ export interface ContentItem {
   id: string; account_id: string | null; brand_id: string | null; status: ItemStatus; concept: string; hooks: string[]; script: string | null; shot_list: string[];
   caption: string | null; hashtags: string | null; visual_prompt: string | null; format: Format; thumbnail_url: string | null; scheduled_for: string | null; scheduled_time: string | null;
   posted_post_id: string | null; grade: number | null; grade_note: string | null; created_at: string; updated_at: string;
+  /** Where the Publisher has it (schema_120). */
+  publish_status?: 'queued' | 'publishing' | 'processing' | 'published' | 'failed' | null; publish_error?: string | null; published_at?: string | null; publish_url?: string | null;
 }
 
 /** Trend Researcher finds (C3) and links saved by hand. */

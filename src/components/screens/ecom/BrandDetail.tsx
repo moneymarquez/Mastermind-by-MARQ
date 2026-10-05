@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { runWorkerNow } from '../../../data/useEngine';
+import { runWorkerNow, launchNow } from '../../../data/useEngine';
 import { diagnoseFunnel } from '../../../../worker/lib/ecomWorkers';
 import { StorePreview } from './ApprovalBodies';
 import type { CSSProperties } from 'react';
@@ -179,11 +179,20 @@ function StepWorker({ brand, n }: { brand: Brand; n: number }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [html, setHtml] = useState<string | null>(null);
+  const [build, setBuild] = useState<{ id: string; status: string; live_url: string | null; checkout_url: string | null; launch_error: string | null; launched_at: string | null } | null>(null);
+  const [launching, setLaunching] = useState(false);
   useEffect(() => {
     if (n !== 6) return;
-    supabase.from('ecom_store_builds').select('html').eq('brand_id', brand.id).not('html', 'is', null).order('created_at', { ascending: false }).limit(1)
-      .then(({ data }) => setHtml(((data ?? [])[0] as { html?: string } | undefined)?.html ?? null));
+    supabase.from('ecom_store_builds').select('id,html,status,live_url,checkout_url,launch_error,launched_at').eq('brand_id', brand.id).not('html', 'is', null).order('created_at', { ascending: false }).limit(1)
+      .then(({ data }) => { const b = (data ?? [])[0] as ({ html?: string } & NonNullable<typeof build>) | undefined; setHtml(b?.html ?? null); setBuild(b ?? null); });
   }, [n, brand.id, msg]);
+  const launch = async () => {
+    if (!build) return;
+    setLaunching(true);
+    const r = await launchNow(build.id);
+    setLaunching(false);
+    setMsg(r.ok ? { ok: true, text: r.summary ?? 'Live.' } : { ok: false, text: r.error ?? 'Launch failed.' });
+  };
   const run = async () => {
     setBusy(true); setMsg(null);
     const r = await runWorkerNow(w.key, { brand_id: brand.id });
@@ -194,9 +203,17 @@ function StepWorker({ brand, n }: { brand: Brand; n: number }) {
     <div style={{ marginTop: 12, padding: 10, borderRadius: 'var(--radius-sm)', border: `1px dashed ${E.border}` }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
         <button style={btn('primary')} disabled={busy} onClick={run}>{busy ? w.busy : `🤖 Run ${w.name}`}</button>
-        <span style={{ fontSize: 'var(--text-caption)', color: E.faint }}>Its output waits in Approvals; approving fills this step.</span>
+        <span style={{ fontSize: 'var(--text-caption)', color: E.faint }}>{n === 6 ? 'Its page waits in Approvals; approving it launches the store (Shopify + Cloudflare Pages).' : 'Its output waits in Approvals; approving fills this step.'}</span>
       </div>
       {msg && <div style={{ fontSize: 'var(--text-caption)', color: msg.ok ? E.muted : E.red, marginTop: 6 }}>{msg.text}</div>}
+      {n === 6 && build && (build.live_url || build.launch_error) && (
+        <div style={{ marginTop: 10, padding: 10, borderRadius: 'var(--radius-sm)', border: `1px solid ${build.live_url ? E.green : E.red}` }}>
+          <div style={{ ...label, marginBottom: 4, color: build.live_url ? E.green : E.red }}>Launcher · {build.live_url ? 'live' : 'didn\'t launch'}</div>
+          {build.live_url && <div style={{ fontSize: 'var(--text-body)', color: E.text }}><a href={build.live_url} target="_blank" rel="noopener noreferrer" style={{ color: E.blue }}>{build.live_url.replace(/^https:\/\//, '')}</a>{build.checkout_url && <> · Buy → <a href={build.checkout_url} target="_blank" rel="noopener noreferrer" style={{ color: E.blue }}>Shopify checkout</a></>}</div>}
+          {build.launch_error && <div style={{ fontSize: 'var(--text-caption)', color: E.muted, marginTop: 4 }}>{build.live_url ? 'Last re-launch failed: ' : ''}{build.launch_error}</div>}
+          <button style={{ ...btn(build.live_url ? 'ghost' : 'primary'), marginTop: 8 }} disabled={launching} onClick={launch}>{launching ? 'Launching…' : build.live_url ? 'Re-launch' : 'Launch again'}</button>
+        </div>
+      )}
       {n === 6 && html && <div style={{ marginTop: 10 }}><div style={{ ...label, marginBottom: 6 }}>Latest store page</div><StorePreview html={html} name={brand.name} /></div>}
     </div>
   );

@@ -46,6 +46,10 @@ export interface RunRes extends RunResult { skipped?: boolean }
 export const runScout = (channel: string, count: number, instructions?: string) => api<RunRes>('/api/engine/run', { body: { worker: 'scout', channel, count, instructions } });
 /** Any live worker: body carries what that worker needs (product_id,
  *  venture, script_channel, all…). */
+/** "Publish again" on one post (one attempt), or post whatever is due. */
+export const publishNow = (itemId?: string) => api<RunRes>('/api/engine/publish', { body: itemId ? { item_id: itemId } : {} });
+/** "Launch again" on a store build. */
+export const launchNow = (buildId: string) => api<RunRes>('/api/engine/launch', { body: { build_id: buildId } });
 export const runWorkerNow = (worker: string, body: Record<string, unknown>) => api<RunRes>('/api/engine/run', { body: { worker, ...body } });
 
 // ── The Orchestrator's overnight plan ─────────────────────────────────
@@ -54,7 +58,7 @@ export interface DailyPlan { date: string; plan: { key: string; worker: string |
 export const getDailyPlan = () => api<DailyPlan>('/api/engine/daily', { method: 'GET' });
 export const runDailyStep = () => api<{ date: string; done: boolean; step: { step: { key: string; label: string }; status: string; note: string } | null }>('/api/engine/daily', { method: 'POST' });
 export const decideApproval = (approvalId: string, status: 'approved' | 'sent_back' | 'killed', note?: string | null, rerun?: boolean, choice?: number) =>
-  api<{ ok: boolean; applied?: Record<string, unknown> | null; rerun?: RunResult; error?: string }>('/api/engine/decide', { body: { approval_id: approvalId, status, note, rerun, choice } });
+  api<{ ok: boolean; type?: string; applied?: Record<string, unknown> | null; rerun?: RunResult; launch?: RunResult; error?: string }>('/api/engine/decide', { body: { approval_id: approvalId, status, note, rerun, choice } });
 export const startCompany = () => api<{ workers: WorkerRow[]; anthropic: boolean }>('/api/engine/start', { method: 'POST' });
 
 // ── Playbooks ─────────────────────────────────────────────────────────

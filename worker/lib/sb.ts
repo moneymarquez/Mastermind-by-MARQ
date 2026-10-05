@@ -52,6 +52,14 @@ export class Sb {
   async remove(table: string, filter: string): Promise<void> {
     await fetch(`${this.url}/rest/v1/${table}?${filter}`, { method: 'DELETE', headers: this.headers });
   }
+  /** PATCH that returns the rows it changed — a conditional patch
+   *  (…&status=eq.queued) doubles as an atomic claim. */
+  async patchReturning<T = Record<string, unknown>>(table: string, filter: string, body: unknown): Promise<T[]> {
+    const res = await fetch(`${this.url}/rest/v1/${table}?${filter}`, { method: 'PATCH', headers: { ...this.headers, Prefer: 'return=representation' }, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(`patch ${table}: ${res.status} ${(await res.text().catch(() => '')).slice(0, 300)}`);
+    const rows = await res.json();
+    return Array.isArray(rows) ? (rows as T[]) : [];
+  }
   async patch(table: string, filter: string, body: unknown): Promise<void> {
     const res = await fetch(`${this.url}/rest/v1/${table}?${filter}`, { method: 'PATCH', headers: this.headers, body: JSON.stringify(body) });
     if (!res.ok) throw new Error(`patch ${table}: ${res.status} ${(await res.text().catch(() => '')).slice(0, 300)}`);

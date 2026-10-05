@@ -6,6 +6,7 @@ import { STATUSES, STATUS, FORMATS, PLATFORM, weekDays, weekLabel, dayLabel, nex
 import { dateStr, addDaysStr } from '../../../data/time';
 import { E, Badge, Drawer, TeachingEmpty, btn, field, label, useIsMobile, tint } from '../ecom/ecomShared';
 import { askConfirm } from '../../../lib/confirm';
+import { publishNow } from '../../../data/useEngine';
 
 type ItemsApi = ReturnType<typeof useContentItems>;
 type AccountsApi = ReturnType<typeof useSocialAccounts>;
@@ -91,6 +92,44 @@ export default function PlanTab({ items, accounts, newOpen, onCloseNew }: Props)
   );
 }
 
+const PUB = {
+  queued: { label: 'auto-posts', color: E.blue },
+  publishing: { label: 'posting…', color: E.blue },
+  processing: { label: 'platform processing', color: E.amber },
+  published: { label: 'posted', color: E.green },
+  failed: { label: 'post failed', color: E.red },
+} as const;
+
+/** The Publisher's view of one post: queued for its time, posting, live
+ *  (with the platform link), or failed with the platform's own words and
+ *  a one-press retry. */
+function PublishPanel({ item, onDone }: { item: ContentItem; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const st = item.publish_status;
+  if (!st) return null;
+  const again = async () => {
+    setBusy(true); setMsg('');
+    const r = await publishNow(item.id);
+    setBusy(false); setMsg(r.error ?? r.summary ?? ''); onDone();
+  };
+  const when = item.scheduled_for ? `${item.scheduled_for}${item.scheduled_time ? ` ${item.scheduled_time.slice(0, 5)}` : ''}` : 'as soon as possible';
+  return (
+    <div style={{ ...E.card, padding: 12, marginBottom: 12, borderColor: PUB[st].color }}>
+      <div style={{ ...label, marginBottom: 4, color: PUB[st].color }}>Publisher · {PUB[st].label}</div>
+      <div style={{ fontSize: 'var(--text-body)', color: E.text }}>
+        {st === 'queued' && `Approved. Posts on its own at ${when} (Denver time).`}
+        {st === 'publishing' && 'Uploading to the platform now.'}
+        {st === 'processing' && 'Uploaded — the platform is processing the video. It goes live when they finish (checked every 5 minutes).'}
+        {st === 'published' && <>Posted{item.published_at ? ` ${new Date(item.published_at).toLocaleString()}` : ''}. {item.publish_url && <a href={item.publish_url} target="_blank" rel="noopener noreferrer" style={{ color: E.blue }}>Open the post</a>}</>}
+        {st === 'failed' && <>Not posted. <span style={{ color: E.muted }}>{item.publish_error}</span></>}
+      </div>
+      {st === 'failed' && <button style={{ ...btn('primary'), marginTop: 8 }} disabled={busy} onClick={again}>{busy ? 'Posting…' : 'Publish again'}</button>}
+      {msg && <div style={{ fontSize: 'var(--text-caption)', color: E.muted, marginTop: 6 }}>{msg}</div>}
+    </div>
+  );
+}
+
 function SlotCard({ i, a, onOpen }: { i: ContentItem; a: SocialAccount | null; onOpen: () => void }) {
   const st = STATUS[i.status];
   return (
@@ -104,6 +143,7 @@ function SlotCard({ i, a, onOpen }: { i: ContentItem; a: SocialAccount | null; o
           {a && <span style={{ fontSize: 10, color: E.faint }}>· {PLATFORM[a.platform].short} @{a.handle}</span>}
           {i.scheduled_time && <span style={{ fontSize: 10, color: E.faint, fontFamily: 'var(--font-mono)' }}>· {i.scheduled_time.slice(0, 5)}</span>}
           {i.grade && <Badge color={GRADE_COLOR[i.grade]}>{i.grade}/4</Badge>}
+          {i.publish_status && i.publish_status !== 'published' && <Badge color={PUB[i.publish_status].color}>{PUB[i.publish_status].label}</Badge>}
         </div>
       </div>
     </div>
@@ -167,6 +207,7 @@ function ItemDrawer({ items, accounts, item, defaultDate, defaultAccount, onClos
           {nextStatus(item.status) && <button style={{ ...btn('primary'), padding: '4px 10px', fontSize: 12, marginLeft: 'auto' }} onClick={advance}>{nextStatus(item.status) === 'posted' ? 'Mark posted' : `→ ${STATUS[nextStatus(item.status)!].label}`}</button>}
         </div>
       )}
+      {item && <PublishPanel item={item} onDone={() => { void items.reload(); }} />}
       {posting && (
         <div style={{ ...E.card, padding: 12, marginBottom: 12, borderColor: E.green }}>
           <div style={{ ...label, marginBottom: 4 }}>Link to the published post</div>
@@ -178,7 +219,7 @@ function ItemDrawer({ items, accounts, item, defaultDate, defaultAccount, onClos
           {!accountId && <div style={{ fontSize: 12, color: E.amber, marginTop: 6 }}>Pick an account first — the post's numbers live under it.</div>}
         </div>
       )}
-      {item && item.status !== 'posted' && ['edited', 'approved'].includes(item.status) && (caption.trim() || hashtags.trim()) && !posting && (
+      {item && item.status !== 'posted' && !item.publish_status && ['edited', 'approved'].includes(item.status) && (caption.trim() || hashtags.trim()) && !posting && (
         <div style={{ ...E.card, padding: 12, marginBottom: 12, borderColor: E.green }}>
           <div style={{ ...label, marginBottom: 4 }}>Ready to post{item.scheduled_for ? ` · ${item.scheduled_for}${item.scheduled_time ? ` ${item.scheduled_time.slice(0, 5)}` : ''}` : ''}</div>
           <div style={{ fontSize: 'var(--text-body)', color: E.text, whiteSpace: 'pre-wrap' }}>{[caption.trim(), hashtags.trim()].filter(Boolean).join('\n\n')}</div>

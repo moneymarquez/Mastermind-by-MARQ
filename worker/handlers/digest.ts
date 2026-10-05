@@ -111,11 +111,15 @@ async function mmDesk(sb: Sb, u: string, today: string): Promise<DeskReport> {
 
 async function contentDesk(sb: Sb, u: string, today: string, yday: string): Promise<DeskReport> {
   const since30 = addDaysIso(today, -30);
-  const [accounts, posts, items] = await Promise.all([
+  const [accounts, posts, items, pubLog] = await Promise.all([
     sb.count(`social_accounts?user_id=eq.${u}`),
     sb.get<{ id: string; account_id: string; posted_at: string; hook: string | null }>(`social_posts?user_id=eq.${u}&posted_at=gte.${since30}T00:00:00&select=id,account_id,posted_at,hook`),
     sb.get<{ concept: string; status: string; scheduled_for: string | null }>(`content_items?user_id=eq.${u}&status=in.(idea,script)&scheduled_for=gte.${today}&scheduled_for=lte.${addDaysIso(today, 1)}&order=scheduled_for.asc&select=concept,status,scheduled_for`),
+    // What the Publisher did since yesterday, failures with the platform's words.
+    sb.get<{ status: string; platform: string; error: string | null }>(`content_publish_log?user_id=eq.${u}&date=gte.${yday}&status=in.(published,failed)&select=status,platform,error`),
   ]);
+  const published = pubLog.filter((l) => l.status === 'published').length;
+  const pubFailed = pubLog.filter((l) => l.status === 'failed');
   if (accounts === 0 && posts.length === 0 && items.length === 0) return { desk: 'content', line: '', full: 'Content: no accounts yet. Add them in Content → Accounts.', setUp: false };
   const ids = posts.map((p) => p.id);
   const metrics = ids.length ? await sb.get<{ post_id: string; views: number | null; captured_at: string }>(`social_post_metrics?post_id=in.(${ids.join(',')})&select=post_id,views,captured_at`) : [];
@@ -128,8 +132,10 @@ async function contentDesk(sb: Sb, u: string, today: string, yday: string): Prom
   const grades = yPosts.map((p) => grade(latest[p.id], avg(p.account_id))).filter((g): g is number => g != null);
   const film = items.slice(0, 3).map((i) => i.concept);
   const line = film.length ? `Film ${film.length}: ${film.join(', ')}` : yPosts.length ? `${yPosts.length} posted yesterday${grades.length ? ` (grades ${grades.join(', ')})` : ''}` : 'Nothing scheduled — plan the week';
-  const full = [`CONTENT — ${today}`, `Accounts: ${accounts}`, `Yesterday: ${yPosts.length} post${yPosts.length === 1 ? '' : 's'}${grades.length ? `, grades ${grades.join(', ')}` : ''}`, `To film today/tomorrow: ${film.length ? film.join('; ') : 'nothing scheduled'}`, `Posts in the last 30 days: ${posts.length}`].join('\n');
-  return { desk: 'content', line, full, setUp: true, urgent: film.length ? [{ weight: 20, text: `Film: ${film[0]}` }] : [] };
+  const full = [`CONTENT — ${today}`, `Accounts: ${accounts}`, `Yesterday: ${yPosts.length} post${yPosts.length === 1 ? '' : 's'}${grades.length ? `, grades ${grades.join(', ')}` : ''}`, `To film today/tomorrow: ${film.length ? film.join('; ') : 'nothing scheduled'}`, `Posts in the last 30 days: ${posts.length}`,
+    pubLog.length ? `Publisher since yesterday: ${published} posted, ${pubFailed.length} failed${pubFailed.length ? ` — ${pubFailed.slice(0, 2).map((f) => `${f.platform}: ${(f.error ?? '').slice(0, 120)}`).join(' | ')}` : ''}` : ''].filter(Boolean).join('\n');
+  const urgent = [...(pubFailed.length ? [{ weight: 60, text: `${pubFailed.length} approved post${pubFailed.length === 1 ? '' : 's'} failed to post — ${pubFailed[0].platform}: ${(pubFailed[0].error ?? '').slice(0, 80)}` }] : []), ...(film.length ? [{ weight: 20, text: `Film: ${film[0]}` }] : [])];
+  return { desk: 'content', line, full, setUp: true, urgent };
 }
 
 async function marketingDesk(sb: Sb, u: string, today: string): Promise<DeskReport> {

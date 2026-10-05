@@ -8,8 +8,9 @@ import { LIVE_WORKERS } from '../src/data/ecom';
 test('worker specs, lead filter rules, grading, orchestrator plan', async () => {
 
   const ctx = { playbooks: 'PB', corrections: ['no fragile'], budgetNote: 'Budget $1' };
-  // every live worker has a runner, and vice versa
-  assert.deepEqual([...LIVE_WORKERS].sort(), Object.keys(RUNNERS).sort());
+  // Every live worker has a runner, except the two that act instead of
+  // drafting (lib/publisher.ts, lib/launcher.ts), which run on approval.
+  assert.deepEqual([...LIVE_WORKERS].filter((k) => k !== 'publisher' && k !== 'launcher').sort(), Object.keys(RUNNERS).sort());
   for (const t of ['scout_products', 'analysis', 'teardown', 'lead_tags', 'scripts', 'campaign_plan', 'grades']) assert.ok(APPLIERS[t], t);
 
   // brief spine

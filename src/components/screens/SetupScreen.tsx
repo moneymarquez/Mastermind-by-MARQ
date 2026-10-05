@@ -170,8 +170,10 @@ function AppSecretsCard({ status, onChanged }: { status: Status; onChanged: () =
   const rows: { secret: string; label: string; help: string }[] = [
     { secret: 'INSTAGRAM_APP_ID', label: 'Instagram app ID', help: 'developers.facebook.com → My Apps → Create app → type Business → add "Instagram" (Instagram API with Instagram Login) → App settings → Basic.' },
     { secret: 'INSTAGRAM_APP_SECRET', label: 'Instagram app secret', help: 'Same page. Add the redirect URL below under Instagram → API setup → Business login settings.' },
-    { secret: 'TIKTOK_CLIENT_KEY', label: 'TikTok client key', help: 'developers.tiktok.com → Manage apps → your app → add Login Kit + Display API, scopes user.info.basic and video.list, redirect URL below.' },
+    { secret: 'TIKTOK_CLIENT_KEY', label: 'TikTok client key', help: 'developers.tiktok.com → Manage apps → your app → add Login Kit, Display API and Content Posting API (Direct Post), scopes user.info.basic, video.list and video.publish, redirect URL below.' },
     { secret: 'TIKTOK_CLIENT_SECRET', label: 'TikTok client secret', help: 'Same page.' },
+    { secret: 'FACEBOOK_APP_ID', label: 'Facebook app ID', help: 'The same Meta app as Instagram → add Facebook Login for Business → App settings → Basic. Redirect URL below goes under Facebook Login → Settings.' },
+    { secret: 'FACEBOOK_APP_SECRET', label: 'Facebook app secret', help: 'Same page.' },
     { secret: 'TOKEN_ENCRYPTION_KEY', label: 'Token encryption key (optional)', help: 'A random 32-byte base64 string (run: openssl rand -base64 32). Without it, tokens are sealed with a key derived from the service key. Setting it later means reconnecting accounts once.' },
   ];
   const save = async () => {
@@ -187,7 +189,7 @@ function AppSecretsCard({ status, onChanged }: { status: Status; onChanged: () =
   return (
     <div style={{ ...E.card, padding: 14 }}>
       <div style={{ fontWeight: 700, color: E.text }}>Developer apps for account connections</div>
-      <div style={{ fontSize: 'var(--text-body)', color: E.muted, marginTop: 4 }}>One Instagram app and one TikTok app for all of Mastermind; each user then taps Connect with their own login. Both need the privacy-policy URL from Marketing Stage Zero before Meta or TikTok approve them.</div>
+      <div style={{ fontSize: 'var(--text-body)', color: E.muted, marginTop: 4 }}>One Instagram app (which also serves Facebook Pages) and one TikTok app for all of Mastermind; each user then taps Connect with their own login. Both need the privacy-policy URL from Marketing Stage Zero before Meta or TikTok approve them.</div>
       <div style={{ display: 'flex', gap: 6, marginTop: 6 }}><Badge color={readyIg ? E.green : E.amber}>Instagram app {readyIg ? 'ready' : 'not set'}</Badge><Badge color={readyTt ? E.green : E.amber}>TikTok app {readyTt ? 'ready' : 'not set'}</Badge></div>
       <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 8 }}>OAuth redirect URL for both: <span style={{ fontFamily: 'var(--font-mono)', color: E.muted, wordBreak: 'break-all' }}>{status.oauthRedirect}</span></div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
@@ -232,8 +234,9 @@ function AccountCard({ a, state, conn, onChanged }: { a: SetupEntry; state?: { c
       </div>
       <div style={{ fontSize: 'var(--text-body)', color: E.muted, marginTop: 4 }}>{a.powers}</div>
       {a.unlocks && <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>{a.unlocks.map((u) => <Badge key={u} color={E.violet}>{u}</Badge>)}</div>}
-      <div style={{ marginTop: 6 }}>{state?.connected ? <TestLine conn={conn} /> : <Badge color={E.faint}>not connected</Badge>}</div>
-      {open && (
+      <div style={{ marginTop: 6 }}>{a.notStarted ? <Badge color={E.faint}>not started</Badge> : state?.connected ? <TestLine conn={conn} /> : <Badge color={E.faint}>not connected</Badge>}</div>
+      {open && a.notStarted && <div style={{ fontSize: 'var(--text-body)', color: E.muted, marginTop: 10 }}>{a.notStarted}</div>}
+      {open && !a.notStarted && (
         <div style={{ marginTop: 10 }}>
           <div style={label}>How to connect</div>
           <Steps e={a} />

@@ -76,7 +76,7 @@ async function workerByKey(sb: Sb, userId: string, key: string): Promise<WorkerR
 }
 
 export interface RunOutcome { ok: boolean; runId?: string; approvalId?: string; summary?: string; count?: number; dropped?: string[]; costUsd?: number; searches?: number; error?: string; capReached?: boolean; skipped?: boolean }
-export type Trigger = 'manual' | 'rerun' | 'cron';
+export type Trigger = 'manual' | 'rerun' | 'cron' | 'approval';
 
 // ── The generic runtime ───────────────────────────────────────────────
 // Every worker run has the same life: a run row, the worker's status in
@@ -482,7 +482,7 @@ export function runInboundTracker(apiKey: string | undefined, sb: Sb, userId: st
 
 // ── E-commerce phases 5–7: per-brand workers ──────────────────────────
 interface BrandRow { id: string; name: string; positioning: string | null; domain: string | null; steps: Record<string, { status?: string; fields?: Record<string, string>; note?: string }> }
-async function brandFor(sb: Sb, userId: string, brandId?: string): Promise<{ row: BrandRow; ctx: BrandCtx; productId: string | null }> {
+export async function brandFor(sb: Sb, userId: string, brandId?: string): Promise<{ row: BrandRow; ctx: BrandCtx; productId: string | null }> {
   if (!brandId) throw new Error('Pick a brand.');
   const [row] = await sb.get<BrandRow>(`ecom_brands?id=eq.${brandId}&user_id=eq.${userId}&select=id,name,positioning,domain,steps`);
   if (!row) throw new Error('That brand is gone.');
@@ -500,7 +500,7 @@ async function brandFor(sb: Sb, userId: string, brandId?: string): Promise<{ row
   };
 }
 /** Merge fields into one step of the brand (the same shape BrandDetail saves). */
-async function patchStep(sb: Sb, userId: string, brandId: string, n: number, fields: Record<string, string>, status?: string) {
+export async function patchStep(sb: Sb, userId: string, brandId: string, n: number, fields: Record<string, string>, status?: string) {
   const [b] = await sb.get<{ steps: BrandRow['steps'] }>(`ecom_brands?id=eq.${brandId}&user_id=eq.${userId}&select=steps`);
   if (!b) throw new Error('That brand is gone.');
   const cur = b.steps?.[String(n)] ?? {};
@@ -746,10 +746,20 @@ export const APPLIERS: Record<string, Applier> = {
     return { graded: items.length };
   },
 
+  /** Times and captions land on each post, and every post on an Instagram
+   *  or TikTok account is queued for the Publisher, which posts it when
+   *  its time comes (lib/publisher.ts). Already-posted items stay posted. */
   post_plan: async (sb, u, raw) => {
     const slots = (raw.slots ?? []) as SlotOut[];
-    for (const s of slots) await sb.patch('content_items', `id=eq.${s.item_id}&user_id=eq.${u}`, { scheduled_for: s.scheduled_for, scheduled_time: s.scheduled_time, caption: s.caption, hashtags: s.hashtags || null, updated_at: now() });
-    return { scheduled: slots.length };
+    const ids = [...new Set(slots.map((s) => s.account_id).filter(Boolean))] as string[];
+    const live = ids.length ? (await sb.get<{ id: string }>(`social_accounts?id=in.(${ids.join(',')})&user_id=eq.${u}&platform=in.(instagram,tiktok)&select=id`)).map((a) => a.id) : [];
+    let queued = 0;
+    for (const s of slots) {
+      const q = !!s.account_id && live.includes(s.account_id);
+      await sb.patch('content_items', `id=eq.${s.item_id}&user_id=eq.${u}&status=neq.posted`, { scheduled_for: s.scheduled_for, scheduled_time: s.scheduled_time, caption: s.caption, hashtags: s.hashtags || null, ...(q ? { publish_status: 'queued', publish_error: null, publish_ref: null } : {}), updated_at: now() });
+      if (q) queued++;
+    }
+    return { scheduled: slots.length, queued };
   },
 
   /** The picked supplier fills step 4, every option is saved on the
@@ -795,10 +805,12 @@ export const APPLIERS: Record<string, Applier> = {
     return { domain: raw.domain };
   },
 
-  /** Approving the page fills step 6 with the build; nothing is published. */
+  /** Approving the page fills step 6 with the build. The Launcher
+   *  (lib/launcher.ts) then takes it live — handlers/engine.ts runs it
+   *  right after this applier succeeds. */
   store_draft: async (sb, u, raw) => {
     if (raw.build_id) await sb.patch('ecom_store_builds', `id=eq.${raw.build_id}&user_id=eq.${u}`, { status: 'preview', updated_at: now() });
-    await patchStep(sb, u, raw.brand_id as string, 6, { review_notes: `Store page approved ${new Date().toISOString().slice(0, 10)} — ${raw.pass ? 'gate passed' : 'approved with failing checks'}. Download it from the brand's Store build step.` }, 'in_progress');
+    await patchStep(sb, u, raw.brand_id as string, 6, { review_notes: `Store page approved ${new Date().toISOString().slice(0, 10)} — ${raw.pass ? 'gate passed' : 'approved with failing checks'}. The Launcher takes it live next.` }, 'in_progress');
     return { build_id: raw.build_id };
   },
 
@@ -824,7 +836,18 @@ export const APPLIERS: Record<string, Applier> = {
     const plan = raw.plan as EditPlan;
     await sb.patch('content_clips', `id=eq.${id}&user_id=eq.${u}`, { edit_plan: plan, status: 'approved', updated_at: now() });
     if (clip.content_item_id) await sb.patch('content_items', `id=eq.${clip.content_item_id}&user_id=eq.${u}&status=in.(idea,script,filmed)`, { status: 'edited', updated_at: now() }).catch(() => {});
-    return { clip_id: id, length: plan.edited_length_s };
+    // A post that was already timed and captioned (and failed only for want
+    // of a video, or never queued) goes to the Publisher now that it has one.
+    let queued = false;
+    if (clip.content_item_id) {
+      const [it] = await sb.get<{ caption: string | null; scheduled_for: string | null; publish_status: string | null; account_id: string | null }>(`content_items?id=eq.${clip.content_item_id}&user_id=eq.${u}&select=caption,scheduled_for,publish_status,account_id`);
+      const [acct] = it?.account_id ? await sb.get<{ id: string }>(`social_accounts?id=eq.${it.account_id}&user_id=eq.${u}&platform=in.(instagram,tiktok)&select=id`) : [];
+      if (it && acct && it.caption && it.scheduled_for && (it.publish_status == null || it.publish_status === 'failed')) {
+        await sb.patch('content_items', `id=eq.${clip.content_item_id}&user_id=eq.${u}`, { publish_status: 'queued', publish_error: null, publish_ref: null, updated_at: now() });
+        queued = true;
+      }
+    }
+    return { clip_id: id, length: plan.edited_length_s, queued };
   },
 };
 
@@ -845,7 +868,7 @@ function rerunInput(key: string, input: Record<string, unknown>): AnyRunInput {
 }
 
 export interface DecideInput { approvalId: string; status: 'approved' | 'sent_back' | 'killed'; note?: string | null; rerun?: boolean; /** Which option, for cards that offer several (Brand Lab, suppliers). */ choice?: number }
-export async function decide(apiKey: string | undefined, sb: Sb, userId: string, input: DecideInput): Promise<{ ok: boolean; applied?: unknown; rerun?: RunOutcome; error?: string }> {
+export async function decide(apiKey: string | undefined, sb: Sb, userId: string, input: DecideInput): Promise<{ ok: boolean; type?: string; applied?: unknown; rerun?: RunOutcome; error?: string }> {
   const [a] = await sb.get<{ id: string; type: string; status: string; payload: Record<string, unknown>; worker_id: string | null; run_id: string | null; is_money: boolean }>(`ai_approvals?id=eq.${input.approvalId}&user_id=eq.${userId}&select=id,type,status,payload,worker_id,run_id,is_money`);
   if (!a) return { ok: false, error: 'Approval not found.' };
   if (a.status !== 'pending') return { ok: false, error: `Already ${a.status.replace('_', ' ')}.` };
@@ -865,5 +888,5 @@ export async function decide(apiKey: string | undefined, sb: Sb, userId: string,
     const runner = w && RUNNERS[w.key];
     if (runner) rerun = await runner(apiKey, sb, userId, { ...rerunInput(w.key, run?.input ?? a.payload), instructions: input.note, trigger: 'rerun' });
   }
-  return { ok: true, applied, rerun };
+  return { ok: true, type: a.type, applied, rerun };
 }

@@ -18,6 +18,9 @@ export interface SetupEntry {
   unlocks?: string[];
   testable: boolean;
   phase?: string;
+  /** A placeholder for something deliberately not built yet: shown with
+   *  its reason, no Connect button. */
+  notStarted?: string;
 }
 
 export const PLATFORM_SETUP: SetupEntry[] = [
@@ -32,6 +35,18 @@ export const PLATFORM_SETUP: SetupEntry[] = [
     ],
     withoutIt: 'Workers can\'t run, Nova can\'t answer, and the digest sends its plain draft instead of a ranked one.',
     fields: [{ secret: 'ANTHROPIC_API_KEY', label: 'API key', placeholder: 'sk-ant-…' }],
+  },
+  {
+    id: 'xai', kind: 'platform', name: 'Grok (xAI)', testable: true, phase: 'Texting',
+    powers: 'Two-way texting: a text to the Mastermind number that isn\'t a digest command gets a Grok reply, in the voice set in Settings (lead response by default).',
+    steps: [
+      { text: 'Open the xAI console and sign in.', link: 'https://console.x.ai/' },
+      { text: 'API Keys → Create API key, name it mastermind-texting, copy it.' },
+      { text: 'Add a little credit and set a spend limit in Billing as a backstop.' },
+      { text: 'Paste the key below and press Save, then Test.' },
+    ],
+    withoutIt: 'Texts that aren\'t digest commands get no reply.',
+    fields: [{ secret: 'XAI_API_KEY', label: 'API key', placeholder: 'xai-…' }],
   },
   {
     id: 'twilio', kind: 'platform', name: 'Twilio (Morning Digest texts)', testable: true,
@@ -113,34 +128,38 @@ export const PLATFORM_SETUP: SetupEntry[] = [
 export const ACCOUNT_SETUP: SetupEntry[] = [
   {
     id: 'instagram', kind: 'account', name: 'Instagram (Business or Creator)', testable: true, connect: 'oauth', phase: 'Content C2',
-    powers: 'Your posts, views, reach, saves, shares and follower changes, pulled daily into Content → Accounts.',
-    unlocks: ['Content: real account numbers and post grades', 'E-comm: post metrics for brand content', 'Digest: yesterday\'s post grades'],
+    powers: 'Your posts, views, reach, saves, shares and follower changes, pulled daily into Content → Accounts — and posts on your approval: the Publisher posts each approved Reel at its planned time.',
+    unlocks: ['Content: approved posts go out on their own', 'Content: real account numbers and post grades', 'E-comm: post metrics for brand content', 'Digest: yesterday\'s post grades'],
     steps: [
       { text: 'In the Instagram app: Settings → Account type and tools → Switch to professional account → Creator or Business.' },
       { text: 'Mastermind\'s Instagram app has to exist first (a one-time developer setup, walked through in Platform Setup). Once it does, the Connect button below goes live.' },
-      { text: 'Press Connect, log in to Instagram, approve. You come back here connected.' },
+      { text: 'Press Connect, log in to Instagram, approve (it asks for basic profile, insights and content publish). You come back here connected.' },
+      { text: 'Connected before posting was added? Disconnect and Connect again — the old login can\'t post.' },
     ],
-    withoutIt: 'Content numbers stay manual.',
+    withoutIt: 'Content numbers stay manual, and approved posts wait for you to post them by hand.',
     fields: [{ secret: 'INSTAGRAM_APP_ID', label: 'App ID (platform)' }, { secret: 'INSTAGRAM_APP_SECRET', label: 'App secret (platform)' }],
   },
   {
     id: 'tiktok', kind: 'account', name: 'TikTok', testable: true, connect: 'oauth', phase: 'Content C2',
-    powers: 'Views, likes, comments and shares per video, pulled daily.',
-    unlocks: ['Content: TikTok account numbers and grades'],
+    powers: 'Views, likes, comments and shares per video, pulled daily — and posts on your approval: the Publisher uploads each approved video at its planned time.',
+    unlocks: ['Content: approved videos go out on their own', 'Content: TikTok account numbers and grades'],
     steps: [
-      { text: 'Mastermind\'s TikTok app needs Login Kit + Display API approved by TikTok (days). Start it now in TikTok for Developers.', link: 'https://developers.tiktok.com/apps' },
-      { text: 'Once approved and the client key/secret are saved, press Connect and approve.' },
+      { text: 'Mastermind\'s TikTok app needs Login Kit, Display API and Content Posting API (Direct Post) approved by TikTok (days). Start it now in TikTok for Developers.', link: 'https://developers.tiktok.com/apps' },
+      { text: 'Until TikTok audits the app, Direct Post only allows private (only-me) posts. The Publisher says so on each post it makes that way.' },
+      { text: 'Once approved and the client key/secret are saved, press Connect and approve (user.info.basic, video.list, video.publish).' },
+      { text: 'Connected before posting was added? Disconnect and Connect again — the old login can\'t post.' },
     ],
-    withoutIt: 'TikTok numbers stay manual.',
+    withoutIt: 'TikTok numbers stay manual, and approved videos wait for you to post them by hand.',
     fields: [{ secret: 'TIKTOK_CLIENT_KEY', label: 'Client key (platform)' }, { secret: 'TIKTOK_CLIENT_SECRET', label: 'Client secret (platform)' }],
   },
   {
     id: 'shopify', kind: 'account', name: 'Shopify', testable: true, connect: 'token', phase: 'E-comm 7',
-    powers: 'Orders, revenue and conversion on every brand card; checkout for the stores.',
+    powers: 'Orders, revenue and conversion on every brand card; checkout for the stores. The Launcher creates each approved store\'s product here and points its Buy button at Shopify checkout.',
     unlocks: ['E-comm: live revenue, orders, conversion', 'Read loop: funnel from real orders'],
     steps: [
       { text: 'Shopify admin → Settings → Apps and sales channels → Develop apps → Create an app.' },
-      { text: 'Configure Admin API scopes: read_orders, read_products, read_analytics. Install the app.' },
+      { text: 'Configure Admin API scopes: read_orders, read_products, write_products, write_publications, read_analytics. Install the app. (Added scopes later? Reinstall the app and paste the new token.)' },
+      { text: 'Online Store → Preferences: remove the storefront password before launching, or customers hit it at checkout.' },
       { text: 'Copy the Admin API access token (shown once) and your store domain (yourstore.myshopify.com). Paste both below.' },
     ],
     withoutIt: 'Brand cards show "Connect Shopify" instead of revenue.',
@@ -160,19 +179,39 @@ export const ACCOUNT_SETUP: SetupEntry[] = [
     fields: [{ secret: 'token', label: 'Fine-grained token', placeholder: 'github_pat_…' }],
   },
   {
-    id: 'cloudflare_pages', kind: 'account', name: 'Cloudflare Pages (store previews)', testable: true, connect: 'token', phase: 'E-comm 6',
-    powers: 'Preview URLs for each store build and the deploy after you merge.',
-    unlocks: ['E-comm step 6: preview → merge → deploy'],
+    id: 'cloudflare_pages', kind: 'account', name: 'Cloudflare Pages (store hosting)', testable: true, connect: 'token', phase: 'E-comm 6',
+    powers: 'Hosts each store: the Launcher deploys the approved page to production (brand-store.pages.dev) the moment you approve it.',
+    unlocks: ['E-comm step 6: approve → live store'],
     steps: [
       { text: 'Cloudflare → My Profile → API Tokens → Create Custom Token.', link: 'https://dash.cloudflare.com/profile/api-tokens' },
       { text: 'Permissions: Account → Cloudflare Pages → Edit. Account Resources: your account.' },
       { text: 'Copy the token and your Account ID, paste both below.' },
     ],
-    withoutIt: 'Store builds have no preview URL.',
+    withoutIt: 'Approved store pages can\'t go live.',
     fields: [{ secret: 'token', label: 'API token' }, { secret: 'account_id', label: 'Account ID' }],
+  },
+  {
+    id: 'facebook', kind: 'account', name: 'Facebook Pages', testable: true, connect: 'oauth', phase: 'Content',
+    powers: 'Your Facebook Pages, connected for posting on your approval and their engagement numbers. Facebook posting turns on after Instagram and TikTok are proven.',
+    unlocks: ['Content: Facebook Page as a posting account'],
+    steps: [
+      { text: 'Use the same Meta developer app as Instagram: developers.facebook.com → your app → add the "Facebook Login for Business" product.', link: 'https://developers.facebook.com/apps' },
+      { text: 'Add the redirect URL from Platform setup under Facebook Login → Settings → Valid OAuth Redirect URIs. Request pages_manage_posts and pages_read_engagement (pages_show_list comes with them so the app can see which Pages you run).' },
+      { text: 'Save the app ID and secret in Platform setup (Facebook app ID / secret), then press Connect, pick your Pages and approve.' },
+    ],
+    withoutIt: 'Facebook Pages can\'t be posting accounts.',
+    fields: [{ secret: 'FACEBOOK_APP_ID', label: 'App ID (platform)' }, { secret: 'FACEBOOK_APP_SECRET', label: 'App secret (platform)' }],
+  },
+  {
+    id: 'amazon', kind: 'account', name: 'Amazon (Seller Central)', testable: false, phase: 'Not started',
+    notStarted: 'Selling on Amazon (SP-API) is deliberately left out of this pass until Marq decides to build it. Product Scout already reads Amazon best-seller pages through web search.',
+    powers: 'Placeholder — not built. Would list products and pull orders through Amazon\'s Selling Partner API.',
+    steps: [],
+    withoutIt: 'Nothing changes today; Amazon research still works through Product Scout.',
+    fields: [],
   },
 ];
 
 export const ALL_SETUP = [...PLATFORM_SETUP, ...ACCOUNT_SETUP];
 /** Every Worker secret the Setup page is allowed to write. */
-export const WRITABLE_SECRETS = PLATFORM_SETUP.flatMap((e) => e.fields.map((f) => f.secret)).concat(['INSTAGRAM_APP_ID', 'INSTAGRAM_APP_SECRET', 'TIKTOK_CLIENT_KEY', 'TIKTOK_CLIENT_SECRET', 'TOKEN_ENCRYPTION_KEY']).filter((s) => s !== 'VITE_VAPID_PUBLIC_KEY');
+export const WRITABLE_SECRETS = PLATFORM_SETUP.flatMap((e) => e.fields.map((f) => f.secret)).concat(['INSTAGRAM_APP_ID', 'INSTAGRAM_APP_SECRET', 'TIKTOK_CLIENT_KEY', 'TIKTOK_CLIENT_SECRET', 'FACEBOOK_APP_ID', 'FACEBOOK_APP_SECRET', 'TOKEN_ENCRYPTION_KEY']).filter((s) => s !== 'VITE_VAPID_PUBLIC_KEY');

@@ -26,6 +26,8 @@ const HELP: Record<string, { busy: string; note: string }> = {
   brandlab: { busy: 'Designing… (30–60 seconds)', note: 'Three brand options reasoned from the buyer: name, positioning, voice, palette with a reason per colour, type, logo direction. Each .com is checked for real (RDAP). Pick one in Approvals; the domain becomes a money card.' },
   builder: { busy: 'Building… (60–120 seconds)', note: 'Writes a one-product landing page as a single HTML file, then runs the quality gate (mobile viewport, Buy button, no placeholder text, no AI tells, alt text, size). Preview and download it — nothing is published.' },
   content: { busy: 'Writing… (30–60 seconds)', note: 'Launch posts for the brand\'s product rotated across its angles: hooks, script, shot list and a Higgsfield prompt each. Approve to put them on the Content Plan and fill step 7.' },
+  publisher: { busy: 'Posting… (10–60 seconds)', note: 'Posts every approved post that is due now to Instagram or TikTok with the account\'s own login, and finishes any the platform was still processing. Nothing goes out that you didn\'t approve. Failures show exactly what the platform said, on the post and in Alerts.' },
+  launcher: { busy: 'Launching… (10–40 seconds)', note: 'Takes the brand\'s approved store page live: creates the product in Shopify, points the Buy button at its checkout, and deploys the page to Cloudflare Pages. Needs Shopify and Cloudflare Pages connected in Setup.' },
   analytics: { busy: 'Reading… (10–20 seconds)', note: 'Funnel from your logged funnel rows (or step 9\'s numbers), diagnosis of where it breaks, and a scale / iterate / kill recommendation. Kill and double-down raise an alert.' },
   inbound_tracker: { busy: 'Tagging… (5–20 seconds)', note: 'UTM tags, click ids and the referring site first, then what the lead wrote ("my friend told me"); Haiku only reads the ones the rules can\'t settle. Approve to set the sources on Inbound.' },
   campaign_scorer: { busy: 'Grading… (10–30 seconds)', note: `Grades each running campaign out of 4 against your own average (answer → conversation → meeting → close), names the weak stage and writes the fix. Needs 10+ touches per campaign.` },
@@ -49,7 +51,8 @@ export function RunPanel({ workerKey, workerName, enabled, onRan }: { workerKey:
   const [clipId, setClipId] = useState('');
   const [clips, setClips] = useState<{ id: string; file_name: string | null; status: string }[]>([]);
   const [posts, setPosts] = useState(3);
-  const byBrand = ['supplier', 'brandlab', 'builder', 'content', 'analytics'].includes(workerKey);
+  const byBrand = ['supplier', 'brandlab', 'builder', 'content', 'analytics', 'launcher'].includes(workerKey);
+  const acts = workerKey === 'publisher' || workerKey === 'launcher';
   const [brandId, setBrandId] = useState('');
   const [brands, setBrands] = useState<{ id: string; name: string; current_step: number }[]>([]);
   useEffect(() => {
@@ -109,11 +112,11 @@ export function RunPanel({ workerKey, workerName, enabled, onRan }: { workerKey:
       <textarea maxLength={PLAYBOOK_MAX_CHARS} style={{ ...field, marginTop: 8, minHeight: 64, resize: 'vertical' }} value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder="Optional instructions for this run" />
       <div style={{ fontSize: 'var(--text-caption)', color: E.faint, fontFamily: 'var(--font-mono)' }}>{instructions.length.toLocaleString()} / {PLAYBOOK_MAX_CHARS.toLocaleString()}</div>
       <button style={{ ...btn('primary'), marginTop: 10 }} disabled={busy || !enabled || (needsProduct && !productId) || (byBrand && !brandId)} onClick={run}>{busy ? h.busy : `Run ${workerName}`}</button>
-      <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 6, lineHeight: 1.45 }}>{h.note} Counts against today's cap for this module.</div>
+      <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 6, lineHeight: 1.45 }}>{h.note}{acts ? '' : ' Counts against today\'s cap for this module.'}</div>
       {result && (
         <div style={{ marginTop: 10, padding: 10, borderRadius: 'var(--radius-sm)', background: tint(result.ok ? E.green : E.red, 10), border: `1px solid ${tint(result.ok ? E.green : E.red, 35)}`, fontSize: 'var(--text-body)', color: E.text }}>
           {result.ok
-            ? <>{result.skipped ? result.summary : <>Done → waiting in Approvals. {result.summary}</>} <span style={{ color: E.faint }}>({money(result.costUsd ?? 0)}{result.searches ? `, ${result.searches} searches` : ''})</span>{result.dropped?.length ? <div style={{ color: E.amber, marginTop: 4 }}>Dropped: {result.dropped.join('; ')}</div> : null}</>
+            ? <>{result.skipped || acts ? result.summary : <>Done → waiting in Approvals. {result.summary}</>} <span style={{ color: E.faint }}>({money(result.costUsd ?? 0)}{result.searches ? `, ${result.searches} searches` : ''})</span>{result.dropped?.length ? <div style={{ color: E.amber, marginTop: 4 }}>Dropped: {result.dropped.join('; ')}</div> : null}</>
             : <><strong>{result.capReached ? 'Cost cap hit.' : 'Run failed.'}</strong> {result.error}</>}
         </div>
       )}

@@ -60,12 +60,12 @@ function appliedMessage(type: string, a: Record<string, number> | null | undefin
   if (type === 'content_plan') return `Approved — ${a.added} posts added to the Plan as scripts.`;
   if (type === 'content_audit') return 'Approved — the audit is saved on the account; Idea & Script reads it next run.';
   if (type === 'content_grades') return `Approved — ${a.graded} posts graded.`;
-  if (type === 'post_plan') return `Approved — ${a.scheduled} posts timed and captioned on the Plan.`;
+  if (type === 'post_plan') return `Approved — ${a.scheduled} posts timed and captioned on the Plan${a.queued ? `; ${a.queued} will post on their own at their times (Publisher)` : ''}.`;
   if (type === 'supplier_pick') return `Approved — ${a.supplier} is on step 4. The sample is a red card in Approvals: buy it yourself, then tap "I bought it".`;
   if (type === 'brand_options') return `Approved — ${a.name} fills step 5. The domain is waiting as a red card: buy it yourself.`;
   if (type === 'sample_purchase') return 'Marked ordered on step 4.';
   if (type === 'domain_purchase') return `${a.domain} marked bought on step 5.`;
-  if (type === 'store_draft') return 'Approved — the page is on step 6. Download it from there; nothing was published.';
+  if (type === 'store_draft') return 'Approved — the Launcher is taking the page live.';
   if (type === 'brand_read') return `Saved on steps 9 and 10 — ${a.diagnosis}, recommend ${a.recommendation}.`;
   if (type === 'inbound_tags') return `Approved — ${a.tagged} sources set on Inbound.`;
   if (type === 'clip_edit') return 'Approved — the edit is saved on the clip in Studio.';
@@ -92,7 +92,9 @@ function ApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string) => voi
     const r = await decideApproval(a.id, status, note.trim() || null, status === 'sent_back' && rerun, CHOOSES.has(a.type) ? choice : undefined);
     setBusy('');
     if (!r.ok) { setErr(r.error ?? 'Could not save that decision.'); return; }
-    onDone(status === 'approved' ? appliedMessage(a.type, r.applied as Record<string, number> | null | undefined)
+    const launch = (r as { launch?: { ok: boolean; summary?: string; error?: string } }).launch;
+    if (launch && !launch.ok) { onDone(`Approved, but the store didn't launch: ${launch.error ?? 'unknown error'} Fix it, then press Launch again on the brand's Store build step.`); return; }
+    onDone(launch?.ok ? `Approved — ${launch.summary}` : status === 'approved' ? appliedMessage(a.type, r.applied as Record<string, number> | null | undefined)
       : status === 'sent_back' ? (r.rerun ? (r.rerun.ok ? `Sent back. Re-ran with your note — the new version is waiting.` : `Sent back. Re-run failed: ${r.rerun.error}`) : 'Sent back. Your note goes into the next run.')
       : 'Killed.');
   };

@@ -233,6 +233,7 @@ export const WORKERS: WorkerDef[] = [
   { key: 'supplier', name: 'Supplier Finder', role: 'Suppliers, sample order draft, inspection sheet.', model: 'claude-haiku-4-5', domain: 'ecom', tools: ['web search', 'CJ Dropshipping API'], phase: 5 },
   { key: 'brandlab', name: 'Brand Lab', role: 'Three brand options from the buyer profile.', model: 'claude-sonnet-5', domain: 'ecom', tools: ['Higgsfield'], phase: 5 },
   { key: 'builder', name: 'Store Builder', role: 'Site code to a GitHub branch; quality gate.', model: 'claude-sonnet-5', domain: 'ecom', tools: ['GitHub', 'Cloudflare Pages', 'Playwright'], phase: 6 },
+  { key: 'launcher', name: 'Launcher', role: 'Takes an approved store page live: Shopify product + checkout, Cloudflare Pages production.', model: 'no AI (API only)', domain: 'ecom', tools: ['Shopify', 'Cloudflare Pages'], phase: 6 },
   { key: 'content', name: 'Content Producer', role: 'Hooks, scripts, captions, visuals. Shared with the Content Engine.', model: 'claude-sonnet-5', domain: 'content', tools: ['Higgsfield'], phase: 7 },
   { key: 'analytics', name: 'Analytics', role: 'Pull metrics, compute the funnel, raise flags.', model: 'claude-haiku-4-5', domain: 'ecom', tools: ['Shopify', 'TikTok', 'Instagram'], phase: 7 },
   { key: 'orchestrator', name: 'Orchestrator', role: 'Assign work, read outputs, score, route your notes, write the daily summary.', model: 'claude-fable-5-1', domain: 'all', tools: ['playbooks'], phase: 4 },
@@ -248,6 +249,7 @@ export const WORKERS: WorkerDef[] = [
   { key: 'idea_script', name: 'Idea & Script', role: 'Weekly plan: 3 hooks per post, script, shot list, on-screen text, CTA.', model: 'claude-sonnet-5', domain: 'content', tools: ['playbooks'], phase: 3 },
   { key: 'clip_editor', name: 'Clip Editor', role: 'Best moments from raw clips, cuts, 9:16, captions, enhancements.', model: 'claude-sonnet-5', domain: 'content', tools: ['Higgsfield'], phase: 4 },
   { key: 'post_planner', name: 'Post Planner', role: 'Best time per account from your data, caption, hashtags, cross-post plan.', model: 'claude-haiku-4-5', domain: 'content', tools: [], phase: 5 },
+  { key: 'publisher', name: 'Publisher', role: 'Posts approved posts to Instagram and TikTok at their time; writes the post link back.', model: 'no AI (API only)', domain: 'content', tools: ['Instagram', 'TikTok'], phase: 6 },
   { key: 'content_analytics', name: 'Analytics', role: 'Daily metric pull, grades out of 4, flags breakouts and flops.', model: 'claude-haiku-4-5', domain: 'content', tools: ['Instagram', 'TikTok'], phase: 5 },
 ];
 /** Workers a screen shows: its own domain plus the shared orchestrator. */
@@ -257,7 +259,7 @@ export function workersFor(domain: Domain): WorkerDef[] {
 
 /** Workers whose runtime exists in this build. Everyone else shows the
  *  phase they arrive in (and a lights-off room in View Office). */
-export const LIVE_WORKERS = ['scout', 'analyst', 'teardown', 'lead_filter', 'script_copy', 'campaign_planner', 'campaign_scorer', 'trend_researcher', 'idea_script', 'account_auditor', 'content_analytics', 'post_planner', 'clip_editor', 'inbound_tracker', 'supplier', 'brandlab', 'builder', 'content', 'analytics'];
+export const LIVE_WORKERS = ['scout', 'analyst', 'teardown', 'lead_filter', 'script_copy', 'campaign_planner', 'campaign_scorer', 'trend_researcher', 'idea_script', 'account_auditor', 'content_analytics', 'post_planner', 'clip_editor', 'inbound_tracker', 'supplier', 'brandlab', 'builder', 'content', 'analytics', 'publisher', 'launcher'];
 
 /** Longest a single playbook may be. Enforced in the editor, on save, and
  *  when the orchestrator applies an edit. */
