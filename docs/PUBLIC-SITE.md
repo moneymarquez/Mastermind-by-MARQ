@@ -17,9 +17,7 @@ Each of these shows a "Not built yet" page in the site's style, so no link is de
 
 | Page | Address | Linked from |
 | --- | --- | --- |
-| Product | `/product` | Nav, footer |
 | Concepts | `/concepts` | Nav, footer |
-| Jobs | `/jobs` | Nav, footer |
 | Apply (Run by Marq) | `/apply` | Every Apply button, footer |
 | Request a team plan | `/team` | Team "Request access" |
 | Refund policy | `/refund` | Footer |
@@ -27,6 +25,19 @@ Each of these shows a "Not built yet" page in the site's style, so no link is de
 | Roadmap | `/roadmap` | Nowhere yet (the brief lists it) |
 
 Privacy and Terms already exist (`/privacy`, `/terms`) and are linked.
+
+## Product and Jobs pages
+
+- **Product (`/product`, `src/site/Product.tsx`, copy in `productContent.ts`):** the 13 solo-plan modules only. It leaves out Made by Marq, Scaling and E-commerce, because a subscriber doesn't get them.
+  - **Personal modules:** 7 of the 9 are on the page (Daily Plan, Macros & Meals, Goals, Brain, Schedule, Fitness, Opening/Closing). A dashed PLACEHOLDER card holds the spot for the other two until Marq names them.
+  - **Module count:** the homepage now says 13 modules in both places, and `home.html` does too.
+  - **Screenshots:** `public/site/product/*.webp` (about 550 KB total), captured from the app's demo mode at 1440px wide with made-up sample data loaded for the capture only. The app's demo seed wasn't changed. To retake them, run the dev server, start demo mode, swap in solo sample rows through `demoRows`/`demoClient`, and screenshot `[data-demo-content]`.
+  - **Things to check in the screenshots:**
+    - The Opening/Closing checklist steps are built into the app and look like a real store's list (lemons/limes, Frazil machines).
+    - The Dialing screen's lead-queue card mentions LeadFlow, which is owner-only.
+- **Jobs (`/jobs`, `src/site/Jobs.tsx`):** content, cold calling and leads, and e-commerce and brands, all ending in `/apply`.
+  - **Placeholders for Marq, shown in amber mono:** role titles, contractor/intern/employee, pay or equity, and remote/local.
+- **Search engines:** both pages keep `noindex` until the placeholders are filled in.
 
 ## Open items to decide
 

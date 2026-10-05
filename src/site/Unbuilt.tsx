@@ -4,9 +4,7 @@ import { S, LINKS, Nav, Footer, useViewport, updateNavInk } from './shared';
 /** Pages the site links to that have no design yet. Each one says so
  *  plainly, in the site's own style, so nothing is a dead link. */
 export const UNBUILT: Record<string, { title: string; what: string }> = {
-  product: { title: 'Product', what: 'A tour of the 21 modules and how they connect.' },
   concepts: { title: 'Concepts', what: 'A library of the ideas behind Masterminds.' },
-  jobs: { title: 'Jobs', what: 'Apply to work with Marq.' },
   apply: { title: 'Apply', what: 'The application for Run by Marq: Content and E-commerce.' },
   team: { title: 'Request a team plan', what: 'Request access for 10, 25 or 50 seats.' },
   refund: { title: 'Refund policy', what: 'How refunds work for each plan.' },
