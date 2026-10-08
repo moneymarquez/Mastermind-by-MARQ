@@ -9,6 +9,10 @@ import type { ImportRow } from '../../src/data/ecomProducts';
 import { Sb, zonedNow, addDaysIso } from './sb';
 import { loadControls, isPaused, controlDomainOf } from './controls';
 import { feedbackCorrections, addPlaybookRule } from './feedback';
+import { researchSearch } from './research';
+import { notifyStored, APPROVAL_EVENTS } from './notify';
+import { afterBrandOptions } from './visual';
+import { approvePitch } from './ecomOctober';
 import { ask, CapReached, spentToday, capFor } from './ai';
 import type { AskInput, AskResult } from './ai';
 import { scoutSystem, scoutUser, parseScout, BLOCKED_DOMAINS, SCOUT_CHANNELS } from './scout';
@@ -142,6 +146,10 @@ export async function runWorker(apiKey: string | undefined, sb: Sb, userId: stri
         title: a.title.slice(0, 300), payload: { ...a.payload, instructions: job.instructions ?? null }, principle: a.principle ?? null, source_url: a.source_url ?? null, confidence: a.confidence ?? 'ai', is_money: false,
       });
       approvalId = row?.id;
+      // The approvals that matter tell Marq right away (brief §2e).
+      const ev = APPROVAL_EVENTS[a.type];
+      if (ev && row?.id) await notifyStored(sb, userId, ev.event, { title: `${ev.verb}: ${a.title.replace(/^[^:]+:\s*/, '').slice(0, 90)}`, body: typeof a.payload.summary === 'string' ? a.payload.summary.slice(0, 160) : undefined, deepLink: ev.link });
+      if (a.type === 'brand_options' && row?.id) await afterBrandOptions(sb, userId, row.id, a.payload).catch((e) => console.error('visuals', e));
     }
     await sb.patch('ai_worker_runs', `id=eq.${run.id}`, { status: 'done', finished_at: new Date().toISOString(), tokens_in: tokensIn, tokens_out: tokensOut, cost_usd: Number(cost.toFixed(5)), summary: r.summary.slice(0, 1000), output: { ...(r.output ?? {}), count: r.count ?? null, dropped: r.dropped ?? [], searches, approval_id: approvalId ?? null }, updated_at: new Date().toISOString() });
     await finishWorker('idle');
@@ -169,12 +177,18 @@ export function runScout(apiKey: string | undefined, sb: Sb, userId: string, inp
     key: 'scout', task: `Scouting ${SCOUT_CHANNELS[channel].label} (top ${count})`, input: { channel, count, instructions: input.instructions ?? null },
     instructions: input.instructions, trigger: input.trigger, entityType: 'channel',
     async execute(ctx) {
-      const res = await ctx.ask({
-        maxTokens: 6000,
-        system: scoutSystem({ ...ctx.brief, budgetNote: `${ctx.brief.budgetNote} Use at most 5 searches.` }),
-        user: scoutUser(channel, count, input.instructions),
-        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5, blocked_domains: BLOCKED_DOMAINS }],
-      });
+      // Research through Parallel when it's connected; Claude formats what it
+      // found into Product Sheet rows. Otherwise Claude searches itself.
+      const r = await researchSearch(sb, userId, `Best-selling and fastest-rising products on ${SCOUT_CHANNELS[channel].label} right now: name, price, sales signals, sellers.`, [`${SCOUT_CHANNELS[channel].label} best sellers this week`, `trending products ${SCOUT_CHANNELS[channel].label} ${new Date().getFullYear()}`], 12);
+      const res = r
+        ? await ctx.ask({ maxTokens: 6000, system: scoutSystem({ ...ctx.brief, budgetNote: `${ctx.brief.budgetNote} Research is provided below — do not search.` }), user: `${scoutUser(channel, count, input.instructions)}\n\nRESEARCH (use only these sources; every product's source_url must be one of them):\n${r.brief}` })
+        : await ctx.ask({
+          maxTokens: 6000,
+          system: scoutSystem({ ...ctx.brief, budgetNote: `${ctx.brief.budgetNote} Use at most 5 searches.` }),
+          user: scoutUser(channel, count, input.instructions),
+          tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5, blocked_domains: BLOCKED_DOMAINS }],
+        });
+      if (r) res.sources.push(...r.sources);
       const parsed = parseScout(res.text, channel, new Date().toISOString());
       if (parsed.rows.length === 0) throw new Error(`Scout returned no usable products${parsed.dropped.length ? ` (dropped: ${parsed.dropped.join('; ')})` : ''}.`);
       const top = parsed.rows[0];
@@ -200,7 +214,8 @@ export function runAnalyst(apiKey: string | undefined, sb: Sb, userId: string, i
     async execute(ctx) {
       const p = await productFor(sb, userId, input.productId);
       await sb.patch('ai_workers', `id=eq.${ctx.w.id}`, { current_task: `Analysing ${p.name}`.slice(0, 200) }).catch(() => {});
-      const res = await ctx.ask({ maxTokens: 3000, system: analystSystem(ctx.brief), user: analystUser(p, input.instructions) });
+      const r = await researchSearch(sb, userId, `Who buys "${p.name}", why, what they pay, complaints in reviews, and shipping/supplier costs.`, [`${p.name} reviews`, `${p.name} price supplier`], 8);
+      const res = await ctx.ask({ maxTokens: 3000, system: analystSystem(ctx.brief), user: r ? `${analystUser(p, input.instructions)}\n\nRESEARCH (cite these; never invent numbers):\n${r.brief}` : analystUser(p, input.instructions) });
       const a = parseAnalysis(res.text, p);
       const verdict = a.verdict === 'pass' ? 'passes Validate' : a.verdict === 'fail' ? `fails Validate (${a.validate!.rules.filter((r) => !r.pass).map((r) => r.name).join(', ')})` : 'needs numbers';
       return { summary: a.summary || `${p.name}: ${verdict}`, count: 1, approval: { type: 'analysis', title: `Analyst: ${p.name} — ${verdict}`, payload: { ...a }, principle: a.detail.principle ?? null, source_url: p.source_url, confidence: 'estimate', entity_type: 'product', entity_id: p.id } };
@@ -668,6 +683,10 @@ const chunks = <T,>(a: T[], n: number): T[][] => { const out: T[][] = []; for (l
 
 export const APPLIERS: Record<string, Applier> = {
   /** A correction Marq gave twice becomes a standing playbook rule. */
+  /** Product Pitch approved: the brand is born; Brand Lab and Supplier Finder run next (handlers/engine.ts). */
+  product_pitch: async (sb, u, raw) => approvePitch(sb, u, raw),
+  /** "Approve to ship": the supplier order over the threshold may be placed. */
+  supplier_order: async (sb, u, raw) => { await sb.patch('ecom_orders', `user_id=eq.${u}&brand_id=eq.${raw.brand_id}&external_id=eq.${raw.order_external_id}`, { supplier_status: 'to_place', problem: null, updated_at: now() }); return { ok: true }; },
   playbook_rule: async (sb, u, raw) => addPlaybookRule(sb, u, String(raw.playbook), String(raw.domain ?? 'all'), String(raw.rule), 'Approved: the same correction twice'),
 
   scout_products: async (sb, u, p) => importScoutRows(sb, u, (p.rows ?? []) as ImportRow[]),

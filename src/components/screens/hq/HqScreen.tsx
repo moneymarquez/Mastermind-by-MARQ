@@ -98,7 +98,7 @@ export default function HqScreen() {
   );
 }
 
-function KillSwitch({ controls, onChanged }: { controls: Controls; onChanged: () => void }) {
+export function KillSwitch({ controls, onChanged }: { controls: Controls; onChanged: () => void }) {
   const [busy, setBusy] = useState('');
   const flip = async (which: string, paused: boolean) => {
     if (paused && !window.confirm(which === 'all' ? 'Pause everything? No worker runs, posts, texts or spend until you resume. Queued work waits, nothing is lost.' : `Pause ${which}?`)) return;

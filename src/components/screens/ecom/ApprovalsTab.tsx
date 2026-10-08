@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import type { useApprovals, Approval } from '../../../data/useEcom';
 import { decideApproval } from '../../../data/useEngine';
 import Thumbs from '../../mm/Thumbs';
+import { api } from '../../../lib/api';
 import type { ImportRow } from '../../../data/ecomProducts';
 import { marginHealthy } from '../../../data/ecomProducts';
 import { E, Badge, ConfidenceBadge, TeachingEmpty, btn, field, label, tint, useIsMobile } from './ecomShared';
@@ -67,13 +68,14 @@ function appliedMessage(type: string, a: Record<string, number> | null | undefin
   if (type === 'sample_purchase') return 'Marked ordered on step 4.';
   if (type === 'domain_purchase') return `${a.domain} marked bought on step 5.`;
   if (type === 'store_draft') return 'Approved — the Launcher is taking the page live.';
+  if (type === 'product_pitch') return 'Approved — the brand is set up. Brand Lab is drafting three directions and Supplier Finder the shipping plan; both land here.';
   if (type === 'brand_read') return `Saved on steps 9 and 10 — ${a.diagnosis}, recommend ${a.recommendation}.`;
   if (type === 'inbound_tags') return `Approved — ${a.tagged} sources set on Inbound.`;
   if (type === 'clip_edit') return 'Approved — the edit is saved on the clip in Studio.';
   return 'Approved.';
 }
 
-function ApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string) => void }) {
+export function ApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string) => void }) {
   const mobile = useIsMobile();
   const [note, setNote] = useState('');
   const [rerun, setRerun] = useState(true);
@@ -148,7 +150,7 @@ function ApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string) => voi
           ))}
           {Array.isArray(a.payload.dropped) && (a.payload.dropped as string[]).length > 0 && <div style={{ fontSize: 'var(--text-caption)', color: E.amber }}>Dropped by the rules: {(a.payload.dropped as string[]).join('; ')}</div>}
         </div>
-      ) : APPROVE_LABEL[a.type] ? <ApprovalBody type={a.type} payload={a.payload} choice={choice} onChoice={setChoice} /> : Object.keys(a.payload).length > 0 && (
+      ) : APPROVE_LABEL[a.type] ? <ApprovalBody type={a.type} payload={a.payload} choice={choice} onChoice={setChoice} approvalId={a.id} /> : Object.keys(a.payload).length > 0 && (
         <pre style={{ fontSize: 12, color: E.text, background: E.sunk, border: `1px solid ${E.border}`, borderRadius: 6, padding: 10, marginTop: 8, whiteSpace: 'pre-wrap', maxHeight: 220, overflow: 'auto' }}>{JSON.stringify(a.payload, null, 2)}</pre>
       )}
 
@@ -158,6 +160,7 @@ function ApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string) => voi
       <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
         <button style={btn('primary')} disabled={!!busy} onClick={() => go('approved')}>{busy === 'approved' ? 'Saving…' : a.type === 'sample_purchase' || a.type === 'domain_purchase' ? '✓ I bought it' : a.is_money ? 'Approve · spend' : rows.length ? `Approve · add ${rows.length} to sheet` : APPROVE_LABEL[a.type]?.(a.payload) ?? 'Approve'}</button>
         <button style={btn('ghost')} disabled={!!busy} onClick={() => go('sent_back')}>{busy === 'sent_back' ? (rerun && (a.type === 'scout_products' || RERUNNABLE.has(a.type)) ? 'Re-running…' : 'Saving…') : 'Send back'}</button>
+        {a.type === 'product_pitch' && <button style={btn('ghost')} disabled={!!busy} onClick={async () => { setBusy('another'); const r = await api<{ ok?: boolean; summary?: string; error?: string }>('/api/engine/pitch', { body: { another_of: a.id } }); setBusy(''); onDone(r.error ? `Couldn't find another: ${r.error}` : `Replaced. ${r.summary ?? ''}`); }}>{busy === 'another' ? 'Looking…' : 'Find me another'}</button>}
         <button style={btn('danger')} disabled={!!busy} onClick={() => go('killed')}>Kill</button>
         <span style={{ marginLeft: 'auto' }}><Thumbs entityType="approval" entityId={a.id} domain={a.domain} workerId={a.worker_id ?? null} compact /></span>
       </div>

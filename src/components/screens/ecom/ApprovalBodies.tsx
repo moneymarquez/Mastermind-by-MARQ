@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { money } from '../../../data/ecom';
 import { E, Badge, label, tint } from './ecomShared';
+import { PitchBody, DirectionVisuals } from './PitchCard';
 
 /** The readable body of each non-Scout approval card: what you're
  *  approving, laid out the way you'd check it — never raw JSON. Payload
@@ -34,12 +35,18 @@ export const APPROVE_LABEL: Record<string, (p: P) => string> = {
   brand_read: (p) => `Approve · save (${String(p.recommendation)})`,
   sample_purchase: () => '✓ I bought it',
   domain_purchase: () => '✓ I bought it',
+  product_pitch: () => 'Approve · build the brand',
+  supplier_order: () => 'Approve to ship',
+  playbook_rule: () => 'Approve · make it a rule',
 };
 const DAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const secs = (n: unknown) => (typeof n === 'number' ? `${Math.floor(n / 60)}:${String(Math.floor(n % 60)).padStart(2, '0')}` : '—');
 const gradeColor = (g: number) => (g >= 4 ? E.green : g === 3 ? E.blue : g === 2 ? E.amber : E.red);
 
-export function ApprovalBody({ type, payload: p, choice = 0, onChoice }: { type: string; payload: P; choice?: number; onChoice?: (i: number) => void }) {
+export function ApprovalBody({ type, payload: p, choice = 0, onChoice, approvalId }: { type: string; payload: P; choice?: number; onChoice?: (i: number) => void; approvalId?: string }) {
+  if (type === 'product_pitch') return <PitchBody p={p} />;
+  if (type === 'supplier_order') return <div style={{ marginTop: 10, fontSize: 'var(--text-body)', color: E.muted }}>{String(p.summary ?? '')} Approving marks it ready to place with the supplier; nothing is bought automatically.</div>;
+  if (type === 'playbook_rule') return <div style={{ marginTop: 10, padding: 10, borderRadius: 'var(--radius-sm)', background: E.sunk, fontFamily: 'var(--font-mono)', fontSize: 13, color: E.text }}>{String(p.rule ?? '')}<div style={{ fontFamily: 'inherit', fontSize: 12, color: E.faint, marginTop: 6 }}>Goes into {String(p.playbook ?? '')}</div></div>;
   if (type === 'analysis') {
     const d = (p.detail ?? {}) as Record<string, string>;
     const n = (p.numbers ?? {}) as Record<string, number | string | null>;
@@ -323,6 +330,7 @@ export function ApprovalBody({ type, payload: p, choice = 0, onChoice }: { type:
             <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>{o.palette.map((c) => <span key={c.hex} title={`${c.name} — ${c.why}`} style={{ width: 28, height: 28, borderRadius: 6, background: c.hex, border: `1px solid ${E.border}` }} />)}</div>
             <Line k="Positioning" v={o.positioning} /><Line k="Voice" v={o.voice} /><Line k="Type" v={o.type.heading ? `${o.type.heading} / ${o.type.body} — ${o.type.why}` : ''} />
             <Line k="Logo" v={o.logo_direction} /><Line k="Why this buyer" v={o.why_this_buyer} /><Line k="Principle" v={o.principle} /><Line k="Handles" v={`${o.handles} (check by hand)`} />
+            {approvalId && <DirectionVisuals approvalId={approvalId} direction={i} />}
           </label>
         ))}
       </div>

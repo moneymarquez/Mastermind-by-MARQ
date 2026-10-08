@@ -250,7 +250,7 @@ function AccountCard({ a, state, conn, onChanged }: { a: SetupEntry; state?: { c
           <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
             {a.connect === 'oauth'
               ? <button style={btn('primary')} disabled={!!busy || !state?.appReady} onClick={connectOauth}>{busy === 'connect' ? 'Opening…' : state?.connected ? 'Reconnect' : 'Connect'}</button>
-              : <button style={btn('primary')} disabled={!!busy || a.fields.some((f) => !vals[f.secret]?.trim())} onClick={connectToken}>{busy === 'connect' ? 'Testing…' : state?.connected ? 'Replace & test' : 'Connect & test'}</button>}
+              : <button style={btn('primary')} disabled={!!busy || a.fields.some((f) => !f.optional && !vals[f.secret]?.trim())} onClick={connectToken}>{busy === 'connect' ? 'Testing…' : state?.connected ? 'Replace & test' : 'Connect & test'}</button>}
             {state?.connected && <button style={btn('ghost')} disabled={!!busy} onClick={test}>{busy === 'test' ? 'Testing…' : 'Test'}</button>}
             {state?.connected && <button style={btn('danger')} onClick={disconnect}>Disconnect</button>}
           </div>

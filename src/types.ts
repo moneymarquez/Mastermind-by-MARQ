@@ -1,5 +1,11 @@
 export type Screen =
   | 'home'
+  | 'ecom-clients'
+  | 'ecom-inbox'
+  | 'ecom-office'
+  | 'ecom-orders'
+  | 'ecom-stores'
+  | 'ecom-products'
   | 'hq'
   | 'daily-plan'
   | 'dialing'

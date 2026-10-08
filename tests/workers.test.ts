@@ -97,7 +97,7 @@ test('worker specs, lead filter rules, grading, orchestrator plan', async () => 
   // orchestrator plan
   assert.deepEqual(scoutChannelsFor(1), ['tiktok', 'amazon']);
   const mon = planFor(1).map((s) => s.key), sun = planFor(0).map((s) => s.key);
-  assert.deepEqual(mon, ['scout:tiktok', 'scout:amazon', 'analyst', 'teardown', 'lead_filter', 'inbound_tracker', 'brand_analytics', 'content_analytics', 'trend_researcher', 'clip_editor', 'summary:ecom', 'summary:content', 'summary:marketing', 'hq']);
+  assert.deepEqual(mon, ['scout:tiktok', 'scout:amazon', 'analyst', 'teardown', 'pitch', 'lead_filter', 'inbound_tracker', 'brand_analytics', 'content_analytics', 'trend_researcher', 'clip_editor', 'summary:ecom', 'summary:content', 'summary:marketing', 'hq']);
   assert.ok(sun.includes('campaign_scorer') && sun.indexOf('campaign_scorer') < sun.indexOf('campaign_planner') && sun.at(-1) === 'hq');
   for (let d = 0; d < 7; d++) assert.ok(planFor(d).every((s) => !s.worker || ['orchestrator', 'hq', 'content_orchestrator', 'marketing_orchestrator'].includes(s.worker) || s.worker in RUNNERS));
 

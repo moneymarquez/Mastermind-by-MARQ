@@ -21,9 +21,10 @@ import { qualityGate } from './ecomWorkers';
 import { rewriteCheckout, pagesProjectName, pagesHash, toBase64, gidNumber } from './publishRules';
 
 import { isDryRun } from './dryRun';
+import { registerShopifyWebhooks, handoffBrandToContent } from './ecomOctober';
 import type { DryRunEnv } from './dryRun';
 
-export type LaunchEnv = SbEnv & VaultEnv & DryRunEnv;
+export type LaunchEnv = SbEnv & VaultEnv & DryRunEnv & { APP_ORIGIN?: string };
 const SHOPIFY_API = '2025-07';
 const CF = 'https://api.cloudflare.com/client/v4';
 const now = () => new Date().toISOString();
@@ -149,6 +150,11 @@ export async function runLauncher(env: LaunchEnv, sb: Sb, u: string, input: { bu
         await patchStep(sb, u, build.brand_id, 6, { preview_url: dep.live, checkout: 'Shopify backend + custom storefront', review_notes: `Live ${now().slice(0, 10)} at ${dep.live} — Buy goes to ${checkoutUrl}.` }, 'done');
         const [row] = await sb.get<{ current_step: number }>(`ecom_brands?id=eq.${build.brand_id}&user_id=eq.${u}&select=current_step`);
         if (row && row.current_step < 7) await sb.patch('ecom_brands', `id=eq.${build.brand_id}&user_id=eq.${u}`, { current_step: 7, updated_at: now() });
+        // Shopify tells us about every sale (orders/create), and the brand
+        // goes to Content for its pages.
+        const hook = await registerShopifyWebhooks(shop!.shop.replace(/^https?:\/\//, '').replace(/\/.*$/, ''), shop!.token, `${env.APP_ORIGIN ?? 'https://mastermindsbymarq.com'}/api/webhooks/shopify`).catch((e) => ({ ok: false, error: String(e) }));
+        await sb.insert('ecom_shops', { user_id: u, shop_domain: shop!.shop.replace(/^https?:\/\//, '').replace(/\/.*$/, ''), webhooks_registered_at: hook.ok ? now() : null }, { upsert: 'shop_domain' }).catch(() => {});
+        await handoffBrandToContent(sb, u, build.brand_id, dep.live).catch((e) => console.error('handoff', e));
         await alert(sb, u, 'ecom', 'info', 'store_live', `${b.name} is live`, `${dep.live} — Buy opens Shopify checkout (${checkoutUrl}). If the shop still has a storefront password, customers will hit it at checkout: remove it in Shopify → Online Store → Preferences.`, { type: 'brand', id: build.brand_id });
         return { summary: `${b.name} is live at ${dep.live}; Buy opens Shopify checkout.`, count: 1, output: { live_url: dep.live, checkout_url: checkoutUrl, deployment: dep.deployment, buy_buttons: page.count } };
       } catch (e) {

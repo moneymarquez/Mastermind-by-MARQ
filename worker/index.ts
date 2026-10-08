@@ -45,9 +45,14 @@ import { runMorningDigest, digestTest, digestStatus, digestReply } from './handl
 import { runOrchestratorTick } from './lib/orchestrator';
 import { runPublisherTick } from './lib/publisher';
 import { runFlagsTick } from './lib/flags';
+import { setResearchEnv } from './lib/research';
+import { setNotifyEnv } from './lib/notify';
+import { setVisualEnv } from './lib/visual';
 import { hqRoute } from './handlers/hq';
 import type { HqEnv } from './handlers/hq';
 import { smsInbound, smsSettingsRoute } from './handlers/sms';
+import { shopifyWebhook, ecomRoute } from './handlers/ecom';
+import type { EcomEnv } from './handlers/ecom';
 import type { SmsEnv } from './handlers/sms';
 import type { DigestEnv } from './handlers/digest';
 import { engineRoute } from './handlers/engine';
@@ -65,12 +70,13 @@ import { dispatchExtract, dispatchTranscribe, dispatchNotify, dispatchNudge, dis
 import { accountRoute } from './handlers/account';
 import type { SetupEnv } from './handlers/setup';
 
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv, DispatchEnv, ContentEnv, InboxEnv, HqEnv, SmsEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv, DispatchEnv, ContentEnv, InboxEnv, HqEnv, SmsEnv, EcomEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
 export default {
   async fetch(request: Request, env: Env, ctx?: { waitUntil: (promise: Promise<unknown>) => void }): Promise<Response> {
+    setResearchEnv(env); setNotifyEnv(env); setVisualEnv(env);
     const url = new URL(request.url);
 
     if (url.pathname === '/api/save-broker-keys') return saveBrokerKeys(request, env);
@@ -116,6 +122,9 @@ export default {
     const hqMatch = url.pathname.match(/^\/api\/hq\/([a-z-]+)$/);
     if (hqMatch) return hqRoute(request, env, hqMatch[1]);
     if (url.pathname === '/api/sms/inbound') return smsInbound(request, env);
+    if (url.pathname === '/api/webhooks/shopify') return shopifyWebhook(request, env);
+    const ecomMatch = url.pathname.match(/^\/api\/ecom\/([a-z-]+)$/);
+    if (ecomMatch) return ecomRoute(request, env, ecomMatch[1]);
     if (url.pathname === '/api/sms/settings') return smsSettingsRoute(request, env);
 
     const engineMatch = url.pathname.match(/^\/api\/engine\/([a-z-]+)$/);
@@ -165,6 +174,7 @@ export default {
   // runStocksBot itself; this only decides which handler a given firing
   // belongs to.
   async scheduled(event: { cron: string }, env: Env, ctx: { waitUntil: (promise: Promise<unknown>) => void }): Promise<void> {
+    setResearchEnv(env); setNotifyEnv(env); setVisualEnv(env);
     if (event.cron === '*/5 * * * *') {
       ctx.waitUntil(runShiftReminders(env));
       ctx.waitUntil(runOrchestratorTick(env));

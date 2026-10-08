@@ -24,3 +24,14 @@ Every place this build had to choose without asking Marq. Each one can be revers
 | 16 | DRY_RUN: a Worker env with `DRY_RUN=1` simulates posts, store launches and texts (records are written, marked dry run). | The brief: every outbound action gets a DRY_RUN path. Production leaves it unset. |
 | 17 | Parallel endpoints: Search `POST /v1beta/search` and Task `POST /v1/tasks/runs` + `GET …/result`, `x-api-key`, `source_policy.exclude_domains`. | Written from Parallel's documented API; couldn't call it from the sandbox. If a field name differs, the Setup "Test" error says exactly what Parallel rejected. |
 | 18 | 👎 corrections count as "the same" when their normalized words match (stop words, plural and -ing endings stripped). | This is a simple deterministic test with no AI call. Two differently worded complaints about the same thing may not match; that's the safe direction. |
+
+## Phase 2 — E-commerce
+
+19. **Higgsfield endpoint is unverified.** `worker/lib/visual.ts` posts to `HIGGSFIELD_API_URL` with `hf-api-key`; without a key every image is stored as `planned` with its prompt, so the cards still show what would be made. Verify the endpoint before the first paid run.
+20. **Supplier orders are not auto-placed.** There is no supplier API connected, so a new order gets `supplier_status = to_place` (or a `supplier_order` approval when it's over the $25 approval line). Placing is one tap in Orders.
+21. **Stores per product defaults to 1** (`system_controls.stores_per_product`), as the brief allows.
+22. **Client Stores reads other accounts through the Worker's service role**, owner-only (`/api/ecom/client-stores`), read-only. No RLS is loosened.
+23. **Sections are separate screens** (`ecom-products` … `ecom-clients`) rendered by one `EcomScreen` with a `section` prop; `ecommerce` stays as the overview with red/amber counts per section. Opening a brand from another section hands its id over through sessionStorage.
+24. **The pitch selection rules live in code** (`PITCH_RULES` in `worker/lib/pitch.ts`) and in the pitch system prompt, not as an editable playbook yet, so a playbook edit can't silently loosen the $10 / 35% bar.
+25. **The Office graph is plain SVG** (no graph library). `layoutGraph` is pure and can be restyled when the "brain" reference arrives; the old floor plan stays one tap away.
+26. **Research goes to Parallel when its key is set**, otherwise Claude web search, as before. Blocked domains are filtered after the search too.

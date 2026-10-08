@@ -90,3 +90,21 @@ export async function notify(env: NotifyEnv, sb: Sb, u: string, event: NotifyEve
   await sb.insert('app_notifications', { user_id: u, event, title: msg.title.slice(0, 200), body: msg.body?.slice(0, 1000) ?? null, deep_link: msg.deepLink ?? null, priority: msg.priority ?? 'normal', channels: plan.channels, delivery }).catch((e) => console.error('app_notifications', e));
   return { channels: plan.channels, delivery };
 }
+
+// Runners (worker engine jobs) only get the Anthropic key; the Worker hands
+// notify its env once per request/tick so jobs can still alert Marq.
+let storedEnv: NotifyEnv | null = null;
+export function setNotifyEnv(env: NotifyEnv): void { storedEnv = env; }
+export async function notifyStored(sb: Sb, u: string, event: NotifyEvent, msg: NotifyInput): Promise<void> {
+  if (!storedEnv) { await sb.insert('app_notifications', { user_id: u, event, title: msg.title.slice(0, 200), body: msg.body ?? null, deep_link: msg.deepLink ?? null, priority: msg.priority ?? 'normal', channels: ['inapp'] }).catch(() => {}); return; }
+  await notify(storedEnv, sb, u, event, msg).catch((e) => console.error('notify', e));
+}
+
+/** Which approvals ping Marq the moment a worker files them, and where the link goes. */
+export const APPROVAL_EVENTS: Record<string, { event: NotifyEvent; link: string; verb: string }> = {
+  product_pitch: { event: 'product_pitch', link: 'ecom-products', verb: 'Product pitch ready' },
+  brand_options: { event: 'brand_directions', link: 'ecom-inbox', verb: 'Brand directions ready to pick' },
+  store_draft: { event: 'store_preview', link: 'ecom-inbox', verb: 'Store preview ready to approve' },
+  post_plan: { event: 'post_batch', link: 'content', verb: 'Posts ready to approve' },
+  content_plan: { event: 'post_batch', link: 'content', verb: 'Post batch ready to approve' },
+};

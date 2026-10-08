@@ -7,28 +7,46 @@ import { money } from '../../../data/ecom';
 import type { Brand } from '../../../data/ecom';
 import { E, TeachingEmpty, Drawer, Badge, btn } from './ecomShared';
 import EcomOverview from './EcomOverview';
-import { Page, Tabs, field as mmField, useModule } from '../../mm/Page';
-import BrandsTab from './BrandsTab';
-import WorkersTab from './WorkersTab';
-import ApprovalsTab from './ApprovalsTab';
-import ProductSheetsTab from './ProductSheetsTab';
+import { Page, field as mmField, useModule } from '../../mm/Page';
 import OfficeView from '../../office/OfficeView';
+import { useFlags } from '../../../data/useFlags';
+import ProductsSection from './sections/ProductsSection';
+import StoresSection from './sections/StoresSection';
+import OrdersSection from './sections/OrdersSection';
+import OfficeSection from './sections/OfficeSection';
+import InboxSection from './sections/InboxSection';
+import ClientStoresSection from './sections/ClientStoresSection';
 
+export type EcomSection = 'overview' | 'products' | 'stores' | 'orders' | 'office' | 'inbox' | 'clients';
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
+  section?: EcomSection;
 }
 
-type Tab = 'brands' | 'sheets' | 'workers' | 'performance' | 'approvals';
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'brands', label: 'Brands' },
-  { id: 'sheets', label: 'Product sheets' },
-  { id: 'workers', label: 'Workers' },
-  { id: 'performance', label: 'Performance' },
-  { id: 'approvals', label: 'Approvals' },
+/** The split nav (brief §2.1): each section is its own screen in the
+ *  E-commerce portal; 'overview' is the landing page with counts. */
+export const SECTIONS: { id: Exclude<EcomSection, 'overview'>; screen: string; label: string; sub: string }[] = [
+  { id: 'products', screen: 'ecom-products', label: 'Products', sub: 'Tonight\'s pitch, the research queue, and every product the bots found.' },
+  { id: 'stores', screen: 'ecom-stores', label: 'Stores', sub: 'Every brand and store, from idea to live.' },
+  { id: 'orders', screen: 'ecom-orders', label: 'Orders', sub: 'Shopify orders, margins and supplier status.' },
+  { id: 'office', screen: 'ecom-office', label: 'Office', sub: 'Who\'s working, what they did, and the kill switch.' },
+  { id: 'inbox', screen: 'ecom-inbox', label: 'Inbox', sub: 'Approvals, store mail and order problems.' },
+  { id: 'clients', screen: 'ecom-clients', label: 'Client Stores', sub: 'Every subscriber\'s stores, revenue and flags.' },
 ];
+/** Which section an open flag belongs to, from its deep link. */
+export function sectionOfFlag(link: string | null, entityType: string): Exclude<EcomSection, 'overview'> {
+  const l = link ?? '';
+  for (const s of SECTIONS) if (l.includes(s.screen)) return s.id;
+  if (entityType === 'worker') return 'office';
+  if (entityType === 'order') return 'orders';
+  if (entityType === 'product' || entityType === 'pitch') return 'products';
+  if (entityType === 'approval') return 'inbox';
+  return 'stores';
+}
 const DAILY_CAP_USD = 1;
 const SEEN_KEY = 'ecom_last_seen';
+const OPEN_KEY = 'ecom_open_brand';
 
 interface SinceLook { since: string; added: Record<string, number>; runs: { name: string; summary: string | null }[]; failed: number }
 /** "What workers did since you last looked" — runs and products since the
@@ -83,15 +101,23 @@ function useCostBreakdown(open: boolean) {
 /** The e-commerce shell (§3): top bar, status strip, four tabs, and the
  *  approvals inbox behind the strip. Same panel-in-the-dark-shell as
  *  LeadFlow, on purpose. */
-export default function EcomScreen(_: Props) {
-  const phone = useModule().device === 'phone';
-  const [tab, setTab] = useState<Tab>('brands');
+export default function EcomScreen({ section = 'overview' }: Props) {
+  const { device, nav } = useModule();
+  const phone = device === 'phone';
+  const flags = useFlags(true);
   const [search, setSearch] = useState('');
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [costOpen, setCostOpen] = useState(false);
   const [newBrandOpen, setNewBrandOpen] = useState(false);
   const [officeOpen, setOfficeOpen] = useState(false);
   const [openBrandId, setOpenBrandId] = useState<string | null>(null);
+  useEffect(() => {
+    if (section !== 'stores') return;
+    try {
+      const v = sessionStorage.getItem(OPEN_KEY);
+      if (v) { sessionStorage.removeItem(OPEN_KEY); const o = JSON.parse(v) as { id: string | null; create: boolean }; setOpenBrandId(o.id); setNewBrandOpen(o.create); }
+    } catch { /* private mode */ }
+  }, [section]);
   const brands = useEcomBrands();
   const counters = useEcomCounters();
   const approvals = useApprovals();
@@ -107,32 +133,58 @@ export default function EcomScreen(_: Props) {
     ? `Scout added ${Object.values(since.data.added).reduce((a, b) => a + b, 0)} (${Object.entries(since.data.added).map(([c, n]) => `${n} ${c}`).join(', ')})`
     : since.data?.runs.length ? `${since.data.runs.length} run${since.data.runs.length === 1 ? '' : 's'} finished` : 'no worker runs';
 
+  const meta = SECTIONS.find((x) => x.id === section);
+  const counts = (id: string) => { const f = flags.flags.filter((x) => x.domain === 'ecommerce' && sectionOfFlag(x.link, x.entity_type) === id); return { red: f.filter((x) => x.severity === 'red').length, amber: f.filter((x) => x.severity === 'amber').length }; };
+  // Sections are separate screens, so "open this brand" crosses a remount.
+  const openInStores = (id: string | null, create = false) => { try { sessionStorage.setItem(OPEN_KEY, JSON.stringify({ id, create })); } catch { /* private mode */ } if (section === 'stores') { setOpenBrandId(id); setNewBrandOpen(create); } else nav('ecom-stores'); };
+  const buildBrand = async (input: { name: string; owner_type: 'mine' | 'client'; client_id: string | null; positioning: string | null; steps: Record<string, unknown>; current_step: number }) => { const b = await brands.createBrand({ ...input, steps: input.steps as Brand['steps'] }); if (b) openInStores(b.id); return b?.id ?? null; };
+
   return (
-    <Page title="E-commerce" sub="Brands, product sheets, workers and performance. Money never moves without your tap."
-      fab={{ t: 'Brand', onClick: () => { setTab('brands'); setOpenBrandId(null); setNewBrandOpen(true); } }}
-      menu={[{ t: 'View Office', onClick: () => setOfficeOpen(true) }]}>
-      <Tabs tabs={TABS.map((t) => (t.id === 'approvals' ? { ...t, badge: counters.pendingApprovals } : t))} value={tab} onChange={setTab} />
+    <Page title={meta?.label ?? 'E-commerce'} sub={meta?.sub ?? 'Products, stores, orders and the office. Money never moves without your tap.'}
+      backTo={meta ? 'ecommerce' : 'modules'} back={meta ? 'E-commerce' : 'All modules'}
+      fab={section === 'stores' || section === 'overview' ? { t: 'Brand', onClick: () => openInStores(null, true) } : undefined}
+      menu={[{ t: 'Floor plan view', onClick: () => setOfficeOpen(true) }]}>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        <input style={{ ...mmField, height: 34, borderRadius: 999, flex: '1 1 140px', maxWidth: phone ? undefined : 320, fontSize: 14 }} placeholder="Search brands, products" value={search} onChange={(e) => setSearch(e.target.value)} />
-        {!phone && <div style={{ flex: 1 }} />}
+        {(section === 'products' || section === 'stores' || section === 'overview') && <input style={{ ...mmField, height: 34, borderRadius: 999, flex: '1 1 140px', maxWidth: phone ? undefined : 320, fontSize: 14 }} placeholder="Search brands, products" value={search} onChange={(e) => setSearch(e.target.value)} />}
+        <div style={{ flex: 1 }} />
         <button className="mm-btn" style={iconBtn} onClick={() => setAlertsOpen(true)}>Alerts{dot(counters.unreadAlerts, E.red)}</button>
         <button className="mm-btn" style={iconBtn} onClick={() => setCostOpen(true)}>Spend {money(counters.spentMonth)}</button>
       </div>
-      <div style={{ fontSize: 13, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
-        Since {since.data ? new Date(since.data.since).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : 'you last looked'}: {sinceText}{since.data?.failed ? `, ${since.data.failed} failed` : ''} · {money(counters.spentToday)} spent today
-      </div>
-      {tab === 'brands' && !openBrandId && !newBrandOpen && (
-        <EcomOverview brands={brands.brands} orders30d={brands.orders30d} approvals={approvals.approvals} onOpenBrand={setOpenBrandId} onOpenApprovals={() => setTab('approvals')} />
+      {section === 'overview' && (
+        <>
+          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
+            Since {since.data ? new Date(since.data.since).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : 'you last looked'}: {sinceText}{since.data?.failed ? `, ${since.data.failed} failed` : ''} · {money(counters.spentToday)} spent today
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: phone ? '1fr 1fr' : 'repeat(3,minmax(0,1fr))', gap: 10 }}>
+            {SECTIONS.map((x) => {
+              const c = counts(x.id);
+              const extra = x.id === 'inbox' ? counters.pendingApprovals : 0;
+              return (
+                <button key={x.id} className="mm-btn" onClick={() => nav(x.screen)} style={{ height: 'auto', padding: 14, borderRadius: 14, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, textAlign: 'left' }}>
+                  <span style={{ display: 'flex', gap: 6, alignItems: 'center', width: '100%' }}>
+                    <span style={{ fontWeight: 600, fontSize: 15, flex: 1 }}>{x.label}</span>
+                    {c.red > 0 && <Badge color={E.red}>{c.red}</Badge>}
+                    {c.amber > 0 && <Badge color={E.amber}>{c.amber}</Badge>}
+                    {extra > 0 && <Badge color={E.blue}>{extra} waiting</Badge>}
+                  </span>
+                  {!phone && <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)', lineHeight: 1.4 }}>{x.sub}</span>}
+                </button>
+              );
+            })}
+          </div>
+          <EcomOverview brands={brands.brands} orders30d={brands.orders30d} approvals={approvals.approvals} onOpenBrand={(id) => openInStores(id)} onOpenApprovals={() => nav('ecom-inbox')} />
+        </>
       )}
-      <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: phone ? 14 : 20, minWidth: 0 }}>
-        {tab === 'brands' && <BrandsTab api={brands} clients={clients.clients} search={search} openBrandId={openBrandId} onOpenBrand={setOpenBrandId} newBrandOpen={newBrandOpen} onCloseNewBrand={() => setNewBrandOpen(false)} />}
-        {tab === 'sheets' && <ProductSheetsTab search={search} onBuildBrand={async (input) => { const b = await brands.createBrand({ ...input, steps: input.steps as Brand['steps'] }); if (b) { setTab('brands'); setOpenBrandId(b.id); } return b?.id ?? null; }} />}
-        {tab === 'workers' && <WorkersTab onRan={refreshAll} />}
-        {tab === 'performance' && (
-          <TeachingEmpty what="Performance — revenue, funnel by stage, flags and the Sunday checkup — fills from Shopify orders and post metrics." worker="Analytics + the Orchestrator's read loop" connection="Shopify custom app token, Instagram / TikTok" phase={7} />
-        )}
-        {tab === 'approvals' && <ApprovalsTab api={approvals} onDecided={refreshAll} />}
-      </div>
+      {section === 'products' && <ProductsSection approvals={approvals} search={search} onBuildBrand={buildBrand} onDecided={refreshAll} />}
+      {section === 'stores' && (
+        <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: phone ? 14 : 20, minWidth: 0 }}>
+          <StoresSection api={brands} clients={clients.clients} search={search} openBrandId={openBrandId} onOpenBrand={setOpenBrandId} newBrandOpen={newBrandOpen} onCloseNewBrand={() => setNewBrandOpen(false)} />
+        </div>
+      )}
+      {section === 'orders' && <OrdersSection brands={brands.brands} />}
+      {section === 'office' && <OfficeSection onRan={refreshAll} />}
+      {section === 'inbox' && <InboxSection approvals={approvals} brands={brands.brands} onDecided={refreshAll} />}
+      {section === 'clients' && <ClientStoresSection />}
 
       <Drawer open={alertsOpen} onClose={() => setAlertsOpen(false)} title="Alerts" subtitle="Only things that need a human." width={440}>
         {approvals.alerts.length === 0

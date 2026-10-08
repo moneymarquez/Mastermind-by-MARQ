@@ -4,7 +4,7 @@
  *  the Setup screen and the Worker (which only uses ids and secret names). */
 
 export type SetupKind = 'platform' | 'account';
-export interface SetupField { secret: string; label: string; placeholder?: string; hint?: string }
+export interface SetupField { secret: string; label: string; placeholder?: string; hint?: string; optional?: boolean }
 export interface SetupEntry {
   id: string;
   kind: SetupKind;
@@ -172,12 +172,12 @@ export const ACCOUNT_SETUP: SetupEntry[] = [
     unlocks: ['E-comm: live revenue, orders, conversion', 'Read loop: funnel from real orders'],
     steps: [
       { text: 'Shopify admin → Settings → Apps and sales channels → Develop apps → Create an app.' },
-      { text: 'Configure Admin API scopes: read_orders, read_products, write_products, write_publications, read_analytics. Install the app. (Added scopes later? Reinstall the app and paste the new token.)' },
+      { text: 'Configure Admin API scopes: read_orders, read_products, write_products, write_publications, read_analytics (read_orders is what turns on the 💸 sale alerts). Install the app. (Added scopes later? Reinstall the app and paste the new token.)' },
       { text: 'Online Store → Preferences: remove the storefront password before launching, or customers hit it at checkout.' },
       { text: 'Copy the Admin API access token (shown once) and your store domain (yourstore.myshopify.com). Paste both below.' },
     ],
     withoutIt: 'Brand cards show "Connect Shopify" instead of revenue.',
-    fields: [{ secret: 'token', label: 'Admin API access token', placeholder: 'shpat_…' }, { secret: 'shop', label: 'Store domain', placeholder: 'yourstore.myshopify.com' }],
+    fields: [{ secret: 'token', label: 'Admin API access token', placeholder: 'shpat_…' }, { secret: 'shop', label: 'Store domain', placeholder: 'yourstore.myshopify.com' }, { secret: 'webhook_secret', label: 'API secret key (for sale alerts)', placeholder: 'from the app\'s API credentials', optional: true, hint: 'Shopify signs order webhooks with it; without it, sales still show up but can\'t be verified, so they\'re refused.' }],
   },
   {
     id: 'github', kind: 'account', name: 'GitHub (store repos only)', testable: true, connect: 'token', phase: 'E-comm 6',

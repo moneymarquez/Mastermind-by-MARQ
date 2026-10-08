@@ -10,6 +10,7 @@ import { nextDailyStep, planFor } from '../lib/orchestrator';
 import { runPublisher, requeue } from '../lib/publisher';
 import type { PublishEnv } from '../lib/publisher';
 import { runLauncher } from '../lib/launcher';
+import { rejectPitch, runProductPitch } from '../lib/ecomOctober';
 import type { Venture, ScriptChannel } from '../../src/data/mktEngine';
 import type { Channel } from '../../src/data/ecom';
 import { PLAYBOOK_MAX_CHARS } from '../../src/data/ecom';
@@ -79,7 +80,21 @@ export async function engineRoute(request: Request, env: EngineEnv, path: string
       const b = await body<{ approval_id?: string; status?: 'approved' | 'sent_back' | 'killed'; note?: string; rerun?: boolean; choice?: number }>(request);
       if (!b?.approval_id || !b.status || !['approved', 'sent_back', 'killed'].includes(b.status)) return json({ error: 'approval_id and status are required.' }, 400);
       const r = await decide(env.ANTHROPIC_API_KEY, sb, user.id, { approvalId: b.approval_id, status: b.status, note: b.note, rerun: b.rerun, choice: Number.isInteger(b.choice) && b.choice! >= 0 && b.choice! < 10 ? b.choice : undefined });
+      if (r.ok && r.type === 'product_pitch' && b.status !== 'approved') {
+        // A rejected pitch: the note is already a correction (send-back); the pitch is marked rejected.
+        const [a] = await sb.get<{ payload: { pitch_id?: string } }>(`ai_approvals?id=eq.${b.approval_id}&user_id=eq.${user.id}&select=payload`);
+        await rejectPitch(sb, user.id, a?.payload?.pitch_id, b.note ?? null);
+      }
       if (!r.ok || b.status !== 'approved') return json(r, r.ok ? 200 : 400);
+      if (r.type === 'product_pitch') {
+        // Approved: Brand Lab drafts 3 directions (the Visual worker images them)
+        // and Supplier Finder builds the shipping plan — Marq confirms each.
+        const brandId = ((r.applied ?? {}) as { brand_id?: string }).brand_id;
+        if (brandId) {
+          const job = (async () => { await RUNNERS.brandlab(env.ANTHROPIC_API_KEY, sb, user.id, { brandId, trigger: 'approval' }); await RUNNERS.supplier(env.ANTHROPIC_API_KEY, sb, user.id, { brandId, trigger: 'approval' }); })().catch((e) => console.error('pitch follow-up', e));
+          if (ctx) ctx.waitUntil(job); else await job;
+        }
+      }
       // Approved work goes out into the world right away; the */5 cron is
       // the fallback for anything not due yet or still processing.
       if (r.type === 'post_plan' || r.type === 'clip_edit') {
@@ -102,6 +117,19 @@ export async function engineRoute(request: Request, env: EngineEnv, path: string
       }
       const r = await runPublisher(env, sb, user.id, { trigger: 'manual', itemIds: b?.item_id ? [b.item_id] : undefined });
       return json(r ?? { ok: true, summary: 'Nothing is due to post right now.' });
+    }
+    // Product Pitch now, or "Find me another" (the current one is replaced).
+    if (path === 'pitch') {
+      const b = await body<{ another_of?: string; instructions?: string }>(request);
+      let exclude: string[] = [];
+      if (b?.another_of && UUID.test(b.another_of)) {
+        const [a] = await sb.get<{ id: string; payload: { pitch_id?: string; product_id?: string }; status: string }>(`ai_approvals?id=eq.${b.another_of}&user_id=eq.${user.id}&select=id,payload,status`);
+        if (a?.status === 'pending') await sb.patch('ai_approvals', `id=eq.${a.id}`, { status: 'killed', my_note: 'Find me another', decided_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+        await rejectPitch(sb, user.id, a?.payload?.pitch_id, 'Find me another', true);
+        if (a?.payload?.product_id) exclude = [a.payload.product_id];
+      }
+      const r = await runProductPitch(env.ANTHROPIC_API_KEY, sb, user.id, { exclude, instructions: b?.instructions?.slice(0, 2000) ?? null, trigger: 'manual' });
+      return json(r, r.ok ? 200 : r.capReached ? 429 : 502);
     }
     // "Launch again" on a store build after fixing what the last try said.
     if (path === 'launch') {

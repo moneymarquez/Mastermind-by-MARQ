@@ -10,6 +10,7 @@ import { ENGINE_DOMAINS, RUNNERS, runWorker, TZ } from './engine';
 import type { RunOutcome } from './engine';
 import { spentToday } from './ai';
 import { loadControls, isPaused, controlDomainOf } from './controls';
+import { runProductPitch, refreshPitchActuals } from './ecomOctober';
 import type { Channel } from '../../src/data/ecom';
 
 export const DAILY_START_MIN = 3 * 60 + 30;
@@ -34,6 +35,7 @@ export function planFor(dow: number): Step[] {
   const steps: Omit<Step, 'domain'>[] = scoutChannelsFor(dow).map((c) => ({ key: `scout:${c}`, worker: 'scout', label: `Scout ${c}` }));
   steps.push({ key: 'analyst', worker: 'analyst', label: 'Analyse the top new products' });
   steps.push({ key: 'teardown', worker: 'teardown', label: 'Tear down a watched product' });
+  steps.push({ key: 'pitch', worker: 'orchestrator', label: 'Pick tonight\'s #1 product and pitch it' });
   steps.push({ key: 'lead_filter', worker: 'lead_filter', label: 'Tag new leads' });
   steps.push({ key: 'inbound_tracker', worker: 'inbound_tracker', label: 'Tag where new inbound leads came from' });
   steps.push({ key: 'brand_analytics', worker: 'analytics', label: 'Read the funnel for brands that are posting' });
@@ -110,6 +112,10 @@ async function runStep(apiKey: string | undefined, sb: Sb, userId: string, step:
     for (const b of brands) { const r = await RUNNERS.analytics(apiKey, sb, userId, { brandId: b.id, trigger: 'cron' }); res.push(r); if (r.capReached) break; }
     const ok = res.filter((r) => r.ok);
     return { status: ok.length ? 'done' : 'failed', note: `Analytics: ${ok.length}/${res.length} brands read → Approvals${ok.length < res.length ? ` (${res.find((r) => !r.ok)?.error})` : ''}`, runId: ok[0]?.runId ?? res[0]?.runId ?? null };
+  }
+  if (step.key === 'pitch') {
+    await refreshPitchActuals(sb, userId).catch(() => 0);
+    return one(await runProductPitch(apiKey, sb, userId, { trigger: 'cron' }), step.label);
   }
   if (step.key.startsWith('summary:')) return writeDomainSummary(apiKey, sb, userId, step.domain as Exclude<StepDomain, 'master'>, date);
   if (step.key === 'hq') return writeMasterReport(apiKey, sb, userId, date);

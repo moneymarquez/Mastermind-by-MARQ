@@ -12,13 +12,15 @@ import { runScout } from '../../../data/useEngine';
 
 interface Props {
   search: string;
+  /** Pipeline status per product (Products nav): researching / pitched / approved / rejected / building / live. */
+  statusOf?: (productId: string) => { label: string; color: string } | null;
   onBuildBrand: (input: { name: string; owner_type: 'mine' | 'client'; client_id: string | null; positioning: string | null; steps: Record<string, unknown>; current_step: number }, productId: string) => Promise<string | null>;
 }
 
 /** §5 — the sheets: a channel per pill, top products ranked, cards with
  *  pictures (table is the optional toggle), the drawer with every section,
  *  CSV import as the v1 source adapter. */
-export default function ProductSheetsTab({ search, onBuildBrand }: Props) {
+export default function ProductSheetsTab({ search, onBuildBrand, statusOf }: Props) {
   const [scouting, setScouting] = useState(false);
   const [scoutMsg, setScoutMsg] = useState('');
   const api = useEcomProducts();
@@ -77,7 +79,7 @@ export default function ProductSheetsTab({ search, onBuildBrand }: Props) {
       {view === 'cards' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12, marginTop: 14 }}>
           {rows.slice(0, limit).map((p) => (
-            <ProductCard key={p.id} p={p} ranks={(api.snapshots[p.id] ?? []).map((s) => s.rank)} onOpen={() => setOpenId(p.id)} onWatch={() => api.toggleWatch(p)} onBuild={() => buildBrand(p)} />
+            <ProductCard key={p.id} p={p} ranks={(api.snapshots[p.id] ?? []).map((s) => s.rank)} onOpen={() => setOpenId(p.id)} onWatch={() => api.toggleWatch(p)} onBuild={() => buildBrand(p)} statusOf={statusOf} />
           ))}
         </div>
       ) : (
@@ -88,7 +90,7 @@ export default function ProductSheetsTab({ search, onBuildBrand }: Props) {
               {rows.slice(0, limit).map((p) => (
                 <tr key={p.id} onClick={() => setOpenId(p.id)} style={{ borderTop: '1px solid var(--border)', cursor: 'pointer' }}>
                   <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{p.rank ?? '—'}</td>
-                  <td style={{ padding: '8px 10px', color: E.text, fontWeight: 600 }}>{p.watched ? '★ ' : ''}{p.name}</td>
+                  <td style={{ padding: '8px 10px', color: E.text, fontWeight: 600 }}>{p.watched ? '★ ' : ''}{p.name}{statusOf?.(p.id) && <> <Badge color={statusOf(p.id)!.color}>{statusOf(p.id)!.label}</Badge></>}</td>
                   <td style={{ padding: '8px 10px', color: E.muted }}>{p.category ?? '—'}</td>
                   <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{money(p.sell_price)}</td>
                   <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{money(p.landed_cost)}</td>
@@ -113,7 +115,7 @@ export default function ProductSheetsTab({ search, onBuildBrand }: Props) {
   );
 }
 
-function ProductCard({ p, ranks, onOpen, onWatch, onBuild }: { p: Product; ranks: (number | null)[]; onOpen: () => void; onWatch: () => void; onBuild: () => void }) {
+function ProductCard({ p, ranks, onOpen, onWatch, onBuild, statusOf }: { p: Product; ranks: (number | null)[]; onOpen: () => void; onWatch: () => void; onBuild: () => void; statusOf?: Props['statusOf'] }) {
   const path = sparklinePath(ranks);
   const trend = rankTrend(ranks);
   const healthy = marginHealthy(p.sell_price, p.landed_cost);
@@ -130,6 +132,7 @@ function ProductCard({ p, ranks, onOpen, onWatch, onBuild }: { p: Product; ranks
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             {p.rank != null && <Badge color={E.text}>#{p.rank}</Badge>}
             <span style={{ fontWeight: 700, color: E.text, fontSize: 'var(--text-subhead)', flex: 1, minWidth: 0 }}>{p.name}</span>
+            {statusOf?.(p.id) && <Badge color={statusOf(p.id)!.color}>{statusOf(p.id)!.label}</Badge>}
             {path && <svg width={72} height={22} aria-label="14-day rank"><path d={path} fill="none" stroke={trend === '↓' ? E.red : E.green} strokeWidth={1.8} strokeLinejoin="round" /></svg>}
           </div>
           <div style={{ fontSize: 'var(--text-body)', color: E.faint, marginTop: 2 }}>{[p.category, `${CHANNELS.find((c) => c.id === p.channel)?.short}${trend ? ` ${trend}` : ''}`].filter(Boolean).join(' · ')}{isSaturated(p) ? ' · saturated' : ''}</div>

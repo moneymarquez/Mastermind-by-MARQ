@@ -88,7 +88,7 @@ const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 const LEGACY_SCREENS = new Set<string>([]);
 
 const BUILT_SCREENS = [
-  'home', 'hq', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
+  'home', 'ecom-clients', 'ecom-inbox', 'ecom-office', 'ecom-orders', 'ecom-stores', 'ecom-products', 'hq', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'leadflow', 'account-settings', 'prompt-voice-settings',
   'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access', 'changelog', 'dispatch', 'inbox', 'modules',
@@ -462,6 +462,12 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         
         {state.screen === 'hq' && <HqScreen />}
+        {state.screen === 'ecom-products' && <EcomScreen section="products" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
+        {state.screen === 'ecom-stores' && <EcomScreen section="stores" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
+        {state.screen === 'ecom-orders' && <EcomScreen section="orders" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
+        {state.screen === 'ecom-office' && <EcomScreen section="office" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
+        {state.screen === 'ecom-inbox' && <EcomScreen section="inbox" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
+        {state.screen === 'ecom-clients' && <EcomScreen section="clients" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
         {state.screen === 'modules' && <ModulesGrid groups={moduleTiles} onOpen={shellNav} />}
         {state.screen === 'inbox' && (
           <InboxScreen device={device} isOwner={isOwner} inbox={ownerInbox} feed={leadFeed} focus={inboxFocus} onFocusConsumed={() => setInboxFocus(null)}

@@ -7,7 +7,7 @@ A fresh session continues from **Current step** below.
 ## Phases
 
 - [x] **Phase 1, Foundation:** models, flags, kill switch, spend guardrail, notify, Setup cards, Twilio+Grok texting
-- [ ] **Phase 2, E-commerce:** split nav, Product Pitch, orders + Shopify webhook, brand → store → content, Office graph + task log
+- [x] **Phase 2, E-commerce:** split nav, Product Pitch, orders + Shopify webhook, brand → store → content, Office graph + task log
 - [ ] **Phase 3, Content:** ideas, performance loop, clip rendering, multiple accounts, handoff, own accounts
 - [ ] **Phase 4, Solo:** tiers, Tasks, Brain Dump + import, AI onboarding, Weekly Check-in, Money Move, Peptides, People lists, Feed
 - [ ] **Phase 5, Made by Marq:** audit, CRM tabs + phases, Classroom, Ledger, Contracts, Comms, Playbooks/Case studies, HQ (started in P1), Marketing
@@ -48,6 +48,17 @@ A fresh session continues from **Current step** below.
 - **Migration:** `supabase/schema_121_october_foundation.sql` (not applied).
 - **Tests:** `tests/october-foundation.test.ts`.
 
+## Phase 2: what was built
+
+- **Split nav:** six owner-only screens in the E-commerce portal (Products, Stores, Orders, Office, Inbox, Client Stores); the overview shows red/amber counts per section.
+- **Product Pitch:** `worker/lib/pitch.ts` (hard filter, pick, outcome range, parse) and `runProductPitch` in `worker/lib/ecomOctober.ts`, run nightly as the `pitch` step after Teardown. Approve → Brand Lab → Supplier. Reject or "Find me another" → the next pick. Predicted vs actual after 30 days.
+- **Brand → store → content:** Brand Lab options trigger the Visual worker (`worker/lib/visual.ts`, 6 images per direction, `checkSpend`-guarded); launch registers Shopify order webhooks, writes `ecom_shops` and opens a `brand_ready` handoff to Content.
+- **Orders:** `/api/webhooks/shopify` (HMAC-verified) records orders with margin and supplier status; Orders section with totals.
+- **Office:** live graph (`OfficeGraph`, `buildGraphData`), node drawer with runs, cost, 👍/👎, enable and model override; task log; orchestrator chat; kill switch; workers list.
+- **Inbox:** approvals, store mail and order problems. **Client Stores:** every subscriber's stores, revenue, flags, last run.
+- **Migration:** `supabase/schema_122_ecom_october.sql` (not applied).
+- **Tests:** `tests/ecom-october.test.ts`.
+
 ## Current step
 
-Phase 2: start with 2.1 (split E-commerce into Products / Stores / Orders / Office / Inbox / Client Stores).
+Phase 3: Content (ideas engine first).

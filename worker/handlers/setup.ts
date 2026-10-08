@@ -264,9 +264,11 @@ export async function setupRoute(request: Request, env: SetupEnv, path: string):
       const entry = ACCOUNT_SETUP.find((a) => a.id === id && a.connect === 'token');
       if (!entry) return json({ error: 'Unknown token connection.' }, 400);
       const tok: Record<string, string> = {};
-      for (const f of entry.fields) { const v = String((b.values as Record<string, unknown> | undefined)?.[f.secret] ?? '').trim(); if (!v) return json({ error: `${f.label} is required.` }, 400); tok[f.secret] = v; }
+      for (const f of entry.fields) { const v = String((b.values as Record<string, unknown> | undefined)?.[f.secret] ?? '').trim(); if (!v && !f.optional) return json({ error: `${f.label} is required.` }, 400); if (v) tok[f.secret] = v; }
       const r = await testAccount(id, tok);
       if (r.ok) await saveToken(e, sb, user.id, id, tok, { tested: new Date().toISOString() });
+      // Incoming order webhooks find their account by shop domain.
+      if (r.ok && id === 'shopify') await sb.insert('ecom_shops', { user_id: user.id, shop_domain: tok.shop.replace(/^https?:\/\//, '').replace(/\/.*$/, '').toLowerCase() }, { upsert: 'shop_domain' }).catch(() => {});
       await recordStatus(sb, user.id, id, r);
       return json(r, r.ok ? 200 : 400);
     }
