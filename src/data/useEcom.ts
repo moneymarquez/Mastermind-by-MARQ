@@ -105,6 +105,7 @@ export interface Approval {
   id: string; domain: string; type: string; entity_type: string | null; entity_id: string | null; title: string;
   payload: Record<string, unknown>; principle: string | null; source_url: string | null; confidence: 'hard' | 'estimate' | 'ai' | null;
   is_money: boolean; amount_usd: number | null; status: 'pending' | 'approved' | 'sent_back' | 'killed'; my_note: string | null; created_at: string;
+  worker_id?: string | null;
 }
 export interface Alert { id: string; domain: string; severity: 'info' | 'warn' | 'urgent'; kind: string | null; title: string; body: string | null; read_at: string | null; created_at: string }
 

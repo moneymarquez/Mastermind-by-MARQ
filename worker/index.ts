@@ -44,6 +44,11 @@ import type { PushSubscriptionEnv } from './handlers/push-subscription';
 import { runMorningDigest, digestTest, digestStatus, digestReply } from './handlers/digest';
 import { runOrchestratorTick } from './lib/orchestrator';
 import { runPublisherTick } from './lib/publisher';
+import { runFlagsTick } from './lib/flags';
+import { hqRoute } from './handlers/hq';
+import type { HqEnv } from './handlers/hq';
+import { smsInbound, smsSettingsRoute } from './handlers/sms';
+import type { SmsEnv } from './handlers/sms';
 import type { DigestEnv } from './handlers/digest';
 import { engineRoute } from './handlers/engine';
 import { setupRoute } from './handlers/setup';
@@ -60,7 +65,7 @@ import { dispatchExtract, dispatchTranscribe, dispatchNotify, dispatchNudge, dis
 import { accountRoute } from './handlers/account';
 import type { SetupEnv } from './handlers/setup';
 
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv, DispatchEnv, ContentEnv, InboxEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv, DispatchEnv, ContentEnv, InboxEnv, HqEnv, SmsEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
@@ -107,6 +112,11 @@ export default {
     if (url.pathname === '/api/digest/test') return digestTest(request, env);
     if (url.pathname === '/api/digest/status') return digestStatus(request, env);
     if (url.pathname === '/api/digest/reply') return digestReply(request, env);
+
+    const hqMatch = url.pathname.match(/^\/api\/hq\/([a-z-]+)$/);
+    if (hqMatch) return hqRoute(request, env, hqMatch[1]);
+    if (url.pathname === '/api/sms/inbound') return smsInbound(request, env);
+    if (url.pathname === '/api/sms/settings') return smsSettingsRoute(request, env);
 
     const engineMatch = url.pathname.match(/^\/api\/engine\/([a-z-]+)$/);
     if (engineMatch) return engineRoute(request, env, engineMatch[1], ctx);
@@ -160,6 +170,7 @@ export default {
       ctx.waitUntil(runOrchestratorTick(env));
       ctx.waitUntil(runInboundWaitCheck(env));
       ctx.waitUntil(runPublisherTick(env));
+      ctx.waitUntil(runFlagsTick(env));
       return;
     }
     ctx.waitUntil(runStocksBot(env));

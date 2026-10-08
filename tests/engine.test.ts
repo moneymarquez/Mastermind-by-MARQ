@@ -29,7 +29,7 @@ test('worker runtime lifecycle, approvals, overnight plan', async () => {
     };
   }
   const U = 'u1';
-  const workers = ['analyst', 'campaign_scorer', 'lead_filter', 'scout', 'teardown', 'orchestrator', 'campaign_planner', 'script_copy'].map((key, i) => ({ id: `w${i}`, user_id: U, key, name: key, domain: ['campaign_scorer', 'lead_filter', 'campaign_planner', 'script_copy'].includes(key) ? 'marketing' : key === 'orchestrator' ? 'all' : 'ecom', model: 'claude-haiku-4-5', enabled: true, status: 'idle', autonomy_level: 0 }));
+  const workers = ['analyst', 'campaign_scorer', 'lead_filter', 'scout', 'teardown', 'orchestrator', 'campaign_planner', 'script_copy', 'hq', 'content_orchestrator', 'marketing_orchestrator'].map((key, i) => ({ id: `w${i}`, user_id: U, key, name: key, domain: ['campaign_scorer', 'lead_filter', 'campaign_planner', 'script_copy', 'marketing_orchestrator'].includes(key) ? 'marketing' : key === 'content_orchestrator' ? 'content' : key === 'orchestrator' || key === 'hq' ? 'all' : 'ecom', model: 'claude-haiku-4-5', enabled: true, status: 'idle', autonomy_level: 0 }));
 
   // Scorer with nothing to grade: done, skipped, no AI call, no approval.
   let sb = mockSb({ ai_workers: workers, ai_playbooks: [], ai_approvals: [], ai_cost_ledger: [], ai_domain_caps: [] });
@@ -68,11 +68,12 @@ test('worker runtime lifecycle, approvals, overnight plan', async () => {
   // Orchestrator: steps are idempotent and the summary falls back without a key.
   sb = mockSb({ ai_workers: workers, ai_playbooks: [], ai_approvals: [], ai_cost_ledger: [], ai_domain_caps: [], ecom_products: [], ecom_competitors: [], leads: [], mkt_campaigns: [], mkt_touches: [], mkt_scripts: [] });
   const seen: string[] = [];
-  for (let i = 0; i < 14; i++) { const s = await nextDailyStep(undefined, sb as never, U, '2026-09-28', 1); if (!s) break; seen.push(`${s.step.key}:${s.status}`); }
-  assert.deepEqual(seen.map((s) => s.split(':').slice(0, -1).join(':')), ['scout:tiktok', 'scout:amazon', 'analyst', 'teardown', 'lead_filter', 'inbound_tracker', 'brand_analytics', 'content_analytics', 'trend_researcher', 'clip_editor', 'summary']);
+  for (let i = 0; i < 20; i++) { const s = await nextDailyStep(undefined, sb as never, U, '2026-09-28', 1); if (!s) break; seen.push(`${s.step.key}:${s.status}`); }
+  assert.deepEqual(seen.map((s) => s.split(':').slice(0, -1).join(':')), ['scout:tiktok', 'scout:amazon', 'analyst', 'teardown', 'lead_filter', 'inbound_tracker', 'brand_analytics', 'content_analytics', 'trend_researcher', 'clip_editor', 'summary:ecom', 'summary:content', 'summary:marketing', 'hq']);
   assert.equal(seen[0].endsWith('failed'), true); // no key → scout fails, plan continues
   assert.equal(await nextDailyStep(undefined, sb as never, U, '2026-09-28', 1), null);
-  const sum = sb.db.ai_daily_summaries[0] as { domain: string; summary_text: string; numbers: { how: string } };
-  assert.equal(sum.domain, 'orchestrator'); assert.match(sum.numbers.how, /fallback/); assert.ok(sum.summary_text.length > 20);
+  // Each domain orchestrator writes orch:<domain>; HQ writes orch:master and the 'orchestrator' row Home and the digest read.
+  assert.deepEqual((sb.db.ai_daily_summaries as { domain: string }[]).map((x) => x.domain).sort(), ['orch:content', 'orch:ecom', 'orch:marketing', 'orch:master', 'orchestrator']);
+  const sum = (sb.db.ai_daily_summaries as { domain: string; summary_text: string; numbers: { how: string } }[]).find((x) => x.domain === 'orchestrator')!; assert.match(sum.numbers.how, /fallback/); assert.ok(sum.summary_text.length > 20);
 
 });

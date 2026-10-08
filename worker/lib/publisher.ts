@@ -19,7 +19,10 @@ import { runWorker, alert, TZ } from './engine';
 import type { RunOutcome, Trigger } from './engine';
 import { isDue, captionFor, contentTypeFor, isVideoType, chunkPlan } from './publishRules';
 
-export interface PublishEnv extends SbEnv, VaultEnv { INSTAGRAM_APP_SECRET?: string; TIKTOK_CLIENT_KEY?: string; TIKTOK_CLIENT_SECRET?: string }
+import { isDryRun, dryRunId } from './dryRun';
+import type { DryRunEnv } from './dryRun';
+
+export interface PublishEnv extends SbEnv, VaultEnv, DryRunEnv { INSTAGRAM_APP_SECRET?: string; TIKTOK_CLIENT_KEY?: string; TIKTOK_CLIENT_SECRET?: string }
 
 const IG = 'https://graph.instagram.com';
 const TT = 'https://open.tiktokapis.com/v2';
@@ -221,6 +224,8 @@ async function startOne(env: PublishEnv, sb: Sb, item: Item, acct: Account | nul
   try {
     const media = await mediaFor(env, sb, item);
     logId = await logRow(sb, item, acct, date, 'publishing', { media_source: media.source });
+    // DRY_RUN: everything up to the platform call ran for real; the post itself is simulated.
+    if (isDryRun(env)) { await markPublished(sb, item, acct, { id: dryRunId(acct.platform), url: null }, logId); notes.push('dry run — nothing was posted'); return 'published'; }
     const caption = captionFor(item.caption, item.hashtags);
     let ref: string;
     if (acct.platform === 'instagram') ref = await igCreate(await igToken(env, sb, item.user_id), media, caption);

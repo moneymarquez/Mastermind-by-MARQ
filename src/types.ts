@@ -1,5 +1,6 @@
 export type Screen =
   | 'home'
+  | 'hq'
   | 'daily-plan'
   | 'dialing'
   | 'sticky-spot'

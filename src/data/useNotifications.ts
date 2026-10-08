@@ -7,7 +7,7 @@ import { waitingMin, fmtWait, URGENT_WAIT_MIN } from './useLeadFeed';
 /** The bell's panel (design handoff: four groups — New leads, Inbox,
  *  Bills and deadlines, Clients). Built only from real rows; "read" is a
  *  per-device list of ids, cleared by Mark all read. */
-export type NotifGroup = 'New leads' | 'Inbox' | 'Bills and deadlines' | 'Clients';
+export type NotifGroup = 'Alerts' | 'New leads' | 'Inbox' | 'Bills and deadlines' | 'Clients';
 export interface Notif { id: string; group: NotifGroup; title: string; sub: string; at: string; chip?: { text: string; kind: 'bad' | 'warn' | 'good' | 'neutral' | 'accent' }; target: { screen: string; ref?: string } }
 
 const READ_KEY = 'mm-notif-read';
@@ -19,6 +19,7 @@ export function useNotifications(inbox: InboxItem[], leads: FeedLead[], now: num
   const [bills, setBills] = useState<BillRow[]>([]);
   const [rems, setRems] = useState<{ id: string; title: string; due_date: string; due_time: string | null }[]>([]);
   const [read, setRead] = useState<Set<string>>(readSet);
+  const [alerts, setAlerts] = useState<{ id: string; event: string; title: string; body: string | null; deep_link: string | null; priority: string; read_at: string | null; created_at: string }[]>([]);
   useEffect(() => {
     if (!enabled) return;
     const soon = new Date(now + 7 * 86400000).toISOString().slice(0, 10);
@@ -27,6 +28,9 @@ export function useNotifications(inbox: InboxItem[], leads: FeedLead[], now: num
     // Reminders due by tomorrow ride the same group (the floating
     // Reminders box is the old look; the redesign puts them here).
     const tomorrow = new Date(now + 86400000).toISOString().slice(0, 10);
+    // notify() rows (worker/lib/notify.ts): sales, approvals ready, problems. Absent table = none.
+    supabase.from('app_notifications').select('id,event,title,body,deep_link,priority,read_at,created_at').order('created_at', { ascending: false }).limit(30)
+      .then(({ data, error }) => setAlerts(error ? [] : ((data ?? []) as typeof alerts)));
     supabase.from('reminders').select('id,title,due_date,due_time').eq('done', false).lte('due_date', tomorrow).order('due_date').limit(20)
       .then(({ data }) => setRems((data ?? []) as typeof rems));
     // now changes once a minute; bills only need a refresh when the day turns
@@ -35,6 +39,10 @@ export function useNotifications(inbox: InboxItem[], leads: FeedLead[], now: num
 
   const items = useMemo(() => {
     const out: Notif[] = [];
+    for (const a of alerts) {
+      if (a.read_at) continue;
+      out.push({ id: `app-${a.id}`, group: 'Alerts', title: a.title, sub: a.body ?? '', at: a.created_at, chip: a.event === 'sale_made' ? { text: 'Sale', kind: 'good' } : a.priority === 'high' ? { text: 'Now', kind: 'bad' } : undefined, target: { screen: a.deep_link && !a.deep_link.startsWith('http') ? a.deep_link : 'home' } });
+    }
     for (const l of leads.slice(0, 12)) {
       const w = waitingMin(l, now);
       if (w == null && now - new Date(l.at).getTime() > 2 * 86400000) continue;
@@ -56,7 +64,7 @@ export function useNotifications(inbox: InboxItem[], leads: FeedLead[], now: num
       out.push({ id: `rem-${r.id}`, group: 'Bills and deadlines', title: r.title, sub: `Reminder${r.due_time ? ` · ${r.due_time.slice(0, 5)}` : ''}`, at: `${r.due_date}T${r.due_time ?? '09:00:00'}`, chip: { text: days < 0 ? `${-days} day${days === -1 ? '' : 's'} overdue` : days === 0 ? 'Due today' : 'Tomorrow', kind: days < 0 ? 'bad' : days === 0 ? 'warn' : 'neutral' }, target: { screen: 'home' } });
     }
     return out;
-  }, [leads, inbox, bills, rems, now]);
+  }, [leads, inbox, bills, rems, now, alerts]);
 
   const unread = items.filter((n) => !read.has(n.id)).length;
   const markRead = useCallback((id: string) => setRead((r) => { const n = new Set(r); n.add(id); try { localStorage.setItem(READ_KEY, JSON.stringify([...n].slice(-400))); } catch { /* private mode */ } return n; }), []);

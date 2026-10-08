@@ -20,7 +20,10 @@ import type { BrandCtx } from './ecomWorkers';
 import { qualityGate } from './ecomWorkers';
 import { rewriteCheckout, pagesProjectName, pagesHash, toBase64, gidNumber } from './publishRules';
 
-export type LaunchEnv = SbEnv & VaultEnv;
+import { isDryRun } from './dryRun';
+import type { DryRunEnv } from './dryRun';
+
+export type LaunchEnv = SbEnv & VaultEnv & DryRunEnv;
 const SHOPIFY_API = '2025-07';
 const CF = 'https://api.cloudflare.com/client/v4';
 const now = () => new Date().toISOString();
@@ -134,6 +137,10 @@ export async function runLauncher(env: LaunchEnv, sb: Sb, u: string, input: { bu
         const [shop, pages] = await Promise.all([loadToken(env, sb, u, 'shopify'), loadToken(env, sb, u, 'cloudflare_pages')]);
         const missing = [!shop?.token && 'Shopify', !pages?.token && 'Cloudflare Pages'].filter(Boolean);
         if (missing.length) throw new Error(`${missing.join(' and ')} ${missing.length > 1 ? 'aren\'t' : 'isn\'t'} connected. Setup → Accounts, then press Launch again.`);
+        if (isDryRun(env)) {
+          const page = rewriteCheckout(build.html, 'https://example.myshopify.com/cart/0:1');
+          return { summary: `Dry run: ${b.name} passed every check and would launch (${page.count} Buy button${page.count === 1 ? '' : 's'}). Nothing was created or deployed.`, count: 0, output: { dry_run: true } };
+        }
         const { productId, checkoutUrl } = await shopifyProduct(sb, u, shop!, build, b);
         const page = rewriteCheckout(build.html, checkoutUrl);
         if (!page.count) throw new Error('The page has no #checkout Buy button to point at Shopify.');

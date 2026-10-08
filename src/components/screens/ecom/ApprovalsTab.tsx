@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import type { useApprovals, Approval } from '../../../data/useEcom';
 import { decideApproval } from '../../../data/useEngine';
+import Thumbs from '../../mm/Thumbs';
 import type { ImportRow } from '../../../data/ecomProducts';
 import { marginHealthy } from '../../../data/ecomProducts';
 import { E, Badge, ConfidenceBadge, TeachingEmpty, btn, field, label, tint, useIsMobile } from './ecomShared';
@@ -158,6 +159,7 @@ function ApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string) => voi
         <button style={btn('primary')} disabled={!!busy} onClick={() => go('approved')}>{busy === 'approved' ? 'Saving…' : a.type === 'sample_purchase' || a.type === 'domain_purchase' ? '✓ I bought it' : a.is_money ? 'Approve · spend' : rows.length ? `Approve · add ${rows.length} to sheet` : APPROVE_LABEL[a.type]?.(a.payload) ?? 'Approve'}</button>
         <button style={btn('ghost')} disabled={!!busy} onClick={() => go('sent_back')}>{busy === 'sent_back' ? (rerun && (a.type === 'scout_products' || RERUNNABLE.has(a.type)) ? 'Re-running…' : 'Saving…') : 'Send back'}</button>
         <button style={btn('danger')} disabled={!!busy} onClick={() => go('killed')}>Kill</button>
+        <span style={{ marginLeft: 'auto' }}><Thumbs entityType="approval" entityId={a.id} domain={a.domain} workerId={a.worker_id ?? null} compact /></span>
       </div>
       {mobile && !a.is_money && <div style={{ fontSize: 10.5, color: E.faint, marginTop: 6 }}>Swipe right to approve · left to send back</div>}
     </div>

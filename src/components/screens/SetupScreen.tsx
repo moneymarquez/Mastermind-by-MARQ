@@ -12,7 +12,7 @@ import { askConfirm } from '../../lib/confirm';
 
 interface Props { homeHeadStyle?: CSSProperties; homeSubStyle?: CSSProperties; onNavigate?: (id: string) => void }
 interface Status {
-  owner: boolean; canWriteSecrets: boolean; encryption: string; replyWebhook: string; oauthRedirect: string;
+  owner: boolean; canWriteSecrets: boolean; encryption: string; replyWebhook: string; smsWebhook?: string; oauthRedirect: string;
   platform: { id: string; present: { secret: string; set: boolean }[] }[];
   accounts: { id: string; connected: boolean; appReady: boolean }[];
   connections: { provider: string; status: string; last_tested_at: string | null; note: string | null }[];
@@ -66,7 +66,7 @@ export default function SetupScreen({ onNavigate }: Props) {
                 </div>
               </div>
             )}
-            {[...PLATFORM_SETUP].sort((a, b) => (status.canWriteSecrets ? 0 : (a.id === 'cloudflare_secrets' ? -1 : b.id === 'cloudflare_secrets' ? 1 : 0))).map((p) => <PlatformCard key={p.id} startOpen={!status.canWriteSecrets && p.id === 'cloudflare_secrets'} p={p} present={status.platform.find((x) => x.id === p.id)?.present ?? []} conn={conn(p.id)} canWrite={status.canWriteSecrets} extra={p.id === 'twilio' ? status.replyWebhook : undefined} onChanged={load} />)}
+            {[...PLATFORM_SETUP].sort((a, b) => (status.canWriteSecrets ? 0 : (a.id === 'cloudflare_secrets' ? -1 : b.id === 'cloudflare_secrets' ? 1 : 0))).map((p) => <PlatformCard key={p.id} startOpen={!status.canWriteSecrets && p.id === 'cloudflare_secrets'} p={p} present={status.platform.find((x) => x.id === p.id)?.present ?? []} conn={conn(p.id)} canWrite={status.canWriteSecrets} extra={p.id === 'twilio' ? (status.smsWebhook ?? status.replyWebhook) : undefined} onChanged={load} />)}
             <AppSecretsCard status={status} onChanged={load} />
           </>
         )}
@@ -149,7 +149,7 @@ function PlatformCard({ p, present, conn, canWrite, extra, onChanged, startOpen 
               );
             })}
           </div>
-          {extra && <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 8 }}>Reply webhook for Twilio: <span style={{ fontFamily: 'var(--font-mono)', color: E.muted, wordBreak: 'break-all' }}>{extra}</span> (HTTP POST)</div>}
+          {extra && <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 8 }}>Texting line webhook (Messaging → A message comes in): <span style={{ fontFamily: 'var(--font-mono)', color: E.muted, wordBreak: 'break-all' }}>{extra}</span> (HTTP POST)</div>}
           <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
             <button style={btn('primary')} disabled={!!busy || !Object.values(vals).some((v) => v.trim())} onClick={save}>{busy === 'save' ? 'Saving…' : 'Save'}</button>
             {p.testable && <button style={btn('ghost')} disabled={!!busy} onClick={test}>{busy === 'test' ? 'Testing…' : 'Test'}</button>}

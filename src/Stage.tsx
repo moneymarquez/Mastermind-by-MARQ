@@ -21,6 +21,7 @@ import { PhoneHeader, PhoneTabBar, AppSidebar, AppTopBar, NotificationsPanel, Se
 import { shellGroups, crumbFor } from './components/shell/nav';
 import { useLeadFeed } from './data/useLeadFeed';
 import { useNotifications } from './data/useNotifications';
+import { useFlags, PORTAL_FLAG_DOMAINS } from './data/useFlags';
 import { useResolvedTheme } from './data/useTheme';
 import { usePortal } from './data/usePortal';
 import PortalCards from './components/screens/home/PortalCards';
@@ -78,6 +79,7 @@ const VoiceCaptureV2 = lazyScreen(() => import('./components/screens/v2/VoiceCap
 const ManageModulesScreen = lazyScreen(() => import('./components/screens/ManageModulesScreen'));
 const GrantAccessV2 = lazyScreen(() => import('./components/screens/v2/GrantAccessV2'));
 const InboxScreen = lazyScreen(() => import('./components/screens/inbox/InboxScreen'));
+const HqScreen = lazyScreen(() => import('./components/screens/hq/HqScreen'));
 const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 
 // Screens still on their pre-redesign layout: on phone they get the shared
@@ -86,7 +88,7 @@ const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 const LEGACY_SCREENS = new Set<string>([]);
 
 const BUILT_SCREENS = [
-  'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
+  'home', 'hq', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'leadflow', 'account-settings', 'prompt-voice-settings',
   'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access', 'changelog', 'dispatch', 'inbox', 'modules',
@@ -125,6 +127,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // ── Redesign shell (design handoff: MM App) ─────────────────────────
   const leadFeed = useLeadFeed(isOwner);
   const notifs = useNotifications(ownerInbox.items, leadFeed.leads, leadFeed.now, true);
+  const flagsApi = useFlags(isOwner);
   const resolvedTheme = useResolvedTheme();
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -250,7 +253,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
     <div className="app-shine-bg" style={stageStyle}>
       {device === 'phone' ? (
         <>
-          <PhoneHeader portal={portal} screenLabel={crumb.label} onMenu={() => setMenuOpen(true)} onHome={() => shellNav('home')} onSearch={() => setSearchOpen(true)} onBell={() => setNotifOpen((v) => !v)} bellDot={notifs.unread > 0} bellOpen={notifOpen} />
+          <PhoneHeader portal={portal} screenLabel={crumb.label} onMenu={() => setMenuOpen(true)} onHome={() => shellNav('home')} onSearch={() => setSearchOpen(true)} onBell={() => setNotifOpen((v) => !v)} bellDot={notifs.unread > 0} bellOpen={notifOpen} reds={isOwner ? flagsApi.redsIn(PORTAL_FLAG_DOMAINS[portal]) : 0} onReds={() => shellNav('hq')} />
           {menuOpen && (
             <>
               <div onClick={() => setMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 95, background: 'rgba(0,0,0,.45)' }} />
@@ -263,7 +266,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
       ) : (
         <>
           <AppSidebar device={device} screen={state.screen} novaOpen={state.novaOpen} groups={groups} badges={badges} ownerName={ownerDisplayName} isOwner={isOwner} onNav={shellNav} onNova={toggleNova} onSearch={() => setSearchOpen(true)} portal={portalNav} />
-          <AppTopBar device={device} left={sidebarW(device)} right={novaDock} crumb={crumb} dark={resolvedTheme === 'dark'} novaOpen={state.novaOpen} bellDot={notifs.unread > 0} bellOpen={notifOpen} onToggleTheme={toggleTheme} onSearch={() => setSearchOpen(true)} onBell={() => setNotifOpen((v) => !v)} onNova={toggleNova} />
+          <AppTopBar device={device} left={sidebarW(device)} right={novaDock} crumb={crumb} dark={resolvedTheme === 'dark'} novaOpen={state.novaOpen} bellDot={notifs.unread > 0} bellOpen={notifOpen} onToggleTheme={toggleTheme} onSearch={() => setSearchOpen(true)} onBell={() => setNotifOpen((v) => !v)} onNova={toggleNova} reds={isOwner ? flagsApi.redsIn(PORTAL_FLAG_DOMAINS[portal]) : 0} onReds={() => shellNav('hq')} />
         </>
       )}
 
@@ -458,6 +461,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         
+        {state.screen === 'hq' && <HqScreen />}
         {state.screen === 'modules' && <ModulesGrid groups={moduleTiles} onOpen={shellNav} />}
         {state.screen === 'inbox' && (
           <InboxScreen device={device} isOwner={isOwner} inbox={ownerInbox} feed={leadFeed} focus={inboxFocus} onFocusConsumed={() => setInboxFocus(null)}

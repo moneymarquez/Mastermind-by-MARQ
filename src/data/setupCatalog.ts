@@ -49,15 +49,16 @@ export const PLATFORM_SETUP: SetupEntry[] = [
     fields: [{ secret: 'XAI_API_KEY', label: 'API key', placeholder: 'xai-…' }],
   },
   {
-    id: 'twilio', kind: 'platform', name: 'Twilio (Morning Digest texts)', testable: true,
-    powers: 'The 5:30am text from "Morning Digest" and the reply commands (ECOM, dials 30, done).',
+    id: 'twilio', kind: 'platform', name: 'Twilio (texts)', testable: true,
+    powers: 'The 5:30am Morning Digest and its reply commands (ECOM, dials 30, done), the two-way texting line (anyone who texts the number gets a Grok reply in lead-response mode), and SMS alerts like "Sale made" and "Store preview ready".',
     steps: [
       { text: 'Sign up at Twilio, verify your email and your phone.', link: 'https://www.twilio.com/try-twilio' },
       { text: 'Console → Phone Numbers → Buy a number → Toll-Free → buy one.', link: 'https://console.twilio.com/us1/develop/phone-numbers/manage/search' },
       { text: 'Messaging → Regulatory Compliance → Toll-Free Verification → submit with use case "Account notifications — a daily planning summary sent only to the account owner", under 100/month.', link: 'https://console.twilio.com/us1/develop/sms/regulatory-compliance/toll-free-verification' },
       { text: 'Copy the Account SID and Auth Token from the Console home page.', link: 'https://console.twilio.com/' },
       { text: 'Upgrade from trial (~$20) or every text starts with "Sent from your Twilio trial account".' },
-      { text: 'Paste all four values below, Save, Test. Then set the reply webhook (shown after Test) under the number\'s Messaging → "A message comes in".' },
+      { text: 'Texting anyone besides yourself (leads, clients) from a 10-digit number needs A2P 10DLC registration: Messaging → Regulatory Compliance → A2P 10DLC → register the brand and a campaign. Until it\'s approved, Test shows "10DLC: not registered yet".', link: 'https://console.twilio.com/us1/develop/sms/regulatory-compliance/a2p-10dlc-overview' },
+      { text: 'Paste all four values below, Save, Test. Then point the number\'s Messaging → "A message comes in" webhook at the texting line URL shown after Test (/api/sms/inbound). The digest reply commands keep working through it.' },
     ],
     withoutIt: 'The digest arrives as a push notification from the app instead of a text, and reply commands don\'t work.',
     fields: [
@@ -113,12 +114,25 @@ export const PLATFORM_SETUP: SetupEntry[] = [
     fields: [{ secret: 'CJ_API_KEY', label: 'API key' }],
   },
   {
+    id: 'parallel', kind: 'platform', name: 'Parallel (research)', testable: true, phase: 'October',
+    powers: 'The research worker\'s web access: Product Scout and Audience Analyst search through Parallel, and Money Move researches each week\'s opportunity live and local. Every number keeps its source link.',
+    steps: [
+      { text: 'Sign up at Parallel and open the platform dashboard.', link: 'https://platform.parallel.ai/' },
+      { text: 'API Keys → Create key, name it masterminds-research, copy it.' },
+      { text: 'Search is about $1–5 per 1,000 calls; deep Task runs are $5 (Lite) to $100 (Pro) per 1,000. The research bucket in HQ caps it at $40 a month by default.' },
+      { text: 'Paste the key below, Save, then Test (one cheap search).' },
+    ],
+    withoutIt: 'Scout and Analyst fall back to Claude\'s built-in web search; Money Move uses your profile only, without live local research.',
+    fields: [{ secret: 'PARALLEL_API_KEY', label: 'API key' }],
+  },
+  {
     id: 'higgsfield', kind: 'platform', name: 'Higgsfield', testable: false, phase: 'E-comm 5 / Content 4',
     powers: 'Brand Lab mockups, content visuals, and the Clip Editor\'s enhancements.',
     steps: [
       { text: 'Sign in to Higgsfield and open the API / developer settings for your workspace.', link: 'https://higgsfield.ai/' },
       { text: 'Create an API key, paste below, Save.' },
-      { text: 'There is no free test call for this one; it is checked the first time Brand Lab or the Clip Editor uses it.' },
+      { text: 'The API has its own wallet, separate from a Higgsfield website subscription — the subscription does not pay for API calls. Top it up ($5–$25 to start) in the API dashboard.' },
+      { text: 'There is no free test call for this one; it is checked the first time Brand Lab or the Clip Editor uses it. Every generation goes through the visual-spend cap in HQ ($60/month by default).' },
     ],
     withoutIt: 'Brand Lab gives written brand options with no mockups; the Clip Editor can\'t enhance clips.',
     fields: [{ secret: 'HIGGSFIELD_API_KEY', label: 'API key' }],

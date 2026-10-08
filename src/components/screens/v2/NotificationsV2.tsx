@@ -13,6 +13,7 @@ import Chip from '../../mm/Chip';
 import Switch from '../../mm/Switch';
 import { Page, Sheet, Field, field, useModule } from '../../mm/Page';
 import { shortDate, clock } from './util';
+import AlertChannels from './AlertChannels';
 
 function ToggleRow({ label, sub, on, onChange, first }: { label: string; sub?: string; on: boolean; onChange: (v: boolean) => void; first?: boolean }) {
   return (
@@ -112,6 +113,7 @@ export default function NotificationsV2() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>{rem}{nudges}</div>
         </div>
       ) : <>{cats}{meals}{rem}{nudges}</>}
+      <AlertChannels />
       {adding && <AddReminder onClose={() => setAdding(false)} onAdd={addReminder} />}
     </Page>
   );

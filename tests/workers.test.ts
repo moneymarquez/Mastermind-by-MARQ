@@ -10,7 +10,7 @@ test('worker specs, lead filter rules, grading, orchestrator plan', async () => 
   const ctx = { playbooks: 'PB', corrections: ['no fragile'], budgetNote: 'Budget $1' };
   // Every live worker has a runner, except the two that act instead of
   // drafting (lib/publisher.ts, lib/launcher.ts), which run on approval.
-  assert.deepEqual([...LIVE_WORKERS].filter((k) => k !== 'publisher' && k !== 'launcher').sort(), Object.keys(RUNNERS).sort());
+  assert.deepEqual([...LIVE_WORKERS].filter((k) => !['publisher', 'launcher', 'hq', 'content_orchestrator', 'marketing_orchestrator'].includes(k)).sort(), Object.keys(RUNNERS).sort());
   for (const t of ['scout_products', 'analysis', 'teardown', 'lead_tags', 'scripts', 'campaign_plan', 'grades']) assert.ok(APPLIERS[t], t);
 
   // brief spine
@@ -97,8 +97,8 @@ test('worker specs, lead filter rules, grading, orchestrator plan', async () => 
   // orchestrator plan
   assert.deepEqual(scoutChannelsFor(1), ['tiktok', 'amazon']);
   const mon = planFor(1).map((s) => s.key), sun = planFor(0).map((s) => s.key);
-  assert.deepEqual(mon, ['scout:tiktok', 'scout:amazon', 'analyst', 'teardown', 'lead_filter', 'inbound_tracker', 'brand_analytics', 'content_analytics', 'trend_researcher', 'clip_editor', 'summary']);
-  assert.ok(sun.includes('campaign_scorer') && sun.indexOf('campaign_scorer') < sun.indexOf('campaign_planner') && sun.at(-1) === 'summary');
-  for (let d = 0; d < 7; d++) assert.ok(planFor(d).every((s) => !s.worker || s.worker === 'orchestrator' || s.worker in RUNNERS));
+  assert.deepEqual(mon, ['scout:tiktok', 'scout:amazon', 'analyst', 'teardown', 'lead_filter', 'inbound_tracker', 'brand_analytics', 'content_analytics', 'trend_researcher', 'clip_editor', 'summary:ecom', 'summary:content', 'summary:marketing', 'hq']);
+  assert.ok(sun.includes('campaign_scorer') && sun.indexOf('campaign_scorer') < sun.indexOf('campaign_planner') && sun.at(-1) === 'hq');
+  for (let d = 0; d < 7; d++) assert.ok(planFor(d).every((s) => !s.worker || ['orchestrator', 'hq', 'content_orchestrator', 'marketing_orchestrator'].includes(s.worker) || s.worker in RUNNERS));
 
 });

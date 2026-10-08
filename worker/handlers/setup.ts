@@ -9,6 +9,7 @@ import { Sb, json } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
 import { signState, verifyState } from '../lib/vault';
 import { loadToken, saveToken } from '../lib/tokens';
+import { search as parallelSearch } from '../lib/parallel';
 import { PLATFORM_SETUP, ACCOUNT_SETUP, WRITABLE_SECRETS } from '../../src/data/setupCatalog';
 import { toE164 } from '../lib/phone';
 
@@ -16,7 +17,7 @@ export interface SetupEnv extends SbEnv {
   ANTHROPIC_API_KEY?: string; TWILIO_ACCOUNT_SID?: string; TWILIO_AUTH_TOKEN?: string; TWILIO_FROM_NUMBER?: string; DIGEST_TO_NUMBER?: string;
   CF_API_TOKEN?: string; CF_ACCOUNT_ID?: string; CF_WORKER_NAME?: string; ETSY_API_KEY?: string; CJ_API_KEY?: string; HIGGSFIELD_API_KEY?: string;
   INSTAGRAM_APP_ID?: string; INSTAGRAM_APP_SECRET?: string; TIKTOK_CLIENT_KEY?: string; TIKTOK_CLIENT_SECRET?: string; TOKEN_ENCRYPTION_KEY?: string;
-  XAI_API_KEY?: string; FACEBOOK_APP_ID?: string; FACEBOOK_APP_SECRET?: string;
+  XAI_API_KEY?: string; FACEBOOK_APP_ID?: string; FACEBOOK_APP_SECRET?: string; PARALLEL_API_KEY?: string;
 }
 type Env = SetupEnv & Record<string, string | undefined>;
 
@@ -70,6 +71,16 @@ async function testTwilioInner(env: Env): Promise<TestResult> {
     try { count = ((JSON.parse(raw) as { incoming_phone_numbers?: unknown[] }).incoming_phone_numbers ?? []).length; } catch { /* not JSON */ }
     lines.push(`Lookup GET /IncomingPhoneNumbers.json?PhoneNumber=… → HTTP ${look.status}, ${count} match${count === 1 ? '' : 'es'}${look.ok ? '' : ` — raw: ${redact(raw)}`}.`);
   } else lines.push('Lookup request failed to reach Twilio.');
+
+  // A2P 10DLC: texting anyone but yourself from a 10-digit number needs a
+  // registered brand + campaign. Clue only; the send below decides.
+  const brands = await fetch('https://messaging.twilio.com/v1/a2p/BrandRegistrations', { headers: auth }).catch(() => null);
+  if (brands?.ok) {
+    const bj = (await brands.json().catch(() => ({}))) as { data?: { status?: string }[]; results?: { status?: string }[] };
+    const list = bj.data ?? bj.results ?? [];
+    const approved = list.some((x) => /approved|verified/i.test(x.status ?? ''));
+    lines.push(`10DLC: ${approved ? 'registered' : list.length ? `in review (${list.map((x) => x.status).join(', ')})` : 'not registered yet — texts to leads may be filtered until it is'}.`);
+  } else lines.push('10DLC: couldn\'t check registration (fine for toll-free numbers).');
 
   // The real test: send one text.
   const send = await fetch(`${base}/Messages.json`, {
@@ -134,6 +145,13 @@ async function testPlatform(id: string, env: Env, sb: Sb): Promise<TestResult> {
       if (!res.ok) return { ok: false, detail: `xAI ${res.status}: ${await errText(res)}` };
       const j = (await res.json().catch(() => ({}))) as { data?: { id: string }[] };
       return { ok: true, detail: `Key works. ${(j.data ?? []).length} models available${j.data?.length ? ` (${j.data.slice(0, 3).map((m) => m.id).join(', ')}…)` : ''}.` };
+    }
+    case 'parallel': {
+      if (!env.PARALLEL_API_KEY) return { ok: false, detail: 'PARALLEL_API_KEY is not set.' };
+      try {
+        const hits = await parallelSearch(env, { objective: 'What is Masterminds by MARQ? (connection test)', maxResults: 1 });
+        return { ok: true, detail: `Parallel answered: ${hits.length} result${hits.length === 1 ? '' : 's'}. One search costs about half a cent.` };
+      } catch (e) { return { ok: false, detail: e instanceof Error ? e.message : String(e) }; }
     }
     case 'higgsfield':
       return env.HIGGSFIELD_API_KEY ? { ok: true, detail: 'Key saved. Checked on first real use (no free test call exists).' } : { ok: false, detail: 'HIGGSFIELD_API_KEY is not set.' };
@@ -211,6 +229,7 @@ export async function setupRoute(request: Request, env: SetupEnv, path: string):
         connections: conns,
         encryption: e.TOKEN_ENCRYPTION_KEY ? 'dedicated key' : 'derived from the service key',
         replyWebhook: `${url.origin}/api/digest/reply`,
+        smsWebhook: `${url.origin}/api/sms/inbound`,
         oauthRedirect: `${url.origin}/api/connect/oauth/callback`,
       });
     }

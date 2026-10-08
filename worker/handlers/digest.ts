@@ -12,7 +12,7 @@ import { DESKS, composeDraft, fitSms, parseReply, twilioSignature, twiml, grade,
 import type { Desk, DeskReport, DigestInput, ScheduleItem } from '../lib/digestText';
 import { m0Progress, M0_LABEL } from '../../src/data/stageZero';
 import type { M0Venture } from '../../src/data/stageZero';
-import { toE164 } from '../lib/phone';
+import { sendTwilioSms } from '../lib/twilio';
 
 export interface DigestEnv extends SbEnv {
   ANTHROPIC_API_KEY?: string;
@@ -259,15 +259,9 @@ async function writeMaster(env: DigestEnv, sb: Sb, u: string, today: string, inp
 
 interface Delivery { channel: string; sent: boolean; error?: string }
 export async function sendSms(env: DigestEnv, body: string, to = env.DIGEST_TO_NUMBER): Promise<Delivery> {
-  if (!env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN || !env.TWILIO_FROM_NUMBER || !to) return { channel: 'sms', sent: false, error: 'Twilio secrets are not all set (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER, DIGEST_TO_NUMBER).' };
-  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}/Messages.json`, {
-    method: 'POST',
-    headers: { Authorization: `Basic ${btoa(`${env.TWILIO_ACCOUNT_SID}:${env.TWILIO_AUTH_TOKEN}`)}`, 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ To: toE164(to), From: toE164(env.TWILIO_FROM_NUMBER), Body: body }).toString(),
-  });
-  if (res.ok) return { channel: 'sms', sent: true };
-  const err = (await res.json().catch(() => ({}))) as { message?: string; code?: number };
-  return { channel: 'sms', sent: false, error: `Twilio ${res.status}${err.code ? ` (${err.code})` : ''}: ${err.message ?? 'send failed'}` };
+  if (!to) return { channel: 'sms', sent: false, error: 'Twilio secrets are not all set (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER, DIGEST_TO_NUMBER).' };
+  const r = await sendTwilioSms(env, to, body);
+  return r.sent ? { channel: 'sms', sent: true } : { channel: 'sms', sent: false, error: r.error };
 }
 
 async function deliver(env: DigestEnv, sb: Sb, s: Settings, title: string, body: string): Promise<Delivery[]> {

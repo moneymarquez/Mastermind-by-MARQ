@@ -7,6 +7,8 @@ import { WORKERS, PLAYBOOK_MAX_CHARS, PLAYBOOK_LOAD_BUDGET } from '../../src/dat
 import type { Channel } from '../../src/data/ecom';
 import type { ImportRow } from '../../src/data/ecomProducts';
 import { Sb, zonedNow, addDaysIso } from './sb';
+import { loadControls, isPaused, controlDomainOf } from './controls';
+import { feedbackCorrections, addPlaybookRule } from './feedback';
 import { ask, CapReached, spentToday, capFor } from './ai';
 import type { AskInput, AskResult } from './ai';
 import { scoutSystem, scoutUser, parseScout, BLOCKED_DOMAINS, SCOUT_CHANNELS } from './scout';
@@ -17,7 +19,7 @@ import type { TouchOutcome, Venture, ScriptChannel } from '../../src/data/mktEng
 import { landedCost, marginPct } from '../../src/data/ecomProducts';
 import { trendSystem, trendUser, parseTrends, ideaSystem, ideaUser, parseIdeas, scriptBody, gradeMeasured, auditSystem, auditUser, parseAudit, analyticsSystem, analyticsUser, parseGrades, bestHours, plannerSystem as postPlannerSystem, plannerUser as postPlannerUser, parseSlots, clipSystem, clipUser, parseClipEdit, cleanSegments } from './contentWorkers';
 import { supplierSystem, supplierUser, parseSuppliers, brandSystem, brandUser, parseBrands, domainStatusFrom, storeSystem, storeUser, extractHtml, qualityGate, diagnoseFunnel, readSystem, parseRead } from './ecomWorkers';
-import type { BrandCtx, SupplierPayload, BrandOption, GateCheck, Flag } from './ecomWorkers';
+import type { BrandCtx, SupplierPayload, BrandOption } from './ecomWorkers';
 import { ruleSource, trackerSystem, trackerUser, mergeTrackerTags } from './inbound';
 import type { InboundLite, SourceTag, Source } from './inbound';
 import type { AccountLite, MeasuredPost, InspirationDraft, PostDraft, AuditPayload, GradeOut, SlotOut, PlanItemLite, EditPlan } from './contentWorkers';
@@ -30,10 +32,18 @@ export interface RunRow { id: string; worker_id: string; status: string; created
 
 /** "Start the company": one ai_workers row per worker in the spec, never
  *  resetting autonomy or enabled on a re-run; one cap row per domain. */
+/** Models earlier builds seeded as defaults; rows still on one follow the role map. */
+const RETIRED_DEFAULTS = ['claude-sonnet-5', 'claude-opus-5', 'claude-fable-5-1'];
+
 export async function ensureRoster(sb: Sb, userId: string): Promise<WorkerRow[]> {
   await sb.insert('ai_workers', WORKERS.map((w) => ({ user_id: userId, domain: w.domain, key: w.key, name: w.name, role: w.role, model: w.model })), { upsert: 'user_id,domain,key', ignore: true }).catch((e) => console.error('roster', e));
   // Keep model/role in sync with the config without touching autonomy.
-  for (const w of WORKERS) await sb.patch('ai_workers', `user_id=eq.${userId}&domain=eq.${w.domain}&key=eq.${w.key}`, { name: w.name, role: w.role, model: w.model }).catch(() => {});
+  // A model picked in Office (a per-worker override) is never reset: only
+  // rows still on a retired default move to the role model.
+  for (const w of WORKERS) {
+    await sb.patch('ai_workers', `user_id=eq.${userId}&domain=eq.${w.domain}&key=eq.${w.key}`, { name: w.name, role: w.role }).catch(() => {});
+    await sb.patch('ai_workers', `user_id=eq.${userId}&domain=eq.${w.domain}&key=eq.${w.key}&model=in.(${RETIRED_DEFAULTS.join(',')})`, { model: w.model }).catch(() => {});
+  }
   await sb.insert('ai_domain_caps', ENGINE_DOMAINS.map((d) => ({ user_id: userId, domain: d })), { upsert: 'user_id,domain', ignore: true }).catch((e) => console.error('caps', e));
   return sb.get<WorkerRow>(`ai_workers?user_id=eq.${userId}&order=domain.asc&select=*`);
 }
@@ -61,8 +71,12 @@ export async function playbooksFor(sb: Sb, userId: string, domain: string, max =
 
 /** The last ten "Send back" notes for this worker — the approvals loop. */
 export async function correctionsFor(sb: Sb, userId: string, workerId: string): Promise<string[]> {
-  const rows = await sb.get<{ my_note: string | null; title: string }>(`ai_approvals?user_id=eq.${userId}&worker_id=eq.${workerId}&status=eq.sent_back&my_note=not.is.null&order=decided_at.desc&limit=10&select=my_note,title`);
-  return rows.map((r) => `${r.my_note!.trim()} (on "${r.title}")`);
+  const [rows, thumbs] = await Promise.all([
+    sb.get<{ my_note: string | null; title: string }>(`ai_approvals?user_id=eq.${userId}&worker_id=eq.${workerId}&status=eq.sent_back&my_note=not.is.null&order=decided_at.desc&limit=10&select=my_note,title`),
+    feedbackCorrections(sb, userId, workerId),
+  ]);
+  // Send-back notes and 👎 reasons, at most ten in all.
+  return [...rows.map((r) => `${r.my_note!.trim()} (on "${r.title}")`), ...thumbs].slice(0, 10);
 }
 
 export async function alert(sb: Sb, userId: string, domain: string, severity: 'info' | 'warn' | 'urgent', kind: string, title: string, body?: string, entity?: { type: string; id: string }) {
@@ -100,6 +114,8 @@ export async function runWorker(apiKey: string | undefined, sb: Sb, userId: stri
   const w = await workerByKey(sb, userId, job.key);
   if (!w) return { ok: false, error: `${job.key} is not in the roster. Open Setup → Start the company.` };
   if (!w.enabled) return { ok: false, error: `${w.name} is turned off.` };
+  // Kill switch (brief §2d): a paused domain starts nothing; queued work waits.
+  if (isPaused(await loadControls(sb, userId), controlDomainOf(w.domain))) return { ok: false, error: `${w.name} didn't start: ${w.domain === 'all' ? 'everything' : controlDomainOf(w.domain)} is paused by the kill switch.`, skipped: true };
   const domain = costDomain(w);
   const z = zonedNow(TZ);
   const [run] = await sb.insert<RunRow>('ai_worker_runs', { user_id: userId, worker_id: w.id, domain, entity_type: job.entityType ?? null, entity_id: job.entityId ?? null, input: job.input, status: 'running', started_at: new Date().toISOString(), trigger: job.trigger ?? 'manual', instructions: job.instructions ?? null });
@@ -651,6 +667,9 @@ const now = () => new Date().toISOString();
 const chunks = <T,>(a: T[], n: number): T[][] => { const out: T[][] = []; for (let i = 0; i < a.length; i += n) out.push(a.slice(i, i + n)); return out; };
 
 export const APPLIERS: Record<string, Applier> = {
+  /** A correction Marq gave twice becomes a standing playbook rule. */
+  playbook_rule: async (sb, u, raw) => addPlaybookRule(sb, u, String(raw.playbook), String(raw.domain ?? 'all'), String(raw.rule), 'Approved: the same correction twice'),
+
   scout_products: async (sb, u, p) => importScoutRows(sb, u, (p.rows ?? []) as ImportRow[]),
 
   /** Fills the product's drawer fields and records the Validate verdict.

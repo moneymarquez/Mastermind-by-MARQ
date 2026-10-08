@@ -10,7 +10,7 @@ import type { PortalKey } from '../../portals.config';
 export interface ShellItem { id: string; label: string; glyph: string; locked?: boolean }
 export interface ShellGroup { title: string; items: ShellItem[]; owner?: boolean }
 
-export const SHELL_GROUPS = ['Personal', 'Cold Calling', 'Clients', 'Scaling', 'Side Hustles', 'Content', 'E-commerce'] as const;
+export const SHELL_GROUPS = ['HQ', 'Personal', 'Cold Calling', 'Clients', 'Scaling', 'Side Hustles', 'Content', 'E-commerce'] as const;
 const SKIP = new Set(['home', 'settings', 'codelab']);
 
 /** Two-letter module glyph: "Daily Plan" → DP, "Sobriety" → SO. */
@@ -24,7 +24,7 @@ export function glyphFor(label: string): string {
  *  (Client Modules, LeadFlow) then Scaling; Content and E-commerce are one
  *  group each; Masterminds keeps the registry's groups. */
 function groupIn(portal: PortalKey, id: string, natural: string): string {
-  if (portal === 'madeby') return id === 'client-modules' || id === 'leadflow' ? 'Clients' : 'Scaling';
+  if (portal === 'madeby') return id === 'hq' ? 'HQ' : id === 'client-modules' || id === 'leadflow' ? 'Clients' : 'Scaling';
   if (portal === 'content') return 'Content';
   if (portal === 'ecommerce') return 'E-commerce';
   return natural;

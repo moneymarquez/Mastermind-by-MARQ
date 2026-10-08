@@ -59,6 +59,7 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { key: 'call-recordings', label: 'Call Recordings', category: 'Cold Calling', description: 'Upload and organize call recordings, linked to contacts.', icon: 'ph-microphone', routes: ['call-recordings'], requiresAI: false, portal: 'masterminds' },
   { key: 'leadflow', label: 'LeadFlow', category: 'Cold Calling', description: 'Your LeadFlow CRM — Dashboard, War Room, Lead Pool, Lead Finder, and more.', icon: 'ph-users-three', routes: ['leadflow'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
   { key: 'client-modules', label: 'Client Modules', category: 'Clients', description: "Every client's portal from your side — progress spine, tickets, change log, guides, handoff, and a preview of exactly what they see.", icon: 'ph-users-three', routes: ['client-modules'], requiresAI: false, ownerOnly: true, portal: 'madeby' },
+  { key: 'hq', label: 'HQ', category: 'Scaling', description: 'The master orchestrator: one morning report, one chat that routes to every orchestrator, everything waiting on you, flags, spend vs caps and the kill switch.', icon: 'ph-command', routes: ['hq'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
   // The entire Scaling category is owner-only, not just Marketing —
   // ownerOnly: true on every entry below is deliberate, per the explicit
   // "entire Scaling section is owner-only" requirement, not an oversight.
