@@ -11,6 +11,11 @@ import { requireMember } from '../lib/member';
 import { json } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
 import { cleanSegments } from '../lib/contentWorkers';
+import { requireUser, isOwnerUser } from '../lib/auth';
+import { Sb } from '../lib/sb';
+import { runIdeas, ideaToPlan, seedOwnAccounts, buildContentKit } from '../lib/contentOctober';
+import { renderClip, renderCallback } from '../lib/render';
+import type { RenderEnv } from '../lib/render';
 
 export interface ContentEnv extends SbEnv { AI?: { run(model: string, input: Record<string, unknown>): Promise<unknown> } }
 
@@ -44,4 +49,50 @@ export async function contentTranscribe(request: Request, env: ContentEnv): Prom
   const duration = Number(request.headers.get('x-duration')) || out.transcription_info?.duration || segments[segments.length - 1]?.end || null;
   await sb.patch('content_clips', `id=eq.${clipId}&user_id=eq.${user.id}`, { transcript: text || null, segments, duration_s: duration, updated_at: new Date().toISOString() });
   return json({ text, segments, duration_s: duration });
+}
+
+// ── October build, Phase 3 ────────────────────────────────────────────
+//   POST /api/content/ideas-run       { account_id?, count? } fill the Ideas tab
+//   POST /api/content/idea-plan       { idea_id, day? }       idea → Plan card
+//   POST /api/content/own-accounts    owner: add Masterminds / Made by Marq / personal accounts
+//   POST /api/content/kit-run         { handoff_id? }         build a brand's content kit now
+//   POST /api/content/render          { clip_id }             render an approved edit
+//   POST /api/content/render-callback the render service (signed, no login)
+
+export type ContentOctEnv = ContentEnv & Partial<Omit<RenderEnv, 'VITE_SUPABASE_URL' | 'SUPABASE_SERVICE_ROLE_KEY'>> & { ANTHROPIC_API_KEY?: string; VITE_SUPABASE_ANON_KEY: string };
+
+export async function contentRoute(request: Request, env: ContentOctEnv, path: string): Promise<Response> {
+  const sb = new Sb(env);
+  if (path === 'render-callback') {
+    if (request.method !== 'POST') return json({ error: 'POST only' }, 405);
+    const raw = await request.text();
+    const r = await renderCallback(env as RenderEnv, sb, raw, request.headers.get('x-render-signature'));
+    return json({ ok: r.ok }, r.status);
+  }
+  const user = await requireUser(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+  if (user instanceof Response) return user;
+  const b = request.method === 'POST' ? ((await request.json().catch(() => ({}))) as Record<string, unknown>) : {};
+  const id = (k: string) => (typeof b[k] === 'string' && UUID.test(b[k] as string) ? (b[k] as string) : undefined);
+  try {
+    if (path === 'ideas-run') return json(await runIdeas(env.ANTHROPIC_API_KEY, sb, user.id, { accountId: id('account_id'), count: typeof b.count === 'number' ? b.count : undefined, instructions: typeof b.instructions === 'string' ? b.instructions : null, trigger: 'manual' }));
+    if (path === 'idea-plan') {
+      const ideaId = id('idea_id');
+      if (!ideaId) return json({ error: 'idea_id is required.' }, 400);
+      const day = typeof b.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(b.day) ? b.day : null;
+      return json(await ideaToPlan(sb, user.id, ideaId, day));
+    }
+    if (path === 'own-accounts') {
+      if (!isOwnerUser(user)) return json({ error: 'Owner only.' }, 403);
+      return json(await seedOwnAccounts(sb, user.id));
+    }
+    if (path === 'kit-run') return json(await buildContentKit(env.ANTHROPIC_API_KEY, sb, user.id, { handoffId: id('handoff_id'), trigger: 'manual' }));
+    if (path === 'render') {
+      const clipId = id('clip_id');
+      if (!clipId) return json({ error: 'clip_id is required.' }, 400);
+      return json(await renderClip(env as RenderEnv, sb, user.id, clipId, new URL(request.url).origin));
+    }
+    return json({ error: `Unknown content route ${path}` }, 404);
+  } catch (e) {
+    return json({ error: e instanceof Error ? e.message : String(e) }, 500);
+  }
 }

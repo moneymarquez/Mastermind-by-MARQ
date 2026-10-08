@@ -11,6 +11,10 @@ import type { RunOutcome } from './engine';
 import { spentToday } from './ai';
 import { loadControls, isPaused, controlDomainOf } from './controls';
 import { runProductPitch, refreshPitchActuals } from './ecomOctober';
+import { runIdeas, buildContentKit } from './contentOctober';
+
+/** An account with fewer open ideas than this gets topped up overnight. */
+export const IDEAS_FLOOR = 5;
 import type { Channel } from '../../src/data/ecom';
 
 export const DAILY_START_MIN = 3 * 60 + 30;
@@ -28,7 +32,7 @@ export interface Step { key: string; worker: string | null; label: string; domai
 export const DOMAIN_ORCHESTRATOR: Record<StepDomain, string> = { ecom: 'orchestrator', content: 'content_orchestrator', marketing: 'marketing_orchestrator', master: 'hq' };
 const MARKETING_KEYS = new Set(['lead_filter', 'inbound_tracker', 'campaign_scorer', 'campaign_planner']);
 const domainOfStep = (key: string): StepDomain => (MARKETING_KEYS.has(key) ? 'marketing' : CONTENT_STEP_KEYS.has(key) ? 'content' : 'ecom');
-const CONTENT_STEP_KEYS = new Set(['content_analytics', 'trend_researcher', 'clip_editor', 'account_auditor', 'idea_script', 'post_planner']);
+const CONTENT_STEP_KEYS = new Set(['content_analytics', 'trend_researcher', 'clip_editor', 'account_auditor', 'idea_script', 'post_planner', 'ideas', 'kit']);
 /** Tonight's steps, in order. Sunday adds the marketing week: grade the
  *  week that ended, then plan the next one. */
 export function planFor(dow: number): Step[] {
@@ -42,6 +46,8 @@ export function planFor(dow: number): Step[] {
   steps.push({ key: 'content_analytics', worker: 'content_analytics', label: 'Grade yesterday\'s posts' });
   if (dow === 1 || dow === 4) steps.push({ key: 'trend_researcher', worker: 'trend_researcher', label: 'Find what\'s working in your niches' });
   steps.push({ key: 'clip_editor', worker: 'clip_editor', label: 'Cut the next raw clip in Studio' });
+  steps.push({ key: 'ideas', worker: 'idea_script', label: 'Top up the Ideas tab for accounts running low' });
+  steps.push({ key: 'kit', worker: 'content_orchestrator', label: 'Build the content kit for any brand that just launched' });
   if (dow === 0) {
     steps.push({ key: 'account_auditor', worker: 'account_auditor', label: 'Audit the last two weeks of posts' });
     steps.push({ key: 'idea_script', worker: 'idea_script', label: 'Write next week\'s posts' });
@@ -117,6 +123,19 @@ async function runStep(apiKey: string | undefined, sb: Sb, userId: string, step:
     await refreshPitchActuals(sb, userId).catch(() => 0);
     return one(await runProductPitch(apiKey, sb, userId, { trigger: 'cron' }), step.label);
   }
+  if (step.key === 'ideas') {
+    const [accts, open] = await Promise.all([
+      sb.get<{ id: string }>(`social_accounts?user_id=eq.${userId}&order=created_at.asc&select=id`),
+      sb.get<{ account_id: string | null }>(`social_ideas?user_id=eq.${userId}&status=eq.new&select=account_id&limit=500`).catch(() => [] as { account_id: string | null }[]),
+    ]);
+    const low = accts.filter((a) => open.filter((o) => o.account_id === a.id).length < IDEAS_FLOOR).slice(0, 2);
+    if (!low.length) return { status: 'done', note: accts.length ? 'Ideas: every account has enough ideas waiting.' : 'Ideas: no accounts yet.' };
+    const res: RunOutcome[] = [];
+    for (const a of low) { const r = await runIdeas(apiKey, sb, userId, { accountId: a.id, trigger: 'cron' }); res.push(r); if (r.capReached) break; }
+    const ok = res.filter((r) => r.ok);
+    return { status: ok.length ? 'done' : 'failed', note: `Ideas: ${ok.length}/${res.length} accounts topped up${ok.length < res.length ? ` (${res.find((r) => !r.ok)?.error})` : ''}`, runId: ok[0]?.runId ?? res[0]?.runId ?? null };
+  }
+  if (step.key === 'kit') return one(await buildContentKit(apiKey, sb, userId, { trigger: 'cron' }), step.label);
   if (step.key.startsWith('summary:')) return writeDomainSummary(apiKey, sb, userId, step.domain as Exclude<StepDomain, 'master'>, date);
   if (step.key === 'hq') return writeMasterReport(apiKey, sb, userId, date);
   const runner = step.worker ? RUNNERS[step.worker] : null;

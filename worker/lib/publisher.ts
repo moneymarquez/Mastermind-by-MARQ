@@ -93,7 +93,12 @@ async function signedUrl(env: PublishEnv, path: string, seconds = 86400): Promis
 /** The newest clip on the post: a rendered edit if one exists, otherwise
  *  the uploaded file. An image post with a thumbnail uses that. */
 async function mediaFor(env: PublishEnv, sb: Sb, item: Item): Promise<Media> {
-  const clips = await sb.get<{ storage_path: string | null; edited_url: string | null; file_name: string | null; edit_plan: unknown }>(`content_clips?content_item_id=eq.${item.id}&user_id=eq.${item.user_id}&order=updated_at.desc&select=storage_path,edited_url,file_name,edit_plan`);
+  let clips: { storage_path: string | null; edited_url: string | null; file_name: string | null; edit_plan: unknown; rendered_path?: string | null }[];
+  try { clips = await sb.get(`content_clips?content_item_id=eq.${item.id}&user_id=eq.${item.user_id}&order=updated_at.desc&select=storage_path,edited_url,file_name,edit_plan,rendered_path`); }
+  catch { clips = await sb.get(`content_clips?content_item_id=eq.${item.id}&user_id=eq.${item.user_id}&order=updated_at.desc&select=storage_path,edited_url,file_name,edit_plan`); }
+  // A file the render service cut from the approved plan beats everything.
+  const rendered = clips.find((c) => c.rendered_path);
+  if (rendered) return { url: await signedUrl(env, rendered.rendered_path!), contentType: 'video/mp4', source: 'rendered edit' };
   const edited = clips.find((c) => /^https:\/\//.test(c.edited_url ?? ''));
   if (edited) return { url: edited.edited_url!, contentType: contentTypeFor(edited.edited_url!), source: 'edited clip' };
   const raw = clips.find((c) => c.storage_path);

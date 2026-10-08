@@ -65,12 +65,13 @@ import type { ContentEnv } from './handlers/content';
 import { inboundPost, runInboundWaitCheck } from './handlers/inbound';
 import { inboxReply } from './handlers/inbox';
 import type { InboxEnv } from './handlers/inbox';
-import { contentTranscribe } from './handlers/content';
+import { contentTranscribe, contentRoute } from './handlers/content';
+import type { ContentOctEnv } from './handlers/content';
 import { dispatchExtract, dispatchTranscribe, dispatchNotify, dispatchNudge, dispatchInvite, dispatchJoin } from './handlers/dispatch';
 import { accountRoute } from './handlers/account';
 import type { SetupEnv } from './handlers/setup';
 
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv, DispatchEnv, ContentEnv, InboxEnv, HqEnv, SmsEnv, EcomEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv, DispatchEnv, ContentEnv, InboxEnv, HqEnv, SmsEnv, EcomEnv, ContentOctEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
@@ -138,6 +139,8 @@ export default {
     if (url.pathname === '/api/inbox/reply') return inboxReply(request, env);
     if (url.pathname.startsWith('/api/inbound/')) return inboundPost(request, env, url.pathname.slice('/api/inbound/'.length));
     if (url.pathname === '/api/content/transcribe') return contentTranscribe(request, env);
+    const contentMatch = url.pathname.match(/^\/api\/content\/([a-z-]+)$/);
+    if (contentMatch) return contentRoute(request, env, contentMatch[1]);
     if (url.pathname === '/api/dispatch/extract') return dispatchExtract(request, env);
     if (url.pathname === '/api/dispatch/transcribe') return dispatchTranscribe(request, env);
     if (url.pathname === '/api/dispatch/notify') return dispatchNotify(request, env);

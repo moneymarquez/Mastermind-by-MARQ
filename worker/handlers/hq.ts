@@ -16,6 +16,7 @@ import { loadControls, setPaused, spentThisMonth, controlsFrom } from '../lib/co
 import type { ControlDomain } from '../lib/controls';
 import { syncFlags, bySeverity } from '../lib/flags';
 import type { Severity } from '../lib/flags';
+import { likedPostBrief } from '../lib/contentOctober';
 import { recordFeedback } from '../lib/feedback';
 import { HQ_ROUTE_SYSTEM, parseRoute } from '../lib/office';
 import { ROLE_MODEL } from '../lib/models';
@@ -57,6 +58,8 @@ export async function hqRoute(request: Request, env: HqEnv, path: string): Promi
     if (path === 'feedback') {
       const b = await body<{ domain?: string; worker_id?: string | null; entity_type?: string; entity_id?: string; vote?: number; reason?: string }>(request);
       if (!b.entity_type || !b.entity_id || (b.vote !== 1 && b.vote !== -1)) return json({ error: 'entity_type, entity_id and vote (1 or -1) are required.' }, 400);
+      // 👍 on a post feeds the Ideas engine as a positive example.
+      if (b.entity_type === 'social_post' && b.vote === 1 && /^[0-9a-f-]{36}$/i.test(b.entity_id)) await likedPostBrief(sb, u, b.entity_id).catch(() => {});
       return json(await recordFeedback(sb, u, { domain: b.domain ?? 'ecom', worker_id: b.worker_id && /^[0-9a-f-]{36}$/i.test(b.worker_id) ? b.worker_id : null, entity_type: b.entity_type.slice(0, 40), entity_id: b.entity_id.slice(0, 80), vote: b.vote, reason: b.reason ?? null }));
     }
 

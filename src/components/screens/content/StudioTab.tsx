@@ -5,6 +5,7 @@ import type { useSocialAccounts, useContentItems, useClips } from '../../../data
 import { PLATFORM, editSequence, nextInSequence } from '../../../data/contentEngine';
 import type { Clip, ClipPlan } from '../../../data/contentEngine';
 import { runWorkerNow, decideApproval } from '../../../data/useEngine';
+import { api as callApi } from '../../../lib/api';
 import { extractWav, MAX_TRANSCRIBE_S } from '../../../lib/clipAudio';
 import { money } from '../../../data/ecom';
 import { E, Badge, TeachingEmpty, btn, field, label, tint, useIsMobile } from '../ecom/ecomShared';
@@ -148,6 +149,12 @@ function ClipCard({ clip: c, open, onToggle, api, accounts, items }: { clip: Cli
     const { data } = await supabase.from('ai_approvals').select('id,payload').eq('type', 'clip_edit').eq('status', 'pending').eq('entity_id', c.id).order('created_at', { ascending: false }).limit(1);
     setPending(((data ?? [])[0] as PendingEdit | undefined) ?? null);
   };
+  const render = async () => {
+    setBusy('Starting the render…'); setMsg('');
+    const r = await callApi<{ ok?: boolean; status?: string; message?: string; error?: string }>('/api/content/render', { body: { clip_id: c.id } });
+    setBusy(''); setMsg(r.error ?? r.message ?? '');
+    await api.reload();
+  };
   const plan = pending?.payload.plan ?? c.edit_plan;
   const hasTranscript = !!(c.segments && c.segments.length);
 
@@ -167,6 +174,9 @@ function ClipCard({ clip: c, open, onToggle, api, accounts, items }: { clip: Cli
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
             {!hasTranscript && <button style={btn('primary')} disabled={!!busy} onClick={retranscribe}>{busy || 'Transcribe'}</button>}
             {hasTranscript && !pending && <button style={btn(plan ? 'ghost' : 'primary')} disabled={!!busy || c.status === 'editing'} onClick={cut}>{busy || (plan ? 'Re-cut' : '✂️ Cut it')}</button>}
+            {c.status === 'approved' && c.edit_plan && c.storage_path && <button style={btn(c.rendered_path ? 'ghost' : 'primary')} disabled={!!busy || c.render_status === 'rendering'} onClick={render}>{c.render_status === 'rendering' ? 'Rendering…' : c.rendered_path ? 'Render again' : '🎬 Render the edit'}</button>}
+            {c.rendered_path && <Badge color={E.green}>Rendered: the Publisher posts this cut</Badge>}
+            {c.render_status === 'failed' && c.render_error && <span style={{ fontSize: 'var(--text-caption)', color: E.red }}>{c.render_error}</span>}
             <button style={{ ...btn('ghost'), marginLeft: 'auto' }} onClick={async () => { if (await askConfirm('Delete this clip and its video?')) await api.remove(c); }}>Delete</button>
           </div>
           {pending && (

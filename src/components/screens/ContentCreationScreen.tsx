@@ -30,13 +30,17 @@ import { useSocialAccounts, useContentItems, useInspiration, useClips, useLatest
 import InspirationTab from './content/InspirationTab';
 import StudioTab from './content/StudioTab';
 import LatestAudits from './content/LatestAudits';
+import IdeasTab from './content/IdeasTab';
+import KitsTab from './content/KitsTab';
 
-type EngineTab = 'accounts' | 'plan' | 'studio' | 'inspiration' | 'workers' | 'growth';
+type EngineTab = 'accounts' | 'ideas' | 'plan' | 'studio' | 'inspiration' | 'kits' | 'workers' | 'growth';
 const ENGINE_TABS: { id: EngineTab; label: string }[] = [
   { id: 'accounts', label: 'Accounts' },
+  { id: 'ideas', label: 'Ideas' },
   { id: 'plan', label: 'Plan' },
   { id: 'studio', label: 'Studio' },
   { id: 'inspiration', label: 'Inspiration' },
+  { id: 'kits', label: 'Brand kits' },
   { id: 'workers', label: 'Workers' },
   { id: 'growth', label: 'Growth plans' },
 ];
@@ -227,6 +231,8 @@ export default function ContentCreationScreen({ selectedClientId, onSelectClient
       {engineTab === 'plan' && <div style={enginePanel}><PlanTab items={contentItems} accounts={social} newOpen={newOpen} onCloseNew={() => setNewOpen(false)} /></div>}
       {engineTab === 'studio' && <div style={enginePanel}><StudioTab api={clips} accounts={social} items={contentItems} /></div>}
       {engineTab === 'inspiration' && <div style={enginePanel}><InspirationTab api={inspiration} accounts={social} items={contentItems} onOpenPlan={() => setEngineTab('plan')} /></div>}
+      {engineTab === 'ideas' && <div style={enginePanel}><IdeasTab accounts={social} items={contentItems} onOpenPlan={() => setEngineTab('plan')} /></div>}
+      {engineTab === 'kits' && <div style={enginePanel}><KitsTab /></div>}
       {engineTab === 'workers' && <div style={enginePanel}><WorkersTab domain="content" phaseLabel="C" /></div>}
 
       {engineTab === 'growth' && (<>

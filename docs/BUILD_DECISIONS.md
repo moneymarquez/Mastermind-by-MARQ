@@ -35,3 +35,15 @@ Every place this build had to choose without asking Marq. Each one can be revers
 24. **The pitch selection rules live in code** (`PITCH_RULES` in `worker/lib/pitch.ts`) and in the pitch system prompt, not as an editable playbook yet, so a playbook edit can't silently loosen the $10 / 35% bar.
 25. **The Office graph is plain SVG** (no graph library). `layoutGraph` is pure and can be restyled when the "brain" reference arrives; the old floor plan stays one tap away.
 26. **Research goes to Parallel when its key is set**, otherwise Claude web search, as before. Blocked domains are filtered after the search too.
+
+## Phase 3 — Content
+
+27. **Ideas live in a new `social_ideas` table.** The older `content_ideas` (schema_082) is per CRM client and plan, so reusing it would have mixed two products. Ideas aren't an approval: "Add to plan" is Marq's tap.
+28. **"No blank page"** works three ways: the Ideas tab runs Idea & Script itself the first time an account has none; the nightly `ideas` step tops up any account under 5 open ideas (2 accounts a night, so spend stays small); and **More ideas** runs it on demand.
+29. **Breakouts are 3× the account average, flops are under ⅓**, the same thresholds Content Analytics already used. A breakout writes a `content_briefs` row; a 👍 on a post writes a `liked` brief. Both feed the next ideas run as positive examples.
+30. **"Pull this post" doesn't fake an API.** The Instagram Graph API and TikTok Content Posting API publish but can't delete or archive. Pull opens the post with one line of instructions, and "I pulled it" sets `social_posts.pulled_at`.
+31. **Clips render with our own ffmpeg service** (`render/`, sized for Cloudflare Containers). Higgsfield's API exposes reframe and upscale but no verified endpoint for cutting ranges and burning captions. The Worker builds the ffmpeg arguments (pure, tested) and sends signed download and upload URLs plus an HMAC-signed callback. It's behind `CLIP_RENDER=on` + `RENDER_URL`; with those off, the plan-only path is unchanged. **Left to do:** deploy the container and set `RENDER_URL`, `RENDER_SECRET` and `CLIP_RENDER`. The container wiring wasn't added to `wrangler.jsonc`, so the main deploy can't break.
+32. **The Publisher prefers the rendered file** (`rendered_path`), then the old `edited_url`, then the raw upload.
+33. **Variant rule enforced at scheduling:** after the Post Planner's slots are applied, the second of any identical caption + video pair going to two accounts on the same day is held (`publish_status = failed` with the reason), so Marq changes it instead of posting spam.
+34. **Own accounts use the existing owner value `mastermind`** (the schema_100 check), not `masterminds`. "Add Masterminds, Made by Marq + personal accounts" seeds the six IG/TikTok rows with written voices, not connected.
+35. **The content kit is an approval** (`content_kit`). Approving it puts the 9 posts on the Plan, labelled [A]/[B] for the two directions, timed from the 2-week plan. They're attached to the brand's accounts if those exist, otherwise left unassigned. Creating the accounts stays a manual checklist.

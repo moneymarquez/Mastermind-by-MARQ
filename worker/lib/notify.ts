@@ -107,4 +107,5 @@ export const APPROVAL_EVENTS: Record<string, { event: NotifyEvent; link: string;
   store_draft: { event: 'store_preview', link: 'ecom-inbox', verb: 'Store preview ready to approve' },
   post_plan: { event: 'post_batch', link: 'content', verb: 'Posts ready to approve' },
   content_plan: { event: 'post_batch', link: 'content', verb: 'Post batch ready to approve' },
+  content_kit: { event: 'post_batch', link: 'content', verb: 'Content kit ready for a new brand' },
 };

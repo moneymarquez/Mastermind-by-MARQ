@@ -13,6 +13,7 @@ import { researchSearch } from './research';
 import { notifyStored, APPROVAL_EVENTS } from './notify';
 import { afterBrandOptions } from './visual';
 import { approvePitch } from './ecomOctober';
+import { afterGrades, holdDuplicates, applyContentKit } from './contentOctober';
 import { ask, CapReached, spentToday, capFor } from './ai';
 import type { AskInput, AskResult } from './ai';
 import { scoutSystem, scoutUser, parseScout, BLOCKED_DOMAINS, SCOUT_CHANNELS } from './scout';
@@ -341,11 +342,11 @@ export function runScorer(apiKey: string | undefined, sb: Sb, userId: string, in
 
 // ── Content Engine workers (C2–C6) ────────────────────────────────────
 const ACCOUNT_COLS = 'id,platform,handle,owner,voice,posts_per_week_goal,followers';
-async function accountsFor(sb: Sb, userId: string, accountId?: string): Promise<AccountLite[]> {
+export async function accountsFor(sb: Sb, userId: string, accountId?: string): Promise<AccountLite[]> {
   return sb.get<AccountLite>(`social_accounts?user_id=eq.${userId}${accountId ? `&id=eq.${accountId}` : ''}&order=created_at.asc&select=${ACCOUNT_COLS}`);
 }
 /** Posts with their latest metrics row folded in. */
-async function measuredPosts(sb: Sb, userId: string, q: { accountId?: string; sinceIso?: string }): Promise<MeasuredPost[]> {
+export async function measuredPosts(sb: Sb, userId: string, q: { accountId?: string; sinceIso?: string }): Promise<MeasuredPost[]> {
   const posts = await sb.get<Omit<MeasuredPost, 'views' | 'likes' | 'comments' | 'shares' | 'saves' | 'follows'>>(`social_posts?user_id=eq.${userId}${q.accountId ? `&account_id=eq.${q.accountId}` : ''}${q.sinceIso ? `&posted_at=gte.${q.sinceIso}` : ''}&order=posted_at.asc&limit=1000&select=id,account_id,posted_at,type,hook,caption,length_sec,grade,content_item_id`);
   if (!posts.length) return [];
   const metrics: { post_id: string; captured_at: string; views: number | null; likes: number | null; comments: number | null; shares: number | null; saves: number | null; follows: number | null }[] = [];
@@ -354,7 +355,7 @@ async function measuredPosts(sb: Sb, userId: string, q: { accountId?: string; si
   for (const m of metrics) last.set(m.post_id, m);
   return posts.map((p) => { const m = last.get(p.id); return { ...p, views: m?.views ?? null, likes: m?.likes ?? null, comments: m?.comments ?? null, shares: m?.shares ?? null, saves: m?.saves ?? null, follows: m?.follows ?? null }; });
 }
-const handleOf = (a: AccountLite | undefined) => (a ? `@${a.handle}` : 'no account');
+export const handleOf = (a: AccountLite | undefined) => (a ? `@${a.handle}` : 'no account');
 
 export function runTrendResearcher(apiKey: string | undefined, sb: Sb, userId: string, input: { accountId?: string; instructions?: string | null; trigger?: Trigger }): Promise<RunOutcome> {
   return runWorker(apiKey, sb, userId, {
@@ -687,6 +688,7 @@ export const APPLIERS: Record<string, Applier> = {
   product_pitch: async (sb, u, raw) => approvePitch(sb, u, raw),
   /** "Approve to ship": the supplier order over the threshold may be placed. */
   supplier_order: async (sb, u, raw) => { await sb.patch('ecom_orders', `user_id=eq.${u}&brand_id=eq.${raw.brand_id}&external_id=eq.${raw.order_external_id}`, { supplier_status: 'to_place', problem: null, updated_at: now() }); return { ok: true }; },
+  content_kit: async (sb, u, raw) => applyContentKit(sb, u, raw),
   playbook_rule: async (sb, u, raw) => addPlaybookRule(sb, u, String(raw.playbook), String(raw.domain ?? 'all'), String(raw.rule), 'Approved: the same correction twice'),
 
   scout_products: async (sb, u, p) => importScoutRows(sb, u, (p.rows ?? []) as ImportRow[]),
@@ -781,7 +783,9 @@ export const APPLIERS: Record<string, Applier> = {
       await sb.patch('social_posts', `id=eq.${i.post_id}&user_id=eq.${u}`, { grade: i.grade, grade_note: note, updated_at: now() });
       if (i.content_item_id) await sb.patch('content_items', `id=eq.${i.content_item_id}&user_id=eq.${u}`, { grade: i.grade, grade_note: note, updated_at: now() }).catch(() => {});
     }
-    return { graded: items.length };
+    // The loop: breakouts become "do more like this" briefs, flops get a reason.
+    const loop = await afterGrades(sb, u, items).catch(() => ({ briefs: 0, flops: 0 }));
+    return { graded: items.length, ...loop };
   },
 
   /** Times and captions land on each post, and every post on an Instagram
@@ -797,7 +801,10 @@ export const APPLIERS: Record<string, Applier> = {
       await sb.patch('content_items', `id=eq.${s.item_id}&user_id=eq.${u}&status=neq.posted`, { scheduled_for: s.scheduled_for, scheduled_time: s.scheduled_time, caption: s.caption, hashtags: s.hashtags || null, ...(q ? { publish_status: 'queued', publish_error: null, publish_ref: null } : {}), updated_at: now() });
       if (q) queued++;
     }
-    return { scheduled: slots.length, queued };
+    // No identical caption + video on two accounts the same day.
+    let held = 0;
+    for (const day of [...new Set(slots.map((s) => s.scheduled_for))]) held += await holdDuplicates(sb, u, day).catch(() => 0);
+    return { scheduled: slots.length, queued: queued - held, held };
   },
 
   /** The picked supplier fills step 4, every option is saved on the

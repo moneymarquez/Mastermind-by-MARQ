@@ -6,6 +6,8 @@ import { PLATFORMS, PLATFORM, OWNERS, FORMATS, followerChange30, avgViews30, pos
 import { dateStr } from '../../../data/time';
 import { E, Badge, Drawer, Metric, Section, TeachingEmpty, btn, field, label } from '../ecom/ecomShared';
 import { askConfirm } from '../../../lib/confirm';
+import { api as callApi } from '../../../lib/api';
+import { useModule } from '../../mm/Page';
 
 type Api = ReturnType<typeof useSocialAccounts>;
 interface Props { api: Api; items: ContentItem[]; newOpen: boolean; onCloseNew: () => void; onOpenPlan: () => void }
@@ -18,10 +20,24 @@ export default function AccountsTab({ api, items, newOpen, onCloseNew, onOpenPla
   const [logId, setLogId] = useState<string | null>(null);
   const today = dateStr(new Date());
   const open = api.accounts.find((a) => a.id === openId) ?? null;
+  const { isOwner } = useModule();
+  const [seedMsg, setSeedMsg] = useState('');
+  const own = api.accounts.filter((a) => a.owner === 'mastermind' || a.owner === 'madebymarq' || a.owner === 'personal').length;
+  const seed = async () => { const r = await callApi<{ added?: number; error?: string }>('/api/content/own-accounts', { body: {} }); setSeedMsg(r.error ?? `Added ${r.added ?? 0} account${r.added === 1 ? '' : 's'}. Connect each in Setup → Accounts.`); await api.reload(); };
+  // Brief §3.4: 3–5 accounts, every post a unique variant.
+  const perOwner = Object.values(api.accounts.reduce<Record<string, number>>((m, a) => { m[a.owner] = (m[a.owner] ?? 0) + 1; return m; }, {}));
 
   return (
     <div>
       {api.error && <div style={{ color: E.red, marginBottom: 10 }}>{api.error}</div>}
+      <div style={{ ...E.card, padding: 12, marginBottom: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ flex: '1 1 260px', fontSize: 'var(--text-caption)', color: E.muted, lineHeight: 1.5 }}>
+          <strong style={{ color: E.text }}>Run 3–5 accounts, every post a unique variant.</strong> A different hook, caption and cut on each. The same clip posted identically across many accounts is what Instagram and TikTok flag as spam, so the Post Planner holds an identical caption + video going to two accounts on the same day.
+          {perOwner.some((n) => n > 5) && <div style={{ color: E.amber, marginTop: 4 }}>You have more than 5 accounts under one owner; that's past where variants stay genuinely different.</div>}
+        </div>
+        {isOwner && own < 6 && <button style={btn('ghost')} onClick={() => void seed()}>Add Masterminds, Made by Marq + personal accounts</button>}
+        {seedMsg && <div style={{ fontSize: 'var(--text-caption)', color: E.muted, width: '100%' }}>{seedMsg}</div>}
+      </div>
       {!api.loading && api.accounts.length === 0 && (
         <TeachingEmpty what="No accounts yet. Add every account this engine will run: Mastermind, Made by Marq, your personal one, each e-comm brand." worker="you for now — once Instagram and TikTok are connected, the numbers fill in by themselves" />
       )}

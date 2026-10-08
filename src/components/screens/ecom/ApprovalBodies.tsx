@@ -38,6 +38,7 @@ export const APPROVE_LABEL: Record<string, (p: P) => string> = {
   product_pitch: () => 'Approve · build the brand',
   supplier_order: () => 'Approve to ship',
   playbook_rule: () => 'Approve · make it a rule',
+  content_kit: (p) => `Approve · add ${plural(arr(p.posts).length, 'post')} to the Plan`,
 };
 const DAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const secs = (n: unknown) => (typeof n === 'number' ? `${Math.floor(n / 60)}:${String(Math.floor(n % 60)).padStart(2, '0')}` : '—');
@@ -246,6 +247,23 @@ export function ApprovalBody({ type, payload: p, choice = 0, onChoice, approvalI
           </Box>
         ))}
         {arr<string>(p.skipped).length > 0 && <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>Not graded: {arr<string>(p.skipped).slice(0, 6).join('; ')}</div>}
+      </div>
+    );
+  }
+  if (type === 'content_kit') {
+    const bio = (p.bio ?? {}) as { instagram?: string; tiktok?: string };
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {typeof p.profile_image === 'string' && <img src={p.profile_image} alt="" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{arr<string>(p.handles).map((h) => <Badge key={h} color={E.blue}>@{h}</Badge>)}</div>
+        </div>
+        <Line k="Instagram bio" v={bio.instagram ?? ''} /><Line k="TikTok bio" v={bio.tiktok ?? ''} /><Line k="Look" v={String(p.look ?? '')} />
+        {arr<{ concept: string; hooks: string[]; direction: string; day: number }>(p.posts).map((x, i) => (
+          <Box key={i}><div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}><Badge color={x.direction === 'B' ? E.violet : E.blue}>{x.direction}</Badge><Badge color={E.faint}>day {x.day + 1}</Badge><span style={{ color: E.text, fontWeight: 600 }}>{x.concept}</span></div><div style={{ fontSize: 'var(--text-caption)', color: E.muted, marginTop: 4 }}>“{x.hooks[0]}”</div></Box>
+        ))}
+        <div style={{ fontSize: 'var(--text-caption)', color: E.muted }}>Then by hand (no API can create accounts):</div>
+        {arr<{ label: string }>(p.checklist).map((c, i) => <div key={i} style={{ fontSize: 'var(--text-caption)', color: E.text }}>☐ {c.label}</div>)}
       </div>
     );
   }

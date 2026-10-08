@@ -8,7 +8,7 @@ A fresh session continues from **Current step** below.
 
 - [x] **Phase 1, Foundation:** models, flags, kill switch, spend guardrail, notify, Setup cards, Twilio+Grok texting
 - [x] **Phase 2, E-commerce:** split nav, Product Pitch, orders + Shopify webhook, brand → store → content, Office graph + task log
-- [ ] **Phase 3, Content:** ideas, performance loop, clip rendering, multiple accounts, handoff, own accounts
+- [x] **Phase 3, Content:** ideas, performance loop, clip rendering, multiple accounts, handoff, own accounts
 - [ ] **Phase 4, Solo:** tiers, Tasks, Brain Dump + import, AI onboarding, Weekly Check-in, Money Move, Peptides, People lists, Feed
 - [ ] **Phase 5, Made by Marq:** audit, CRM tabs + phases, Classroom, Ledger, Contracts, Comms, Playbooks/Case studies, HQ (started in P1), Marketing
 - [ ] **Phase 6, Design pass**
@@ -59,6 +59,17 @@ A fresh session continues from **Current step** below.
 - **Migration:** `supabase/schema_122_ecom_october.sql` (not applied).
 - **Tests:** `tests/ecom-october.test.ts`.
 
+## Phase 3: what was built
+
+- **Ideas tab:** `runIdeas` (`worker/lib/contentOctober.ts`) fills `social_ideas` with hook, format, why (tied to past winners) and a draft. It auto-runs on an empty account, tops up nightly, and "Add to plan" makes a scripted card.
+- **Performance loop:** approved grades call `afterGrades`. Breakouts become "do more like this" briefs and flops get `flop_reason`. Flops show on the Ideas tab with an honest Pull. A 👍 on a post becomes a liked brief.
+- **Real clipping:** `worker/lib/render.ts` (timeline, captions, ffmpeg graph, signed job and callback) plus `render/` (Node + ffmpeg container), behind `CLIP_RENDER`. Studio has a **Render the edit** button, and the Publisher posts the rendered file.
+- **Multiple accounts:** 3–5 guidance on Accounts; identical caption + video on two accounts the same day is held at scheduling.
+- **Handoff → content kit:** the nightly `kit` step (or **Build the kit now**) turns `ecom_brand_to_content` into a `content_kit` approval. A **Brand kits** tab shows the manual checklist.
+- **Own accounts:** one tap seeds the Masterminds, Made by Marq and personal IG/TikTok rows with voices.
+- **Migration:** `supabase/schema_123_content_october.sql` (not applied). Routes: `/api/content/*`.
+- **Tests:** `tests/content-october.test.ts`.
+
 ## Current step
 
-Phase 3: Content (ideas engine first).
+Phase 4: Solo $19.99 (tiers and entitlements first).
