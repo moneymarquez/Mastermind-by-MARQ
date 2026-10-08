@@ -9,6 +9,7 @@ import type { PillKind } from '../../mm/Stat';
 import { Bars } from '../../mm/charts';
 import { Page, useModule, useAi, AiOffCard, NovaMark, area } from '../../mm/Page';
 import { goalPace, weekNo } from './math';
+import WeeklyCheckin from '../../solo/WeeklyCheckin';
 import { addDays, shortDate, usd, num } from './util';
 
 type Tile = { l: string; v: string; d: string; k?: PillKind };
@@ -158,6 +159,7 @@ export default function WeeklyReviewV2() {
   return (
     <Page title={title} sub={sub} right={phone ? { t: busy ? 'Saving…' : 'Submit', onClick: () => void submit() } : undefined}>
       {weekPick}
+      <WeeklyCheckin week={week} />
       {phone ? (
         <>{numbers}{honest}{ratings}{nova}</>
       ) : (

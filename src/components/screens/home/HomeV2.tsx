@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import FocusLine from '../../solo/FocusLine';
 import { readPins } from '../../../data/homePins';
 import type { CSSProperties, ReactNode } from 'react';
 import '../../shell/shell.css';
@@ -294,7 +295,7 @@ export default function HomeV2(p: HomeV2Props) {
   if (phone) {
     return (
       <div className="mm-stagger" style={col}>
-        {head}{dayCard}{p.portalCards}{p.top}{hero}{stats}{leadCard}{attentionCard}{todayCard}{briefCard}{pinned}
+        {head}<FocusLine />{dayCard}{p.portalCards}{p.top}{hero}{stats}{leadCard}{attentionCard}{todayCard}{briefCard}{pinned}
       </div>
     );
   }
@@ -303,6 +304,7 @@ export default function HomeV2(p: HomeV2Props) {
   return (
     <div className="mm-stagger" style={{ ...col, gap: 20 }}>
       {head}
+      <FocusLine />
       <div style={{ display: 'grid', gridTemplateColumns: threeColsTop ? 'minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(0, 1fr)', gap: 16 }}>{dayCard}{hero}{threeColsTop ? stats : null}</div>
       {!threeColsTop && stats}
       {p.portalCards}

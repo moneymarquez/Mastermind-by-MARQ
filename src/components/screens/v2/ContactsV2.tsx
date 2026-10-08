@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useContactLists, ListFilter, ContactPeople } from '../../solo/PeopleLists';
 import { useContacts } from '../../../data/useContacts';
 import { useEvents } from '../../../data/useEvents';
 import { useCallOutcomes } from '../../../data/useCallOutcomes';
@@ -37,9 +38,12 @@ export default function ContactsV2() {
   const [src, setSrc] = useState<ContactSource | 'all'>('all');
   const [sel, setSel] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const people = useContactLists();
+  const [listId, setListId] = useState<string | null>(null);
   const today = ymd(new Date());
 
-  const list = C.contacts.filter((c) => (src === 'all' || c.source === src) && matches(c, q));
+  const members = listId ? people.inList(listId) : null;
+  const list = C.contacts.filter((c) => (src === 'all' || c.source === src) && matches(c, q) && (!members || members.has(c.id)));
   useEffect(() => { if (!phone && !sel && list[0]) setSel(list[0].id); }, [phone, sel, list]);
   const cur = C.contacts.find((c) => c.id === sel) ?? null;
 
@@ -72,6 +76,7 @@ export default function ContactsV2() {
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, business, phone" aria-label="Search contacts" style={{ flex: 1, minWidth: 0, height: 36, padding: '0 10px', borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit' }} />
           {!phone && <button className="mm-btn mm-btn--primary" style={{ height: 36, fontSize: 13 }} onClick={() => setAdding(true)}>Contact</button>}
         </div>
+        <ListFilter api={people} value={listId} onChange={setListId} />
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {(['all', 'dialing', 'scalez', 'manual'] as const).map((s) => <button key={s} aria-pressed={src === s} onClick={() => setSrc(s)} style={{ padding: '4px 10px', borderRadius: 999, border: src === s ? '1px solid var(--text)' : '1px solid var(--border)', background: src === s ? 'var(--text)' : 'transparent', color: src === s ? 'var(--bg)' : 'var(--text-secondary)', fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>{s === 'all' ? `All ${C.contacts.length}` : SOURCE[s]}</button>)}
         </div>
@@ -90,7 +95,7 @@ export default function ContactsV2() {
       </div>
     </div>
   );
-  const record = cur && <Record key={cur.id} c={cur} chip={status(cur)} onBack={phone ? () => setSel(null) : undefined} update={C.updateContact} remove={async () => { if (window.confirm(`Delete ${cur.name}?`)) { await C.deleteContact(cur.id); setSel(null); } }}
+  const record = cur && <Record key={cur.id} people={people} c={cur} chip={status(cur)} onBack={phone ? () => setSel(null) : undefined} update={C.updateContact} remove={async () => { if (window.confirm(`Delete ${cur.name}?`)) { await C.deleteContact(cur.id); setSel(null); } }}
     log={[
       ...O.outcomes.filter((o) => o.contact_id === cur.id).map((o) => ({ at: o.logged_at, t: `Call · ${CALL_OUTCOME_LABEL[o.outcome]}${o.callback_date && o.outcome === 'call_back_later' ? ` · back ${shortDate(o.callback_date)}` : ''}` })),
       ...events.filter((e) => e.linked_contact_id === cur.id).map((e) => ({ at: `${e.event_date}T${e.start_time}`, t: `${eventLabel(e)}${e.status ? ` · ${e.status}` : ''}` })),
@@ -119,7 +124,7 @@ export default function ContactsV2() {
   );
 }
 
-function Record({ c, chip, onBack, update, remove, log }: { c: Contact; chip: { c: string; k: ChipKind }; onBack?: () => void; update: ReturnType<typeof useContacts>['updateContact']; remove: () => void; log: { at: string; t: string }[] }) {
+function Record({ c, chip, onBack, update, remove, log, people }: { c: Contact; chip: { c: string; k: ChipKind }; onBack?: () => void; update: ReturnType<typeof useContacts>['updateContact']; remove: () => void; log: { at: string; t: string }[]; people?: ReturnType<typeof useContactLists> }) {
   const d = c.details as Record<string, unknown>;
   const fields = [...BASE.filter((f) => f.k !== 'business_name' || c.source !== 'dialing' || c.business_name), ...(c.source === 'dialing' ? DIAL : c.source === 'scalez' ? SCALE : [])];
   const save = (f: F, raw: string) => {
@@ -145,6 +150,7 @@ function Record({ c, chip, onBack, update, remove, log }: { c: Contact; chip: { 
       <div style={{ display: 'grid', gridTemplateColumns: onBack ? 'minmax(0,1fr)' : 'repeat(2,minmax(0,1fr))', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
         {fields.map((f, i) => <EditCell key={f.k} f={f} value={val(f)} onSave={(v) => save(f, v)} first={onBack ? i === 0 : i < 2} odd={!onBack && i % 2 === 1} />)}
       </div>
+      {people && <ContactPeople api={people} contact={c as never} />}
       <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Notes</span>
         <NoteBox value={c.notes ?? ''} onSave={(v) => void update(c.id, { notes: v || null } as never)} />

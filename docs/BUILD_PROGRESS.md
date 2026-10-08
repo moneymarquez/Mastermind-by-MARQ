@@ -9,7 +9,7 @@ A fresh session continues from **Current step** below.
 - [x] **Phase 1, Foundation:** models, flags, kill switch, spend guardrail, notify, Setup cards, Twilio+Grok texting
 - [x] **Phase 2, E-commerce:** split nav, Product Pitch, orders + Shopify webhook, brand → store → content, Office graph + task log
 - [x] **Phase 3, Content:** ideas, performance loop, clip rendering, multiple accounts, handoff, own accounts
-- [ ] **Phase 4, Solo:** tiers, Tasks, Brain Dump + import, AI onboarding, Weekly Check-in, Money Move, Peptides, People lists, Feed
+- [x] **Phase 4, Solo:** tiers, Tasks, Brain Dump + import, AI onboarding, Weekly Check-in, Money Move, Peptides, People lists, Feed
 - [ ] **Phase 5, Made by Marq:** audit, CRM tabs + phases, Classroom, Ledger, Contracts, Comms, Playbooks/Case studies, HQ (started in P1), Marketing
 - [ ] **Phase 6, Design pass**
 - [ ] **Phase 7, Website alignment**
@@ -70,6 +70,19 @@ A fresh session continues from **Current step** below.
 - **Migration:** `supabase/schema_123_content_october.sql` (not applied). Routes: `/api/content/*`.
 - **Tests:** `tests/content-october.test.ts`.
 
+## Phase 4: what was built
+
+- **Tiers:** Dispatch and Call Recordings sit behind Teams (`user_entitlements`), with a Grant Access card and a backfill. The `SOLO_LINEUP` is pre-selected in onboarding.
+- **Tasks:** new module (`src/data/tasks.ts`, `TasksScreen`). The Daily Plan places today's picks, goal paths write their one-off steps as Tasks, and an 8am due push goes out.
+- **Brain Dump + Import v1:** `src/data/importFormat.ts` (template, extract, validator, preview), `applyImport` with undo, the `BrainDumpScreen` Documents library, and `/api/solo/import-parse` (block, AI, .docx, .pdf).
+- **AI onboarding:** `src/data/onboardingPrompt.ts` + `TalkSetup` as the default first step.
+- **Weekly Check-in:** scorecard, shortfalls, 3 one-tap adjustments, chat, and focus pinned on Home (`WeeklyCheckin`, `/api/solo/checkin-*`, Sunday cron).
+- **Money Move:** `/api/solo/money-run` plus a Monday cron, the card with I'm doing it / Not for me / I made $___, and a running total.
+- **Peptides:** tracking, logs, inventory/reorder, reminders, and an own-log AI summary (no dosing advice).
+- **People lists:** lists on Contacts (filter + per-contact), last contact, next follow-up → Task.
+- **Feed v1:** win cards from real data, reactions, report, owner moderation queue, 10/day limit, hourly reaction notices.
+- **Migration:** `supabase/schema_124_solo_october.sql` (not applied). **Tests:** `tests/solo-october.test.ts`.
+
 ## Current step
 
-Phase 4: Solo $19.99 (tiers and entitlements first).
+Phase 5: Made by Marq (MADEBY_AUDIT.md first).

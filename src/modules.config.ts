@@ -32,6 +32,9 @@ export interface ModuleDef {
   /** Which portal lists this module (see portals.config.ts). New modules
    *  belong to 'masterminds' unless they say otherwise. */
   portal: PortalKey;
+  /** Needs an entitlement on top of being enabled: 'teams' modules are for
+   *  accounts Marq flags as Teams in Grant Access (user_entitlements). */
+  entitlement?: 'teams';
 }
 
 // Every selectable section in the app, used by both the onboarding module
@@ -43,20 +46,24 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { key: 'macros', label: 'Macros & Meals', category: 'Personal', description: 'Photo-based AI calorie/macro logging, symptom + water tracking, meal suggestions.', icon: 'ph-fork-knife', routes: ['macros'], requiresAI: true, portal: 'masterminds' },
   { key: 'sobriety', label: 'Sobriety', category: 'Personal', description: 'Streak tracking, Bender Mode journal, AI pattern check-ins.', icon: 'ph-heart', routes: ['sobriety'], requiresAI: true, portal: 'masterminds' },
   { key: 'goals', label: 'Goals', category: 'Personal', description: 'Living-contract goals with AI-generated paths, pace tracking, and check-ins.', icon: 'ph-target', routes: ['goals'], requiresAI: true, portal: 'masterminds' },
+  { key: 'tasks', label: 'Tasks', category: 'Personal', description: 'Your master to-do list by project, due date and goal. Today\'s picks land on your Daily Plan.', icon: 'ph-check-square', routes: ['tasks'], requiresAI: false, portal: 'masterminds' },
   { key: 'mental', label: 'Mental Health', category: 'Personal', description: 'Deep mental-health profile with AI reflection on your check-ins.', icon: 'ph-brain', routes: ['mental'], requiresAI: true, portal: 'masterminds' },
-  { key: 'dispatch', label: 'Dispatch', category: 'Personal', description: 'Talk it out, it lands on the right person: hold the mic, say who does what by when, review, send. A live board of who has what.', icon: 'dispatch', routes: ['dispatch'], requiresAI: true, portal: 'masterminds' },
-  { key: 'brain', label: 'Brain', category: 'Personal', description: 'A four-minute assessment of how you sell and follow through, a daily check-in on the calling hour, and the patterns in your own data.', icon: 'ph-brain', routes: ['brain'], requiresAI: false, portal: 'masterminds' },
+  { key: 'dispatch', label: 'Dispatch', category: 'Personal', description: 'Talk it out, it lands on the right person: hold the mic, say who does what by when, review, send. A live board of who has what.', icon: 'dispatch', routes: ['dispatch'], requiresAI: true, portal: 'masterminds', entitlement: 'teams' },
+  { key: 'brain', label: 'Brain', category: 'Personal', description: 'A four-minute assessment of how you sell and follow through, a daily check-in on the calling hour, and the patterns in your own data.', icon: 'ph-brain', routes: ['brain', 'brain-dump'], requiresAI: false, portal: 'masterminds' },
   { key: 'schedule', label: 'Schedule', category: 'Personal', description: 'Month calendar, day-zoom drag-to-create timeline, holiday shift calendar.', icon: 'ph-calendar-blank', routes: ['schedule'], requiresAI: false, portal: 'masterminds' },
   { key: 'budgeting', label: 'Budgeting', category: 'Personal', description: 'Categories, recurring bills, month-over-month history, and a subscription tracker.', icon: 'ph-wallet', routes: ['budgeting'], requiresAI: false, portal: 'masterminds' },
   { key: 'decisions', label: 'Decision Log', category: 'Personal', description: 'Log real decisions with reasoning, review them later, and see the pattern in how you decide.', icon: 'ph-scales', routes: ['decisions'], requiresAI: true, portal: 'masterminds' },
-  { key: 'weekly-review', label: 'Weekly Review', category: 'Personal', description: 'A self-writing, honest weekly review pulled from every active module.', icon: 'ph-notepad', routes: ['weekly-review'], requiresAI: true, portal: 'masterminds' },
+  { key: 'weekly-review', label: 'Weekly Check-in', category: 'Personal', description: 'Sunday: planned vs actual across every module, where you fell short and why, and 3 adjustments you can apply in one tap.', icon: 'ph-notepad', routes: ['weekly-review'], requiresAI: true, portal: 'masterminds' },
+  { key: 'money-move', label: 'Money Move', category: 'Personal', description: 'Every Monday, one specific, doable way to make money this week from your skills, time, budget and city.', icon: 'ph-currency-dollar', routes: ['money-move'], requiresAI: true, portal: 'masterminds' },
+  { key: 'peptides', label: 'Peptides', category: 'Personal', description: 'Track what you take, when, sites, effects and inventory, with reminders. Tracking only, not medical advice.', icon: 'ph-syringe', routes: ['peptides'], requiresAI: false, portal: 'masterminds' },
+  { key: 'feed', label: 'Feed', category: 'Personal', description: 'Share real wins and cheer on other members. Reactions only, private by default.', icon: 'ph-fire', routes: ['feed'], requiresAI: false, portal: 'masterminds' },
   { key: 'cashflow', label: 'Cash-Flow Forecast', category: 'Personal', description: '30/60/90-day balance projection from invoices, recurring items, and spending, with scenario questions.', icon: 'ph-chart-line', routes: ['cashflow'], requiresAI: true, portal: 'masterminds' },
   { key: 'patterns', label: 'Patterns', category: 'Personal', description: 'Real cross-module correlations in your own data — spending, sobriety, calls, workouts.', icon: 'ph-chart-scatter', routes: ['patterns'], requiresAI: true, portal: 'masterminds' },
   { key: 'voice-capture', label: 'Voice Capture', category: 'Personal', description: 'Speak a task, expense, contact, decision, note, or follow-up — it files itself into the right module.', icon: 'ph-microphone', routes: ['voice-capture'], requiresAI: true, portal: 'masterminds' },
   { key: 'opening-closing', label: 'Opening/Closing', category: 'Personal', description: 'Self-running shift checklist with real push notifications.', icon: 'ph-clock', routes: ['opening-closing'], requiresAI: false, portal: 'masterminds' },
   { key: 'fitness', label: 'Fitness', category: 'Personal', description: 'AI-generated workout/diet plans, full workout library, live workout mode.', icon: 'ph-barbell', routes: ['fitness'], requiresAI: true, portal: 'masterminds' },
   { key: 'dialing', label: 'Dialing/Contacts', category: 'Cold Calling', description: 'Cold-calling queue, outcome tracking, and your Dialing/Scaling contacts.', icon: 'ph-phone-call', routes: ['dialing', 'contacts'], requiresAI: false, portal: 'masterminds' },
-  { key: 'call-recordings', label: 'Call Recordings', category: 'Cold Calling', description: 'Upload and organize call recordings, linked to contacts.', icon: 'ph-microphone', routes: ['call-recordings'], requiresAI: false, portal: 'masterminds' },
+  { key: 'call-recordings', label: 'Call Recordings', category: 'Cold Calling', description: 'Upload and organize call recordings, linked to contacts.', icon: 'ph-microphone', routes: ['call-recordings'], requiresAI: false, portal: 'masterminds', entitlement: 'teams' },
   { key: 'leadflow', label: 'LeadFlow', category: 'Cold Calling', description: 'Your LeadFlow CRM — Dashboard, War Room, Lead Pool, Lead Finder, and more.', icon: 'ph-users-three', routes: ['leadflow'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
   { key: 'client-modules', label: 'Client Modules', category: 'Clients', description: "Every client's portal from your side — progress spine, tickets, change log, guides, handoff, and a preview of exactly what they see.", icon: 'ph-users-three', routes: ['client-modules'], requiresAI: false, ownerOnly: true, portal: 'madeby' },
   { key: 'hq', label: 'HQ', category: 'Scaling', description: 'The master orchestrator: one morning report, one chat that routes to every orchestrator, everything waiting on you, flags, spend vs caps and the kill switch.', icon: 'ph-command', routes: ['hq'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
@@ -116,4 +123,8 @@ export function moduleKeyForRoute(route: string): string | undefined {
  *  later via Manage modules. Excludes ownerOnly modules entirely — those
  *  are shown as locked preview tiles instead (see ModulePicker.tsx), never
  *  toggled on for a non-owner account. */
-export const SELECTABLE_MODULE_KEYS = MODULE_REGISTRY.filter((m) => !m.ownerOnly).map((m) => m.key);
+export const SELECTABLE_MODULE_KEYS = MODULE_REGISTRY.filter((m) => !m.ownerOnly && !m.entitlement).map((m) => m.key);
+/** Modules gated by the Teams entitlement (Dispatch, Call Recordings). */
+export const TEAMS_MODULE_KEYS = MODULE_REGISTRY.filter((m) => m.entitlement === 'teams').map((m) => m.key);
+/** The solo $19.99 lineup (brief §4.2): what onboarding pre-selects. */
+export const SOLO_LINEUP = ['daily-plan', 'goals', 'tasks', 'macros', 'fitness', 'schedule', 'brain', 'opening-closing', 'weekly-review', 'money-move', 'peptides', 'feed', 'dialing', 'stocks', 'streaming', 'sticky-spot'];

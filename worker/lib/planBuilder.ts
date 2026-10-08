@@ -50,7 +50,10 @@ export interface PlanInput {
   overdue: PlanReminder[];
   /** Today's dial target, from the DIALS goal (src/data/callGoal.ts). */
   callGoal?: number;
+  /** Today's picks from the Tasks module (src/data/tasks.ts pickToday). */
+  tasks?: PlanTask[];
 }
+export interface PlanTask { id: string; title: string; project: string | null; due: string | null; priority: 'high' | 'med' | 'low' }
 
 export const CALL_HOUR_DEFAULT = 16 * 60;   // 4:00 PM
 export const CALL_HOUR_LENGTH = 60;
@@ -242,6 +245,20 @@ export function buildPlan(input: PlanInput): PlanBlock[] {
     claim(slot);
   }
 
+  // ── Today's tasks (brief §4.3): whatever free hours are left ─────────
+  for (const t of input.tasks ?? []) {
+    const slot = candidates.find((x) => !taken.has(Math.floor(x / 60)));
+    if (slot == null) break;
+    const late = t.due && t.due < input.date ? daysBetween(t.due, input.date) : 0;
+    blocks.push({
+      time: toTime(slot), duration: 30,
+      title: t.title,
+      detail: [t.project ? `Task · ${t.project}` : 'Task', t.priority === 'high' ? 'high priority' : '', late ? `${late} day${late === 1 ? '' : 's'} overdue` : t.due === input.date ? 'due today' : ''].filter(Boolean).join(' · '),
+      type: 'goal', module: 'manual', source: `task:${t.id}`,
+    });
+    claim(slot);
+  }
+
   // ── Sunday: the weekly review, 15 minutes, three questions ───────────
   if (dayOfWeek(input.date) === 0) {
     let at = REVIEW_TIME;
@@ -293,7 +310,7 @@ function daysBetween(from: string, to: string): number {
 export function isFloorSource(source: string | null): boolean {
   if (!source) return false;
   return source === 'overdue' || source === 'shift' || source === 'event' || source === 'weekly-review'
-    || source.startsWith('dials-') || source.startsWith('step:');
+    || source.startsWith('dials-') || source.startsWith('step:') || source.startsWith('task:');
 }
 
 /** Replace the floor of an existing plan with a freshly built one.

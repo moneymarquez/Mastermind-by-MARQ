@@ -66,12 +66,16 @@ import { inboundPost, runInboundWaitCheck } from './handlers/inbound';
 import { inboxReply } from './handlers/inbox';
 import type { InboxEnv } from './handlers/inbox';
 import { contentTranscribe, contentRoute } from './handlers/content';
+import { soloRoute } from './handlers/solo';
+import type { SoloEnv } from './handlers/solo';
+import { runSoloTick } from './lib/solo';
+import { Sb as SbClient } from './lib/sb';
 import type { ContentOctEnv } from './handlers/content';
 import { dispatchExtract, dispatchTranscribe, dispatchNotify, dispatchNudge, dispatchInvite, dispatchJoin } from './handlers/dispatch';
 import { accountRoute } from './handlers/account';
 import type { SetupEnv } from './handlers/setup';
 
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv, DispatchEnv, ContentEnv, InboxEnv, HqEnv, SmsEnv, EcomEnv, ContentOctEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv, DispatchEnv, ContentEnv, InboxEnv, HqEnv, SmsEnv, EcomEnv, ContentOctEnv, SoloEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
@@ -139,6 +143,8 @@ export default {
     if (url.pathname === '/api/inbox/reply') return inboxReply(request, env);
     if (url.pathname.startsWith('/api/inbound/')) return inboundPost(request, env, url.pathname.slice('/api/inbound/'.length));
     if (url.pathname === '/api/content/transcribe') return contentTranscribe(request, env);
+    const soloMatch = url.pathname.match(/^\/api\/solo\/([a-z-]+)$/);
+    if (soloMatch) return soloRoute(request, env, soloMatch[1]);
     const contentMatch = url.pathname.match(/^\/api\/content\/([a-z-]+)$/);
     if (contentMatch) return contentRoute(request, env, contentMatch[1]);
     if (url.pathname === '/api/dispatch/extract') return dispatchExtract(request, env);
@@ -184,6 +190,7 @@ export default {
       ctx.waitUntil(runInboundWaitCheck(env));
       ctx.waitUntil(runPublisherTick(env));
       ctx.waitUntil(runFlagsTick(env));
+      if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runSoloTick(env, new SbClient(env)).catch((e) => console.error('solo tick', e)));
       return;
     }
     ctx.waitUntil(runStocksBot(env));

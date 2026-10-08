@@ -1,5 +1,10 @@
 export type Screen =
   | 'home'
+  | 'feed'
+  | 'peptides'
+  | 'money-move'
+  | 'tasks'
+  | 'brain-dump'
   | 'ecom-clients'
   | 'ecom-inbox'
   | 'ecom-office'
