@@ -32,20 +32,19 @@ Detailed per-phase notes: `docs/BUILD_PROGRESS.md`. Every judgment call (61 of t
 
 ## ⚑ Flagged: Twilio texting (waiting on A2P 10DLC review)
 - The campaign was resubmitted on Oct 8, 2026, with the public opt-in page (`/sms`), `/privacy` and `/terms` (with the SMS clauses), and five sample messages. The lending, age-gated and phone-number boxes were unchecked.
-- **Until it's approved:** keep Twilio unconfigured or `DRY_RUN=1`. Every text is logged, not sent. The `/sms` form still saves sign-ups once `schema_126` is applied.
+- **Until it's approved:** keep Twilio unconfigured or `DRY_RUN=1`. Every text is logged, not sent. The `/sms` form saves sign-ups now (`schema_126` is applied).
 - **After approval:** attach the number to the Messaging Service, set the number's inbound webhook to `https://mastermindsbymarq.com/api/sms/inbound`, save the SID/token/number in Setup → Twilio, and send yourself a test from `/sms`.
 - **If it's rejected again:** check that `/sms`, `/privacy` and `/terms` load publicly, and that the brand name reads "Masterminds by MARQ" everywhere.
 
 ## READY_TO_SHIP checklist
 
-### 1. Migrations (apply in this order; none have been applied by this build)
-`schema_120_publish_launch.sql` was applied before this build. Then:
+### 1. Migrations ✅ applied to production on Oct 9, 2026
+`schema_120_publish_launch.sql` was applied before this build. 121–126 were then applied in order (verified: all 46 new tables exist with RLS on; 3 existing Dispatch/Call Recordings users were kept on Teams). `list_entitlements` and `set_teams` are signed-in only. A harmless leftover test function `public._mm_quote_test()` (returns 1, no access for anyone) can be dropped from the SQL editor.
 1. `supabase/schema_121_october_foundation.sql`: flags, kill switch, handoffs, feedback, notifications, ledger, texting.
 2. `supabase/schema_122_ecom_october.sql`: order columns, pitches, visuals, shops.
 3. `supabase/schema_123_content_october.sql`: ideas, briefs, kits, render columns.
 4. `supabase/schema_124_solo_october.sql`: entitlements (+ backfill), tasks, Brain Dump, check-in columns, Money Move, peptides, people lists, feed, storage buckets `brain-docs` and `feed-photos`.
 5. `supabase/schema_125_madeby_october.sql`: delivery phases, checklists, plays, metrics, case studies, recurring ledger, invoices, contracts, comms (with the lock trigger), launch offers, idea bank, plans.
-
 6. `supabase/schema_126_sms_optin.sql`: SMS opt-in consent records.
 
 All six are additive (no drops, renames or retypes). Every new user table has RLS "own rows". Entitlements, feed moderation and launch offers are owner-managed. The app runs before they're applied: each feature shows a "needs the migration" state instead of breaking.
@@ -101,5 +100,5 @@ npm ci && npm run build && npx wrangler deploy
 
 ## Safety check (definition of done)
 - **No real sends without three gates.** No feature sends, posts, spends or publishes for real unless a key is connected, `DRY_RUN` is unset, and nothing is paused. Money-moving actions also go through `checkSpend`: above $25 needs approval; above the monthly cap is blocked and raises a red flag.
-- **Migrations are additive** and none were applied to production. No user data is deleted. Moving a module behind Teams hides it; its data stays.
+- **Migrations are additive** and were applied to production with Marq's OK on Oct 9. No user data is deleted. Moving a module behind Teams hides it; its data stays.
 - **No secrets in code.** Keys go through Setup and the vault, or Worker secrets.

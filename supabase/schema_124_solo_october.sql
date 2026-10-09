@@ -305,3 +305,9 @@ insert into storage.buckets (id, name, public) values ('feed-photos', 'feed-phot
 drop policy if exists "feed photos own folder" on storage.objects;
 create policy "feed photos own folder" on storage.objects for insert
   with check (bucket_id = 'feed-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- Owner-only helpers: signed-in callers only (they also check is_owner inside).
+revoke execute on function list_entitlements() from public, anon;
+revoke execute on function set_teams(text, boolean) from public, anon;
+grant execute on function list_entitlements() to authenticated;
+grant execute on function set_teams(text, boolean) to authenticated;

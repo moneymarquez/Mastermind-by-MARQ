@@ -179,7 +179,7 @@ create index if not exists comm_messages_contact_idx on comm_messages (user_id, 
 create index if not exists comm_messages_due_idx on comm_messages (status, scheduled_for);
 -- Sent and received messages are a record: the body, recipients and
 -- timestamps can't change afterwards (status/error can, for delivery).
-create or replace function comm_messages_lock() returns trigger language plpgsql as $$
+create or replace function comm_messages_lock() returns trigger language plpgsql set search_path = public as $$
 begin
   if old.status in ('sent', 'received', 'dry_run') and (new.body is distinct from old.body or new.subject is distinct from old.subject or new.to_addr is distinct from old.to_addr or new.sent_at is distinct from old.sent_at or new.attachments is distinct from old.attachments) then
     raise exception 'Sent messages are locked';
