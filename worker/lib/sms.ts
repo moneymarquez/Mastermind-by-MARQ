@@ -57,3 +57,15 @@ export async function grokReply(env: XaiEnv, system: string, history: { role: 'u
   if (!res.ok) throw new Error(`xAI ${res.status}: ${typeof j.error === 'string' ? j.error : j.error?.message ?? 'request failed'}`);
   return { text: j.choices?.[0]?.message?.content ?? '', tokensIn: j.usage?.prompt_tokens ?? 0, tokensOut: j.usage?.completion_tokens ?? 0, model };
 }
+
+/** The free option: Cloudflare Workers AI (the account's free daily allowance
+ *  covers a texting line's volume; billed to Cloudflare, not to xAI/Anthropic). */
+export interface WorkersAiEnv { AI?: { run(model: string, input: Record<string, unknown>): Promise<unknown> }; WORKERS_AI_SMS_MODEL?: string }
+export const FREE_SMS_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+export async function workersAiReply(env: WorkersAiEnv, system: string, history: { role: 'user' | 'assistant'; content: string }[]): Promise<{ text: string; model: string }> {
+  if (!env.AI) throw new Error('Workers AI isn\'t switched on for this Worker (the AI binding is missing).');
+  const model = env.WORKERS_AI_SMS_MODEL || FREE_SMS_MODEL;
+  const out = (await env.AI.run(model, { max_tokens: 200, temperature: 0.5, messages: [{ role: 'system', content: system }, ...history] })) as { response?: string; result?: { response?: string } } | string;
+  const text = typeof out === 'string' ? out : out?.response ?? out?.result?.response ?? '';
+  return { text, model };
+}

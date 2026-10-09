@@ -61,7 +61,7 @@ Keep `DRY_RUN=1` while testing. Real sends, posts and texts happen only with it 
 |---|---|
 | `DRY_RUN` | `1` = log every outbound action instead of doing it |
 | `PARALLEL_API_KEY` | research (Scout, Analyst, Money Move) |
-| `XAI_API_KEY` (+ optional `XAI_MODEL`) | two-way texting replies |
+| `XAI_API_KEY` (+ optional `XAI_MODEL`) | optional: texting replies by Grok. Without it, replies use Cloudflare Workers AI (free daily allowance, `WORKERS_AI_SMS_MODEL` to change the model) |
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` | SMS out and in |
 | `RESEND_API_KEY`, `MADEBYMARQUEZ_FROM_EMAIL` | Comms hub email, contracts, invoices |
 | `HIGGSFIELD_API_KEY` (key ID), `HIGGSFIELD_API_SECRET`, optional `HIGGSFIELD_API_URL` / `HIGGSFIELD_VIDEO_URL` | brand images and video |

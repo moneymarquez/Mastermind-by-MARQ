@@ -12,8 +12,8 @@ import { OWNER_USER_ID, requireUser, isOwnerUser } from '../lib/auth';
 import { parseReply, twilioSignature, twiml } from '../lib/digestText';
 import { digestReply } from './digest';
 import type { DigestEnv } from './digest';
-import { systemPromptFor, historyMessages, cleanReply, isOptOut, grokReply, SMS_PROMPTS } from '../lib/sms';
-import type { SmsMode, XaiEnv } from '../lib/sms';
+import { systemPromptFor, historyMessages, cleanReply, isOptOut, grokReply, workersAiReply, SMS_PROMPTS } from '../lib/sms';
+import type { SmsMode, XaiEnv, WorkersAiEnv } from '../lib/sms';
 import { SMS_PROVIDER, ROLE_MODEL } from '../lib/models';
 import { ask } from '../lib/ai';
 import { loadControls, isPaused } from '../lib/controls';
@@ -23,7 +23,7 @@ import { isDryRun } from '../lib/dryRun';
 import { sendTwilioSms } from '../lib/twilio';
 import { toE164 } from '../lib/phone';
 
-export type SmsEnv = DigestEnv & XaiEnv & NotifyEnv & { ANTHROPIC_API_KEY?: string };
+export type SmsEnv = DigestEnv & XaiEnv & WorkersAiEnv & NotifyEnv & { ANTHROPIC_API_KEY?: string };
 const digits = (s: string | undefined) => (s ?? '').replace(/\D/g, '');
 /** POST /api/sms/optin — the public /sms sign-up form (A2P 10DLC call to
  *  action). Stores proof of consent and sends one confirmation text
@@ -73,8 +73,13 @@ export async function smsInbound(request: Request, env: SmsEnv): Promise<Respons
   const system = systemPromptFor(settings?.mode ?? 'lead_response', settings?.system_prompt);
   let reply = '', provider: string = SMS_PROVIDER, error: string | null = null;
   try {
-    if (SMS_PROVIDER === 'grok') reply = (await grokReply(env, system, historyMessages(history))).text;
-    else {
+    if (SMS_PROVIDER === 'grok') {
+      // Grok when there's an xAI key (and it works); otherwise the free Workers AI model.
+      if (env.XAI_API_KEY) {
+        try { reply = (await grokReply(env, system, historyMessages(history))).text; }
+        catch (e) { console.error('grok failed, using Workers AI', e); const f = await workersAiReply(env, system, historyMessages(history)); reply = f.text; provider = f.model; }
+      } else { const f = await workersAiReply(env, system, historyMessages(history)); reply = f.text; provider = f.model; }
+    } else {
       const convo = history.map((t) => `${t.direction === 'in' ? 'Them' : 'You'}: ${t.body}`).join('\n');
       reply = (await ask(env.ANTHROPIC_API_KEY, sb, { model: ROLE_MODEL.sms, system, user: `${convo}\n\nReply to their last text.`, domain: 'marketing', userId: u, date: zonedNow('America/Denver').date, maxTokens: 300 })).text;
       provider = ROLE_MODEL.sms;

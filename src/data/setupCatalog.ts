@@ -38,14 +38,14 @@ export const PLATFORM_SETUP: SetupEntry[] = [
   },
   {
     id: 'xai', kind: 'platform', name: 'Grok (xAI)', testable: true, phase: 'Texting',
-    powers: 'Two-way texting: a text to the Mastermind number that isn\'t a digest command gets a Grok reply, in the voice set in Settings (lead response by default).',
+    powers: 'Two-way texting: a text to the Mastermind number that isn\'t a digest command gets an AI reply, in the voice set in Settings (lead response by default). Optional: with no key, replies use Cloudflare\'s free Workers AI model; add a key to use Grok instead.',
     steps: [
       { text: 'Open the xAI console and sign in.', link: 'https://console.x.ai/' },
       { text: 'API Keys → Create API key, name it mastermind-texting, copy it.' },
       { text: 'Add a little credit and set a spend limit in Billing as a backstop.' },
       { text: 'Paste the key below and press Save, then Test.' },
     ],
-    withoutIt: 'Texts that aren\'t digest commands get no reply.',
+    withoutIt: 'Replies still work, using Cloudflare\'s free Workers AI model (a bit less polished than Grok).',
     fields: [{ secret: 'XAI_API_KEY', label: 'API key', placeholder: 'xai-…' }],
   },
   {
