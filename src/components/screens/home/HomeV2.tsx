@@ -107,7 +107,7 @@ function DayCard({ phone, calls, goal, done, total, streak, onOpen }: { phone: b
     </section>
   );
 }
-const initials = (s: string) => s.split(/[\s.@]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '··';
+const initials = (s: string | null | undefined) => (s ?? '').split(/[\s.@]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '··';
 
 export default function HomeV2(p: HomeV2Props) {
   const phone = p.device === 'phone', desk = p.device === 'desktop';

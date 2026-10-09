@@ -19,6 +19,6 @@ export function clock(t: Date | string): string {
 }
 /** "9:00" style short clock (no AM/PM) like the timeline. */
 export function clockShort(hhmm: string): string { const [h, m] = hhmm.split(':').map(Number); const h12 = ((h + 11) % 12) + 1; return `${h12}:${String(m).padStart(2, '0')}`; }
-export const initials = (s: string) => s.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join('') || '?';
+export const initials = (s: string | null | undefined) => (s ?? '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join('') || '?';
 /** Last N day keys ending today (oldest first). */
 export function lastDays(n: number, end = ymd(new Date())): string[] { return Array.from({ length: n }, (_, i) => addDays(end, i - n + 1)); }

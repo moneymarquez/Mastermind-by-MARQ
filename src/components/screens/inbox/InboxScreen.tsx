@@ -28,7 +28,7 @@ interface Props {
 }
 
 const h1: CSSProperties = { margin: 0, color: 'var(--text)', fontWeight: 700, letterSpacing: '-0.035em' };
-const initials = (s: string) => s.split(/[\s.@]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '··';
+const initials = (s: string | null | undefined) => (s ?? '').split(/[\s.@]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '··';
 const timeOf = (iso: string, now: number) => {
   const d = new Date(iso), days = Math.floor((now - d.getTime()) / 86400000);
   if (days < 1 && new Date(now).toDateString() === d.toDateString()) return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });

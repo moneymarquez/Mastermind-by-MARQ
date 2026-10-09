@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { normalizeContact } from './contactsPure';
 import type { Contact, ContactSource, DialingContactDetails, ScalingContactDetails } from './types';
 
 export interface ContactInput {
@@ -19,7 +20,7 @@ export function useContacts() {
 
   const load = useCallback(async () => {
     const { data } = await supabase.from('contacts').select('*').order('name');
-    setContacts(data ?? []);
+    setContacts((data ?? []).map((r) => normalizeContact(r as Contact)));
     setLoading(false);
   }, []);
 
@@ -90,7 +91,7 @@ export function useContacts() {
     const q = query.trim().toLowerCase();
     if (!q) return [];
     return contacts
-      .filter((c) => c.name.toLowerCase().includes(q) || (c.phone ?? '').includes(q) || (c.email ?? '').toLowerCase().includes(q))
+      .filter((c) => (c.name ?? '').toLowerCase().includes(q) || (c.phone ?? '').includes(q) || (c.email ?? '').toLowerCase().includes(q))
       .slice(0, 8);
   };
 

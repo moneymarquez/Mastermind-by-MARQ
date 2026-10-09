@@ -9,7 +9,7 @@ import { checklistFor, ROOMS, roomOf, dropPatch, phaseProgress, nextStep, waitin
 import type { CheckItem } from '../../../data/madeby';
 
 interface Client { id: string; business_name: string; stage: string; delivery_phase: number | null; room: string | null; client_type: string | null; last_contact_at: string | null; last_activity_at: string }
-const initials = (s: string) => s.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+const initials = (s: string | null | undefined) => (s ?? '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 const hue = (s: string) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
 
 /** Classroom (brief §5.3): the whole business as a floor plan. One room per

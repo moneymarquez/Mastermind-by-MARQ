@@ -311,7 +311,7 @@ export default function EventAdderModal({
           {type === 'dialing' && (
             <div>
               {!isEditing && <ContactSearch searchContacts={searchContacts} onPick={(c) => {
-                const [f, ...rest] = c.name.split(' ');
+                const [f, ...rest] = (c.name ?? '').split(' ');
                 setDFirstName(f ?? ''); setDLastName(rest.join(' '));
                 setDPhone(c.phone ?? ''); setDEmail(c.email ?? ''); setDBusiness(c.business_name ?? '');
               }} />}
