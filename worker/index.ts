@@ -51,7 +51,7 @@ import { setVisualEnv } from './lib/visual';
 import { hqRoute } from './handlers/hq';
 import type { HqEnv } from './handlers/hq';
 import { smsInbound, smsSettingsRoute, smsOptin } from './handlers/sms';
-import { shopifyWebhook, ecomRoute } from './handlers/ecom';
+import { shopifyWebhook, ecomRoute, siteBeacon } from './handlers/ecom';
 import type { EcomEnv } from './handlers/ecom';
 import type { SmsEnv } from './handlers/sms';
 import type { DigestEnv } from './handlers/digest';
@@ -132,6 +132,7 @@ export default {
     if (url.pathname === '/api/sms/optin') return smsOptin(request, env);
     if (url.pathname === '/api/sms/inbound') return smsInbound(request, env);
     if (url.pathname === '/api/webhooks/shopify') return shopifyWebhook(request, env);
+    if (url.pathname === '/api/ecom/beacon') return siteBeacon(request, env);
     const ecomMatch = url.pathname.match(/^\/api\/ecom\/([a-z-]+)$/);
     if (ecomMatch) return ecomRoute(request, env, ecomMatch[1]);
     if (url.pathname === '/api/sms/settings') return smsSettingsRoute(request, env);

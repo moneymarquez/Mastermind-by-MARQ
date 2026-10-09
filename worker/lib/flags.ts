@@ -23,6 +23,8 @@ export const DEFAULT_THRESHOLDS = {
   noOrdersAmberDays: 7,
   noOrdersRedDays: 14,
   spendAmberPct: 0.8,
+  /** Share of the week's orders with no site attribution before tracking counts as broken. */
+  unattributedPct: 0.2,
 };
 export type Thresholds = typeof DEFAULT_THRESHOLDS;
 export function thresholdsFrom(raw: unknown): Thresholds {
@@ -49,6 +51,8 @@ export interface FlagFacts {
   /** Spend this period vs cap, per domain (daily AI caps) and per bucket (monthly). */
   spend: { key: string; label: string; spent: number; cap: number; domain: FlagDomain }[];
   flops: { id: string; account: string; hook: string | null }[];
+  /** Last 7 days of Shopify orders: how many, and how many no site could claim. */
+  attribution?: { orders: number; unattributed: number };
 }
 
 const hoursSince = (iso: string | null, now: number) => (iso ? (now - new Date(iso).getTime()) / 3600000 : Infinity);
@@ -85,6 +89,8 @@ export function evaluateFlags(f: FlagFacts, t: Thresholds = DEFAULT_THRESHOLDS):
     if (pct >= t.spendAmberPct) out.push({ domain: s.domain, entity_type: 'spend', entity_id: s.key, severity: pct >= 1 ? 'red' : 'amber', rule: 'spend_cap', message: `${s.label}: ${money(s.spent)} of ${money(s.cap)}${pct >= 1 ? ' — cap reached' : ` (${Math.round(pct * 100)}%)`}`, link: 'hq' });
   }
   for (const p of f.flops) out.push({ domain: 'content', entity_type: 'social_post', entity_id: p.id, severity: 'amber', rule: 'post_flop', message: `Flop on @${p.account}: ${(p.hook ?? 'post').slice(0, 80)}`, link: 'content' });
+  const at = f.attribution;
+  if (at && at.orders >= 5 && at.unattributed / at.orders > t.unattributedPct) out.push({ domain: 'ecommerce', entity_type: 'tracking', entity_id: 'site_attribution', severity: 'amber', rule: 'unattributed_orders', message: `${at.unattributed} of ${at.orders} orders this week came from no known site — site tracking may be broken`, link: 'ecom-orders' });
   return out;
 }
 
@@ -142,6 +148,7 @@ export async function gatherFacts(sb: Sb, u: string, now = Date.now()): Promise<
     sb.get<{ id: string; account_id: string; hook: string | null }>(`social_posts?user_id=eq.${u}&grade=eq.1&posted_at=gte.${since7}&select=id,account_id,hook&limit=20`),
   ]);
   const brandIds = [...new Set([...builds.map((b) => b.brand_id), ...reads.map((r) => r.entity_id)])];
+  const week = await sb.get<{ site_id: string | null }>(`ecom_orders?user_id=eq.${u}&placed_at=gte.${new Date(now - 7 * 86400000).toISOString()}&select=site_id&limit=2000`).catch(() => []);
   const [brands, orders, accts] = await Promise.all([
     brandIds.length ? sb.get<{ id: string; name: string }>(`ecom_brands?id=in.(${brandIds.join(',')})&select=id,name`) : Promise.resolve([]),
     brandIds.length ? sb.get<{ brand_id: string; placed_at: string }>(`ecom_orders?user_id=eq.${u}&brand_id=in.(${brandIds.join(',')})&select=brand_id,placed_at&limit=2000`) : Promise.resolve([]),
@@ -171,6 +178,7 @@ export async function gatherFacts(sb: Sb, u: string, now = Date.now()): Promise<
     connections: conns,
     spend,
     flops: flops.map((p) => ({ id: p.id, account: accts.find((a) => a.id === p.account_id)?.handle ?? 'account', hook: p.hook })),
+    attribution: { orders: week.length, unattributed: week.filter((o) => !o.site_id).length },
   };
   return { facts, thresholds: thresholdsFrom(controls[0]?.flag_thresholds) };
 }

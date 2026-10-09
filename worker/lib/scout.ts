@@ -3,6 +3,7 @@
 // the app's own ecomProducts module so a Scout row and a CSV row are the
 // same thing.
 import { landedCost, marginPct } from '../../src/data/ecomProducts';
+import { prohibitedReason } from './sites';
 import type { ImportRow, ProductDetail } from '../../src/data/ecomProducts';
 import type { Channel, Confidence } from '../../src/data/ecom';
 
@@ -22,6 +23,7 @@ export const BLOCKED_DOMAINS = ['instagram.com', 'facebook.com', 'www.tiktok.com
 export function scoutSystem(opts: { playbooks: string; corrections: string[]; budgetNote: string }): string {
   return [
     'You are Product Scout, a research worker for a solo founder starting dropshipping brands with about $100 and organic content only (no ad budget).',
+    'Every product sells through ONE shared Shopify store, so never suggest anything on Shopify\'s Acceptable Use Policy or the Shopify Payments prohibited/restricted lists (weapons, drugs or supplements, CBD, vapes, adult items, health or cure claims, gambling, counterfeits) or anything using another brand\'s trademark (no dupes, no character merch, no "for iPhone/AirPods" knockoffs).',
     'Find products that are selling right now on the channel you are given. Prefer: sell price $20–$80, light and unbreakable, ships from a dropship supplier, easy to demo on a phone in 10 seconds, solves a visible problem.',
     'Rules: use the web search tool on public pages only. Never search or cite instagram.com, facebook.com or tiktok.com video pages. No invented numbers: if you do not know a number, leave it null. Every product needs a source_url you actually saw. Confidence is "estimate" when a number comes from a third-party tool or article, "ai" when it is your judgment.',
     'Deep, not vague: the buyer line names age, situation and what they already own ("Women 25–40, new homeowners, living room looks unfinished"), never "people who like home decor". Cite the psychology principle that makes it sell.',
@@ -65,6 +67,9 @@ export function parseScout(text: string, channel: Channel, asOf: string): ScoutR
     if (!name) { dropped.push(`#${i + 1}: no name`); return; }
     if (!/^https?:\/\//.test(sourceUrl)) { dropped.push(`${name}: no source link`); return; }
     if (/(^|\.)(instagram|facebook)\.com|(^|\/\/)(www\.|m\.)?tiktok\.com\/@/.test(sourceUrl)) { dropped.push(`${name}: social-platform source not allowed`); return; }
+    // One shared Shopify store: a banned product puts every site's payments at risk.
+    const banned = prohibitedReason(`${name} ${str(p.category)}`);
+    if (banned) { dropped.push(`${name}: not allowed in the shared store — ${banned}`); return; }
     const sell = num(p.sell_price), supplier = num(p.supplier_cost), ship = num(p.ship_cost) ?? 0;
     const landed = sell != null && supplier != null ? landedCost(supplier, ship, sell) : null;
     const detail: ProductDetail = {};

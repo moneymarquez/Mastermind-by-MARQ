@@ -5,6 +5,7 @@
 // ones through Cloudflare's API. Account connections (per user) are sealed
 // with lib/vault.ts into ai_user_tokens, which only the service role reads.
 import { requireUser, isOwnerUser } from '../lib/auth';
+import { cleanShop, isShopDomain, shopifyMode, resolveShopifyToken, SHOPIFY_API } from '../lib/shopify';
 import { Sb, json } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
 import { signState, verifyState } from '../lib/vault';
@@ -174,12 +175,15 @@ async function testAccount(id: string, tok: Record<string, string>): Promise<Tes
       return j.success ? { ok: true, detail: `Token can read Pages (${(j.result ?? []).length} project(s)).` } : { ok: false, detail: `Cloudflare: ${j.errors?.[0]?.message ?? res.status}` };
     }
     case 'shopify': {
-      const shop = (tok.shop ?? '').replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-      if (!/\.myshopify\.com$/.test(shop)) return { ok: false, detail: 'Store domain must look like yourstore.myshopify.com.' };
-      const res = await fetch(`https://${shop}/admin/api/2025-07/shop.json`, { headers: { 'X-Shopify-Access-Token': tok.token } });
+      const shop = cleanShop(tok.shop ?? '');
+      if (!isShopDomain(shop)) return { ok: false, detail: 'Store domain must look like yourstore.myshopify.com.' };
+      if (!shopifyMode(tok)) return { ok: false, detail: 'Paste either the Client ID and Client Secret (Dev Dashboard app) or an shpat_ Admin API token (older custom app).' };
+      let token: string;
+      try { token = (await resolveShopifyToken(tok, { force: true })).token; } catch (e) { return { ok: false, detail: e instanceof Error ? e.message : String(e) }; }
+      const res = await fetch(`https://${shop}/admin/api/${SHOPIFY_API}/shop.json`, { headers: { 'X-Shopify-Access-Token': token } });
       if (!res.ok) return { ok: false, detail: `Shopify ${res.status}: ${await errText(res)}` };
       const j = (await res.json()) as { shop: { name: string; plan_display_name?: string } };
-      return { ok: true, detail: `Connected to ${j.shop.name}${j.shop.plan_display_name ? ` (${j.shop.plan_display_name})` : ''}.` };
+      return { ok: true, detail: `Connected to ${j.shop.name}${j.shop.plan_display_name ? ` (${j.shop.plan_display_name})` : ''}${shopifyMode(tok) === 'client' ? ' through the Dev Dashboard app — tokens refresh on their own every 24 hours' : ''}.` };
     }
     case 'instagram': {
       const res = await fetch(`https://graph.instagram.com/me?fields=user_id,username,account_type&access_token=${encodeURIComponent(tok.token)}`);
@@ -268,7 +272,7 @@ export async function setupRoute(request: Request, env: SetupEnv, path: string):
       const r = await testAccount(id, tok);
       if (r.ok) await saveToken(e, sb, user.id, id, tok, { tested: new Date().toISOString() });
       // Incoming order webhooks find their account by shop domain.
-      if (r.ok && id === 'shopify') await sb.insert('ecom_shops', { user_id: user.id, shop_domain: tok.shop.replace(/^https?:\/\//, '').replace(/\/.*$/, '').toLowerCase() }, { upsert: 'shop_domain' }).catch(() => {});
+      if (r.ok && id === 'shopify') await sb.insert('ecom_shops', { user_id: user.id, shop_domain: cleanShop(tok.shop) }, { upsert: 'shop_domain' }).catch(() => {});
       await recordStatus(sb, user.id, id, r);
       return json(r, r.ok ? 200 : 400);
     }

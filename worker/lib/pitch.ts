@@ -8,6 +8,7 @@
 // the E-commerce playbook so Marq can edit the soft ones). Pure parts are
 // tested in tests/ecom-october.test.ts.
 import { extractJson } from './scout';
+import { prohibitedReason } from './sites';
 import { landedCost, marginPct } from '../../src/data/ecomProducts';
 
 export interface PitchRules { minProfitUsd: number; minMarginPct: number; priceMin: number; priceMax: number; testBudgetUsd: number }
@@ -32,6 +33,8 @@ export function passesHardFilter(p: PitchCandidate, r: PitchRules = PITCH_RULES)
   if (math.profit < r.minProfitUsd) reasons.push(`$${math.profit.toFixed(2)} profit per order, under $${r.minProfitUsd}`);
   if (math.marginPct < r.minMarginPct) reasons.push(`${math.marginPct.toFixed(0)}% margin, under ${r.minMarginPct}%`);
   if (p.detail?.fragile) reasons.push('fragile');
+  const banned = prohibitedReason(`${p.name} ${p.category ?? ''}`);
+  if (banned) reasons.push(`not allowed in the shared store: ${banned}`);
   return { pass: reasons.length === 0, reasons, math };
 }
 

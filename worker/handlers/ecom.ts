@@ -4,6 +4,7 @@
 //   POST /api/ecom/video              "Make a video" for the picked direction (checkSpend)
 //   POST /api/ecom/register-webhooks  subscribe the connected shop to order webhooks now
 import { requireUser, isOwnerUser } from '../lib/auth';
+import { getShopifyToken, withShopify, webhookSecretFor } from '../lib/shopify';
 import { Sb, json } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
 import type { VaultEnv } from '../lib/vault';
@@ -24,7 +25,7 @@ export async function shopifyWebhook(request: Request, env: EcomEnv): Promise<Re
   const [owner] = shop ? await sb.get<{ user_id: string }>(`ecom_shops?shop_domain=eq.${encodeURIComponent(shop)}&select=user_id`) : [];
   if (!owner) return new Response('Unknown shop', { status: 404 });
   const tok = await loadToken(env, sb, owner.user_id, 'shopify');
-  const secret = tok?.webhook_secret || env.SHOPIFY_WEBHOOK_SECRET || '';
+  const secret = webhookSecretFor(tok, env.SHOPIFY_WEBHOOK_SECRET ?? '');
   if (!(await shopifyHmacValid(secret, raw, request.headers.get('x-shopify-hmac-sha256')))) return new Response('Bad signature', { status: 401 });
   let order: ShopifyOrder;
   try { order = JSON.parse(raw) as ShopifyOrder; } catch { return new Response('Bad JSON', { status: 400 }); }
@@ -34,6 +35,23 @@ export async function shopifyWebhook(request: Request, env: EcomEnv): Promise<Re
   }
   const r = await recordShopifyOrder(sb, owner.user_id, shop, order);
   return json({ ok: true, ...r });
+}
+
+/** POST /api/ecom/beacon — public, no login. Every generated product site
+ *  sends {site, event: 'view' | 'buy_click'} here with navigator.sendBeacon
+ *  (text/plain, so no CORS preflight). Counts only for a live site's slug. */
+export async function siteBeacon(request: Request, env: EcomEnv): Promise<Response> {
+  const cors = { 'access-control-allow-origin': '*' };
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { ...cors, 'access-control-allow-methods': 'POST', 'access-control-allow-headers': 'content-type' } });
+  if (request.method !== 'POST') return new Response('POST only', { status: 405, headers: cors });
+  const text = (await request.text().catch(() => '')).slice(0, 500);
+  let b: { site?: unknown; event?: unknown } = {};
+  try { b = JSON.parse(text); } catch { return new Response(null, { status: 204, headers: cors }); }
+  const slug = String(b.site ?? '');
+  const event = b.event === 'buy_click' ? 'buy_click' : b.event === 'view' ? 'view' : '';
+  if (!/^[a-z0-9-]{1,60}$/.test(slug) || !event) return new Response(null, { status: 204, headers: cors });
+  await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/rpc/ecom_site_hit`, { method: 'POST', headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, 'content-type': 'application/json' }, body: JSON.stringify({ p_slug: slug, p_event: event }) }).catch(() => {});
+  return new Response(null, { status: 204, headers: cors });
 }
 
 export async function ecomRoute(request: Request, env: EcomEnv, path: string): Promise<Response> {
@@ -48,10 +66,10 @@ export async function ecomRoute(request: Request, env: EcomEnv, path: string): P
       return json(await makeVideo(sb, user.id, brandId, String(b.prompt), b.resolution === '720p' ? '720p' : '480p'));
     }
     if (path === 'register-webhooks') {
-      const tok = await loadToken(env, sb, user.id, 'shopify');
-      if (!tok?.token || !tok.shop) return json({ error: 'Shopify isn\'t connected. Setup → Accounts → Shopify.' }, 409);
-      const shop = cleanShop(tok.shop);
-      const r = await registerShopifyWebhooks(shop, tok.token, `${env.APP_ORIGIN ?? new URL(request.url).origin}/api/webhooks/shopify`);
+      const conn = await getShopifyToken(env, sb, user.id).catch(() => null);
+      if (!conn) return json({ error: 'Shopify isn\'t connected. Setup → Accounts → Shopify.' }, 409);
+      const shop = conn.shop;
+      const r = await withShopify(env, sb, user.id, (sh, t) => registerShopifyWebhooks(sh, t, `${env.APP_ORIGIN ?? new URL(request.url).origin}/api/webhooks/shopify`));
       await sb.insert('ecom_shops', { user_id: user.id, shop_domain: shop, webhooks_registered_at: r.ok ? new Date().toISOString() : null }, { upsert: 'shop_domain' }).catch(() => {});
       return json(r, r.ok ? 200 : 502);
     }

@@ -2,6 +2,9 @@
 // what happens when Marq decides on it (brand → store → shipping → content),
 // Shopify orders from the webhook, and the content handoff after a launch.
 import { Sb, zonedNow } from './sb';
+import { attributeOrder } from './sites';
+import type { SiteRef } from './sites';
+import { SHOPIFY_API, ShopifyAuthError } from './shopify';
 import { runWorker, TZ, brandFor } from './engine';
 import type { RunOutcome, Trigger } from './engine';
 import { BLOCKED_DOMAINS } from './scout';
@@ -94,7 +97,7 @@ export async function handoffBrandToContent(sb: Sb, u: string, brandId: string, 
 }
 
 // ── Shopify orders (orders/create webhook) ────────────────────────────
-export interface ShopifyOrder { id: number | string; name?: string; order_number?: number; total_price?: string; created_at?: string; financial_status?: string; fulfillment_status?: string | null; customer?: { first_name?: string; last_name?: string } | null; line_items?: { product_id?: number | string | null; title?: string; quantity?: number; price?: string }[] }
+export interface ShopifyOrder { id: number | string; name?: string; order_number?: number; total_price?: string; created_at?: string; financial_status?: string; fulfillment_status?: string | null; customer?: { first_name?: string; last_name?: string } | null; line_items?: { product_id?: number | string | null; title?: string; quantity?: number; price?: string }[]; note_attributes?: { name?: string; value?: string }[] | null; landing_site?: string | null; referring_site?: string | null }
 /** Supplier cost and margin for one order from the brand's own numbers. Pure. */
 export function orderMargin(o: ShopifyOrder, unitCost: number | null, shipCost: number | null): { qty: number; supplier: number | null; ship: number | null; margin: number | null } {
   const qty = (o.line_items ?? []).reduce((s, l) => s + (l.quantity ?? 1), 0) || 1;
@@ -109,9 +112,13 @@ const round = (n: number) => Math.round(n * 100) / 100;
 /** Store the order, work out the supplier side through the guardrail, and tell Marq. */
 export async function recordShopifyOrder(sb: Sb, u: string, shop: string, o: ShopifyOrder): Promise<{ brand_id: string | null; supplier_status: string }> {
   const productIds = (o.line_items ?? []).map((l) => String(l.product_id ?? '')).filter(Boolean);
+  // Which site made the sale (addendum §4): mm_site cart attribute, else landing URL, else referrer.
+  const sites = await sb.get<SiteRef & { brand_id: string; shopify_product_ids: string[] }>(`ecom_sites?user_id=eq.${u}&select=id,slug,domain,deploy_url,brand_id,shopify_product_ids`).catch(() => []);
+  const attribution = attributeOrder(o, sites);
+  const site = sites.find((x) => x.id === attribution.site_id);
   const builds = productIds.length ? await sb.get<{ brand_id: string; shopify_product_id: string | null }>(`ecom_store_builds?user_id=eq.${u}&shopify_product_id=not.is.null&select=brand_id,shopify_product_id`) : [];
   const match = builds.find((b) => productIds.some((pid) => (b.shopify_product_id ?? '').endsWith(`/${pid}`)));
-  const brandId = match?.brand_id ?? null;
+  const brandId = site?.brand_id ?? match?.brand_id ?? null;
   let unit: number | null = null, ship: number | null = null, name = 'your store';
   if (brandId) { const { row, ctx } = await brandFor(sb, u, brandId); unit = ctx.supplier_cost; name = row.name; const s = Number(row.steps?.['2']?.fields?.ship_cost); ship = Number.isFinite(s) ? s : null; }
   const m = orderMargin(o, unit, ship);
@@ -124,12 +131,16 @@ export async function recordShopifyOrder(sb: Sb, u: string, shop: string, o: Sho
     supplierStatus = v.verdict === 'allow' ? 'to_place' : v.verdict === 'needs_approval' ? 'needs_approval' : 'problem';
     if (v.verdict !== 'allow') problem = v.reason;
   } else problem = 'No supplier cost on the brand (step 4) — margin unknown.';
-  if (!brandId) problem = 'Order didn\'t match a launched store\'s product.';
-  const row = { user_id: u, brand_id: brandId, external_id: String(o.id), order_number: o.name ?? (o.order_number != null ? `#${o.order_number}` : null), customer_name: [o.customer?.first_name, o.customer?.last_name].filter(Boolean).join(' ') || null, total, items: o.line_items ?? [], placed_at: o.created_at ?? now(), status: o.financial_status ?? 'paid', fulfillment_status: o.fulfillment_status ?? null, supplier_status: supplierStatus, supplier_cost: m.supplier, ship_cost: m.ship, margin_usd: m.margin, product_title: o.line_items?.[0]?.title ?? null, shop, problem, raw: o, updated_at: now() };
+  if (!brandId) problem = 'Unattributed: the order didn\'t come from a known site or product.';
+  const row = { user_id: u, brand_id: brandId, external_id: String(o.id), order_number: o.name ?? (o.order_number != null ? `#${o.order_number}` : null), customer_name: [o.customer?.first_name, o.customer?.last_name].filter(Boolean).join(' ') || null, total, items: o.line_items ?? [], placed_at: o.created_at ?? now(), status: o.financial_status ?? 'paid', fulfillment_status: o.fulfillment_status ?? null, supplier_status: supplierStatus, supplier_cost: m.supplier, ship_cost: m.ship, margin_usd: m.margin, product_title: o.line_items?.[0]?.title ?? null, shop, problem, site_id: attribution.site_id, attribution, raw: o, updated_at: now() };
   if (brandId) await sb.insert('ecom_orders', row, { upsert: 'brand_id,external_id' });
-  else await sb.insert('ecom_orders', row).catch(() => {});
+  else {
+    // Unattributed orders are kept (once each) so the tracking-broke flag can count them.
+    const [dupe] = await sb.get<{ id: string }>(`ecom_orders?user_id=eq.${u}&external_id=eq.${encodeURIComponent(String(o.id))}&brand_id=is.null&select=id`).catch(() => []);
+    if (!dupe) await sb.insert('ecom_orders', row).catch((e) => console.error('unattributed order', e));
+  }
   if (supplierStatus === 'needs_approval' && brandId) await sb.insert('ai_approvals', { user_id: u, domain: 'ecom', type: 'supplier_order', entity_type: 'brand', entity_id: brandId, title: `Approve to ship ${row.order_number ?? ''}: supplier order $${((m.supplier ?? 0) + (m.ship ?? 0)).toFixed(2)}`, payload: { brand_id: brandId, order_external_id: String(o.id), amount: (m.supplier ?? 0) + (m.ship ?? 0), summary: problem }, is_money: true, amount_usd: Number(((m.supplier ?? 0) + (m.ship ?? 0)).toFixed(2)), confidence: 'hard' }).catch(() => {});
-  await notifyStored(sb, u, 'sale_made', { title: `💸 Sale: $${total.toFixed(2)} — ${name}${row.order_number ? `, order ${row.order_number}` : ''}`, body: m.margin != null ? `About $${m.margin.toFixed(2)} profit after supplier, shipping and fees.` : undefined, deepLink: 'ecom-orders', priority: 'high' });
+  await notifyStored(sb, u, 'sale_made', { title: `💸 Sale: $${total.toFixed(2)} — ${name}${site ? ` (${site.slug})` : ''}${row.order_number ? `, order ${row.order_number}` : ''}`, body: m.margin != null ? `About $${m.margin.toFixed(2)} profit after supplier, shipping and fees.` : undefined, deepLink: 'ecom-orders', priority: 'high' });
   return { brand_id: brandId, supplier_status: supplierStatus };
 }
 
@@ -137,7 +148,8 @@ export async function recordShopifyOrder(sb: Sb, u: string, shop: string, o: Sho
 export async function registerShopifyWebhooks(shop: string, token: string, callbackUrl: string, f: typeof fetch = fetch): Promise<{ ok: boolean; error?: string }> {
   const q = 'mutation($topic: WebhookSubscriptionTopic!, $sub: WebhookSubscriptionInput!) { webhookSubscriptionCreate(topic: $topic, webhookSubscription: $sub) { userErrors { message } } }';
   for (const topic of ['ORDERS_CREATE', 'ORDERS_FULFILLED']) {
-    const res = await f(`https://${shop}/admin/api/2025-07/graphql.json`, { method: 'POST', headers: { 'X-Shopify-Access-Token': token, 'content-type': 'application/json' }, body: JSON.stringify({ query: q, variables: { topic, sub: { callbackUrl, format: 'JSON' } } }) });
+    const res = await f(`https://${shop}/admin/api/${SHOPIFY_API}/graphql.json`, { method: 'POST', headers: { 'X-Shopify-Access-Token': token, 'content-type': 'application/json' }, body: JSON.stringify({ query: q, variables: { topic, sub: { callbackUrl, format: 'JSON' } } }) });
+    if (res.status === 401) throw new ShopifyAuthError('Shopify rejected the token (401).');
     const j = (await res.json().catch(() => ({}))) as { data?: { webhookSubscriptionCreate?: { userErrors?: { message: string }[] } }; errors?: unknown };
     const errs = j.data?.webhookSubscriptionCreate?.userErrors ?? [];
     if (!res.ok || j.errors || (errs.length && !errs.every((e) => /already|taken/i.test(e.message)))) return { ok: false, error: `Shopify ${res.status}: ${errs.map((e) => e.message).join('; ') || JSON.stringify(j.errors ?? '').slice(0, 200)}${res.status === 403 ? ' — the token needs read_orders.' : ''}` };
