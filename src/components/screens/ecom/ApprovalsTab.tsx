@@ -7,6 +7,7 @@ import type { ImportRow } from '../../../data/ecomProducts';
 import { marginHealthy } from '../../../data/ecomProducts';
 import { E, Badge, ConfidenceBadge, TeachingEmpty, btn, field, label, tint, useIsMobile } from './ecomShared';
 import { ApprovalBody, APPROVE_LABEL } from './ApprovalBodies';
+import RichProductCard from './RichProductCard';
 import { money, ago, CHANNELS } from '../../../data/ecom';
 
 /** §7 — one inbox for everything waiting on you, across domains. Every card
@@ -68,6 +69,7 @@ function appliedMessage(type: string, a: Record<string, number> | null | undefin
   if (type === 'sample_purchase') return 'Marked ordered on step 4.';
   if (type === 'domain_purchase') return `${a.domain} marked bought on step 5.`;
   if (type === 'store_draft') return 'Approved — the Launcher is taking the page live.';
+  if (type === 'product_card') return 'Approved — the brand is set up and the pipeline is running.';
   if (type === 'product_pitch') return 'Approved — the brand is set up. Brand Lab is drafting three directions and Supplier Finder the shipping plan; both land here.';
   if (type === 'brand_read') return `Saved on steps 9 and 10 — ${a.diagnosis}, recommend ${a.recommendation}.`;
   if (type === 'inbound_tags') return `Approved — ${a.tagged} sources set on Inbound.`;
@@ -75,7 +77,33 @@ function appliedMessage(type: string, a: Record<string, number> | null | undefin
   return 'Approved.';
 }
 
-export function ApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string) => void }) {
+/** A Scout find: the rich product card with its own decision row (approve to test / watch / reject with a reason). */
+function ProductApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string) => void }) {
+  const row = a.payload.row as ImportRow | undefined;
+  const [busy, setBusy] = useState('');
+  const [msg, setMsg] = useState('');
+  if (!row) return <div style={{ ...E.card, padding: 14, color: E.muted }}>{a.title}: this find has no product data. Kill it from the sheet.</div>;
+  const finish = (m: string) => { setBusy(''); setMsg(m); onDone(m); };
+  const approve = async () => {
+    setBusy('approve'); setMsg('');
+    const r = await decideApproval(a.id, 'approved');
+    if (!r.ok) { setBusy(''); setMsg(r.error ?? 'Could not approve that.'); return; }
+    finish(`Approved. ${(r.applied as { note?: string } | undefined)?.note ?? ''} Brand Lab and Supplier Finder are drafting next.`.trim());
+  };
+  const reject = async (reason: string) => { setBusy('reject'); const r = await decideApproval(a.id, 'sent_back', `Rejected: ${reason}`, false); if (!r.ok) { setBusy(''); setMsg(r.error ?? 'Could not save that.'); return; } finish(`Rejected: ${reason}. Scout will read that next run.`); };
+  const watch = async () => { setBusy('watch'); const r = await api<{ ok?: boolean; error?: string; detail?: string }>('/api/engine/watch-card', { body: { approval_id: a.id } }); if (r.error) { setBusy(''); setMsg(r.error); return; } finish(r.detail ?? 'Watching.'); };
+  const enrich = async () => { setBusy('enrich'); setMsg('Looking up the missing numbers… (1–2 min)'); const r = await api<{ ok?: boolean; error?: string; summary?: string }>('/api/engine/enrich', { body: { approval_id: a.id } }); finish(r.error ?? r.summary ?? 'Done.'); };
+  return (
+    <RichProductCard p={{ ...row, source_url: row.source_url ?? null } as never} busy={busy} message={msg}
+      onApprove={() => void approve()} onReject={(r) => void reject(r)} onWatch={() => void watch()} onEnrich={() => void enrich()} />
+  );
+}
+
+export function ApprovalCard(props: { a: Approval; onDone: (msg: string) => void }) {
+  return props.a.type === 'product_card' ? <ProductApprovalCard {...props} /> : <GenericApprovalCard {...props} />;
+}
+
+function GenericApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string) => void }) {
   const mobile = useIsMobile();
   const [note, setNote] = useState('');
   const [rerun, setRerun] = useState(true);

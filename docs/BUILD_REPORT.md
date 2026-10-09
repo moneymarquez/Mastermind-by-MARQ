@@ -148,3 +148,22 @@ Verified by reading the code, by unit tests, and in the demo-mode UI. **Not** ru
 4. Waitlist screen: **Sync to MailerLite**, then **Launch** (opens the doors and drafts the campaign). Review and Send it in MailerLite.
 5. After Twilio approves the number: set `TWILIO_LIVE=1`.
 6. Migrations applied in this addendum: `schema_128` (waitlist, coupons), `129` (coupon revenue), `130` (marketing brands), `131` (cap defaults).
+
+---
+
+# Addendum 3 and 4 — Approvals tab, rich product cards, Contacts fix, error-screen game
+
+**Quality bar:** build ✅ · lint ✅ (0 errors) · tests ✅ (see the last run in the session report). Decisions 93–103 in `docs/BUILD_DECISIONS.md`.
+
+## One fully filled card (demo data, Approvals → "Pocket Fabric Shaver")
+Collapsed: **#1 Pocket Fabric Shaver · GO · 8/10 · Estimate** — *Sell $36.50 · Profit $21.51/order · Margin 59% · Ships 3–6 days · Trend rising · Easy to film* — "Pilled sweaters make good clothes look old." Buttons: More, Approve to test, Reject.
+Opened: the stats grid (sell, supplier, shipping, landed, profit, margin, break-even, days trending, velocity, sellers, difficulty, score, confidence); the receipt (customer pays $36.50, supplier −$7.90, shipping −$3.90, Shopify 2.9% + $0.30 −$1.36, packaging −$0.00, refund allowance 5% −$1.83, **= $21.51 (59%)**); Why sell this (demand with links, problem, trigger, buyer, why it sells, psychology in plain words, the angle); who's selling it now (shop, price, estimated orders and revenue labelled Estimate, months selling, what the store looks like, "Gap we can take"); supplier options with the pick highlighted; conservative vs base orders and profit per month, confidence with 3 reasons and 2 risks; 3 hooks, how to film it, the first post; the five risk checks; Source / Top seller's shop / Supplier listing / Search TikTok / Search Amazon / Copy name; Approve to test / Watch / Reject (reason chips) / Notes / Find the missing numbers.
+
+## What was verified
+- ✅ In the demo UI: Approvals lists a GO card and a **BLOCKED** "Stanley-style Tumbler" (no Approve button, "Blocked: a brand knockoff"); More opens sections A–K; Products shows tarte SPOTTED icons set and Toplux Magnesium Complex as Blocked, a number-less "Mini Steam Iron" with "Not found" lines and a Find the missing numbers button, and no bare `?` anywhere.
+- ✅ Unit tests: the receipt math, "Not found" reasons, verdicts, blocked names, enrichment merging (picks the fast supplier, never overwrites hand-typed numbers, bad answers become Not found), and Scout parsing (0 placeholders become unknown; blocked finds are kept).
+- ⚠ **Not run live:** "Run Scout in test mode" needs the Parallel key and the production Worker. After the deploy, press Run Product Scout once and check that each new find arrives in Approvals with numbers or "Not found: reason". Watch's 7-day re-check is a date only, not automatic.
+
+## Addendum 4
+- **Contacts crash fixed.** `null.split` came from the `initials()` helpers receiving a contact with a null name. All five copies are null-safe and contacts are normalized on load (`normalizeContact`); a test covers null name, phone, email, tags and lists.
+- **Error-screen game:** an original "M" bot runner (bug, error box, spinner, `null`), lazy-loaded (about 2.5 kB), reload button always above it, high score saved per device, respects reduced motion, pauses when the tab is hidden, own error boundary. Logic is unit-tested; I did **not** check the canvas on a real iPad. The app has no offline screen, so the game only shows on error screens.

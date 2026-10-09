@@ -25,6 +25,7 @@ export interface ProductDetail {
   card?: CardData;
   notes?: string;
   recheck_at?: string;
+  rejected?: string;
   blocked?: string;
 }
 

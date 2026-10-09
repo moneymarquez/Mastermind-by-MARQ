@@ -3,7 +3,10 @@ import type { ReactNode } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { money } from '../../../data/ecom';
 import { E, Badge, label, tint } from './ecomShared';
-import { PitchBody, DirectionVisuals } from './PitchCard';
+import { DirectionVisuals } from './PitchCard';
+import RichProductCard from './RichProductCard';
+import { emptyCard } from '../../../data/ecomCard';
+import type { CardProduct } from '../../../data/ecomCard';
 
 /** The readable body of each non-Scout approval card: what you're
  *  approving, laid out the way you'd check it — never raw JSON. Payload
@@ -45,7 +48,7 @@ const secs = (n: unknown) => (typeof n === 'number' ? `${Math.floor(n / 60)}:${S
 const gradeColor = (g: number) => (g >= 4 ? E.green : g === 3 ? E.blue : g === 2 ? E.amber : E.red);
 
 export function ApprovalBody({ type, payload: p, choice = 0, onChoice, approvalId }: { type: string; payload: P; choice?: number; onChoice?: (i: number) => void; approvalId?: string }) {
-  if (type === 'product_pitch') return <PitchBody p={p} />;
+  if (type === 'product_pitch') return <RichPitch p={p} />;
   if (type === 'supplier_order') return <div style={{ marginTop: 10, fontSize: 'var(--text-body)', color: E.muted }}>{String(p.summary ?? '')} Approving marks it ready to place with the supplier; nothing is bought automatically.</div>;
   if (type === 'playbook_rule') return <div style={{ marginTop: 10, padding: 10, borderRadius: 'var(--radius-sm)', background: E.sunk, fontFamily: 'var(--font-mono)', fontSize: 13, color: E.text }}>{String(p.rule ?? '')}<div style={{ fontFamily: 'inherit', fontSize: 12, color: E.faint, marginTop: 6 }}>Goes into {String(p.playbook ?? '')}</div></div>;
   if (type === 'analysis') {
@@ -429,4 +432,27 @@ export function StorePreview({ html, name = 'store' }: { html: string; name?: st
       <button onClick={download} style={{ marginTop: 8, padding: '6px 12px', borderRadius: 'var(--radius-pill)', border: `1px solid ${E.border}`, background: 'transparent', color: E.text, cursor: 'pointer', fontSize: 13 }}>Download HTML</button>
     </div>
   );
+}
+
+/** Tonight's pitch on the same rich card, opened by default: the pitch's own numbers (sellers, supplier, outcomes, risks) merged onto the product row. */
+function RichPitch({ p }: { p: P }) {
+  const [row, setRow] = useState<Record<string, unknown> | null>(null);
+  useEffect(() => { let on = true; supabase.from('ecom_products').select('*').eq('id', String(p.product_id ?? '')).maybeSingle().then(({ data }) => { if (on) setRow(data as Record<string, unknown> | null); }); return () => { on = false; }; }, [p.product_id]);
+  const m = (p.math ?? {}) as { sell?: number; supplier?: number; ship?: number };
+  const sup = (p.supplier ?? {}) as { name?: string; url?: string | null; ship_days?: number | null; unit_cost?: number | null; us_warehouse?: boolean | null };
+  const out = (p.outcomes ?? {}) as { conservative?: { orders: number; profit: number }; base?: { orders: number; profit: number } };
+  const base = (row ?? {}) as Partial<CardProduct>;
+  const detail = { ...(base.detail ?? {}), ship_cost: m.ship ?? base.detail?.ship_cost } as CardProduct['detail'];
+  const card = {
+    ...emptyCard(), ...(detail.card ?? {}),
+    sellers: ((p.sellers ?? []) as { name: string; shop_url: string | null; price: number | null; est_monthly_orders: number | null; est_monthly_revenue: number | null; source_url: string | null; shop_look: string; screenshot_url: string | null }[]).map((s) => ({ name: s.name, shop_url: s.shop_url, price: s.price, est_monthly_orders: s.est_monthly_orders, est_monthly_revenue: s.est_monthly_revenue, months_selling: null, look: s.shop_look, screenshot_url: s.screenshot_url, source_url: s.source_url })),
+    suppliers: sup.name && sup.name !== 'Not found yet' ? [{ name: sup.name, url: sup.url ?? null, unit_cost: sup.unit_cost ?? m.supplier ?? null, ship_cost: m.ship ?? null, ship_days_min: null, ship_days_max: sup.ship_days ?? null, warehouse: sup.us_warehouse ? 'US' : null, rating: null, sample_cost: null }] : (detail.card?.suppliers ?? []),
+    demand: ((p.why_now ?? []) as { claim: string; url: string | null }[]).map((w) => ({ text: w.claim, url: w.url })),
+    outcome: out.conservative && out.base ? { conservative: out.conservative, base: out.base } : null,
+    confidence_pct: typeof p.confidence_pct === 'number' ? p.confidence_pct : null,
+    confidence_reasons: ((p.reasons ?? []) as string[]).slice(0, 3), risks: ((p.risks ?? []) as string[]).slice(0, 2),
+    gap: String(p.summary ?? ''),
+  };
+  const prod = { name: String(p.product_name ?? 'Product'), category: base.category ?? null, images: [...(p.image ? [String(p.image)] : []), ...(base.images ?? [])], sell_price: m.sell ?? base.sell_price ?? null, supplier_cost: m.supplier ?? base.supplier_cost ?? null, score: base.score ?? null, confidence: (base.confidence ?? 'estimate') as CardProduct['confidence'], days_trending: base.days_trending ?? null, velocity: base.velocity ?? null, content_difficulty: base.content_difficulty ?? null, detail: { ...detail, card }, source_url: base.source_url ?? null, channel: (base.channel ?? 'tiktok') as CardProduct['channel'] } as CardProduct;
+  return <div style={{ marginTop: 10 }}><RichProductCard p={prod} expanded embedded /></div>;
 }

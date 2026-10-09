@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
-import type { CSSProperties } from 'react';
 import type { Channel } from '../../../data/ecom';
 import { CHANNELS, money, ago } from '../../../data/ecom';
 import type { Product, SheetFilters } from '../../../data/ecomProducts';
-import { DEFAULT_FILTERS, filterProducts, rankSort, sparklinePath, rankTrend, marginHealthy, isSaturated, brandStepsFromProduct } from '../../../data/ecomProducts';
+import { DEFAULT_FILTERS, filterProducts, rankSort, brandStepsFromProduct } from '../../../data/ecomProducts';
 import { useEcomProducts, linkProductToBrand } from '../../../data/useEcom';
 import { E, Pill, Badge, ConfidenceBadge, TeachingEmpty, btn, field, label } from './ecomShared';
 import ProductDrawer from './ProductDrawer';
+import RichProductCard from './RichProductCard';
+import { cardView } from '../../../data/ecomCard';
 import CsvImportDrawer from './CsvImportDrawer';
 import { api as callApi } from '../../../lib/api';
 import { runScout } from '../../../data/useEngine';
@@ -44,7 +45,23 @@ export default function ProductSheetsTab({ search, onBuildBrand, statusOf, onOpe
     if (id) { await linkProductToBrand(id, p.id); setOpenId(null); }
   };
 
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [busyKind, setBusyKind] = useState('');
   const [testMsg, setTestMsg] = useState<Record<string, string>>({});
+  const rejectOne = async (p: Product, reason: string) => {
+    setBusyId(p.id); setBusyKind('reject');
+    const r = await callApi<{ ok?: boolean; error?: string }>('/api/engine/reject-product', { body: { product_id: p.id, reason } });
+    setBusyId(null); setBusyKind('');
+    setTestMsg((m) => ({ ...m, [p.id]: r.error ?? `Rejected: ${reason}. Scout will read that next run.` }));
+    void api.reload();
+  };
+  const enrichOne = async (p: Product) => {
+    setBusyId(p.id); setBusyKind('enrich');
+    const r = await callApi<{ ok?: boolean; error?: string; summary?: string }>('/api/engine/enrich', { body: { product_id: p.id } });
+    setBusyId(null); setBusyKind('');
+    setTestMsg((m) => ({ ...m, [p.id]: r.error ?? r.summary ?? 'Done.' }));
+    void api.reload();
+  };
   const testOne = async (p: Product) => {
     setTestMsg((m) => ({ ...m, [p.id]: 'Starting…' }));
     const r = await callApi<{ ok?: boolean; error?: string; note?: string; existing?: boolean }>('/api/engine/test-product', { body: { product_id: p.id } });
@@ -88,28 +105,39 @@ export default function ProductSheetsTab({ search, onBuildBrand, statusOf, onOpe
       {api.error && <div style={{ color: E.red, fontSize: 'var(--text-body)', marginTop: 10 }}>{api.error}</div>}
 
       {view === 'cards' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12, marginTop: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 420px), 1fr))', gap: 12, marginTop: 14, alignItems: 'start' }}>
           {rows.slice(0, limit).map((p) => (
-            <ProductCard key={p.id} p={p} ranks={(api.snapshots[p.id] ?? []).map((s) => s.rank)} onOpen={() => setOpenId(p.id)} onWatch={() => api.toggleWatch(p)} onBuild={() => buildBrand(p)} onTest={() => void testOne(p)} testMsg={testMsg[p.id]} statusOf={statusOf} />
+            <div key={p.id} data-demo="product-card" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <RichProductCard p={{ ...p, rank: p.rank }} statusChip={statusOf?.(p.id)} busy={busyId === p.id ? busyKind : ''} message={testMsg[p.id]}
+                notes={p.detail.notes} onNotes={(v) => void api.updateProduct(p.id, { detail: { ...p.detail, notes: v } })}
+                onApprove={() => void testOne(p)} onWatch={() => void api.toggleWatch(p)} onReject={(r) => void rejectOne(p, r)} onEnrich={() => void enrichOne(p)} />
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button style={{ ...btn('ghost'), minHeight: 32, fontSize: 13 }} onClick={() => setOpenId(p.id)}>Edit numbers / research</button>
+                <button style={{ ...btn('ghost'), minHeight: 32, fontSize: 13 }} onClick={() => buildBrand(p)}>Build a brand (skip pipeline)</button>
+              </div>
+            </div>
           ))}
         </div>
       ) : (
         <div style={{ ...E.card, marginTop: 14, overflow: 'auto' }}>
           <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 'var(--text-body)' }}>
-            <thead><tr style={{ background: E.sunk }}>{['#', 'Product', 'Category', 'Price', 'Landed', 'Margin', 'Days', 'Velocity', 'Score', 'Content', 'Conf.', 'As of'].map((h) => <th key={h} style={{ textAlign: 'left', padding: '8px 10px', color: E.faint, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 12 }}>{h}</th>)}</tr></thead>
+            <thead><tr style={{ background: E.sunk }}>{['#', 'Product', 'Verdict', 'Price', 'Profit/order', 'Margin', 'Ship days', 'Days', 'Velocity', 'Score', 'Content', 'Conf.', 'As of'].map((h) => <th key={h} style={{ textAlign: 'left', padding: '8px 10px', color: E.faint, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 12 }}>{h}</th>)}</tr></thead>
             <tbody>
               {rows.slice(0, limit).map((p) => (
                 <tr key={p.id} onClick={() => setOpenId(p.id)} style={{ borderTop: '1px solid var(--border)', cursor: 'pointer' }}>
-                  <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{p.rank ?? '—'}</td>
+                  <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{p.rank ?? ''}</td>
                   <td style={{ padding: '8px 10px', color: E.text, fontWeight: 600 }}>{p.watched ? '★ ' : ''}{p.name}{statusOf?.(p.id) && <> <Badge color={statusOf(p.id)!.color}>{statusOf(p.id)!.label}</Badge></>}</td>
-                  <td style={{ padding: '8px 10px', color: E.muted }}>{p.category ?? '—'}</td>
-                  <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{money(p.sell_price)}</td>
-                  <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{money(p.landed_cost)}</td>
-                  <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)', color: marginHealthy(p.sell_price, p.landed_cost) ? E.green : E.text }}>{p.margin_pct != null ? `${p.margin_pct.toFixed(0)}%` : '—'}</td>
-                  <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{p.days_trending ?? '—'}</td>
-                  <td style={{ padding: '8px 10px' }}>{p.velocity ?? '—'}</td>
-                  <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{p.score ?? '—'}</td>
-                  <td style={{ padding: '8px 10px' }}>{p.content_difficulty ?? '—'}</td>
+                  {(() => { const v = cardView(p); return (<>
+                    <td style={{ padding: '8px 10px' }}><Badge color={v.verdict === 'GO' ? E.green : v.verdict === 'MAYBE' ? E.amber : E.red} title={v.verdictWhy}>{v.verdict}</Badge></td>
+                    <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{p.sell_price != null ? money(p.sell_price) : 'Not found'}</td>
+                    <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)', color: v.floorOk ? E.green : E.text }}>{v.bd ? money(v.bd.profit) : 'Not found'}</td>
+                    <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)', color: v.floorOk ? E.green : E.text }}>{v.bd ? `${v.bd.marginPct.toFixed(0)}%` : 'Not found'}</td>
+                    <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{v.shipMax != null ? `${v.shipMin ?? v.shipMax}–${v.shipMax}` : 'Not found'}</td>
+                  </>); })()}
+                  <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{p.days_trending ?? 'Not found'}</td>
+                  <td style={{ padding: '8px 10px' }}>{p.velocity ?? 'Not found'}</td>
+                  <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{p.score ?? 'Not found'}</td>
+                  <td style={{ padding: '8px 10px' }}>{p.content_difficulty ?? 'Not found'}</td>
                   <td style={{ padding: '8px 10px' }}><ConfidenceBadge c={p.confidence} /></td>
                   <td style={{ padding: '8px 10px', color: E.faint, whiteSpace: 'nowrap' }}>{ago(p.as_of)}</td>
                 </tr>
@@ -122,52 +150,6 @@ export default function ProductSheetsTab({ search, onBuildBrand, statusOf, onOpe
 
       <ProductDrawer product={open} snapshots={open ? api.snapshots[open.id] ?? [] : []} onClose={() => setOpenId(null)} onSave={api.updateProduct} onToggleWatch={api.toggleWatch} onBuildBrand={buildBrand} onRemove={api.removeProduct} />
       <CsvImportDrawer open={importOpen} channel={channel} onClose={() => setImportOpen(false)} onImport={api.importRows} />
-    </div>
-  );
-}
-
-function ProductCard({ p, ranks, onOpen, onWatch, onBuild, onTest, testMsg, statusOf }: { p: Product; ranks: (number | null)[]; onOpen: () => void; onWatch: () => void; onBuild: () => void; onTest: () => void; testMsg?: string; statusOf?: Props['statusOf'] }) {
-  const path = sparklinePath(ranks);
-  const trend = rankTrend(ranks);
-  const healthy = marginHealthy(p.sell_price, p.landed_cost);
-  const num: CSSProperties = { fontFamily: 'var(--font-mono)', fontWeight: 600, color: E.text };
-  return (
-    <div style={{ ...E.card, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      <div data-demo="product-card" onClick={onOpen} style={{ cursor: 'pointer' }}>
-        <div style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', background: E.border, height: 160 }}>
-          {p.images.length === 0
-            ? <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: E.faint, fontSize: 12 }}>No photo yet</div>
-            : p.images.map((u) => <img key={u} src={u} alt="" loading="lazy" style={{ width: '100%', height: 160, objectFit: 'cover', flex: '0 0 100%', scrollSnapAlign: 'start' }} />)}
-        </div>
-        <div style={{ padding: '12px 14px 0' }}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            {p.rank != null && <Badge color={E.text}>#{p.rank}</Badge>}
-            <span style={{ fontWeight: 700, color: E.text, fontSize: 'var(--text-subhead)', flex: 1, minWidth: 0 }}>{p.name}</span>
-            {statusOf?.(p.id) && <Badge color={statusOf(p.id)!.color}>{statusOf(p.id)!.label}</Badge>}
-            {path && <svg width={72} height={22} aria-label="14-day rank"><path d={path} fill="none" stroke={trend === '↓' ? E.red : E.green} strokeWidth={1.8} strokeLinejoin="round" /></svg>}
-          </div>
-          <div style={{ fontSize: 'var(--text-body)', color: E.faint, marginTop: 2 }}>{[p.category, `${CHANNELS.find((c) => c.id === p.channel)?.short}${trend ? ` ${trend}` : ''}`].filter(Boolean).join(' · ')}{isSaturated(p) ? ' · saturated' : ''}</div>
-          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 10, fontSize: 'var(--text-body)' }}>
-            <span><span style={num}>{money(p.sell_price)}</span> <span style={{ color: E.faint }}>sell</span></span>
-            <span><span style={num}>{money(p.landed_cost)}</span> <span style={{ color: E.faint }}>landed</span></span>
-            <span><span style={{ ...num, color: healthy ? E.green : E.text }}>{p.margin_pct != null ? `${p.margin_pct.toFixed(0)}%` : '—'}</span> <span style={{ color: E.faint }}>margin{healthy ? ' · ≥3×' : ''}</span></span>
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8, alignItems: 'center', fontSize: 'var(--text-caption)', color: E.muted }}>
-            <span>{p.days_trending != null ? `${p.days_trending}d trending` : 'trend unknown'}</span>
-            <span>· {p.velocity === 'rising' ? '↑ rising' : p.velocity === 'fading' ? '↓ fading' : p.velocity === 'flat' ? '→ flat' : '— velocity'}</span>
-            {p.content_difficulty && <span>· {p.content_difficulty} content</span>}
-            <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 6, alignItems: 'center' }}>{p.score != null && <span style={num}>{p.score}/10</span>}<ConfidenceBadge c={p.confidence} /></span>
-          </div>
-          <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 4 }}>as of {ago(p.as_of)} · {p.source}</div>
-        </div>
-      </div>
-      <div style={{ display: 'flex', gap: 6, padding: '10px 14px 12px', marginTop: 'auto' }}>
-        <button style={{ ...btn('ghost'), padding: '7px 10px' }} onClick={onWatch} title="Watch">{p.watched ? '★' : '☆'}</button>
-        <button style={{ ...btn('ghost'), padding: '7px 12px' }} onClick={onOpen}>Research</button>
-        <button style={{ ...btn('ghost'), padding: '7px 12px', marginLeft: 'auto' }} onClick={onBuild}>Build a brand</button>
-        <button style={{ ...btn('primary'), padding: '7px 12px' }} onClick={onTest} disabled={testMsg === 'Starting…'}>I want to test this one</button>
-      </div>
-      {testMsg && testMsg !== 'Starting…' && <div style={{ padding: '0 14px 12px', fontSize: 'var(--text-caption)', color: E.muted }}>{testMsg}</div>}
     </div>
   );
 }
