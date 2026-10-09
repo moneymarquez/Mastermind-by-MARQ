@@ -52,6 +52,7 @@ import { hqRoute } from './handlers/hq';
 import type { HqEnv } from './handlers/hq';
 import { smsInbound, smsSettingsRoute, smsOptin } from './handlers/sms';
 import { shopifyWebhook, ecomRoute, siteBeacon } from './handlers/ecom';
+import { siteConfig, waitlistJoin, waitlistAdmin } from './handlers/waitlist';
 import type { EcomEnv } from './handlers/ecom';
 import type { SmsEnv } from './handlers/sms';
 import type { DigestEnv } from './handlers/digest';
@@ -133,6 +134,10 @@ export default {
     if (url.pathname === '/api/sms/inbound') return smsInbound(request, env);
     if (url.pathname === '/api/webhooks/shopify') return shopifyWebhook(request, env);
     if (url.pathname === '/api/ecom/beacon') return siteBeacon(request, env);
+    if (url.pathname === '/api/site/config') return siteConfig(request, env);
+    if (url.pathname === '/api/waitlist') return waitlistJoin(request, env, ctx);
+    const wlMatch = url.pathname.match(/^\/api\/waitlist\/(mode|sync|launch)$/);
+    if (wlMatch) return waitlistAdmin(request, env, wlMatch[1]);
     const ecomMatch = url.pathname.match(/^\/api\/ecom\/([a-z-]+)$/);
     if (ecomMatch) return ecomRoute(request, env, ecomMatch[1]);
     if (url.pathname === '/api/sms/settings') return smsSettingsRoute(request, env);

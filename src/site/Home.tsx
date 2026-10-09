@@ -4,9 +4,10 @@ import Offers from './Offers';
 import { S, LINKS, Nav, Footer, useViewport, useReducedMotion, updateNavInk } from './shared';
 import {
   HEADLINES, SUBLINE, UTILIZE_1, UTILIZE_2, WORK_WITH_1, WORK_WITH_2, SAMPLE_DO, SAMPLE_GOAL, FITS, FIRST_STEP, PLAN,
-  repPanels, REP_CHECKED, CLIPS, CHAPTERS, PIPE, TASKS, WEEK, K_STATS, K_PIECES, OUTPUTS, SHOPS, DAY, FAQS,
+  repPanels, REP_CHECKED, CLIPS, CHAPTERS, PIPE, TASKS, WEEK, K_STATS, K_PIECES, OUTPUTS, SHOPS, DAY, faqsFor,
 } from './content';
 import type { RepItem } from './content';
+import { useCta, WaitlistCard } from './waitlist';
 
 // Masterminds Home v3. The cover photograph is a sticky layer; scrolling
 // pushes the camera into the laptop on the desk until its glass fills the
@@ -23,6 +24,7 @@ const ease = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 
 
 export default function Home() {
   const { h: vhState, mob: m } = useViewport();
+  const cta = useCta(true);
   const still = useReducedMotion();
   const q = new URLSearchParams(location.search);
   const headline = HEADLINES[(q.get('h') as 'a' | 'b' | 'c') ?? 'a'] ?? HEADLINES.a;
@@ -188,7 +190,7 @@ export default function Home() {
   const dur1 = m ? '56s' : '70s', dur2 = m ? '67s' : '84s', bandGap = m ? '16px' : '24px';
   const phW = m ? Math.round(Math.min(200, vh * 0.46 * 0.485)) : Math.round(Math.min(320, (vh - 160) * 0.485));
   const phH = m ? Math.round(Math.min(412, vh * 0.46)) : Math.round(Math.min(660, vh - 160));
-  const panels = repPanels(seats, more, { signup: LINKS.signup, team: LINKS.team, apply: LINKS.apply });
+  const panels = repPanels(seats, more, { signup: LINKS.signup, team: LINKS.team, apply: LINKS.apply, waitlist: cta.waitlist });
   const rep4 = <T,>(a: T[]) => [...a, ...a, ...a, ...a];
   const rep6 = <T,>(a: T[]) => [...a, ...a, ...a, ...a, ...a, ...a];
   const stops = DAY.map(([time, mod, line, c1, c2], i) => ({ time, mod, line, grad: `linear-gradient(165deg,${c1} 0%,${c2} 100%)`, on: i === dayIdx }));
@@ -423,7 +425,7 @@ export default function Home() {
             <div ref={stackRef} style={S('position:absolute; top:120px; left:20px; right:20px; display:flex; flex-direction:column; align-items:center; text-align:center; transform-origin:50% 0;')}>
               <h1 style={S(`margin:0; font-size:${m ? '40px' : 'clamp(54px, 5.4vw, 78px)'}; line-height:1.0; font-weight:480; letter-spacing:-0.035em; max-width:960px; text-wrap:balance; color:#100f12;`)}>{headline}</h1>
               <p style={S(`margin:${m ? '14px' : '20px'} 0 0; font-size:${m ? '16px' : '19px'}; line-height:1.45; max-width:640px; color:#252b3a; text-wrap:balance;`)}>{SUBLINE}</p>
-              <a href={LINKS.signup} className="lp-h-primary" style={S(`margin-top:${m ? '22px' : '30px'}; height:56px; padding:0 30px; display:flex; align-items:center; border-radius:999px; background:#5266eb; color:#fff; font-size:17px; font-weight:500; box-shadow:0 8px 20px rgba(16,15,18,.16); white-space:nowrap;`)}>Start 7-day free trial</a>
+              <a href={cta.href} className="lp-h-primary" style={S(`margin-top:${m ? '22px' : '30px'}; height:56px; padding:0 30px; display:flex; align-items:center; border-radius:999px; background:#5266eb; color:#fff; font-size:17px; font-weight:500; box-shadow:0 8px 20px rgba(16,15,18,.16); white-space:nowrap;`)}>{cta.label}</a>
               <div style={S(`margin-top:${m ? '18px' : '22px'}; font-size:${m ? '17px' : '20px'}; font-weight:500; letter-spacing:-0.015em; color:#100f12;`)}>{MODULE_COUNT} modules. One login. $19.99/mo.</div>
               <div style={S('margin-top:8px; font-size:12px; letter-spacing:.02em; color:#2e3240;')}>Not medical or financial advice.</div>
             </div>
@@ -550,6 +552,7 @@ export default function Home() {
         <div style={S('max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:40px;')}>
           <div style={S('display:flex; flex-direction:column; gap:16px;')}><span style={S('font-size:11px; font-weight:500; letter-spacing:.14em; color:#6b665c;')}>GET STARTED</span><h2 style={S(`margin:0; font-size:${h2Size}; line-height:1.02; font-weight:480; letter-spacing:-0.035em;`)}>Pick where you start.</h2></div>
           <div style={S('display:grid; grid-template-columns:repeat(auto-fit,minmax(296px,1fr)); gap:16px; align-items:stretch;')}>
+            {cta.waitlist ? <WaitlistCard dark /> : (
             <div style={S('background:#1b1a17; color:#fbf9f4; border-radius:12px; padding:32px; display:flex; flex-direction:column; gap:16px;')}>
               <span style={S('font-size:18px; font-weight:600;')}>Masterminds</span>
               <div style={S('display:flex; align-items:baseline; gap:8px;')}><span style={S("font-family:'IBM Plex Mono',monospace; font-size:48px; line-height:1; letter-spacing:-0.03em;")}>$19.99</span><span style={S('font-size:16px; color:#b8b3a8;')}>/mo</span></div>
@@ -557,6 +560,7 @@ export default function Home() {
               <a href={LINKS.signup} className="lp-h-primary" style={S('height:48px; display:flex; align-items:center; justify-content:center; border-radius:999px; background:#5266eb; color:#fff; font-size:16px; font-weight:500;')}>Start 7-day free trial</a>
               <span style={S('padding-top:16px; border-top:1px solid #3a3833; font-size:12px; line-height:1.5; color:#b8b3a8;')}>7-day free trial terms. <span style={S("font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.08em;")}>PLACEHOLDER</span></span>
             </div>
+            )}
             <div style={S('background:#fff; border:1px solid #e2ddd2; border-radius:12px; padding:32px; display:flex; flex-direction:column; gap:16px;')}>
               <div style={S('display:flex; justify-content:space-between; align-items:center; gap:16px;')}><span style={S('font-size:18px; font-weight:600;')}>Masterminds Pro</span><span style={S('padding:4px 8px; border:1px solid #d6d1c6; border-radius:4px; font-size:12px;')}>Coming soon</span></div>
               <div style={S('display:flex; align-items:baseline; gap:8px;')}><span style={S("font-family:'IBM Plex Mono',monospace; font-size:48px; line-height:1; letter-spacing:-0.03em;")}>$49.99</span><span style={S('font-size:16px; color:#6b665c;')}>/mo</span></div>
@@ -593,7 +597,7 @@ export default function Home() {
         <div style={S('max-width:880px; margin:0 auto; display:flex; flex-direction:column; gap:40px;')}>
           <div style={S('display:flex; flex-direction:column; gap:16px;')}><span style={S('font-size:11px; font-weight:500; letter-spacing:.14em; color:#6b665c;')}>FAQ <span style={S("font-family:'IBM Plex Mono',monospace; letter-spacing:.08em;")}>· DRAFT COPY</span></span><h2 style={S(`margin:0; font-size:${h2Size}; line-height:1.02; font-weight:480; letter-spacing:-0.035em;`)}>Questions.</h2></div>
           <div style={S('display:flex; flex-direction:column; border-top:1px solid #1b1a17;')}>
-            {FAQS.map(([qq, a], i) => (
+            {faqsFor(cta.waitlist).map(([qq, a], i) => (
               <div key={qq} style={S('border-bottom:1px solid #e2ddd2;')}>
                 <button onClick={() => setFaq(faq === i ? -1 : i)} aria-expanded={faq === i} style={S("width:100%; min-height:64px; padding:16px 0; display:flex; justify-content:space-between; align-items:center; gap:16px; border:none; background:transparent; color:#1b1a17; font-family:'Instrument Sans',sans-serif; font-size:18px; font-weight:500; text-align:left; cursor:pointer;")}><span>{qq}</span><span aria-hidden="true" style={S('font-size:20px; color:#6b665c;')}>{faq === i ? '−' : '+'}</span></button>
                 {faq === i && <p style={S('margin:0; padding:0 0 24px; max-width:640px; font-size:16px; line-height:1.55; color:#4a463f;')}>{a}</p>}

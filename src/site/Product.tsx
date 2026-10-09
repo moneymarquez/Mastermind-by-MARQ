@@ -3,6 +3,7 @@ import { S, LINKS, Nav, Footer, useViewport, updateNavInk } from './shared';
 import { PRODUCT_MODULES, MODULE_COUNT, PERSONAL_TBD, SHOT_H } from './productContent';
 import Offers from './Offers';
 import type { ProductModule } from './productContent';
+import { useCta, WaitlistCard } from './waitlist';
 
 const shot = (k: string) => `/site/product/${k}.webp`;
 const MONO = "font-family:'IBM Plex Mono',monospace;";
@@ -63,6 +64,7 @@ function ModuleRow({ mod, i, m }: { mod: ProductModule; i: number; m: boolean })
 
 export default function Product() {
   const { mob: m } = useViewport();
+  const cta = useCta(false);
   const navRef = useRef<HTMLElement>(null);
   useEffect(() => {
     document.title = 'Product · Masterminds';
@@ -95,8 +97,8 @@ export default function Product() {
           <h1 style={S(`margin:0; font-size:${m ? '42px' : 'clamp(56px, 5.6vw, 80px)'}; line-height:1.0; font-weight:480; letter-spacing:-0.035em; max-width:900px; text-wrap:balance;`)}>{MODULE_COUNT} modules. One login.</h1>
           <p style={S(`margin:0; font-size:${m ? '17px' : '20px'}; line-height:1.45; max-width:640px; color:#252b3a; text-wrap:balance;`)}>Your day, your goals, your training, your calls and your side money in one app — and each part feeds the others, so the plan you wake up to already knows about your shift.</p>
           <div style={S('display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:6px;')}>
-            <a href={LINKS.signup} className="lp-h-primary" style={S(`${CTA} box-shadow:0 8px 20px rgba(16,15,18,.16);`)}>Start 7-day free trial</a>
-            <span style={S('font-size:14px; color:#4a4a55;')}>$19.99/mo after the trial · cancel any time</span>
+            <a href={cta.waitlist ? '#waitlist' : LINKS.signup} className="lp-h-primary" style={S(`${CTA} box-shadow:0 8px 20px rgba(16,15,18,.16);`)}>{cta.label}</a>
+            <span style={S('font-size:14px; color:#4a4a55;')}>{cta.waitlist ? 'Founding spots are limited · free to join' : '$19.99/mo after the trial · cancel any time'}</span>
           </div>
           <div style={S(`width:100%; max-width:1120px; margin-top:${m ? '32px' : '56px'};`)}><Frame k="daily-plan" alt="The Masterminds Daily Plan on a sample day" m={m} eager /></div>
           <span style={S(`${MONO} font-size:11px; letter-spacing:.06em; color:#8a8a98;`)}>Every screenshot on this page uses made-up sample data.</span>
@@ -149,9 +151,10 @@ export default function Product() {
       {/* ── Close */}
       <section data-nav="light" style={S(`background:#171721; color:#ededf3; padding:${m ? '80px 20px' : '128px 64px'};`)}>
         <div style={S('max-width:880px; margin:0 auto; display:flex; flex-direction:column; align-items:center; text-align:center; gap:20px;')}>
-          <h2 style={S(`margin:0; font-size:${m ? '38px' : '56px'}; line-height:1.02; font-weight:480; letter-spacing:-0.035em; text-wrap:balance;`)}>Try all {MODULE_COUNT} for a week.</h2>
+          <h2 style={S(`margin:0; font-size:${m ? '38px' : '56px'}; line-height:1.02; font-weight:480; letter-spacing:-0.035em; text-wrap:balance;`)}>{cta.waitlist ? 'Get in early.' : `Try all ${MODULE_COUNT} for a week.`}</h2>
+          {cta.waitlist ? <div style={S('width:100%; max-width:520px; margin-top:8px;')}><WaitlistCard id="waitlist" /></div> : (<>
           <p style={S('margin:0; font-size:18px; line-height:1.55; color:#b8b8c6; max-width:560px;')}>One login, $19.99 a month after the trial. Cancel from Settings any time.</p>
-          <a href={LINKS.signup} className="lp-h-primary" style={S(`${CTA} margin-top:8px;`)}>Start 7-day free trial</a>
+          <a href={LINKS.signup} className="lp-h-primary" style={S(`${CTA} margin-top:8px;`)}>Start 7-day free trial</a></>)}
           <a href={LINKS.pricing} className="lp-h-ul" style={S('font-size:15px; color:#b8b8c6;')}>See pricing</a>
           <div style={S('width:100%; max-width:900px; margin-top:16px;')}><Offers dark /></div>
         </div>

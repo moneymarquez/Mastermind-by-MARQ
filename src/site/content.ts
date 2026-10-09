@@ -61,7 +61,7 @@ const f0 = (v: number) => '$' + v.toLocaleString('en-US', { maximumFractionDigit
 
 export const REP_CHECKED = 'Published prices, USD, checked Oct 4, 2026. Ranges vary by provider. Not medical or financial advice.';
 
-export function repPanels(seats: 10 | 25 | 50, more: boolean, links: { signup: string; team: string; apply: string }): RepPanel[] {
+export function repPanels(seats: 10 | 25 | 50, more: boolean, links: { signup: string; team: string; apply: string; waitlist?: boolean }): RepPanel[] {
   const solo = [row('Daily planning', 'Sunsama', '$25/mo'), row('Macros & meals', 'MyFitnessPal Premium', '$24.99/mo'), row('Budgeting', 'YNAB', '$14.99/mo'), row('Voice capture', 'Otter Pro', '$16.99/mo'), row('Task handoff', 'ClickUp Business', '$19/user/mo'), row('Notes & weekly review', 'Notion Plus', '$10/user/mo')];
   const soloC = [conf('Mental health', 'Headspace'), conf('Sobriety', 'I Am Sober Plus'), conf('Goals', 'Fabulous Premium'), conf('Decision log', 'Decision Journal Premium')];
   const biz = [row('Client CRM', 'HubSpot Sales Hub Starter', '$20/seat/mo'), row('Invoicing', 'QuickBooks Online Simple Start', '$38/mo'), row('Phone', 'Quo Starter', '$19/user/mo'), row('Call recording', 'Fireflies Pro', '$18/seat/mo'), row('Design', 'Canva Pro', '$12/mo, billed yearly')];
@@ -69,7 +69,7 @@ export function repPanels(seats: 10 | 25 | 50, more: boolean, links: { signup: s
   const seatP = { 10: 99, 25: 199, 50: 349 }[seats], perSeat = 20 + 19 + 18;
   const moreRow = (n: number): RepItem => ({ kind: 'more', note: `${n} rows, price to confirm` });
   return [
-    { key: 'Solo', eyebrow: 'MASTERMINDS SOLO', price: '$19.99/mo', sepLabel: "What you'd pay separately", total: f2(soloT) + '/mo', note: 'Monthly billing prices. Rows marked "Price to confirm" are not in the total.', cta: 'Start 7-day free trial', href: '#start', live: true, items: [...solo, moreRow(4), ...(more ? soloC : [])] },
+    { key: 'Solo', eyebrow: 'MASTERMINDS SOLO', price: '$19.99/mo', sepLabel: "What you'd pay separately", total: f2(soloT) + '/mo', note: 'Monthly billing prices. Rows marked "Price to confirm" are not in the total.', cta: links.waitlist ? 'Join the waitlist' : 'Start 7-day free trial', href: '#start', live: true, items: [...solo, moreRow(4), ...(more ? soloC : [])] },
     { key: 'Pro', eyebrow: 'MASTERMINDS PRO · COMING SOON', price: '$49.99/mo', sepLabel: "What you'd pay separately", total: f2(proT) + '/mo', note: 'Solo plus business tools. Monthly billing prices; Canva Pro is billed yearly.', cta: 'Coming soon', live: false, items: [...solo, ...biz, { kind: 'row', fn: 'Business tools subtotal', prod: '', price: '$107/mo' }, moreRow(5), ...(more ? [...soloC, conf('Lead generation', 'Apollo Professional')] : [])] },
     { key: 'Team', eyebrow: `MASTERMINDS TEAM · ${seats} SEATS`, price: f0(seatP) + '/mo', sepLabel: "What you'd pay separately", total: f0(perSeat * seats) + '/mo', note: `$${perSeat} per seat × ${seats} seats. Monthly billing prices.`, cta: 'Request access', href: links.team, live: true, hasSeats: true, items: [row('Client CRM', 'HubSpot Sales Hub Starter', '$20/seat/mo'), row('Phone', 'Quo Starter', '$19/seat/mo'), row('Call recording', 'Fireflies Pro', '$18/seat/mo'), { kind: 'row', fn: 'Per seat', prod: 'Total', price: `$${perSeat}/seat/mo` }] },
     { key: 'E-commerce', eyebrow: 'RUN BY MARQ · E-COMMERCE', price: '$1,500/mo', cta: 'Apply', href: links.apply, live: true, line: 'Your store, run for you.', foot: 'Store tools billed separately, about $74/mo.',
@@ -130,3 +130,11 @@ export const FAQS: [string, string][] = [
   ['What is Run by Marq?', "A done-with-you service from Marq's team. Content is $749 a month and E-commerce is $1,500 a month. Apply to get started."],
   ['Is this medical or financial advice?', 'No. Masterminds is not medical or financial advice.'],
 ];
+
+/** FAQ answers that change with the launch switch (waitlist vs open). */
+export function faqsFor(waitlist: boolean): [string, string][] {
+  if (!waitlist) return FAQS;
+  return FAQS.map(([q, a]): [string, string] => (q === 'How much does Masterminds cost?'
+    ? [q, 'Masterminds opens soon. It will be $19.99 a month. The first 100 people on the waitlist are founding members: that price is locked for life, they get first access, and their first month is free. Join the waitlist above.']
+    : [q, a]));
+}

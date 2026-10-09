@@ -281,7 +281,7 @@ export function nextTwenty(rows: ChannelSpend[]): string {
   return 'No paid tests yet. Spend the first $20 on one boosted post from your best organic winner.';
 }
 export const OFFER_DEFAULTS = {
-  founding: { limit: 100, price_usd: 9.99, headline: 'Founding Member', blurb: 'The first {{limit}} members lock $9.99/mo for life.' },
+  founding: { limit: 100, price_usd: 19.99, headline: 'Founding Member', blurb: 'The first {{limit}} members lock {{price}}/mo for life, get first access, and their first month free.' },
   annual: { price_usd: 179, headline: 'Pay yearly', blurb: 'A year up front for {{price}}: two and a half months free.' },
   guarantee: { days: 30, headline: '30-day guarantee', blurb: 'Use it daily for 30 days. If it hasn\'t changed how you run your day, full refund.' },
 };

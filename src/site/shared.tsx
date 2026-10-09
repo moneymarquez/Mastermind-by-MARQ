@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { CSSProperties, ReactNode, Ref } from 'react';
+import { useCta } from './waitlist';
 
 /** The design ships its styles as CSS strings; parsing them keeps every value
  *  identical to the file instead of hand-translating hundreds of properties.
@@ -80,6 +81,7 @@ export function Mark({ size = 32, bg, fg, transition }: { size?: number; bg: str
 export function Nav({ mob, navRef, onHome }: { mob: boolean; navRef?: Ref<HTMLElement>; onHome?: boolean }) {
   const [menu, setMenu] = useState(false);
   const pricing = onHome ? '#start' : LINKS.pricing;
+  const cta = useCta(!!onHome);
   return (
     <>
       <nav ref={navRef} aria-label="Main" style={S(`position:fixed; z-index:60; top:0; left:0; right:0; height:${mob ? '64px' : '80px'}; padding:0 ${mob ? '16px' : '40px'}; box-sizing:border-box; display:flex; align-items:center; justify-content:space-between; gap:16px; color:var(--navc,#100f12); background:transparent; transition:color .3s; pointer-events:none;`)}>
@@ -97,7 +99,7 @@ export function Nav({ mob, navRef, onHome }: { mob: boolean; navRef?: Ref<HTMLEl
         )}
         <div style={S('pointer-events:auto; display:flex; align-items:center; gap:8px; white-space:nowrap;')}>
           {!mob && <a href={LINKS.login} className="lp-h-fade" style={S('color:inherit; font-size:15px; font-weight:500; padding:8px 16px;')}>Log in</a>}
-          <a href={pricing} className="lp-h-primary" style={S('background:#5266eb; color:#fff; font-size:15px; font-weight:500; height:40px; padding:0 20px; display:flex; align-items:center; border-radius:999px;')}>Free trial</a>
+          <a href={pricing} className="lp-h-primary" style={S('background:#5266eb; color:#fff; font-size:15px; font-weight:500; height:40px; padding:0 20px; display:flex; align-items:center; border-radius:999px;')}>{cta.navLabel}</a>
           {mob && (
             <button onClick={() => setMenu((v) => !v)} aria-label="Menu" aria-expanded={menu} style={S('width:44px; height:44px; border:none; background:transparent; color:inherit; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; cursor:pointer;')}>
               <span style={S('width:20px; height:1.5px; background:currentColor;')} /><span style={S('width:20px; height:1.5px; background:currentColor;')} />

@@ -195,6 +195,7 @@ export function buildSeed(): Record<string, Row[]> {
       '10': { fields: { reason: 'Analytics recommends scale: 18 sales at 1.6% CTR, 31% cart-to-sale. Next: make 3 more posts on the 3pm-neck angle.' } },
     } }]);
   T('ecom_brand_products', []);
+  T('waitlist', Array.from({ length: 23 }, (_, i) => ({ id: uid('wait'), email: `person${i + 1}@example.com`, name: i % 3 ? null : ['Ana', 'Ben', 'Cara'][i % 3], code: i % 4 === 0 ? 'MARQ20' : i % 7 === 0 ? 'JAMES20' : null, source: i % 2 ? 'tiktok' : null, spot_number: i + 1, founding_spot: true, mailerlite_synced_at: null, mailerlite_error: null, created_at: iso(-(i % 9)) })));
   const brandId = (db.ecom_brands[0] as { id: string }).id;
   const siteId = uid('site');
   T('ecom_sites', [{ id: siteId, brand_id: brandId, build_id: null, slug: 'northline-goods', domain: 'northlinegoods.com', domain_status: 'awaiting_purchase', pages_project: 'northline-goods', deploy_url: 'https://northline-goods.pages.dev', status: 'live', checkout_url: 'https://marq-goods.myshopify.com/cart/1:1?attributes[mm_site]=northline-goods', last_error: null, launched_at: iso(-9) }]);
