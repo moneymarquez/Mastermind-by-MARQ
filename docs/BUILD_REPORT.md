@@ -30,6 +30,12 @@ Detailed per-phase notes: `docs/BUILD_PROGRESS.md`. Every judgment call (61 of t
 7. **Office graph styling** waits on Marq's "brain" reference screenshot. The component is self-contained (`OfficeGraph.tsx`), so restyling it doesn't touch the data layer.
 8. **Scaling Planner's** "guided refinement mid-questionnaire" was never built. That predates this build, and the UI copy says so.
 
+## ⚑ Flagged: Twilio texting (waiting on A2P 10DLC review)
+- The campaign was resubmitted on Oct 8, 2026, with the public opt-in page (`/sms`), `/privacy` and `/terms` (with the SMS clauses), and five sample messages. The lending, age-gated and phone-number boxes were unchecked.
+- **Until it's approved:** keep Twilio unconfigured or `DRY_RUN=1`. Every text is logged, not sent. The `/sms` form still saves sign-ups once `schema_126` is applied.
+- **After approval:** attach the number to the Messaging Service, set the number's inbound webhook to `https://mastermindsbymarq.com/api/sms/inbound`, save the SID/token/number in Setup → Twilio, and send yourself a test from `/sms`.
+- **If it's rejected again:** check that `/sms`, `/privacy` and `/terms` load publicly, and that the brand name reads "Masterminds by MARQ" everywhere.
+
 ## READY_TO_SHIP checklist
 
 ### 1. Migrations (apply in this order; none have been applied by this build)
@@ -40,7 +46,9 @@ Detailed per-phase notes: `docs/BUILD_PROGRESS.md`. Every judgment call (61 of t
 4. `supabase/schema_124_solo_october.sql`: entitlements (+ backfill), tasks, Brain Dump, check-in columns, Money Move, peptides, people lists, feed, storage buckets `brain-docs` and `feed-photos`.
 5. `supabase/schema_125_madeby_october.sql`: delivery phases, checklists, plays, metrics, case studies, recurring ledger, invoices, contracts, comms (with the lock trigger), launch offers, idea bank, plans.
 
-All five are additive (no drops, renames or retypes). Every new user table has RLS "own rows". Entitlements, feed moderation and launch offers are owner-managed. The app runs before they're applied: each feature shows a "needs the migration" state instead of breaking.
+6. `supabase/schema_126_sms_optin.sql`: SMS opt-in consent records.
+
+All six are additive (no drops, renames or retypes). Every new user table has RLS "own rows". Entitlements, feed moderation and launch offers are owner-managed. The app runs before they're applied: each feature shows a "needs the migration" state instead of breaking.
 
 ### 2. Worker secrets (Cloudflare → mastermind-by-marq → Settings → Variables)
 Keep `DRY_RUN=1` while testing. Real sends, posts and texts happen only with it unset **and** the kill switch off **and** `checkSpend` allowing it.
