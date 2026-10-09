@@ -65,8 +65,8 @@ export async function madebyRoute(request: Request, env: MadebyRouteEnv, area: s
     }
     if (area === 'marketing' && path === 'plan') {
       if (!isOwnerUser(user)) return json({ error: 'Owner only.' }, 403);
-      const f = b.facts as { accounts?: string[]; funnel?: string; budgetLeft?: number; nextTwenty?: string; ideas?: string[] } | undefined;
-      return json(await marketingPlan(env.ANTHROPIC_API_KEY, sb, user.id, { accounts: f?.accounts ?? [], funnel: f?.funnel ?? 'unknown', budgetLeft: Number(f?.budgetLeft ?? 100), nextTwenty: f?.nextTwenty ?? '', ideas: f?.ideas ?? [] }));
+      const f = b.facts as { brand_key?: string; brand?: string; accounts?: string[]; funnel?: string; budgetLeft?: number; nextTwenty?: string; ideas?: string[]; paidAllowed?: boolean } | undefined;
+      return json(await marketingPlan(env.ANTHROPIC_API_KEY, sb, user.id, { brand_key: f?.brand_key, brand: f?.brand, accounts: f?.accounts ?? [], funnel: f?.funnel ?? 'unknown', budgetLeft: Number(f?.budgetLeft ?? 50), nextTwenty: f?.nextTwenty ?? '', ideas: f?.ideas ?? [], paidAllowed: f?.paidAllowed }));
     }
     return json({ error: `Unknown route ${area}/${path}` }, 404);
   } catch (e) {

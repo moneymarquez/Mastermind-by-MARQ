@@ -211,18 +211,35 @@ export async function invoicePaidToLedger(sb: Sb, u: string, ref: { type: 'biz_i
 }
 
 // ── Marketing orchestrator: weekly plan for Our Brands ───────────────
-export const MARKETING_PLAN_SYSTEM = [
-  'You are the Marketing orchestrator for Masterminds by MARQ (a $19.99/mo personal operating system app) and Made by Marq (a small agency). You plan one week of marketing for the brands Marq owns.',
-  'Use the account numbers, the funnel, the budget left this month and the idea bank. Pick which hooks go on which account on which day (unique variants per account, never the same post twice), and at most one small paid test that fits the budget left.',
-  'Say where the next $20 should go and why, from the numbers. Be specific and short. Never invent numbers.',
-  'Answer ONLY with JSON: {"posts":[{"day":"Mon","account":"@handle","hook":"","format":"reel|carousel|story","why":""}],"paid_test":{"channel":"","amount_usd":0,"why":""}|null,"next_20":"","focus":"one sentence"}',
-].join('\n');
-export async function marketingPlan(apiKey: string | undefined, sb: Sb, u: string, facts: { accounts: string[]; funnel: string; budgetLeft: number; nextTwenty: string; ideas: string[] }): Promise<{ id?: string; plan: Record<string, unknown> }> {
+/** The planner's instructions for ONE brand of any type (product, app, business or client). Pure. */
+export function marketingPlanSystem(brandCtx: string, paidAllowed: boolean): string {
+  return [
+    'You are the Marketing orchestrator. You plan one week of marketing for exactly one brand:',
+    brandCtx,
+    'Use the account numbers, how the success number is moving, the budget left this month and the idea bank. Pick which hooks go on which account on which day (unique variants per account, never the same post twice). Every post should point toward the success measure above.',
+    paidAllowed
+      ? 'You may suggest at most one small paid test that fits the budget left.'
+      : 'Paid promotion is switched OFF for this brand until it has made a real sale: paid_test must be null. Organic only.',
+    'Say where the next $20 should go and why, from the numbers (or "organic only for now" if paid is off). Be specific and short. Never invent numbers.',
+    'Answer ONLY with JSON: {"posts":[{"day":"Mon","account":"@handle","hook":"","format":"reel|carousel|story","why":""}],"paid_test":{"channel":"","amount_usd":0,"why":""}|null,"next_20":"","focus":"one sentence"}',
+  ].join('\n');
+}
+/** Keep the model honest: no paid test when it's off, and never more than the budget left. Pure. */
+export function finalizePlan(plan: Record<string, unknown>, opts: { paidAllowed: boolean; budgetLeft: number }): Record<string, unknown> {
+  const t = plan.paid_test as { amount_usd?: number } | null | undefined;
+  if (!opts.paidAllowed || !t || !(Number(t.amount_usd) > 0) || Number(t.amount_usd) > opts.budgetLeft) return { ...plan, paid_test: null };
+  return plan;
+}
+export interface PlanFacts { brand_key?: string; brand?: string; accounts: string[]; funnel: string; budgetLeft: number; nextTwenty: string; ideas: string[]; paidAllowed?: boolean }
+export async function marketingPlan(apiKey: string | undefined, sb: Sb, u: string, facts: PlanFacts): Promise<{ id?: string; plan: Record<string, unknown>; brand_key: string }> {
   const date = zonedNow(TZ).date;
   const dow = new Date(`${date}T12:00:00Z`).getUTCDay();
   const week = new Date(Date.parse(`${date}T12:00:00Z`) + ((8 - dow) % 7 || 7) * 86400000).toISOString().slice(0, 10);
-  const res = await ask(apiKey, sb, { model: ROLE_MODEL.domain, system: MARKETING_PLAN_SYSTEM, user: [`Week starting ${week}.`, `Accounts:\n${facts.accounts.join('\n') || '(none connected yet)'}`, `Funnel: ${facts.funnel}`, `Marketing budget left this month: $${facts.budgetLeft.toFixed(2)}`, `Spend so far says: ${facts.nextTwenty}`, `Idea bank:\n${(facts.ideas.length ? facts.ideas : IDEA_BANK).slice(0, 25).map((i) => `- ${i}`).join('\n')}`].join('\n\n'), maxTokens: 2500, domain: 'marketing', userId: u, date });
-  const plan = extractJson(res.text) as Record<string, unknown>;
-  const [row] = await sb.insert<{ id: string }>('mkt_weekly_plans', { user_id: u, week_start: week, plan }, { upsert: 'user_id,week_start' });
-  return { id: row?.id, plan };
+  const brandKey = /^(product|app|business|client):[A-Za-z0-9_-]{1,64}$/.test(facts.brand_key ?? '') ? facts.brand_key! : 'app:masterminds';
+  const paidAllowed = facts.paidAllowed !== false;
+  const ctx = (facts.brand ?? 'Brand: Masterminds by MARQ (app)\nAudience: people building something while working a job\nGoal: grow the waitlist').slice(0, 1200);
+  const res = await ask(apiKey, sb, { model: ROLE_MODEL.domain, system: marketingPlanSystem(ctx, paidAllowed), user: [`Week starting ${week}.`, `Accounts:\n${facts.accounts.join('\n') || '(none connected yet)'}`, `Success number: ${facts.funnel}`, `Marketing budget left this month: $${facts.budgetLeft.toFixed(2)}`, `Spend so far says: ${facts.nextTwenty}`, `Idea bank:\n${(facts.ideas.length ? facts.ideas : IDEA_BANK).slice(0, 25).map((i) => `- ${i}`).join('\n')}`].join('\n\n'), maxTokens: 2500, domain: 'marketing', userId: u, date });
+  const plan = finalizePlan(extractJson(res.text) as Record<string, unknown>, { paidAllowed, budgetLeft: facts.budgetLeft });
+  const [row] = await sb.insert<{ id: string }>('mkt_brand_plans', { user_id: u, brand_key: brandKey, week_start: week, plan }, { upsert: 'user_id,brand_key,week_start' });
+  return { id: row?.id, plan, brand_key: brandKey };
 }

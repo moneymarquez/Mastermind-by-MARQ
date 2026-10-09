@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { DELIVERY_PHASES, phaseProgress, nextStep, checklistFor, waitingOnMarq, singlePoint, ringFor, ROOMS, roomOf, dropPatch, monthlyPnl, ytd, taxSetAside, ledgerCsv, dueRecurring, nextInvoiceNumber, invoiceTotal, CONTRACT_TEMPLATES, templateVars, fillTemplate, missingVars, renderMessage, nextSequenceAt, historyHtml, caseDeltas, funnel, channelCosts, nextTwenty, spotsLeft, IDEA_BANK, DEFAULT_SEQUENCES } from '../src/data/madeby';
-import { emailHtml, mdToHtml, signedHtml, MARKETING_PLAN_SYSTEM } from '../worker/lib/madeby';
+import { emailHtml, mdToHtml, signedHtml, marketingPlanSystem } from '../worker/lib/madeby';
 import { buildSpine, PHASE_STATION } from '../src/data/clientSpine';
 
 const item = (id: string, extra: Partial<{ client_id: string; phase: number; owner: 'marq' | 'client' | 'bot'; done: boolean; due: string | null; created_at: string; title: string }> = {}) => ({ id, client_id: 'c1', phase: 1, title: id, owner: 'marq' as const, due: null, done: false, created_at: '2026-10-01T00:00:00Z', ...extra });
@@ -140,6 +140,6 @@ describe('case studies + marketing', () => {
     expect(spotsLeft(100, 140)).toBe(0);
     expect(IDEA_BANK).toHaveLength(25);
     expect(new Set(IDEA_BANK).size).toBe(25);
-    expect(MARKETING_PLAN_SYSTEM).toMatch(/Never invent numbers/);
+    expect(marketingPlanSystem('Brand: X (app)', true)).toMatch(/Never invent numbers/);
   });
 });

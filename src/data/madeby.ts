@@ -308,7 +308,7 @@ export const IDEA_BANK: string[] = [
   'What I learned building this app at night',
   'Stop planning your day. Let it plan you.',
   'My goals, broken into tasks I actually did',
-  'Founding member price: why I\'m locking it at $9.99 forever',
+  'Founding member price: why I\'m locking it at $19.99 forever',
   'The streak that changed my mornings',
   'A real client result from Made by Marq, before → after',
   'Ask me anything about running your life like a business',

@@ -16,8 +16,10 @@ import OrdersSection from './sections/OrdersSection';
 import OfficeSection from './sections/OfficeSection';
 import InboxSection from './sections/InboxSection';
 import ClientStoresSection from './sections/ClientStoresSection';
+import BrandMarketing from '../marketing/BrandMarketing';
+import { TAB_TYPES } from '../../../data/mktBrands';
 
-export type EcomSection = 'overview' | 'products' | 'stores' | 'orders' | 'office' | 'inbox' | 'clients';
+export type EcomSection = 'overview' | 'products' | 'stores' | 'orders' | 'marketing' | 'office' | 'inbox' | 'clients';
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
@@ -30,6 +32,7 @@ export const SECTIONS: { id: Exclude<EcomSection, 'overview'>; screen: string; l
   { id: 'products', screen: 'ecom-products', label: 'Products', sub: 'Tonight\'s pitch, the research queue, and every product the bots found.' },
   { id: 'stores', screen: 'ecom-stores', label: 'Sites', sub: 'Every product\'s own website — all checking out through your one Shopify store.' },
   { id: 'orders', screen: 'ecom-orders', label: 'Orders', sub: 'Shopify orders, margins and supplier status.' },
+  { id: 'marketing', screen: 'ecom-marketing', label: 'Marketing', sub: 'One plan per product: hooks, drafts waiting for approval, and the orders they drive.' },
   { id: 'office', screen: 'ecom-office', label: 'Office', sub: 'Who\'s working, what they did, and the kill switch.' },
   { id: 'inbox', screen: 'ecom-inbox', label: 'Inbox', sub: 'Approvals, store mail and order problems.' },
   { id: 'clients', screen: 'ecom-clients', label: 'Client Stores', sub: 'Every subscriber\'s stores, revenue and flags.' },
@@ -182,6 +185,7 @@ export default function EcomScreen({ section = 'overview' }: Props) {
         </div>
       )}
       {section === 'orders' && <OrdersSection brands={brands.brands} />}
+      {section === 'marketing' && <BrandMarketing types={TAB_TYPES.ecommerce} empty="Product brands appear here once you approve a Product Pitch. Each one gets its own plan, idea bank and orders from its own site." />}
       {section === 'office' && <OfficeSection onRan={refreshAll} />}
       {section === 'inbox' && <InboxSection approvals={approvals} brands={brands.brands} onDecided={refreshAll} />}
       {section === 'clients' && <ClientStoresSection />}

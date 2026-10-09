@@ -52,7 +52,7 @@ import OurBrandsTab from './marketing/OurBrandsTab';
 
 type EngineTab = 'our-brands' | 'stage-zero' | 'campaigns' | 'scripts' | 'inbound' | 'lists' | 'workers';
 const ENGINE_TABS: { id: EngineTab; label: string }[] = [
-  { id: 'our-brands', label: 'Our Brands' },
+  { id: 'our-brands', label: 'Brands' },
   { id: 'campaigns', label: 'Campaigns' },
   { id: 'stage-zero', label: 'Stage Zero' },
   { id: 'scripts', label: 'Scripts' },
