@@ -28,7 +28,7 @@ interface Props {
  *  E-commerce portal; 'overview' is the landing page with counts. */
 export const SECTIONS: { id: Exclude<EcomSection, 'overview'>; screen: string; label: string; sub: string }[] = [
   { id: 'products', screen: 'ecom-products', label: 'Products', sub: 'Tonight\'s pitch, the research queue, and every product the bots found.' },
-  { id: 'stores', screen: 'ecom-stores', label: 'Stores', sub: 'Every brand and store, from idea to live.' },
+  { id: 'stores', screen: 'ecom-stores', label: 'Sites', sub: 'Every product\'s own website — all checking out through your one Shopify store.' },
   { id: 'orders', screen: 'ecom-orders', label: 'Orders', sub: 'Shopify orders, margins and supplier status.' },
   { id: 'office', screen: 'ecom-office', label: 'Office', sub: 'Who\'s working, what they did, and the kill switch.' },
   { id: 'inbox', screen: 'ecom-inbox', label: 'Inbox', sub: 'Approvals, store mail and order problems.' },
@@ -140,7 +140,7 @@ export default function EcomScreen({ section = 'overview' }: Props) {
   const buildBrand = async (input: { name: string; owner_type: 'mine' | 'client'; client_id: string | null; positioning: string | null; steps: Record<string, unknown>; current_step: number }) => { const b = await brands.createBrand({ ...input, steps: input.steps as Brand['steps'] }); if (b) openInStores(b.id); return b?.id ?? null; };
 
   return (
-    <Page title={meta?.label ?? 'E-commerce'} sub={meta?.sub ?? 'Products, stores, orders and the office. Money never moves without your tap.'}
+    <Page title={meta?.label ?? 'E-commerce'} sub={meta?.sub ?? 'Products, sites, orders and the office. Money never moves without your tap.'}
       backTo={meta ? 'ecommerce' : 'modules'} back={meta ? 'E-commerce' : 'All modules'}
       fab={section === 'stores' || section === 'overview' ? { t: 'Brand', onClick: () => openInStores(null, true) } : undefined}
       menu={[{ t: 'Floor plan view', onClick: () => setOfficeOpen(true) }]}>

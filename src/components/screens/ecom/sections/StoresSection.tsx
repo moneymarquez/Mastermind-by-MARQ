@@ -7,23 +7,28 @@ import { useFlags, sortBySeverity } from '../../../../data/useFlags';
 import FlagDot from '../../../mm/FlagDot';
 import { E, Badge } from '../ecomShared';
 import BrandsTab from '../BrandsTab';
+import SitesPanel from '../SitesPanel';
 import type { ClientListItem } from '../../../../data/useClients';
 
-/** Stores (brief §2.1): one card per brand — where it is in the 10 steps,
- *  the live URL, 7-day orders and revenue, the funnel flag — sorted red,
- *  amber, then the rest. The full brand view (and Performance) sits below. */
+/** Sites (addendum §2, was "Stores"): every product's own website first,
+ *  then one card per brand — where it is in the 10 steps, 7-day orders and
+ *  revenue, the funnel flag — sorted red, amber, then the rest. The full
+ *  brand view (and Performance) sits below. All sites share one Shopify store. */
 export default function StoresSection({ api, clients, search, openBrandId, onOpenBrand, newBrandOpen, onCloseNewBrand }: { api: ReturnType<typeof useEcomBrands>; clients: ClientListItem[]; search: string; openBrandId: string | null; onOpenBrand: (id: string | null) => void; newBrandOpen: boolean; onCloseNewBrand: () => void }) {
-  const orders = useOrders(7);
+  const orders = useOrders(30);
+  const week = Date.now() - 7 * 86400000;
   const builds = useBuilds();
   const flags = useFlags(true);
   const cards = useMemo(() => sortBySeverity(api.brands, (b: Brand) => flags.flagFor('brand', b.id)?.severity), [api.brands, flags]);
   if (openBrandId || newBrandOpen) return <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: 16 }}><BrandsTab api={api} clients={clients} search={search} openBrandId={openBrandId} onOpenBrand={onOpenBrand} newBrandOpen={newBrandOpen} onCloseNewBrand={onCloseNewBrand} /></div>;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <SitesPanel brands={api.brands} orders={orders.rows} />
+      <span style={{ fontSize: 17, fontWeight: 600 }}>Brands</span>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: 12 }}>
-        {cards.length === 0 && <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>No stores yet. Approve a Product Pitch (Products) and the brand starts here.</div>}
+        {cards.length === 0 && <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>No brands yet. Approve a Product Pitch (Products) and the brand starts here.</div>}
         {cards.map((b) => {
-          const o = orders.rows.filter((x) => x.brand_id === b.id);
+          const o = orders.rows.filter((x) => x.brand_id === b.id && Date.parse(x.placed_at) >= week);
           const build = builds.find((x) => x.brand_id === b.id && x.live_url);
           const flag = flags.flagFor('brand', b.id);
           const step = nextStep(b);

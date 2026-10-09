@@ -50,6 +50,7 @@ Detailed per-phase notes: `docs/BUILD_PROGRESS.md`. Every judgment call (61 of t
 4. `supabase/schema_124_solo_october.sql`: entitlements (+ backfill), tasks, Brain Dump, check-in columns, Money Move, peptides, people lists, feed, storage buckets `brain-docs` and `feed-photos`.
 5. `supabase/schema_125_madeby_october.sql`: delivery phases, checklists, plays, metrics, case studies, recurring ledger, invoices, contracts, comms (with the lock trigger), launch offers, idea bank, plans.
 6. `supabase/schema_126_sms_optin.sql`: SMS opt-in consent records.
+7. `supabase/schema_127_ecom_sites.sql`: product sites, per-site daily views/Buy clicks, order `site_id` + attribution (E-commerce addendum). ✅ Applied Oct 9.
 
 All six are additive (no drops, renames or retypes). Every new user table has RLS "own rows". Entitlements, feed moderation and launch offers are owner-managed. The app runs before they're applied: each feature shows a "needs the migration" state instead of breaking.
 
@@ -64,7 +65,7 @@ Keep `DRY_RUN=1` while testing. Real sends, posts and texts happen only with it 
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` | SMS out and in |
 | `RESEND_API_KEY`, `MADEBYMARQUEZ_FROM_EMAIL` | Comms hub email, contracts, invoices |
 | `HIGGSFIELD_API_KEY` (key ID), `HIGGSFIELD_API_SECRET`, optional `HIGGSFIELD_API_URL` / `HIGGSFIELD_VIDEO_URL` | brand images and video |
-| `SHOPIFY_WEBHOOK_SECRET` (or per-shop in Setup) | order webhook HMAC |
+| `SHOPIFY_WEBHOOK_SECRET` (fallback only; Setup's Client Secret or API secret key is used first) | order webhook HMAC |
 | `RENDER_URL`, `RENDER_SECRET`, `CLIP_RENDER=on` | clip rendering (optional) |
 | `APP_ORIGIN` | `https://mastermindsbymarq.com`, for links in emails |
 
@@ -90,7 +91,7 @@ npm ci && npm run build && npx wrangler deploy
 ## Things Marq has to do himself
 1. **Instagram:** finish the Meta new-device 2FA wait, add the Instagram product to the Meta app, set the redirect to `https://mastermindsbymarq.com/api/connect/oauth/callback`, save the App ID and Secret in Setup, then Connect (with publish scope). Add yourself as a tester; public use needs App Review.
 2. **TikTok:** create the developer app (Login Kit + Content Posting API) with the same redirect, save the Client Key and Secret, and connect. API posts stay private until TikTok audits the app, so request the audit early.
-3. **Shopify:** add the `write_products`, `write_publications` and `read_orders` scopes, reinstall, paste the new token, and remove the storefront password.
+3. **Shopify (new store, Dev Dashboard app — see `docs/ECOM-ARCHITECTURE-ADDENDUM.md`):** name the store a neutral parent brand, fill in its policies, create the Dev Dashboard app with `read_orders, read_products, write_products, write_publications, read_analytics`, install it, paste the Client ID + Secret + store domain in Setup → Shopify, and remove the storefront password.
 4. **Cloudflare Pages token** (Pages: Edit) → Setup.
 5. **Twilio:** buy a number, complete A2P 10DLC, and save the SID, token and number.
 6. **Parallel:** sign up and add the key.

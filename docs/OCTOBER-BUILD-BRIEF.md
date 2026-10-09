@@ -169,6 +169,8 @@ Use **prompt caching** on the big, stable system prompts (playbooks plus the wor
 
 ### Phase 2: E-commerce, split into tabs, status-first ("Marq's baby")
 
+> **Addendum (LOCKED, overrides anything below that assumes one Shopify store per product): E-commerce architecture: one Shopify backend per owner, one Cloudflare site per product, checkout via cart permalinks with `mm_site` attribution.** One Shopify store (Basic plan) holds every product, checkout, payment and order. Each product or brand has its own site on Cloudflare Pages, built by Store Builder and deployed by Launcher. The Buy button is a cart permalink to the shared store, carrying `mm_site`/`mm_brand` and UTM attributes. Masterminds uses only the Admin API and never edits the Shopify theme. "Stores" are now "Sites", and "stores per product" is now "sites per product" (default 1, max 2, for A/B tests). Client Stores follow the same model. The full text, and how it was built, is in `docs/ECOM-ARCHITECTURE-ADDENDUM.md` and `docs/BUILD_DECISIONS.md` items 68–80.
+
 **2.1 Split the one E-commerce module into separate nav entries in the `ecommerce` portal.** Add these to `modules.config.ts` (all `ownerOnly: true, portal: 'ecommerce'`), reusing the existing tab components underneath:
 
 | Nav entry | Built from | What it shows |

@@ -195,7 +195,11 @@ export function buildSeed(): Record<string, Row[]> {
       '10': { fields: { reason: 'Analytics recommends scale: 18 sales at 1.6% CTR, 31% cart-to-sale. Next: make 3 more posts on the 3pm-neck angle.' } },
     } }]);
   T('ecom_brand_products', []);
-  T('ecom_orders', Array.from({ length: 11 }, (_, i) => ({ id: uid('ordr'), brand_id: null, external_id: String(1042 + i), order_number: `#${1042 + i}`, product_title: 'Squish Pillow', customer_name: ['Ana R.', 'Ben T.', 'Cara M.'][i % 3], status: 'paid', fulfillment_status: i < 3 ? null : 'fulfilled', supplier_status: i < 2 ? 'to_place' : 'placed', supplier_cost: 9.5, ship_cost: 4, margin_usd: 21.4, total: 39, placed_at: hoursAgo(i * 5) })));
+  const brandId = (db.ecom_brands[0] as { id: string }).id;
+  const siteId = uid('site');
+  T('ecom_sites', [{ id: siteId, brand_id: brandId, build_id: null, slug: 'northline-goods', domain: 'northlinegoods.com', domain_status: 'awaiting_purchase', pages_project: 'northline-goods', deploy_url: 'https://northline-goods.pages.dev', status: 'live', checkout_url: 'https://marq-goods.myshopify.com/cart/1:1?attributes[mm_site]=northline-goods', last_error: null, launched_at: iso(-9) }]);
+  T('ecom_site_daily', Array.from({ length: 14 }, (_, i) => ({ site_id: siteId, date: dayStr(-i), views: 900 + ((i * 137) % 600), buy_clicks: 14 + ((i * 7) % 9) })));
+  T('ecom_orders', Array.from({ length: 11 }, (_, i) => ({ id: uid('ordr'), brand_id: i === 10 ? null : brandId, site_id: i === 10 ? null : siteId, external_id: String(1042 + i), order_number: `#${1042 + i}`, product_title: 'Squish Pillow', customer_name: ['Ana R.', 'Ben T.', 'Cara M.'][i % 3], status: 'paid', fulfillment_status: i < 3 ? null : 'fulfilled', supplier_status: i < 2 ? 'to_place' : 'placed', supplier_cost: 9.5, ship_cost: 4, margin_usd: 21.4, total: 39, placed_at: hoursAgo(i * 5) })));
 
   // ── Content: 7-day plan, one clip pair, grades 4/3/2/1 ──────────────
   const acct = (platform: string, handle: string, owner: string, followers: number) => ({ id: uid('acct'), platform, handle, display_name: null, avatar_url: null, owner, brand_id: null, client_id: null, voice: 'Short, direct, no fluff.', posts_per_week_goal: 10, connected: false, followers });

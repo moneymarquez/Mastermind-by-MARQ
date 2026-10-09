@@ -4,6 +4,7 @@
 // "Send back" note is read back into that worker's next prompt. Claude calls
 // go through lib/ai.ts, which enforces the per-domain daily cap.
 import { WORKERS, PLAYBOOK_MAX_CHARS, PLAYBOOK_LOAD_BUDGET } from '../../src/data/ecom';
+import { approveDomain } from './siteDomains';
 import type { Channel } from '../../src/data/ecom';
 import type { ImportRow } from '../../src/data/ecomProducts';
 import { Sb, zonedNow, addDaysIso } from './sb';
@@ -686,6 +687,8 @@ export const APPLIERS: Record<string, Applier> = {
   /** A correction Marq gave twice becomes a standing playbook rule. */
   /** Product Pitch approved: the brand is born; Brand Lab and Supplier Finder run next (handlers/engine.ts). */
   product_pitch: async (sb, u, raw) => approvePitch(sb, u, raw),
+  /** Buy a product site's domain: approved → a one-tap checklist step on the site (lib/siteDomains.ts). */
+  buy_domain: async (sb, u, raw) => approveDomain(sb, u, raw),
   /** "Approve to ship": the supplier order over the threshold may be placed. */
   supplier_order: async (sb, u, raw) => { await sb.patch('ecom_orders', `user_id=eq.${u}&brand_id=eq.${raw.brand_id}&external_id=eq.${raw.order_external_id}`, { supplier_status: 'to_place', problem: null, updated_at: now() }); return { ok: true }; },
   content_kit: async (sb, u, raw) => applyContentKit(sb, u, raw),

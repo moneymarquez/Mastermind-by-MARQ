@@ -189,7 +189,7 @@ function SpendLimits({ s, onSaved }: { s: Status; onSaved: () => void }) {
         <div style={{ display: 'grid', gap: 12 }}>
           <Field l="Any single money move over this needs your approval ($)"><input inputMode="decimal" value={per} onChange={(e) => setPer(e.target.value)} style={field} /></Field>
           {Object.keys(caps).map((k) => <Field key={k} l={`Monthly cap — ${k} ($)`}><input inputMode="decimal" value={caps[k]} onChange={(e) => setCaps({ ...caps, [k]: e.target.value })} style={field} /></Field>)}
-          <Field l="Stores per approved product (1 recommended; 2 splits the budget and the data)"><select value={stores} onChange={(e) => setStores(e.target.value)} style={field}><option value="1">1</option><option value="2">2</option></select></Field>
+          <Field l="Sites per approved product (1 recommended; 2 only to A/B test two brand directions, all on the same Shopify store)"><select value={stores} onChange={(e) => setStores(e.target.value)} style={field}><option value="1">1</option><option value="2">2</option></select></Field>
           <button className="mm-btn mm-btn--primary" style={{ height: 46 }} onClick={async () => { const r = await api('/api/hq/settings', { body: { per_action_approval_over_usd: Number(per), monthly_caps: Object.fromEntries(Object.entries(caps).map(([k, v]) => [k, Number(v)])), stores_per_product: Number(stores) } }); setMsg(r.error ?? 'Saved.'); onSaved(); }}>Save limits</button>
           {msg && <span style={{ fontSize: 13, color: msg === 'Saved.' ? 'var(--success)' : 'var(--danger)' }}>{msg}</span>}
         </div>

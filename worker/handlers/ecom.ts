@@ -4,6 +4,8 @@
 //   POST /api/ecom/video              "Make a video" for the picked direction (checkSpend)
 //   POST /api/ecom/register-webhooks  subscribe the connected shop to order webhooks now
 import { requireUser, isOwnerUser } from '../lib/auth';
+import { requestDomain, markPurchased, connectDomain } from '../lib/siteDomains';
+import type { DryRunEnv } from '../lib/dryRun';
 import { getShopifyToken, withShopify, webhookSecretFor } from '../lib/shopify';
 import { Sb, json } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
@@ -13,7 +15,7 @@ import { recordShopifyOrder, registerShopifyWebhooks, shopifyHmacValid } from '.
 import type { ShopifyOrder } from '../lib/ecomOctober';
 import { makeVideo } from '../lib/visual';
 
-export type EcomEnv = SbEnv & VaultEnv & { SHOPIFY_WEBHOOK_SECRET?: string; APP_ORIGIN?: string };
+export type EcomEnv = SbEnv & VaultEnv & DryRunEnv & { SHOPIFY_WEBHOOK_SECRET?: string; APP_ORIGIN?: string };
 const cleanShop = (s: string) => s.replace(/^https?:\/\//, '').replace(/\/.*$/, '').toLowerCase();
 
 export async function shopifyWebhook(request: Request, env: EcomEnv): Promise<Response> {
@@ -64,6 +66,17 @@ export async function ecomRoute(request: Request, env: EcomEnv, path: string): P
       const brandId = String(b.brand_id ?? '');
       if (!/^[0-9a-f-]{36}$/i.test(brandId) || !String(b.prompt ?? '').trim()) return json({ error: 'brand_id and prompt are required.' }, 400);
       return json(await makeVideo(sb, user.id, brandId, String(b.prompt), b.resolution === '720p' ? '720p' : '480p'));
+    }
+    if (path === 'site-domain') {
+      const siteId = String(b.site_id ?? '');
+      if (!/^[0-9a-f-]{36}$/i.test(siteId)) return json({ error: 'site_id is required.' }, 400);
+      const action = String(b.action ?? '');
+      const r = action === 'request' ? await requestDomain(sb, user.id, siteId, String(b.domain ?? ''))
+        : action === 'purchased' ? await markPurchased(sb, user.id, siteId)
+        : action === 'connect' || action === 'check' ? await connectDomain(env, sb, user.id, siteId, action === 'check')
+        : null;
+      if (!r) return json({ error: 'action must be request, purchased, connect or check.' }, 400);
+      return json(r, r.ok ? 200 : 409);
     }
     if (path === 'register-webhooks') {
       const conn = await getShopifyToken(env, sb, user.id).catch(() => null);

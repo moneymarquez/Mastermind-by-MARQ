@@ -108,3 +108,31 @@ describe('site slugs and the prohibited-product filter', () => {
     expect(prohibitedReason('Glow-in-the-dark Halloween garland')).toBeNull();
   });
 });
+
+import { siteStats } from '../src/data/ecomOctoberPure';
+import { isDomain, cleanDomain } from '../worker/lib/siteDomains';
+
+describe('per-site numbers', () => {
+  it('counts only this site\'s orders and days in the window', () => {
+    const now = Date.parse('2026-10-09T12:00:00Z');
+    const orders = [
+      { site_id: 's1', total: 30, placed_at: '2026-10-08T10:00:00Z' },
+      { site_id: 's1', total: 20, placed_at: '2026-09-01T10:00:00Z' },
+      { site_id: 's2', total: 99, placed_at: '2026-10-08T10:00:00Z' },
+      { site_id: null, total: 15, placed_at: '2026-10-08T10:00:00Z' },
+    ];
+    const days = [{ site_id: 's1', date: '2026-10-08', views: 400, buy_clicks: 9 }, { site_id: 's1', date: '2026-10-07', views: 600, buy_clicks: 11 }, { site_id: 's2', date: '2026-10-08', views: 50, buy_clicks: 1 }];
+    expect(siteStats('s1', orders, days, now - 7 * 86400000)).toEqual({ orders: 1, revenue: 30, views: 1000, clicks: 20, conversion: 0.001 });
+    expect(siteStats('s3', orders, days, now - 7 * 86400000).conversion).toBeNull();
+  });
+});
+
+describe('site domains', () => {
+  it('accepts real domains and cleans pasted URLs', () => {
+    expect(cleanDomain('https://www.VoltGrip.com/shop')).toBe('voltgrip.com');
+    expect(isDomain('voltgrip.com')).toBe(true);
+    expect(isDomain('volt-grip.co.uk')).toBe(true);
+    expect(isDomain('voltgrip')).toBe(false);
+    expect(isDomain('-bad.com')).toBe(false);
+  });
+});

@@ -1,7 +1,7 @@
 // /api/hq/* — the master orchestrator's home (brief §5.8, §2a–2e). Owner only.
 //   GET  status          controls, open flags, approvals across portals, spend, report, task log
 //   POST pause           { which: 'all'|'ecommerce'|'content'|'marketing', paused }
-//   POST settings        guardrail + flag thresholds + stores per product
+//   POST settings        guardrail + flag thresholds + sites per product (stored as stores_per_product)
 //   POST feedback        👍/👎 on any output (→ corrections → playbook rules)
 //   POST chat            talk to HQ; it routes to a domain orchestrator
 //   POST flags-sync      recompute flags now
