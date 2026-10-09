@@ -12,8 +12,8 @@ import { Sb, json, zonedNow } from '../lib/sb';
 import { ask } from '../lib/ai';
 import { ENGINE_DOMAINS, TZ } from '../lib/engine';
 import { spentToday, capFor } from '../lib/ai';
-import { loadControls, setPaused, spentThisMonth, controlsFrom } from '../lib/controls';
-import type { ControlDomain } from '../lib/controls';
+import { loadControls, setPaused, spentThisMonth, controlsFrom, spentInGroup } from '../lib/controls';
+import type { ControlDomain, SpendBucket } from '../lib/controls';
 import { syncFlags, bySeverity } from '../lib/flags';
 import type { Severity } from '../lib/flags';
 import { likedPostBrief } from '../lib/contentOctober';
@@ -83,7 +83,7 @@ export async function hqRoute(request: Request, env: HqEnv, path: string): Promi
         date, controls,
         flags: bySeverity(flags, (f) => f.severity),
         approvals, report: report[0] ?? null, summaries, handoffs, tasks, runs,
-        spend: { daily, monthly: Object.entries(controls.monthly_caps).map(([bucket, cap]) => ({ bucket, cap, spent: monthly[bucket as keyof typeof monthly] ?? 0 })) },
+        spend: { daily, monthly: Object.entries(controls.monthly_caps).map(([bucket, cap]) => ({ bucket, cap, spent: spentInGroup(bucket as SpendBucket, monthly) })) },
       });
     }
     if (path === 'pause') {
@@ -98,7 +98,7 @@ export async function hqRoute(request: Request, env: HqEnv, path: string): Promi
       const b = await body<Record<string, unknown>>(request);
       const cur = await loadControls(sb, u);
       const caps = { ...cur.monthly_caps };
-      for (const [k, v] of Object.entries((b.monthly_caps ?? {}) as Record<string, unknown>)) { const n = Number(v); if (['marketing', 'visual', 'research', 'supplier', 'other'].includes(k) && Number.isFinite(n) && n >= 0 && n <= 100000) caps[k as keyof typeof caps] = n; }
+      for (const [k, v] of Object.entries((b.monthly_caps ?? {}) as Record<string, unknown>)) { const n = Number(v); if (['ecommerce', 'marketing', 'visual', 'research', 'supplier', 'xai', 'twilio', 'other'].includes(k) && Number.isFinite(n) && n >= 0 && n <= 100000) caps[k as keyof typeof caps] = n; }
       const per = Number(b.per_action_approval_over_usd);
       const next = controlsFrom({ ...cur, monthly_caps: caps, per_action_approval_over_usd: Number.isFinite(per) && per >= 0 ? per : cur.per_action_approval_over_usd, stores_per_product: Number(b.stores_per_product ?? cur.stores_per_product), flag_thresholds: (b.flag_thresholds as Record<string, number>) ?? cur.flag_thresholds });
       await sb.insert('system_controls', { user_id: u, per_action_approval_over_usd: next.per_action_approval_over_usd, monthly_caps: next.monthly_caps, stores_per_product: next.stores_per_product, flag_thresholds: next.flag_thresholds, updated_at: new Date().toISOString() }, { upsert: 'user_id' });

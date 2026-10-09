@@ -32,7 +32,9 @@ export async function requestDomain(sb: Sb, u: string, siteId: string, domainIn:
   const domain = cleanDomain(domainIn);
   if (!isDomain(domain)) return { ok: false, status: 'invalid', detail: 'That doesn\'t look like a domain (e.g. voltgrip.com).' };
   const site = await siteOf(sb, u, siteId);
-  const v = await guardSpend(sb, u, { bucket: 'marketing', label: `Domain ${domain}` }, DOMAIN_COST_USD, 'ecommerce');
+  // The first site's domain is allowed; every one after it waits for the first real sale.
+  const [other] = await sb.get<{ id: string }>(`ecom_sites?user_id=eq.${u}&id=neq.${siteId}&domain_status=in.(proposed,awaiting_purchase,purchased,connecting,active)&select=id&limit=1`);
+  const v = await guardSpend(sb, u, { bucket: 'ecommerce', label: `Domain ${domain}`, needsFirstSale: !!other }, DOMAIN_COST_USD, 'ecommerce');
   if (v.verdict === 'block') return { ok: false, status: 'blocked', detail: v.reason };
   await sb.patch('ecom_sites', `id=eq.${site.id}&user_id=eq.${u}`, { domain, domain_status: 'proposed', updated_at: now() });
   await sb.insert('ai_approvals', { user_id: u, domain: 'ecom', type: 'buy_domain', entity_type: 'brand', entity_id: site.brand_id, title: `Buy domain ${domain} (~$10–15/yr) for ${site.slug}`, payload: { site_id: site.id, domain, amount: DOMAIN_COST_USD, summary: `${site.slug} runs on its free pages.dev address until this is bought.` }, is_money: true, amount_usd: DOMAIN_COST_USD, confidence: 'hard' });
@@ -51,7 +53,7 @@ export async function markPurchased(sb: Sb, u: string, siteId: string): Promise<
   const site = await siteOf(sb, u, siteId);
   if (!site.domain || site.domain_status !== 'awaiting_purchase') return { ok: false, status: site.domain_status, detail: 'Approve the domain in Inbox first.' };
   await sb.patch('ecom_sites', `id=eq.${site.id}&user_id=eq.${u}`, { domain_status: 'purchased', updated_at: now() });
-  await recordSpend(sb, u, { bucket: 'marketing', label: `Domain ${site.domain}` }, DOMAIN_COST_USD, { type: 'ecom_site', id: site.id }).catch(() => {});
+  await recordSpend(sb, u, { bucket: 'ecommerce', label: `Domain ${site.domain}` }, DOMAIN_COST_USD, { type: 'ecom_site', id: site.id }).catch(() => {});
   return { ok: true, status: 'purchased', detail: `${site.domain} recorded in the Ledger. Next: Connect.` };
 }
 

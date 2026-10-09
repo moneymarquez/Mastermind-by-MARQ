@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { evaluateFlags, diffFlags, thresholdsFrom, correctionKey, bySeverity, DEFAULT_THRESHOLDS } from '../worker/lib/flags';
 import type { FlagFacts } from '../worker/lib/flags';
-import { checkSpend, isPaused, controlsFrom, controlDomainOf, DEFAULT_CONTROLS } from '../worker/lib/controls';
+import { checkSpend, isPaused, controlsFrom, controlDomainOf, DEFAULT_CONTROLS, DEFAULT_CAPS, spentInGroup } from '../worker/lib/controls';
 import { inQuietHours, planDelivery, smsText, DEFAULT_PREFS } from '../worker/lib/notify';
 import { cleanReply, historyMessages, systemPromptFor, isOptOut, SMS_PROMPTS } from '../worker/lib/sms';
 import { search, hitsToBrief, task } from '../worker/lib/parallel';
@@ -108,7 +108,7 @@ describe('kill switch + spend guardrail', () => {
     expect(controlDomainOf('all')).toBeNull();
   });
   it('allows small spend, asks over $25, blocks over the monthly cap or when paused', () => {
-    const st = { controls: c, spentThisMonth: { visual: 50 } };
+    const st = { controls: { ...c, monthly_caps: { ...c.monthly_caps, marketing: 100, visual: 60, ecommerce: 200 } }, spentThisMonth: { visual: 50 } };
     expect(checkSpend({ bucket: 'visual', label: 'Images' }, 5, st).verdict).toBe('allow');
     expect(checkSpend({ bucket: 'supplier', label: 'Sample' }, 30, st).verdict).toBe('needs_approval');
     expect(checkSpend({ bucket: 'visual', label: 'Video batch' }, 12, st).verdict).toBe('block');
@@ -117,10 +117,20 @@ describe('kill switch + spend guardrail', () => {
     expect(checkSpend({ bucket: 'visual', label: 'x' }, 1, { ...st, controls: { ...c, paused_ecommerce: true }, domain: 'ecommerce' }).verdict).toBe('block');
     expect(checkSpend({ bucket: 'visual', label: 'x' }, -1, st).verdict).toBe('block');
   });
+  it('gates first-sale spend, counts Higgsfield inside e-commerce, caps xai', () => {
+    const base = { controls: { ...c, monthly_caps: { ...DEFAULT_CAPS } }, spentThisMonth: {} as Record<string, number> };
+    const video = { bucket: 'visual' as const, label: 'Video', needsFirstSale: true };
+    expect(checkSpend(video, 2, { ...base, hasSale: false }).verdict).toBe('block');
+    expect(checkSpend(video, 2, { ...base, hasSale: true }).verdict).toBe('allow');
+    expect(checkSpend({ bucket: 'visual', label: 'Img' }, 3, { ...base, spentThisMonth: { ecommerce: 48 } }).verdict).toBe('block');
+    expect(spentInGroup('ecommerce', { ecommerce: 30, visual: 10 })).toBe(40);
+    expect(checkSpend({ bucket: 'xai', label: 'Grok' }, 5.5, base).verdict).toBe('block');
+    expect(checkSpend({ bucket: 'xai', label: 'Grok' }, 1, base).verdict).toBe('allow');
+  });
   it('reads a stored row safely', () => {
     expect(controlsFrom(null)).toEqual(DEFAULT_CONTROLS);
     expect(controlsFrom({ stores_per_product: 9, monthly_caps: { marketing: 300 } }).stores_per_product).toBe(2);
-    expect(controlsFrom({ monthly_caps: { marketing: 300 } }).monthly_caps).toEqual({ marketing: 300, visual: 60, research: 40 });
+    expect(controlsFrom({ monthly_caps: { marketing: 300 } }).monthly_caps).toEqual({ ...DEFAULT_CAPS, marketing: 300 });
   });
 });
 

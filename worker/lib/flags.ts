@@ -7,6 +7,8 @@
 // tests/flags.test.ts; runFlagsTick gathers the facts with the service role
 // on the five-minute cron.
 import { Sb } from './sb';
+import { DEFAULT_CAPS, AI_MONTHLY_ALERT_USD, spentInGroup } from './controls';
+import type { SpendBucket } from './controls';
 import type { SbEnv } from './sb';
 
 export type FlagDomain = 'ecommerce' | 'content' | 'marketing' | 'master' | 'madeby' | 'personal';
@@ -49,7 +51,7 @@ export interface FlagFacts {
   publishFailed: { id: string; concept: string; error: string | null }[];
   connections: { provider: string; status: string; note: string | null }[];
   /** Spend this period vs cap, per domain (daily AI caps) and per bucket (monthly). */
-  spend: { key: string; label: string; spent: number; cap: number; domain: FlagDomain }[];
+  spend: { key: string; label: string; spent: number; cap: number; domain: FlagDomain; /** a heads-up at the number, not a block */ alertOnly?: boolean }[];
   flops: { id: string; account: string; hook: string | null }[];
   /** Last 7 days of Shopify orders: how many, and how many no site could claim. */
   attribution?: { orders: number; unattributed: number };
@@ -86,6 +88,8 @@ export function evaluateFlags(f: FlagFacts, t: Thresholds = DEFAULT_THRESHOLDS):
   for (const s of f.spend) {
     if (s.cap <= 0) continue;
     const pct = s.spent / s.cap;
+    // An alert-only number (Anthropic's $40/month) is an amber heads-up when reached, never red or a block.
+    if (s.alertOnly) { if (pct >= 1) out.push({ domain: s.domain, entity_type: 'spend', entity_id: s.key, severity: 'amber', rule: 'spend_alert', message: `${s.label}: ${money(s.spent)} (alert at ${money(s.cap)})`, link: 'hq' }); continue; }
     if (pct >= t.spendAmberPct) out.push({ domain: s.domain, entity_type: 'spend', entity_id: s.key, severity: pct >= 1 ? 'red' : 'amber', rule: 'spend_cap', message: `${s.label}: ${money(s.spent)} of ${money(s.cap)}${pct >= 1 ? ' — cap reached' : ` (${Math.round(pct * 100)}%)`}`, link: 'hq' });
   }
   for (const p of f.flops) out.push({ domain: 'content', entity_type: 'social_post', entity_id: p.id, severity: 'amber', rule: 'post_flop', message: `Flop on @${p.account}: ${(p.hook ?? 'post').slice(0, 80)}`, link: 'content' });
@@ -133,7 +137,7 @@ export async function gatherFacts(sb: Sb, u: string, now = Date.now()): Promise<
   const since7 = new Date(now - 7 * 86400000).toISOString().slice(0, 10);
   const month = new Date(now).toISOString().slice(0, 7);
   const today = new Date(now).toISOString().slice(0, 10);
-  const [approvals, workers, runs, builds, reads, failedItems, conns, controls, caps, ledger, aiSpend, flops] = await Promise.all([
+  const [approvals, workers, runs, builds, reads, failedItems, conns, controls, caps, ledger, aiSpend, flops, aiMonth] = await Promise.all([
     sb.get<{ id: string; domain: string; title: string; created_at: string }>(`ai_approvals?user_id=eq.${u}&status=eq.pending&select=id,domain,title,created_at&limit=200`),
     sb.get<{ id: string; key: string; name: string; domain: string; enabled: boolean }>(`ai_workers?user_id=eq.${u}&enabled=eq.true&select=id,key,name,domain,enabled`),
     sb.get<{ worker_id: string; status: string; created_at: string }>(`ai_worker_runs?user_id=eq.${u}&created_at=gte.${since30}&order=created_at.desc&select=worker_id,status,created_at&limit=2000`),
@@ -146,6 +150,7 @@ export async function gatherFacts(sb: Sb, u: string, now = Date.now()): Promise<
     sb.get<{ bucket: string | null; amount_usd: number }>(`biz_ledger?user_id=eq.${u}&kind=eq.expense&date=gte.${month}-01&bucket=not.is.null&select=bucket,amount_usd`),
     sb.get<{ domain: string; cost_usd: number }>(`ai_cost_ledger?user_id=eq.${u}&date=eq.${today}&select=domain,cost_usd`),
     sb.get<{ id: string; account_id: string; hook: string | null }>(`social_posts?user_id=eq.${u}&grade=eq.1&posted_at=gte.${since7}&select=id,account_id,hook&limit=20`),
+    sb.get<{ cost_usd: number }>(`ai_cost_ledger?user_id=eq.${u}&date=gte.${month}-01&select=cost_usd&limit=5000`),
   ]);
   const brandIds = [...new Set([...builds.map((b) => b.brand_id), ...reads.map((r) => r.entity_id)])];
   const week = await sb.get<{ site_id: string | null }>(`ecom_orders?user_id=eq.${u}&placed_at=gte.${new Date(now - 7 * 86400000).toISOString()}&select=site_id&limit=2000`).catch(() => []);
@@ -161,8 +166,12 @@ export async function gatherFacts(sb: Sb, u: string, now = Date.now()): Promise<
   for (const r of reads) if (!latestRead.has(r.entity_id) && r.status !== 'killed') latestRead.set(r.entity_id, String(r.payload?.flag ?? ''));
   const capOf = (d: string) => Number(caps.find((c) => c.domain === d)?.daily_cap_usd ?? 1);
   const spend: FlagFacts['spend'] = ['ecom', 'content', 'marketing'].map((d) => ({ key: `ai:${d}`, label: `AI spend today (${d === 'ecom' ? 'e-commerce' : d})`, spent: aiSpend.filter((r) => r.domain === d).reduce((s, r) => s + Number(r.cost_usd), 0), cap: capOf(d), domain: flagDomainOf(d) }));
-  const monthly = controls[0]?.monthly_caps ?? { marketing: 100, visual: 60, research: 40 };
-  for (const [bucket, cap] of Object.entries(monthly)) spend.push({ key: `month:${bucket}`, label: `${bucket[0].toUpperCase()}${bucket.slice(1)} spend this month`, spent: ledger.filter((l) => l.bucket === bucket).reduce((s, l) => s + Number(l.amount_usd), 0), cap: Number(cap), domain: bucket === 'marketing' ? 'marketing' : 'master' });
+  const monthly = { ...DEFAULT_CAPS, ...(controls[0]?.monthly_caps ?? {}) };
+  const byBucket: Partial<Record<SpendBucket, number>> = {};
+  for (const l of ledger) if (l.bucket) byBucket[l.bucket as SpendBucket] = (byBucket[l.bucket as SpendBucket] ?? 0) + Number(l.amount_usd);
+  // Higgsfield counts inside the e-commerce cap (spentInGroup), so it isn't counted twice here.
+  for (const [bucket, cap] of Object.entries(monthly)) spend.push({ key: `month:${bucket}`, label: `${bucket[0].toUpperCase()}${bucket.slice(1)} spend this month`, spent: spentInGroup(bucket as SpendBucket, byBucket), cap: Number(cap), domain: bucket === 'marketing' ? 'marketing' : bucket === 'ecommerce' || bucket === 'visual' ? 'ecommerce' : 'master' });
+  spend.push({ key: 'ai:month', label: 'AI (Anthropic) spend this month', spent: aiMonth.reduce((s, r) => s + Number(r.cost_usd), 0), cap: AI_MONTHLY_ALERT_USD, domain: 'master', alertOnly: true });
   const facts: FlagFacts = {
     now,
     approvals,

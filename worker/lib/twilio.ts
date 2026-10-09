@@ -5,13 +5,14 @@ import { toE164 } from './phone';
 import { isDryRun } from './dryRun';
 import type { DryRunEnv } from './dryRun';
 
-export interface TwilioEnv extends DryRunEnv { TWILIO_ACCOUNT_SID?: string; TWILIO_AUTH_TOKEN?: string; TWILIO_FROM_NUMBER?: string }
+export interface TwilioEnv extends DryRunEnv { TWILIO_ACCOUNT_SID?: string; TWILIO_AUTH_TOKEN?: string; TWILIO_FROM_NUMBER?: string; /** '1' once the number is through 10DLC approval; until then no real text goes out. */ TWILIO_LIVE?: string }
 export interface SmsResult { sent: boolean; error?: string; sid?: string; dryRun?: boolean }
 
 export const twilioReady = (env: TwilioEnv) => !!(env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_FROM_NUMBER);
 
 export async function sendTwilioSms(env: TwilioEnv, to: string, body: string): Promise<SmsResult> {
   if (isDryRun(env)) return { sent: true, dryRun: true, sid: 'dry-run' };
+  if (env.TWILIO_LIVE !== '1' && env.TWILIO_LIVE !== 'true') return { sent: false, error: 'Texting is off until Twilio approves the number (10DLC). Once it\'s approved, set TWILIO_LIVE=1 in Cloudflare → Build variables.' };
   if (!twilioReady(env)) return { sent: false, error: 'Twilio isn\'t connected (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER). Connect it in Setup.' };
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}/Messages.json`, {
     method: 'POST',

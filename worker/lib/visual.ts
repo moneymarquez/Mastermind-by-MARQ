@@ -100,7 +100,7 @@ export async function afterBrandOptions(sb: Sb, u: string, approvalId: string, p
 /** "Make a video" on the picked direction: always through checkSpend. */
 export async function makeVideo(sb: Sb, u: string, brandId: string, prompt: string, resolution: '480p' | '720p' = '480p'): Promise<{ ok: boolean; status: string; reason: string }> {
   const cost = VIDEO_COST_USD[resolution];
-  const v = await guardSpend(sb, u, { bucket: 'visual', label: `Brand video (${resolution})` }, cost, 'ecommerce');
+  const v = await guardSpend(sb, u, { bucket: 'visual', label: `Brand video (${resolution})`, needsFirstSale: true }, cost, 'ecommerce');
   const [row] = await sb.insert<{ id: string }>('ecom_visuals', { user_id: u, brand_id: brandId, kind: 'video', prompt: prompt.slice(0, 1200), status: v.verdict === 'allow' ? 'generating' : v.verdict === 'block' ? 'blocked' : 'needs_approval', error: v.verdict === 'allow' ? null : v.reason });
   if (v.verdict !== 'allow') return { ok: false, status: v.verdict, reason: v.reason };
   const g = await generate(visualEnv, prompt, 'video');

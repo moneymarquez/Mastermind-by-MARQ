@@ -16,7 +16,7 @@ import { systemPromptFor, historyMessages, cleanReply, isOptOut, grokReply, work
 import type { SmsMode, XaiEnv, WorkersAiEnv } from '../lib/sms';
 import { SMS_PROVIDER, ROLE_MODEL } from '../lib/models';
 import { ask } from '../lib/ai';
-import { loadControls, isPaused } from '../lib/controls';
+import { loadControls, isPaused, guardSpend, recordSpend } from '../lib/controls';
 import { notify } from '../lib/notify';
 import type { NotifyEnv } from '../lib/notify';
 import { isDryRun } from '../lib/dryRun';
@@ -75,10 +75,16 @@ export async function smsInbound(request: Request, env: SmsEnv): Promise<Respons
   try {
     if (SMS_PROVIDER === 'grok') {
       // Grok when there's an xAI key (and it works); otherwise the free Workers AI model.
-      if (env.XAI_API_KEY) {
-        try { reply = (await grokReply(env, system, historyMessages(history))).text; }
-        catch (e) { console.error('grok failed, using Workers AI', e); const f = await workersAiReply(env, system, historyMessages(history)); reply = f.text; provider = f.model; }
-      } else { const f = await workersAiReply(env, system, historyMessages(history)); reply = f.text; provider = f.model; }
+      // Grok only while the xAI cap has room ($5/mo by default); past it, the free model answers instead of going silent.
+      const grokOk = !!env.XAI_API_KEY && (await guardSpend(sb, u, { bucket: 'xai', label: 'Grok text reply' }, 0.01, 'marketing')).verdict === 'allow';
+      const free = async () => { const f = await workersAiReply(env, system, historyMessages(history)); reply = f.text; provider = f.model; };
+      if (grokOk) {
+        try {
+          const g = await grokReply(env, system, historyMessages(history));
+          reply = g.text;
+          await recordSpend(sb, u, { bucket: 'xai', label: 'Grok text reply' }, g.tokensIn * 3e-6 + g.tokensOut * 15e-6).catch(() => {});
+        } catch (e) { console.error('grok failed, using Workers AI', e); await free(); }
+      } else await free();
     } else {
       const convo = history.map((t) => `${t.direction === 'in' ? 'Them' : 'You'}: ${t.body}`).join('\n');
       reply = (await ask(env.ANTHROPIC_API_KEY, sb, { model: ROLE_MODEL.sms, system, user: `${convo}\n\nReply to their last text.`, domain: 'marketing', userId: u, date: zonedNow('America/Denver').date, maxTokens: 300 })).text;
