@@ -6,7 +6,7 @@
 import { requireUser, isOwnerUser } from '../lib/auth';
 import { requestDomain, markPurchased, connectDomain } from '../lib/siteDomains';
 import type { DryRunEnv } from '../lib/dryRun';
-import { getShopifyToken, withShopify, webhookSecretFor } from '../lib/shopify';
+import { getShopifyToken, withShopify, webhookSecretFor, grantedScopes, missingScopes, scopeFixHint } from '../lib/shopify';
 import { Sb, json } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
 import type { VaultEnv } from '../lib/vault';
@@ -79,12 +79,19 @@ export async function ecomRoute(request: Request, env: EcomEnv, path: string): P
       return json(r, r.ok ? 200 : 409);
     }
     if (path === 'register-webhooks') {
-      const conn = await getShopifyToken(env, sb, user.id).catch(() => null);
-      if (!conn) return json({ error: 'Shopify isn\'t connected. Setup → Accounts → Shopify.' }, 409);
+      let conn: Awaited<ReturnType<typeof getShopifyToken>> = null;
+      try { conn = await getShopifyToken(env, sb, user.id); } catch (e) { return json({ ok: false, error: `Shopify connection problem: ${e instanceof Error ? e.message : String(e)}` }, 502); }
+      if (!conn) return json({ ok: false, error: 'Shopify isn\'t connected. Setup → Accounts → Shopify.' }, 409);
       const shop = conn.shop;
-      const r = await withShopify(env, sb, user.id, (sh, t) => registerShopifyWebhooks(sh, t, `${env.APP_ORIGIN ?? new URL(request.url).origin}/api/webhooks/shopify`));
+      const callback = `${env.APP_ORIGIN ?? new URL(request.url).origin}/api/webhooks/shopify`;
+      // Look at what the install actually granted first: a missing read_orders is the usual reason this fails.
+      const scopes = await grantedScopes(shop, conn.token).catch(() => null);
+      const missing = scopes ? missingScopes(scopes) : [];
+      if (scopes && missing.includes('read_orders')) return json({ ok: false, error: `Shopify didn't give the app permission to read orders. ${scopeFixHint(missing)}`, scopes }, 403);
+      const r = await withShopify(env, sb, user.id, (sh, t) => registerShopifyWebhooks(sh, t, callback)).catch((e) => ({ ok: false, error: e instanceof Error ? e.message : String(e) }));
       await sb.insert('ecom_shops', { user_id: user.id, shop_domain: shop, webhooks_registered_at: r.ok ? new Date().toISOString() : null }, { upsert: 'shop_domain' }).catch(() => {});
-      return json(r, r.ok ? 200 : 502);
+      if (!r.ok) console.error('register-webhooks failed', shop, callback, r.error);
+      return json({ ...r, callback, scopes, ...(missing.length ? { warning: scopeFixHint(missing) } : {}) }, r.ok ? 200 : 502);
     }
     if (path === 'client-stores') {
       if (!isOwnerUser(user)) return json({ error: 'Owner only.' }, 403);

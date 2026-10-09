@@ -92,3 +92,16 @@ export async function shopifyGql<T>(shop: string, token: string, query: string, 
   }
   return j.data as T;
 }
+
+export const REQUIRED_SCOPES = ['read_orders', 'read_products', 'write_products', 'write_publications', 'read_analytics'] as const;
+/** Which required scopes a list of granted scopes lacks. A write_X grant also covers read_X. Pure. */
+export function missingScopes(granted: string[], required: readonly string[] = REQUIRED_SCOPES): string[] {
+  const have = new Set(granted);
+  return required.filter((r) => !have.has(r) && !(r.startsWith('read_') && have.has(`write_${r.slice(5)}`)));
+}
+/** The scopes this app was actually granted on the store (what the install approved). */
+export async function grantedScopes(shop: string, token: string, f: typeof fetch = fetch): Promise<string[]> {
+  const d = await shopifyGql<{ currentAppInstallation: { accessScopes: { handle: string }[] } }>(shop, token, '{ currentAppInstallation { accessScopes { handle } } }', {}, f);
+  return d.currentAppInstallation.accessScopes.map((x) => x.handle);
+}
+export const scopeFixHint = (missing: string[]) => `The app is missing: ${missing.join(', ')}. In the Dev Dashboard open the Masterminds app → Versions, add those scopes, release the new version, then open the app in your Shopify store (Apps → Masterminds) and approve the update.`;

@@ -36,7 +36,7 @@ export default function OrdersSection({ brands }: { brands: Brand[] }) {
         <Stat label="30 days" value={money(t.d30.revenue, 0)} pill={`${t.d30.count} orders`} />
         <Stat label="Profit · 30 days" value={money(t.d30.profit, 0)} pill={t.d30.profitKnown ? 'after supplier + fees' : 'some margins unknown'} k={t.d30.profit > 0 ? 'good' : 'neutral'} />
       </div>
-      <Card title="Every order" meta="from your Shopify store, with the site that made each sale" flush action={<button className="mm-btn" style={{ height: 32, fontSize: 13 }} onClick={async () => { const r = await api<{ ok?: boolean; error?: string }>('/api/ecom/register-webhooks', { body: {} }); setMsg(r.error ?? 'Shopify will send every new order here.'); }}>Connect sale alerts</button>}>
+      <Card title="Every order" meta="from your Shopify store, with the site that made each sale" flush action={<button className="mm-btn" style={{ height: 32, fontSize: 13 }} onClick={async () => { setMsg('Connecting…'); const r = await api<{ ok?: boolean; error?: string; warning?: string }>('/api/ecom/register-webhooks', { body: {} }); setMsg(r.error ? `Couldn't connect sale alerts: ${r.error}` : `Done. Shopify will send every new order here.${r.warning ? ` Note: ${r.warning}` : ''}`); }}>Connect sale alerts</button>}>
         {msg && <div style={{ fontSize: 13, color: 'var(--text-secondary)', padding: '0 0 8px' }}>{msg}</div>}
         {o.rows.length === 0 ? <Empty text={o.loading ? 'Loading…' : 'No orders yet. When a site sells, Shopify sends the order here with the site that made it (and texts you 💸).'} /> : o.rows.map((r, i) => {
           const s = SUPPLIER[r.supplier_status] ?? { l: r.supplier_status, k: 'neutral' as ChipKind };

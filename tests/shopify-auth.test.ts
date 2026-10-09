@@ -78,3 +78,13 @@ describe('shopifyGql', () => {
     await expect(shopifyGql('a.myshopify.com', 't', '{ shop { name } }', {}, f)).rejects.toBeInstanceOf(ShopifyAuthError);
   });
 });
+
+import { missingScopes } from '../worker/lib/shopify';
+describe('missingScopes', () => {
+  it('lists the required scopes the install did not grant', () => {
+    expect(missingScopes(['read_products', 'write_products'])).toEqual(['read_orders', 'write_publications', 'read_analytics']);
+  });
+  it('treats write_X as covering read_X', () => {
+    expect(missingScopes(['write_orders', 'write_products', 'write_publications', 'read_analytics'])).toEqual([]);
+  });
+});

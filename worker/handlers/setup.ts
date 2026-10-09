@@ -5,7 +5,7 @@
 // ones through Cloudflare's API. Account connections (per user) are sealed
 // with lib/vault.ts into ai_user_tokens, which only the service role reads.
 import { requireUser, isOwnerUser } from '../lib/auth';
-import { cleanShop, isShopDomain, shopifyMode, resolveShopifyToken, SHOPIFY_API } from '../lib/shopify';
+import { cleanShop, isShopDomain, shopifyMode, resolveShopifyToken, SHOPIFY_API, grantedScopes, missingScopes, scopeFixHint } from '../lib/shopify';
 import { Sb, json } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
 import { signState, verifyState } from '../lib/vault';
@@ -183,7 +183,9 @@ async function testAccount(id: string, tok: Record<string, string>): Promise<Tes
       const res = await fetch(`https://${shop}/admin/api/${SHOPIFY_API}/shop.json`, { headers: { 'X-Shopify-Access-Token': token } });
       if (!res.ok) return { ok: false, detail: `Shopify ${res.status}: ${await errText(res)}` };
       const j = (await res.json()) as { shop: { name: string; plan_display_name?: string } };
-      return { ok: true, detail: `Connected to ${j.shop.name}${j.shop.plan_display_name ? ` (${j.shop.plan_display_name})` : ''}${shopifyMode(tok) === 'client' ? ' through the Dev Dashboard app — tokens refresh on their own every 24 hours' : ''}.` };
+      const scopes = await grantedScopes(shop, token).catch(() => null);
+      const missing = scopes ? missingScopes(scopes) : [];
+      return { ok: true, detail: `Connected to ${j.shop.name}${j.shop.plan_display_name ? ` (${j.shop.plan_display_name})` : ''}${shopifyMode(tok) === 'client' ? ' through the Dev Dashboard app — tokens refresh on their own every 24 hours' : ''}. ${scopes ? (missing.length ? `⚠ ${scopeFixHint(missing)}` : 'All 5 permissions are granted.') : ''}`.trim() };
     }
     case 'instagram': {
       const res = await fetch(`https://graph.instagram.com/me?fields=user_id,username,account_type&access_token=${encodeURIComponent(tok.token)}`);
