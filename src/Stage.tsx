@@ -85,6 +85,10 @@ const TasksScreen = lazyScreen(() => import('./components/screens/solo/TasksScre
 const MoneyMoveScreen = lazyScreen(() => import('./components/screens/solo/MoneyMoveScreen'));
 const PeptidesScreen = lazyScreen(() => import('./components/screens/solo/PeptidesScreen'));
 const FeedScreen = lazyScreen(() => import('./components/screens/solo/FeedScreen'));
+const ClassroomScreen = lazyScreen(() => import('./components/screens/madeby/ClassroomScreen'));
+const LedgerScreen = lazyScreen(() => import('./components/screens/madeby/LedgerScreen'));
+const ContractsScreen = lazyScreen(() => import('./components/screens/madeby/ContractsScreen'));
+const CommsScreen = lazyScreen(() => import('./components/screens/madeby/CommsScreen'));
 const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 
 // Screens still on their pre-redesign layout: on phone they get the shared
@@ -93,7 +97,7 @@ const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 const LEGACY_SCREENS = new Set<string>([]);
 
 const BUILT_SCREENS = [
-  'home', 'feed', 'peptides', 'money-move', 'tasks', 'brain-dump', 'ecom-clients', 'ecom-inbox', 'ecom-office', 'ecom-orders', 'ecom-stores', 'ecom-products', 'hq', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
+  'home', 'comms', 'contracts', 'ledger', 'classroom', 'feed', 'peptides', 'money-move', 'tasks', 'brain-dump', 'ecom-clients', 'ecom-inbox', 'ecom-office', 'ecom-orders', 'ecom-stores', 'ecom-products', 'hq', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'leadflow', 'account-settings', 'prompt-voice-settings',
   'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access', 'changelog', 'dispatch', 'inbox', 'modules',
@@ -478,6 +482,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         {state.screen === 'money-move' && <MoneyMoveScreen />}
         {state.screen === 'peptides' && <PeptidesScreen />}
         {state.screen === 'feed' && <FeedScreen />}
+        {state.screen === 'classroom' && <ClassroomScreen />}
+        {state.screen === 'ledger' && <LedgerScreen />}
+        {state.screen === 'contracts' && <ContractsScreen />}
+        {state.screen === 'comms' && <CommsScreen />}
         {state.screen === 'modules' && <ModulesGrid groups={moduleTiles} onOpen={shellNav} />}
         {state.screen === 'inbox' && (
           <InboxScreen device={device} isOwner={isOwner} inbox={ownerInbox} feed={leadFeed} focus={inboxFocus} onFocusConsumed={() => setInboxFocus(null)}

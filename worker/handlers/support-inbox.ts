@@ -1,3 +1,6 @@
+import { recordInbound } from '../lib/madeby';
+import { Sb } from '../lib/sb';
+import type { SbEnv } from '../lib/sb';
 import Anthropic from '@anthropic-ai/sdk';
 import PostalMime from 'postal-mime';
 import { OWNER_USER_ID } from '../lib/auth';
@@ -205,6 +208,8 @@ export async function handleInboundEmail(message: InboundEmailMessage, env: Supp
 
   // Store in the background so the forward never waits on Claude.
   ctx.waitUntil(storeInboundMessage(env, { fromEmail, toEmail: message.to, subject, bodyText }));
+  // A reply from a known contact or client also lands in their Comms thread (brief §5.6).
+  if ((env as { SUPABASE_SERVICE_ROLE_KEY?: string }).SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(recordInbound(new Sb(env as unknown as SbEnv), OWNER_USER_ID, { channel: 'email', from: fromEmail, to: message.to, subject, body: bodyText || '(no text)' }).catch(() => {}));
 
   if (!env.INBOX_FORWARD_TO) {
     console.error('support-inbox: INBOX_FORWARD_TO is not set — message stored in the app but NOT forwarded to a mailbox');

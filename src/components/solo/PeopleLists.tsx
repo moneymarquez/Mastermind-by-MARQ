@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import Chip from '../mm/Chip';
 import { field } from '../mm/Page';
 import { DEFAULT_LISTS, followUpTaskTitle } from '../../data/peopleLists';
@@ -27,7 +28,12 @@ export function useContactLists() {
     const on = members.some((m) => m.list_id === listId && m.contact_id === contactId);
     setMembers((x) => (on ? x.filter((m) => !(m.list_id === listId && m.contact_id === contactId)) : [...x, { list_id: listId, contact_id: contactId }]));
     if (on) await supabase.from('contact_list_members').delete().eq('list_id', listId).eq('contact_id', contactId);
-    else await supabase.from('contact_list_members').insert({ list_id: listId, contact_id: contactId });
+    else {
+      await supabase.from('contact_list_members').insert({ list_id: listId, contact_id: contactId });
+      // Owner automations (Comms hub): the list's sequence starts. The server ignores this for solo users.
+      const name = lists.find((l) => l.id === listId)?.name;
+      if (name) void api('/api/comms/start-sequence', { body: { contact_id: contactId, list_name: name } });
+    }
   };
   const create = async (name: string) => { const n = name.trim(); if (!n) return; await supabase.from('contact_lists').insert({ name: n, sort: lists.length }); await load(); };
   const listsOf = (contactId: string) => lists.filter((l) => members.some((m) => m.list_id === l.id && m.contact_id === contactId));

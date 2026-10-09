@@ -11,6 +11,8 @@ import InvoiceDetailView from './InvoiceDetailView';
 import LiveCaptureView from './LiveCaptureView';
 import type { AnswerConfidence } from '../../data/types';
 import ClientCampaigns from './marketing/ClientCampaigns';
+import { Tabs } from '../mm/Page';
+import { ClientOverview, DeliveryTab, ClientComms, ClientContracts } from '../madeby/ClientSections';
 
 interface Props {
   client: CrmClientWithChildren;
@@ -26,6 +28,9 @@ interface Props {
 }
 
 type Tab = 'audit' | 'analysis' | 'pricing' | 'invoices' | 'reports' | 'portal' | 'sent';
+type Section = 'overview' | 'sales' | 'delivery' | 'comms' | 'docs' | 'money';
+const SECTIONS: { id: Section; label: string }[] = [{ id: 'overview', label: 'Overview' }, { id: 'sales', label: 'Sales' }, { id: 'delivery', label: 'Delivery' }, { id: 'comms', label: 'Comms' }, { id: 'docs', label: 'Docs' }, { id: 'money', label: 'Money' }];
+const SECTION_TABS: Record<Section, Tab[]> = { overview: [], sales: ['audit', 'analysis', 'pricing'], delivery: [], comms: [], docs: ['portal', 'reports'], money: ['invoices', 'sent'] };
 
 const textareaStyle: CSSProperties = {
   width: '100%', minHeight: 70, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)',
@@ -45,6 +50,9 @@ function amountLabel(amount: number | null): string {
 
 export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, homeSubStyle, onPushToMarketing, onOpenCampaign, onStartCampaign }: Props) {
   const [tab, setTab] = useState<Tab>(client.audit?.status === 'complete' ? 'analysis' : 'audit');
+  // Brief §5.2: one client page in six tabs instead of one long screen.
+  const [section, setSection] = useState<Section>('overview');
+  const showTab = (t: Tab) => SECTION_TABS[section].includes(t) && tab === t;
   const [nameDraft, setNameDraft] = useState(client.business_name);
   const [emailDraft, setEmailDraft] = useState(client.contact_email ?? '');
   const [phoneDraft, setPhoneDraft] = useState(client.contact_phone ?? '');
@@ -384,6 +392,11 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         </div>
       </div>
 
+      <div style={{ marginTop: 16 }}><Tabs tabs={SECTIONS} value={section} onChange={(s) => { setSection(s); const first = SECTION_TABS[s][0]; if (first) setTab(first); }} /></div>
+      {section === 'overview' && <ClientOverview client={client} onOpen={(s) => setSection(s)} />}
+      {section === 'delivery' && <DeliveryTab client={client} onChanged={() => crm.reload()} />}
+      {section === 'comms' && <ClientComms client={client} />}
+      {section === 'sales' && (<>
       {onOpenCampaign && onStartCampaign && <ClientCampaigns clientId={client.id} onOpenCampaign={onOpenCampaign} onStartCampaign={onStartCampaign} />}
 
       <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap', maxWidth: 640 }}>
@@ -414,6 +427,8 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         />
       </div>
 
+      </>)}
+      {section === 'docs' && (<>
       {/* Client login (Step 1 of the client-login/audit/invoice build) — a
           real, separate account scoped to just this client via RLS (see
           schema_045_client_login.sql), not the token-based Reports link
@@ -449,20 +464,24 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 20, flexWrap: 'wrap' }}>
-        <div style={tabStyle(tab === 'audit')} onClick={() => setTab('audit')}>Audit</div>
-        <div style={tabStyle(tab === 'analysis')} onClick={() => setTab('analysis')}>Analysis</div>
-        <div style={tabStyle(tab === 'pricing')} onClick={() => setTab('pricing')}>Pricing</div>
-        <div style={tabStyle(tab === 'invoices')} onClick={() => setTab('invoices')}>Invoices ({client.invoices.length})</div>
-        <div style={tabStyle(tab === 'reports')} onClick={() => setTab('reports')}>Reports</div>
-        <div style={tabStyle(tab === 'portal')} onClick={() => setTab('portal')}>Portal</div>
-        <div style={tabStyle(tab === 'sent')} onClick={() => setTab('sent')}>Sent ({sentInvoices.length})</div>
-      </div>
+      <ClientContracts client={client} />
+      </>)}
+      {SECTION_TABS[section].length > 1 && (
+        <div style={{ display: 'flex', gap: 8, marginTop: 20, flexWrap: 'wrap' }}>
+          {SECTION_TABS[section].includes('audit') && <div style={tabStyle(tab === 'audit')} onClick={() => setTab('audit')}>Audit</div>}
+          {SECTION_TABS[section].includes('analysis') && <div style={tabStyle(tab === 'analysis')} onClick={() => setTab('analysis')}>Analysis</div>}
+          {SECTION_TABS[section].includes('pricing') && <div style={tabStyle(tab === 'pricing')} onClick={() => setTab('pricing')}>Pricing</div>}
+          {SECTION_TABS[section].includes('invoices') && <div style={tabStyle(tab === 'invoices')} onClick={() => setTab('invoices')}>Invoices ({client.invoices.length})</div>}
+          {SECTION_TABS[section].includes('reports') && <div style={tabStyle(tab === 'reports')} onClick={() => setTab('reports')}>Reports</div>}
+          {SECTION_TABS[section].includes('portal') && <div style={tabStyle(tab === 'portal')} onClick={() => setTab('portal')}>Portal</div>}
+          {SECTION_TABS[section].includes('sent') && <div style={tabStyle(tab === 'sent')} onClick={() => setTab('sent')}>Sent ({sentInvoices.length})</div>}
+        </div>
+      )}
 
-      {tab === 'reports' && <ClientReportsTab clientId={client.id} publicToken={client.public_token} />}
-      {tab === 'portal' && <ClientPortalAdmin client={client} />}
+      {showTab('reports') && <ClientReportsTab clientId={client.id} publicToken={client.public_token} />}
+      {showTab('portal') && <ClientPortalAdmin client={client} />}
 
-      {tab === 'audit' && (
+      {showTab('audit') && (
         <div style={{ marginTop: 18, maxWidth: 640 }}>
           {!client.audit ? (
             <div style={cardStyle}>
@@ -556,7 +575,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         </div>
       )}
 
-      {tab === 'analysis' && (
+      {showTab('analysis') && (
         <div style={{ marginTop: 18, maxWidth: 680 }}>
           {!client.audit?.analysis_text ? (
             <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No analysis generated yet — fill out the Audit tab and click Generate.</div>
@@ -582,7 +601,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         </div>
       )}
 
-      {tab === 'pricing' && (
+      {showTab('pricing') && (
         <div style={{ marginTop: 18, maxWidth: 680 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <div
@@ -776,7 +795,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         </div>
       )}
 
-      {(tab === 'invoices' || tab === 'sent') && selectedInvoiceId && (() => {
+      {(showTab('invoices') || showTab('sent')) && selectedInvoiceId && (() => {
         const inv = client.invoices.find((i) => i.id === selectedInvoiceId);
         if (!inv) { setSelectedInvoiceId(null); return null; }
         return (
@@ -786,14 +805,14 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
         );
       })()}
 
-      {tab === 'sent' && !selectedInvoiceId && (
+      {showTab('sent') && !selectedInvoiceId && (
         <div style={{ marginTop: 18, maxWidth: 680, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {sentInvoices.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>Nothing sent yet — invoices show up here once they leave draft.</div>}
           {sentInvoices.map(invoiceRow)}
         </div>
       )}
 
-      {tab === 'invoices' && !selectedInvoiceId && (
+      {showTab('invoices') && !selectedInvoiceId && (
         <div style={{ marginTop: 18, maxWidth: 680 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
             {client.invoices.length === 0 && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>No invoices yet.</div>}

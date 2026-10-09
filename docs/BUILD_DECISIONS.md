@@ -61,3 +61,21 @@ Every place this build had to choose without asking Marq. Each one can be revers
 44. **Peptides AI** uses one fixed system prompt (`PEPTIDE_SYSTEM_PROMPT`), tested to contain the no-dosing rule. The footer is on the screen permanently.
 45. **Feed photos live in a public-read bucket** (`feed-photos`) so other members can see them. The upload is per-user-folder. The 10-a-day limit and suspensions are enforced in the RLS insert policy, not only in the UI.
 46. **People-list automations are only defined here** (`LIST_AUTOMATIONS`). Phase 5's Comms hub runs them for the owner. Solo users get lists and follow-ups (follow-ups go into Tasks).
+
+## Phase 5 — Made by Marq
+
+47. **The audit was run in Demo Mode with headless Chromium** (see `MADEBY_AUDIT.md`). The biggest find was the hand-kept nav list. It's now derived from the registry, so new modules can't go missing from the nav again.
+48. **Delivery phases are a new `crm_clients.delivery_phase` column (1–5)**, separate from the sales `stage`. The sales pipeline stays exactly as it was. Classroom drag-and-drop and the CRM write this same field.
+49. **The client-facing spine keeps its 6 stations.** Phases 1–5 map onto Discovery call → Teach-back. The client sees their phase with no change to the portal's types or overrides.
+50. **The client page keeps every existing sub-tab** (audit, analysis, pricing, invoices, reports, portal, sent) and groups them under the six new tabs, so nothing was removed.
+51. **A signed contract is stored as a printable HTML record** (exact text, typed name, UTC time, IP, device, consent line) in Brain Dump documents, filed under the contract's project. "Signed PDF" opens it for the browser's print-to-PDF. The Worker has no PDF renderer, and the HTML is the authoritative record.
+52. **Sender entity is a `business_profile.sender_entity` setting** defaulting to "Made by Marq (Cristopher Marquez)". New contracts and invoices read it, so filing the Utah LLC is a one-field change.
+53. **Sent messages are locked by a database trigger**, not just the UI. Body, subject, recipient, sent time and attachments can't change after send.
+54. **Brain Dump attachments go out as inline text in the email** (no binary attachments yet). A future step is real attachments via Resend.
+55. **Invoices to anyone live in a new `biz_invoices` table**, so client invoices tied to the CRM pricing schedule are untouched. Monthly recurring makes a draft each month for Marq to send; nothing auto-sends.
+56. **Recurring ledger rows land unconfirmed** (`confirmed = false`) for Marq to tap Confirm. P&L ignores them until then.
+57. **Masterminds subscription payments become Ledger income** from the existing Stripe `invoice.paid` webhook (idempotent on the Stripe invoice id).
+58. **Launch offers are stored config** (`launch_offers`). The site reads them through `public_launch_offers()` (no login; Stripe IDs stripped). The Founding counter is `claimed` vs `limit`. Phase 7 wires the site cards.
+59. **Funnel trials = every account with any subscription row past `none`**; paid = active/past_due; churned = canceled/unpaid. Visits come from the existing Cloudflare Web Analytics route.
+60. **People-list automations are sequences in the Comms hub**, started when a contact is added to a list. The server only starts them for the owner; solo users get lists and follow-ups only.
+61. **HQ (5.8) was built in Phase 1.** This phase added the nav group and breadcrumb fix.

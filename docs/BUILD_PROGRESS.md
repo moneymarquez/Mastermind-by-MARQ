@@ -10,7 +10,7 @@ A fresh session continues from **Current step** below.
 - [x] **Phase 2, E-commerce:** split nav, Product Pitch, orders + Shopify webhook, brand → store → content, Office graph + task log
 - [x] **Phase 3, Content:** ideas, performance loop, clip rendering, multiple accounts, handoff, own accounts
 - [x] **Phase 4, Solo:** tiers, Tasks, Brain Dump + import, AI onboarding, Weekly Check-in, Money Move, Peptides, People lists, Feed
-- [ ] **Phase 5, Made by Marq:** audit, CRM tabs + phases, Classroom, Ledger, Contracts, Comms, Playbooks/Case studies, HQ (started in P1), Marketing
+- [x] **Phase 5, Made by Marq:** audit, CRM tabs + phases, Classroom, Ledger, Contracts, Comms, Playbooks/Case studies, HQ (started in P1), Marketing
 - [ ] **Phase 6, Design pass**
 - [ ] **Phase 7, Website alignment**
 - [ ] **Phase 8, Report**
@@ -83,6 +83,18 @@ A fresh session continues from **Current step** below.
 - **Feed v1:** win cards from real data, reactions, report, owner moderation queue, 10/day limit, hourly reaction notices.
 - **Migration:** `supabase/schema_124_solo_october.sql` (not applied). **Tests:** `tests/solo-october.test.ts`.
 
+## Phase 5: what was built
+
+- **Audit:** `docs/MADEBY_AUDIT.md`. Fixed the missing nav rows, the HQ crumb, the Orders crash, the demo invoice placeholders and the stale demo models.
+- **Client CRM:** six tabs. Delivery holds 5 phases with checklists (owner + due), plays, baseline/snapshot numbers and the case study. The spine follows the phase.
+- **Classroom:** rooms per phase plus APHS and own brands, drag to move, a waiting-on-you panel and amber/red rings.
+- **Ledger:** income/expenses with receipts, monthly P&L, YTD, tax set-aside, CSV, recurring rows to confirm, and invoices to anyone (monthly recurring; paid → income). Stripe paid → income.
+- **Contracts:** 6 templates, variables, Writer tailoring, send by email, the public `/sign/<token>` page, and a signed record in Brain Dump.
+- **Comms hub:** threads per person (email/SMS in and out), templates, scheduled sends, attachments from Brain Dump, locked once sent, history export, and list sequences.
+- **Playbooks:** a Scaling plays section; "Save as play" and "Use" on Delivery.
+- **Marketing → Our Brands:** own accounts, the funnel with the biggest drop, the launch offer builder, the $100 budget with cost per trial/paid and "next $20", the idea bank (25 seeded), the orchestrator's weekly plan with 👍/👎, and case studies.
+- **Migration:** `supabase/schema_125_madeby_october.sql` (not applied). **Tests:** `tests/madeby-october.test.ts`.
+
 ## Current step
 
-Phase 5: Made by Marq (MADEBY_AUDIT.md first).
+Phases 6–8: design pass, website alignment, report.

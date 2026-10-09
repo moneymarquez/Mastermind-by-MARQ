@@ -341,9 +341,16 @@ export async function stripeWebhook(request: Request, env: BillingEnv): Promise<
           await sendPaidReceiptEmail(env, paidClient.contact_email, paidClient.business_name, crmInvoice.invoice_number, crmInvoice.description, crmInvoice.amount);
         }
         await autoProvisionClientLogin(env, crmInvoice.client_id);
+        // Brief §5.4: a paid invoice lands in the Ledger as income.
+        await ledgerIncome(env, { ref_type: 'client_invoice', ref_id: crmInvoice.id, amount: Number(crmInvoice.amount), party: paidClient?.business_name ?? 'Client', category: 'client' });
         return new Response('ok', { status: 200 });
       }
     }
+  }
+
+  // A Masterminds subscription payment is Made by Marq income (brief §5.4).
+  if (event.type === 'invoice.paid' && obj.subscription && typeof obj.amount_paid === 'number' && obj.amount_paid > 0) {
+    await ledgerIncome(env, { ref_type: 'stripe', ref_id: String(obj.id), amount: Number(obj.amount_paid) / 100, party: 'Masterminds subscription', category: 'Masterminds subscriptions' });
   }
 
   let sub: StripeSubscriptionObject | null = null;
@@ -370,4 +377,14 @@ export async function stripeWebhook(request: Request, env: BillingEnv): Promise<
   });
 
   return new Response('ok', { status: 200 });
+}
+
+/** One Ledger income row per paid invoice (idempotent on ref). Best effort:
+ *  before schema_121 there is no biz_ledger and this quietly does nothing. */
+async function ledgerIncome(env: BillingEnv, r: { ref_type: string; ref_id: string; amount: number; party: string; category: string }): Promise<void> {
+  try {
+    const have = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/biz_ledger?user_id=eq.${OWNER_USER_ID}&ref_type=eq.${r.ref_type}&ref_id=eq.${encodeURIComponent(r.ref_id)}&select=id`, { headers: supabaseHeaders(env) });
+    if (!have.ok || ((await have.json()) as unknown[]).length) return;
+    await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/biz_ledger`, { method: 'POST', headers: supabaseHeaders(env), body: JSON.stringify({ user_id: OWNER_USER_ID, kind: 'income', amount_usd: r.amount, category: r.category, party: r.party, auto: true, ref_type: r.ref_type, ref_id: r.ref_id }) });
+  } catch { /* the webhook must still answer 200 */ }
 }

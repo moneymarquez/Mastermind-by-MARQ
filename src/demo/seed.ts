@@ -8,6 +8,8 @@
 // client is the in-memory copy in ./client.ts, never the real database.
 type Row = Record<string, unknown>;
 
+import { ROLE_MODEL } from '../data/models';
+
 export const DEMO_USER = { id: 'a4b89df9-7122-424a-afb5-fc4871e0963b', email: 'marq@madebymarq.demo', name: 'Marq' };
 const U = DEMO_USER.id;
 /** A second workspace where the demo identity is a member (explore mode). */
@@ -104,16 +106,16 @@ export function buildSeed(): Record<string, Row[]> {
   // ── The Office (e-comm): orchestrator + 6 workers, mixed states ─────
   const W = (key: string, name: string, role: string, model: string, status: string, current_task: string | null, domain = 'ecom') => ({ id: uid('wrkr'), domain, key, name, role, model, autonomy_level: 0, status, current_task, enabled: true, playbook_name: null });
   const workers = [
-    W('orchestrator', 'Orchestrator', 'Assign work, read outputs, score, route your notes, write the daily summary.', 'claude-fable-5-1', 'running', 'Delegating tonight\'s plan', 'all'),
-    W('scout', 'Product Scout', 'Fill Product Sheets per channel; take snapshots.', 'claude-haiku-4-5', 'running', 'Scouting TikTok Shop (top 10)'),
-    W('analyst', 'Audience Analyst', 'Who buys, why, the angle, the margin math.', 'claude-sonnet-5', 'running', 'Analysing Cloud Neck Pillow'),
-    W('teardown', 'Competitor Teardown', 'Dossiers on the top sellers; 3 unclaimed angles.', 'claude-sonnet-5', 'idle', null),
-    W('supplier', 'Supplier Finder', 'Suppliers, sample order draft, inspection sheet.', 'claude-haiku-4-5', 'idle', null),
-    W('brandlab', 'Brand Lab', 'Three brand options from the buyer profile.', 'claude-sonnet-5', 'idle', null),
-    W('builder', 'Store Builder', 'Site code to a GitHub branch; quality gate.', 'claude-sonnet-5', 'idle', null),
-    W('content', 'Content Producer', 'Hooks, scripts, captions, visuals.', 'claude-sonnet-5', 'running', 'Scripting 3 hooks for Northline', 'content'),
-    W('script_copy', 'Script & Copy', 'Openers, voicemails, emails — 3 tones × 2 audiences.', 'claude-sonnet-5', 'idle', null, 'marketing'),
-    W('campaign_scorer', 'Campaign Scorer', 'Grades each campaign out of 4.', 'claude-sonnet-5', 'idle', null, 'marketing'),
+    W('orchestrator', 'Orchestrator', 'Assign work, read outputs, score, route your notes, write the daily summary.', ROLE_MODEL.domain, 'running', 'Delegating tonight\'s plan', 'all'),
+    W('scout', 'Product Scout', 'Fill Product Sheets per channel; take snapshots.', ROLE_MODEL.parse, 'running', 'Scouting TikTok Shop (top 10)'),
+    W('analyst', 'Audience Analyst', 'Who buys, why, the angle, the margin math.', ROLE_MODEL.writer, 'running', 'Analysing Cloud Neck Pillow'),
+    W('teardown', 'Competitor Teardown', 'Dossiers on the top sellers; 3 unclaimed angles.', ROLE_MODEL.writer, 'idle', null),
+    W('supplier', 'Supplier Finder', 'Suppliers, sample order draft, inspection sheet.', ROLE_MODEL.parse, 'idle', null),
+    W('brandlab', 'Brand Lab', 'Three brand options from the buyer profile.', ROLE_MODEL.writer, 'idle', null),
+    W('builder', 'Store Builder', 'Site code to a GitHub branch; quality gate.', ROLE_MODEL.writer, 'idle', null),
+    W('content', 'Content Producer', 'Hooks, scripts, captions, visuals.', ROLE_MODEL.writer, 'running', 'Scripting 3 hooks for Northline', 'content'),
+    W('script_copy', 'Script & Copy', 'Openers, voicemails, emails — 3 tones × 2 audiences.', ROLE_MODEL.writer, 'idle', null, 'marketing'),
+    W('campaign_scorer', 'Campaign Scorer', 'Grades each campaign out of 4.', ROLE_MODEL.writer, 'idle', null, 'marketing'),
   ];
   T('ai_workers', workers);
   const wk = (key: string) => workers.find((w) => w.key === key)!.id;
@@ -193,7 +195,7 @@ export function buildSeed(): Record<string, Row[]> {
       '10': { fields: { reason: 'Analytics recommends scale: 18 sales at 1.6% CTR, 31% cart-to-sale. Next: make 3 more posts on the 3pm-neck angle.' } },
     } }]);
   T('ecom_brand_products', []);
-  T('ecom_orders', Array.from({ length: 11 }, (_, i) => ({ id: uid('ordr'), brand_id: null, total: 39, placed_at: hoursAgo(i * 5) })));
+  T('ecom_orders', Array.from({ length: 11 }, (_, i) => ({ id: uid('ordr'), brand_id: null, external_id: String(1042 + i), order_number: `#${1042 + i}`, product_title: 'Squish Pillow', customer_name: ['Ana R.', 'Ben T.', 'Cara M.'][i % 3], status: 'paid', fulfillment_status: i < 3 ? null : 'fulfilled', supplier_status: i < 2 ? 'to_place' : 'placed', supplier_cost: 9.5, ship_cost: 4, margin_usd: 21.4, total: 39, placed_at: hoursAgo(i * 5) })));
 
   // ── Content: 7-day plan, one clip pair, grades 4/3/2/1 ──────────────
   const acct = (platform: string, handle: string, owner: string, followers: number) => ({ id: uid('acct'), platform, handle, display_name: null, avatar_url: null, owner, brand_id: null, client_id: null, voice: 'Short, direct, no fluff.', posts_per_week_goal: 10, connected: false, followers });
@@ -276,7 +278,15 @@ export function buildSeed(): Record<string, Row[]> {
   // ── Montage screens: invoices, client CRM ───────────────────────────
   const crm = (business_name: string, contact_name: string, stage: string) => ({ id: uid('crmc'), business_name, contact_name, contact_email: `${contact_name.split(' ')[0].toLowerCase()}@example.com`, contact_phone: null, stage, reveal_full_schedule: false, source: 'cold call', notes: null, stripe_customer_id: null, last_activity_at: hoursAgo(10), public_token: uid('tokn'), client_type: 'client', transcript: null });
   const clients = [crm('Blue Door Bakery', 'Nina Brooks', 'active'), crm('Summit Auto Spa', 'Dev Patel', 'active'), crm('Juniper Tacos', 'Rosa Diaz', 'proposal')];
+  Object.assign(clients[0], { delivery_phase: 3, business_kind: 'restaurant', phase_started_at: hoursAgo(72), last_contact_at: hoursAgo(20) });
+  Object.assign(clients[1], { delivery_phase: 2, business_kind: 'service', phase_started_at: hoursAgo(130), last_contact_at: hoursAgo(2.5) });
   T('crm_clients', clients);
+  // Delivery checklists (brief §5.2) so the Classroom and Overview have something to show.
+  const ck = (client: number, phase: number, title: string, owner: 'marq' | 'client' | 'bot', done: boolean, ageH: number) => ({ id: uid('chk'), user_id: U, client_id: clients[client].id, phase, title, owner, due: dayStr(Math.round(-ageH / 24) + 5), done, done_at: done ? hoursAgo(ageH / 2) : null, play_id: null, sort: 0, created_at: hoursAgo(ageH), updated_at: hoursAgo(ageH) });
+  T('client_checklist', [
+    ck(0, 3, 'Site / app live on the client domain', 'marq', true, 70), ck(0, 3, 'Client signs off on launch', 'client', false, 70), ck(0, 3, 'Walkthrough video recorded and sent', 'marq', false, 96), ck(0, 3, 'First campaign or posts live', 'bot', false, 70),
+    ck(1, 2, 'Strategy doc approved by client', 'client', true, 120), ck(1, 2, 'Brand kit (logo, palette, voice) finished', 'marq', false, 40), ck(1, 2, 'Accounts and tools set up', 'marq', false, 40), ck(1, 2, 'Content plan for the first month', 'bot', false, 40),
+  ]);
   // Unified Inbox: mail on both domains (with the triage's drafts), a
   // portal ticket and a portal question. The demo client doesn't join, so
   // the embedded crm_clients the real query would return is inlined.
@@ -289,7 +299,7 @@ export function buildSeed(): Record<string, Row[]> {
   T('client_tickets', [{ id: uid('tick'), client_id: clients[0].id, deliverable_id: null, kind: 'bug', title: 'Booking button missing on mobile', avoid: "Don't move the menu — customers know where it is.", prefer: 'Put the button back where it was, under the hero photo.', status: 'open', owner_note: null, created_at: hoursAgo(26), updated_at: hoursAgo(26), resolved_at: null, crm_clients: { business_name: 'Blue Door Bakery', contact_name: 'Nina Brooks' } }]);
   T('client_messages', [{ id: uid('cmsg'), client_id: clients[1].id, sender: 'client', body: 'Can we move Thursday\'s review to 11:30? Something came up at 11.', read_at: null, created_at: hoursAgo(2.5), crm_clients: { business_name: 'Summit Auto Spa', contact_name: 'Dev Patel' } }]);
   T('client_documents', [
-    { id: 'cdoc-blue-door-invoice', doc_type: 'invoice', contact_id: null, label: 'Blue Door Bakery — Invoice', status: 'sent', paid_at: null, data: { client_name: 'Nina Brooks', client_company: 'Blue Door Bakery', invoice_number: 'INV-0042', line_items: [{ type: 'Build', description: 'Website + online ordering', qty: '1', rate: '1800', amount: '1800' }, { type: 'Retainer', description: 'Monthly care plan', qty: '1', rate: '550', amount: '550' }] } },
+    { id: 'cdoc-blue-door-invoice', doc_type: 'invoice', contact_id: null, label: 'Blue Door Bakery — Invoice', status: 'sent', paid_at: null, data: { client_name: 'Nina Brooks', client_company: 'Blue Door Bakery', client_email: 'nina@bluedoorbakery.demo', project_ref: 'BDB-WEB-01', issue_date: '2026-10-01', due_date: '2026-10-16', payment_terms: 'Net 15', invoice_number: 'INV-0042', line_items: [{ type: 'Build', description: 'Website + online ordering', qty: '1', rate: '1800', amount: '1800' }, { type: 'Retainer', description: 'Monthly care plan', qty: '1', rate: '550', amount: '550' }] } },
     { id: uid('cdoc'), doc_type: 'proposal', contact_id: null, label: 'Juniper Tacos — Project Brief', status: 'draft', paid_at: null, data: {} },
   ]);
   const deliveryInvoice = 'cdoc-blue-door-invoice';

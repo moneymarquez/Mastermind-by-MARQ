@@ -1,5 +1,9 @@
 export type Screen =
   | 'home'
+  | 'comms'
+  | 'contracts'
+  | 'ledger'
+  | 'classroom'
   | 'feed'
   | 'peptides'
   | 'money-move'

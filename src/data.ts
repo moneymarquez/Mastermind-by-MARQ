@@ -13,7 +13,7 @@ for (const m of MODULE_REGISTRY) {
   for (const route of m.routes) NAV_ITEM_TO_MODULE[route] = m.key;
 }
 
-export const NAV_DATA: NavGroup[] = [
+const NAV_BASE: NavGroup[] = [
   {
     group: 'Personal',
     items: [
@@ -95,6 +95,36 @@ export const NAV_DATA: NavGroup[] = [
     ],
   },
 ];
+
+/** NAV_BASE plus every registry module it doesn't list yet, so a module
+ *  added to modules.config.ts shows up in the nav without a second edit
+ *  (HQ, Tasks, Money Move, the E-commerce sections…). New rows go into the
+ *  group named by the module's category, right after the registry module
+ *  before them. Single-route modules also take their label from the
+ *  registry, so a rename there (Weekly Review → Weekly Check-in) shows. */
+export function withRegistry(base: NavGroup[]): NavGroup[] {
+  const out = base.map((g) => ({ ...g, items: [...g.items] }));
+  const has = new Set(out.flatMap((g) => g.items.map((i) => i.id)));
+  const ICON: Record<string, string> = { dispatch: 'dispatch' };
+  MODULE_REGISTRY.forEach((m, idx) => {
+    const id = m.routes[0];
+    if (!id) return;
+    if (has.has(id)) {
+      if (m.routes.length === 1) for (const g of out) for (const it of g.items) if (it.id === id) it.label = m.label;
+      return;
+    }
+    const groupName = m.category === 'Clients' || m.category === 'Scaling' || m.category === 'Personal' || m.category === 'Cold Calling' || m.category === 'Side Hustles' ? m.category : null;
+    let g = out.find((x) => x.group === groupName);
+    if (!g) { g = { group: groupName, items: [] }; out.splice(Math.max(0, out.length - 1), 0, g); }
+    // After the closest earlier registry module that's in this group.
+    let at = g.items.length;
+    for (let k = idx - 1; k >= 0; k--) { const prev = MODULE_REGISTRY[k].routes[0]; const j = g.items.findIndex((i) => i.id === prev); if (j >= 0) { at = j + 1; break; } }
+    g.items.splice(at, 0, { id, label: m.label, icon: ICON[m.icon] ?? m.icon });
+    has.add(id);
+  });
+  return out;
+}
+export const NAV_DATA: NavGroup[] = withRegistry(NAV_BASE);
 
 // Custom subtitles for sections that are still placeholders — falls back to
 // "This section is coming soon." (see navigateTo in state.ts) when a screen

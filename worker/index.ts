@@ -67,6 +67,9 @@ import { inboxReply } from './handlers/inbox';
 import type { InboxEnv } from './handlers/inbox';
 import { contentTranscribe, contentRoute } from './handlers/content';
 import { soloRoute } from './handlers/solo';
+import { madebyRoute } from './handlers/madeby';
+import type { MadebyRouteEnv } from './handlers/madeby';
+import { runCommsTick, runLedgerDaily } from './lib/madeby';
 import type { SoloEnv } from './handlers/solo';
 import { runSoloTick } from './lib/solo';
 import { Sb as SbClient } from './lib/sb';
@@ -75,7 +78,7 @@ import { dispatchExtract, dispatchTranscribe, dispatchNotify, dispatchNudge, dis
 import { accountRoute } from './handlers/account';
 import type { SetupEnv } from './handlers/setup';
 
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv, DispatchEnv, ContentEnv, InboxEnv, HqEnv, SmsEnv, EcomEnv, ContentOctEnv, SoloEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv, DispatchEnv, ContentEnv, InboxEnv, HqEnv, SmsEnv, EcomEnv, ContentOctEnv, SoloEnv, MadebyRouteEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
@@ -143,6 +146,8 @@ export default {
     if (url.pathname === '/api/inbox/reply') return inboxReply(request, env);
     if (url.pathname.startsWith('/api/inbound/')) return inboundPost(request, env, url.pathname.slice('/api/inbound/'.length));
     if (url.pathname === '/api/content/transcribe') return contentTranscribe(request, env);
+    const madebyMatch = url.pathname.match(/^\/api\/(comms|contracts|invoices|marketing)\/([a-z-]+)$/);
+    if (madebyMatch && !(madebyMatch[1] === 'marketing' && madebyMatch[2] === 'visits')) return madebyRoute(request, env, madebyMatch[1], madebyMatch[2]);
     const soloMatch = url.pathname.match(/^\/api\/solo\/([a-z-]+)$/);
     if (soloMatch) return soloRoute(request, env, soloMatch[1]);
     const contentMatch = url.pathname.match(/^\/api\/content\/([a-z-]+)$/);
@@ -191,12 +196,14 @@ export default {
       ctx.waitUntil(runPublisherTick(env));
       ctx.waitUntil(runFlagsTick(env));
       if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runSoloTick(env, new SbClient(env)).catch((e) => console.error('solo tick', e)));
+      if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runCommsTick(env, new SbClient(env)).catch((e) => console.error('comms tick', e)));
       return;
     }
     ctx.waitUntil(runStocksBot(env));
     ctx.waitUntil(runDailyPlan(env));
     ctx.waitUntil(runReminders(env));
     ctx.waitUntil(runMorningDigest(env));
+    if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runLedgerDaily(new SbClient(env)).catch((e) => console.error('ledger daily', e)));
   },
 
   // Cloudflare Email Routing → this Worker. Each address on

@@ -48,9 +48,11 @@ import { panel } from './ecom/ecomShared';
 import MarketingOverview from './marketing/MarketingOverview';
 import { useInbound } from '../../data/useInbound';
 import { Page, Tabs } from '../mm/Page';
+import OurBrandsTab from './marketing/OurBrandsTab';
 
-type EngineTab = 'stage-zero' | 'campaigns' | 'scripts' | 'inbound' | 'lists' | 'workers';
+type EngineTab = 'our-brands' | 'stage-zero' | 'campaigns' | 'scripts' | 'inbound' | 'lists' | 'workers';
 const ENGINE_TABS: { id: EngineTab; label: string }[] = [
+  { id: 'our-brands', label: 'Our Brands' },
   { id: 'campaigns', label: 'Campaigns' },
   { id: 'stage-zero', label: 'Stage Zero' },
   { id: 'scripts', label: 'Scripts' },
@@ -365,6 +367,7 @@ export default function MarketingScreen({ selectedClientId, onSelectClient, pend
         <MarketingOverview campaigns={campaignsApi.campaigns} pipeline={m.pipeline} inbound={inbound.rows} />
       )}
       <div>
+      {engineTab === 'our-brands' && <OurBrandsTab />}
       {engineTab === 'stage-zero' && <div style={{ marginTop: 16 }}><StageZeroTab api={stageZero} /></div>}
       {engineTab === 'scripts' && <div style={{ marginTop: 16 }}><ScriptsTab /></div>}
       {engineTab === 'inbound' && <div style={enginePanel}><InboundTab /></div>}

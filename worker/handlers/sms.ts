@@ -5,6 +5,7 @@
 // first text from an unknown number becomes an inbound lead (mkt_inbound).
 // The kill switch (marketing) or sms_settings.enabled=false logs the text
 // and notifies Marq instead of auto-replying.
+import { recordInbound } from '../lib/madeby';
 import { Sb, json, zonedNow } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
 import { OWNER_USER_ID, requireUser, isOwnerUser } from '../lib/auth';
@@ -38,6 +39,7 @@ export async function smsInbound(request: Request, env: SmsEnv): Promise<Respons
   const sb = new Sb(env);
   const u = OWNER_USER_ID;
   await sb.insert('sms_messages', { user_id: u, direction: 'in', counterpart: from, body: body.slice(0, 1600), provider: 'twilio', status: 'received', twilio_sid: params.MessageSid ?? null }).catch((e) => console.error('sms in', e));
+  await recordInbound(sb, u, { channel: 'sms', from, body, external_id: params.MessageSid ?? null }).catch(() => {});
   if (isOptOut(body)) return empty();
 
   // First text from this number → an inbound lead with its source.
