@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 import NovaPanel from './components/NovaPanel';
 import { useNavModulePrefs } from './data/useNavModulePrefs';
 import { useOwnerInbox } from './data/useOwnerInbox';
+import { usePendingApprovals } from './data/usePendingApprovals';
 import { HomeExtras } from './components/screens/home/HomeExtras';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
 import ProductTour, { filterTourSteps } from './components/ProductTour';
@@ -99,7 +100,7 @@ const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 const LEGACY_SCREENS = new Set<string>([]);
 
 const BUILT_SCREENS = [
-  'home', 'ecom-marketing', 'coupons', 'waitlist', 'comms', 'contracts', 'ledger', 'classroom', 'feed', 'peptides', 'money-move', 'tasks', 'brain-dump', 'ecom-clients', 'ecom-inbox', 'ecom-office', 'ecom-orders', 'ecom-stores', 'ecom-products', 'hq', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
+  'home', 'ecom-marketing', 'coupons', 'waitlist', 'comms', 'contracts', 'ledger', 'classroom', 'feed', 'peptides', 'money-move', 'tasks', 'brain-dump', 'ecom-clients', 'ecom-inbox', 'ecom-approvals', 'ecom-office', 'ecom-orders', 'ecom-stores', 'ecom-products', 'hq', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'leadflow', 'account-settings', 'prompt-voice-settings',
   'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access', 'changelog', 'dispatch', 'inbox', 'modules',
@@ -200,7 +201,8 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // portal switches to it like any deep link.
   const searchGroups = useMemo(() => portals.flatMap((p) => shellGroups(navAccess, isOwner, navPrefs.order, { portal: p }).map((g) => ({ ...g, title: p === 'masterminds' ? g.title : portalName(p) }))), [navAccess, isOwner, navPrefs.order, portals]);
   const crumb = crumbFor(state.screen, groups, portal);
-  const badges = { inbox: ownerInbox.items.filter((i) => i.unread).length, leads: leadFeed.waiting, urgent: leadFeed.urgent > 0 };
+  const ecomPending = usePendingApprovals(isOwner);
+  const badges = { inbox: ownerInbox.items.filter((i) => i.unread).length, leads: leadFeed.waiting, urgent: leadFeed.urgent > 0, screens: { 'ecom-approvals': ecomPending } };
   const toggleTheme = () => onThemeChange(resolvedTheme === 'dark' ? 'light' : 'dark');
   const toggleNova = () => (state.novaOpen ? actions.closeNova() : actions.openNova());
   // Desktop: Nova is a 360px column that pushes content. iPad: it slides
@@ -474,6 +476,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         
         {state.screen === 'hq' && <HqScreen />}
         {state.screen === 'ecom-products' && <EcomScreen section="products" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
+        {state.screen === 'ecom-approvals' && <EcomScreen section="approvals" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
         {state.screen === 'ecom-stores' && <EcomScreen section="stores" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
         {state.screen === 'ecom-orders' && <EcomScreen section="orders" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
         {state.screen === 'ecom-office' && <EcomScreen section="office" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}

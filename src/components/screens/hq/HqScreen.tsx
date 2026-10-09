@@ -31,7 +31,7 @@ interface Status {
 }
 type Tab = 'today' | 'flags' | 'spend' | 'log' | 'texting';
 const DOMAIN: Record<string, string> = { ecom: 'E-commerce', ecommerce: 'E-commerce', content: 'Content', marketing: 'Marketing', master: 'HQ', madeby: 'Made by', personal: 'Personal', 'orch:ecom': 'E-commerce', 'orch:content': 'Content', 'orch:marketing': 'Marketing' };
-const LINK_SCREEN: Record<string, string> = { approvals: 'ecom-inbox', office: 'ecom-office', stores: 'ecom-stores', content: 'content', setup: 'setup', hq: 'hq' };
+const LINK_SCREEN: Record<string, string> = { approvals: 'ecom-approvals', office: 'ecom-office', stores: 'ecom-stores', content: 'content', setup: 'setup', hq: 'hq' };
 const ago = (iso: string) => { const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000); return m < 60 ? `${m}m` : m < 1440 ? `${Math.round(m / 60)}h` : `${Math.round(m / 1440)}d`; };
 
 export function useHqStatus() {
@@ -75,7 +75,7 @@ export default function HqScreen() {
           )}
           <Card title="Waiting on you" meta={`${s.approvals.length} across every portal`} flush>
             {s.approvals.length === 0 ? <div style={{ padding: '4px 0 12px', color: 'var(--text-secondary)', fontSize: 14 }}>Nothing to approve.</div> : s.approvals.slice(0, 30).map((a, i) => (
-              <button key={a.id} onClick={() => nav(a.domain === 'content' ? 'content' : a.domain === 'marketing' ? 'marketing' : 'ecom-inbox')} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 0', border: 0, borderTop: i ? '1px solid var(--grid)' : 'none', background: 'transparent', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text)' }}>
+              <button key={a.id} onClick={() => nav(a.domain === 'content' ? 'content' : a.domain === 'marketing' ? 'marketing' : 'ecom-approvals')} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 0', border: 0, borderTop: i ? '1px solid var(--grid)' : 'none', background: 'transparent', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text)' }}>
                 <FlagDot flag={flagsApi.flagFor('approval', a.id)} />
                 <span style={{ flex: 1, minWidth: 0, fontSize: 14.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.title}</span>
                 <Chip k={a.is_money ? 'warn' : 'neutral'}>{DOMAIN[a.domain] ?? a.domain}{a.is_money && a.amount_usd != null ? ` · ${usd(a.amount_usd, 2)}` : ''}</Chip>

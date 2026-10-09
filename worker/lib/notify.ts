@@ -102,9 +102,9 @@ export async function notifyStored(sb: Sb, u: string, event: NotifyEvent, msg: N
 
 /** Which approvals ping Marq the moment a worker files them, and where the link goes. */
 export const APPROVAL_EVENTS: Record<string, { event: NotifyEvent; link: string; verb: string }> = {
-  product_pitch: { event: 'product_pitch', link: 'ecom-products', verb: 'Product pitch ready' },
-  brand_options: { event: 'brand_directions', link: 'ecom-inbox', verb: 'Brand directions ready to pick' },
-  store_draft: { event: 'store_preview', link: 'ecom-inbox', verb: 'Store preview ready to approve' },
+  product_pitch: { event: 'product_pitch', link: 'ecom-approvals', verb: 'Product pitch ready' },
+  brand_options: { event: 'brand_directions', link: 'ecom-approvals', verb: 'Brand directions ready to pick' },
+  store_draft: { event: 'store_preview', link: 'ecom-approvals', verb: 'Store preview ready to approve' },
   post_plan: { event: 'post_batch', link: 'content', verb: 'Posts ready to approve' },
   content_plan: { event: 'post_batch', link: 'content', verb: 'Post batch ready to approve' },
   content_kit: { event: 'post_batch', link: 'content', verb: 'Content kit ready for a new brand' },

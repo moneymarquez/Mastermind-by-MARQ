@@ -22,7 +22,7 @@ export const sidebarW = (d: Device) => (d === 'desktop' ? 248 : 232);
 export const NOVA_DOCK_W = 360;
 const SAFE_BOTTOM = 'max(env(safe-area-inset-bottom), 20px)';
 
-export interface Badges { inbox: number; leads: number; urgent: boolean }
+export interface Badges { inbox: number; leads: number; urgent: boolean; /** Pending count per module screen (sidebar row badges). */ screens?: Record<string, number> }
 /** The current portal and the ones this account can open. */
 export interface PortalNav { current: PortalKey; list: PortalKey[]; onSwitch: (k: PortalKey) => void }
 
@@ -210,6 +210,7 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
                   <button key={m.id} className="mm-nav-row" data-active={active || undefined} aria-current={active ? 'page' : undefined} style={{ height: rowH }} onClick={() => onNav(m.id)}>
                     <span style={{ width: 20, height: 20, flex: 'none', borderRadius: 6, background: active ? 'var(--accent)' : 'var(--surface-3)', color: active ? 'var(--bg)' : 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8.5, fontWeight: 700, letterSpacing: '-0.02em' }}>{m.glyph}</span>
                     <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.label}</span>
+                    {!!badges.screens?.[m.id] && <Badge n={badges.screens[m.id]} urgent={false} />}
                   </button>
                 );
               })}

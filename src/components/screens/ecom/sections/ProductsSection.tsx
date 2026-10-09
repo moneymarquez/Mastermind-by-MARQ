@@ -14,7 +14,7 @@ const STATUS_COLOR: Record<string, string> = { researching: E.faint, pitched: E.
 
 /** Products (brief §2.1/2.2): tonight's pitch first, the research queue,
  *  how past picks did against their confidence, then every product. */
-export default function ProductsSection({ approvals, search, onBuildBrand, onDecided }: { approvals: ReturnType<typeof useApprovals>; search: string; onBuildBrand: (input: { name: string; owner_type: 'mine' | 'client'; client_id: string | null; positioning: string | null; steps: Record<string, unknown>; current_step: number }, productId: string) => Promise<string | null>; onDecided: () => void }) {
+export default function ProductsSection({ approvals, search, onBuildBrand, onDecided, onOpenApprovals }: { approvals: ReturnType<typeof useApprovals>; onOpenApprovals: () => void; search: string; onBuildBrand: (input: { name: string; owner_type: 'mine' | 'client'; client_id: string | null; positioning: string | null; steps: Record<string, unknown>; current_step: number }, productId: string) => Promise<string | null>; onDecided: () => void }) {
   const pitches = usePitches();
   const builds = useBuilds();
   const [links, setLinks] = useState<{ brand_id: string; product_id: string }[]>([]);
@@ -64,7 +64,7 @@ export default function ProductsSection({ approvals, search, onBuildBrand, onDec
       <div>
         <div style={{ ...label, marginBottom: 8 }}>Every product the bots found</div>
         <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: 14, minWidth: 0 }}>
-          <ProductSheetsTab search={search} onBuildBrand={onBuildBrand} statusOf={statusOf} />
+          <ProductSheetsTab search={search} onBuildBrand={onBuildBrand} statusOf={statusOf} onOpenApprovals={onOpenApprovals} />
         </div>
       </div>
     </div>

@@ -13,6 +13,7 @@ export type Screen =
   | 'tasks'
   | 'brain-dump'
   | 'ecom-clients'
+  | 'ecom-approvals'
   | 'ecom-inbox'
   | 'ecom-office'
   | 'ecom-orders'

@@ -13,6 +13,7 @@ import { runScout } from '../../../data/useEngine';
 
 interface Props {
   search: string;
+  onOpenApprovals?: () => void;
   /** Pipeline status per product (Products nav): researching / pitched / approved / rejected / building / live. */
   statusOf?: (productId: string) => { label: string; color: string } | null;
   onBuildBrand: (input: { name: string; owner_type: 'mine' | 'client'; client_id: string | null; positioning: string | null; steps: Record<string, unknown>; current_step: number }, productId: string) => Promise<string | null>;
@@ -21,7 +22,7 @@ interface Props {
 /** §5 — the sheets: a channel per pill, top products ranked, cards with
  *  pictures (table is the optional toggle), the drawer with every section,
  *  CSV import as the v1 source adapter. */
-export default function ProductSheetsTab({ search, onBuildBrand, statusOf }: Props) {
+export default function ProductSheetsTab({ search, onBuildBrand, statusOf, onOpenApprovals }: Props) {
   const [scouting, setScouting] = useState(false);
   const [scoutMsg, setScoutMsg] = useState('');
   const api = useEcomProducts();
@@ -78,9 +79,9 @@ export default function ProductSheetsTab({ search, onBuildBrand, statusOf }: Pro
         <div style={{ marginTop: 14 }}>
           <TeachingEmpty what={`No ${CHANNELS.find((c) => c.id === channel)?.label} products yet.`} worker="Product Scout (web search over public pages; FastMoss / Jungle Scout later) — or a CSV from any tool" connection="Anthropic key (Setup)"
             action={<div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <button style={btn('primary')} disabled={scouting} onClick={async () => { setScouting(true); setScoutMsg(''); const r = await runScout(channel, 10); setScouting(false); setScoutMsg(r.ok ? `Scout found ${r.count} — approve them in Approvals to add them here.` : r.error ?? 'Scout failed.'); }}>{scouting ? 'Scouting… (30–90s)' : 'Run Product Scout'}</button>
+              <button style={btn('primary')} disabled={scouting} onClick={async () => { setScouting(true); setScoutMsg(''); const r = await runScout(channel, 10); setScouting(false); setScoutMsg(r.ok ? `Scout found ${r.count}.` : r.error ?? 'Scout failed.'); }}>{scouting ? 'Scouting… (30–90s)' : 'Run Product Scout'}</button>
               <button style={btn('ghost')} onClick={() => setImportOpen(true)}>Import a CSV</button>
-              {scoutMsg && <span style={{ fontSize: 'var(--text-caption)', color: scoutMsg.startsWith('Scout found') ? E.green : E.red }}>{scoutMsg}</span>}
+              {scoutMsg && <span style={{ fontSize: 'var(--text-caption)', color: scoutMsg.startsWith('Scout found') ? E.green : E.red }}>{scoutMsg}{scoutMsg.startsWith('Scout found') && onOpenApprovals && <> <button type="button" onClick={onOpenApprovals} style={{ background: 'none', border: 0, padding: 0, color: E.blue, textDecoration: 'underline', cursor: 'pointer', font: 'inherit' }}>Review them in Approvals →</button></>}</span>}
             </div>} />
         </div>
       )}

@@ -15,11 +15,12 @@ import StoresSection from './sections/StoresSection';
 import OrdersSection from './sections/OrdersSection';
 import OfficeSection from './sections/OfficeSection';
 import InboxSection from './sections/InboxSection';
+import ApprovalsTab from './ApprovalsTab';
 import ClientStoresSection from './sections/ClientStoresSection';
 import BrandMarketing from '../marketing/BrandMarketing';
 import { TAB_TYPES } from '../../../data/mktBrands';
 
-export type EcomSection = 'overview' | 'products' | 'stores' | 'orders' | 'marketing' | 'office' | 'inbox' | 'clients';
+export type EcomSection = 'overview' | 'products' | 'approvals' | 'stores' | 'orders' | 'marketing' | 'office' | 'inbox' | 'clients';
 interface Props {
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
@@ -30,11 +31,12 @@ interface Props {
  *  E-commerce portal; 'overview' is the landing page with counts. */
 export const SECTIONS: { id: Exclude<EcomSection, 'overview'>; screen: string; label: string; sub: string }[] = [
   { id: 'products', screen: 'ecom-products', label: 'Products', sub: 'Tonight\'s pitch, the research queue, and every product the bots found.' },
+  { id: 'approvals', screen: 'ecom-approvals', label: 'Approvals', sub: 'Products, brand directions, store previews and money moves waiting for your OK.' },
   { id: 'stores', screen: 'ecom-stores', label: 'Sites', sub: 'Every product\'s own website — all checking out through your one Shopify store.' },
   { id: 'orders', screen: 'ecom-orders', label: 'Orders', sub: 'Shopify orders, margins and supplier status.' },
   { id: 'marketing', screen: 'ecom-marketing', label: 'Marketing', sub: 'One plan per product: hooks, drafts waiting for approval, and the orders they drive.' },
   { id: 'office', screen: 'ecom-office', label: 'Office', sub: 'Who\'s working, what they did, and the kill switch.' },
-  { id: 'inbox', screen: 'ecom-inbox', label: 'Inbox', sub: 'Approvals, store mail and order problems.' },
+  { id: 'inbox', screen: 'ecom-inbox', label: 'Inbox', sub: 'Customer email and order problems.' },
   { id: 'clients', screen: 'ecom-clients', label: 'Client Stores', sub: 'Every subscriber\'s stores, revenue and flags.' },
 ];
 /** Which section an open flag belongs to, from its deep link. */
@@ -44,7 +46,7 @@ export function sectionOfFlag(link: string | null, entityType: string): Exclude<
   if (entityType === 'worker') return 'office';
   if (entityType === 'order') return 'orders';
   if (entityType === 'product' || entityType === 'pitch') return 'products';
-  if (entityType === 'approval') return 'inbox';
+  if (entityType === 'approval') return 'approvals';
   return 'stores';
 }
 const DAILY_CAP_USD = 1;
@@ -161,7 +163,7 @@ export default function EcomScreen({ section = 'overview' }: Props) {
           <div style={{ display: 'grid', gridTemplateColumns: phone ? '1fr 1fr' : 'repeat(3,minmax(0,1fr))', gap: 10 }}>
             {SECTIONS.map((x) => {
               const c = counts(x.id);
-              const extra = x.id === 'inbox' ? counters.pendingApprovals : 0;
+              const extra = x.id === 'approvals' ? counters.pendingApprovals : 0;
               return (
                 <button key={x.id} className="mm-btn" onClick={() => nav(x.screen)} style={{ height: 'auto', padding: 14, borderRadius: 14, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, textAlign: 'left' }}>
                   <span style={{ display: 'flex', gap: 6, alignItems: 'center', width: '100%' }}>
@@ -175,10 +177,11 @@ export default function EcomScreen({ section = 'overview' }: Props) {
               );
             })}
           </div>
-          <EcomOverview brands={brands.brands} orders30d={brands.orders30d} approvals={approvals.approvals} onOpenBrand={(id) => openInStores(id)} onOpenApprovals={() => nav('ecom-inbox')} />
+          <EcomOverview brands={brands.brands} orders30d={brands.orders30d} approvals={approvals.approvals} onOpenBrand={(id) => openInStores(id)} onOpenApprovals={() => nav('ecom-approvals')} />
         </>
       )}
-      {section === 'products' && <ProductsSection approvals={approvals} search={search} onBuildBrand={buildBrand} onDecided={refreshAll} />}
+      {section === 'approvals' && <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: phone ? 14 : 16 }}><ApprovalsTab api={approvals} onDecided={refreshAll} /></div>}
+      {section === 'products' && <ProductsSection approvals={approvals} onOpenApprovals={() => nav('ecom-approvals')} search={search} onBuildBrand={buildBrand} onDecided={refreshAll} />}
       {section === 'stores' && (
         <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: phone ? 14 : 20, minWidth: 0 }}>
           <StoresSection api={brands} clients={clients.clients} search={search} openBrandId={openBrandId} onOpenBrand={setOpenBrandId} newBrandOpen={newBrandOpen} onCloseNewBrand={() => setNewBrandOpen(false)} />
@@ -187,7 +190,7 @@ export default function EcomScreen({ section = 'overview' }: Props) {
       {section === 'orders' && <OrdersSection brands={brands.brands} />}
       {section === 'marketing' && <BrandMarketing types={TAB_TYPES.ecommerce} empty="Product brands appear here once you approve a Product Pitch. Each one gets its own plan, idea bank and orders from its own site." />}
       {section === 'office' && <OfficeSection onRan={refreshAll} />}
-      {section === 'inbox' && <InboxSection approvals={approvals} brands={brands.brands} onDecided={refreshAll} />}
+      {section === 'inbox' && <InboxSection brands={brands.brands} />}
       {section === 'clients' && <ClientStoresSection />}
 
       <Drawer open={alertsOpen} onClose={() => setAlertsOpen(false)} title="Alerts" subtitle="Only things that need a human." width={440}>
