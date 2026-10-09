@@ -9,10 +9,11 @@
 // tested in tests/ecom-october.test.ts.
 import { extractJson } from './scout';
 import { prohibitedReason } from './sites';
-import { landedCost, marginPct } from '../../src/data/ecomProducts';
+import { landedCost, marginPct, testCost, fitsBudget, TEST_BUDGET_USD } from '../../src/data/ecomProducts';
+export { testCost, fitsBudget };
 
 export interface PitchRules { minProfitUsd: number; minMarginPct: number; priceMin: number; priceMax: number; testBudgetUsd: number }
-export const PITCH_RULES: PitchRules = { minProfitUsd: 10, minMarginPct: 35, priceMin: 20, priceMax: 80, testBudgetUsd: 100 };
+export const PITCH_RULES: PitchRules = { minProfitUsd: 10, minMarginPct: 35, priceMin: 20, priceMax: 80, testBudgetUsd: TEST_BUDGET_USD };
 
 export interface UnitMath { sell: number; supplier: number; ship: number; landed: number; profit: number; marginPct: number; breakEvenOrders: number }
 /** Landed cost uses the same formula as Product Sheets (supplier + ship + 3% fees + 7.5% returns). */
@@ -32,6 +33,7 @@ export function passesHardFilter(p: PitchCandidate, r: PitchRules = PITCH_RULES)
   if (math.sell < r.priceMin || math.sell > r.priceMax) reasons.push(`sells at $${math.sell.toFixed(2)}, outside $${r.priceMin}–$${r.priceMax}`);
   if (math.profit < r.minProfitUsd) reasons.push(`$${math.profit.toFixed(2)} profit per order, under $${r.minProfitUsd}`);
   if (math.marginPct < r.minMarginPct) reasons.push(`${math.marginPct.toFixed(0)}% margin, under ${r.minMarginPct}%`);
+  if (!fitsBudget(p.supplier_cost, p.detail?.ship_cost)) reasons.push(`a sample + domain is $${testCost(Number(p.supplier_cost), Number(p.detail?.ship_cost ?? 0)).toFixed(2)}, over the $${r.testBudgetUsd} test budget`);
   if (p.detail?.fragile) reasons.push('fragile');
   const banned = prohibitedReason(`${p.name} ${p.category ?? ''}`);
   if (banned) reasons.push(`not allowed in the shared store: ${banned}`);

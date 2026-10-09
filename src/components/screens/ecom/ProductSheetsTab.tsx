@@ -8,6 +8,7 @@ import { useEcomProducts, linkProductToBrand } from '../../../data/useEcom';
 import { E, Pill, Badge, ConfidenceBadge, TeachingEmpty, btn, field, label } from './ecomShared';
 import ProductDrawer from './ProductDrawer';
 import CsvImportDrawer from './CsvImportDrawer';
+import { api as callApi } from '../../../lib/api';
 import { runScout } from '../../../data/useEngine';
 
 interface Props {
@@ -42,6 +43,13 @@ export default function ProductSheetsTab({ search, onBuildBrand, statusOf }: Pro
     if (id) { await linkProductToBrand(id, p.id); setOpenId(null); }
   };
 
+  const [testMsg, setTestMsg] = useState<Record<string, string>>({});
+  const testOne = async (p: Product) => {
+    setTestMsg((m) => ({ ...m, [p.id]: 'Starting…' }));
+    const r = await callApi<{ ok?: boolean; error?: string; note?: string; existing?: boolean }>('/api/engine/test-product', { body: { product_id: p.id } });
+    setTestMsg((m) => ({ ...m, [p.id]: r.error ?? `${r.existing ? '' : 'Brand started: directions and shipping plan are being drafted. '}${r.note ?? ''}` }));
+  };
+
   const counts = Object.fromEntries(CHANNELS.map((c) => [c.id, c.id === 'rising' ? api.products.filter((p) => p.velocity === 'rising').length : api.products.filter((p) => p.channel === c.id).length]));
 
   return (
@@ -60,6 +68,8 @@ export default function ProductSheetsTab({ search, onBuildBrand, statusOf }: Pro
         <select style={{ ...field, width: 'auto' }} value={filters.difficulty} onChange={(e) => setFilters((f) => ({ ...f, difficulty: e.target.value as SheetFilters['difficulty'] }))}><option value="any">Any content difficulty</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={label}>Trending ≥</span><input style={{ ...field, width: 56, fontFamily: 'var(--font-mono)' }} inputMode="numeric" value={filters.minDays || ''} placeholder="0" onChange={(e) => setFilters((f) => ({ ...f, minDays: Number(e.target.value) || 0 }))} />d</span>
         <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: E.muted, cursor: 'pointer' }}><input type="checkbox" checked={filters.hideSaturated} onChange={(e) => setFilters((f) => ({ ...f, hideSaturated: e.target.checked }))} />Hide saturated</label>
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: E.muted, cursor: 'pointer' }} title="A sample plus its domain costs $50 or less"><input type="checkbox" checked={!!filters.fitsBudget} onChange={(e) => setFilters((f) => ({ ...f, fitsBudget: e.target.checked }))} />Fits $50 budget</label>
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: E.muted, cursor: 'pointer' }} title="At least $10 profit per order and a 35% margin"><input type="checkbox" checked={!!filters.marginFloor} onChange={(e) => setFilters((f) => ({ ...f, marginFloor: e.target.checked }))} />$10 &amp; 35% floor</label>
         <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: E.muted, cursor: 'pointer' }}><input type="checkbox" checked={filters.watchedOnly} onChange={(e) => setFilters((f) => ({ ...f, watchedOnly: e.target.checked }))} />☆ Watched</label>
         <span style={{ marginLeft: 'auto', color: E.faint, fontSize: 'var(--text-caption)' }}>{rows.length} of {inChannel.length} · showing top {Math.min(limit, rows.length)}</span>
       </div>
@@ -79,7 +89,7 @@ export default function ProductSheetsTab({ search, onBuildBrand, statusOf }: Pro
       {view === 'cards' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12, marginTop: 14 }}>
           {rows.slice(0, limit).map((p) => (
-            <ProductCard key={p.id} p={p} ranks={(api.snapshots[p.id] ?? []).map((s) => s.rank)} onOpen={() => setOpenId(p.id)} onWatch={() => api.toggleWatch(p)} onBuild={() => buildBrand(p)} statusOf={statusOf} />
+            <ProductCard key={p.id} p={p} ranks={(api.snapshots[p.id] ?? []).map((s) => s.rank)} onOpen={() => setOpenId(p.id)} onWatch={() => api.toggleWatch(p)} onBuild={() => buildBrand(p)} onTest={() => void testOne(p)} testMsg={testMsg[p.id]} statusOf={statusOf} />
           ))}
         </div>
       ) : (
@@ -115,7 +125,7 @@ export default function ProductSheetsTab({ search, onBuildBrand, statusOf }: Pro
   );
 }
 
-function ProductCard({ p, ranks, onOpen, onWatch, onBuild, statusOf }: { p: Product; ranks: (number | null)[]; onOpen: () => void; onWatch: () => void; onBuild: () => void; statusOf?: Props['statusOf'] }) {
+function ProductCard({ p, ranks, onOpen, onWatch, onBuild, onTest, testMsg, statusOf }: { p: Product; ranks: (number | null)[]; onOpen: () => void; onWatch: () => void; onBuild: () => void; onTest: () => void; testMsg?: string; statusOf?: Props['statusOf'] }) {
   const path = sparklinePath(ranks);
   const trend = rankTrend(ranks);
   const healthy = marginHealthy(p.sell_price, p.landed_cost);
@@ -153,8 +163,10 @@ function ProductCard({ p, ranks, onOpen, onWatch, onBuild, statusOf }: { p: Prod
       <div style={{ display: 'flex', gap: 6, padding: '10px 14px 12px', marginTop: 'auto' }}>
         <button style={{ ...btn('ghost'), padding: '7px 10px' }} onClick={onWatch} title="Watch">{p.watched ? '★' : '☆'}</button>
         <button style={{ ...btn('ghost'), padding: '7px 12px' }} onClick={onOpen}>Research</button>
-        <button style={{ ...btn('primary'), padding: '7px 12px', marginLeft: 'auto' }} onClick={onBuild}>Build a brand from this</button>
+        <button style={{ ...btn('ghost'), padding: '7px 12px', marginLeft: 'auto' }} onClick={onBuild}>Build a brand</button>
+        <button style={{ ...btn('primary'), padding: '7px 12px' }} onClick={onTest} disabled={testMsg === 'Starting…'}>I want to test this one</button>
       </div>
+      {testMsg && testMsg !== 'Starting…' && <div style={{ padding: '0 14px 12px', fontSize: 'var(--text-caption)', color: E.muted }}>{testMsg}</div>}
     </div>
   );
 }

@@ -3,10 +3,12 @@ import { createHmac } from 'node:crypto';
 import { unitMath, passesHardFilter, pickTop, outcomeRange, parsePitch, pickAccuracy, PITCH_RULES } from '../worker/lib/pitch';
 import type { PitchCandidate } from '../worker/lib/pitch';
 import { planVisuals } from '../worker/lib/visual';
-import { orderMargin, shopifyHmacValid } from '../worker/lib/ecomOctober';
+import { orderMargin, shopifyHmacValid, testProduct } from '../worker/lib/ecomOctober';
 import { layoutGraph } from '../src/components/office/OfficeGraph';
 import { buildGraphData } from '../src/data/officeGraph';
 import type { GWorker } from '../src/data/officeGraph';
+import { fitsBudget, testCost, clearsMarginFloor, filterProducts, DEFAULT_FILTERS } from '../src/data/ecomProducts';
+import type { Product } from '../src/data/ecomProducts';
 import { productStatus, orderTotals } from '../src/data/ecomOctoberPure';
 
 const cand = (id: string, sell: number, cost: number, score: number, extra: Partial<PitchCandidate['detail']> = {}): PitchCandidate => ({ id, name: `P${id}`, sell_price: sell, supplier_cost: cost, score, detail: { ship_cost: 4, ...extra } });
@@ -16,7 +18,7 @@ describe('product pitch', () => {
     const m = unitMath(40, 8, 4);
     expect(m.landed).toBeCloseTo(8 + 4 + 40 * 0.105, 2);
     expect(m.profit).toBeCloseTo(40 - m.landed, 2);
-    expect(m.breakEvenOrders).toBe(Math.ceil(100 / m.profit));
+    expect(m.breakEvenOrders).toBe(Math.ceil(50 / m.profit));
   });
   it('hard filter rejects thin margin, out-of-range price and fragile items', () => {
     expect(passesHardFilter(cand('a', 40, 8, 7)).pass).toBe(true);
@@ -128,5 +130,45 @@ describe('office graph', () => {
     for (const p of a) { expect(p.x).toBeGreaterThanOrEqual(0); expect(p.x).toBeLessThanOrEqual(1000); expect(p.y).toBeLessThanOrEqual(420); }
     expect(layoutGraph(g, 1000, 420)).toEqual(a);
     expect(a.find((p) => p.kind === 'hq')!.y).toBeLessThan(a.find((p) => p.kind === 'orchestrator')!.y);
+  });
+});
+
+describe('$50 test budget and "I want to test this one"', () => {
+  it('fitsBudget = sample + shipping + a $12 domain within $50', () => {
+    expect(testCost(20, 5)).toBe(37);
+    expect(fitsBudget(20, 5)).toBe(true);
+    expect(fitsBudget(34, 5)).toBe(false);
+    expect(fitsBudget(null, 0)).toBe(false);
+  });
+  it('the pitch hard filter drops products that do not fit the budget', () => {
+    const r = passesHardFilter(cand('x', 79, 40, 9, { ship_cost: 3 }));
+    expect(r.pass).toBe(false);
+    expect(r.reasons.join()).toMatch(/test budget/);
+    expect(passesHardFilter(cand('ok', 40, 8, 7)).pass).toBe(true);
+  });
+  it('sheet filters: budget and the $10 / 35% floor', () => {
+    const row = (id: string, sell: number, landed: number, supplier: number): Product => ({ id, sell_price: sell, landed_cost: landed, margin_pct: ((sell - landed) / sell) * 100, supplier_cost: supplier, detail: {}, name: id } as unknown as Product);
+    const rows = [row('good', 40, 20, 8), row('thin', 40, 36, 30), row('pricey', 90, 40, 45)];
+    expect(clearsMarginFloor(rows[0])).toBe(true);
+    expect(clearsMarginFloor(rows[1])).toBe(false);
+    expect(filterProducts(rows, { ...DEFAULT_FILTERS, marginFloor: true }).map((p) => p.id)).toEqual(['good', 'pricey']);
+    expect(filterProducts(rows, { ...DEFAULT_FILTERS, fitsBudget: true }).map((p) => p.id)).toEqual(['good', 'thin']);
+  });
+  it('testProduct builds a brand from any product once, even one the pitch would reject', async () => {
+    const inserts: { t: string; row: Record<string, unknown> }[] = [];
+    let linked = false;
+    const product = { id: 'p1', name: 'Odd Gadget', sell_price: 25, supplier_cost: 22, channel: 'tiktok', detail: { ship_cost: 6 }, category: 'Gadgets', images: [] };
+    const sb = {
+      get: async (path: string) => (path.startsWith('ecom_products') ? [product] : path.startsWith('ecom_brand_products') ? (linked ? [{ brand_id: 'b1' }] : []) : []),
+      insert: async (t: string, row: Record<string, unknown>) => { inserts.push({ t, row }); if (t === 'ecom_brand_products') linked = true; return [{ id: 'b1' }]; },
+      patch: async () => [],
+    } as never;
+    const first = await testProduct(sb, 'u1', 'p1');
+    expect(first).toMatchObject({ brand_id: 'b1', existing: false, cost: 40 });
+    expect(first.note).toMatch(/inside the \$50/);
+    expect(inserts.map((i) => i.t)).toEqual(['ecom_brands', 'ecom_brand_products']);
+    const again = await testProduct(sb, 'u1', 'p1');
+    expect(again.existing).toBe(true);
+    expect(inserts).toHaveLength(2);
   });
 });

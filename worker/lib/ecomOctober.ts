@@ -9,7 +9,7 @@ import { runWorker, TZ, brandFor } from './engine';
 import type { RunOutcome, Trigger } from './engine';
 import { BLOCKED_DOMAINS } from './scout';
 import { researchSearch } from './research';
-import { pickTop, parsePitch, pitchSystem, unitMath, PITCH_RULES } from './pitch';
+import { pickTop, parsePitch, pitchSystem, unitMath, PITCH_RULES, testCost } from './pitch';
 import type { PitchCandidate, PitchPayload } from './pitch';
 import { ROLE_MODEL } from './models';
 import { guardSpend } from './controls';
@@ -62,6 +62,23 @@ export async function approvePitch(sb: Sb, u: string, raw: Record<string, unknow
   await sb.insert('ecom_brand_products', { user_id: u, brand_id: brand.id, product_id: p.id, stage: 'testing' }, { upsert: 'brand_id,product_id' }).catch(() => {});
   if (pitch.pitch_id) await sb.patch('ecom_pitches', `id=eq.${pitch.pitch_id}&user_id=eq.${u}`, { status: 'approved', brand_id: brand.id, updated_at: now() }).catch(() => {});
   return { brand_id: brand.id };
+}
+
+/** "I want to test this one": any product on the sheet, whatever the filters say.
+ *  The brand is born from the product's own numbers (no pitch needed) and the
+ *  same follow-ups queue (the caller runs Brand Lab + Supplier Finder). Safe to
+ *  tap twice: a product already being tested returns its brand. */
+export async function testProduct(sb: Sb, u: string, productId: string): Promise<{ brand_id: string; existing: boolean; cost: number; note: string }> {
+  const [p] = await sb.get<Product & { detail: { ship_cost?: number } | null }>(`ecom_products?id=eq.${productId}&user_id=eq.${u}&select=*`);
+  if (!p) throw new Error('That product is no longer in the sheet.');
+  const [link] = await sb.get<{ brand_id: string }>(`ecom_brand_products?user_id=eq.${u}&product_id=eq.${productId}&select=brand_id&limit=1`);
+  const ship = Number(p.detail?.ship_cost ?? 0), sup = Number(p.supplier_cost ?? 0), sell = Number(p.sell_price ?? 0);
+  const cost = testCost(sup, ship);
+  if (link) return { brand_id: link.brand_id, existing: true, cost, note: 'Already being tested.' };
+  const math = unitMath(sell, sup, ship);
+  const { brand_id } = await approvePitch(sb, u, { product_id: p.id, product_name: p.name, math, reasons: ['You chose to test this one.'], risks: [], sellers: [], pitch_id: null });
+  const note = p.sell_price == null || p.supplier_cost == null ? 'No price or supplier cost yet; Supplier Finder will fill them in.' : cost > PITCH_RULES.testBudgetUsd ? `Heads up: a sample + domain is about $${cost.toFixed(0)}, over the $${PITCH_RULES.testBudgetUsd} test budget, so each spend will wait for your approval.` : `A sample + domain is about $${cost.toFixed(0)}, inside the $${PITCH_RULES.testBudgetUsd} test budget.`;
+  return { brand_id, existing: false, cost, note };
 }
 
 /** Reject (send back / kill): the reason is a correction the next pitch reads. */

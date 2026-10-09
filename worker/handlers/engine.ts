@@ -10,7 +10,7 @@ import { nextDailyStep, planFor } from '../lib/orchestrator';
 import { runPublisher, requeue } from '../lib/publisher';
 import type { PublishEnv } from '../lib/publisher';
 import { runLauncher } from '../lib/launcher';
-import { rejectPitch, runProductPitch } from '../lib/ecomOctober';
+import { rejectPitch, runProductPitch, testProduct } from '../lib/ecomOctober';
 import type { Venture, ScriptChannel } from '../../src/data/mktEngine';
 import type { Channel } from '../../src/data/ecom';
 import { PLAYBOOK_MAX_CHARS } from '../../src/data/ecom';
@@ -130,6 +130,17 @@ export async function engineRoute(request: Request, env: EngineEnv, path: string
       }
       const r = await runProductPitch(env.ANTHROPIC_API_KEY, sb, user.id, { exclude, instructions: b?.instructions?.slice(0, 2000) ?? null, trigger: 'manual' });
       return json(r, r.ok ? 200 : r.capReached ? 429 : 502);
+    }
+    // "I want to test this one": any product on the sheet becomes a brand and runs the same pipeline as an approved pitch.
+    if (path === 'test-product') {
+      const b = await body<{ product_id?: string }>(request);
+      if (!b?.product_id || !UUID.test(b.product_id)) return json({ error: 'product_id is required.' }, 400);
+      const r = await testProduct(sb, user.id, b.product_id);
+      if (!r.existing) {
+        const job = (async () => { await RUNNERS.brandlab(env.ANTHROPIC_API_KEY, sb, user.id, { brandId: r.brand_id, trigger: 'approval' }); await RUNNERS.supplier(env.ANTHROPIC_API_KEY, sb, user.id, { brandId: r.brand_id, trigger: 'approval' }); })().catch((e) => console.error('test-product follow-up', e));
+        if (ctx) ctx.waitUntil(job); else await job;
+      }
+      return json({ ok: true, ...r });
     }
     // "Launch again" on a store build after fixing what the last try said.
     if (path === 'launch') {
