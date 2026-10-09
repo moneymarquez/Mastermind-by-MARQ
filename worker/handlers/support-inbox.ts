@@ -159,7 +159,11 @@ interface InboundMessage {
 async function storeInboundMessage(env: SupportInboxEnv, m: InboundMessage): Promise<boolean> {
   let category: string | null = null;
   let draft: string | null = null;
-  if (env.ANTHROPIC_API_KEY) {
+  // accounts@ is the sign-up address for the business's own tools: receipts
+  // and renewals, nothing to reply to, so no AI triage (and no AI cost).
+  const isAccounts = /^accounts@/i.test((m.toEmail.match(/<([^>]+)>/)?.[1] ?? m.toEmail).trim());
+  if (isAccounts) category = 'billing';
+  else if (env.ANTHROPIC_API_KEY) {
     const triage = await triageWithClaude(env.ANTHROPIC_API_KEY, m.fromEmail, m.toEmail, m.subject, m.bodyText);
     if (triage) { category = triage.category; draft = triage.draft; }
   }
