@@ -5,6 +5,7 @@ import Home from './Home';
 import Unbuilt from './Unbuilt';
 import Product from './Product';
 import Jobs from './Jobs';
+import { SmsOptIn, Privacy, Terms } from './Legal';
 
 // Public site entry. Deliberately separate from the app: it never imports
 // src/index.css, the app's theme hooks or Supabase, and its pages are not
@@ -14,6 +15,6 @@ const page = root.dataset.page ?? 'home';
 
 createRoot(root).render(
   <StrictMode>
-    {page === 'home' ? <Home /> : page === 'product' ? <Product /> : page === 'jobs' ? <Jobs /> : <Unbuilt page={page} />}
+    {page === 'home' ? <Home /> : page === 'product' ? <Product /> : page === 'jobs' ? <Jobs /> : page === 'sms' ? <SmsOptIn /> : page === 'privacy' ? <Privacy /> : page === 'terms' ? <Terms /> : <Unbuilt page={page} />}
   </StrictMode>,
 );

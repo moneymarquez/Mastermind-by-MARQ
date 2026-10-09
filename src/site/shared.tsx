@@ -143,7 +143,7 @@ export function Footer({ mob, onHome }: { mob: boolean; onHome?: boolean }) {
           <div style={S('display:flex; align-items:center; gap:8px;')}><Mark bg="#ededf3" fg="#171721" /><span style={S('font-size:16px; font-weight:700;')}>Masterminds</span></div>
           <div style={S('display:flex; gap:56px; flex-wrap:wrap; font-size:15px;')}>
             {col('PRODUCT', [['Product', LINKS.product], ['Pricing', onHome ? '#start' : LINKS.pricing], ['Concepts', LINKS.concepts], ['Jobs', LINKS.jobs]])}
-            {col('HELP', [['Apply', LINKS.apply], ['FAQ', onHome ? '#faq' : LINKS.faq]])}
+            {col('HELP', [['Apply', LINKS.apply], ['FAQ', onHome ? '#faq' : LINKS.faq], ['Text updates', '/sms']])}
             {col('LEGAL', [['Privacy', LINKS.privacy], ['Terms', LINKS.terms], ['Refund', LINKS.refund], ['Disclaimers', LINKS.disclaimers]])}
           </div>
         </div>

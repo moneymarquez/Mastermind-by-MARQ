@@ -50,7 +50,7 @@ import { setNotifyEnv } from './lib/notify';
 import { setVisualEnv } from './lib/visual';
 import { hqRoute } from './handlers/hq';
 import type { HqEnv } from './handlers/hq';
-import { smsInbound, smsSettingsRoute } from './handlers/sms';
+import { smsInbound, smsSettingsRoute, smsOptin } from './handlers/sms';
 import { shopifyWebhook, ecomRoute } from './handlers/ecom';
 import type { EcomEnv } from './handlers/ecom';
 import type { SmsEnv } from './handlers/sms';
@@ -129,6 +129,7 @@ export default {
 
     const hqMatch = url.pathname.match(/^\/api\/hq\/([a-z-]+)$/);
     if (hqMatch) return hqRoute(request, env, hqMatch[1]);
+    if (url.pathname === '/api/sms/optin') return smsOptin(request, env);
     if (url.pathname === '/api/sms/inbound') return smsInbound(request, env);
     if (url.pathname === '/api/webhooks/shopify') return shopifyWebhook(request, env);
     const ecomMatch = url.pathname.match(/^\/api\/ecom\/([a-z-]+)$/);

@@ -20,9 +20,26 @@ import { loadControls, isPaused } from '../lib/controls';
 import { notify } from '../lib/notify';
 import type { NotifyEnv } from '../lib/notify';
 import { isDryRun } from '../lib/dryRun';
+import { sendTwilioSms } from '../lib/twilio';
+import { toE164 } from '../lib/phone';
 
 export type SmsEnv = DigestEnv & XaiEnv & NotifyEnv & { ANTHROPIC_API_KEY?: string };
 const digits = (s: string | undefined) => (s ?? '').replace(/\D/g, '');
+/** POST /api/sms/optin — the public /sms sign-up form (A2P 10DLC call to
+ *  action). Stores proof of consent and sends one confirmation text
+ *  (DRY_RUN aware; nothing goes out until Twilio is connected). */
+export async function smsOptin(request: Request, env: SmsEnv): Promise<Response> {
+  if (request.method !== 'POST') return json({ error: 'POST only' }, 405);
+  const b = (await request.json().catch(() => ({}))) as { phone?: string; name?: string; consent?: string; page?: string };
+  const phone = toE164(b.phone);
+  if (!/^\+1\d{10}$/.test(phone)) return json({ error: 'Enter a 10-digit US mobile number.' }, 400);
+  if (!b.consent || b.consent.length < 40) return json({ error: 'Check the consent box first.' }, 400);
+  const sb = new Sb(env);
+  await sb.insert('sms_optins', { phone, name: (b.name ?? '').slice(0, 120) || null, consent_text: b.consent.slice(0, 2000), page: (b.page ?? '').slice(0, 300) || null, ip: request.headers.get('cf-connecting-ip') ?? null, user_agent: (request.headers.get('user-agent') ?? '').slice(0, 300) });
+  await sendTwilioSms(env, phone, 'Masterminds by MARQ: You\'re signed up for daily planning texts. Msg frequency varies (about 1-3/day). Msg & data rates may apply. Reply HELP for help, STOP to opt out.').catch(() => null);
+  return json({ ok: true });
+}
+
 const empty = () => new Response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', { headers: { 'content-type': 'text/xml' } });
 
 export async function smsInbound(request: Request, env: SmsEnv): Promise<Response> {
@@ -40,7 +57,7 @@ export async function smsInbound(request: Request, env: SmsEnv): Promise<Respons
   const u = OWNER_USER_ID;
   await sb.insert('sms_messages', { user_id: u, direction: 'in', counterpart: from, body: body.slice(0, 1600), provider: 'twilio', status: 'received', twilio_sid: params.MessageSid ?? null }).catch((e) => console.error('sms in', e));
   await recordInbound(sb, u, { channel: 'sms', from, body, external_id: params.MessageSid ?? null }).catch(() => {});
-  if (isOptOut(body)) return empty();
+  if (isOptOut(body)) { await sb.patch('sms_optins', `phone=eq.${encodeURIComponent(toE164(from))}&opted_out_at=is.null`, { opted_out_at: new Date().toISOString() }).catch(() => {}); return empty(); }
 
   // First text from this number → an inbound lead with its source.
   const seen = await sb.count(`sms_messages?user_id=eq.${u}&counterpart=eq.${encodeURIComponent(from)}&direction=eq.in`);
