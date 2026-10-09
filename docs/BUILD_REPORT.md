@@ -107,3 +107,44 @@ npm ci && npm run build && npx wrangler deploy
 - **No real sends without three gates.** No feature sends, posts, spends or publishes for real unless a key is connected, `DRY_RUN` is unset, and nothing is paused. Money-moving actions also go through `checkSpend`: above $25 needs approval; above the monthly cap is blocked and raises a red flag.
 - **Migrations are additive** and were applied to production with Marq's OK on Oct 9. No user data is deleted. Moving a module behind Teams hides it; its data stays.
 - **No secrets in code.** Keys go through Setup and the vault, or Worker secrets.
+
+---
+
+# Addendum 2 — waitlist, coupons, marketing tabs, caps, product sheet
+
+**Quality bar:** `npm run build` ✅ · `npm run lint` ✅ (0 errors) · `npm test` ✅ **269 tests** in 33 files. Test mode (`DRY_RUN=1`) is still on. Nothing was sent, spent or deployed by hand; pushes to `build/october-overhaul` auto-deploy that branch only, never `main`. Decisions 82–92 are in `docs/BUILD_DECISIONS.md`.
+
+## What was built
+- **Waitlist replaces the pay button** on mastermindsbymarq.com (`launch_mode`, default `waitlist`). Form: email, optional first name, code (prefilled from `?code=`), honeypot, per-IP rate limit. Founding offer: first 100 lock $19.99/mo for life, first access, first month free, with a live "X of 100 spots left". Owner **Waitlist** screen (Made by Marq): totals, signups per day, founding spots used, per code, CSV export, mode switch, MailerLite sync, **Launch** button.
+- **Coupons** (Made by Marq → Coupons): create % or $ off; once / repeating N months / forever; max redemptions; expiry; your own label; pause but never delete; shareable `?code=` link; per-code stats; applied at checkout. Starting drafts: **MARQ20**, **FOUNDING**, **FAMILY**, **COMEBACK**.
+- **Two marketing tabs over one engine:** E-commerce → Marketing (product brands) and Made by Marq → Marketing (Masterminds, Made by Marq, clients). Masterminds is an `app` brand with goal "grow the waitlist", seeded ideas and a visits → waitlist → trials → paid funnel.
+- **Spending caps and first-sale gates** (see decisions 88–90), with amber at 80% and red at 100%.
+- **Product sheet:** "Fits $50 budget" and "$10 & 35% floor" filters, the budget rule in the nightly pitch, and **I want to test this one** on every product card.
+
+## Stripe test coupons
+The four codes are saved as drafts but **not created in Stripe**: the Stripe connector here only reaches the live account and the build must not touch live. To create them in test mode: add `STRIPE_TEST_SECRET_KEY` (Cloudflare Build variable), then Coupons → Push to Stripe on each (it uses the test key while test mode is on). Live ids are stored separately.
+
+## MailerLite
+Group **Masterminds Waitlist** with custom fields `founding_member` and `referral_code`, and a **paused** "You're in" automation, were created in MailerLite. Nothing is enabled. Sign-ups wait in the app until test mode is off and `MAILERLITE_API_KEY` is set.
+
+## Waitlist URL
+`https://mastermindsbymarq.com/home#start`. Code links look like `https://mastermindsbymarq.com/?code=MARQ20`.
+
+## Product sheet: exactly what was verified
+Verified by reading the code, by unit tests, and in the demo-mode UI. **Not** run live: Scout, Analyst and Product Pitch need the Parallel key and the production Worker, so press them once after deploy.
+- ✅ Run Scout: route and runner exist (`RUNNERS.scout`), "Scout now" button on an empty sheet, nightly at 3:30.
+- ✅ Analyst: runs per product; its result fills the product drawer and keeps a hand-typed supplier cost.
+- ✅ Product Pitch: picks the best score that clears the hard filter and hasn't been pitched. Unit tests cover thin margin, price range, fragile, prohibited, and now the $50 budget.
+- ✅ Margin floor $10/order and 35%: in the pitch filter and (new) a sheet filter. Tests added.
+- ✅ **Fits $50 budget** was missing. Added to the pitch filter and the sheet; tests added. Test budget in pitch math changed from $100 to $50.
+- ✅ **Approve ANY product** was missing (approval only worked on the nightly pitch card). Added "I want to test this one" plus `POST /api/engine/test-product`; tests cover a product the pitch would reject, and tapping twice.
+- ✅ Brand → site: after a brand is created, Brand Lab and Supplier Finder run, then the existing store-draft approval → launcher → site pipeline (Sites) takes over. The domain buy still waits for your approval and counts against the $50 e-commerce cap.
+- ⚠ Table view has no test button; open the product drawer's "Build brand" or use the card view.
+
+## What Marq flips on launch day
+1. Cloudflare: add `STRIPE_SECRET_KEY` (live), `STRIPE_TEST_SECRET_KEY` (test, if not yet), `MAILERLITE_API_KEY`; remove `DRY_RUN=1` from `wrangler.jsonc` and deploy.
+2. MailerLite: verify the sender, then switch the "You're in" automation on.
+3. Coupons: Push each code to **live** Stripe (it uses the live key once test mode is off).
+4. Waitlist screen: **Sync to MailerLite**, then **Launch** (opens the doors and drafts the campaign). Review and Send it in MailerLite.
+5. After Twilio approves the number: set `TWILIO_LIVE=1`.
+6. Migrations applied in this addendum: `schema_128` (waitlist, coupons), `129` (coupon revenue), `130` (marketing brands), `131` (cap defaults).
