@@ -7,6 +7,8 @@
 //   runLedgerDaily     recurring income/expenses land unconfirmed for Marq to confirm
 //   marketingPlan      the Marketing orchestrator's weekly plan for Our Brands
 import type { Sb } from './sb';
+import { senderFor } from './senders';
+import type { SendPurpose } from './senders';
 import { zonedNow } from './sb';
 import { isDryRun, dryRunId } from './dryRun';
 import type { DryRunEnv } from './dryRun';
@@ -31,17 +33,17 @@ export function emailHtml(body: string, footer?: string): string {
   return `<div style="font:15px/1.55 -apple-system,Segoe UI,sans-serif;color:#111;max-width:600px">${paras}${footer ? `<p style="color:#888;font-size:12px;margin-top:24px">${esc(footer)}</p>` : ''}</div>`;
 }
 
-export async function sendEmail(env: MadebyEnv, to: string, subject: string, html: string): Promise<{ ok: boolean; id?: string; error?: string; dryRun?: boolean }> {
+export async function sendEmail(env: MadebyEnv, to: string, subject: string, html: string, purpose: SendPurpose = 'comms'): Promise<{ ok: boolean; id?: string; error?: string; dryRun?: boolean }> {
   if (!EMAIL_RE.test(to)) return { ok: false, error: 'That email address doesn\'t look right.' };
   if (isDryRun(env)) return { ok: true, id: dryRunId('email'), dryRun: true };
-  const from = env.MADEBYMARQUEZ_FROM_EMAIL || env.RESEND_FROM_EMAIL;
+  const from = senderFor(env, purpose);
   if (!env.RESEND_API_KEY || !from) return { ok: false, error: 'Email isn\'t connected. Setup → Resend.' };
   const r = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' }, body: JSON.stringify({ from, to: [to], subject: subject.replace(/[\r\n]+/g, ' ').slice(0, 200), html }) });
   const j = (await r.json().catch(() => ({}))) as { id?: string; message?: string };
   return r.ok ? { ok: true, id: j.id } : { ok: false, error: j.message ?? `Email failed (${r.status})` };
 }
 
-export interface SendInput { channel: 'email' | 'sms'; to: string; subject?: string | null; body: string; contact_id?: string | null; client_id?: string | null; scheduled_for?: string | null; attachments?: { doc_id?: string; name: string }[]; sequence_run_id?: string | null }
+export interface SendInput { channel: 'email' | 'sms'; to: string; subject?: string | null; body: string; contact_id?: string | null; client_id?: string | null; scheduled_for?: string | null; attachments?: { doc_id?: string; name: string }[]; sequence_run_id?: string | null; purpose?: SendPurpose }
 /** Send (or schedule) one message and keep it in the thread. */
 export async function sendMessage(env: MadebyEnv, sb: Sb, u: string, m: SendInput): Promise<{ ok: boolean; id?: string; status: string; error?: string }> {
   if (!m.to?.trim() || !m.body?.trim()) return { ok: false, status: 'failed', error: 'A recipient and a message are required.' };
@@ -50,18 +52,18 @@ export async function sendMessage(env: MadebyEnv, sb: Sb, u: string, m: SendInpu
     const [row] = await sb.insert<{ id: string }>('comm_messages', { ...base, status: 'scheduled', scheduled_for: m.scheduled_for });
     return { ok: true, id: row?.id, status: 'scheduled' };
   }
-  const r = await deliver(env, sb, base.channel, base.to_addr, base.subject, base.body, base.attachments);
+  const r = await deliver(env, sb, base.channel, base.to_addr, base.subject, base.body, base.attachments, m.purpose);
   const [row] = await sb.insert<{ id: string }>('comm_messages', { ...base, status: r.dryRun ? 'dry_run' : r.ok ? 'sent' : 'failed', sent_at: r.ok ? now() : null, error: r.error ?? null, external_id: r.id ?? null });
   if (r.ok) await touchContact(sb, u, m.contact_id, m.client_id);
   return { ok: r.ok, id: row?.id, status: r.dryRun ? 'dry_run' : r.ok ? 'sent' : 'failed', error: r.error };
 }
 
-async function deliver(env: MadebyEnv, sb: Sb, channel: 'email' | 'sms', to: string, subject: string | null, body: string, attachments: { doc_id?: string; name: string }[]): Promise<{ ok: boolean; id?: string; error?: string; dryRun?: boolean }> {
+async function deliver(env: MadebyEnv, sb: Sb, channel: 'email' | 'sms', to: string, subject: string | null, body: string, attachments: { doc_id?: string; name: string }[], purpose: SendPurpose = 'comms'): Promise<{ ok: boolean; id?: string; error?: string; dryRun?: boolean }> {
   if (channel === 'sms') { const r = await sendTwilioSms(env, to, body); return { ok: r.sent, id: r.sid, error: r.error, dryRun: r.dryRun }; }
   // Brain Dump documents go along as their text, inline (no binary attachments yet).
   let extra = '';
   for (const a of attachments) if (a.doc_id) { const [d] = await sb.get<{ title: string; body_text: string | null }>(`brain_documents?id=eq.${a.doc_id}&select=title,body_text`).catch(() => []); if (d?.body_text) extra += `\n\n— ${d.title} —\n${d.body_text.slice(0, 20000)}`; }
-  return sendEmail(env, to, subject || '(no subject)', emailHtml(body + extra));
+  return sendEmail(env, to, subject || '(no subject)', emailHtml(body + extra), purpose);
 }
 
 async function touchContact(sb: Sb, u: string, contactId?: string | null, clientId?: string | null) {
@@ -118,7 +120,7 @@ export async function sendContract(env: MadebyEnv, sb: Sb, u: string, id: string
   if (!c.to_email) return { ok: false, status: 'no_email', error: 'Add the signer\'s email first.' };
   const link = `${env.APP_ORIGIN ?? origin}/sign/${c.sign_token}`;
   const body = `Hi ${c.to_name.split(' ')[0]},\n\n${c.sender_entity ?? DEFAULT_SENDER} sent you "${c.title}" to review and sign.\n\nRead and sign here: ${link}\n\nIt takes a minute: read it, type your full name, and agree to sign electronically.`;
-  const r = await sendMessage(env, sb, u, { channel: 'email', to: c.to_email, subject: `Please sign: ${c.title}`, body, contact_id: c.contact_id, client_id: c.client_id });
+  const r = await sendMessage(env, sb, u, { channel: 'email', to: c.to_email, subject: `Please sign: ${c.title}`, body, contact_id: c.contact_id, client_id: c.client_id, purpose: 'contract' });
   if (!r.ok) return { ok: false, status: r.status, error: r.error };
   await sb.patch('contracts', `id=eq.${id}`, { status: 'sent', sent_at: now(), updated_at: now() });
   return { ok: true, status: r.status, link };
@@ -175,7 +177,7 @@ export async function sendBizInvoice(env: MadebyEnv, sb: Sb, u: string, id: stri
   const sender = bp?.sender_entity || bp?.business_name || DEFAULT_SENDER;
   const lines = inv.items.map((i) => `${i.description} — ${i.qty} × $${Number(i.rate).toFixed(2)} = $${(i.qty * i.rate).toFixed(2)}`).join('\n');
   const body = `Hi ${inv.to_name.split(' ')[0]},\n\nInvoice ${inv.number} from ${sender}.\n\n${lines}\n\nTotal: $${Number(inv.amount_usd).toFixed(2)}${inv.due_date ? `\nDue: ${inv.due_date}` : ''}${inv.note ? `\n\n${inv.note}` : ''}\n\nThank you.`;
-  const r = await sendMessage(env, sb, u, { channel: 'email', to: inv.to_email, subject: `Invoice ${inv.number} from ${sender}`, body, contact_id: inv.contact_id, client_id: inv.client_id });
+  const r = await sendMessage(env, sb, u, { channel: 'email', to: inv.to_email, subject: `Invoice ${inv.number} from ${sender}`, body, contact_id: inv.contact_id, client_id: inv.client_id, purpose: 'invoice' });
   if (!r.ok) return { ok: false, status: r.status, error: r.error };
   await sb.patch('biz_invoices', `id=eq.${id}`, { status: 'sent', sent_at: now(), updated_at: now() });
   return { ok: true, status: r.status };

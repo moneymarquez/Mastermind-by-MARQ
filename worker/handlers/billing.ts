@@ -1,4 +1,5 @@
 import { requireUser, OWNER_USER_ID } from '../lib/auth';
+import { senderFor } from '../lib/senders';
 import { provisionClientLogin } from './client-crm';
 
 // Stripe embedded billing — $19.99/mo, Payment Element mounted client-side
@@ -52,13 +53,14 @@ async function leaveOwnerReminder(env: BillingEnv, title: string): Promise<void>
 // caller can fall back to an in-app reminder with the password when it
 // didn't (unconfigured Resend, or the send itself failing).
 async function sendClientLoginEmail(env: BillingEnv, to: string, businessName: string, password: string): Promise<boolean> {
-  if (!env.RESEND_API_KEY || !env.RESEND_FROM_EMAIL) return false;
+  const from = senderFor(env, 'account');
+  if (!env.RESEND_API_KEY || !from) return false;
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
       body: JSON.stringify({
-        from: env.RESEND_FROM_EMAIL,
+        from,
         to: [to],
         subject: 'Your Masterminds client login',
         html: [
@@ -96,8 +98,8 @@ async function sendPaidReceiptEmail(
   description: string,
   amount: number,
 ): Promise<boolean> {
-  const fromEmail = 'Made by MARQ <invoice@madebymarquez.com>';
-  if (!env.RESEND_API_KEY) return false;
+  const fromEmail = senderFor(env, 'receipt');
+  if (!env.RESEND_API_KEY || !fromEmail) return false;
   const amt = `$${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
   try {
     const res = await fetch('https://api.resend.com/emails', {

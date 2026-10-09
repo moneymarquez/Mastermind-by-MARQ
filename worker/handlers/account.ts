@@ -8,6 +8,7 @@
 // auth.users ON DELETE CASCADE) → confirmation email. The owner account
 // can't be deleted from the app.
 import { requireUser, isOwnerUser } from '../lib/auth';
+import { senderFor } from '../lib/senders';
 import type { AuthedUser } from '../lib/auth';
 import { Sb, json } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
@@ -72,7 +73,7 @@ async function confirmationEmail(env: AccountEnv, to: string | null | undefined)
   await fetch('https://api.resend.com/emails', {
     method: 'POST', headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
     body: JSON.stringify({
-      from: env.RESEND_FROM_EMAIL, to: [to], subject: 'Your Masterminds account was deleted',
+      from: senderFor(env, 'account'), to: [to], subject: 'Your Masterminds account was deleted',
       html: '<p>Your Masterminds by MARQ account and everything in it have been deleted, and any subscription was cancelled.</p><p>If you didn\'t ask for this, reply to this email.</p>',
     }),
   }).catch(() => {});

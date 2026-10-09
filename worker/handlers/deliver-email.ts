@@ -1,4 +1,5 @@
 import { requireOwner } from '../lib/auth';
+import { senderFor } from '../lib/senders';
 
 // The one genuinely automation-worthy piece of the delivery pipeline —
 // packaging a live preview link, a signed video URL, and an invoice
@@ -74,7 +75,7 @@ export async function sendDeliveryEmail(request: Request, env: DeliverEmailEnv):
   // and Show Your Work is an owner-only module.
   const user = await requireOwner(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
   if (user instanceof Response) return user;
-  const fromEmail = env.MADEBYMARQUEZ_FROM_EMAIL || env.RESEND_FROM_EMAIL;
+  const fromEmail = senderFor(env, 'delivery');
   if (!env.RESEND_API_KEY || !fromEmail) return notConfigured();
 
   let body: DeliverEmailBody;
