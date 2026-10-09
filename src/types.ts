@@ -1,5 +1,6 @@
 export type Screen =
   | 'home'
+  | 'coupons'
   | 'waitlist'
   | 'comms'
   | 'contracts'

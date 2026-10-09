@@ -9,6 +9,7 @@ const PublicClientDashboard = lazyScreen(() => import('./PublicClientDashboard')
 import { isStandalone } from './lib/pwa'
 import { initOrientationLock } from './lib/orientationLock'
 import { initDemo } from './demo/lifecycle'
+import './lib/saveCode';
 import { captureJoinToken } from './dispatch/join';
 
 // Applies the data-force-portrait attribute index.css's rotate-lock keys

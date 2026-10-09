@@ -53,6 +53,7 @@ import type { HqEnv } from './handlers/hq';
 import { smsInbound, smsSettingsRoute, smsOptin } from './handlers/sms';
 import { shopifyWebhook, ecomRoute, siteBeacon } from './handlers/ecom';
 import { siteConfig, waitlistJoin, waitlistAdmin } from './handlers/waitlist';
+import { couponsRoute } from './handlers/coupons';
 import type { EcomEnv } from './handlers/ecom';
 import type { SmsEnv } from './handlers/sms';
 import type { DigestEnv } from './handlers/digest';
@@ -135,6 +136,8 @@ export default {
     if (url.pathname === '/api/webhooks/shopify') return shopifyWebhook(request, env);
     if (url.pathname === '/api/ecom/beacon') return siteBeacon(request, env);
     if (url.pathname === '/api/site/config') return siteConfig(request, env);
+    const cpMatch = url.pathname.match(/^\/api\/coupons\/(status|create|push|toggle|stats)$/);
+    if (cpMatch) return couponsRoute(request, env, cpMatch[1]);
     if (url.pathname === '/api/waitlist') return waitlistJoin(request, env, ctx);
     const wlMatch = url.pathname.match(/^\/api\/waitlist\/(mode|sync|launch)$/);
     if (wlMatch) return waitlistAdmin(request, env, wlMatch[1]);

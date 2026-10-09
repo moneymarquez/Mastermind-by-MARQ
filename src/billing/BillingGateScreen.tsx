@@ -63,22 +63,26 @@ export default function BillingGateScreen({ onSubscribed, onSignOut, theme }: Pr
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await authedFetch('/api/billing/create-subscription', { method: 'POST' });
-        const body = await res.json();
-        if (!res.ok) {
-          setError(body.error ?? `Could not start checkout (${res.status}).`);
-        } else {
-          setClientSecret(body.clientSecret);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Could not start checkout.');
-      } finally {
-        setLoading(false);
-      }
-    })();
+  const [code, setCode] = useState(() => { try { return localStorage.getItem('mm_code') ?? ''; } catch { return ''; } });
+  const [applied, setApplied] = useState('');
+
+  // Starts (or restarts) checkout. A code is optional: one typed here, one saved
+  // from a ?code= link, or the one this email joined the waitlist with (the
+  // server picks that). A typed code that isn't valid shows its own message.
+  const start = async (withCode: string) => {
+    setLoading(true); setError(''); setClientSecret(null);
+    try {
+      const res = await authedFetch('/api/billing/create-subscription', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: withCode }) });
+      const body = await res.json();
+      if (!res.ok) { setError(body.error ?? `Could not start checkout (${res.status}).`); }
+      else { setClientSecret(body.clientSecret); setApplied(body.discount?.code ?? ''); }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not start checkout.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => { void start(code); /* first load only */ // eslint-disable-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -138,6 +142,11 @@ export default function BillingGateScreen({ onSubscribed, onSignOut, theme }: Pr
             {LIVE_PLAN.price}{LIVE_PLAN.cadence}, cancel anytime.
           </div>
 
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Have a code?" aria-label="Discount code" autoComplete="off" style={{ flex: 1, minWidth: 0, height: 44, padding: '0 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-2, transparent)', color: 'var(--text)', fontSize: 16 }} />
+          <button type="button" onClick={() => void start(code.trim())} disabled={loading || !code.trim()} style={{ height: 44, padding: '0 16px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text)', cursor: 'pointer', font: 'inherit' }}>Apply</button>
+        </div>
+        {applied && !loading && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--success)', marginBottom: 12 }}>Code {applied} applied. The discount shows on your first invoice.</div>}
         {loading && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>Loading…</div>}
         {!loading && error && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', lineHeight: 1.6 }}>{error}</div>}
         {!loading && !error && clientSecret && stripePromise && (

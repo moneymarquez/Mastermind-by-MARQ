@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './site.css';
+import '../lib/saveCode';
 import Home from './Home';
 import Unbuilt from './Unbuilt';
 import Product from './Product';

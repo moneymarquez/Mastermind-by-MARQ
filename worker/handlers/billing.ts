@@ -1,4 +1,5 @@
 import { requireUser, OWNER_USER_ID } from '../lib/auth';
+import { findPromoId, promoIdsFromInvoice } from '../lib/coupons';
 import { senderFor } from '../lib/senders';
 import { provisionClientLogin } from './client-crm';
 
@@ -180,6 +181,19 @@ async function stripeRequest(env: BillingEnv, path: string, body: Record<string,
   return data;
 }
 
+/** Which promotion code (if any) this checkout gets. Live Stripe only. */
+async function promoForCheckout(env: BillingEnv, email: string | null | undefined, typed: string): Promise<{ promoId: string | null; code: string | null }> {
+  if (!env.STRIPE_SECRET_KEY) return { promoId: null, code: null };
+  let code = typed;
+  if (!code && email) {
+    const rows = (await (await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/waitlist?email=ilike.${encodeURIComponent(email)}&select=code,founding_spot&limit=1`, { headers: supabaseHeaders(env) })).json().catch(() => [])) as { code: string | null; founding_spot: boolean }[];
+    code = rows?.[0]?.code || (rows?.[0]?.founding_spot ? 'FOUNDING' : '');
+  }
+  if (!code) return { promoId: null, code: null };
+  const promoId = await findPromoId(env.STRIPE_SECRET_KEY, code).catch(() => null);
+  return { promoId, code: promoId ? code : null };
+}
+
 // Creates (or reuses) a Stripe Customer for this user, starts a
 // subscription in `default_incomplete` state against the $19.99/mo Price the
 // user creates in their own Stripe dashboard, and returns the client
@@ -202,8 +216,16 @@ export async function createSubscriptionIntent(request: Request, env: BillingEnv
       customerId = customer.id as string;
     }
 
+    // A code (typed, from ?code=, or the one this email joined the waitlist with),
+    // else FOUNDING for a founding waitlist spot. A code the person typed that
+    // isn't valid is an error; an automatic one that isn't is skipped quietly.
+    const body = (await request.clone().json().catch(() => ({}))) as { code?: string };
+    const typed = String(body.code ?? '').trim().toUpperCase();
+    const discount = await promoForCheckout(env, user.email, typed);
+    if (typed && !discount.promoId) return new Response(JSON.stringify({ error: `The code ${typed} isn't valid or has run out.` }), { status: 400, headers: { 'content-type': 'application/json' } });
     const subscription = await stripeRequest(env, '/subscriptions', {
       customer: customerId,
+      ...(discount.promoId ? { 'discounts[0][promotion_code]': discount.promoId } : {}),
       'items[0][price]': env.STRIPE_PRICE_ID,
       payment_behavior: 'default_incomplete',
       'payment_settings[save_default_payment_method]': 'on_subscription',
@@ -235,7 +257,7 @@ export async function createSubscriptionIntent(request: Request, env: BillingEnv
       }),
     });
 
-    return new Response(JSON.stringify({ clientSecret }), { status: 200, headers: { 'content-type': 'application/json' } });
+    return new Response(JSON.stringify({ clientSecret, ...(discount.promoId ? { discount: { code: discount.code } } : {}) }), { status: 200, headers: { 'content-type': 'application/json' } });
   } catch (err) {
     return new Response(JSON.stringify({ error: err instanceof Error ? err.message : 'Could not start checkout.' }), { status: 500, headers: { 'content-type': 'application/json' } });
   }
@@ -295,6 +317,14 @@ interface StripeSubscriptionObject {
 // carry enough info in event.data.object to know the subscription's
 // current status — no need to branch per event type, just re-sync
 // whatever status Stripe reports for that subscription/customer.
+async function recordCouponRevenue(env: BillingEnv, invoiceId: string, amountUsd: number, promoIds: string[]): Promise<void> {
+  for (const promo of promoIds) {
+    const [c] = (await (await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/coupons?or=(stripe_live_promo_id.eq.${promo},stripe_test_promo_id.eq.${promo})&select=id,user_id&limit=1`, { headers: supabaseHeaders(env) })).json()) as { id: string; user_id: string }[];
+    if (!c) continue;
+    await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/coupon_revenue?on_conflict=invoice_id,promo_id`, { method: 'POST', headers: { ...supabaseHeaders(env), Prefer: 'resolution=ignore-duplicates' }, body: JSON.stringify({ user_id: c.user_id, coupon_id: c.id, promo_id: promo, invoice_id: invoiceId, amount_usd: amountUsd }) });
+  }
+}
+
 export async function stripeWebhook(request: Request, env: BillingEnv): Promise<Response> {
   if (!env.STRIPE_WEBHOOK_SECRET) return notConfigured();
 
@@ -353,6 +383,8 @@ export async function stripeWebhook(request: Request, env: BillingEnv): Promise<
   // A Masterminds subscription payment is Made by Marq income (brief §5.4).
   if (event.type === 'invoice.paid' && obj.subscription && typeof obj.amount_paid === 'number' && obj.amount_paid > 0) {
     await ledgerIncome(env, { ref_type: 'stripe', ref_id: String(obj.id), amount: Number(obj.amount_paid) / 100, party: 'Masterminds subscription', category: 'Masterminds subscriptions' });
+    // Revenue per coupon code (Coupons screen). Best effort: never blocks the webhook.
+    await recordCouponRevenue(env, String(obj.id), Number(obj.amount_paid) / 100, promoIdsFromInvoice(obj)).catch(() => {});
   }
 
   let sub: StripeSubscriptionObject | null = null;

@@ -195,6 +195,11 @@ export function buildSeed(): Record<string, Row[]> {
       '10': { fields: { reason: 'Analytics recommends scale: 18 sales at 1.6% CTR, 31% cart-to-sale. Next: make 3 more posts on the 3pm-neck angle.' } },
     } }]);
   T('ecom_brand_products', []);
+  T('coupons', [
+    { id: uid('coup'), code: 'MARQ20', label: 'Promoter code (example)', owner_label: 'Example', kind: 'promoter', percent_off: 20, amount_off_usd: null, duration: 'repeating', duration_months: 3, max_redemptions: null, expires_at: null, active: true, stripe_test_coupon_id: null, stripe_test_promo_id: null, stripe_live_coupon_id: null, stripe_live_promo_id: null, last_error: null },
+    { id: uid('coup'), code: 'FOUNDING', label: 'Founding member: first month free', owner_label: null, kind: 'founding', percent_off: 100, amount_off_usd: null, duration: 'once', duration_months: null, max_redemptions: 100, expires_at: null, active: true, stripe_test_coupon_id: null, stripe_test_promo_id: null, stripe_live_coupon_id: null, stripe_live_promo_id: null, last_error: null },
+    { id: uid('coup'), code: 'FAMILY', label: 'Friends and family', owner_label: null, kind: 'family', percent_off: 50, amount_off_usd: null, duration: 'repeating', duration_months: 3, max_redemptions: 20, expires_at: null, active: true, stripe_test_coupon_id: null, stripe_test_promo_id: null, stripe_live_coupon_id: null, stripe_live_promo_id: null, last_error: null },
+  ]);
   T('waitlist', Array.from({ length: 23 }, (_, i) => ({ id: uid('wait'), email: `person${i + 1}@example.com`, name: i % 3 ? null : ['Ana', 'Ben', 'Cara'][i % 3], code: i % 4 === 0 ? 'MARQ20' : i % 7 === 0 ? 'JAMES20' : null, source: i % 2 ? 'tiktok' : null, spot_number: i + 1, founding_spot: true, mailerlite_synced_at: null, mailerlite_error: null, created_at: iso(-(i % 9)) })));
   const brandId = (db.ecom_brands[0] as { id: string }).id;
   const siteId = uid('site');
