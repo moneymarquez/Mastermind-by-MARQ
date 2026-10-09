@@ -6,18 +6,19 @@
 // through checkSpend. Without a Higgsfield key the prompts are still saved
 // ("planned"), so Marq sees exactly what would be made.
 //
-// Higgsfield's REST API: the adapter below posts to HIGGSFIELD_API_URL
-// (default https://platform.higgsfield.ai) with the key in hf-api-key. The
-// exact endpoint isn't verified from the build sandbox — see
-// docs/BUILD_DECISIONS.md; tests mock it.
+// Higgsfield's REST API (docs.higgsfield.ai quickstart, Oct 2026): POST
+// https://api.higgsfield.ai/<model path> with "Authorization: Key id:secret"
+// and a JSON body with the prompt; the reply is async (request_id +
+// status_url). HIGGSFIELD_API_URL may name the full model endpoint. A
+// platform.higgsfield.ai URL keeps the older hf-api-key / v1 shape.
 import { Sb } from './sb';
 import { guardSpend, recordSpend } from './controls';
 import { isDryRun } from './dryRun';
 import type { DryRunEnv } from './dryRun';
 
-export interface VisualEnv extends DryRunEnv { HIGGSFIELD_API_KEY?: string; HIGGSFIELD_API_SECRET?: string; HIGGSFIELD_API_URL?: string }
+export interface VisualEnv extends DryRunEnv { HIGGSFIELD_API_KEY?: string; HIGGSFIELD_API_SECRET?: string; HIGGSFIELD_API_URL?: string; HIGGSFIELD_VIDEO_URL?: string }
 let visualEnv: VisualEnv = {};
-export function setVisualEnv(env: VisualEnv): void { visualEnv = { HIGGSFIELD_API_KEY: env.HIGGSFIELD_API_KEY, HIGGSFIELD_API_SECRET: env.HIGGSFIELD_API_SECRET, HIGGSFIELD_API_URL: env.HIGGSFIELD_API_URL, DRY_RUN: env.DRY_RUN }; }
+export function setVisualEnv(env: VisualEnv): void { visualEnv = { HIGGSFIELD_API_KEY: env.HIGGSFIELD_API_KEY, HIGGSFIELD_API_SECRET: env.HIGGSFIELD_API_SECRET, HIGGSFIELD_API_URL: env.HIGGSFIELD_API_URL, HIGGSFIELD_VIDEO_URL: env.HIGGSFIELD_VIDEO_URL, DRY_RUN: env.DRY_RUN }; }
 
 export const IMAGE_COST_USD = 0.03;
 export const VIDEO_COST_USD: Record<'480p' | '720p', number> = { '480p': 2, '720p': 4.6 };
@@ -50,16 +51,23 @@ export interface GenResult { ok: boolean; url?: string; jobId?: string; error?: 
 export async function generate(env: VisualEnv, prompt: string, kind: VisualKind, f: typeof fetch = fetch): Promise<GenResult> {
   if (isDryRun(env)) return { ok: true, dryRun: true, url: undefined, jobId: 'dry-run' };
   if (!env.HIGGSFIELD_API_KEY) return { ok: false, error: 'Higgsfield isn\'t connected. Add the API key in Setup → Higgsfield (the API wallet is separate from the website subscription).' };
-  const base = env.HIGGSFIELD_API_URL || 'https://platform.higgsfield.ai';
-  const path = kind === 'video' ? '/v1/image2video' : '/v1/text2image';
-  const res = await f(`${base}${path}`, {
+  const legacy = (env.HIGGSFIELD_API_URL ?? '').includes('platform.higgsfield.ai');
+  if (!legacy && kind === 'video' && !env.HIGGSFIELD_VIDEO_URL) return { ok: false, error: 'Pick a Higgsfield video model and save its endpoint as HIGGSFIELD_VIDEO_URL first.' };
+  const url = legacy
+    ? `${env.HIGGSFIELD_API_URL}${kind === 'video' ? '/v1/image2video' : '/v1/text2image'}`
+    : kind === 'video' ? env.HIGGSFIELD_VIDEO_URL! : env.HIGGSFIELD_API_URL || 'https://api.higgsfield.ai/higgsfield-ai/soul/v2/standard';
+  const headers: Record<string, string> = legacy
+    ? { 'hf-api-key': env.HIGGSFIELD_API_KEY, ...(env.HIGGSFIELD_API_SECRET ? { 'hf-secret': env.HIGGSFIELD_API_SECRET } : {}) }
+    : { authorization: `Key ${env.HIGGSFIELD_API_SECRET ? `${env.HIGGSFIELD_API_KEY}:${env.HIGGSFIELD_API_SECRET}` : env.HIGGSFIELD_API_KEY}` };
+  const params = kind === 'video' ? { duration: 10, resolution: '480p' } : { width_and_height: kind === 'logo' ? '1024x1024' : '1152x1536', batch_size: 1 };
+  const res = await f(url, {
     method: 'POST',
-    headers: { 'hf-api-key': env.HIGGSFIELD_API_KEY, ...(env.HIGGSFIELD_API_SECRET ? { 'hf-secret': env.HIGGSFIELD_API_SECRET } : {}), 'content-type': 'application/json' },
-    body: JSON.stringify({ params: { prompt, ...(kind === 'video' ? { duration: 10, resolution: '480p' } : { width_and_height: kind === 'logo' ? '1024x1024' : '1152x1536', batch_size: 1 }) } }),
+    headers: { ...headers, 'content-type': 'application/json' },
+    body: JSON.stringify(legacy ? { params: { prompt, ...params } } : { prompt, ...(kind === 'logo' ? { aspect_ratio: '1:1' } : { aspect_ratio: '3:4' }) }),
   }).catch((e) => ({ ok: false, status: 0, json: async () => ({ error: String(e) }) }) as unknown as Response);
-  const j = (await res.json().catch(() => ({}))) as { id?: string; jobs?: { id?: string; results?: { raw?: { url?: string } } }[]; url?: string; error?: string; detail?: string };
+  const j = (await res.json().catch(() => ({}))) as { id?: string; request_id?: string; jobs?: { id?: string; results?: { raw?: { url?: string } } }[]; images?: { url?: string }[]; url?: string; error?: string; detail?: string };
   if (!res.ok) return { ok: false, error: `Higgsfield ${res.status}: ${j.error ?? j.detail ?? 'request failed'}` };
-  return { ok: true, jobId: j.id ?? j.jobs?.[0]?.id, url: j.url ?? j.jobs?.[0]?.results?.raw?.url };
+  return { ok: true, jobId: j.request_id ?? j.id ?? j.jobs?.[0]?.id, url: j.url ?? j.images?.[0]?.url ?? j.jobs?.[0]?.results?.raw?.url };
 }
 
 /** After Brand Lab files its options: plan and (budget permitting) generate the images. */

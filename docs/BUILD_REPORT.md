@@ -2,7 +2,7 @@
 
 Branch: `build/october-overhaul` (not merged into `main`, not deployed). One commit per phase, plus the Phase 6–8 commit.
 
-**Quality bar at the end:** `npm run build` ✅ · `npm run lint` ✅ (0 errors; the existing warnings are unchanged) · `npm test` ✅ **182 tests** in 25 files.
+**Quality bar at the end:** `npm run build` ✅ · `npm run lint` ✅ (0 errors; the existing warnings are unchanged) · `npm test` ✅ **186 tests** in 26 files.
 
 Detailed per-phase notes: `docs/BUILD_PROGRESS.md`. Every judgment call (61 of them): `docs/BUILD_DECISIONS.md`. Made by Marq audit: `docs/MADEBY_AUDIT.md`.
 
@@ -22,7 +22,7 @@ Detailed per-phase notes: `docs/BUILD_PROGRESS.md`. Every judgment call (61 of t
 ## Stubbed or partial, and exactly what's left
 
 1. **Clip rendering** works end to end in code but is off until the container is deployed. **Left:** deploy `render/` as a Cloudflare Container or any Docker host, then set `RENDER_URL`, `RENDER_SECRET` and `CLIP_RENDER=on`. With rendering off, the plan-only path is unchanged.
-2. **Higgsfield image generation** uses an endpoint I couldn't verify (`HIGGSFIELD_API_URL`). Without a key, the image prompts are saved as "planned". **Left:** confirm the endpoint and request shape against Higgsfield's API docs before the first paid run.
+2. **Higgsfield image generation** now follows Higgsfield's current quickstart: `POST https://api.higgsfield.ai/higgsfield-ai/soul/v2/standard` with `Authorization: Key <id>:<secret>`, and the response is async (`request_id`). Covered by `tests/higgsfield-adapter.test.ts`. **Left:** after you add the key, run one $0.03 test image. Video needs a chosen model's endpoint in `HIGGSFIELD_VIDEO_URL`; without it, video refuses rather than guessing. Polling the async result into the image URL isn't built yet, so images show "generating" until then.
 3. **Supplier orders** aren't placed automatically (no supplier API). They show "to place", or wait in Inbox when over $25.
 4. **Signed contracts** are an HTML record printed to PDF in the browser; no server-side PDF is generated.
 5. **Email attachments** from Brain Dump go out as inline text, not files.
@@ -59,7 +59,7 @@ Keep `DRY_RUN=1` while testing. Real sends, posts and texts happen only with it 
 | `XAI_API_KEY` (+ optional `XAI_MODEL`) | two-way texting replies |
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` | SMS out and in |
 | `RESEND_API_KEY`, `MADEBYMARQUEZ_FROM_EMAIL` | Comms hub email, contracts, invoices |
-| `HIGGSFIELD_API_KEY`, `HIGGSFIELD_API_SECRET`, `HIGGSFIELD_API_URL` | brand images and video |
+| `HIGGSFIELD_API_KEY` (key ID), `HIGGSFIELD_API_SECRET`, optional `HIGGSFIELD_API_URL` / `HIGGSFIELD_VIDEO_URL` | brand images and video |
 | `SHOPIFY_WEBHOOK_SECRET` (or per-shop in Setup) | order webhook HMAC |
 | `RENDER_URL`, `RENDER_SECRET`, `CLIP_RENDER=on` | clip rendering (optional) |
 | `APP_ORIGIN` | `https://mastermindsbymarq.com`, for links in emails |
