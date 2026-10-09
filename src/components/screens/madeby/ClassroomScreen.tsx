@@ -4,6 +4,7 @@ import { Page, useModule } from '../../mm/Page';
 import Card from '../../mm/Card';
 import Chip from '../../mm/Chip';
 import { Empty } from '../../mm/States';
+import Progress from '../../mm/Progress';
 import { checklistFor, ROOMS, roomOf, dropPatch, phaseProgress, nextStep, waitingOnMarq, singlePoint, ringFor, phaseOf, daysSince } from '../../../data/madeby';
 import type { CheckItem } from '../../../data/madeby';
 
@@ -119,7 +120,7 @@ function MiniCard({ c, items, waitDays, onClose, onOpen, onMove, now }: { c: Cli
       <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 380, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 10, boxShadow: '0 20px 50px rgba(0,0,0,.2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><strong style={{ flex: 1, fontSize: 16 }}>{c.business_name}</strong><button className="mm-btn" style={{ height: 30 }} onClick={onClose}>✕</button></div>
         <div style={{ fontSize: 14 }}>{phase ? `Phase ${phase.n} · ${phase.label} — ${prog?.pct ?? 0}% through` : c.room === 'aphs' ? 'APHS room' : c.room === 'own' ? 'Own brands' : 'No phase yet'}</div>
-        {prog && <div style={{ height: 6, borderRadius: 3, background: 'var(--surface-2)', overflow: 'hidden' }}><div style={{ width: `${prog.pct}%`, height: '100%', background: 'var(--accent)', transition: 'width .4s' }} /></div>}
+        {prog && <Progress pct={prog.pct} label="Phase progress" />}
         <div style={{ fontSize: 13.5, color: 'var(--text-secondary)' }}>Next: {step?.title ?? '—'}</div>
         <div style={{ fontSize: 13.5, color: 'var(--text-secondary)' }}>Waiting on: {step ? (step.owner === 'marq' ? <Chip k={ringFor(waitDays) === 'red' ? 'bad' : 'warn'}>you · {waitDays ?? 0}d</Chip> : step.owner) : '—'}</div>
         <div style={{ fontSize: 13.5, color: 'var(--text-secondary)' }}>Last contact: {daysSince(last, now)}d ago</div>

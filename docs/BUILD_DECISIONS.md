@@ -79,3 +79,12 @@ Every place this build had to choose without asking Marq. Each one can be revers
 59. **Funnel trials = every account with any subscription row past `none`**; paid = active/past_due; churned = canceled/unpaid. Visits come from the existing Cloudflare Web Analytics route.
 60. **People-list automations are sequences in the Comms hub**, started when a contact is added to a list. The server only starts them for the owner; solo users get lists and follow-ups only.
 61. **HQ (5.8) was built in Phase 1.** This phase added the nav group and breadcrumb fix.
+
+## Phases 6–8 — Design, website, report
+
+62. **There is no Studio/Deck/Ledger/Signal switcher on this branch.** `schema_117` added only a "system" option; the app has dark / light / system tokens in `index.css`. So the design pass works through those shared tokens (`--card-elev`, `--ease-spring`, `.mm-card`, `.mm-btn` press, `.mm-progress`) and reaches every module in both modes. If the four-design switcher lands later, those classes are the hook point.
+63. **The completion moment** is a check burst at the tap point plus a 14 ms vibrate where it's supported, used on task done, peptide logged and Money Move earned. It's hidden entirely under `prefers-reduced-motion`.
+64. **"Today's win"** reuses the Feed's real-win finder (`src/data/wins.ts`): a goal completed, a workout today, macros hit, a Money Move earning, a streak milestone, or 3+ tasks done. With no win today it shows nothing; no fake encouragement.
+65. **Product page = `SOLO_LINEUP`.** Modules with written copy keep it. New ones use their registry description, and say "screenshot coming" until a demo-data capture. Home's "N modules" uses the same count.
+66. **Offer cards render nothing until an offer is enabled**, so the live site doesn't change until Marq decides (brief §4, item 11).
+67. **The daily Ledger job runs on the 15-minute cron branch** (where the daily plan and digest already run). It's idempotent (per-month and next-issue-date guards), so repeated ticks are harmless.

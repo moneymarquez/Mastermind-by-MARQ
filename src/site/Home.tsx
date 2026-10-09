@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { MODULE_COUNT } from './productContent';
+import Offers from './Offers';
 import { S, LINKS, Nav, Footer, useViewport, useReducedMotion, updateNavInk } from './shared';
 import {
   HEADLINES, SUBLINE, UTILIZE_1, UTILIZE_2, WORK_WITH_1, WORK_WITH_2, SAMPLE_DO, SAMPLE_GOAL, FITS, FIRST_STEP, PLAN,
@@ -422,7 +424,7 @@ export default function Home() {
               <h1 style={S(`margin:0; font-size:${m ? '40px' : 'clamp(54px, 5.4vw, 78px)'}; line-height:1.0; font-weight:480; letter-spacing:-0.035em; max-width:960px; text-wrap:balance; color:#100f12;`)}>{headline}</h1>
               <p style={S(`margin:${m ? '14px' : '20px'} 0 0; font-size:${m ? '16px' : '19px'}; line-height:1.45; max-width:640px; color:#252b3a; text-wrap:balance;`)}>{SUBLINE}</p>
               <a href={LINKS.signup} className="lp-h-primary" style={S(`margin-top:${m ? '22px' : '30px'}; height:56px; padding:0 30px; display:flex; align-items:center; border-radius:999px; background:#5266eb; color:#fff; font-size:17px; font-weight:500; box-shadow:0 8px 20px rgba(16,15,18,.16); white-space:nowrap;`)}>Start 7-day free trial</a>
-              <div style={S(`margin-top:${m ? '18px' : '22px'}; font-size:${m ? '17px' : '20px'}; font-weight:500; letter-spacing:-0.015em; color:#100f12;`)}>13 modules. One login. $19.99/mo.</div>
+              <div style={S(`margin-top:${m ? '18px' : '22px'}; font-size:${m ? '17px' : '20px'}; font-weight:500; letter-spacing:-0.015em; color:#100f12;`)}>{MODULE_COUNT} modules. One login. $19.99/mo.</div>
               <div style={S('margin-top:8px; font-size:12px; letter-spacing:.02em; color:#2e3240;')}>Not medical or financial advice.</div>
             </div>
 
@@ -551,7 +553,7 @@ export default function Home() {
             <div style={S('background:#1b1a17; color:#fbf9f4; border-radius:12px; padding:32px; display:flex; flex-direction:column; gap:16px;')}>
               <span style={S('font-size:18px; font-weight:600;')}>Masterminds</span>
               <div style={S('display:flex; align-items:baseline; gap:8px;')}><span style={S("font-family:'IBM Plex Mono',monospace; font-size:48px; line-height:1; letter-spacing:-0.03em;")}>$19.99</span><span style={S('font-size:16px; color:#b8b3a8;')}>/mo</span></div>
-              <span style={S('flex:1; font-size:15px; line-height:1.5; color:#d6d1c6;')}>All 13 modules, Nova, and one login.</span>
+              <span style={S('flex:1; font-size:15px; line-height:1.5; color:#d6d1c6;')}>All {MODULE_COUNT} modules, Nova, and one login.</span>
               <a href={LINKS.signup} className="lp-h-primary" style={S('height:48px; display:flex; align-items:center; justify-content:center; border-radius:999px; background:#5266eb; color:#fff; font-size:16px; font-weight:500;')}>Start 7-day free trial</a>
               <span style={S('padding-top:16px; border-top:1px solid #3a3833; font-size:12px; line-height:1.5; color:#b8b3a8;')}>7-day free trial terms. <span style={S("font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.08em;")}>PLACEHOLDER</span></span>
             </div>
@@ -570,6 +572,7 @@ export default function Home() {
               <a href={LINKS.team} className="lp-h-inv-ink" style={S('height:48px; display:flex; align-items:center; justify-content:center; border-radius:999px; border:1px solid #1b1a17; color:#1b1a17; font-size:16px; font-weight:500;')}>Request access</a>
             </div>
           </div>
+          <Offers />
           <div style={S('display:flex; flex-direction:column; gap:16px;')}>
             <span style={S('font-size:11px; font-weight:500; letter-spacing:.14em; color:#6b665c;')}>RUN BY MARQ · DONE WITH YOU</span>
             <div style={S('display:grid; grid-template-columns:repeat(auto-fit,minmax(296px,1fr)); border-top:1px solid #d6d1c6;')}>

@@ -6,6 +6,7 @@ import Card from '../../mm/Card';
 import Chip from '../../mm/Chip';
 import Stat from '../../mm/Stat';
 import { Empty } from '../../mm/States';
+import { celebrate } from '../../../lib/celebrate';
 import { PEPTIDE_FOOTER, dosesLeft, needsReorder, monthlyCost, dosesPerWeek } from '../../../data/peptides';
 import type { PeptideRow } from '../../../data/peptides';
 
@@ -39,7 +40,7 @@ export default function PeptidesScreen() {
     if (!logFor) return;
     await supabase.from('peptide_logs').insert({ peptide_id: logFor.id, amount: entry.amount || logFor.amount, site: entry.site || null, effects: entry.effects || null });
     if (logFor.vial_remaining != null && logFor.per_dose) await supabase.from('peptides').update({ vial_remaining: Math.max(0, logFor.vial_remaining - logFor.per_dose) }).eq('id', logFor.id);
-    setLogFor(null); setEntry({ amount: '', site: '', effects: '' }); await load();
+    celebrate(); setLogFor(null); setEntry({ amount: '', site: '', effects: '' }); await load();
   };
   const summarize = async () => { setBusy(true); const r = await api<{ text?: string; error?: string }>('/api/solo/peptide-summary', { body: {} }); setBusy(false); setSummary(r.error ?? r.text ?? ''); };
   const num = (v: string) => (v.trim() === '' ? null : Number(v));

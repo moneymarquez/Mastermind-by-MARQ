@@ -6,6 +6,7 @@ import Card from '../../mm/Card';
 import Chip from '../../mm/Chip';
 import Stat from '../../mm/Stat';
 import { Empty } from '../../mm/States';
+import { celebrate } from '../../../lib/celebrate';
 import { moneyEarned, fmtRange } from '../../../data/moneyMove';
 import type { MoneyMove } from '../../../data/moneyMove';
 
@@ -40,7 +41,7 @@ export default function MoneyMoveScreen() {
     setMsg('Added the steps to Tasks and a mini goal for this week.'); await load();
   };
   const saveNo = async () => { if (!no) return; await supabase.from('money_moves').update({ status: 'not_for_me', reason: reason.trim() || null, updated_at: new Date().toISOString() }).eq('id', no.id); setNo(null); setReason(''); await load(); };
-  const saveEarned = async () => { if (!earned) return; const n = Number(amount.replace(/[$,]/g, '')); if (!Number.isFinite(n)) return; await supabase.from('money_moves').update({ earned_usd: n, status: 'done', updated_at: new Date().toISOString() }).eq('id', earned.id); setEarned(null); setAmount(''); await load(); };
+  const saveEarned = async () => { if (!earned) return; const n = Number(amount.replace(/[$,]/g, '')); if (!Number.isFinite(n)) return; await supabase.from('money_moves').update({ earned_usd: n, status: 'done', updated_at: new Date().toISOString() }).eq('id', earned.id); celebrate(); setEarned(null); setAmount(''); await load(); };
   const saveInputs = async () => {
     if (!editInputs) return;
     const { error } = await supabase.from('user_setup').upsert({ ...editInputs, updated_at: new Date().toISOString() });

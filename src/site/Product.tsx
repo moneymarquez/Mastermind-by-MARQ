@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { S, LINKS, Nav, Footer, useViewport, updateNavInk } from './shared';
 import { PRODUCT_MODULES, MODULE_COUNT, PERSONAL_TBD, SHOT_H } from './productContent';
+import Offers from './Offers';
 import type { ProductModule } from './productContent';
 
 const shot = (k: string) => `/site/product/${k}.webp`;
@@ -55,7 +56,7 @@ function ModuleRow({ mod, i, m }: { mod: ProductModule; i: number; m: boolean })
         )}
         {mod.links && <Links links={mod.links} />}
       </div>
-      <div style={S(`order:${flip ? 1 : 2};`)}><Frame k={mod.img} alt={mod.alt} m={m} /></div>
+      {mod.img ? <div style={S(`order:${flip ? 1 : 2};`)}><Frame k={mod.img} alt={mod.alt} m={m} /></div> : <div style={S(`order:${flip ? 1 : 2}; border:1px solid #e3e3ea; border-radius:16px; background:#f3f4f8; padding:32px; font-size:15px; color:#6e6e7a;`)}>New in October. Screenshot coming with the next sample-data capture.</div>}
     </article>
   );
 }
@@ -112,12 +113,9 @@ export default function Product() {
       {/* ── Personal */}
       <section data-nav="ink" style={S(`padding:${m ? '72px 0' : '128px 0'};`)}>
         <div style={S(`max-width:1200px; margin:0 auto; padding:${pad}; display:flex; flex-direction:column; gap:${m ? '72px' : '128px'};`)}>
-          {groupHead('PERSONAL', 'Run the day instead of reacting to it.', 'Nine modules for the life around the work: the plan, the calendar, the goals, the body and how your head works. They share one set of data, so nothing has to be entered twice.')}
+          {groupHead('PERSONAL', 'Run the day instead of reacting to it.', `${personal.length} modules for the life around the work: the plan, the calendar, the goals, the body and how your head works. They share one set of data, so nothing has to be entered twice.`)}
           {personal.map((x, i) => <ModuleRow key={x.key} mod={x} i={i} m={m} />)}
-          <div style={S('border:1px dashed #c9c9d3; border-radius:14px; padding:24px; display:flex; flex-direction:column; gap:8px;')}>
-            <span style={S(`${MONO} font-size:10px; letter-spacing:.08em; color:#8a8a98;`)}>PLACEHOLDER · {PERSONAL_TBD} MORE PERSONAL MODULES</span>
-            <span style={S('font-size:15px; line-height:1.55; color:#4a4a55;')}>Marq to confirm which two of the remaining Personal modules are in the solo plan before this page goes live.</span>
-          </div>
+          {PERSONAL_TBD > 0 && <div style={S('border:1px dashed #c9c9d3; border-radius:14px; padding:24px;')}>{PERSONAL_TBD} more Personal modules</div>}
         </div>
       </section>
 
@@ -132,11 +130,11 @@ export default function Product() {
       {/* ── Side Hustles: screenshot first, one line each */}
       <section data-nav="ink" style={S(`padding:${m ? '72px 0' : '128px 0'};`)}>
         <div style={S(`max-width:1200px; margin:0 auto; padding:${pad}; display:flex; flex-direction:column; gap:${m ? '40px' : '64px'};`)}>
-          {groupHead('SIDE HUSTLES', 'The extra money, kept in one place.', 'Three small tools for the things on the side.')}
+          {groupHead('SIDE HUSTLES', 'The extra money, kept in one place.', `${side.length === 3 ? 'Three' : side.length} small tools for the things on the side.`)}
           <div style={S(`display:grid; grid-template-columns:${m ? 'minmax(0,1fr)' : 'repeat(3,minmax(0,1fr))'}; gap:${m ? '40px' : '32px'};`)}>
             {side.map((x) => (
               <article key={x.key} id={x.key} style={S('display:flex; flex-direction:column; gap:16px; scroll-margin-top:96px;')}>
-                <Frame k={x.img} alt={x.alt} m />
+                {x.img ? <Frame k={x.img} alt={x.alt} m /> : null}
                 <div style={S('display:flex; flex-direction:column; gap:6px;')}>
                   <h3 style={S('margin:0; font-size:24px; font-weight:500; letter-spacing:-0.02em;')}>{x.name}</h3>
                   <p style={S('margin:0; font-size:15px; line-height:1.55; color:#4a4a55;')}>{x.line}</p>
@@ -155,6 +153,7 @@ export default function Product() {
           <p style={S('margin:0; font-size:18px; line-height:1.55; color:#b8b8c6; max-width:560px;')}>One login, $19.99 a month after the trial. Cancel from Settings any time.</p>
           <a href={LINKS.signup} className="lp-h-primary" style={S(`${CTA} margin-top:8px;`)}>Start 7-day free trial</a>
           <a href={LINKS.pricing} className="lp-h-ul" style={S('font-size:15px; color:#b8b8c6;')}>See pricing</a>
+          <div style={S('width:100%; max-width:900px; margin-top:16px;')}><Offers dark /></div>
         </div>
       </section>
 

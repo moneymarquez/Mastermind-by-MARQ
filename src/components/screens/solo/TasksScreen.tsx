@@ -7,6 +7,8 @@ import { Empty } from '../../mm/States';
 import { DEFAULT_PROJECTS, groupTasks, weekOf } from '../../../data/tasks';
 import type { Task, TaskView, Priority } from '../../../data/tasks';
 import { dateStr } from '../../../data/time';
+import { celebrate, streakDays } from '../../../lib/celebrate';
+import { Streak } from '../../mm/Progress';
 
 const VIEWS: { id: TaskView; label: string }[] = [{ id: 'due', label: 'By due date' }, { id: 'project', label: 'By project' }, { id: 'week', label: 'This week' }];
 const PRI: Record<Priority, 'bad' | 'neutral' | 'good'> = { high: 'bad', med: 'neutral', low: 'good' };
@@ -47,7 +49,8 @@ export default function TasksScreen() {
   const weekDone = tasks.filter((t) => t.done && t.done_at && t.done_at.slice(0, 10) >= wk.start).length;
   const overdue = tasks.filter((t) => !t.done && t.due && t.due < today).length;
 
-  const toggle = async (t: Task) => {
+  const toggle = async (t: Task, ev?: { clientX: number; clientY: number }) => {
+    if (!t.done) celebrate(ev);
     setTasks((x) => x.map((y) => (y.id === t.id ? { ...y, done: !t.done, done_at: !t.done ? new Date().toISOString() : null } : y)));
     await supabase.from('tasks').update({ done: !t.done, done_at: !t.done ? new Date().toISOString() : null, updated_at: new Date().toISOString() }).eq('id', t.id);
   };
@@ -73,6 +76,7 @@ export default function TasksScreen() {
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <Chip k={overdue ? 'bad' : 'good'}>{overdue ? `${overdue} overdue` : 'Nothing overdue'}</Chip>
         <Chip k="neutral">{weekDone} done this week</Chip>
+        <Streak days={streakDays(tasks.filter((t) => t.done && t.done_at).map((t) => t.done_at!.slice(0, 10)), today)} what="a task done" />
         <Chip k="neutral">{tasks.filter((t) => !t.done).length} open</Chip>
       </div>
       <Tabs tabs={VIEWS} value={view} onChange={setView} />
@@ -83,7 +87,7 @@ export default function TasksScreen() {
       <div style={{ display: 'grid', gridTemplateColumns: phone || view !== 'project' ? '1fr' : 'repeat(auto-fill,minmax(320px,1fr))', gap: 16 }}>
         {groups.map((g) => (
           <Card key={g.key} title={g.label} meta={`${g.items.length}`}>
-            {g.items.map((t, i) => <Row key={t.id} t={t} first={i === 0} today={today} goal={goals.find((x) => x.id === t.goal_id)?.title} onToggle={() => void toggle(t)} onOpen={() => setEditing(t)} />)}
+            {g.items.map((t, i) => <Row key={t.id} t={t} first={i === 0} today={today} goal={goals.find((x) => x.id === t.goal_id)?.title} onToggle={(e) => void toggle(t, e)} onOpen={() => setEditing(t)} />)}
           </Card>
         ))}
       </div>
@@ -115,11 +119,11 @@ export default function TasksScreen() {
   );
 }
 
-function Row({ t, first, today, goal, onToggle, onOpen }: { t: Task; first: boolean; today: string; goal?: string; onToggle: () => void; onOpen: () => void }) {
+function Row({ t, first, today, goal, onToggle, onOpen }: { t: Task; first: boolean; today: string; goal?: string; onToggle: (e?: { clientX: number; clientY: number }) => void; onOpen: () => void }) {
   const late = !t.done && t.due && t.due < today;
   return (
     <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 0', borderTop: first ? 'none' : '1px solid var(--grid)' }}>
-      <input type="checkbox" checked={t.done} onChange={onToggle} aria-label={`Done: ${t.title}`} style={{ width: 20, height: 20, marginTop: 2, flexShrink: 0 }} />
+      <input type="checkbox" checked={t.done} onClick={(e) => onToggle({ clientX: e.clientX, clientY: e.clientY })} onChange={() => {}} aria-label={`Done: ${t.title}`} style={{ width: 20, height: 20, marginTop: 2, flexShrink: 0 }} />
       <button onClick={onOpen} style={{ all: 'unset', cursor: 'pointer', flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
         <span style={{ fontSize: 15, color: t.done ? 'var(--text-tertiary)' : 'var(--text)', textDecoration: t.done ? 'line-through' : 'none', overflowWrap: 'anywhere' }}>{t.title}</span>
         <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap', fontSize: 12.5, color: 'var(--text-tertiary)' }}>

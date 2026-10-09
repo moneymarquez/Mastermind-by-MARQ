@@ -11,9 +11,9 @@ A fresh session continues from **Current step** below.
 - [x] **Phase 3, Content:** ideas, performance loop, clip rendering, multiple accounts, handoff, own accounts
 - [x] **Phase 4, Solo:** tiers, Tasks, Brain Dump + import, AI onboarding, Weekly Check-in, Money Move, Peptides, People lists, Feed
 - [x] **Phase 5, Made by Marq:** audit, CRM tabs + phases, Classroom, Ledger, Contracts, Comms, Playbooks/Case studies, HQ (started in P1), Marketing
-- [ ] **Phase 6, Design pass**
-- [ ] **Phase 7, Website alignment**
-- [ ] **Phase 8, Report**
+- [x] **Phase 6, Design pass**
+- [x] **Phase 7, Website alignment**
+- [x] **Phase 8, Report**
 
 ## Phase 1: what was built
 
@@ -95,6 +95,12 @@ A fresh session continues from **Current step** below.
 - **Marketing → Our Brands:** own accounts, the funnel with the biggest drop, the launch offer builder, the $100 budget with cost per trial/paid and "next $20", the idea bank (25 seeded), the orchestrator's weekly plan with 👍/👎, and case studies.
 - **Migration:** `supabase/schema_125_madeby_october.sql` (not applied). **Tests:** `tests/madeby-october.test.ts`.
 
-## Current step
+## Phases 6–8: what was built
 
-Phases 6–8: design pass, website alignment, report.
+- **Design:** shared depth/motion tokens and classes, the completion burst + haptic, streak chips, animated `Progress`, and "today's win" on Home.
+- **Website:** Product list and count derived from `SOLO_LINEUP`; Home count derived too; launch offer cards from config on Home and Product.
+- **Report:** `docs/BUILD_REPORT.md` with the READY_TO_SHIP checklist.
+
+## Status
+
+**Complete.** See `docs/BUILD_REPORT.md`.

@@ -6,6 +6,7 @@ import Chip from '../../mm/Chip';
 import Stat from '../../mm/Stat';
 import Thumbs from '../../mm/Thumbs';
 import { field } from '../../mm/Page';
+import Progress from '../../mm/Progress';
 import { avgViews30, followerChange30 } from '../../../data/contentEngine';
 import type { SocialAccount, SocialPost, PostMetrics, AccountSnapshot } from '../../../data/contentEngine';
 import { funnel, channelCosts, nextTwenty, OFFER_DEFAULTS, spotsLeft, IDEA_BANK } from '../../../data/madeby';
@@ -142,7 +143,7 @@ export default function OurBrandsTab() {
       </Card>
 
       <Card title="Marketing budget" meta={`$${spent.toFixed(2)} of $${MONTHLY_BUDGET} this month`}>
-        <div style={{ height: 8, borderRadius: 4, background: 'var(--surface-2)', overflow: 'hidden' }}><div style={{ width: `${Math.min(100, (spent / MONTHLY_BUDGET) * 100)}%`, height: '100%', background: spent > MONTHLY_BUDGET * 0.8 ? 'var(--warning)' : 'var(--accent)' }} /></div>
+        <Progress pct={(spent / MONTHLY_BUDGET) * 100} tone={spent > MONTHLY_BUDGET * 0.8 ? 'warn' : undefined} label="Budget used" />
         {channelCosts(channels).filter((c) => c.spend > 0 || c.trials > 0).map((c) => <div key={c.channel} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) repeat(3,auto)', gap: 12, fontSize: 13.5 }}><span>{c.channel}</span><span>${c.spend.toFixed(2)}</span><span>{c.perTrial != null ? `$${c.perTrial}/trial` : `${c.trials} trials`}</span><span>{c.perPaid != null ? `$${c.perPaid}/paid` : '—'}</span></div>)}
         <div style={{ fontSize: 14 }}>💡 {plan?.plan.next_20 || tip}</div>
         <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>Ad spend comes from Ledger expenses with category "marketing" (party = the channel). The guardrail approves anything over $25.</div>

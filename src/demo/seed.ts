@@ -281,6 +281,13 @@ export function buildSeed(): Record<string, Row[]> {
   Object.assign(clients[0], { delivery_phase: 3, business_kind: 'restaurant', phase_started_at: hoursAgo(72), last_contact_at: hoursAgo(20) });
   Object.assign(clients[1], { delivery_phase: 2, business_kind: 'service', phase_started_at: hoursAgo(130), last_contact_at: hoursAgo(2.5) });
   T('crm_clients', clients);
+  // Tasks (brief §4.3) across the projects, so Tasks and the Daily Plan pick-up have real rows.
+  const tk = (title: string, project: string, due: number | null, priority: 'high' | 'med' | 'low', done = false, source = 'manual') => ({ id: uid('task'), user_id: U, title, project, due: due == null ? null : dayStr(due), priority, goal_id: null, source, notes: null, done, done_at: done ? hoursAgo(5) : null, created_at: hoursAgo(48), updated_at: hoursAgo(5) });
+  T('tasks', [
+    tk('Send James the October dev invoice', 'APHS', 0, 'high'), tk('Review Blue Door launch sign-off', 'Made by Marq', -1, 'high'), tk('Record the Masterminds onboarding walkthrough', 'Masterminds', 2, 'med'),
+    tk('Reorder Northline sample pillows', 'E-commerce', 3, 'med'), tk('Film 3 hooks for @mastermindsbymarq', 'Content', 1, 'med'), tk('Meal prep for the week', 'Personal', 0, 'low', true),
+    tk('Call back Rosa about the taco truck menu', 'Made by Marq', 0, 'med', true, 'follow_up'), tk('Pressure-wash gear: book the rental', 'Money Move', 4, 'low', false, 'money_move'),
+  ]);
   // Delivery checklists (brief §5.2) so the Classroom and Overview have something to show.
   const ck = (client: number, phase: number, title: string, owner: 'marq' | 'client' | 'bot', done: boolean, ageH: number) => ({ id: uid('chk'), user_id: U, client_id: clients[client].id, phase, title, owner, due: dayStr(Math.round(-ageH / 24) + 5), done, done_at: done ? hoursAgo(ageH / 2) : null, play_id: null, sort: 0, created_at: hoursAgo(ageH), updated_at: hoursAgo(ageH) });
   T('client_checklist', [
