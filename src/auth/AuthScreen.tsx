@@ -15,6 +15,10 @@ const fieldStyle: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 11, height: 48, padding: '0 15px',
   borderRadius: 'var(--radius-md)', border: '1px solid var(--mm-line)', background: 'var(--mm-field, var(--mm-panel))',
 };
+/** The sign-in uses the public site's look: warm paper, ink, one cobalt action, Instrument Sans. */
+const SITE = { paper: '#fbf9f4', ink: '#1b1a17', mute: '#6b665c', line: '#ddd8cc', card: '#ffffff', cobalt: '#5266eb', sans: "'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif", mono: "'IBM Plex Mono', ui-monospace, Menlo, monospace" };
+const siteField: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 11, height: 50, padding: '0 14px', borderRadius: 10, border: `1px solid ${SITE.line}`, background: '#fff' };
+const siteInput: React.CSSProperties = { flex: 1, border: 'none', outline: 'none', background: 'transparent', color: SITE.ink, fontSize: 16, fontFamily: 'inherit', minWidth: 0 };
 const inputStyle: React.CSSProperties = {
   flex: 1, border: 'none', outline: 'none', background: 'transparent', color: 'var(--mm-text)', fontSize: 14,
 };
@@ -37,6 +41,15 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
     if (/^\/(forgot|reset)-password\/?$/.test(window.location.pathname)) return 'reset';
     return new URLSearchParams(window.location.search).has('signup') ? 'signup' : 'login';
   });
+  // A signed-out visitor on the bare root belongs on the public site. index.html
+  // already sends them there, but skips it when a stale sign-in token is in storage
+  // (an expired session on a phone), which left them on this old sign-in landing.
+  useEffect(() => {
+    try {
+      const standalone = matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone;
+      if (window.location.pathname === '/' && !window.location.search && !window.location.hash && !standalone) window.location.replace('/home');
+    } catch { /* stay on the sign-in */ }
+  }, []);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -213,15 +226,18 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
   }
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--mm-canvas)', color: 'var(--mm-text)', display: 'flex', flexDirection: 'column' } as React.CSSProperties}>
+    <div style={{ height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: SITE.paper, color: SITE.ink, fontFamily: SITE.sans, display: 'flex', flexDirection: 'column' } as React.CSSProperties}>
       <style>{`
         .mm-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; text-decoration: none; font-weight: 600; border-radius: 999px; border: 1px solid transparent; }
-        .mm-btn-ink { background: var(--mm-ink); color: var(--mm-ink-text); }
-        .mm-btn-ink:hover { opacity: 0.92; }
+        .mm-btn-ink { background: #5266eb; color: #fff; font-family: inherit; font-size: 16px; font-weight: 500; }
+        .mm-btn-ink:hover { background: #4356d9; }
+        .mm-btn-ink:disabled { opacity: .6; cursor: default; }
+        .wl-auth input::placeholder { color: #8f8a7f; opacity: 1; }
+        .wl-auth :focus-visible { outline: 2px solid #5266eb; outline-offset: 2px; }
       `}</style>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '16px 20px', paddingTop: 'max(16px, env(safe-area-inset-top))' }}>
-        <a href="/home" style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--mm-text)', textDecoration: 'none' }}>
-          <span aria-hidden="true" style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--mm-text)', color: 'var(--mm-canvas)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 10, lineHeight: '10px' }}><span>MA</span><span>RQ</span></span>
+        <a href="/home" style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#1b1a17', textDecoration: 'none' }}>
+          <span aria-hidden="true" style={{ width: 32, height: 32, borderRadius: 8, background: '#1b1a17', color: 'var(--mm-canvas)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 10, lineHeight: '10px' }}><span>MA</span><span>RQ</span></span>
           <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}><span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.01em' }}>Masterminds</span><span style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '.22em', opacity: 0.72 }}>BY MARQ</span></span>
         </a>
         <button
@@ -234,41 +250,42 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
       </div>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 20px 48px' }}>
         <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div id="login-card" style={{ padding: 26, borderRadius: 18, border: '1px solid var(--mm-line)', background: 'var(--mm-panel-solid)', boxShadow: 'var(--mm-shadow)', display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <div id="login-card" className="wl-auth" style={{ padding: 28, borderRadius: 12, border: '1px solid #e2ddd2', background: SITE.card, display: 'flex', flexDirection: 'column', gap: 18 }}>
               {hasPendingJoin() && (
                 <div role="status" style={{ padding: '12px 14px', borderRadius: 12, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', fontSize: 14, lineHeight: 1.45 }}>
                   You've been invited to a team. Log in — or create a free login — and your tasks will be waiting. No subscription needed.
                 </div>
               )}
               <div>
-                <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em' }}>
+                <div style={{ fontFamily: SITE.mono, fontSize: 11, fontWeight: 500, letterSpacing: '.14em', color: SITE.mute, marginBottom: 8 }}>{mode === 'login' ? 'LOG IN' : mode === 'signup' ? 'JOIN' : 'RESET'}</div>
+                <div style={{ fontSize: 28, lineHeight: 1.15, fontWeight: 480, letterSpacing: '-0.02em' }}>
                   {mode === 'login' ? 'Log in' : mode === 'signup' ? 'Create your account' : 'Reset your password'}
                 </div>
-                <div style={{ fontSize: 13.5, color: 'var(--mm-faint)', marginTop: 4 }}>
+                <div style={{ fontSize: 15, color: SITE.mute, marginTop: 6, lineHeight: 1.5 }}>
                   {mode === 'login' ? 'Nova has your morning ready.' : mode === 'signup' ? 'Takes about a minute.' : "We'll email you a link to set a new one."}
                 </div>
               </div>
 
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={fieldStyle}>
-                  <Icon name="envelope-simple" size={17} color="var(--mm-faint)" />
-                  <input type="email" name="email" autoComplete={mode === 'signup' ? 'email' : 'username'} inputMode="email" aria-label="Email" autoFocus autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
+                <div style={siteField}>
+                  <Icon name="envelope-simple" size={17} color={SITE.mute} />
+                  <input style={siteInput} type="email" name="email" autoComplete={mode === 'signup' ? 'email' : 'username'} inputMode="email" aria-label="Email" autoFocus autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
                 {mode !== 'reset' && (
-                  <div style={fieldStyle}>
-                    <Icon name="lock-simple" size={17} color="var(--mm-faint)" />
-                    <input type="password" name="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} aria-label="Password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
+                  <div style={siteField}>
+                    <Icon name="lock-simple" size={17} color={SITE.mute} />
+                    <input style={siteInput} type="password" name="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} aria-label="Password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
                   </div>
                 )}
                 {mode === 'signup' && (
-                  <div style={fieldStyle}>
-                    <Icon name="lock-simple" size={17} color="var(--mm-faint)" />
-                    <input type="password" name="confirm-password" autoComplete="new-password" aria-label="Confirm password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={inputStyle} />
+                  <div style={siteField}>
+                    <Icon name="lock-simple" size={17} color={SITE.mute} />
+                    <input style={siteInput} type="password" name="confirm-password" autoComplete="new-password" aria-label="Confirm password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                   </div>
                 )}
                 {mode === 'login' && (
                   <div style={{ textAlign: 'right', marginTop: -2 }}>
-                    <span style={{ fontSize: 12.5, color: 'var(--mm-faint)', cursor: 'pointer' }} onClick={() => switchMode('reset')}>Forgot password?</span>
+                    <span style={{ fontSize: 12.5, color: '#6b665c', cursor: 'pointer' }} onClick={() => switchMode('reset')}>Forgot password?</span>
                   </div>
                 )}
 
@@ -282,29 +299,29 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
                 </button>
               </form>
 
-              <div style={{ fontSize: 13, color: 'var(--mm-faint)', textAlign: 'center' }}>
+              <div style={{ fontSize: 13, color: '#6b665c', textAlign: 'center' }}>
                 {mode === 'login' && (
                   <>No account?{' '}
-                    <button type="button" style={{ color: 'var(--mm-text)', cursor: 'pointer', background: 'none', border: 'none', textDecoration: 'underline', textUnderlineOffset: 3, padding: '8px 2px', font: 'inherit' }} onClick={() => switchMode('signup')}>Create an account</button>
+                    <button type="button" style={{ color: '#1b1a17', cursor: 'pointer', background: 'none', border: 'none', textDecoration: 'underline', textUnderlineOffset: 3, padding: '8px 2px', font: 'inherit' }} onClick={() => switchMode('signup')}>Create an account</button>
                   </>
                 )}
                 {mode === 'signup' && (
                   <>Already have an account?{' '}
-                    <span style={{ color: 'var(--mm-text)', borderBottom: '1px solid var(--mm-line2)', cursor: 'pointer' }} onClick={() => switchMode('login')}>Log in</span>
+                    <span style={{ color: '#1b1a17', borderBottom: '1px solid #c9c3b5', cursor: 'pointer' }} onClick={() => switchMode('login')}>Log in</span>
                   </>
                 )}
                 {mode === 'reset' && (
-                  <span style={{ color: 'var(--mm-text)', borderBottom: '1px solid var(--mm-line2)', cursor: 'pointer' }} onClick={() => switchMode('login')}>← Back to log in</span>
+                  <span style={{ color: '#1b1a17', borderBottom: '1px solid #c9c3b5', cursor: 'pointer' }} onClick={() => switchMode('login')}>← Back to log in</span>
                 )}
                 <div style={{ marginTop: 6, display: 'flex', justifyContent: 'center', gap: 14, flexWrap: 'wrap' }}>
-                  <a href="/privacy" style={{ color: 'var(--mm-faint)', textDecoration: 'underline', textUnderlineOffset: 3, padding: '10px 2px' }}>Privacy Policy</a>
-                  <a href="/terms" style={{ color: 'var(--mm-faint)', textDecoration: 'underline', textUnderlineOffset: 3, padding: '10px 2px' }}>Terms &amp; Conditions</a>
+                  <a href="/privacy" style={{ color: '#6b665c', textDecoration: 'underline', textUnderlineOffset: 3, padding: '10px 2px' }}>Privacy Policy</a>
+                  <a href="/terms" style={{ color: '#6b665c', textDecoration: 'underline', textUnderlineOffset: 3, padding: '10px 2px' }}>Terms &amp; Conditions</a>
                 </div>
               </div>
             </div>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 18, flexWrap: 'wrap', fontSize: 13 }}>
-            <a href="/home" style={{ color: 'var(--mm-faint)', textDecoration: 'underline', textUnderlineOffset: 3, padding: '8px 2px' }}>Back to Masterminds</a>
-            <button type="button" onClick={() => startDemo()} style={{ color: 'var(--mm-faint)', textDecoration: 'underline', textUnderlineOffset: 3, padding: '8px 2px', background: 'none', border: 'none', font: 'inherit', cursor: 'pointer' }}>See a 2-minute demo</button>
+            <a href="/home" style={{ color: '#6b665c', textDecoration: 'underline', textUnderlineOffset: 3, padding: '8px 2px' }}>Back to Masterminds</a>
+            <button type="button" onClick={() => startDemo()} style={{ color: '#6b665c', textDecoration: 'underline', textUnderlineOffset: 3, padding: '8px 2px', background: 'none', border: 'none', font: 'inherit', cursor: 'pointer' }}>See a 2-minute demo</button>
           </div>
         </div>
       </div>
