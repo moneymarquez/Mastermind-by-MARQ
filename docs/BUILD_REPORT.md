@@ -2,7 +2,7 @@
 
 Branch: `build/october-overhaul` (not merged into `main`, not deployed). One commit per phase, plus the Phase 6–8 commit.
 
-**Quality bar at the end:** `npm run build` ✅ · `npm run lint` ✅ (0 errors; the existing warnings are unchanged) · `npm test` ✅ **186 tests** in 26 files.
+**Quality bar at the end:** `npm run build` ✅ · `npm run lint` ✅ (0 errors; the existing warnings are unchanged) · `npm test` ✅ **186 tests** in 25 files.
 
 Detailed per-phase notes: `docs/BUILD_PROGRESS.md`. Every judgment call (61 of them): `docs/BUILD_DECISIONS.md`. Made by Marq audit: `docs/MADEBY_AUDIT.md`.
 
