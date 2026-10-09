@@ -36,6 +36,10 @@ Detailed per-phase notes: `docs/BUILD_PROGRESS.md`. Every judgment call (61 of t
 - **After approval:** attach the number to the Messaging Service, set the number's inbound webhook to `https://mastermindsbymarq.com/api/sms/inbound`, save the SID/token/number in Setup → Twilio, and send yourself a test from `/sms`.
 - **If it's rejected again:** check that `/sms`, `/privacy` and `/terms` load publicly, and that the brand name reads "Masterminds by MARQ" everywhere.
 
+## ⚑ Flagged: mobile app went blank (to fix)
+- Oct 9, 2026: Marq saw the mobile app glitch and go to a blank screen. When and where isn't known yet.
+- **To investigate:** run a phone-width check on every screen, use the error boundary to catch crashes, and check for a stale service worker after deploys (a blank screen right after an update often means the cached app shell is asking for files the new deploy replaced).
+
 ## READY_TO_SHIP checklist
 
 ### 1. Migrations ✅ applied to production on Oct 9, 2026
