@@ -30,7 +30,7 @@ export function scoutSystem(opts: { playbooks: string; corrections: string[]; bu
     opts.budgetNote,
     opts.corrections.length ? `Corrections from Marq on your earlier work — follow every one:\n${opts.corrections.map((c) => `- ${c}`).join('\n')}` : '',
     opts.playbooks ? `Playbooks (follow these):\n${opts.playbooks}` : 'No playbooks written yet; use sound dropshipping judgment.',
-    'Answer with ONLY a JSON object, no prose: {"products":[{"name":"","category":"","rank":1,"sell_price":0,"supplier_cost":null,"ship_cost":null,"days_trending":null,"velocity":"rising|flat|fading","score":0,"content_difficulty":"easy|medium|hard","image_url":null,"source_url":"","confidence":"ai|estimate","problem":"","trigger":"","evidence":"","buyer":"","why_emotional":"","why_practical":"","principle":"","angle":"","competition":"","sellers":null,"fail_risks":""}],"summary":"one sentence on what you found"}. score is 0–10 for fit with the rules above.',
+    'Answer with ONLY a JSON object, no prose: {"products":[{"name":"","category":"","rank":1,"sell_price":null,"supplier_cost":null,"ship_cost":null,"days_trending":null,"velocity":"rising|flat|fading","score":null,"content_difficulty":"easy|medium|hard","image_url":null,"source_url":"","confidence":"ai|estimate","problem":"","trigger":"","evidence":"","buyer":"","why_emotional":"","why_practical":"","principle":"","angle":"","competition":"","sellers":null,"fail_risks":""}],"summary":"one sentence on what you found"}. score is 0–10 for fit with the rules above. Use null, never 0, for any price or score you do not know.',
   ].filter(Boolean).join('\n\n');
 }
 
@@ -68,16 +68,19 @@ export function parseScout(text: string, channel: Channel, asOf: string): ScoutR
     if (!/^https?:\/\//.test(sourceUrl)) { dropped.push(`${name}: no source link`); return; }
     if (/(^|\.)(instagram|facebook)\.com|(^|\/\/)(www\.|m\.)?tiktok\.com\/@/.test(sourceUrl)) { dropped.push(`${name}: social-platform source not allowed`); return; }
     // One shared Shopify store: a banned product puts every site's payments at risk.
+    // It stays in the batch as Blocked (with the reason) so Marq can see why, but can't be approved.
     const banned = prohibitedReason(`${name} ${str(p.category)}`);
-    if (banned) { dropped.push(`${name}: not allowed in the shared store — ${banned}`); return; }
-    const sell = num(p.sell_price), supplier = num(p.supplier_cost), ship = num(p.ship_cost) ?? 0;
+    // A 0 is a template placeholder, not a price.
+    const posn = (v: unknown) => { const n = num(v); return n != null && n > 0 ? n : null; };
+    const sell = posn(p.sell_price), supplier = posn(p.supplier_cost), ship = num(p.ship_cost) ?? 0;
     const landed = sell != null && supplier != null ? landedCost(supplier, ship, sell) : null;
     const detail: ProductDetail = {};
     for (const k of ['problem', 'trigger', 'evidence', 'buyer', 'why_emotional', 'why_practical', 'principle', 'angle', 'competition', 'fail_risks'] as const) { const v = str(p[k]); if (v) detail[k] = v; }
     if (ship) detail.ship_cost = ship;
     const sellers = num(p.sellers); if (sellers != null) detail.sellers = sellers;
     detail.sources = sourceUrl;
-    const score = num(p.score);
+    if (banned) detail.blocked = banned;
+    const score = posn(p.score);
     const image = str(p.image_url);
     rows.push({
       name, category: str(p.category) || null, channel, rank: num(p.rank) ?? i + 1, sell_price: sell, supplier_cost: supplier,

@@ -137,10 +137,17 @@ const PROHIBITED: [RegExp, string][] = [
   [/\b(weight[- ]loss pill|diet pill|fat burner|cures?|treats? (cancer|diabetes|covid)|miracle|fda[- ]approved)\b/i, 'medical or health claims'],
   [/\b(gambling|casino|lottery|crypto mining|get rich|forex signals?)\b/i, 'gambling or financial schemes'],
   [/\b(replica|knock-?off|dupe|inspired by|counterfeit|fake (designer|brand))\b/i, 'knockoffs or counterfeit'],
-  [/\b(nike|adidas|apple|airpods|iphone|disney|marvel|pokemon|pokémon|nintendo|lego|stanley cup|yeti|gucci|louis vuitton|chanel|rolex|supreme)\b/i, 'someone else\'s trademark'],
+  [/\b(nike|adidas|apple|airpods|iphone|disney|marvel|pokemon|pokémon|nintendo|lego|stanley|yeti|gucci|louis vuitton|chanel|rolex|supreme|tarte|sephora|fenty|glossier|maybelline|l'?oreal|covergirl|nars|revlon|dior|prada|coach|kate spade|north face|patagonia|lululemon|crocs|owala|hydro ?flask|dyson|cricut|samsung|sony|bose|jbl|gopro|fitbit|garmin|anker|nerf|hasbro|mattel|barbie|hello kitty|sanrio|pixar|harry potter|taylor swift|starbucks|lamborghini|ferrari|nfl|nba|mlb)\b/i, 'someone else\'s trademark'],
+  [/\b(supplements?|vitamins?|magnesium|collagen|probiotics?|gummies|gummy|capsules?|protein powder|creatine|melatonin|ashwagandha|omega-?3|multivitamin|electrolyte (powder|drink)|detox tea|slimming tea)\b/i, 'supplements or ingestibles'],
+  [/\b(anti-?aging|wrinkle (cream|remover)|hair growth|acne (treatment|cure|patch)|teeth whitening|stretch mark|cellulite|scar removal|eyelash growth)\b/i, 'cosmetics with health claims'],
+  [/\b(blood pressure|glucose|pulse oximeter|hearing aid|cpap|tens unit|ems (pain|muscle)|pain relief device|heating pad for (pain|arthritis)|medical grade)\b/i, 'medical devices or claims'],
 ];
+/** Generic style words: "Retro-style" is a look, "Stanley-style" is someone's brand. */
+const STYLE_WORDS = /^(retro|vintage|boho|bohemian|modern|nordic|korean|japanese|french|scandinavian|western|industrial|rustic|minimalist|farmhouse|victorian|gothic|y2k|classic|mediterranean|southwestern|coastal|art|deco|mid-?century|cottage|country|urban|street|sport|casual|elegant|chic|cute|kawaii|punk|preppy|hippie|tropical|beach|spa|hotel|cafe|café|boutique|designer|luxury|premium|unique|new|old|multi|one|two|three|four|five|six)$/i;
 /** Why a product can't go in the shared store, or null if it's fine. Pure. */
 export function prohibitedReason(text: string): string | null {
   for (const [re, why] of PROHIBITED) { const m = text.match(re); if (m) return `${why} ("${m[0]}")`; }
+  // "<Name>-style" / "<Name> style" where the name isn't an ordinary look word: someone's brand.
+  for (const m of text.matchAll(/([A-Za-z][\w'’]+)[- ]style\b/g)) if (!STYLE_WORDS.test(m[1])) return `a brand knockoff ("${m[0]}")`;
   return null;
 }

@@ -16,6 +16,7 @@ import { guardSpend } from './controls';
 import { notifyStored } from './notify';
 import { SCOUT_CHANNELS } from './scout';
 import type { Channel } from '../../src/data/ecom';
+import { breakdown } from '../../src/data/ecomFees';
 import { brandStepsFromProduct } from '../../src/data/ecomProducts';
 import type { Product } from '../../src/data/ecomProducts';
 
@@ -121,8 +122,8 @@ export function orderMargin(o: ShopifyOrder, unitCost: number | null, shipCost: 
   if (unitCost == null) return { qty, supplier: null, ship: shipCost == null ? null : shipCost * qty, margin: null };
   const supplier = unitCost * qty, ship = (shipCost ?? 0) * qty;
   const total = Number(o.total_price ?? 0);
-  // Same fees + returns allowance as landed cost (3% + 7.5%).
-  return { qty, supplier: round(supplier), ship: round(ship), margin: round(total - supplier - ship - total * 0.105) };
+  // Same fees + refund allowance as the product card (src/data/ecomFees.ts).
+  return { qty, supplier: round(supplier), ship: round(ship), margin: round(breakdown(total, supplier, ship).profit) };
 }
 const round = (n: number) => Math.round(n * 100) / 100;
 

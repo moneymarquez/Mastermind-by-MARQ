@@ -16,7 +16,7 @@ const cand = (id: string, sell: number, cost: number, score: number, extra: Part
 describe('product pitch', () => {
   it('unitMath uses landed cost (fees + returns)', () => {
     const m = unitMath(40, 8, 4);
-    expect(m.landed).toBeCloseTo(8 + 4 + 40 * 0.105, 2);
+    expect(m.landed).toBeCloseTo(8 + 4 + 40 * 0.029 + 0.3 + 40 * 0.05, 2);
     expect(m.profit).toBeCloseTo(40 - m.landed, 2);
     expect(m.breakEvenOrders).toBe(Math.ceil(50 / m.profit));
   });
@@ -77,7 +77,7 @@ describe('orders', () => {
     expect(m.qty).toBe(2);
     expect(m.supplier).toBe(20);
     expect(m.ship).toBe(6);
-    expect(m.margin).toBeCloseTo(80 - 26 - 8.4, 2);
+    expect(m.margin).toBeCloseTo(80 - 26 - 6.62, 2);
     expect(orderMargin({ id: 2, total_price: '40' }, null, null).margin).toBeNull();
   });
   it('shopifyHmacValid accepts the real signature and rejects others', async () => {

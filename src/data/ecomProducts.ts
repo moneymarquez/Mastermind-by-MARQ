@@ -6,6 +6,8 @@ import type { Channel, Confidence } from './ecom';
 export type Velocity = 'rising' | 'flat' | 'fading';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
+import { breakdown } from './ecomFees';
+import type { CardData } from './ecomCard';
 export interface ProductDetail {
   problem?: string; trigger?: string; evidence?: string;
   buyer?: string;
@@ -19,6 +21,11 @@ export interface ProductDetail {
   videos?: string;
   ship_cost?: number;
   sellers?: number;
+  /** Everything the rich card shows beyond the basics (suppliers, sellers, hooks, outcomes, what's missing). */
+  card?: CardData;
+  notes?: string;
+  recheck_at?: string;
+  blocked?: string;
 }
 
 export interface Product {
@@ -48,9 +55,9 @@ export interface Product {
 
 export interface Snapshot { id: string; product_id: string; channel: string; rank: number | null; price: number | null; captured_at: string }
 
-/** Spec §6 step 2: landed = supplier + shipping + 3% fees + ~7.5% returns. */
+/** Landed = supplier + shipping + payment processing + packaging + the refund allowance (rates in ecomFees.ts). */
 export function landedCost(supplier: number, ship: number, sellPrice: number): number {
-  return supplier + ship + sellPrice * 0.03 + sellPrice * 0.075;
+  return breakdown(sellPrice, supplier, ship).landed;
 }
 export function marginPct(sellPrice: number, landed: number): number {
   return sellPrice > 0 ? ((sellPrice - landed) / sellPrice) * 100 : 0;

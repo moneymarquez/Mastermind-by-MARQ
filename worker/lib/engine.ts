@@ -13,7 +13,7 @@ import { feedbackCorrections, addPlaybookRule } from './feedback';
 import { researchSearch } from './research';
 import { notifyStored, APPROVAL_EVENTS } from './notify';
 import { afterBrandOptions } from './visual';
-import { approvePitch } from './ecomOctober';
+import { approvePitch, testProduct } from './ecomOctober';
 import { afterGrades, holdDuplicates, applyContentKit } from './contentOctober';
 import { ask, CapReached, spentToday, capFor } from './ai';
 import type { AskInput, AskResult } from './ai';
@@ -23,6 +23,8 @@ import type { BriefCtx, ProductForAnalysis, LeadLite, LeadTag, Gradable, Analysi
 import { funnelStats } from '../../src/data/mktEngine';
 import type { TouchOutcome, Venture, ScriptChannel } from '../../src/data/mktEngine';
 import { landedCost, marginPct } from '../../src/data/ecomProducts';
+import { cardView } from '../../src/data/ecomCard';
+import { enrichRow } from './enrich';
 import { trendSystem, trendUser, parseTrends, ideaSystem, ideaUser, parseIdeas, scriptBody, gradeMeasured, auditSystem, auditUser, parseAudit, analyticsSystem, analyticsUser, parseGrades, bestHours, plannerSystem as postPlannerSystem, plannerUser as postPlannerUser, parseSlots, clipSystem, clipUser, parseClipEdit, cleanSegments } from './contentWorkers';
 import { supplierSystem, supplierUser, parseSuppliers, brandSystem, brandUser, parseBrands, domainStatusFrom, storeSystem, storeUser, extractHtml, qualityGate, diagnoseFunnel, readSystem, parseRead } from './ecomWorkers';
 import type { BrandCtx, SupplierPayload, BrandOption } from './ecomWorkers';
@@ -193,11 +195,22 @@ export function runScout(apiKey: string | undefined, sb: Sb, userId: string, inp
       if (r) res.sources.push(...r.sources);
       const parsed = parseScout(res.text, channel, new Date().toISOString());
       if (parsed.rows.length === 0) throw new Error(`Scout returned no usable products${parsed.dropped.length ? ` (dropped: ${parsed.dropped.join('; ')})` : ''}.`);
-      const top = parsed.rows[0];
-      return {
-        summary: parsed.summary || `${parsed.rows.length} products`, count: parsed.rows.length, dropped: parsed.dropped,
-        approval: { type: 'scout_products', title: `Scout: ${parsed.rows.length} ${SCOUT_CHANNELS[channel].label} product${parsed.rows.length === 1 ? '' : 's'}`, payload: { channel, rows: parsed.rows, summary: parsed.summary, dropped: parsed.dropped, sources: res.sources.slice(0, 20) }, principle: top.detail.principle ?? null, source_url: top.source_url },
-      };
+      // Supplier Finder + Analyst run on every find BEFORE it reaches Approvals, so no card shows a bare "?".
+      // Blocked finds skip the research (nothing to decide) and show why they're blocked.
+      const rows: ImportRow[] = [];
+      for (const row of parsed.rows) rows.push(row.detail.blocked ? row : await enrichRow(ctx, sb, row, input.instructions));
+      const known = new Set((await sb.get<{ name: string }>(`ecom_products?user_id=eq.${userId}&channel=eq.${channel}&select=name`)).map((p) => p.name.trim().toLowerCase()));
+      const waiting = new Set((await sb.get<{ title: string }>(`ai_approvals?user_id=eq.${userId}&type=eq.product_card&status=eq.pending&select=title`)).map((a) => a.title.trim().toLowerCase()));
+      let made = 0, blocked = 0, skipped = 0;
+      for (const row of rows) {
+        const title = `Product: ${row.name}`.slice(0, 300);
+        if (known.has(row.name.trim().toLowerCase()) || waiting.has(title.toLowerCase())) { skipped++; continue; }
+        const v = cardView({ ...row, detail: row.detail, source_url: row.source_url ?? null } as never);
+        if (v.blocked) blocked++;
+        await sb.insert('ai_approvals', { user_id: userId, domain: ctx.domain, type: 'product_card', entity_type: 'product', entity_id: ctx.runId, worker_id: ctx.w.id, run_id: ctx.runId, title: `${title} — ${v.verdict}`.slice(0, 300), payload: { channel, row, verdict: v.verdict, summary: v.verdictWhy, instructions: input.instructions ?? null }, principle: row.detail.principle ?? null, source_url: row.source_url ?? null, confidence: row.confidence ?? 'estimate', is_money: false });
+        made++;
+      }
+      return { summary: `${parsed.summary || `${rows.length} products`} ${made} in Approvals${blocked ? ` (${blocked} blocked)` : ''}${skipped ? `, ${skipped} already known` : ''}.`.trim(), count: made, dropped: parsed.dropped, output: { channel, made, blocked, skipped } };
     },
   });
 }
@@ -694,6 +707,19 @@ export const APPLIERS: Record<string, Applier> = {
   content_kit: async (sb, u, raw) => applyContentKit(sb, u, raw),
   playbook_rule: async (sb, u, raw) => addPlaybookRule(sb, u, String(raw.playbook), String(raw.domain ?? 'all'), String(raw.rule), 'Approved: the same correction twice'),
 
+  /** "Approve to test" on a Scout find: it joins the sheet, then runs the same pipeline as an approved pitch. Blocked or number-less finds can't be approved. */
+  product_card: async (sb, u, p) => {
+    const row = p.row as ImportRow | undefined;
+    if (!row) throw new Error('The approval has no product.');
+    const v = cardView({ ...row, source_url: row.source_url ?? null } as never);
+    if (v.blocked) throw new Error(`Blocked: ${v.blocked}`);
+    if (!v.canApprove) throw new Error('No sell price or supplier cost yet. Tap "Find the missing numbers" first.');
+    await importScoutRows(sb, u, [row]);
+    const [prod] = await sb.get<{ id: string }>(`ecom_products?user_id=eq.${u}&channel=eq.${row.channel}&name=eq.${encodeURIComponent(row.name)}&select=id&limit=1`);
+    if (!prod) throw new Error('The product could not be saved to the sheet.');
+    const t = await testProduct(sb, u, prod.id);
+    return { brand_id: t.brand_id, product_id: prod.id, note: t.note };
+  },
   scout_products: async (sb, u, p) => importScoutRows(sb, u, (p.rows ?? []) as ImportRow[]),
 
   /** Fills the product's drawer fields and records the Validate verdict.

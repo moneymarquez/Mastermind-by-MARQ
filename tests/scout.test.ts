@@ -16,7 +16,7 @@ test('Product Scout parsing', async () => {
   assert.equal(r.dropped.length, 3);
   const a = r.rows[0];
   assert.equal(a.sell_price, 29.99); assert.equal(a.velocity, 'rising'); assert.equal(a.score, 10); assert.equal(a.confidence, 'estimate');
-  assert.ok(Math.abs(a.landed_cost! - (4.2 + 2.1 + 29.99 * 0.105)) < 1e-9);
+  assert.ok(Math.abs(a.landed_cost! - (4.2 + 2.1 + 29.99 * 0.029 + 0.3 + 29.99 * 0.05)) < 0.01);
   assert.equal(a.detail.sellers, 12); assert.equal(a.detail.ship_cost, 2.1); assert.equal(a.detail.sources, 'https://ads.tiktok.com/business/creativecenter/x');
   assert.equal(r.rows[1].rank, 5); assert.equal(r.rows[1].landed_cost, null); assert.equal(r.rows[1].images.length, 0); assert.equal(r.rows[1].confidence, 'ai');
   assert.throws(() => extractJson('no json here'));

@@ -5,7 +5,10 @@ import { requireMember } from '../lib/member';
 import { json, zonedNow } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
 import { spentToday, capFor } from '../lib/ai';
-import { ensureRoster, RUNNERS, decide, ENGINE_DOMAINS, TZ } from '../lib/engine';
+import { ensureRoster, RUNNERS, decide, ENGINE_DOMAINS, TZ, runWorker, importScoutRows } from '../lib/engine';
+import { enrichRow } from '../lib/enrich';
+import { cardView } from '../../src/data/ecomCard';
+import type { ImportRow } from '../../src/data/ecomProducts';
 import { nextDailyStep, planFor } from '../lib/orchestrator';
 import { runPublisher, requeue } from '../lib/publisher';
 import type { PublishEnv } from '../lib/publisher';
@@ -86,7 +89,7 @@ export async function engineRoute(request: Request, env: EngineEnv, path: string
         await rejectPitch(sb, user.id, a?.payload?.pitch_id, b.note ?? null);
       }
       if (!r.ok || b.status !== 'approved') return json(r, r.ok ? 200 : 400);
-      if (r.type === 'product_pitch') {
+      if (r.type === 'product_pitch' || r.type === 'product_card') {
         // Approved: Brand Lab drafts 3 directions (the Visual worker images them)
         // and Supplier Finder builds the shipping plan — Marq confirms each.
         const brandId = ((r.applied ?? {}) as { brand_id?: string }).brand_id;
@@ -130,6 +133,55 @@ export async function engineRoute(request: Request, env: EngineEnv, path: string
       }
       const r = await runProductPitch(env.ANTHROPIC_API_KEY, sb, user.id, { exclude, instructions: b?.instructions?.slice(0, 2000) ?? null, trigger: 'manual' });
       return json(r, r.ok ? 200 : r.capReached ? 429 : 502);
+    }
+    // "Find the missing numbers": re-run Supplier Finder + Analyst on one find (an approval) or one sheet product.
+    if (path === 'enrich') {
+      const b = await body<{ approval_id?: string; product_id?: string }>(request);
+      const id = b?.approval_id ?? b?.product_id;
+      if (!id || !UUID.test(id)) return json({ error: 'approval_id or product_id is required.' }, 400);
+      const r = await runWorker(env.ANTHROPIC_API_KEY, sb, user.id, {
+        key: 'analyst', task: 'Finding the missing numbers', input: { id }, trigger: 'manual', entityType: b?.approval_id ? 'approval' : 'product', entityId: id,
+        async execute(ctx) {
+          if (b?.approval_id) {
+            const [a] = await sb.get<{ payload: { row?: ImportRow }; status: string }>(`ai_approvals?id=eq.${id}&user_id=eq.${user.id}&select=payload,status`);
+            if (!a?.payload?.row || a.status !== 'pending') throw new Error('That find is no longer waiting for approval.');
+            const row = await enrichRow(ctx, sb, a.payload.row);
+            const v = cardView({ ...row, source_url: row.source_url ?? null } as never);
+            await sb.patch('ai_approvals', `id=eq.${id}&user_id=eq.${user.id}`, { payload: { ...a.payload, row, verdict: v.verdict, summary: v.verdictWhy }, updated_at: new Date().toISOString() });
+            return { summary: `${row.name}: ${v.missing.length ? `${v.missing.length} still not found` : 'all numbers found'}`, count: 1 };
+          }
+          const [p] = await sb.get<Record<string, unknown>>(`ecom_products?id=eq.${id}&user_id=eq.${user.id}&select=*`);
+          if (!p) throw new Error('That product is no longer in the sheet.');
+          const row = await enrichRow(ctx, sb, { ...(p as unknown as ImportRow), detail: (p.detail ?? {}) as ImportRow['detail'] });
+          await sb.patch('ecom_products', `id=eq.${id}&user_id=eq.${user.id}`, { sell_price: row.sell_price, supplier_cost: row.supplier_cost, landed_cost: row.landed_cost, margin_pct: row.margin_pct, score: row.score, days_trending: row.days_trending, velocity: row.velocity, content_difficulty: row.content_difficulty, images: row.images, detail: row.detail, updated_at: new Date().toISOString() });
+          const v = cardView({ ...row, source_url: row.source_url ?? null } as never);
+          return { summary: `${row.name}: ${v.missing.length ? `${v.missing.length} still not found` : 'all numbers found'}`, count: 1 };
+        },
+      });
+      return json(r, r.ok ? 200 : r.capReached ? 429 : 502);
+    }
+    // Watch: keep a find (re-check in 7 days) without starting a brand.
+    if (path === 'watch-card') {
+      const b = await body<{ approval_id?: string }>(request);
+      if (!b?.approval_id || !UUID.test(b.approval_id)) return json({ error: 'approval_id is required.' }, 400);
+      const [a] = await sb.get<{ payload: { row?: ImportRow }; status: string }>(`ai_approvals?id=eq.${b.approval_id}&user_id=eq.${user.id}&select=payload,status`);
+      if (!a?.payload?.row || a.status !== 'pending') return json({ error: 'That find is no longer waiting.' }, 409);
+      const row = a.payload.row;
+      await importScoutRows(sb, user.id, [{ ...row, detail: { ...row.detail, recheck_at: new Date(Date.now() + 7 * 86400000).toISOString() } }]);
+      await sb.patch('ecom_products', `user_id=eq.${user.id}&channel=eq.${row.channel}&name=eq.${encodeURIComponent(row.name)}`, { watched: true });
+      await sb.patch('ai_approvals', `id=eq.${b.approval_id}&user_id=eq.${user.id}`, { status: 'approved', my_note: 'Watching: re-check in 7 days', decided_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+      return json({ ok: true, detail: 'Saved to Watched. It gets a fresh look in 7 days.' });
+    }
+    // Reject a sheet product with a reason; the reason becomes a correction Scout reads.
+    if (path === 'reject-product') {
+      const b = await body<{ product_id?: string; reason?: string }>(request);
+      if (!b?.product_id || !UUID.test(b.product_id) || !b.reason?.trim()) return json({ error: 'product_id and a reason are required.' }, 400);
+      const [p] = await sb.get<{ name: string; detail: Record<string, unknown> }>(`ecom_products?id=eq.${b.product_id}&user_id=eq.${user.id}&select=name,detail`);
+      if (!p) return json({ error: 'That product is gone.' }, 404);
+      const [w] = await sb.get<{ id: string }>(`ai_workers?user_id=eq.${user.id}&key=eq.scout&select=id`);
+      await sb.patch('ecom_products', `id=eq.${b.product_id}&user_id=eq.${user.id}`, { detail: { ...p.detail, rejected: b.reason.trim().slice(0, 80) }, updated_at: new Date().toISOString() });
+      await sb.insert('ai_approvals', { user_id: user.id, domain: 'ecom', type: 'product_card', entity_type: 'product', entity_id: b.product_id, worker_id: w?.id ?? null, title: `Product: ${p.name} (rejected)`, payload: { rejected: true }, status: 'sent_back', my_note: `Rejected: ${b.reason.trim().slice(0, 80)}`, decided_at: new Date().toISOString(), is_money: false }).catch(() => {});
+      return json({ ok: true });
     }
     // "I want to test this one": any product on the sheet becomes a brand and runs the same pipeline as an approved pitch.
     if (path === 'test-product') {
