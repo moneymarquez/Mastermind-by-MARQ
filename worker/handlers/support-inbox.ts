@@ -99,8 +99,23 @@ async function verifySvixSignature(secret: string, id: string, timestamp: string
   });
 }
 
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', ndash: '–', mdash: '—', rsquo: '’', lsquo: '‘', rdquo: '”', ldquo: '“', hellip: '…', copy: '©' };
+/** HTML mail → readable text. Drops <head>, <style>, <script> and comments (their
+ *  contents are code, not words), keeps paragraph/line breaks, decodes entities. */
+export function stripHtml(html: string): string {
+  return html
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<(head|style|script|title)\b[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<(br|\/p|\/div|\/tr|\/h[1-6]|\/li)\b[^>]*>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e: string) => {
+      if (e[0] === '#') { const n = e[1].toLowerCase() === 'x' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10); return Number.isFinite(n) && n > 0 && n < 0x110000 ? String.fromCodePoint(n) : ' '; }
+      return ENTITIES[e.toLowerCase()] ?? m;
+    })
+    .replace(/[ \t\f\v\u00a0]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function extractEmail(field: unknown): string {
