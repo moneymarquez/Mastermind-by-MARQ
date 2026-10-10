@@ -2,7 +2,7 @@
 // synchronous from the caller's point of view ("Run now" waits for the
 // answer); the overnight plan runs from the */5 cron (lib/orchestrator.ts).
 import { requireMember } from '../lib/member';
-import { json, zonedNow } from '../lib/sb';
+import { json, zonedNow, Sb } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
 import { spentToday, capFor } from '../lib/ai';
 import { ensureRoster, RUNNERS, decide, ENGINE_DOMAINS, TZ, runWorker, importScoutRows } from '../lib/engine';
@@ -26,6 +26,34 @@ const VENTURES: Venture[] = ['madebymarq', 'mastermind', 'client'];
 const SCRIPT_CHANNELS: ScriptChannel[] = ['call', 'voicemail', 'email', 'dm', 'landing'];
 
 async function body<T>(request: Request): Promise<T | null> { try { return (await request.json()) as T; } catch { return null; } }
+
+async function clearPending(sb: Sb, u: string, id: string): Promise<Record<string, unknown>> {
+  const [a] = await sb.get<{ payload: Record<string, unknown> }>(`ai_approvals?id=eq.${id}&user_id=eq.${u}&select=payload`);
+  return { ...(a?.payload ?? {}), pending_enrich: false };
+}
+
+/** Supplier Finder + Analyst for one find (approval) or one sheet product, as a tracked worker run. */
+async function enrichOne(env: SbEnv & { ANTHROPIC_API_KEY?: string }, sb: Sb, userId: string, kind: 'approval' | 'product', id: string) {
+  return runWorker(env.ANTHROPIC_API_KEY, sb, userId, {
+    key: 'analyst', task: 'Finding the missing numbers', input: { id }, trigger: 'manual', entityType: kind, entityId: id,
+    async execute(ctx) {
+      if (kind === 'approval') {
+        const [a] = await sb.get<{ payload: { row?: ImportRow }; status: string }>(`ai_approvals?id=eq.${id}&user_id=eq.${userId}&select=payload,status`);
+        if (!a?.payload?.row || a.status !== 'pending') throw new Error('That find is no longer waiting for approval.');
+        const row = await enrichRow(ctx, sb, a.payload.row);
+        const v = cardView({ ...row, source_url: row.source_url ?? null } as never);
+        await sb.patch('ai_approvals', `id=eq.${id}&user_id=eq.${userId}`, { payload: { ...a.payload, row, verdict: v.verdict, summary: v.verdictWhy, pending_enrich: false }, updated_at: new Date().toISOString() });
+        return { summary: `${row.name}: ${v.missing.length ? `${v.missing.length} still not found` : 'all numbers found'}`, count: 1 };
+      }
+      const [p] = await sb.get<Record<string, unknown>>(`ecom_products?id=eq.${id}&user_id=eq.${userId}&select=*`);
+      if (!p) throw new Error('That product is no longer in the sheet.');
+      const row = await enrichRow(ctx, sb, { ...(p as unknown as ImportRow), detail: (p.detail ?? {}) as ImportRow['detail'] });
+      await sb.patch('ecom_products', `id=eq.${id}&user_id=eq.${userId}`, { sell_price: row.sell_price, supplier_cost: row.supplier_cost, landed_cost: row.landed_cost, margin_pct: row.margin_pct, score: row.score, days_trending: row.days_trending, velocity: row.velocity, content_difficulty: row.content_difficulty, images: row.images, detail: row.detail, updated_at: new Date().toISOString() });
+      const v = cardView({ ...row, source_url: row.source_url ?? null } as never);
+      return { summary: `${row.name}: ${v.missing.length ? `${v.missing.length} still not found` : 'all numbers found'}`, count: 1 };
+    },
+  });
+}
 
 export async function engineRoute(request: Request, env: EngineEnv, path: string, ctx?: WaitCtx): Promise<Response> {
   // Members only (bug inventory B-02): every route here can spend.
@@ -139,26 +167,18 @@ export async function engineRoute(request: Request, env: EngineEnv, path: string
       const b = await body<{ approval_id?: string; product_id?: string }>(request);
       const id = b?.approval_id ?? b?.product_id;
       if (!id || !UUID.test(id)) return json({ error: 'approval_id or product_id is required.' }, 400);
-      const r = await runWorker(env.ANTHROPIC_API_KEY, sb, user.id, {
-        key: 'analyst', task: 'Finding the missing numbers', input: { id }, trigger: 'manual', entityType: b?.approval_id ? 'approval' : 'product', entityId: id,
-        async execute(ctx) {
-          if (b?.approval_id) {
-            const [a] = await sb.get<{ payload: { row?: ImportRow }; status: string }>(`ai_approvals?id=eq.${id}&user_id=eq.${user.id}&select=payload,status`);
-            if (!a?.payload?.row || a.status !== 'pending') throw new Error('That find is no longer waiting for approval.');
-            const row = await enrichRow(ctx, sb, a.payload.row);
-            const v = cardView({ ...row, source_url: row.source_url ?? null } as never);
-            await sb.patch('ai_approvals', `id=eq.${id}&user_id=eq.${user.id}`, { payload: { ...a.payload, row, verdict: v.verdict, summary: v.verdictWhy }, updated_at: new Date().toISOString() });
-            return { summary: `${row.name}: ${v.missing.length ? `${v.missing.length} still not found` : 'all numbers found'}`, count: 1 };
-          }
-          const [p] = await sb.get<Record<string, unknown>>(`ecom_products?id=eq.${id}&user_id=eq.${user.id}&select=*`);
-          if (!p) throw new Error('That product is no longer in the sheet.');
-          const row = await enrichRow(ctx, sb, { ...(p as unknown as ImportRow), detail: (p.detail ?? {}) as ImportRow['detail'] });
-          await sb.patch('ecom_products', `id=eq.${id}&user_id=eq.${user.id}`, { sell_price: row.sell_price, supplier_cost: row.supplier_cost, landed_cost: row.landed_cost, margin_pct: row.margin_pct, score: row.score, days_trending: row.days_trending, velocity: row.velocity, content_difficulty: row.content_difficulty, images: row.images, detail: row.detail, updated_at: new Date().toISOString() });
-          const v = cardView({ ...row, source_url: row.source_url ?? null } as never);
-          return { summary: `${row.name}: ${v.missing.length ? `${v.missing.length} still not found` : 'all numbers found'}`, count: 1 };
-        },
-      });
+      const r = await enrichOne(env, sb, user.id, b?.approval_id ? 'approval' : 'product', id);
       return json(r, r.ok ? 200 : r.capReached ? 429 : 502);
+    }
+    // The next find still waiting for its numbers; the Approvals tab calls this until nothing is left.
+    if (path === 'enrich-next') {
+      const [next] = await sb.get<{ id: string }>(`ai_approvals?user_id=eq.${user.id}&type=eq.product_card&status=eq.pending&payload->>pending_enrich=eq.true&order=created_at.asc&limit=1&select=id`);
+      if (!next) return json({ ok: true, done: true, remaining: 0 });
+      const r = await enrichOne(env, sb, user.id, 'approval', next.id);
+      const remaining = await sb.count(`ai_approvals?user_id=eq.${user.id}&type=eq.product_card&status=eq.pending&payload->>pending_enrich=eq.true`).catch(() => 0);
+      // A failed try is not retried forever: it's marked done and shows "Not found" with the Find the missing numbers button.
+      if (!r.ok) await sb.patch('ai_approvals', `id=eq.${next.id}&user_id=eq.${user.id}`, { payload: await clearPending(sb, user.id, next.id) }).catch(() => {});
+      return json({ ...r, done: remaining === 0 || !r.ok && remaining <= 1, remaining: Math.max(0, remaining - (r.ok ? 0 : 1)) }, 200);
     }
     // Watch: keep a find (re-check in 7 days) without starting a brand.
     if (path === 'watch-card') {

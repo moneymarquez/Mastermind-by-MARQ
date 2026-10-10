@@ -24,7 +24,6 @@ import { funnelStats } from '../../src/data/mktEngine';
 import type { TouchOutcome, Venture, ScriptChannel } from '../../src/data/mktEngine';
 import { landedCost, marginPct } from '../../src/data/ecomProducts';
 import { cardView } from '../../src/data/ecomCard';
-import { enrichRow } from './enrich';
 import { trendSystem, trendUser, parseTrends, ideaSystem, ideaUser, parseIdeas, scriptBody, gradeMeasured, auditSystem, auditUser, parseAudit, analyticsSystem, analyticsUser, parseGrades, bestHours, plannerSystem as postPlannerSystem, plannerUser as postPlannerUser, parseSlots, clipSystem, clipUser, parseClipEdit, cleanSegments } from './contentWorkers';
 import { supplierSystem, supplierUser, parseSuppliers, brandSystem, brandUser, parseBrands, domainStatusFrom, storeSystem, storeUser, extractHtml, qualityGate, diagnoseFunnel, readSystem, parseRead } from './ecomWorkers';
 import type { BrandCtx, SupplierPayload, BrandOption } from './ecomWorkers';
@@ -120,6 +119,8 @@ const costDomain = (w: WorkerRow) => (w.domain === 'all' ? 'ecom' : w.domain);
 
 export async function runWorker(apiKey: string | undefined, sb: Sb, userId: string, job: Job): Promise<RunOutcome> {
   const w = await workerByKey(sb, userId, job.key);
+  // A request that was cut off (phone dropped, Worker time limit) leaves its run "running" forever. Close old ones; nothing is deleted.
+  if (w) await sb.patch('ai_worker_runs', `user_id=eq.${userId}&worker_id=eq.${w.id}&status=eq.running&created_at=lt.${new Date(Date.now() - 15 * 60000).toISOString()}`, { status: 'failed', error: 'Timed out: the request was cut off before it finished.', finished_at: new Date().toISOString() }).catch(() => {});
   if (!w) return { ok: false, error: `${job.key} is not in the roster. Open Setup → Start the company.` };
   if (!w.enabled) return { ok: false, error: `${w.name} is turned off.` };
   // Kill switch (brief §2d): a paused domain starts nothing; queued work waits.
@@ -195,10 +196,10 @@ export function runScout(apiKey: string | undefined, sb: Sb, userId: string, inp
       if (r) res.sources.push(...r.sources);
       const parsed = parseScout(res.text, channel, new Date().toISOString());
       if (parsed.rows.length === 0) throw new Error(`Scout returned no usable products${parsed.dropped.length ? ` (dropped: ${parsed.dropped.join('; ')})` : ` (it answered: ${res.text.replace(/\s+/g, ' ').slice(0, 200) || 'nothing'})`}.`);
-      // Supplier Finder + Analyst run on every find BEFORE it reaches Approvals, so no card shows a bare "?".
-      // Blocked finds skip the research (nothing to decide) and show why they're blocked.
-      const rows: ImportRow[] = [];
-      for (const row of parsed.rows) rows.push(row.detail.blocked ? row : await enrichRow(ctx, sb, row, input.instructions));
+      // Scout answers fast. Supplier Finder + Analyst then run on each find one at a time (/api/engine/enrich-next,
+      // driven by the Approvals tab) so no single request runs for minutes and gets cut off on a phone.
+      // Until a card is enriched it says so and can't be approved; blocked finds skip it.
+      const rows: ImportRow[] = parsed.rows;
       const known = new Set((await sb.get<{ name: string }>(`ecom_products?user_id=eq.${userId}&channel=eq.${channel}&select=name`)).map((p) => p.name.trim().toLowerCase()));
       const waiting = new Set((await sb.get<{ title: string }>(`ai_approvals?user_id=eq.${userId}&type=eq.product_card&status=eq.pending&select=title`)).map((a) => a.title.trim().toLowerCase()));
       let made = 0, blocked = 0, skipped = 0;
@@ -207,7 +208,7 @@ export function runScout(apiKey: string | undefined, sb: Sb, userId: string, inp
         if (known.has(row.name.trim().toLowerCase()) || waiting.has(title.toLowerCase())) { skipped++; continue; }
         const v = cardView({ ...row, detail: row.detail, source_url: row.source_url ?? null } as never);
         if (v.blocked) blocked++;
-        await sb.insert('ai_approvals', { user_id: userId, domain: ctx.domain, type: 'product_card', entity_type: 'product', entity_id: ctx.runId, worker_id: ctx.w.id, run_id: ctx.runId, title: `${title} — ${v.verdict}`.slice(0, 300), payload: { channel, row, verdict: v.verdict, summary: v.verdictWhy, instructions: input.instructions ?? null }, principle: row.detail.principle ?? null, source_url: row.source_url ?? null, confidence: row.confidence ?? 'estimate', is_money: false });
+        await sb.insert('ai_approvals', { user_id: userId, domain: ctx.domain, type: 'product_card', entity_type: 'product', entity_id: ctx.runId, worker_id: ctx.w.id, run_id: ctx.runId, title: `${title} — ${v.verdict}`.slice(0, 300), payload: { channel, row, verdict: v.verdict, summary: v.verdictWhy, instructions: input.instructions ?? null, pending_enrich: !v.blocked }, principle: row.detail.principle ?? null, source_url: row.source_url ?? null, confidence: row.confidence ?? 'estimate', is_money: false });
         made++;
       }
       return { summary: `${parsed.summary || `${rows.length} products`} ${made} in Approvals${blocked ? ` (${blocked} blocked)` : ''}${skipped ? `, ${skipped} already known` : ''}.`.trim(), count: made, dropped: parsed.dropped, output: { channel, made, blocked, skipped } };

@@ -1,8 +1,9 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { useApprovals, Approval } from '../../../data/useEcom';
 import { decideApproval } from '../../../data/useEngine';
 import Thumbs from '../../mm/Thumbs';
 import { api } from '../../../lib/api';
+import { api as callApi } from '../../../lib/api';
 import type { ImportRow } from '../../../data/ecomProducts';
 import { marginHealthy } from '../../../data/ecomProducts';
 import { E, Badge, ConfidenceBadge, TeachingEmpty, btn, field, label, tint, useIsMobile } from './ecomShared';
@@ -20,8 +21,29 @@ export default function ApprovalsTab({ api, onDecided }: { api: ReturnType<typeo
   const pending = api.approvals.filter((a) => a.status === 'pending');
   const decided = api.approvals.filter((a) => a.status !== 'pending').slice(0, 20);
   const [toast, setToast] = useState('');
+  // Scout finds arrive without their numbers; fill them in one at a time (each call is short, so a phone connection survives it).
+  const waiting = pending.filter((a) => a.type === 'product_card' && a.payload.pending_enrich === true).length;
+  const [filling, setFilling] = useState(false);
+  const running = useRef(false);
+  const reload = api.reload;
+  useEffect(() => {
+    if (!waiting || running.current) return;
+    running.current = true; setFilling(true);
+    let on = true;
+    (async () => {
+      for (let i = 0; i < 25 && on; i++) {
+        const r = await callApi<{ done?: boolean; error?: string }>('/api/engine/enrich-next', { body: {} });
+        await reload();
+        if (r.error || r.done) break;
+      }
+      running.current = false; if (on) setFilling(false);
+    })();
+    return () => { on = false; running.current = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [waiting > 0]);
   return (
     <div>
+      {(waiting > 0 || filling) && <div role="status" style={{ ...E.card, padding: 10, marginBottom: 10, fontSize: 'var(--text-body)', color: E.muted }}>Finding supplier costs, sellers and shipping for {waiting} new find{waiting === 1 ? '' : 's'}… cards update by themselves. Keep this tab open.</div>}
       {toast && <div style={{ ...E.card, padding: 10, marginBottom: 10, borderColor: E.green, color: E.text, fontSize: 'var(--text-body)' }}>{toast}</div>}
       {!api.loading && pending.length === 0 && (
         <TeachingEmpty what="Nothing waiting on you." worker="every worker — Scout runs, drafts, brand options, supplier picks and store previews all land here" />
@@ -84,6 +106,7 @@ function ProductApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string)
   const [msg, setMsg] = useState('');
   if (!row) return <div style={{ ...E.card, padding: 14, color: E.muted }}>{a.title}: this find has no product data. Kill it from the sheet.</div>;
   const finish = (m: string) => { setBusy(''); setMsg(m); onDone(m); };
+  const lookingUp = a.payload.pending_enrich === true;
   const approve = async () => {
     setBusy('approve'); setMsg('');
     const r = await decideApproval(a.id, 'approved');
@@ -94,7 +117,7 @@ function ProductApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string)
   const watch = async () => { setBusy('watch'); const r = await api<{ ok?: boolean; error?: string; detail?: string }>('/api/engine/watch-card', { body: { approval_id: a.id } }); if (r.error) { setBusy(''); setMsg(r.error); return; } finish(r.detail ?? 'Watching.'); };
   const enrich = async () => { setBusy('enrich'); setMsg('Looking up the missing numbers… (1–2 min)'); const r = await api<{ ok?: boolean; error?: string; summary?: string }>('/api/engine/enrich', { body: { approval_id: a.id } }); finish(r.error ?? r.summary ?? 'Done.'); };
   return (
-    <RichProductCard p={{ ...row, source_url: row.source_url ?? null } as never} busy={busy} message={msg}
+    <RichProductCard p={{ ...row, source_url: row.source_url ?? null } as never} busy={lookingUp ? 'enrich' : busy} message={lookingUp && !msg ? 'Finding supplier costs, sellers and shipping…' : msg}
       onApprove={() => void approve()} onReject={(r) => void reject(r)} onWatch={() => void watch()} onEnrich={() => void enrich()} />
   );
 }
