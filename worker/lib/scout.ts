@@ -30,7 +30,7 @@ export function scoutSystem(opts: { playbooks: string; corrections: string[]; bu
     opts.budgetNote,
     opts.corrections.length ? `Corrections from Marq on your earlier work — follow every one:\n${opts.corrections.map((c) => `- ${c}`).join('\n')}` : '',
     opts.playbooks ? `Playbooks (follow these):\n${opts.playbooks}` : 'No playbooks written yet; use sound dropshipping judgment.',
-    'Answer with ONLY a JSON object, no prose: {"products":[{"name":"","category":"","rank":1,"sell_price":null,"supplier_cost":null,"ship_cost":null,"days_trending":null,"velocity":"rising|flat|fading","score":null,"content_difficulty":"easy|medium|hard","image_url":null,"source_url":"","confidence":"ai|estimate","problem":"","trigger":"","evidence":"","buyer":"","why_emotional":"","why_practical":"","principle":"","angle":"","competition":"","sellers":null,"fail_risks":""}],"summary":"one sentence on what you found"}. score is 0–10 for fit with the rules above. Use null, never 0, for any price or score you do not know.',
+    'Answer with ONLY a JSON object, no prose: {"products":[{"name":"","category":"","rank":1,"sell_price":null,"supplier_cost":null,"ship_cost":null,"days_trending":null,"velocity":"rising|flat|fading","score":null,"content_difficulty":"easy|medium|hard","image_url":null,"source_url":"","confidence":"ai|estimate","problem":"","trigger":"","evidence":"","buyer":"","why_emotional":"","why_practical":"","principle":"","angle":"","competition":"","sellers":null,"fail_risks":""}],"summary":"one sentence on what you found"}. score is 0–10 for fit with the rules above. Use null, never 0, for any price or score you do not know. Keep every text field to one short sentence so the whole list fits. If the research is thin, still return your best products from it with nulls for what you do not know; never return an empty list and never answer with prose.',
   ].filter(Boolean).join('\n\n');
 }
 
@@ -49,6 +49,24 @@ export function extractJson(text: string): unknown {
   return JSON.parse(body.slice(start, end + 1));
 }
 
+/** A long answer can be cut off mid-list. Keep every product object that closed properly before the cut. Pure. */
+export function salvageProducts(text: string): { products: unknown[]; summary?: unknown } {
+  const start = text.indexOf('"products"');
+  const open = start === -1 ? -1 : text.indexOf('[', start);
+  if (open === -1) throw new Error('No JSON object in the answer.');
+  const products: unknown[] = [];
+  let depth = 0, from = -1, inStr = false, esc = false;
+  for (let i = open + 1; i < text.length; i++) {
+    const c = text[i];
+    if (inStr) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true;
+    else if (c === '{') { if (depth === 0) from = i; depth++; }
+    else if (c === '}') { depth--; if (depth === 0 && from !== -1) { try { products.push(JSON.parse(text.slice(from, i + 1))); } catch { /* skip a broken one */ } from = -1; } }
+    else if (c === ']' && depth === 0) break;
+  }
+  return { products };
+}
+
 const num = (v: unknown): number | null => { const n = typeof v === 'string' ? Number(v.replace(/[$,\s]/g, '')) : typeof v === 'number' ? v : NaN; return Number.isFinite(n) ? n : null; };
 const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
 const pick = <T extends string>(v: unknown, allowed: readonly T[]): T | null => { const s = str(v).toLowerCase() as T; return allowed.includes(s) ? s : null; };
@@ -56,7 +74,8 @@ const pick = <T extends string>(v: unknown, allowed: readonly T[]): T | null => 
 export interface ScoutResult { rows: ImportRow[]; summary: string; dropped: string[] }
 
 export function parseScout(text: string, channel: Channel, asOf: string): ScoutResult {
-  const obj = extractJson(text) as { products?: unknown[]; summary?: unknown };
+  let obj: { products?: unknown[]; summary?: unknown };
+  try { obj = extractJson(text) as { products?: unknown[]; summary?: unknown }; } catch { obj = salvageProducts(text); }
   const list = Array.isArray(obj.products) ? obj.products : [];
   const rows: ImportRow[] = [];
   const dropped: string[] = [];

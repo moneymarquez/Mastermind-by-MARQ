@@ -88,3 +88,14 @@ describe('Scout parsing keeps blocked finds and drops 0 placeholders', () => {
     expect(r.rows[0].sell_price).toBeNull(); expect(r.rows[0].score).toBeNull(); expect(r.rows[1].score).toBeNull();
   });
 });
+
+describe('Scout answers that get cut off', () => {
+  it('keeps the products that closed before the cut', () => {
+    const cut = '```json\n{"products":[{"name":"A","source_url":"https://a.com/1","sell_price":20},{"name":"B, with } brace","source_url":"https://a.com/2"},{"name":"C","source_url":"https://a.c';
+    const r = parseScout(cut, 'amazon', 't');
+    expect(r.rows.map((x) => x.name)).toEqual(['A', 'B, with } brace']);
+  });
+  it('an answer with no list still fails loudly', () => {
+    expect(() => parseScout('Sorry, I could not find anything.', 'amazon', 't')).toThrow();
+  });
+});

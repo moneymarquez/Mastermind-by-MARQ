@@ -185,16 +185,16 @@ export function runScout(apiKey: string | undefined, sb: Sb, userId: string, inp
       // found into Product Sheet rows. Otherwise Claude searches itself.
       const r = await researchSearch(sb, userId, `Best-selling and fastest-rising products on ${SCOUT_CHANNELS[channel].label} right now: name, price, sales signals, sellers.`, [`${SCOUT_CHANNELS[channel].label} best sellers this week`, `trending products ${SCOUT_CHANNELS[channel].label} ${new Date().getFullYear()}`], 12);
       const res = r
-        ? await ctx.ask({ maxTokens: 6000, system: scoutSystem({ ...ctx.brief, budgetNote: `${ctx.brief.budgetNote} Research is provided below — do not search.` }), user: `${scoutUser(channel, count, input.instructions)}\n\nRESEARCH (use only these sources; every product's source_url must be one of them):\n${r.brief}` })
+        ? await ctx.ask({ maxTokens: 9000, system: scoutSystem({ ...ctx.brief, budgetNote: `${ctx.brief.budgetNote} Research is provided below — do not search.` }), user: `${scoutUser(channel, count, input.instructions)}\n\nRESEARCH (use only these sources; every product's source_url must be one of them):\n${r.brief}` })
         : await ctx.ask({
-          maxTokens: 6000,
+          maxTokens: 9000,
           system: scoutSystem({ ...ctx.brief, budgetNote: `${ctx.brief.budgetNote} Use at most 5 searches.` }),
           user: scoutUser(channel, count, input.instructions),
           tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5, blocked_domains: BLOCKED_DOMAINS }],
         });
       if (r) res.sources.push(...r.sources);
       const parsed = parseScout(res.text, channel, new Date().toISOString());
-      if (parsed.rows.length === 0) throw new Error(`Scout returned no usable products${parsed.dropped.length ? ` (dropped: ${parsed.dropped.join('; ')})` : ''}.`);
+      if (parsed.rows.length === 0) throw new Error(`Scout returned no usable products${parsed.dropped.length ? ` (dropped: ${parsed.dropped.join('; ')})` : ` (it answered: ${res.text.replace(/\s+/g, ' ').slice(0, 200) || 'nothing'})`}.`);
       // Supplier Finder + Analyst run on every find BEFORE it reaches Approvals, so no card shows a bare "?".
       // Blocked finds skip the research (nothing to decide) and show why they're blocked.
       const rows: ImportRow[] = [];
