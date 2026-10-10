@@ -24,6 +24,7 @@ import type { DryRunEnv } from './dryRun';
 
 export interface PublishEnv extends SbEnv, VaultEnv, DryRunEnv { INSTAGRAM_APP_SECRET?: string; TIKTOK_CLIENT_KEY?: string; TIKTOK_CLIENT_SECRET?: string }
 
+import { igProvider } from './socialSync';
 const IG = 'https://graph.instagram.com';
 const TT = 'https://open.tiktokapis.com/v2';
 const BUCKET = 'content-clips';
@@ -43,8 +44,10 @@ const now = () => new Date().toISOString();
 const minutesSince = (iso: string | null) => (iso ? (Date.now() - new Date(iso).getTime()) / 60000 : Infinity);
 
 // ── Tokens ────────────────────────────────────────────────────────────
-async function igToken(env: PublishEnv, sb: Sb, u: string): Promise<Token> {
-  const tok = await loadToken(env, sb, u, 'instagram');
+async function igToken(env: PublishEnv, sb: Sb, u: string, handle?: string): Promise<Token> {
+  // The account's own connection first; the single older connection is the fallback.
+  const provider = handle && (await loadToken(env, sb, u, igProvider(handle)).catch(() => null)) ? igProvider(handle) : 'instagram';
+  const tok = await loadToken(env, sb, u, provider);
   if (!tok?.token) throw new PublishError('Instagram isn\'t connected. Setup → Accounts → Instagram → Connect.');
   if (!hasScope(tok, 'instagram_business_content_publish')) throw new PublishError('Instagram is connected without posting permission. Setup → Accounts → Instagram → Disconnect, then Connect again to grant "content publish".');
   // Long-lived tokens last 60 days; refresh weekly so they never lapse.
@@ -53,14 +56,14 @@ async function igToken(env: PublishEnv, sb: Sb, u: string): Promise<Token> {
     const j = res ? ((await res.json().catch(() => ({}))) as { access_token?: string; expires_in?: number }) : {};
     if (j.access_token) {
       Object.assign(tok, { token: j.access_token, refreshed_at: now(), expires_at: new Date(Date.now() + (j.expires_in ?? 0) * 1000).toISOString() });
-      await saveToken(env, sb, u, 'instagram', tok, { refreshed: now(), scope: tok.scope });
+      await saveToken(env, sb, u, provider, tok, { refreshed: now(), scope: tok.scope });
     }
   }
   if (!tok.user_id) {
     const me = (await (await fetch(`${IG}/me?fields=user_id&access_token=${encodeURIComponent(tok.token)}`)).json().catch(() => ({}))) as { user_id?: string | number; id?: string };
     tok.user_id = String(me.user_id ?? me.id ?? '');
     if (!tok.user_id) throw new PublishError('Instagram didn\'t say which account this token is for. Reconnect Instagram in Setup.');
-    await saveToken(env, sb, u, 'instagram', tok, { scope: tok.scope });
+    await saveToken(env, sb, u, provider, tok, { scope: tok.scope });
   }
   return tok;
 }
@@ -233,7 +236,7 @@ async function startOne(env: PublishEnv, sb: Sb, item: Item, acct: Account | nul
     if (isDryRun(env)) { await markPublished(sb, item, acct, { id: dryRunId(acct.platform), url: null }, logId); notes.push('dry run — nothing was posted'); return 'published'; }
     const caption = captionFor(item.caption, item.hashtags);
     let ref: string;
-    if (acct.platform === 'instagram') ref = await igCreate(await igToken(env, sb, item.user_id), media, caption);
+    if (acct.platform === 'instagram') ref = await igCreate(await igToken(env, sb, item.user_id, acct.handle), media, caption);
     else { const r = await ttStart(await tiktokToken(env, sb, item.user_id), media, caption); ref = r.publishId; if (r.privacy !== 'PUBLIC_TO_EVERYONE') notes.push(`TikTok only allowed a ${r.privacy.toLowerCase().replace(/_/g, ' ')} post (the app isn't through TikTok's audit yet)`); }
     await sb.patch('content_items', `id=eq.${item.id}`, { publish_status: 'processing', publish_ref: ref, updated_at: now() });
     if (logId) await sb.patch('content_publish_log', `id=eq.${logId}`, { status: 'processing', updated_at: now() });
@@ -252,7 +255,7 @@ async function advanceOne(env: PublishEnv, sb: Sb, item: Item, acct: Account, lo
   try {
     for (let i = 0; i < tries; i++) {
       if (i) await new Promise((r) => setTimeout(r, 4000));
-      const r = acct.platform === 'instagram' ? await igAdvance(await igToken(env, sb, item.user_id), item.publish_ref!) : await ttAdvance(await tiktokToken(env, sb, item.user_id), item.publish_ref!, acct.handle);
+      const r = acct.platform === 'instagram' ? await igAdvance(await igToken(env, sb, item.user_id, acct.handle), item.publish_ref!) : await ttAdvance(await tiktokToken(env, sb, item.user_id), item.publish_ref!, acct.handle);
       if (r.done) { await markPublished(sb, item, acct, r, logId ?? await logFor(sb, item)); return 'published'; }
     }
     if (minutesSince(item.publish_started_at) > PROCESSING_GIVE_UP_MIN) throw new PublishError(`${acct.platform === 'instagram' ? 'Instagram' : 'TikTok'} was still processing the video after an hour, so the Publisher stopped waiting. Check the app for a draft, then press Publish again if it isn't there.`);

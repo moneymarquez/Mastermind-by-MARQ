@@ -5,6 +5,7 @@
 // ones through Cloudflare's API. Account connections (per user) are sealed
 // with lib/vault.ts into ai_user_tokens, which only the service role reads.
 import { requireUser, isOwnerUser } from '../lib/auth';
+import { fetchIgNumbers, applyIgNumbers, igProvider } from '../lib/socialSync';
 import { cleanShop, isShopDomain, shopifyMode, resolveShopifyToken, SHOPIFY_API, grantedScopes, missingScopes, scopeFixHint } from '../lib/shopify';
 import { Sb, json } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
@@ -346,6 +347,14 @@ async function oauthCallback(request: Request, e: Env): Promise<Response> {
       tok = { token: lj.access_token ?? j.access_token, scope: (perms.data ?? []).filter((p) => p.status === 'granted').map((p) => p.permission).join(','), expires_at: lj.expires_in ? new Date(Date.now() + lj.expires_in * 1000).toISOString() : '' };
     } else throw new Error('unknown provider');
     await saveToken(e, sb, st.u, st.p, tok, { connected: new Date().toISOString(), scope: tok.scope });
+    if (st.p === 'instagram') {
+      // One token per Instagram account, so Masterminds, Made by Marq and personal can all stay connected; the Content profile gets the real numbers.
+      try {
+        const n = await fetchIgNumbers(tok.token);
+        await saveToken(e, sb, st.u, igProvider(n.username), tok, { connected: new Date().toISOString(), scope: tok.scope, username: n.username });
+        await applyIgNumbers(sb, st.u, n);
+      } catch (err) { console.error('instagram import', err); }
+    }
     const r = await testAccount(st.p, tok);
     await recordStatus(sb, st.u, st.p, r);
     return back(`connected=${st.p}`);

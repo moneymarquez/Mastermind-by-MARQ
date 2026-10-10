@@ -7,6 +7,7 @@
 //
 // The video itself never passes through the Worker: the browser uploads it
 // straight to the private content-clips bucket under the user's folder.
+import { syncInstagram } from '../lib/socialSync';
 import { requireMember } from '../lib/member';
 import { json } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
@@ -54,6 +55,7 @@ export async function contentTranscribe(request: Request, env: ContentEnv): Prom
 // ── October build, Phase 3 ────────────────────────────────────────────
 //   POST /api/content/ideas-run       { account_id?, count? } fill the Ideas tab
 //   POST /api/content/idea-plan       { idea_id, day? }       idea → Plan card
+//   POST /api/content/sync-accounts   owner: pull real followers/avg views from each connected Instagram
 //   POST /api/content/own-accounts    owner: add Masterminds / Made by Marq / personal accounts
 //   POST /api/content/kit-run         { handoff_id? }         build a brand's content kit now
 //   POST /api/content/render          { clip_id }             render an approved edit
@@ -84,6 +86,10 @@ export async function contentRoute(request: Request, env: ContentOctEnv, path: s
     if (path === 'own-accounts') {
       if (!isOwnerUser(user)) return json({ error: 'Owner only.' }, 403);
       return json(await seedOwnAccounts(sb, user.id));
+    }
+    if (path === 'sync-accounts') {
+      if (!isOwnerUser(user)) return json({ error: 'Owner only.' }, 403);
+      return json(await syncInstagram(env as never, sb, user.id));
     }
     if (path === 'kit-run') return json(await buildContentKit(env.ANTHROPIC_API_KEY, sb, user.id, { handoffId: id('handoff_id'), trigger: 'manual' }));
     if (path === 'render') {

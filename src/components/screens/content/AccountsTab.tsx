@@ -23,6 +23,15 @@ export default function AccountsTab({ api, items, newOpen, onCloseNew, onOpenPla
   const { isOwner } = useModule();
   const [seedMsg, setSeedMsg] = useState('');
   const own = api.accounts.filter((a) => a.owner === 'mastermind' || a.owner === 'madebymarq' || a.owner === 'personal').length;
+  const [syncMsg, setSyncMsg] = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const sync = async () => {
+    setSyncing(true); setSyncMsg('');
+    const r = await callApi<{ results?: { handle: string; ok: boolean; detail: string }[]; error?: string }>('/api/content/sync-accounts', { body: {} });
+    setSyncing(false);
+    setSyncMsg(r.error ?? ((r.results ?? []).map((x) => `${x.ok ? '✓' : '✕'} @${x.handle}: ${x.detail}`).join('\n') || 'No Instagram accounts to sync.'));
+    await api.reload();
+  };
   const seed = async () => { const r = await callApi<{ added?: number; error?: string }>('/api/content/own-accounts', { body: {} }); setSeedMsg(r.error ?? `Added ${r.added ?? 0} account${r.added === 1 ? '' : 's'}. Connect each in Setup → Accounts.`); await api.reload(); };
   // Brief §3.4: 3–5 accounts, every post a unique variant.
   const perOwner = Object.values(api.accounts.reduce<Record<string, number>>((m, a) => { m[a.owner] = (m[a.owner] ?? 0) + 1; return m; }, {}));
@@ -36,6 +45,8 @@ export default function AccountsTab({ api, items, newOpen, onCloseNew, onOpenPla
           {perOwner.some((n) => n > 5) && <div style={{ color: E.amber, marginTop: 4 }}>You have more than 5 accounts under one owner; that's past where variants stay genuinely different.</div>}
         </div>
         {isOwner && own < 6 && <button style={btn('ghost')} onClick={() => void seed()}>Add Masterminds, Made by Marq + personal accounts</button>}
+        {isOwner && <button style={btn('primary')} disabled={syncing} onClick={() => void sync()}>{syncing ? 'Syncing…' : 'Sync real numbers from Instagram'}</button>}
+        {syncMsg && <div style={{ fontSize: 'var(--text-caption)', color: E.muted, width: '100%', whiteSpace: 'pre-line' }}>{syncMsg}</div>}
         {seedMsg && <div style={{ fontSize: 'var(--text-caption)', color: E.muted, width: '100%' }}>{seedMsg}</div>}
       </div>
       {!api.loading && api.accounts.length === 0 && (
