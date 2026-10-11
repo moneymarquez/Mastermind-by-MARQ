@@ -5,7 +5,7 @@
 // ones through Cloudflare's API. Account connections (per user) are sealed
 // with lib/vault.ts into ai_user_tokens, which only the service role reads.
 import { requireUser, isOwnerUser } from '../lib/auth';
-import { fetchIgNumbers, applyIgNumbers, igProvider } from '../lib/socialSync';
+import { fetchIgNumbers, fetchTtNumbers, applyIgNumbers, igProvider, ttProvider } from '../lib/socialSync';
 import { cleanShop, isShopDomain, shopifyMode, resolveShopifyToken, SHOPIFY_API, grantedScopes, missingScopes, scopeFixHint } from '../lib/shopify';
 import { Sb, json } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
@@ -18,7 +18,7 @@ import { toE164 } from '../lib/phone';
 export interface SetupEnv extends SbEnv {
   ANTHROPIC_API_KEY?: string; TWILIO_ACCOUNT_SID?: string; TWILIO_AUTH_TOKEN?: string; TWILIO_FROM_NUMBER?: string; DIGEST_TO_NUMBER?: string;
   CF_API_TOKEN?: string; CF_ACCOUNT_ID?: string; CF_WORKER_NAME?: string; ETSY_API_KEY?: string; CJ_API_KEY?: string; HIGGSFIELD_API_KEY?: string;
-  INSTAGRAM_APP_ID?: string; INSTAGRAM_APP_SECRET?: string; TIKTOK_CLIENT_KEY?: string; TIKTOK_CLIENT_SECRET?: string; TOKEN_ENCRYPTION_KEY?: string;
+  INSTAGRAM_APP_ID?: string; INSTAGRAM_APP_SECRET?: string; TIKTOK_CLIENT_KEY?: string; TIKTOK_CLIENT_SECRET?: string; TIKTOK_EXTRA_SCOPES?: string; TOKEN_ENCRYPTION_KEY?: string;
   XAI_API_KEY?: string; FACEBOOK_APP_ID?: string; FACEBOOK_APP_SECRET?: string; PARALLEL_API_KEY?: string;
 }
 type Env = SetupEnv & Record<string, string | undefined>;
@@ -28,6 +28,8 @@ type Env = SetupEnv & Record<string, string | undefined>;
 // reconnect (the Setup card says so when the saved scope is missing them).
 export const IG_SCOPES = 'instagram_business_basic,instagram_business_content_publish,instagram_business_manage_insights';
 export const TIKTOK_SCOPES = 'user.info.basic,video.list,video.publish';
+/** Handle and follower count need two more scopes. They're only asked for once they're enabled on the TikTok app (TIKTOK_EXTRA_SCOPES=1), because TikTok rejects a connect that asks for a scope the app doesn't have. */
+export const tiktokScopes = (e: { TIKTOK_EXTRA_SCOPES?: string }) => (e.TIKTOK_EXTRA_SCOPES === '1' ? `${TIKTOK_SCOPES},user.info.profile,user.info.stats` : TIKTOK_SCOPES);
 // pages_show_list rides along so the token can see which Pages it may post to.
 export const FB_SCOPES = 'pages_manage_posts,pages_read_engagement,pages_show_list';
 const FB = 'https://graph.facebook.com/v23.0';
@@ -311,7 +313,7 @@ export async function setupRoute(request: Request, env: SetupEnv, path: string):
       }
       if (id === 'tiktok') {
         if (!e.TIKTOK_CLIENT_KEY) return json({ error: 'Mastermind\'s TikTok app isn\'t set up yet (TIKTOK_CLIENT_KEY missing).' }, 409);
-        return json({ url: `https://www.tiktok.com/v2/auth/authorize/?client_key=${e.TIKTOK_CLIENT_KEY}&scope=${TIKTOK_SCOPES}&response_type=code&redirect_uri=${encodeURIComponent(redirect)}&state=${state}` });
+        return json({ url: `https://www.tiktok.com/v2/auth/authorize/?client_key=${e.TIKTOK_CLIENT_KEY}&scope=${tiktokScopes(e)}&response_type=code&redirect_uri=${encodeURIComponent(redirect)}&state=${state}` });
       }
       if (id === 'facebook') {
         if (!e.FACEBOOK_APP_ID) return json({ error: 'Mastermind\'s Facebook app isn\'t set up yet (FACEBOOK_APP_ID missing).' }, 409);
@@ -372,6 +374,14 @@ async function oauthCallback(request: Request, e: Env): Promise<Response> {
         await saveToken(e, sb, st.u, igProvider(n.username), tok, { connected: new Date().toISOString(), scope: tok.scope, username: n.username });
         await applyIgNumbers(sb, st.u, n);
       } catch (err) { console.error('instagram import', err); }
+    }
+    if (st.p === 'tiktok') {
+      // One token per TikTok account, and its real numbers into the matching Content profile.
+      try {
+        const n = await fetchTtNumbers(tok.token, tok.scope);
+        await saveToken(e, sb, st.u, ttProvider(n.username), tok, { connected: new Date().toISOString(), scope: tok.scope, username: n.username });
+        await applyIgNumbers(sb, st.u, n, 'tiktok');
+      } catch (err) { console.error('tiktok import', err); }
     }
     const r = await testAccount(st.p, tok);
     await recordStatus(sb, st.u, st.p, r);

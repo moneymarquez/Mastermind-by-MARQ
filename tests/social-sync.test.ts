@@ -40,3 +40,24 @@ describe('Instagram numbers into Content profiles', () => {
     expect(none.created).toBe(true);
   });
 });
+
+import { fetchTtNumbers, ttProvider } from '../worker/lib/socialSync';
+describe('TikTok numbers', () => {
+  it('reads the account and recent video views; follower fields only with the stats scope', async () => {
+    const t = Math.floor((Date.now() - 3 * 86400000) / 1000);
+    const urls: string[] = [];
+    const f = (async (u: string) => {
+      urls.push(u);
+      const ok = (b: unknown) => ({ ok: true, json: async () => b });
+      if (u.includes('/user/info/')) return ok({ data: { user: { open_id: 'o1', display_name: 'Made by Marq', ...(u.includes('follower_count') ? { follower_count: 250, video_count: 9, username: 'madebymarq' } : {}) } } });
+      return ok({ data: { videos: [{ id: 'v1', title: 'hi', view_count: 400, create_time: t }, { id: 'v2', view_count: 200, create_time: t }] } });
+    }) as unknown as typeof fetch;
+    const basic = await fetchTtNumbers('tok', 'user.info.basic,video.list', f);
+    expect(basic).toMatchObject({ username: 'Made by Marq', followers: null, avgViews: 300, viewed: 2 });
+    expect(basic.media).toHaveLength(2);
+    const full = await fetchTtNumbers('tok', 'user.info.basic,video.list,user.info.profile,user.info.stats', f);
+    expect(full).toMatchObject({ username: 'madebymarq', followers: 250, posts: 9 });
+    expect(ttProvider('@MadeByMarq')).toBe('tiktok:madebymarq');
+    await expect(fetchTtNumbers('tok', '', (async () => ({ ok: false, json: async () => ({}) })) as unknown as typeof fetch)).rejects.toThrow(/Connect it again/);
+  });
+});

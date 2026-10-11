@@ -24,7 +24,7 @@ import type { DryRunEnv } from './dryRun';
 
 export interface PublishEnv extends SbEnv, VaultEnv, DryRunEnv { INSTAGRAM_APP_SECRET?: string; TIKTOK_CLIENT_KEY?: string; TIKTOK_CLIENT_SECRET?: string }
 
-import { igProvider } from './socialSync';
+import { igProvider, ttProvider } from './socialSync';
 const IG = 'https://graph.instagram.com';
 const TT = 'https://open.tiktokapis.com/v2';
 const BUCKET = 'content-clips';
@@ -68,8 +68,9 @@ async function igToken(env: PublishEnv, sb: Sb, u: string, handle?: string): Pro
   return tok;
 }
 
-async function tiktokToken(env: PublishEnv, sb: Sb, u: string): Promise<Token> {
-  const tok = await loadToken(env, sb, u, 'tiktok');
+async function tiktokToken(env: PublishEnv, sb: Sb, u: string, handle?: string): Promise<Token> {
+  const provider = handle && (await loadToken(env, sb, u, ttProvider(handle)).catch(() => null)) ? ttProvider(handle) : 'tiktok';
+  const tok = await loadToken(env, sb, u, provider);
   if (!tok?.token) throw new PublishError('TikTok isn\'t connected. Setup → Accounts → TikTok → Connect.');
   if (!hasScope(tok, 'video.publish')) throw new PublishError('TikTok is connected without posting permission. Setup → Accounts → TikTok → Disconnect, then Connect again to grant "video.publish".');
   // Access tokens last 24 hours; the refresh token a year.
@@ -79,7 +80,7 @@ async function tiktokToken(env: PublishEnv, sb: Sb, u: string): Promise<Token> {
     const j = (await res.json().catch(() => ({}))) as { access_token?: string; refresh_token?: string; expires_in?: number; scope?: string; error_description?: string; error?: string };
     if (!j.access_token) throw new PublishError(`TikTok refused to renew the login: ${j.error_description ?? j.error ?? res.status}. Reconnect TikTok in Setup.`);
     Object.assign(tok, { token: j.access_token, refresh_token: j.refresh_token ?? tok.refresh_token, scope: j.scope ?? tok.scope, expires_at: new Date(Date.now() + (j.expires_in ?? 86400) * 1000).toISOString() });
-    await saveToken(env, sb, u, 'tiktok', tok, { refreshed: now(), scope: tok.scope });
+    await saveToken(env, sb, u, provider, tok, { refreshed: now(), scope: tok.scope });
   }
   return tok;
 }
@@ -237,7 +238,7 @@ async function startOne(env: PublishEnv, sb: Sb, item: Item, acct: Account | nul
     const caption = captionFor(item.caption, item.hashtags);
     let ref: string;
     if (acct.platform === 'instagram') ref = await igCreate(await igToken(env, sb, item.user_id, acct.handle), media, caption);
-    else { const r = await ttStart(await tiktokToken(env, sb, item.user_id), media, caption); ref = r.publishId; if (r.privacy !== 'PUBLIC_TO_EVERYONE') notes.push(`TikTok only allowed a ${r.privacy.toLowerCase().replace(/_/g, ' ')} post (the app isn't through TikTok's audit yet)`); }
+    else { const r = await ttStart(await tiktokToken(env, sb, item.user_id, acct.handle), media, caption); ref = r.publishId; if (r.privacy !== 'PUBLIC_TO_EVERYONE') notes.push(`TikTok only allowed a ${r.privacy.toLowerCase().replace(/_/g, ' ')} post (the app isn't through TikTok's audit yet)`); }
     await sb.patch('content_items', `id=eq.${item.id}`, { publish_status: 'processing', publish_ref: ref, updated_at: now() });
     if (logId) await sb.patch('content_publish_log', `id=eq.${logId}`, { status: 'processing', updated_at: now() });
     if (media.source.includes('aren\'t rendered')) notes.push(`"${item.concept.slice(0, 40)}" went out as the uploaded clip`);
@@ -255,7 +256,7 @@ async function advanceOne(env: PublishEnv, sb: Sb, item: Item, acct: Account, lo
   try {
     for (let i = 0; i < tries; i++) {
       if (i) await new Promise((r) => setTimeout(r, 4000));
-      const r = acct.platform === 'instagram' ? await igAdvance(await igToken(env, sb, item.user_id, acct.handle), item.publish_ref!) : await ttAdvance(await tiktokToken(env, sb, item.user_id), item.publish_ref!, acct.handle);
+      const r = acct.platform === 'instagram' ? await igAdvance(await igToken(env, sb, item.user_id, acct.handle), item.publish_ref!) : await ttAdvance(await tiktokToken(env, sb, item.user_id, acct.handle), item.publish_ref!, acct.handle);
       if (r.done) { await markPublished(sb, item, acct, r, logId ?? await logFor(sb, item)); return 'published'; }
     }
     if (minutesSince(item.publish_started_at) > PROCESSING_GIVE_UP_MIN) throw new PublishError(`${acct.platform === 'instagram' ? 'Instagram' : 'TikTok'} was still processing the video after an hour, so the Publisher stopped waiting. Check the app for a draft, then press Publish again if it isn't there.`);

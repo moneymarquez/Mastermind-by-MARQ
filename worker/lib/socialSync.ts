@@ -49,9 +49,9 @@ export async function fetchIgNumbers(token: string, f: typeof fetch = fetch): Pr
 
 interface AcctRow { id: string; platform: string; handle: string; owner: string; connected: boolean }
 /** Apply one account's numbers: update the matching Content profile (or take over an unconnected placeholder, or create one), and add a snapshot. */
-export async function applyIgNumbers(sb: Sb, u: string, n: IgNumbers): Promise<{ account_id: string; created: boolean; renamed: boolean }> {
+export async function applyIgNumbers(sb: Sb, u: string, n: IgNumbers, platform: 'instagram' | 'tiktok' = 'instagram'): Promise<{ account_id: string; created: boolean; renamed: boolean }> {
   const handle = n.username.toLowerCase();
-  const rows = await sb.get<AcctRow>(`social_accounts?user_id=eq.${u}&platform=eq.instagram&select=id,platform,handle,owner,connected`);
+  const rows = await sb.get<AcctRow>(`social_accounts?user_id=eq.${u}&platform=eq.${platform}&select=id,platform,handle,owner,connected`);
   const norm = (s: string) => s.toLowerCase().replace(/^@/, '');
   let acct = rows.find((r) => norm(r.handle) === handle);
   let renamed = false, created = false;
@@ -62,7 +62,7 @@ export async function applyIgNumbers(sb: Sb, u: string, n: IgNumbers): Promise<{
     if (placeholder) { await sb.patch('social_accounts', `id=eq.${placeholder.id}&user_id=eq.${u}`, { handle: n.username }); acct = { ...placeholder, handle: n.username }; renamed = true; }
   }
   if (!acct) {
-    const [row] = await sb.insert<AcctRow>('social_accounts', { user_id: u, platform: 'instagram', handle: n.username, owner, connected: true, followers: n.followers });
+    const [row] = await sb.insert<AcctRow>('social_accounts', { user_id: u, platform, handle: n.username, owner, connected: true, followers: n.followers });
     acct = row; created = true;
   }
   await sb.patch('social_accounts', `id=eq.${acct.id}&user_id=eq.${u}`, { connected: true, ...(n.followers != null ? { followers: n.followers } : {}), updated_at: new Date().toISOString() });
@@ -95,5 +95,36 @@ export async function syncInstagram(env: VaultEnv, sb: Sb, u: string, f: typeof 
       results.push({ handle: n.username, ok: true, detail: `${n.followers ?? 'no'} followers${n.avgViews != null ? `, ${n.avgViews} avg views over ${n.viewed} recent posts` : ', no recent post views yet'}.` });
     } catch (e) { results.push({ handle: r.handle, ok: false, detail: e instanceof Error ? e.message : String(e) }); }
   }
+  // TikTok accounts with their own connection.
+  const tts = await sb.get<AcctRow>(`social_accounts?user_id=eq.${u}&platform=eq.tiktok&select=id,platform,handle,owner,connected`);
+  for (const r of tts) {
+    const tok = await loadToken(env, sb, u, ttProvider(r.handle)).catch(() => null);
+    if (!tok?.token) { results.push({ handle: r.handle, ok: false, detail: 'TikTok not connected yet. Setup → Accounts → TikTok → Connect (while logged in as this account).' }); continue; }
+    try {
+      const n = await fetchTtNumbers(tok.token, tok.scope ?? '', f);
+      await applyIgNumbers(sb, u, n, 'tiktok');
+      results.push({ handle: n.username, ok: true, detail: `${n.followers ?? 'followers need the stats scope (use Log numbers)'}${n.followers != null ? ' followers' : ''}${n.avgViews != null ? `, ${n.avgViews} avg views over ${n.viewed} recent videos` : ''}.` });
+    } catch (e) { results.push({ handle: r.handle, ok: false, detail: e instanceof Error ? e.message : String(e) }); }
+  }
   return { results };
+}
+
+
+// ── TikTok ───────────────────────────────────────────────────────────
+const TT = 'https://open.tiktokapis.com/v2';
+export const ttProvider = (handle: string) => `tiktok:${handle.trim().replace(/^@/, '').toLowerCase()}`;
+/** One TikTok account's numbers. followers/handle need the optional user.info.stats / user.info.profile scopes; without them the account is identified by its display name and followers stay for "Log numbers". Never throws on a missing scope. */
+export async function fetchTtNumbers(token: string, scope = '', f: typeof fetch = fetch): Promise<IgNumbers & { displayName: string; openId: string }> {
+  const has = (s: string) => scope.split(/[\s,]+/).includes(s);
+  const fields = ['open_id', 'display_name', ...(has('user.info.profile') ? ['username'] : []), ...(has('user.info.stats') ? ['follower_count', 'video_count'] : [])].join(',');
+  const headers = { Authorization: `Bearer ${token}` };
+  const info = await f(`${TT}/user/info/?fields=${fields}`, { headers }).then((r) => r.json()).catch(() => null) as { data?: { user?: { open_id?: string; display_name?: string; username?: string; follower_count?: number; video_count?: number } }; error?: { code?: string; message?: string } } | null;
+  const u = info?.data?.user;
+  if (!u?.open_id) throw new Error(`TikTok didn't answer for this account${info?.error?.message ? `: ${info.error.message}` : ''}. Disconnect and Connect it again in Setup.`);
+  const list = has('video.list') ? await f(`${TT}/video/list/?fields=id,title,cover_image_url,share_url,view_count,create_time`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ max_count: 12 }) }).then((r) => r.json()).catch(() => null) as { data?: { videos?: { id: string; title?: string; cover_image_url?: string; share_url?: string; view_count?: number; create_time?: number }[] } } | null : null;
+  const vids = list?.data?.videos ?? [];
+  const media: IgMedia[] = vids.map((v) => ({ id: v.id, caption: v.title ?? null, type: 'video', thumbnail: v.cover_image_url ?? null, permalink: v.share_url ?? null, postedAt: new Date((v.create_time ?? 0) * 1000).toISOString(), views: v.view_count ?? null }));
+  const since = Date.now() - 30 * 86400000;
+  const recent = media.filter((m) => new Date(m.postedAt).getTime() >= since).map((m) => m.views);
+  return { username: u.username ?? u.display_name ?? 'tiktok', displayName: u.display_name ?? '', openId: u.open_id, followers: u.follower_count ?? null, posts: u.video_count ?? null, avgViews: avgOf(recent), viewed: recent.filter((v) => v != null).length, media };
 }

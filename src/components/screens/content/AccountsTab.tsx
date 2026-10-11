@@ -45,7 +45,7 @@ export default function AccountsTab({ api, items, newOpen, onCloseNew, onOpenPla
           {perOwner.some((n) => n > 5) && <div style={{ color: E.amber, marginTop: 4 }}>You have more than 5 accounts under one owner; that's past where variants stay genuinely different.</div>}
         </div>
         {isOwner && own < 6 && <button style={btn('ghost')} onClick={() => void seed()}>Add Masterminds, Made by Marq + personal accounts</button>}
-        {isOwner && <button style={btn('primary')} disabled={syncing} onClick={() => void sync()}>{syncing ? 'Syncing…' : 'Sync real numbers from Instagram'}</button>}
+        {isOwner && <button style={btn('primary')} disabled={syncing} onClick={() => void sync()}>{syncing ? 'Syncing…' : 'Sync real numbers (Instagram + TikTok)'}</button>}
         {syncMsg && <div style={{ fontSize: 'var(--text-caption)', color: E.muted, width: '100%', whiteSpace: 'pre-line' }}>{syncMsg}</div>}
         {seedMsg && <div style={{ fontSize: 'var(--text-caption)', color: E.muted, width: '100%' }}>{seedMsg}</div>}
       </div>
