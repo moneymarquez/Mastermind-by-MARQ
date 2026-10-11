@@ -29,16 +29,18 @@ import { Page, Tabs, useModule } from '../mm/Page';
 import { useSocialAccounts, useContentItems, useInspiration, useClips, useLatestAudits } from '../../data/useContentEngine';
 import InspirationTab from './content/InspirationTab';
 import StudioTab from './content/StudioTab';
+import HistoryTab from './content/HistoryTab';
 import LatestAudits from './content/LatestAudits';
 import IdeasTab from './content/IdeasTab';
 import KitsTab from './content/KitsTab';
 
-type EngineTab = 'accounts' | 'ideas' | 'plan' | 'studio' | 'inspiration' | 'kits' | 'workers' | 'growth';
+type EngineTab = 'accounts' | 'ideas' | 'plan' | 'studio' | 'history' | 'inspiration' | 'kits' | 'workers' | 'growth';
 const ENGINE_TABS: { id: EngineTab; label: string }[] = [
   { id: 'accounts', label: 'Accounts' },
   { id: 'ideas', label: 'Ideas' },
   { id: 'plan', label: 'Plan' },
   { id: 'studio', label: 'Studio' },
+  { id: 'history', label: 'History' },
   { id: 'inspiration', label: 'Inspiration' },
   { id: 'kits', label: 'Brand kits' },
   { id: 'workers', label: 'Workers' },
@@ -236,6 +238,7 @@ export default function ContentCreationScreen({ section, selectedClientId, onSel
       {engineTab === 'accounts' && <div style={enginePanel}><AccountsTab api={social} items={contentItems.items} newOpen={newOpen} onCloseNew={() => setNewOpen(false)} onOpenPlan={() => setEngineTab('plan')} /></div>}
       {engineTab === 'plan' && <div style={enginePanel}><PlanTab items={contentItems} accounts={social} newOpen={newOpen} onCloseNew={() => setNewOpen(false)} /></div>}
       {engineTab === 'studio' && <div style={enginePanel}><StudioTab api={clips} accounts={social} items={contentItems} /></div>}
+      {engineTab === 'history' && <div style={enginePanel}><HistoryTab accounts={social} /></div>}
       {engineTab === 'inspiration' && <div style={enginePanel}><InspirationTab api={inspiration} accounts={social} items={contentItems} onOpenPlan={() => setEngineTab('plan')} /></div>}
       {engineTab === 'ideas' && <div style={enginePanel}><IdeasTab accounts={social} items={contentItems} onOpenPlan={() => setEngineTab('plan')} /></div>}
       {engineTab === 'kits' && <div style={enginePanel}><KitsTab /></div>}

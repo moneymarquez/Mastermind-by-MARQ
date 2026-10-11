@@ -65,6 +65,7 @@ export type Screen =
   | 'content-ideas'
   | 'content-plan'
   | 'content-studio'
+  | 'content-history'
   | 'content-inspiration'
   | 'content-kits'
   | 'content-workers'
