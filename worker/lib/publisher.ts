@@ -34,7 +34,7 @@ const PROCESSING_GIVE_UP_MIN = 60;
 export const PUBLISH_PLATFORMS = ['instagram', 'tiktok'] as const;
 
 interface Item { id: string; user_id: string; account_id: string | null; concept: string; caption: string | null; hashtags: string | null; hooks: string[] | null; format: string; thumbnail_url: string | null; scheduled_for: string | null; scheduled_time: string | null; publish_status: string | null; publish_ref: string | null; publish_started_at: string | null }
-interface Account { id: string; platform: string; handle: string; daily_post_cap: number | null }
+interface Account { id: string; platform: string; handle: string; daily_post_cap: number | null; live_posting?: boolean }
 interface Media { url: string; contentType: string; source: string }
 const ITEM_COLS = 'id,user_id,account_id,concept,caption,hashtags,hooks,format,thumbnail_url,scheduled_for,scheduled_time,publish_status,publish_ref,publish_started_at';
 
@@ -234,7 +234,8 @@ async function startOne(env: PublishEnv, sb: Sb, item: Item, acct: Account | nul
     const media = await mediaFor(env, sb, item);
     logId = await logRow(sb, item, acct, date, 'publishing', { media_source: media.source });
     // DRY_RUN: everything up to the platform call ran for real; the post itself is simulated.
-    if (isDryRun(env)) { await markPublished(sb, item, acct, { id: dryRunId(acct.platform), url: null }, logId); notes.push('dry run — nothing was posted'); return 'published'; }
+    // An account switched to live posting (Content → Accounts) posts for real even while the rest of the app is in test mode.
+    if (isDryRun(env) && !acct.live_posting) { await markPublished(sb, item, acct, { id: dryRunId(acct.platform), url: null }, logId); notes.push('dry run — nothing was posted'); return 'published'; }
     const caption = captionFor(item.caption, item.hashtags);
     let ref: string;
     if (acct.platform === 'instagram') ref = await igCreate(await igToken(env, sb, item.user_id, acct.handle), media, caption);
@@ -290,7 +291,7 @@ export async function runPublisher(env: PublishEnv, sb: Sb, u: string, opts: { t
     async execute() {
       const { z, due, processing, stale } = await workFor(sb, u, opts.itemIds);
       const accountIds = [...new Set([...due, ...processing, ...stale].map((i) => i.account_id).filter(Boolean))] as string[];
-      const accts = accountIds.length ? await sb.get<Account>(`social_accounts?id=in.(${accountIds.join(',')})&user_id=eq.${u}&select=id,platform,handle,daily_post_cap`) : [];
+      const accts = accountIds.length ? await sb.get<Account>(`social_accounts?id=in.(${accountIds.join(',')})&user_id=eq.${u}&select=id,platform,handle,daily_post_cap,live_posting`) : [];
       const acctOf = (i: Item) => accts.find((a) => a.id === i.account_id) ?? null;
       const tally: Record<Step, number> = { published: 0, processing: 0, failed: 0, capped: 0, skipped: 0 };
       const notes: string[] = [];

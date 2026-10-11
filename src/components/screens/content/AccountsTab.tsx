@@ -168,7 +168,7 @@ function LogNumbersDrawer({ a, api, onClose }: { a: SocialAccount; api: Api; onC
 const num = (s: string): number | null => (s.trim() === '' ? null : Number(s.replace(/[,\s]/g, '')));
 
 /** A profile-page preview of the account, in Masterminds' own look: a ringed avatar, three numbers, a bio line, and a tile grid of what's posted and what's planned. */
-function ProfilePreview({ a, posts, metrics, planned, followers, avg }: { a: SocialAccount; posts: SocialPost[]; metrics: Api['metrics']; planned: ContentItem[]; followers: number | null; avg: number | null }) {
+function ProfilePreview({ a, api, posts, metrics, planned, followers, avg }: { a: SocialAccount; api: Api; posts: SocialPost[]; metrics: Api['metrics']; planned: ContentItem[]; followers: number | null; avg: number | null }) {
   const recent = [...posts].sort((x, y) => +new Date(y.posted_at) - +new Date(x.posted_at)).slice(0, 9);
   const upcoming = planned.slice(0, Math.max(0, 9 - recent.length));
   const tiles = [...recent.map((p) => ({ key: p.id, kind: 'posted' as const, img: p.thumbnail_url, text: p.hook || p.caption || '', views: latestMetrics(metrics[p.id] ?? [])?.views ?? null, type: p.type })), ...upcoming.map((i) => ({ key: i.id, kind: 'planned' as const, img: i.thumbnail_url, text: i.concept, views: null as number | null, type: i.format as string }))];
@@ -191,6 +191,10 @@ function ProfilePreview({ a, posts, metrics, planned, followers, avg }: { a: Soc
         <div style={{ fontWeight: 700, color: E.text }}>{a.display_name || a.handle}</div>
         <div style={{ fontSize: 13.5, color: E.muted, lineHeight: 1.45 }}>{bio}</div>
         <div style={{ fontSize: 12, color: E.faint, marginTop: 2 }}>@{a.handle} · {a.connected ? 'connected' : 'not connected'} · {a.posts_per_week_goal} posts a week</div>
+      </div>
+      <div style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <Badge color={a.live_posting ? E.red : E.faint}>{a.live_posting ? 'LIVE: approved posts really go out' : 'Test mode: nothing posts'}</Badge>
+        <button style={{ ...btn('ghost'), minHeight: 30, fontSize: 12.5, padding: '0 10px' }} onClick={async () => { const to = !a.live_posting; if (to && !(await askConfirm(`Post for real to @${a.handle}? Approved posts will publish publicly at their planned times.`))) return; await api.updateAccount(a.id, { live_posting: to } as Partial<SocialAccount>); }}>{a.live_posting ? 'Back to test mode' : 'Turn on live posting'}</button>
       </div>
       <div style={{ display: 'flex', gap: 6, margin: '12px 0 10px' }}>
         {(['posted', 'planned'] as const).map((t) => <button key={t} onClick={() => setTab(t)} style={{ ...btn(tab === t ? 'primary' : 'ghost'), minHeight: 32, padding: '0 14px', fontSize: 13, borderRadius: 999 }}>{t === 'posted' ? `Posted ${recent.length}` : `Planned ${upcoming.length}`}</button>)}
@@ -226,7 +230,7 @@ function AccountDetail({ a, api, items, today, onClose, onOpenPlan }: { a: Socia
   return (
     <Drawer open onClose={onClose} title={<span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}><Avatar a={a} size={28} />@{a.handle}</span>} subtitle={`${PLATFORM[a.platform].label} · ${OWNERS.find((o) => o.id === a.owner)?.label}${a.voice ? ` · voice: ${a.voice.slice(0, 60)}` : ''}`} width={640}
       actions={<button style={btn('ghost')} onClick={() => setEdit(true)}>Edit</button>}>
-      <ProfilePreview a={a} posts={posts} metrics={api.metrics} planned={items.filter((i) => i.account_id === a.id && !i.posted_post_id && !!i.scheduled_for && i.scheduled_for >= today)} followers={change.now} avg={avg} />
+      <ProfilePreview a={a} api={api} posts={posts} metrics={api.metrics} planned={items.filter((i) => i.account_id === a.id && !i.posted_post_id && !!i.scheduled_for && i.scheduled_for >= today)} followers={change.now} avg={avg} />
       <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
         <Metric label="Followers" value={compact(change.now)} trend={change.delta == null ? '' : change.delta >= 0 ? `↑${compact(change.delta)} / 30d` : `↓${compact(-change.delta)} / 30d`} big />
         <Metric label="Avg views · 30d" value={compact(avg == null ? null : Math.round(avg))} big />

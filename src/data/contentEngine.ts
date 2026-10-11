@@ -13,7 +13,7 @@ export type AccountHealth = 'new' | 'growing' | 'steady' | 'quiet' | 'declining'
 
 export interface SocialAccount {
   id: string; platform: Platform; handle: string; display_name: string | null; avatar_url: string | null; owner: Owner;
-  brand_id: string | null; client_id: string | null; voice: string | null; posts_per_week_goal: number; connected: boolean; followers: number | null;
+  brand_id: string | null; client_id: string | null; voice: string | null; posts_per_week_goal: number; connected: boolean; followers: number | null; live_posting?: boolean;
   created_at: string; updated_at: string;
 }
 export interface AccountSnapshot { id: string; account_id: string; captured_at: string; followers: number | null; avg_views: number | null; source: 'manual' | 'api' }
