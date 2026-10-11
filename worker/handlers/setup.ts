@@ -5,6 +5,7 @@
 // ones through Cloudflare's API. Account connections (per user) are sealed
 // with lib/vault.ts into ai_user_tokens, which only the service role reads.
 import { requireUser, isOwnerUser } from '../lib/auth';
+import { makeCache } from '../lib/socialMedia';
 import { fetchIgNumbers, fetchTtNumbers, applyIgNumbers, igProvider, ttProvider } from '../lib/socialSync';
 import { cleanShop, isShopDomain, shopifyMode, resolveShopifyToken, SHOPIFY_API, grantedScopes, missingScopes, scopeFixHint } from '../lib/shopify';
 import { Sb, json } from '../lib/sb';
@@ -306,7 +307,7 @@ export async function setupRoute(request: Request, env: SetupEnv, path: string):
         tok.user_id = String(me.user_id ?? me.id ?? '');
         await saveToken(e, sb, user.id, 'instagram', tok, { connected: new Date().toISOString(), scope: tok.scope, via: 'dashboard token' });
         await saveToken(e, sb, user.id, igProvider(n.username), tok, { connected: new Date().toISOString(), scope: tok.scope, username: n.username, via: 'dashboard token' });
-        await applyIgNumbers(sb, user.id, n);
+        await applyIgNumbers(sb, user.id, n, 'instagram', makeCache(e as never, user.id));
         await recordStatus(sb, user.id, 'instagram', { ok: true, detail: `Connected @${n.username} with a pasted token. ${n.followers ?? 'No'} followers${n.avgViews != null ? `, ${n.avgViews} avg views` : ''}. Posting assumes the token includes content publish.` });
         return json({ ok: true, detail: `Connected @${n.username}: ${n.followers ?? 'no'} followers${n.avgViews != null ? `, ${n.avgViews} average views` : ''}. Its Content profile is filled in.` });
       } catch (err) { return json({ ok: false, error: err instanceof Error ? err.message : String(err) }, 400); }
@@ -383,7 +384,7 @@ async function oauthCallback(request: Request, e: Env): Promise<Response> {
       try {
         const n = await fetchIgNumbers(tok.token);
         await saveToken(e, sb, st.u, igProvider(n.username), tok, { connected: new Date().toISOString(), scope: tok.scope, username: n.username });
-        await applyIgNumbers(sb, st.u, n);
+        await applyIgNumbers(sb, st.u, n, 'instagram', makeCache(e as never, st.u));
       } catch (err) { console.error('instagram import', err); }
     }
     if (st.p === 'tiktok') {
@@ -391,7 +392,7 @@ async function oauthCallback(request: Request, e: Env): Promise<Response> {
       try {
         const n = await fetchTtNumbers(tok.token, tok.scope);
         await saveToken(e, sb, st.u, ttProvider(n.username), tok, { connected: new Date().toISOString(), scope: tok.scope, username: n.username });
-        await applyIgNumbers(sb, st.u, n, 'tiktok');
+        await applyIgNumbers(sb, st.u, n, 'tiktok', makeCache(e as never, st.u));
       } catch (err) { console.error('tiktok import', err); }
     }
     const r = await testAccount(st.p, tok);

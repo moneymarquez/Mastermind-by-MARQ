@@ -15,6 +15,8 @@
 // been removed from the repo — nothing in this app depends on Netlify
 // anymore. The Netlify site itself (DNS, the hosted deploy) is an
 // account-level cleanup outside this repo's scope.
+import { serveMedia } from './lib/socialMedia';
+import { runSocialSyncTick } from './lib/socialSync';
 import { saveBrokerKeys, brokerKeysStatus } from './handlers/broker-keys';
 import { stocksAccount } from './handlers/stocks-account';
 import { runStocksBot } from './handlers/stocks-bot';
@@ -136,6 +138,7 @@ export default {
     if (url.pathname === '/api/webhooks/shopify') return shopifyWebhook(request, env);
     if (url.pathname === '/api/ecom/beacon') return siteBeacon(request, env);
     if (url.pathname === '/api/site/config') return siteConfig(request, env);
+    if (url.pathname.startsWith('/api/media/') && request.method === 'GET') return serveMedia(env as never, url);
     const cpMatch = url.pathname.match(/^\/api\/coupons\/(status|create|push|toggle|stats)$/);
     if (cpMatch) return couponsRoute(request, env, cpMatch[1]);
     if (url.pathname === '/api/waitlist') return waitlistJoin(request, env, ctx);
@@ -205,6 +208,7 @@ export default {
       ctx.waitUntil(runInboundWaitCheck(env));
       ctx.waitUntil(runPublisherTick(env));
       ctx.waitUntil(runFlagsTick(env));
+      if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runSocialSyncTick(env as never, new SbClient(env)).catch((e) => console.error('social sync tick', e)));
       if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runSoloTick(env, new SbClient(env)).catch((e) => console.error('solo tick', e)));
       if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runCommsTick(env, new SbClient(env)).catch((e) => console.error('comms tick', e)));
       return;

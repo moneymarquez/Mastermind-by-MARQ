@@ -45,7 +45,7 @@ export default function AccountsTab({ api, items, newOpen, onCloseNew, onOpenPla
           {perOwner.some((n) => n > 5) && <div style={{ color: E.amber, marginTop: 4 }}>You have more than 5 accounts under one owner; that's past where variants stay genuinely different.</div>}
         </div>
         {isOwner && own < 6 && <button style={btn('ghost')} onClick={() => void seed()}>Add Masterminds, Made by Marq + personal accounts</button>}
-        {isOwner && <button style={btn('primary')} disabled={syncing} onClick={() => void sync()}>{syncing ? 'Syncing…' : 'Sync real numbers (Instagram + TikTok)'}</button>}
+        {isOwner && <button style={btn('primary')} disabled={syncing} onClick={() => void sync()}>{syncing ? 'Syncing…' : 'Refresh from Instagram + TikTok'}</button>}
         {syncMsg && <div style={{ fontSize: 'var(--text-caption)', color: E.muted, width: '100%', whiteSpace: 'pre-line' }}>{syncMsg}</div>}
         {seedMsg && <div style={{ fontSize: 'var(--text-caption)', color: E.muted, width: '100%' }}>{seedMsg}</div>}
       </div>
@@ -81,6 +81,8 @@ function AccountCard({ a, api, items, today, onOpen, onLog, onOpenPlan }: { a: S
   const health = accountHealth(posts, change);
   const best = bestPostThisWeek(posts, api.metrics);
   const next = nextScheduled(items.filter((i) => i.account_id === a.id), today);
+  const prof = (a.profile ?? {}) as { sync_error?: string; sync_reconnect?: boolean; media_count?: number };
+  const recent = [...posts].sort((x, y) => +new Date(y.posted_at) - +new Date(x.posted_at)).slice(0, 4);
   const trend = change.delta == null ? '' : change.delta > 0 ? `↑${compact(change.delta)}` : change.delta < 0 ? `↓${compact(-change.delta)}` : '→0';
   return (
     <div style={{ ...E.card, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -92,7 +94,23 @@ function AccountCard({ a, api, items, today, onOpen, onLog, onOpenPlan }: { a: S
         </div>
         <Badge color={HEALTH_COLOR[health]}>{HEALTH_LABEL[health]}</Badge>
       </div>
+      {prof.sync_error && (
+        <div role="alert" style={{ padding: '8px 10px', borderRadius: 10, border: `1px solid ${E.red}`, fontSize: 'var(--text-caption)', color: E.red, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ flex: '1 1 180px' }}>{prof.sync_error}</span>
+          {prof.sync_reconnect && <a href="/?screen=setup" style={{ ...btn('danger'), textDecoration: 'none', minHeight: 30, fontSize: 12.5 }}>Reconnect</a>}
+        </div>
+      )}
+      {recent.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+          {recent.map((p) => (
+            <a key={p.id} href={p.url ?? undefined} target="_blank" rel="noopener noreferrer" title={p.caption ?? ''} style={{ aspectRatio: '1 / 1', borderRadius: 8, overflow: 'hidden', background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, var(--surface)), color-mix(in srgb, var(--success) 18%, var(--surface)))', display: 'block', position: 'relative' }}>
+              {p.thumbnail_url ? <img src={p.thumbnail_url} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ position: 'absolute', inset: 0, padding: 4, fontSize: 10, color: E.text, overflow: 'hidden' }}>{(p.hook || p.caption || '').slice(0, 40)}</span>}
+            </a>
+          ))}
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        <Metric label="Posts" value={compact(prof.media_count ?? posts.length)} />
         <Metric label="Followers" value={compact(change.now)} trend={trend} asOf={a.followers != null ? a.updated_at : null} />
         <Metric label="Avg views · 30d" value={compact(avg == null ? null : Math.round(avg))} />
         <Metric label="Streak" value={String(streak)} unit="wk" />
@@ -170,8 +188,8 @@ const num = (s: string): number | null => (s.trim() === '' ? null : Number(s.rep
 /** A profile-page preview of the account, in Masterminds' own look: a ringed avatar, three numbers, a bio line, and a tile grid of what's posted and what's planned. */
 function ProfilePreview({ a, api, posts, metrics, planned, followers, avg }: { a: SocialAccount; api: Api; posts: SocialPost[]; metrics: Api['metrics']; planned: ContentItem[]; followers: number | null; avg: number | null }) {
   const recent = [...posts].sort((x, y) => +new Date(y.posted_at) - +new Date(x.posted_at)).slice(0, 9);
-  const upcoming = planned.slice(0, Math.max(0, 9 - recent.length));
-  const tiles = [...recent.map((p) => ({ key: p.id, kind: 'posted' as const, img: p.thumbnail_url, text: p.hook || p.caption || '', views: latestMetrics(metrics[p.id] ?? [])?.views ?? null, type: p.type })), ...upcoming.map((i) => ({ key: i.id, kind: 'planned' as const, img: i.thumbnail_url, text: i.concept, views: null as number | null, type: i.format as string }))];
+  const upcoming = planned.slice(0, 9);
+  const tiles = [...recent.map((p) => { const m = latestMetrics(metrics[p.id] ?? []); return { key: p.id, kind: 'posted' as const, img: p.thumbnail_url, text: p.hook || p.caption || '', views: m?.views ?? null, likes: m?.likes ?? null, type: p.type as string, href: p.url }; }), ...upcoming.map((i) => ({ key: i.id, kind: 'planned' as const, img: i.thumbnail_url, text: i.concept, views: null as number | null, likes: null as number | null, type: i.format as string, href: null as string | null }))];
   const [tab, setTab] = useState<'posted' | 'planned'>('posted');
   const shown = tiles.filter((t) => t.kind === tab);
   const bio = a.voice?.trim() || `${OWNERS.find((o) => o.id === a.owner)?.label ?? ''} · ${PLATFORM[a.platform].label}`;
@@ -202,11 +220,11 @@ function ProfilePreview({ a, api, posts, metrics, planned, followers, avg }: { a
       {shown.length === 0 ? <div style={{ fontSize: 13, color: E.faint, padding: '10px 0' }}>{tab === 'posted' ? 'Nothing posted yet. Log or publish a post and it appears here.' : 'Nothing planned. Open the plan to schedule the week.'}</div> : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
           {shown.map((t, i) => (
-            <div key={t.key} style={{ position: 'relative', aspectRatio: '4 / 5', borderRadius: 12, overflow: 'hidden', border: t.kind === 'planned' ? `1px dashed ${E.border}` : `1px solid ${E.border}`, background: t.img ? 'var(--surface-4)' : `linear-gradient(${140 + i * 25}deg, color-mix(in srgb, var(--accent) 22%, var(--surface)), color-mix(in srgb, var(--success) 18%, var(--surface)))` }}>
+            <a key={t.key} href={t.href ?? undefined} target="_blank" rel="noopener noreferrer" style={{ position: 'relative', aspectRatio: '4 / 5', borderRadius: 12, overflow: 'hidden', display: 'block', textDecoration: 'none', border: t.kind === 'planned' ? `1px dashed ${E.border}` : `1px solid ${E.border}`, background: t.img ? 'var(--surface-4)' : `linear-gradient(${140 + i * 25}deg, color-mix(in srgb, var(--accent) 22%, var(--surface)), color-mix(in srgb, var(--success) 18%, var(--surface)))` }}>
               {t.img && <img src={t.img} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
               {!t.img && <div style={{ position: 'absolute', inset: 0, padding: 8, fontSize: 12, lineHeight: 1.3, color: E.text, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', overflow: 'hidden' }}>{t.text.slice(0, 70) || FORMATS.find((f) => f.id === t.type)?.label}</div>}
-              <span style={{ position: 'absolute', left: 6, bottom: 6, fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: 'color-mix(in srgb, var(--bg) 78%, transparent)', color: E.text }}>{t.kind === 'planned' ? 'Planned' : `▶ ${compact(t.views)}`}</span>
-            </div>
+              <span style={{ position: 'absolute', left: 6, bottom: 6, fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: 'color-mix(in srgb, var(--bg) 78%, transparent)', color: E.text }}>{t.kind === 'planned' ? (t.img ? 'Planned' : 'Planned · no image yet') : `▶ ${compact(t.views)} · ♥ ${compact(t.likes)}`}</span>
+            </a>
           ))}
         </div>
       )}
