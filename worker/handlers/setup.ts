@@ -318,6 +318,8 @@ async function oauthCallback(request: Request, e: Env): Promise<Response> {
   const st = await verifyState(e, url.searchParams.get('state') ?? '');
   if (!st) return back('connect_error=expired');
   const code = url.searchParams.get('code');
+  // Leave a trace in Setup's status so a stalled connect can be diagnosed from the app itself.
+  await recordStatus(new Sb(e), st.u, st.p, { ok: false, detail: code ? 'Sent back with a code; finishing the connection…' : `Sent back without a code: ${url.searchParams.get('error_description') ?? url.searchParams.get('error') ?? 'denied'}` }).catch(() => {});
   if (!code) return back(`connect_error=${encodeURIComponent(url.searchParams.get('error_description') ?? url.searchParams.get('error') ?? 'denied')}`);
   const redirect = `${url.origin}/api/connect/oauth/callback`;
   const sb = new Sb(e);
@@ -359,6 +361,7 @@ async function oauthCallback(request: Request, e: Env): Promise<Response> {
     await recordStatus(sb, st.u, st.p, r);
     return back(`connected=${st.p}`);
   } catch (err) {
+    await recordStatus(sb, st.u, st.p, { ok: false, detail: `Connect failed: ${err instanceof Error ? err.message : String(err)}` }).catch(() => {});
     return back(`connect_error=${encodeURIComponent(err instanceof Error ? err.message : String(err))}`);
   }
 }
