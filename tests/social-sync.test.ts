@@ -23,6 +23,8 @@ describe('Instagram numbers into Content profiles', () => {
     }) as unknown as typeof fetch;
     const n = await fetchIgNumbers('tok', f);
     expect(n).toMatchObject({ username: 'made.bymarq', followers: 812, posts: 40, avgViews: 1000, viewed: 1 });
+    expect(n.media).toHaveLength(3);
+    expect(n.media![0]).toMatchObject({ id: 'a', views: 1000, type: 'image' });
     await expect(fetchIgNumbers('tok', (async () => ({ ok: false, json: async () => ({}) })) as unknown as typeof fetch)).rejects.toThrow(/Connect it again/);
   });
   it('takes over a placeholder row instead of making a duplicate, then updates it', async () => {

@@ -24,21 +24,27 @@ export function avgOf(values: (number | null | undefined)[]): number | null {
   return v.length ? Math.round(v.reduce((s, n) => s + n, 0) / v.length) : null;
 }
 
-export interface IgNumbers { username: string; followers: number | null; posts: number | null; avgViews: number | null; viewed: number }
+export interface IgMedia { id: string; caption: string | null; type: 'reel' | 'carousel' | 'image' | 'video'; thumbnail: string | null; permalink: string | null; postedAt: string; views: number | null }
+export interface IgNumbers { username: string; followers: number | null; posts: number | null; avgViews: number | null; viewed: number; media?: IgMedia[] }
+const kindOf = (t?: string, p?: string): IgMedia['type'] => (p === 'REELS' ? 'reel' : t === 'CAROUSEL_ALBUM' ? 'carousel' : t === 'VIDEO' ? 'video' : 'image');
 /** One Instagram account's numbers. Never throws: a missing permission just leaves avg views empty. */
 export async function fetchIgNumbers(token: string, f: typeof fetch = fetch): Promise<IgNumbers> {
   const get = async <T,>(path: string): Promise<T | null> => { try { const r = await f(`${IG}${path}${path.includes('?') ? '&' : '?'}access_token=${encodeURIComponent(token)}`); return r.ok ? ((await r.json()) as T) : null; } catch { return null; } };
   const me = await get<{ username?: string; followers_count?: number; media_count?: number }>('/me?fields=username,followers_count,media_count');
   if (!me?.username) throw new Error('Instagram didn\'t answer for this account. Disconnect and Connect it again in Setup.');
   const since = Date.now() - 30 * 86400000;
-  const media = await get<{ data?: { id: string; timestamp?: string }[] }>('/me/media?fields=id,timestamp&limit=25');
-  const recent = (media?.data ?? []).filter((m) => m.timestamp && new Date(m.timestamp).getTime() >= since).slice(0, 12);
+  type Raw = { id: string; timestamp?: string; caption?: string; media_type?: string; media_product_type?: string; thumbnail_url?: string; media_url?: string; permalink?: string };
+  const media = await get<{ data?: Raw[] }>('/me/media?fields=id,timestamp,caption,media_type,media_product_type,thumbnail_url,media_url,permalink&limit=12');
+  const list = (media?.data ?? []).filter((m) => m.timestamp).slice(0, 12);
+  const out: IgMedia[] = [];
   const views: (number | null)[] = [];
-  for (const m of recent) {
+  for (const m of list) {
     const ins = await get<{ data?: { name?: string; values?: { value?: number }[] }[] }>(`/${m.id}/insights?metric=views`);
-    views.push(ins?.data?.find((d) => d.name === 'views')?.values?.[0]?.value ?? null);
+    const v = ins?.data?.find((d) => d.name === 'views')?.values?.[0]?.value ?? null;
+    out.push({ id: m.id, caption: m.caption ?? null, type: kindOf(m.media_type, m.media_product_type), thumbnail: m.thumbnail_url ?? (m.media_type === 'IMAGE' ? m.media_url ?? null : null), permalink: m.permalink ?? null, postedAt: m.timestamp as string, views: v });
+    if (new Date(m.timestamp as string).getTime() >= since) views.push(v);
   }
-  return { username: me.username, followers: me.followers_count ?? null, posts: me.media_count ?? null, avgViews: avgOf(views), viewed: views.filter((v) => v != null).length };
+  return { username: me.username, followers: me.followers_count ?? null, posts: me.media_count ?? null, avgViews: avgOf(views), viewed: views.filter((v) => v != null).length, media: out };
 }
 
 interface AcctRow { id: string; platform: string; handle: string; owner: string; connected: boolean }
@@ -61,6 +67,18 @@ export async function applyIgNumbers(sb: Sb, u: string, n: IgNumbers): Promise<{
   }
   await sb.patch('social_accounts', `id=eq.${acct.id}&user_id=eq.${u}`, { connected: true, ...(n.followers != null ? { followers: n.followers } : {}), updated_at: new Date().toISOString() });
   await sb.insert('social_account_snapshots', { user_id: u, account_id: acct.id, followers: n.followers, avg_views: n.avgViews, source: 'api' });
+  // The account's recent posts, so the profile preview shows what's really up. Existing ones are refreshed, not duplicated.
+  if (n.media?.length) {
+    const have = await sb.get<{ id: string; external_id: string | null }>(`social_posts?user_id=eq.${u}&account_id=eq.${acct.id}&select=id,external_id`).catch(() => []);
+    for (const m of n.media) {
+      const known = have.find((h) => h.external_id === m.id);
+      const fields = { caption: m.caption, url: m.permalink, thumbnail_url: m.thumbnail, type: m.type, posted_at: m.postedAt, updated_at: new Date().toISOString() };
+      let postId = known?.id;
+      if (known) await sb.patch('social_posts', `id=eq.${known.id}&user_id=eq.${u}`, fields).catch(() => {});
+      else { const [row] = await sb.insert<{ id: string }>('social_posts', { user_id: u, account_id: acct.id, external_id: m.id, hook: (m.caption ?? '').split('\n')[0].slice(0, 120) || null, ...fields }).catch(() => [] as { id: string }[]); postId = row?.id; }
+      if (postId && m.views != null) await sb.insert('social_post_metrics', { user_id: u, post_id: postId, views: m.views, source: 'api' }).catch(() => {});
+    }
+  }
   return { account_id: acct.id, created, renamed };
 }
 
