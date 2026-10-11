@@ -125,7 +125,7 @@ async function igCreate(tok: Token, media: Media, caption: string): Promise<stri
   return j.id;
 }
 /** FINISHED → publish it. IN_PROGRESS → come back. ERROR/EXPIRED → fail. */
-async function igAdvance(tok: Token, containerId: string): Promise<{ done: false } | { done: true; id: string; url: string | null }> {
+async function igAdvance(tok: Token, containerId: string): Promise<{ done: false } | { done: true; id: string; url: string | null; thumb?: string | null }> {
   const res = await fetch(`${IG}/${containerId}?fields=status_code,status&access_token=${encodeURIComponent(tok.token)}`);
   const s = (await res.json().catch(() => ({}))) as IgErr & { status_code?: string; status?: string };
   if (!res.ok) throw new PublishError(igErr(s, res.status));
@@ -134,8 +134,8 @@ async function igAdvance(tok: Token, containerId: string): Promise<{ done: false
   const pub = await fetch(`${IG}/${tok.user_id}/media_publish`, { method: 'POST', body: new URLSearchParams({ creation_id: containerId, access_token: tok.token }) });
   const pj = (await pub.json().catch(() => ({}))) as IgErr & { id?: string };
   if (!pj.id) throw new PublishError(igErr(pj, pub.status));
-  const link = (await (await fetch(`${IG}/${pj.id}?fields=permalink&access_token=${encodeURIComponent(tok.token)}`)).json().catch(() => ({}))) as { permalink?: string };
-  return { done: true, id: pj.id, url: link.permalink ?? null };
+  const link = (await (await fetch(`${IG}/${pj.id}?fields=permalink,media_type,media_url,thumbnail_url&access_token=${encodeURIComponent(tok.token)}`)).json().catch(() => ({}))) as { permalink?: string; media_type?: string; media_url?: string; thumbnail_url?: string };
+  return { done: true, id: pj.id, url: link.permalink ?? null, thumb: link.thumbnail_url ?? (link.media_type === 'IMAGE' ? link.media_url ?? null : null) };
 }
 
 // ── TikTok ────────────────────────────────────────────────────────────
@@ -203,9 +203,9 @@ async function markFailed(sb: Sb, item: Item, acct: Account | null, msg: string,
   await alert(sb, item.user_id, 'content', 'warn', 'publish_failed', `Not posted: ${item.concept.slice(0, 80)}${acct ? ` (@${acct.handle} on ${acct.platform})` : ''}`, msg, { type: 'content_item', id: item.id });
 }
 
-async function markPublished(sb: Sb, item: Item, acct: Account, res: { id: string; url: string | null }, logId: string | null) {
+async function markPublished(sb: Sb, item: Item, acct: Account, res: { id: string; url: string | null; thumb?: string | null }, logId: string | null) {
   const at = now();
-  const [post] = await sb.insert<{ id: string }>('social_posts', { user_id: item.user_id, account_id: acct.id, external_id: res.id, url: res.url, type: acct.platform === 'tiktok' ? 'video' : item.format === 'image' ? 'image' : 'reel', caption: item.caption, hook: item.hooks?.[0] ?? null, format: item.format, posted_at: at, content_item_id: item.id }).catch(() => [] as { id: string }[]);
+  const [post] = await sb.insert<{ id: string }>('social_posts', { user_id: item.user_id, account_id: acct.id, external_id: res.id, url: res.url, type: acct.platform === 'tiktok' ? 'video' : item.format === 'image' ? 'image' : 'reel', caption: item.caption, hook: item.hooks?.[0] ?? null, format: item.format, posted_at: at, content_item_id: item.id, thumbnail_url: res.thumb ?? null }).catch(() => [] as { id: string }[]);
   await sb.patch('content_items', `id=eq.${item.id}`, { status: 'posted', posted_post_id: post?.id ?? null, publish_status: 'published', published_at: at, external_post_id: res.id, publish_url: res.url, publish_error: null, updated_at: at });
   if (logId) await sb.patch('content_publish_log', `id=eq.${logId}`, { status: 'published', external_id: res.id, url: res.url, updated_at: at }).catch(() => {});
 }
