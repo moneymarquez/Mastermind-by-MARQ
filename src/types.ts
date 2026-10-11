@@ -62,6 +62,7 @@ export type Screen =
   | 'marketing'
   | 'content'
   | 'content-accounts'
+  | 'content-profiles'
   | 'content-ideas'
   | 'content-plan'
   | 'content-studio'

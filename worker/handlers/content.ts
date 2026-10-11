@@ -13,6 +13,10 @@ import type { PublishEnv } from '../lib/publisher';
 import { isDryRun } from '../lib/dryRun';
 import type { DryRunEnv } from '../lib/dryRun';
 import { TZ } from '../lib/engine';
+import { ask as askAi } from '../lib/ai';
+import { ROLE_MODEL } from '../lib/models';
+import { profileSystem, profileUser } from '../lib/profileAi';
+import { parseProfileSuggestions } from '../../src/data/profileMock';
 import { requireMember } from '../lib/member';
 import { json, zonedNow } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
@@ -109,6 +113,20 @@ export async function contentRoute(request: Request, env: ContentOctEnv, path: s
       const [after] = await sb.get<{ publish_status: string | null; publish_error: string | null; publish_url: string | null }>(`content_items?id=eq.${item.id}&select=publish_status,publish_error,publish_url`);
       const test = !acct.live_posting && isDryRun(env as unknown as DryRunEnv);
       return json({ ok: after?.publish_status !== 'failed', item_id: item.id, status: after?.publish_status ?? null, error: after?.publish_error ?? null, url: after?.publish_url ?? null, test, summary: out?.summary ?? null });
+    }
+    // Profile help: bio, name and link options for one account, in its voice. Suggestions only; nothing is changed on the platform.
+    if (path === 'profile-ai') {
+      if (!isOwnerUser(user)) return json({ error: 'Owner only.' }, 403);
+      const accountId = id('account_id');
+      if (!accountId) return json({ error: 'account_id is required.' }, 400);
+      const [a] = await sb.get<{ handle: string; platform: string; owner: string; voice: string | null; profile: Record<string, unknown> }>(`social_accounts?id=eq.${accountId}&user_id=eq.${user.id}&select=handle,platform,owner,voice,profile`);
+      if (!a) return json({ error: 'That account is gone.' }, 404);
+      const instruction = (typeof b.instruction === 'string' ? b.instruction : '').slice(0, 600) || 'Improve my profile.';
+      const current = (b.current ?? {}) as Record<string, unknown>;
+      const [w] = await sb.get<{ id: string }>(`ai_workers?user_id=eq.${user.id}&key=eq.ideas&select=id`);
+      const z = zonedNow(TZ);
+      const res = await askAi(env.ANTHROPIC_API_KEY, sb, { model: ROLE_MODEL.parse, domain: 'content', userId: user.id, date: z.date, workerId: w?.id ?? null, maxTokens: 900, system: profileSystem(a.platform), user: profileUser(a, current, instruction) });
+      return json({ ...parseProfileSuggestions(res.text, a.platform), cost_usd: res.costUsd });
     }
     if (path === 'sync-accounts') {
       if (!isOwnerUser(user)) return json({ error: 'Owner only.' }, 403);

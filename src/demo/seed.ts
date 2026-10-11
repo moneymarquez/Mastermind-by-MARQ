@@ -231,6 +231,9 @@ export function buildSeed(): Record<string, Row[]> {
   // ── Content: 7-day plan, one clip pair, grades 4/3/2/1 ──────────────
   const acct = (platform: string, handle: string, owner: string, followers: number) => ({ id: uid('acct'), platform, handle, display_name: null, avatar_url: null, owner, brand_id: null, client_id: null, voice: 'Short, direct, no fluff.', posts_per_week_goal: 10, connected: false, followers });
   const accounts = [acct('tiktok', 'northlinegoods', 'ecom', 8400), acct('instagram', 'madebymarq', 'madebymarq', 2140), acct('tiktok', 'marq.builds', 'personal', 11900)];
+  (accounts[1] as Record<string, unknown>).profile = { name: 'Made by MARQ', username: 'madebymarq', biography: 'We build websites and apps for small businesses.\nDM "BUILD" to start.', website: 'https://madebymarq.com', followers_count: 2140, follows_count: 312, media_count: 48, account_type: 'BUSINESS' };
+  (accounts[1] as Record<string, unknown>).profile_draft = { category: 'Web designer', email: 'hello@madebymarq.com', highlights: ['Work', 'Reviews', 'Process', 'FAQ'] };
+  (accounts[1] as Record<string, unknown>).profile_synced_at = iso(-1);
   T('social_accounts', accounts);
   T('social_account_snapshots', accounts.flatMap((a) => [0, 7, 14, 21, 28].map((d) => ({ id: uid('asnp'), account_id: a.id, captured_at: iso(-d), followers: Math.round(Number(a.followers) * (1 - d / 120)), avg_views: null, source: 'manual' }))));
   const hooks = ['Your 3pm neck, fixed in 10 seconds', 'I stopped looking tired on Zoom', 'The $42 thing my chiropractor asked about', 'POV: your desk finally fits you', 'Three trucks, one menu', 'Cold calling a taco truck at 9am', 'I deleted every app but one'];

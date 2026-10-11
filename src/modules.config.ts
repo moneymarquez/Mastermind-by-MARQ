@@ -92,6 +92,7 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   // lives here, client-scoped like everything else in Scaling, with
   // Marketing linking to it rather than duplicating it.
   { key: 'content-accounts', label: 'Accounts', category: 'Scaling', description: 'Your Instagram and TikTok accounts with real numbers.', icon: 'ph-users', routes: ['content-accounts'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content-profiles', label: 'Profiles', category: 'Scaling', description: 'Every account\'s public page, drawn like a profile, with AI help editing the bio, name and link.', icon: 'ph-identification-card', routes: ['content-profiles'], requiresAI: true, ownerOnly: true, portal: 'content' },
   { key: 'content-ideas', label: 'Ideas', category: 'Scaling', description: 'Post ideas for each account.', icon: 'ph-lightbulb', routes: ['content-ideas'], requiresAI: true, ownerOnly: true, portal: 'content' },
   { key: 'content-plan', label: 'Plan', category: 'Scaling', description: 'The week\'s posts, timed and approved.', icon: 'ph-calendar-check', routes: ['content-plan'], requiresAI: true, ownerOnly: true, portal: 'content' },
   { key: 'content-studio', label: 'Studio', category: 'Scaling', description: 'Upload, edit and post videos and photos.', icon: 'ph-film-slate', routes: ['content-studio'], requiresAI: true, ownerOnly: true, portal: 'content' },
