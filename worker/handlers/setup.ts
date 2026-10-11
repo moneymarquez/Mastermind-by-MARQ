@@ -222,6 +222,12 @@ export async function setupRoute(request: Request, env: SetupEnv, path: string):
   const e = env as Env;
   const url = new URL(request.url);
   if (path === 'oauth/callback') return oauthCallback(request, e);
+  // Diagnostic landing page: shows what a platform sent back after Allow (the code itself is never printed).
+  if (path === 'oauth/echo') {
+    const q = [...url.searchParams.entries()].map(([k, v]) => `<tr><td>${escHtml(k)}</td><td>${escHtml(k === 'code' || k === 'state' ? `${v.slice(0, 6)}… (${v.length} characters, hidden)` : v)}</td></tr>`).join('') || '<tr><td colspan="2">Nothing was sent. The platform did not add a code or an error.</td></tr>';
+    const html = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Connect check</title><body style="font:16px system-ui;margin:24px;max-width:640px"><h2>The platform sent you back here</h2><p>That means Allow worked and the redirect address is registered. What it sent:</p><table border="1" cellpadding="8" style="border-collapse:collapse;word-break:break-all">${q}</table><p>${url.searchParams.get('code') ? '<strong>A login code arrived.</strong> The normal Connect should work; go back to Setup and press Connect.' : '<strong>No code.</strong> Read the error above and send it to Claude.'}</p></body>`;
+    return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+  }
   const user = await requireUser(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
   if (user instanceof Response) return user;
   const sb = new Sb(env);
@@ -307,7 +313,8 @@ export async function setupRoute(request: Request, env: SetupEnv, path: string):
     }
     if (path === 'oauth/start') {
       const id = String(url.searchParams.get('provider') ?? b.provider ?? '');
-      const redirect = `${url.origin}/api/connect/oauth/callback`;
+      // debug=1 sends the browser to the echo page instead, to see what the platform returns.
+      const redirect = `${url.origin}/api/connect/oauth/${url.searchParams.get('debug') === '1' ? 'echo' : 'callback'}`;
       const state = await signState(e, { u: user.id, p: id });
       if (id === 'instagram') {
         if (!e.INSTAGRAM_APP_ID) return json({ error: 'Mastermind\'s Instagram app isn\'t set up yet (INSTAGRAM_APP_ID missing).' }, 409);
@@ -332,6 +339,8 @@ export async function setupRoute(request: Request, env: SetupEnv, path: string):
 /** Browser lands here from Instagram/TikTok/Facebook; no bearer token, so the signed
  *  state carries who started it. Always ends by sending the browser back to
  *  the Setup screen with ?connected= or ?connect_error=. */
+const escHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+
 async function oauthCallback(request: Request, e: Env): Promise<Response> {
   const url = new URL(request.url);
   const back = (q: string) => Response.redirect(`${url.origin}/?screen=setup&${q}`, 302);
