@@ -285,6 +285,22 @@ export async function setupRoute(request: Request, env: SetupEnv, path: string):
       await recordStatus(sb, user.id, id, { ok: false, detail: 'Disconnected.' });
       return json({ ok: true });
     }
+    // The no-redirect way in: a token generated in the Meta app's own dashboard for an added Instagram account.
+    if (path === 'instagram-token') {
+      const token = String(b.token ?? '').trim();
+      if (token.length < 20) return json({ error: 'Paste the whole token from the Meta dashboard.' }, 400);
+      try {
+        const n = await fetchIgNumbers(token);
+        const tok = { token, user_id: '', scope: IG_SCOPES, refreshed_at: new Date().toISOString(), expires_at: new Date(Date.now() + 60 * 86400000).toISOString() };
+        const me = (await (await fetch(`https://graph.instagram.com/me?fields=user_id&access_token=${encodeURIComponent(token)}`)).json().catch(() => ({}))) as { user_id?: string | number; id?: string };
+        tok.user_id = String(me.user_id ?? me.id ?? '');
+        await saveToken(e, sb, user.id, 'instagram', tok, { connected: new Date().toISOString(), scope: tok.scope, via: 'dashboard token' });
+        await saveToken(e, sb, user.id, igProvider(n.username), tok, { connected: new Date().toISOString(), scope: tok.scope, username: n.username, via: 'dashboard token' });
+        await applyIgNumbers(sb, user.id, n);
+        await recordStatus(sb, user.id, 'instagram', { ok: true, detail: `Connected @${n.username} with a pasted token. ${n.followers ?? 'No'} followers${n.avgViews != null ? `, ${n.avgViews} avg views` : ''}. Posting assumes the token includes content publish.` });
+        return json({ ok: true, detail: `Connected @${n.username}: ${n.followers ?? 'no'} followers${n.avgViews != null ? `, ${n.avgViews} average views` : ''}. Its Content profile is filled in.` });
+      } catch (err) { return json({ ok: false, error: err instanceof Error ? err.message : String(err) }, 400); }
+    }
     if (path === 'oauth/start') {
       const id = String(url.searchParams.get('provider') ?? b.provider ?? '');
       const redirect = `${url.origin}/api/connect/oauth/callback`;

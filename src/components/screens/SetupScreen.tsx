@@ -222,6 +222,12 @@ function AccountCard({ a, state, conn, onChanged }: { a: SetupEntry; state?: { c
     const r = await api<{ ok: boolean; detail: string }>('/api/connect/token', { body: { provider: a.id, values: vals } });
     setBusy(''); setMsg(r.error ?? r.detail); if (r.ok) setVals({}); onChanged();
   };
+  const [igTok, setIgTok] = useState('');
+  const connectIgToken = async () => {
+    setBusy('igtoken'); setMsg('');
+    const r = await api<{ ok?: boolean; detail?: string }>('/api/connect/instagram-token', { body: { token: igTok } });
+    setBusy(''); setMsg(r.error ?? r.detail ?? 'Done.'); if (!r.error) setIgTok(''); onChanged();
+  };
   const test = async () => { setBusy('test'); await api('/api/setup/test', { body: { provider: a.id } }); setBusy(''); onChanged(); };
   const disconnect = async () => { if (!(await askConfirm(`Disconnect ${a.name}?`))) return; await api('/api/connect/disconnect', { body: { provider: a.id } }); onChanged(); };
   return (
@@ -254,6 +260,13 @@ function AccountCard({ a, state, conn, onChanged }: { a: SetupEntry; state?: { c
             {state?.connected && <button style={btn('ghost')} disabled={!!busy} onClick={test}>{busy === 'test' ? 'Testing…' : 'Test'}</button>}
             {state?.connected && <button style={btn('danger')} onClick={disconnect}>Disconnect</button>}
           </div>
+          {a.id === 'instagram' && (
+            <div style={{ marginTop: 12, padding: 10, borderRadius: 10, border: `1px dashed ${E.border}`, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ fontSize: 'var(--text-caption)', color: E.muted }}>If Allow does nothing: in the Meta app, Instagram → API setup with Instagram login → <strong>Generate token</strong> next to the account, then paste it here. Do one account at a time.</div>
+              <input style={field} type="password" autoComplete="off" placeholder="Instagram access token" value={igTok} onChange={(e) => setIgTok(e.target.value)} />
+              <div><button style={btn('ghost')} disabled={!!busy || igTok.trim().length < 20} onClick={connectIgToken}>{busy === 'igtoken' ? 'Checking…' : 'Connect with this token'}</button></div>
+            </div>
+          )}
           {a.connect === 'oauth' && !state?.appReady && <div style={{ fontSize: 'var(--text-caption)', color: E.amber, marginTop: 6 }}>Connect goes live once Mastermind's {a.name.split(' ')[0]} developer app keys are saved in Platform setup.</div>}
           {msg && <div style={{ fontSize: 'var(--text-caption)', color: msg.startsWith('Connected') ? E.green : E.red, marginTop: 6 }}>{msg}</div>}
         </div>
