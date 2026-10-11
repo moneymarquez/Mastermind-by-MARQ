@@ -1,3 +1,4 @@
+import PostNow from './PostNow';
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { supabase } from '../../../lib/supabase';
@@ -76,6 +77,7 @@ export default function StudioTab({ api, accounts, items }: { api: ReturnType<ty
 
   return (
     <div>
+      <PostNow accounts={accounts.accounts} />
       <div style={{ ...E.card, padding: 14 }}>
         <div style={{ ...label, marginBottom: 8 }}>New raw clip</div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>

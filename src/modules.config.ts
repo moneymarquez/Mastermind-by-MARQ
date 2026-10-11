@@ -91,11 +91,18 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   // placeholder) — the Marketing rebuild's social-profile-build tooling
   // lives here, client-scoped like everything else in Scaling, with
   // Marketing linking to it rather than duplicating it.
+  { key: 'content-accounts', label: 'Accounts', category: 'Scaling', description: 'Your Instagram and TikTok accounts with real numbers.', icon: 'ph-users', routes: ['content-accounts'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content-ideas', label: 'Ideas', category: 'Scaling', description: 'Post ideas for each account.', icon: 'ph-lightbulb', routes: ['content-ideas'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content-plan', label: 'Plan', category: 'Scaling', description: 'The week\'s posts, timed and approved.', icon: 'ph-calendar-check', routes: ['content-plan'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content-studio', label: 'Studio', category: 'Scaling', description: 'Upload, edit and post videos and photos.', icon: 'ph-film-slate', routes: ['content-studio'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content-inspiration', label: 'Inspiration', category: 'Scaling', description: 'Saved trends and references.', icon: 'ph-sparkle', routes: ['content-inspiration'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content-kits', label: 'Brand kits', category: 'Scaling', description: 'Voice and look for each brand.', icon: 'ph-palette', routes: ['content-kits'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content-workers', label: 'Workers', category: 'Scaling', description: 'The content workers and what they did.', icon: 'ph-robot', routes: ['content-workers'], requiresAI: true, ownerOnly: true, portal: 'content' },
   // 'swipe-file' rides the same module toggle as 'content' — "its own
   // tab, not buried in the module," same shape as Dialing/Contacts
   // above: a separate nav row and screen, gated by one module choice,
   // not a second onboarding toggle of its own.
-  { key: 'content', label: 'Content Creation', category: 'Scaling', description: 'Per-client social profile build and launch kits, congruent with the Marketing campaign driving them.', icon: 'ph-video-camera', routes: ['content', 'swipe-file'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content', label: 'Growth plans', category: 'Scaling', description: 'Per-client social profile build and launch kits, congruent with the Marketing campaign driving them.', icon: 'ph-video-camera', routes: ['content', 'swipe-file'], requiresAI: true, ownerOnly: true, portal: 'content' },
   { key: 'stocks', label: 'Stocks', category: 'Side Hustles', description: 'Paper-trading bot on Alpaca with AI daily commentary.', icon: 'ph-chart-line-up', routes: ['stocks'], requiresAI: true, portal: 'masterminds' },
   { key: 'streaming', label: 'Streaming', category: 'Side Hustles', description: 'Streaming idea bank and calendar.', icon: 'ph-video-camera', routes: ['streaming'], requiresAI: false, portal: 'masterminds' },
   { key: 'ecommerce', label: 'E-commerce', category: 'Side Hustles', description: 'Dropshipping brands built by AI workers you steer: product sheets, a 10-step brand pipeline, approvals, and performance.', icon: 'ph-rocket-launch', routes: ['ecommerce'], requiresAI: true, ownerOnly: true, portal: 'ecommerce' },

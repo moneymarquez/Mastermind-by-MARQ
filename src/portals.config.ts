@@ -9,7 +9,7 @@ export type PortalKey = 'masterminds' | 'madeby' | 'content' | 'ecommerce';
 export const PORTALS: { key: PortalKey; name: string; landing: string }[] = [
   { key: 'masterminds', name: 'Masterminds', landing: 'home' },
   { key: 'madeby', name: 'Made by', landing: 'client-modules' },
-  { key: 'content', name: 'Content', landing: 'content' },
+  { key: 'content', name: 'Content', landing: 'content-accounts' },
   { key: 'ecommerce', name: 'E-commerce', landing: 'ecommerce' },
 ];
 export const PORTAL_KEYS = PORTALS.map((p) => p.key);

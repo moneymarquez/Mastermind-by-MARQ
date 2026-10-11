@@ -25,7 +25,7 @@ import EngineBar from './ecom/EngineBar';
 import WorkersTab from './ecom/WorkersTab';
 import { panel } from './ecom/ecomShared';
 import ContentOverview from './content/ContentOverview';
-import { Page, Tabs } from '../mm/Page';
+import { Page, Tabs, useModule } from '../mm/Page';
 import { useSocialAccounts, useContentItems, useInspiration, useClips, useLatestAudits } from '../../data/useContentEngine';
 import InspirationTab from './content/InspirationTab';
 import StudioTab from './content/StudioTab';
@@ -47,6 +47,8 @@ const ENGINE_TABS: { id: EngineTab; label: string }[] = [
 const enginePanel: CSSProperties = { ...panel, marginTop: 16 };
 
 interface Props {
+  /** Which section this screen is (the sidebar rows). Without it, the screen keeps its own tab bar. */
+  section?: EngineTab;
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
   selectedClientId: string | null;
@@ -175,7 +177,8 @@ function composeGrowthPrompt(plan: ContentGrowthPlan, clientName: string, planCh
   return lines.join('\n');
 }
 
-export default function ContentCreationScreen({ selectedClientId, onSelectClient, onAskNova }: Props) {
+export default function ContentCreationScreen({ section, selectedClientId, onSelectClient, onAskNova }: Props) {
+  const { nav } = useModule();
   const { clients, loading, error, createClient } = useClients();
   const selected = clients.find((c) => c.id === selectedClientId) ?? null;
   const growth = useContentGrowth();
@@ -185,7 +188,10 @@ export default function ContentCreationScreen({ selectedClientId, onSelectClient
   // Content Engine (spec 07 §2): Accounts is home; Plan is the week; Studio,
   // Inspiration and the workers arrive in C3–C4. The per-client growth
   // plans that already existed keep their own tab.
-  const [engineTab, setEngineTab] = useState<EngineTab>('accounts');
+  const [tabState, setTabState] = useState<EngineTab>('accounts');
+  const engineTab: EngineTab = section ?? tabState;
+  // With a sidebar section, "open the plan" goes to the Plan screen instead of switching a tab.
+  const setEngineTab = (t: EngineTab) => { if (section) nav(`content-${t}` === 'content-growth' ? 'content' : `content-${t}`); else setTabState(t); };
   const [newOpen, setNewOpen] = useState(false);
   const [officeOpen, setOfficeOpen] = useState(false);
   const social = useSocialAccounts();
@@ -216,10 +222,10 @@ export default function ContentCreationScreen({ selectedClientId, onSelectClient
   const latestAudit = auditsApi.audits[0] ?? null;
 
   return (
-    <Page title="Content" sub="Accounts, the week's plan, studio and inspiration. You film and approve; workers do the rest."
+    <Page title={section ? (ENGINE_TABS.find((x) => x.id === section)?.label ?? 'Content') : 'Content'} sub="Accounts, the week's plan, studio and inspiration. You film and approve; workers do the rest."
       menu={[{ t: 'View Office', onClick: () => setOfficeOpen(true) }]}
       fab={engineTab === 'accounts' || engineTab === 'plan' ? { t: engineTab === 'accounts' ? 'Account' : 'Post idea', onClick: () => setNewOpen(true) } : undefined}>
-      <Tabs tabs={ENGINE_TABS} value={engineTab} onChange={(t) => { setEngineTab(t); setNewOpen(false); }} />
+      {!section && <Tabs tabs={ENGINE_TABS} value={engineTab} onChange={(t) => { setEngineTab(t); setNewOpen(false); }} />}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
         <EngineBar domain="content" onDecided={() => { void inspiration.reload(); void clips.reload(); void latestAudits.reload(); void contentItems.reload(); void social.reload(); }} />
       </div>

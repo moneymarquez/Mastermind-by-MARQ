@@ -65,7 +65,7 @@ const NAV_BASE: NavGroup[] = [
       { id: 'idea-maker', label: 'Idea Maker', icon: 'ph-lightbulb' },
       { id: 'invoicing', label: 'Invoicing', icon: 'ph-receipt' },
       { id: 'marketing', label: 'Marketing', icon: 'ph-megaphone' },
-      { id: 'content', label: 'Content Creation', icon: 'ph-video-camera' },
+      { id: 'content', label: 'Growth plans', icon: 'ph-video-camera' },
       { id: 'swipe-file', label: 'Swipe File', icon: 'ph-bookmark-simple' },
     ],
   },

@@ -8,8 +8,13 @@
 // The video itself never passes through the Worker: the browser uploads it
 // straight to the private content-clips bucket under the user's folder.
 import { syncInstagram } from '../lib/socialSync';
+import { runPublisher } from '../lib/publisher';
+import type { PublishEnv } from '../lib/publisher';
+import { isDryRun } from '../lib/dryRun';
+import type { DryRunEnv } from '../lib/dryRun';
+import { TZ } from '../lib/engine';
 import { requireMember } from '../lib/member';
-import { json } from '../lib/sb';
+import { json, zonedNow } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
 import { cleanSegments } from '../lib/contentWorkers';
 import { requireUser, isOwnerUser } from '../lib/auth';
@@ -86,6 +91,24 @@ export async function contentRoute(request: Request, env: ContentOctEnv, path: s
     if (path === 'own-accounts') {
       if (!isOwnerUser(user)) return json({ error: 'Owner only.' }, 403);
       return json(await seedOwnAccounts(sb, user.id));
+    }
+    // "Post now": a photo or video that's already in storage goes straight to one account. Pressing it is the approval.
+    if (path === 'post-now') {
+      if (!isOwnerUser(user)) return json({ error: 'Owner only.' }, 403);
+      const accountId = id('account_id'), storagePath = typeof b.path === 'string' ? b.path : '', fileName = typeof b.file_name === 'string' ? b.file_name.slice(0, 200) : 'post';
+      if (!accountId || !storagePath.startsWith(`${user.id}/`) || storagePath.includes('..')) return json({ error: 'account_id and an uploaded file are required.' }, 400);
+      const [acct] = await sb.get<{ id: string; handle: string; platform: string; live_posting: boolean; connected: boolean }>(`social_accounts?id=eq.${accountId}&user_id=eq.${user.id}&select=id,handle,platform,live_posting,connected`);
+      if (!acct) return json({ error: 'That account is gone.' }, 404);
+      const caption = typeof b.caption === 'string' ? b.caption.slice(0, 2200) : '';
+      const isImage = /\.(jpe?g|png|webp)$/i.test(fileName);
+      if (acct.platform === 'tiktok' && isImage) return json({ error: 'TikTok posts need a video.' }, 400);
+      const { date } = zonedNow(TZ);
+      const [item] = await sb.insert<{ id: string }>('content_items', { user_id: user.id, account_id: acct.id, status: 'approved', concept: (caption.split('\n')[0] || 'Post now').slice(0, 80), caption, format: isImage ? 'image' : 'reel', scheduled_for: date, publish_status: 'queued' });
+      await sb.insert('content_clips', { user_id: user.id, storage_path: storagePath, file_name: fileName, status: 'approved', account_id: acct.id, content_item_id: item.id });
+      const out = await runPublisher(env as unknown as PublishEnv, sb, user.id, { trigger: 'manual', itemIds: [item.id] });
+      const [after] = await sb.get<{ publish_status: string | null; publish_error: string | null; publish_url: string | null }>(`content_items?id=eq.${item.id}&select=publish_status,publish_error,publish_url`);
+      const test = !acct.live_posting && isDryRun(env as unknown as DryRunEnv);
+      return json({ ok: after?.publish_status !== 'failed', item_id: item.id, status: after?.publish_status ?? null, error: after?.publish_error ?? null, url: after?.publish_url ?? null, test, summary: out?.summary ?? null });
     }
     if (path === 'sync-accounts') {
       if (!isOwnerUser(user)) return json({ error: 'Owner only.' }, 403);
