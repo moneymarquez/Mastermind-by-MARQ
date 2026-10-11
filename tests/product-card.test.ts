@@ -99,3 +99,24 @@ describe('Scout answers that get cut off', () => {
     expect(() => parseScout('Sorry, I could not find anything.', 'amazon', 't')).toThrow();
   });
 });
+
+import { extractJson, repairJson } from '../worker/lib/scout';
+describe('JSON answers that break partway', () => {
+  it('keeps the ideas that closed before a cut-off', () => {
+    const cut = '{"ideas":[{"concept":"A","hooks":["x","y"]},{"concept":"B","hooks":["z"]},{"concept":"C","hoo';
+    expect((extractJson(cut + '"}') as { ideas: unknown[] }).ideas.length).toBeGreaterThanOrEqual(2);
+    const r = repairJson(cut) as { ideas: { concept: string }[] };
+    expect(r.ideas.map((i) => i.concept)).toEqual(['A', 'B']);
+  });
+  it('recovers when one element has a bad spot, keeping what came before it', () => {
+    const bad = '{"ideas":[{"concept":"A"},{"concept":"B"} {"concept":"C"}],"summary":"s"}';
+    let msg = ''; try { JSON.parse(bad); } catch (e) { msg = (e as Error).message; }
+    const r = repairJson(bad, msg) as { ideas: unknown[] };
+    expect(r.ideas.length).toBeGreaterThanOrEqual(1);
+  });
+  it('valid JSON is untouched and garbage still throws', () => {
+    expect(extractJson('{"a":[1,2]}')).toEqual({ a: [1, 2] });
+    expect(() => extractJson('nothing here')).toThrow();
+    expect(repairJson('{"a":')).toBeNull();
+  });
+});

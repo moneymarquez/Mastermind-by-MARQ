@@ -207,7 +207,7 @@ export function runIdeas(apiKey: string | undefined, sb: Sb, u: string, input: {
       ]);
       const likedSet = new Set(liked.map((l) => l.entity_id));
       const winners = [...posts].filter((p) => p.views != null).sort((a, b) => Number(likedSet.has(b.id)) - Number(likedSet.has(a.id)) || (b.views ?? 0) - (a.views ?? 0)).slice(0, 8);
-      const res = await ctx.ask({ maxTokens: 6000, system: ideasSystem(ctx.brief), user: ideasUser({ account, count, winners, briefs: briefs.map((b) => b.brief), existing: open.filter((o) => o.account_id === account.id).map((o) => o.concept) }, input.instructions) });
+      const res = await ctx.ask({ maxTokens: 9000, system: ideasSystem(ctx.brief), user: ideasUser({ account, count, winners, briefs: briefs.map((b) => b.brief), existing: open.filter((o) => o.account_id === account.id).map((o) => o.concept) }, input.instructions) });
       const p = parseIdeaBank(res.text, count, posts.map((x) => x.id));
       await sb.insert('social_ideas', p.ideas.map((i) => ({ user_id: u, account_id: account.id, run_id: ctx.runId, concept: i.concept, hook: i.hook, format: i.format, why: i.why || null, based_on_post_ids: i.based_on, draft: i.draft })));
       return { summary: p.summary || `${p.ideas.length} ideas for @${account.handle}`, count: p.ideas.length, output: { account_id: account.id } };

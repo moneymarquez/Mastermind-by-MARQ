@@ -46,7 +46,35 @@ export function extractJson(text: string): unknown {
   const body = fenced ? fenced[1] : text;
   const start = body.indexOf('{'), end = body.lastIndexOf('}');
   if (start === -1 || end <= start) throw new Error('No JSON object in the answer.');
-  return JSON.parse(body.slice(start, end + 1));
+  const raw = body.slice(start, end + 1);
+  try { return JSON.parse(raw); }
+  catch (e) {
+    // A long answer can be cut off or have one bad spot. Keep everything up to the last element that closed cleanly.
+    const fixed = repairJson(raw, e instanceof Error ? e.message : '');
+    if (fixed != null) return fixed;
+    throw e;
+  }
+}
+
+/** Cut a broken JSON object back to its last cleanly closed value and close the brackets. null when nothing usable. Pure. */
+export function repairJson(raw: string, errMessage = ''): unknown | null {
+  const pos = Number((errMessage.match(/position (\d+)/) ?? [])[1]);
+  const limit = Number.isFinite(pos) ? pos : raw.length;
+  const stack: string[] = [];
+  let inStr = false, esc = false, best: { idx: number; closers: string } | null = null;
+  for (let i = 0; i < Math.min(raw.length, limit + 1); i++) {
+    const c = raw[i];
+    if (inStr) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true;
+    else if (c === '{') stack.push('}');
+    else if (c === '[') stack.push(']');
+    else if (c === '}' || c === ']') {
+      stack.pop();
+      if (stack.length >= 1 && i < limit) best = { idx: i + 1, closers: [...stack].reverse().join('') };
+    }
+  }
+  if (!best) return null;
+  try { return JSON.parse(raw.slice(0, best.idx) + best.closers); } catch { return null; }
 }
 
 /** A long answer can be cut off mid-list. Keep every product object that closed properly before the cut. Pure. */
