@@ -18,7 +18,7 @@ import { toE164 } from '../lib/phone';
 export interface SetupEnv extends SbEnv {
   ANTHROPIC_API_KEY?: string; TWILIO_ACCOUNT_SID?: string; TWILIO_AUTH_TOKEN?: string; TWILIO_FROM_NUMBER?: string; DIGEST_TO_NUMBER?: string;
   CF_API_TOKEN?: string; CF_ACCOUNT_ID?: string; CF_WORKER_NAME?: string; ETSY_API_KEY?: string; CJ_API_KEY?: string; HIGGSFIELD_API_KEY?: string;
-  INSTAGRAM_APP_ID?: string; INSTAGRAM_APP_SECRET?: string; TIKTOK_CLIENT_KEY?: string; TIKTOK_CLIENT_SECRET?: string; TIKTOK_EXTRA_SCOPES?: string; TOKEN_ENCRYPTION_KEY?: string;
+  INSTAGRAM_APP_ID?: string; INSTAGRAM_APP_SECRET?: string; TIKTOK_CLIENT_KEY?: string; TIKTOK_CLIENT_SECRET?: string; TIKTOK_EXTRA_SCOPES?: string; TIKTOK_POST_SCOPES?: string; TOKEN_ENCRYPTION_KEY?: string;
   XAI_API_KEY?: string; FACEBOOK_APP_ID?: string; FACEBOOK_APP_SECRET?: string; PARALLEL_API_KEY?: string;
 }
 type Env = SetupEnv & Record<string, string | undefined>;
@@ -27,9 +27,11 @@ type Env = SetupEnv & Record<string, string | undefined>;
 // post approved content; accounts connected before they were added must
 // reconnect (the Setup card says so when the saved scope is missing them).
 export const IG_SCOPES = 'instagram_business_basic,instagram_business_content_publish,instagram_business_manage_insights';
-export const TIKTOK_SCOPES = 'user.info.basic,video.list,video.publish';
-/** Handle and follower count need two more scopes. They're only asked for once they're enabled on the TikTok app (TIKTOK_EXTRA_SCOPES=1), because TikTok rejects a connect that asks for a scope the app doesn't have. */
-export const tiktokScopes = (e: { TIKTOK_EXTRA_SCOPES?: string }) => (e.TIKTOK_EXTRA_SCOPES === '1' ? `${TIKTOK_SCOPES},user.info.profile,user.info.stats` : TIKTOK_SCOPES);
+export const TIKTOK_SCOPES = 'user.info.basic';
+/** TikTok refuses a connect that asks for a scope the app doesn't have, so only the one every app has is asked for by default.
+ *  TIKTOK_POST_SCOPES=1 adds video.list + video.publish (after Display API and Direct Post are on the app);
+ *  TIKTOK_EXTRA_SCOPES=1 adds user.info.profile + user.info.stats (handle and follower count). */
+export const tiktokScopes = (e: { TIKTOK_EXTRA_SCOPES?: string; TIKTOK_POST_SCOPES?: string }) => [TIKTOK_SCOPES, ...(e.TIKTOK_POST_SCOPES === '1' ? ['video.list', 'video.publish'] : []), ...(e.TIKTOK_EXTRA_SCOPES === '1' ? ['user.info.profile', 'user.info.stats'] : [])].join(',');
 // pages_show_list rides along so the token can see which Pages it may post to.
 export const FB_SCOPES = 'pages_manage_posts,pages_read_engagement,pages_show_list';
 const FB = 'https://graph.facebook.com/v23.0';
