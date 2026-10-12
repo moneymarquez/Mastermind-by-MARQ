@@ -126,6 +126,18 @@ export const PLATFORM_SETUP: SetupEntry[] = [
     fields: [{ secret: 'PARALLEL_API_KEY', label: 'API key' }],
   },
   {
+    id: 'google_places', kind: 'platform', name: 'Google Places (lead scraper)', testable: true, phase: 'Addendum 6',
+    powers: 'The Harvester: Client Finder searches Google Places for businesses and reads their website and mobile speed. Replaces running the scraper from a terminal.',
+    steps: [
+      { text: 'Open Google Cloud Console → APIs & Services → Library, and enable "Places API (New)" and "PageSpeed Insights API" for your project.', link: 'https://console.cloud.google.com/apis/library' },
+      { text: 'Credentials → Create credentials → API key. Restrict it to those two APIs.' },
+      { text: 'Billing must be on. A Places search costs about $0.035 per 20 businesses (only the fields the engines need are requested); PageSpeed is free.' },
+      { text: 'Paste the key below, Save, then Test (an IDs-only request, which is free).' },
+    ],
+    withoutIt: 'Client Finder can only work from leads already in LeadFlow; it can\'t search for new ones.',
+    fields: [{ secret: 'GOOGLE_PLACES_API_KEY', label: 'API key' }],
+  },
+  {
     id: 'higgsfield', kind: 'platform', name: 'Higgsfield', testable: false, phase: 'E-comm 5 / Content 4',
     powers: 'Brand Lab mockups, content visuals, and the Clip Editor\'s enhancements.',
     steps: [
