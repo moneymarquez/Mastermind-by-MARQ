@@ -17,6 +17,8 @@
 // account-level cleanup outside this repo's scope.
 import { serveMedia } from './lib/socialMedia';
 import { runSocialSyncTick } from './lib/socialSync';
+import { leadEnginesRoute, runEnginesTick } from './handlers/leadEngines';
+import type { EnginesEnv } from './handlers/leadEngines';
 import { saveBrokerKeys, brokerKeysStatus } from './handlers/broker-keys';
 import { stocksAccount } from './handlers/stocks-account';
 import { runStocksBot } from './handlers/stocks-bot';
@@ -148,6 +150,8 @@ export default {
     if (ecomMatch) return ecomRoute(request, env, ecomMatch[1]);
     if (url.pathname === '/api/sms/settings') return smsSettingsRoute(request, env);
 
+    const enginesMatch = url.pathname.match(/^\/api\/engines\/([a-z-]+)$/);
+    if (enginesMatch) return leadEnginesRoute(request, env as unknown as EnginesEnv, enginesMatch[1]);
     const engineMatch = url.pathname.match(/^\/api\/engine\/([a-z-]+)$/);
     if (engineMatch) return engineRoute(request, env, engineMatch[1], ctx);
     const setupMatch = url.pathname.match(/^\/api\/(?:setup|connect)\/([a-z/-]+)$/);
@@ -209,6 +213,7 @@ export default {
       ctx.waitUntil(runPublisherTick(env));
       ctx.waitUntil(runFlagsTick(env));
       if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runSocialSyncTick(env as never, new SbClient(env)).catch((e) => console.error('social sync tick', e)));
+      if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runEnginesTick(env as unknown as EnginesEnv, new SbClient(env)).catch((e) => console.error('engines tick', e)));
       if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runSoloTick(env, new SbClient(env)).catch((e) => console.error('solo tick', e)));
       if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runCommsTick(env, new SbClient(env)).catch((e) => console.error('comms tick', e)));
       return;
