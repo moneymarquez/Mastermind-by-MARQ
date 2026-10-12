@@ -167,3 +167,24 @@ Opened: the stats grid (sell, supplier, shipping, landed, profit, margin, break-
 ## Addendum 4
 - **Contacts crash fixed.** `null.split` came from the `initials()` helpers receiving a contact with a null name. All five copies are null-safe and contacts are normalized on load (`normalizeContact`); a test covers null name, phone, email, tags and lists.
 - **Error-screen game:** an original "M" bot runner (bug, error box, spinner, `null`), lazy-loaded (about 2.5 kB), reload button always above it, high score saved per device, respects reduced motion, pauses when the tab is hidden, own error boundary. Logic is unit-tested; I did **not** check the canvas on a real iPad. The app has no offline screen, so the game only shows on error screens.
+
+## Addendum 6: one scraper, two lead engines
+Everything below is in test mode (`DRY_RUN=1`): no email reaches a lead, no text goes out, nothing paid runs unless Marq presses it or switches an engine on.
+
+**Built**
+- **Harvester** (`worker/lib/harvester/`): one `harvest(job)` entry; adapters `googlePlaces`, `website`, `pageSpeed`, `parallel`; dedupe, cache (nobody pays twice), per-call cost meter, spacing, retries with backoff, budget checked before spending. Google Places key goes in Setup (card "Google Places", Test = one free request).
+- **Old scraper import** (Lead Engines → Import): pick the file, check the column mapping, imported by `place_id`.
+- **Lead Engines** (Made by Marq → Lead Engines): Client Finder and Complaint Scanner cards with on/off, editable daily budget, monthly ceiling, spend today/month, leads or findings today, cost per lead, "At $0.50/day ≈ $15/month", Run now, and a Pause both kill switch. At the limit: "Paused: daily budget reached."
+- **Client Finder**: pool first, Places only when the pool is used up; gaps in order (no website, then down / no https / no phone layout / PageSpeed under 50 / stale copyright / no book-or-call button); each lead shows its evidence and a score.
+- **Complaint Scanner**: ranked groups with plain words, 3–5 quotes with links, who is affected, who is fixing it and for how much, an easy way in, the smallest test under $10, and the tag "Made by Marq can do this now" or "New opportunity". Rotates one industry a day. Phase 1 Find / Phase 2 Act switch (Act is off by default).
+- **Outreach**: text-only cold email drafts with your approval, warm-up caps, one bump, **reply classifier** (eight classes, 80% confidence rule, "Needs your read", corrections feed a playbook), call list with script, after-call text (only with consent), **booking page** `/book/marq`, and the **outreach domain** checklist (SPF, DKIM, DMARC, mailbox, warm-up day).
+
+**Proven**
+- 361 tests pass (about 50 new): budget math, the engines stopping at a **$0.05** day (both a paid search that would overshoot, and a day already spent), free pool run producing no-website leads with evidence at $0, Places field mask and mapping, website and PageSpeed parsing, cache and dedupe, retry/backoff, importer, reply routing for every class (only "interested" sends), warm-up caps, bounce guard, call-list timing, DNS parsing, slots across daylight saving, double-booking guard.
+- The new screen and the booking page were opened in a browser at desktop and phone width on sample data: no errors, no sideways scroll; a booking posted correctly.
+
+**Not proven here, for Marq to press**
+- A live Places search and the live Haiku classification both need keys that live in the Worker, not here. After adding the Places key in Setup, press Run now on Client Finder; then Outreach → Try a reply to classify the eight samples.
+- A [TEST] email arriving in your inbox needs your login: Outreach → Draft 10 → Approve → Send approved (put your email in Setup → Booking page "Your email").
+- Real cold sending needs the outreach domain, a Google Workspace mailbox and the three Gmail keys (Setup → Outreach mailbox). Zoho isn't built. Google Calendar isn't connected anywhere in the app, so bookings are written to your Schedule only.
+- Warm-lead spending (preview site, personalized video, walkthrough) is not started by anything yet; see decision 136.
