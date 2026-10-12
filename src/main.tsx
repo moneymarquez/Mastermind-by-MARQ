@@ -19,6 +19,7 @@ initOrientationLock();
 // Demo Mode (?demo=1 / ?demo=record&speed=fast) — before the first render.
 captureJoinToken();
 const SignContract = lazyScreen(() => import('./site/SignContract'));
+const BookingPage = lazyScreen(() => import('./site/BookingPage'));
 initDemo();
 
 // The two genuinely public routes in the app — /audit (Part 1b: a prospect
@@ -31,6 +32,7 @@ const path = window.location.pathname.replace(/\/+$/, '');
 const isPublicAudit = path === '/audit';
 const clientToken = path.startsWith('/client/') ? path.slice('/client/'.length) : null;
 const signToken = path.startsWith('/sign/') ? path.slice('/sign/'.length) : null;
+const bookSlug = path.startsWith('/book/') ? path.slice('/book/'.length) : null;
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -42,7 +44,9 @@ createRoot(document.getElementById('root')!).render(
           ? <PublicClientDashboard token={clientToken} />
           : signToken
             ? <SignContract token={signToken} />
-            : <App />}
+            : bookSlug
+              ? <BookingPage slug={bookSlug} />
+              : <App />}
       </Suspense>
     </ErrorBoundary>
   </StrictMode>,

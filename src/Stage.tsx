@@ -92,6 +92,7 @@ const ContractsScreen = lazyScreen(() => import('./components/screens/madeby/Con
 const CommsScreen = lazyScreen(() => import('./components/screens/madeby/CommsScreen'));
 const WaitlistScreen = lazyScreen(() => import('./components/screens/madeby/WaitlistScreen'));
 const CouponsScreen = lazyScreen(() => import('./components/screens/madeby/CouponsScreen'));
+const LeadEnginesScreen = lazyScreen(() => import('./components/screens/madeby/LeadEnginesScreen'));
 const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 
 // Screens still on their pre-redesign layout: on phone they get the shared
@@ -100,7 +101,7 @@ const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 const LEGACY_SCREENS = new Set<string>([]);
 
 const BUILT_SCREENS = [
-  'home', 'ecom-marketing', 'coupons', 'waitlist', 'comms', 'contracts', 'ledger', 'classroom', 'feed', 'peptides', 'money-move', 'tasks', 'brain-dump', 'ecom-clients', 'ecom-inbox', 'ecom-approvals', 'ecom-office', 'ecom-orders', 'ecom-stores', 'ecom-products', 'hq', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
+  'home', 'ecom-marketing', 'coupons', 'lead-engines', 'waitlist', 'comms', 'contracts', 'ledger', 'classroom', 'feed', 'peptides', 'money-move', 'tasks', 'brain-dump', 'ecom-clients', 'ecom-inbox', 'ecom-approvals', 'ecom-office', 'ecom-orders', 'ecom-stores', 'ecom-products', 'hq', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'leadflow', 'account-settings', 'prompt-voice-settings',
   'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'content-accounts', 'content-profiles', 'content-ideas', 'content-plan', 'content-studio', 'content-history', 'content-inspiration', 'content-kits', 'content-workers', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access', 'changelog', 'dispatch', 'inbox', 'modules',
@@ -503,6 +504,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         {state.screen === 'comms' && <CommsScreen />}
         {state.screen === 'waitlist' && <WaitlistScreen />}
         {state.screen === 'coupons' && <CouponsScreen />}
+        {state.screen === 'lead-engines' && <LeadEnginesScreen />}
         {state.screen === 'ecom-marketing' && <EcomScreen section="marketing" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
         {state.screen === 'modules' && <ModulesGrid groups={moduleTiles} onOpen={shellNav} />}
         {state.screen === 'inbox' && (
