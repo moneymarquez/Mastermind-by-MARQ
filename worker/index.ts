@@ -19,6 +19,8 @@ import { serveMedia } from './lib/socialMedia';
 import { runSocialSyncTick } from './lib/socialSync';
 import { leadEnginesRoute, runEnginesTick } from './handlers/leadEngines';
 import type { EnginesEnv } from './handlers/leadEngines';
+import { outreachRoute, bookRoute, runOutreachTick } from './handlers/outreach';
+import type { OutreachRouteEnv } from './handlers/outreach';
 import { saveBrokerKeys, brokerKeysStatus } from './handlers/broker-keys';
 import { stocksAccount } from './handlers/stocks-account';
 import { runStocksBot } from './handlers/stocks-bot';
@@ -150,6 +152,10 @@ export default {
     if (ecomMatch) return ecomRoute(request, env, ecomMatch[1]);
     if (url.pathname === '/api/sms/settings') return smsSettingsRoute(request, env);
 
+    const outreachMatch = url.pathname.match(/^\/api\/outreach\/([a-z-]+)$/);
+    if (outreachMatch) return outreachRoute(request, env as unknown as OutreachRouteEnv, outreachMatch[1]);
+    const bookMatch = url.pathname.match(/^\/api\/book\/([a-z-]+)$/);
+    if (bookMatch) return bookRoute(request, env as unknown as OutreachRouteEnv, bookMatch[1]);
     const enginesMatch = url.pathname.match(/^\/api\/engines\/([a-z-]+)$/);
     if (enginesMatch) return leadEnginesRoute(request, env as unknown as EnginesEnv, enginesMatch[1]);
     const engineMatch = url.pathname.match(/^\/api\/engine\/([a-z-]+)$/);
@@ -214,6 +220,7 @@ export default {
       ctx.waitUntil(runFlagsTick(env));
       if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runSocialSyncTick(env as never, new SbClient(env)).catch((e) => console.error('social sync tick', e)));
       if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runEnginesTick(env as unknown as EnginesEnv, new SbClient(env)).catch((e) => console.error('engines tick', e)));
+      if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runOutreachTick(env as unknown as OutreachRouteEnv, new SbClient(env)).catch((e) => console.error('outreach tick', e)));
       if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runSoloTick(env, new SbClient(env)).catch((e) => console.error('solo tick', e)));
       if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runCommsTick(env, new SbClient(env)).catch((e) => console.error('comms tick', e)));
       return;

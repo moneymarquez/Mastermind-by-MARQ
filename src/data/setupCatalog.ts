@@ -138,6 +138,18 @@ export const PLATFORM_SETUP: SetupEntry[] = [
     fields: [{ secret: 'GOOGLE_PLACES_API_KEY', label: 'API key' }],
   },
   {
+    id: 'outreach_mailbox', kind: 'platform', name: 'Outreach mailbox (Gmail / Google Workspace)', testable: true, phase: 'Addendum 6',
+    powers: 'Sends the cold emails from a real mailbox on your outreach domain and reads the replies into Outreach, where the classifier sorts them. App and receipt emails stay on the current provider.',
+    steps: [
+      { text: 'Use a Google Workspace mailbox on your separate outreach domain (not your main domain). Add the domain under Outreach → Outreach domain first, and set SPF, DKIM and DMARC.' },
+      { text: 'Google Cloud Console → enable the Gmail API → OAuth consent screen (Internal is fine for Workspace) → Credentials → OAuth client ID (Web). Add https://developers.google.com/oauthplayground as a redirect URI.', link: 'https://console.cloud.google.com/apis/library/gmail.googleapis.com' },
+      { text: 'Open the OAuth Playground, use your own client ID and secret (gear icon), authorize the scope https://www.googleapis.com/auth/gmail.modify while signed in as the outreach mailbox, then exchange the code. Copy the refresh token.', link: 'https://developers.google.com/oauthplayground' },
+      { text: 'Paste the client ID, client secret and refresh token below, Save, then Test.' },
+    ],
+    withoutIt: 'Cold emails stay in test mode: they go to your own inbox labeled [TEST] and nothing reaches a lead.',
+    fields: [{ secret: 'GMAIL_CLIENT_ID', label: 'OAuth client ID' }, { secret: 'GMAIL_CLIENT_SECRET', label: 'OAuth client secret' }, { secret: 'GMAIL_REFRESH_TOKEN', label: 'Refresh token' }],
+  },
+  {
     id: 'higgsfield', kind: 'platform', name: 'Higgsfield', testable: false, phase: 'E-comm 5 / Content 4',
     powers: 'Brand Lab mockups, content visuals, and the Clip Editor\'s enhancements.',
     steps: [

@@ -5,6 +5,7 @@
 // ones through Cloudflare's API. Account connections (per user) are sealed
 // with lib/vault.ts into ai_user_tokens, which only the service role reads.
 import { requireUser, isOwnerUser } from '../lib/auth';
+import { gmailReady, gmailToken } from '../lib/outreach/mail';
 import { testPlacesKey } from '../lib/harvester';
 import { makeCache } from '../lib/socialMedia';
 import { fetchIgNumbers, fetchTtNumbers, applyIgNumbers, igProvider, ttProvider } from '../lib/socialSync';
@@ -21,7 +22,7 @@ export interface SetupEnv extends SbEnv {
   ANTHROPIC_API_KEY?: string; TWILIO_ACCOUNT_SID?: string; TWILIO_AUTH_TOKEN?: string; TWILIO_FROM_NUMBER?: string; DIGEST_TO_NUMBER?: string;
   CF_API_TOKEN?: string; CF_ACCOUNT_ID?: string; CF_WORKER_NAME?: string; ETSY_API_KEY?: string; CJ_API_KEY?: string; HIGGSFIELD_API_KEY?: string;
   INSTAGRAM_APP_ID?: string; INSTAGRAM_APP_SECRET?: string; TIKTOK_CLIENT_KEY?: string; TIKTOK_CLIENT_SECRET?: string; TIKTOK_EXTRA_SCOPES?: string; TIKTOK_POST_SCOPES?: string; TOKEN_ENCRYPTION_KEY?: string;
-  XAI_API_KEY?: string; FACEBOOK_APP_ID?: string; FACEBOOK_APP_SECRET?: string; PARALLEL_API_KEY?: string; GOOGLE_PLACES_API_KEY?: string;
+  XAI_API_KEY?: string; FACEBOOK_APP_ID?: string; FACEBOOK_APP_SECRET?: string; PARALLEL_API_KEY?: string; GOOGLE_PLACES_API_KEY?: string; GMAIL_CLIENT_ID?: string; GMAIL_CLIENT_SECRET?: string; GMAIL_REFRESH_TOKEN?: string;
 }
 type Env = SetupEnv & Record<string, string | undefined>;
 
@@ -164,6 +165,10 @@ async function testPlatform(id: string, env: Env, sb: Sb): Promise<TestResult> {
     case 'google_places': {
       if (!env.GOOGLE_PLACES_API_KEY) return { ok: false, detail: 'GOOGLE_PLACES_API_KEY is not set.' };
       try { return await testPlacesKey(env.GOOGLE_PLACES_API_KEY); } catch (e) { return { ok: false, detail: e instanceof Error ? e.message : String(e) }; }
+    }
+    case 'outreach_mailbox': {
+      if (!gmailReady(env)) return { ok: false, detail: 'GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET and GMAIL_REFRESH_TOKEN are all needed.' };
+      try { await gmailToken(env); return { ok: true, detail: 'Signed in to the mailbox.' }; } catch (e) { return { ok: false, detail: e instanceof Error ? e.message : String(e) }; }
     }
     case 'higgsfield':
       return env.HIGGSFIELD_API_KEY ? { ok: true, detail: 'Key saved. Checked on first real use (no free test call exists).' } : { ok: false, detail: 'HIGGSFIELD_API_KEY is not set.' };

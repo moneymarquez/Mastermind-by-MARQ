@@ -16,7 +16,7 @@ export type Channel = 'push' | 'sms' | 'inapp';
 export type NotifyEvent =
   | 'product_pitch' | 'brand_directions' | 'store_preview' | 'post_batch' | 'sale_made'
   | 'worker_problem' | 'kill_switch' | 'contract_signed' | 'invoice_paid' | 'inbound_text'
-  | 'task_due' | 'weekly_checkin' | 'money_move' | 'peptide_reminder' | 'feed_reactions' | 'hq_report';
+  | 'lead_reply' | 'lead_booked' | 'task_due' | 'weekly_checkin' | 'money_move' | 'peptide_reminder' | 'feed_reactions' | 'hq_report';
 
 export const EVENTS: { id: NotifyEvent; label: string; defaults: Channel[]; ignoresQuiet?: boolean }[] = [
   { id: 'product_pitch', label: 'Product pitch ready to approve', defaults: ['push', 'sms'] },
@@ -29,6 +29,8 @@ export const EVENTS: { id: NotifyEvent; label: string; defaults: Channel[]; igno
   { id: 'contract_signed', label: 'Contract signed', defaults: ['push'] },
   { id: 'invoice_paid', label: 'Invoice paid', defaults: ['push'] },
   { id: 'inbound_text', label: 'Inbound client text', defaults: ['push'] },
+  { id: 'lead_reply', label: 'A lead replied (or needs your read)', defaults: ['push'] },
+  { id: 'lead_booked', label: 'A lead booked a call', defaults: ['push', 'sms'] },
   { id: 'task_due', label: 'Task due', defaults: ['push'] },
   { id: 'weekly_checkin', label: 'Weekly check-in ready', defaults: ['push'] },
   { id: 'money_move', label: 'This week\'s Money Move', defaults: ['push'] },
