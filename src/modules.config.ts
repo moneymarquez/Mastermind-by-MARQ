@@ -84,7 +84,7 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { key: 'content', label: 'Content Creation', category: 'Scaling', description: 'Per-client social profile build and launch kits, congruent with the Marketing campaign driving them.', icon: 'ph-video-camera', routes: ['content', 'swipe-file'], requiresAI: true, ownerOnly: true, portal: 'content' },
   { key: 'stocks', label: 'Stocks', category: 'Side Hustles', description: 'Paper-trading bot on Alpaca with AI daily commentary.', icon: 'ph-chart-line-up', routes: ['stocks'], requiresAI: true, portal: 'masterminds' },
   { key: 'streaming', label: 'Streaming', category: 'Side Hustles', description: 'Streaming idea bank and calendar.', icon: 'ph-video-camera', routes: ['streaming'], requiresAI: false, portal: 'masterminds' },
-  { key: 'ecommerce', label: 'E-commerce', category: 'Side Hustles', description: 'Dropshipping brands built by AI workers you steer: product sheets, a 10-step brand pipeline, approvals, and performance.', icon: 'ph-rocket-launch', routes: ['ecommerce'], requiresAI: true, ownerOnly: true, portal: 'ecommerce' },
+  { key: 'ecommerce', label: 'E-commerce', category: 'Side Hustles', description: 'Dropshipping brands built by AI workers you steer: product sheets, a 10-step brand pipeline, approvals, and performance.', icon: 'ph-rocket-launch', routes: ['ecommerce', 'ecommerce-sheets', 'ecommerce-workers', 'ecommerce-performance', 'ecommerce-approvals'], requiresAI: true, ownerOnly: true, portal: 'ecommerce' },
   { key: 'sticky-spot', label: 'Sticky Spot', category: null, description: 'Quick fast-cash idea list.', icon: 'ph-lightning', routes: ['sticky-spot'], requiresAI: false, portal: 'masterminds' },
 ];
 

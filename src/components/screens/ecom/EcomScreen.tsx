@@ -15,6 +15,9 @@ import ProductSheetsTab from './ProductSheetsTab';
 import OfficeView from '../../office/OfficeView';
 
 interface Props {
+  /** Which sidebar entry opened this: 'ecommerce' (Brands) or 'ecommerce-<tab>'. */
+  screen?: string;
+  onNavigate?: (id: string) => void;
   homeHeadStyle: CSSProperties;
   homeSubStyle: CSSProperties;
 }
@@ -83,9 +86,15 @@ function useCostBreakdown(open: boolean) {
 /** The e-commerce shell (§3): top bar, status strip, four tabs, and the
  *  approvals inbox behind the strip. Same panel-in-the-dark-shell as
  *  LeadFlow, on purpose. */
-export default function EcomScreen(_: Props) {
+const SCREEN_OF: Record<Tab, string> = { brands: 'ecommerce', sheets: 'ecommerce-sheets', workers: 'ecommerce-workers', performance: 'ecommerce-performance', approvals: 'ecommerce-approvals' };
+const tabOf = (screen?: string): Tab => (Object.entries(SCREEN_OF).find(([, s]) => s === screen)?.[0] as Tab | undefined) ?? 'brands';
+
+export default function EcomScreen({ screen, onNavigate }: Props) {
   const phone = useModule().device === 'phone';
-  const [tab, setTab] = useState<Tab>('brands');
+  const [tab, setTabState] = useState<Tab>(() => tabOf(screen));
+  // The sidebar entry and the pills are the same thing: picking either moves both.
+  useEffect(() => { setTabState(tabOf(screen)); }, [screen]);
+  const setTab = (t: Tab) => { setTabState(t); onNavigate?.(SCREEN_OF[t]); };
   const [search, setSearch] = useState('');
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [costOpen, setCostOpen] = useState(false);

@@ -89,7 +89,7 @@ const BUILT_SCREENS = [
   'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'leadflow', 'account-settings', 'prompt-voice-settings',
-  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access', 'changelog', 'dispatch', 'inbox', 'modules',
+  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'ecommerce', 'ecommerce-sheets', 'ecommerce-workers', 'ecommerce-performance', 'ecommerce-approvals', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access', 'changelog', 'dispatch', 'inbox', 'modules',
 ];
 
 interface Props {
@@ -379,8 +379,8 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <LeadFlowScreen />
         )}
 
-        {state.screen === 'ecommerce' && (
-          <EcomScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        {state.screen.startsWith('ecommerce') && (
+          <EcomScreen screen={state.screen} onNavigate={actions.navigateTo} homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {state.screen === 'account-settings' && (
