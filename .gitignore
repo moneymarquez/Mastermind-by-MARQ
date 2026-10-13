@@ -25,3 +25,10 @@ dist-ssr
 
 # One-off working files (personal data, local previews) — not part of the app
 scratchpad
+
+# Secrets: never commit
+.env
+.env.*
+!.env.example
+.dev.vars
+*.pem
