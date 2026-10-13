@@ -154,12 +154,12 @@ export function runScout(apiKey: string | undefined, sb: Sb, userId: string, inp
     instructions: input.instructions, trigger: input.trigger, entityType: 'channel',
     async execute(ctx) {
       const res = await ctx.ask({
-        maxTokens: 6000,
-        system: scoutSystem({ ...ctx.brief, budgetNote: `${ctx.brief.budgetNote} Use at most 5 searches.` }),
+        maxTokens: 9000,
+        system: scoutSystem({ ...ctx.brief, budgetNote: `${ctx.brief.budgetNote} Use at most 12 searches: a few for the channel's top products, the rest to find each product's real supplier price.` }),
         user: scoutUser(channel, count, input.instructions),
-        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5, blocked_domains: BLOCKED_DOMAINS }],
+        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 12, blocked_domains: BLOCKED_DOMAINS }],
       });
-      const parsed = parseScout(res.text, channel, new Date().toISOString());
+      const parsed = parseScout(res.text, channel, new Date().toISOString(), { requireCosts: true });
       if (parsed.rows.length === 0) throw new Error(`Scout returned no usable products${parsed.dropped.length ? ` (dropped: ${parsed.dropped.join('; ')})` : ''}.`);
       const top = parsed.rows[0];
       return {

@@ -22,8 +22,10 @@ export const BLOCKED_DOMAINS = ['instagram.com', 'facebook.com', 'www.tiktok.com
 export function scoutSystem(opts: { playbooks: string; corrections: string[]; budgetNote: string }): string {
   return [
     'You are Product Scout, a research worker for a solo founder starting dropshipping brands with about $100 and organic content only (no ad budget).',
-    'Find products that are selling right now on the channel you are given. Prefer: sell price $20–$80, light and unbreakable, ships from a dropship supplier, easy to demo on a phone in 10 seconds, solves a visible problem.',
-    'Rules: use the web search tool on public pages only. Never search or cite instagram.com, facebook.com or tiktok.com video pages. No invented numbers: if you do not know a number, leave it null. Every product needs a source_url you actually saw. Confidence is "estimate" when a number comes from a third-party tool or article, "ai" when it is your judgment.',
+    'Find products that are selling right now on the channel you are given, and that would actually make money for a founder with no ad budget. Hard requirements: sell price $20–$80; light and unbreakable; available from a dropship supplier (AliExpress, CJ Dropshipping, Zendrop, Spocket); easy to demo on a phone in 10 seconds; solves a visible problem; velocity "rising" (never flat or fading); content_difficulty "easy" or at most "medium"; sell price at least 3x the landed cost.',
+    'Every product MUST come back with a number in each of these fields: sell_price (what it sells for on the channel today), supplier_cost (the unit price on a real supplier listing you found by searching the product name on AliExpress, CJ Dropshipping or Alibaba), ship_cost (that supplier\'s US shipping per unit), days_trending, velocity and content_difficulty. A product with no findable supplier price is not a product: skip it and find another. Marq cannot use a row that has no sell price, landed cost or margin.',
+    'Rules: use the web search tool on public pages only. Never search or cite instagram.com, facebook.com or tiktok.com video pages. Do not invent numbers: take them from a page you saw and set confidence to "estimate" when the number comes from a third-party tool, article or supplier listing, "ai" only when it is purely your judgment. Every product needs a source_url you actually saw (the channel page) and the supplier listing URL in evidence.',
+    'Rank by money first: best margin that is also rising and easy to film goes at rank 1. Score (0–10) = demand now (rising, not saturated) + margin after landed cost + how easy it is to film + low return/complaint risk. Mark competition honestly and set sellers when you can see how many are selling it.',
     'Deep, not vague: the buyer line names age, situation and what they already own ("Women 25–40, new homeowners, living room looks unfinished"), never "people who like home decor". Cite the psychology principle that makes it sell.',
     opts.budgetNote,
     opts.corrections.length ? `Corrections from Marq on your earlier work — follow every one:\n${opts.corrections.map((c) => `- ${c}`).join('\n')}` : '',
@@ -53,7 +55,7 @@ const pick = <T extends string>(v: unknown, allowed: readonly T[]): T | null => 
 
 export interface ScoutResult { rows: ImportRow[]; summary: string; dropped: string[] }
 
-export function parseScout(text: string, channel: Channel, asOf: string): ScoutResult {
+export function parseScout(text: string, channel: Channel, asOf: string, opts: { requireCosts?: boolean } = {}): ScoutResult {
   const obj = extractJson(text) as { products?: unknown[]; summary?: unknown };
   const list = Array.isArray(obj.products) ? obj.products : [];
   const rows: ImportRow[] = [];
@@ -66,6 +68,10 @@ export function parseScout(text: string, channel: Channel, asOf: string): ScoutR
     if (!/^https?:\/\//.test(sourceUrl)) { dropped.push(`${name}: no source link`); return; }
     if (/(^|\.)(instagram|facebook)\.com|(^|\/\/)(www\.|m\.)?tiktok\.com\/@/.test(sourceUrl)) { dropped.push(`${name}: social-platform source not allowed`); return; }
     const sell = num(p.sell_price), supplier = num(p.supplier_cost), ship = num(p.ship_cost) ?? 0;
+    if (opts.requireCosts) {
+      if (sell == null || supplier == null) { dropped.push(`${name}: no sell price or supplier cost`); return; }
+      if (pick(p.velocity, ['rising', 'flat', 'fading'] as const) === 'fading') { dropped.push(`${name}: fading`); return; }
+    }
     const landed = sell != null && supplier != null ? landedCost(supplier, ship, sell) : null;
     const detail: ProductDetail = {};
     for (const k of ['problem', 'trigger', 'evidence', 'buyer', 'why_emotional', 'why_practical', 'principle', 'angle', 'competition', 'fail_risks'] as const) { const v = str(p[k]); if (v) detail[k] = v; }

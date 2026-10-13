@@ -25,3 +25,15 @@ test('Product Scout parsing', async () => {
   assert.ok(scoutUser('amazon', 10, 'over $30').includes('over $30'));
 
 });
+
+test('Product Scout drops rows without costs when requireCosts is on', async () => {
+  const ans = JSON.stringify({ products: [
+    { name: 'Good', sell_price: 30, supplier_cost: 5, ship_cost: 2, velocity: 'rising', source_url: 'https://ads.tiktok.com/x' },
+    { name: 'No cost', sell_price: 30, velocity: 'rising', source_url: 'https://ads.tiktok.com/y' },
+    { name: 'Fading', sell_price: 30, supplier_cost: 5, velocity: 'fading', source_url: 'https://ads.tiktok.com/z' },
+  ] });
+  const r = parseScout(ans, 'tiktok', '2026-10-13T00:00:00Z', { requireCosts: true });
+  assert.deepEqual(r.rows.map((x) => x.name), ['Good']);
+  assert.equal(r.dropped.length, 2);
+  assert.ok(r.rows[0].margin_pct != null && r.rows[0].landed_cost != null);
+});
