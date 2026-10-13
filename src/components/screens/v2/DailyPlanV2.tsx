@@ -3,6 +3,8 @@ import type { ReactElement } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useDailyPlan, requestPlan } from '../../../data/useDailyPlan';
 import { useCallsToday } from '../../../data/useCallsToday';
+import { useDailyCallGoal } from '../../../data/useDailyCallGoal';
+import { useDailyPillars, PILLARS } from '../../../data/useDailyPillars';
 import { dateStr } from '../../../data/time';
 import type { DailyPlanBlock, DailyPlanModule } from '../../../data/types';
 import Card from '../../mm/Card';
@@ -24,6 +26,8 @@ export default function DailyPlanV2() {
   const today = dateStr(new Date());
   const dp = useDailyPlan(today);
   const { callsToday } = useCallsToday();
+  const callGoal = useDailyCallGoal();
+  const pl = useDailyPillars(today);
   const [now, setNow] = useState(() => new Date());
   const [adding, setAdding] = useState(false);
   const [replanning, setReplanning] = useState(false);
@@ -52,10 +56,34 @@ export default function DailyPlanV2() {
   };
   const replan = async () => { setReplanning(true); await requestPlan(today); await dp.reload(); setReplanning(false); };
 
+  // Financial win is cold calling by default: it ticks itself once the day's
+  // call goal is hit, and can still be ticked by hand for any other win.
+  const finAuto = /call/i.test(pl.pillars.financial.text) && callsToday >= callGoal;
+  const isDone = (k: (typeof PILLARS)[number]['key']) => (k === 'financial' ? pl.pillars.financial.done || finAuto : pl.pillars[k].done);
+  const pillarsDone = PILLARS.filter((p) => isDone(p.key)).length;
+  const pillarsCard = (
+    <Card title="Four pillars" meta={`${pillarsDone} of 4 done`} wide={!phone}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {PILLARS.map((p) => {
+          const done = isDone(p.key);
+          return (
+            <div key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, background: 'var(--surface-2)' }}>
+              <button onClick={() => void pl.set(p.key, { done: !pl.pillars[p.key].done })} aria-pressed={done} aria-label={`${p.label} ${done ? 'done' : 'not done'}`} style={{ flex: 'none', width: 24, height: 24, borderRadius: '50%', border: `1.5px solid ${done ? 'var(--success)' : 'var(--text-tertiary)'}`, background: done ? 'var(--success)' : 'transparent', color: '#fff', cursor: 'pointer', padding: 0, fontSize: 13, lineHeight: 1 }}>{done ? '✓' : ''}</button>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)' }}>{p.label}{p.key === 'financial' && callGoal ? ` · ${callsToday}/${callGoal} calls` : ''}</span>
+                <input key={`${p.key}-${pl.loaded}`} defaultValue={pl.pillars[p.key].text} onBlur={(e) => { if (e.target.value !== pl.pillars[p.key].text) void pl.set(p.key, { text: e.target.value }); }} placeholder={p.placeholder} style={{ border: 0, outline: 0, background: 'transparent', color: done ? 'var(--text-secondary)' : 'var(--text)', fontSize: 14, fontWeight: 500, fontFamily: 'inherit', padding: 0, textDecoration: done ? 'line-through' : 'none' }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
   const sub = `${longToday(now)}${dp.plan ? ' · built from your schedule, goals and habits' : ''}`;
   if (!dp.loading && !dp.generating && blocks.length === 0) {
     return (
       <Page title="Today" sub={sub} back="Home" backTo="home" fab={{ t: 'Add block', onClick: () => setAdding(true) }}>
+        {pillarsCard}
         <Empty text="No plan yet. Add your schedule or a goal and Nova builds today from it." cta={replanning ? 'Building…' : "Build today's plan"} onCta={() => void replan()} />
         {ai === false && <AiOffCard text="Without AI, Daily Plan lists your schedule and habits in time order, and you arrange the day yourself." />}
         {adding && <AddBlock onClose={() => setAdding(false)} onAdd={dp.addBlock} />}
@@ -118,6 +146,7 @@ export default function DailyPlanV2() {
       {phone ? (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>{stats.slice(0, 2)}</div>
+          {pillarsCard}
           {timeline}
           {why}
         </>
@@ -125,6 +154,7 @@ export default function DailyPlanV2() {
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 16 }}>{stats}</div>
           <div style={{ display: 'grid', gridTemplateColumns: three ? 'repeat(3,minmax(0,1fr))' : 'repeat(2,minmax(0,1fr))', gap: 16, alignItems: 'start' }}>
+            <div style={{ gridColumn: '1 / -1' }}>{pillarsCard}</div>
             <div style={{ gridColumn: three ? 'span 2' : '1 / -1', gridRow: three ? 'span 2' : undefined }}>{timeline}</div>
             {why}
             {focus}
