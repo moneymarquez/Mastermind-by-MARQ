@@ -405,7 +405,9 @@ export function useLeadflowPool() {
    *  in the order it was sent. The leads stay in the pool — this is drawing
    *  a call list from the stock, not moving stock out of it. */
   const sendToDialing = async (leads: LeadflowLead[]): Promise<number> => {
-    const ids = leads.map((l) => l.id);
+    // Do-not-contact leads are never sent (the Worker refuses them too).
+    const ids = leads.filter((l) => l.status !== 'do_not_contact').map((l) => l.id);
+    if (ids.length === 0) return 0;
     const queuedAt = new Date().toISOString();
     await bulkPatchLeads(ids, { dialing_queued: true, dialing_queued_at: queuedAt });
     const sent = new Set(ids);

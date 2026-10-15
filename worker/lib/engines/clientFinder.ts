@@ -113,7 +113,7 @@ async function poolBatch(sb: Sb, userId: string, cfg: Record<string, unknown>): 
   const cols = 'id,place_id,business_name,website,rating,review_count,category,city,phone,is_chain';
   for (let page = 0; page < 3; page++) {
     const cursor = cfg.cursor ? `&id=gt.${cfg.cursor}` : '';
-    const rows2 = await sb.get<PoolLead>(`leads?select=${cols}&is_chain=not.is.true&duplicate_of=is.null${cursor}&order=id.asc&limit=24`);
+    const rows2 = await sb.get<PoolLead>(`leads?select=${cols}&is_chain=not.is.true&duplicate_of=is.null&or=(status.is.null,status.neq.do_not_contact)${cursor}&order=id.asc&limit=24`);
     if (!rows2.length) return [];
     cfg.cursor = rows2[rows2.length - 1].id;
     const ids = rows2.map((r) => `"${r.place_id.replace(/"/g, '')}"`).join(',');

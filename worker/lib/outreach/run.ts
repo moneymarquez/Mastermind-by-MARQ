@@ -30,8 +30,8 @@ export async function draftOutreach(sb: Sb, userId: string, limit = 10): Promise
   for (const t of top) {
     if (n >= limit) break;
     if (have.has(t.place_id)) continue;
-    const [lead] = await sb.get<{ id: string; business_name: string; owner_name: string | null; city: string | null; category: string | null; owner_email: string | null; phone: string | null }>(`leads?place_id=eq.${encodeURIComponent(t.place_id)}&select=id,business_name,owner_name,city,category,owner_email,phone&limit=1`);
-    if (!lead || (lead.owner_email && blocked.has(lead.owner_email.toLowerCase()))) continue;
+    const [lead] = await sb.get<{ id: string; business_name: string; owner_name: string | null; city: string | null; category: string | null; owner_email: string | null; phone: string | null; status: string | null }>(`leads?place_id=eq.${encodeURIComponent(t.place_id)}&select=id,business_name,owner_name,city,category,owner_email,phone,status&limit=1`);
+    if (!lead || lead.status === 'do_not_contact' || (lead.owner_email && blocked.has(lead.owner_email.toLowerCase()))) continue;
     const e = draftColdEmail(lead, t);
     await sb.insert('lead_outreach', { user_id: userId, lead_id: lead.id, place_id: t.place_id, business_name: lead.business_name, to_email: lead.owner_email, phone: lead.phone, finding_kind: t.kind, finding_summary: t.summary, subject: e.subject, body: e.body, status: 'drafted', is_test: true });
     n++;

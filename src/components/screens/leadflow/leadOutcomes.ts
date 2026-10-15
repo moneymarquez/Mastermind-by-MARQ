@@ -22,6 +22,8 @@ export const LEAD_CALL_OUTCOMES: { value: string; label: string; color: string; 
   { value: 'callback', color: '#2563eb', label: 'Callback later', signal: 'info' },
   { value: 'interested', color: '#16a34a', label: 'Interested', signal: 'go' },
   { value: 'not_interested', color: '#ef4444', label: 'Not interested', signal: 'stop' },
+  // Needs schema_135 (adds the status). Until it is run, saving this outcome is refused by the database.
+  { value: 'do_not_contact', color: '#b91c1c', label: 'Do not contact', signal: 'stop' },
 ];
 
 export const LEAD_OUTCOME_LABEL: Record<string, string> = Object.fromEntries(

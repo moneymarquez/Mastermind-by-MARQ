@@ -11,7 +11,7 @@ import {
   mapsUrl, streetViewUrl, websiteUrl, registryUrl, peopleSearchUrl,
   bestOwnerGuess, leadImagePaths, hasOwnerContact,
 } from './leadLinks';
-import { fmtPhone, telHref, leadCategory, leadTags, cityState, fmtReviewAge } from './format';
+import { fmtPhone, telHref, leadCategory, leadTags, cityState, fmtReviewAge, isDnc } from './format';
 import { Tag, TierMark, PhoneIcon, MoreMenu, Banner, Dot } from './ui';
 import './leadflow.css';
 
@@ -117,7 +117,7 @@ function OwnerSection({ lead, onPatch }: { lead: LeadflowLead; onPatch: PatchLea
         </div>
       </div>
       <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-        {phone.trim() && <a className="lf-btn lf-btn--secondary lf-btn--sm" href={telHref(phone)}><PhoneIcon size={14} />Call owner direct</a>}
+        {phone.trim() && !isDnc(lead) && <a className="lf-btn lf-btn--secondary lf-btn--sm" href={telHref(phone)}><PhoneIcon size={14} />Call owner direct</a>}
         <a className="lf-btn lf-btn--secondary lf-btn--sm" href={people ?? undefined} target="_blank" rel="noopener noreferrer" aria-disabled={!people}>TruePeopleSearch</a>
         {reg && (
           // Copies on the way out too, so the one tap that opens the registry
@@ -249,7 +249,7 @@ export function RecordBody({ lead, onPatch, onLogCall, ownerFirst }: { lead: Lea
 
   const contact = (
     <Section title="Contact" key="contact">
-      <div className="lf-field"><div>Phone</div><div>{lead.phone ? <a className="lf-mono" href={telHref(lead.phone)} style={{ color: 'var(--lf-text)' }}>{fmtPhone(lead.phone)}</a> : <span style={{ color: 'var(--lf-text-tertiary)' }}>None</span>}</div></div>
+      <div className="lf-field"><div>Phone</div><div>{lead.phone ? (isDnc(lead) ? <span className="lf-mono" title="Do not contact">{fmtPhone(lead.phone)}</span> : <a className="lf-mono" href={telHref(lead.phone)} style={{ color: 'var(--lf-text)' }}>{fmtPhone(lead.phone)}</a>) : <span style={{ color: 'var(--lf-text-tertiary)' }}>None</span>}</div></div>
       {lead.address && <div className="lf-field"><div>Address</div><div>{lead.address}</div></div>}
       {cityState(lead) && <div className="lf-field"><div>City</div><div>{cityState(lead)}</div></div>}
       <div className="lf-field"><div>Website</div><div>{site ? <a href={site} target="_blank" rel="noopener noreferrer">{lead.website}</a> : <span style={{ color: 'var(--lf-text-tertiary)' }}>{lead.website_status === 'no_website' ? 'No website' : lead.website_status ? 'Has a site, address not on file' : 'None on file'}</span>}</div></div>
@@ -312,6 +312,7 @@ export function RecordHeader({ lead, onClose, onBack, backLabel, onPatch }: { le
 
 function CallButton({ lead, big }: { lead: LeadflowLead; big?: boolean }) {
   const cls = `lf-btn lf-btn--primary${big ? ' lf-btn--call' : ''}`;
+  if (isDnc(lead)) return <button className={cls} disabled style={{ flex: 1 }}>Do not contact</button>;
   return lead.phone
     ? <a className={cls} href={telHref(lead.phone)} style={{ flex: 1, minWidth: 0 }}><PhoneIcon />Call <span className="lf-mono">{fmtPhone(lead.phone)}</span></a>
     : <button className={cls} disabled style={{ flex: 1 }}>No phone on file</button>;
@@ -389,9 +390,9 @@ export default function LeadCard({ lead, open, onToggle, onPatch, onLogCall, ski
         </div>
         {meta && <div style={{ fontSize: 13, color: 'var(--lf-text-tertiary)' }}>{meta}</div>}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          {lead.phone && <a className="lf-mono" href={telHref(lead.phone)} style={{ fontSize: 20, fontWeight: 500, color: 'var(--lf-text)', textDecoration: 'none' }}>{fmtPhone(lead.phone)}</a>}
-          {lead.phone && <a className="lf-btn lf-btn--primary" href={telHref(lead.phone)}><PhoneIcon />Call</a>}
-          {ownerKnown && lead.owner_phone && <a className="lf-btn lf-btn--secondary" href={telHref(lead.owner_phone)}>{lead.owner_name}: <span className="lf-mono">{fmtPhone(lead.owner_phone)}</span></a>}
+          {lead.phone && (isDnc(lead) ? <span className="lf-mono" style={{ fontSize: 20, fontWeight: 500, color: 'var(--lf-text-tertiary)' }}>{fmtPhone(lead.phone)}</span> : <a className="lf-mono" href={telHref(lead.phone)} style={{ fontSize: 20, fontWeight: 500, color: 'var(--lf-text)', textDecoration: 'none' }}>{fmtPhone(lead.phone)}</a>)}
+          {lead.phone && (isDnc(lead) ? <button className="lf-btn lf-btn--primary" disabled>Do not contact</button> : <a className="lf-btn lf-btn--primary" href={telHref(lead.phone)}><PhoneIcon />Call</a>)}
+          {ownerKnown && lead.owner_phone && !isDnc(lead) && <a className="lf-btn lf-btn--secondary" href={telHref(lead.owner_phone)}>{lead.owner_name}: <span className="lf-mono">{fmtPhone(lead.owner_phone)}</span></a>}
           <div style={{ flex: 1 }} />
           <button className="lf-btn lf-btn--secondary lf-btn--sm" onClick={onToggle}>{open ? 'Less' : 'Details'}</button>
           {actions}

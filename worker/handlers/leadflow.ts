@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { requireUser, isOwnerUser } from '../lib/auth';
+import { guardInsert, guardPatch, entersCallList, DNC_STATUS } from '../lib/leadflowGuard';
 
 // LeadFlow used to live in its own separate Supabase project
 // (buuntdpgiwvarvtyncfx, github.com/moneymarquez/leadflow), reached with a
@@ -68,6 +69,8 @@ async function countRows(env: LeadflowEnv, filterQuery: string): Promise<number>
   return total === '*' ? 0 : Number(total) || 0;
 }
 
+const DISTINCT_SCAN_CAP = 5000;
+
 export async function leadflowLeads(request: Request, env: LeadflowEnv): Promise<Response> {
   const denied = await requireLeadflowAuth(request, env);
   if (denied) return denied;
@@ -75,8 +78,15 @@ export async function leadflowLeads(request: Request, env: LeadflowEnv): Promise
   const url = new URL(request.url);
 
   if (request.method === 'GET') {
+    // Distinct values come from a small database function (schema_135) so the table is never pulled into the Worker.
+    // Until that migration is run the old bounded scan is used (capped at 5,000 rows instead of 20,000).
     if (url.searchParams.get('industriesOnly')) {
-      const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?select=industry&limit=20000`, { headers: leadflowHeaders(env) });
+      const rpc = await fetch(`${LEADFLOW_URL}/rest/v1/rpc/leadflow_industries`, { method: 'POST', headers: leadflowHeaders(env), body: '{}' });
+      if (rpc.ok) {
+        const rows = (await rpc.json()) as { industry: string | null }[];
+        return new Response(JSON.stringify(rows.map((r) => r.industry).filter((v): v is string => !!v)), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?select=industry&industry=not.is.null&limit=${DISTINCT_SCAN_CAP}`, { headers: leadflowHeaders(env) });
       const rows = (await res.json()) as { industry: string | null }[];
       const unique = [...new Set(rows.map((r) => r.industry).filter((v): v is string => !!v))].sort();
       return new Response(JSON.stringify(unique), { status: 200, headers: { 'content-type': 'application/json' } });
@@ -86,7 +96,13 @@ export async function leadflowLeads(request: Request, env: LeadflowEnv): Promise
     // than two independent lists because a bare city name isn't unique —
     // choosing "Springfield" has to mean a specific one.
     if (url.searchParams.get('citiesOnly')) {
-      const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?select=city,state&limit=20000`, { headers: leadflowHeaders(env) });
+      const rpc = await fetch(`${LEADFLOW_URL}/rest/v1/rpc/leadflow_cities`, { method: 'POST', headers: leadflowHeaders(env), body: '{}' });
+      if (rpc.ok) {
+        const rows = (await rpc.json()) as { city: string; state: string; n: number }[];
+        const list = rows.map((r) => ({ city: r.city, state: (r.state || '').toUpperCase(), count: Number(r.n) })).sort((a, b) => b.count - a.count || a.city.localeCompare(b.city));
+        return new Response(JSON.stringify(list), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?select=city,state&city=not.is.null&limit=${DISTINCT_SCAN_CAP}`, { headers: leadflowHeaders(env) });
       const rows = (await res.json()) as { city: string | null; state: string | null }[];
       const counts = new Map<string, { city: string; state: string; count: number }>();
       for (const r of rows) {
@@ -140,6 +156,8 @@ export async function leadflowLeads(request: Request, env: LeadflowEnv): Promise
     if (city && city !== 'All') qs.set('city', `eq.${city}`);
     if (pooled) qs.set('pooled', `eq.${pooled}`);
     if (dialingQueued) qs.set('dialing_queued', `eq.${dialingQueued}`);
+    // A do-not-contact lead never appears in the Dialing queue, even if it was queued before it was marked.
+    if (dialingQueued === 'true') qs.set('or', `(status.is.null,status.neq.${DNC_STATUS})`);
 
     const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?${qs.toString()}`, { headers: leadflowHeaders(env) });
     const data = await res.text();
@@ -147,11 +165,12 @@ export async function leadflowLeads(request: Request, env: LeadflowEnv): Promise
   }
 
   if (request.method === 'POST') {
-    const body = await request.json();
+    const guarded = guardInsert(await request.json().catch(() => null));
+    if (!guarded.ok) return jsonError(guarded.error, 400);
     const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads`, {
       method: 'POST',
       headers: { ...leadflowHeaders(env), Prefer: 'return=representation' },
-      body: JSON.stringify(body),
+      body: JSON.stringify(guarded.value.length === 1 ? guarded.value[0] : guarded.value),
     });
     const data = await res.text();
     return new Response(data, { status: res.status, headers: { 'content-type': 'application/json' } });
@@ -187,23 +206,29 @@ export async function leadflowLeadsBulk(request: Request, env: LeadflowEnv): Pro
   if (ids.length === 0) return jsonError('No lead ids given.', 400);
   if (ids.length > BULK_MAX_IDS) return jsonError(`Too many leads in one request (${ids.length} > ${BULK_MAX_IDS}).`, 400);
 
-  const patch: Record<string, unknown> = {};
+  const narrowed: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(patchIn)) {
-    if (BULK_PATCH_COLUMNS.has(k)) patch[k] = v;
+    if (BULK_PATCH_COLUMNS.has(k)) narrowed[k] = v;
   }
-  if (Object.keys(patch).length === 0) return jsonError('No updatable columns in patch.', 400);
+  if (Object.keys(narrowed).length === 0) return jsonError('No updatable columns in patch.', 400);
+  const g = guardPatch(narrowed);
+  if (!g.ok) return jsonError(g.error, 400);
+  const patch = g.value;
 
   // Quoted so a uuid is never mistaken for part of the list syntax. These
   // are uuids from our own rows, but the quoting is what makes that safe to
   // rely on rather than something to hope about.
   const inList = ids.map((id) => `"${encodeURIComponent(id)}"`).join(',');
-  const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?id=in.(${inList})`, {
+  // Sending leads to Dialing or the pool skips do-not-contact leads (the filter is applied by the database, not trusted from the browser).
+  const skipDnc = entersCallList(patch) ? `&or=(status.is.null,status.neq.${DNC_STATUS})` : '';
+  const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?id=in.(${inList})${skipDnc}`, {
     method: 'PATCH',
-    headers: leadflowHeaders(env),
+    headers: { ...leadflowHeaders(env), Prefer: 'return=representation' },
     body: JSON.stringify(patch),
   });
   if (!res.ok) return new Response(await res.text(), { status: res.status });
-  return new Response(JSON.stringify({ ok: true, count: ids.length }), { status: 200, headers: { 'content-type': 'application/json' } });
+  const changed = ((await res.json().catch(() => [])) as unknown[]).length;
+  return new Response(JSON.stringify({ ok: true, count: changed, skipped_do_not_contact: ids.length - changed }), { status: 200, headers: { 'content-type': 'application/json' } });
 }
 
 function jsonError(error: string, status: number): Response {
@@ -214,13 +239,19 @@ export async function leadflowLeadUpdate(request: Request, env: LeadflowEnv, id:
   const denied = await requireLeadflowAuth(request, env);
   if (denied) return denied;
 
-  const body = await request.json();
-  const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?id=eq.${encodeURIComponent(id)}`, {
+  const g = guardPatch(await request.json().catch(() => null));
+  if (!g.ok) return jsonError(g.error, 400);
+  const patch = g.value;
+  // Marking a lead do-not-contact also takes it out of the Dialing queue.
+  if (patch.status === DNC_STATUS) patch.dialing_queued = false;
+  const skipDnc = entersCallList(patch) ? `&or=(status.is.null,status.neq.${DNC_STATUS})` : '';
+  const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?id=eq.${encodeURIComponent(id)}${skipDnc}`, {
     method: 'PATCH',
-    headers: leadflowHeaders(env),
-    body: JSON.stringify(body),
+    headers: { ...leadflowHeaders(env), Prefer: 'return=representation' },
+    body: JSON.stringify(patch),
   });
   if (!res.ok) return new Response(await res.text(), { status: res.status });
+  if (entersCallList(patch) && (((await res.json().catch(() => [])) as unknown[]).length === 0)) return jsonError('This lead is marked do-not-contact, so it can\'t go on a calling list.', 409);
   return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'content-type': 'application/json' } });
 }
 

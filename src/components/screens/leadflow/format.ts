@@ -51,11 +51,15 @@ export function websiteSignal(l: Pick<LeadflowLead, 'website' | 'website_status'
   return null;
 }
 
+/** A do-not-contact lead is never called, queued or texted anywhere in LeadFlow. */
+export const isDnc = (l: Pick<LeadflowLead, 'status'>): boolean => l.status === 'do_not_contact';
+
 /** Every signal tag the record header shows, in reading order. */
 export function leadTags(l: LeadflowLead): { label: string; s: Signal; title?: string }[] {
   const out: { label: string; s: Signal; title?: string }[] = [];
   const st = statusOf(l);
   out.push({ label: st.label, s: st.s });
+  if (isDnc(l)) out.push({ label: 'Do not contact', s: 'stop', title: 'Marked do-not-contact. It can\'t be called, queued or texted.' });
   if (hasOwnerContact(l)) out.push({ label: 'Owner on file', s: 'info', title: l.owner_phone ?? undefined });
   if (l.flagged) out.push({ label: 'Flagged', s: 'wait', title: l.flag_note ?? undefined });
   if (l.dialing_queued) out.push({ label: 'In Dialing', s: 'info' });
