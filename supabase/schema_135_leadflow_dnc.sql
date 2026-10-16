@@ -1,6 +1,7 @@
 -- LeadFlow Intelligence, Phase 0: do-not-contact, and a bounded way to list industries and cities.
 --
--- NOT YET APPLIED. Read the live constraint first (it is not defined in any earlier migration file):
+-- APPLIED to production on 2026-10-16 with Marq's approval (verified: 353 rows intact, constraint widened, columns and functions present).
+-- Before applying, the live constraint was read first. Read the live constraint first (it is not defined in any earlier migration file):
 --   select pg_get_constraintdef(oid) from pg_constraint where conname = 'leads_status_check';
 -- On 2026-10-15 it read:
 --   CHECK (status = ANY (ARRAY['new','queued','called','no_answer','voicemail','gatekeeper','callback','interested','not_interested','client','dead']))

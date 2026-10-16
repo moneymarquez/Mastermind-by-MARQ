@@ -35,6 +35,8 @@ Not determinable from here (the Cloudflare tool lists the Worker but not its pla
 Checks: typecheck clean (app and worker), lint 0 errors, 370 tests pass.
 
 ## 4. What you must run
+**Update 2026-10-16: `schema_135` was applied by me with Marq's approval and verified (status constraint now has 14 values, `dnc_at`/`dnc_reason` exist, both picker functions work, 353 rows unchanged, anon cannot run the functions). The items below are history.**
+
 1. Open the Supabase SQL editor for the project and run `supabase/schema_135_leadflow_dnc.sql` in one go. It adds `dnc_at`, `dnc_reason`, three statuses (`do_not_contact`, `wrong_number`, `converted`) and the two picker functions. **One statement is not purely additive**: widening `leads_status_check` drops the old check and adds a longer one in the same transaction; no row changes and all 11 existing values stay valid. I did not apply it, as the prompt says.
 2. Until then: the "Do not contact" button is refused by the database (the leads stay as they were), and the pickers use the fallback scan. Everything else works now.
 3. Answer the open questions below.
