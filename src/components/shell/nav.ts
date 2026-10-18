@@ -10,7 +10,7 @@ import type { PortalKey } from '../../portals.config';
 export interface ShellItem { id: string; label: string; glyph: string; locked?: boolean }
 export interface ShellGroup { title: string; items: ShellItem[]; owner?: boolean }
 
-export const SHELL_GROUPS = ['HQ', 'Personal', 'Cold Calling', 'Clients', 'Scaling', 'Side Hustles', 'Content', 'E-commerce'] as const;
+export const SHELL_GROUPS = ['Orchestrator', 'Personal', 'Cold Calling', 'Clients', 'Scaling', 'Side Hustles', 'Content', 'E-commerce'] as const;
 const SKIP = new Set(['home', 'settings', 'codelab']);
 
 /** Two-letter module glyph: "Daily Plan" → DP, "Sobriety" → SO. */
@@ -20,11 +20,16 @@ export function glyphFor(label: string): string {
   return (words[0] ?? '?').slice(0, 2).toUpperCase();
 }
 
+/** Made by's Clients group: winning and keeping clients. Everything else in
+ *  Made by is Scaling, the A-to-Z delivery path starting at Start. */
+const MADEBY_CLIENTS = new Set(['client-crm', 'comms', 'leadflow', 'lead-engines', 'client-modules']);
+
 /** Drawer group for an item inside a portal: Made by reads Clients
  *  (Client Modules, LeadFlow) then Scaling; Content and E-commerce are one
  *  group each; Masterminds keeps the registry's groups. */
 function groupIn(portal: PortalKey, id: string, natural: string): string {
-  if (portal === 'madeby') return id === 'hq' ? 'HQ' : id === 'client-modules' || id === 'leadflow' || id === 'classroom' || id === 'comms' ? 'Clients' : 'Scaling';
+  if (portal === 'orchestrator') return 'Orchestrator';
+  if (portal === 'madeby') return MADEBY_CLIENTS.has(id) ? 'Clients' : 'Scaling';
   if (portal === 'content') return 'Content';
   if (portal === 'ecommerce') return 'E-commerce';
   return natural;
@@ -44,6 +49,9 @@ export function shellGroups(canAccess: (k: string) => boolean, isOwner: boolean,
       by.set(title, [...(by.get(title) ?? []), { id: it.id, label: it.label, glyph: glyphFor(it.label) }]);
     }
   }
+  // HQ is the Orchestrator's landing screen, so it leads the list.
+  const orch = by.get('Orchestrator');
+  if (orch) by.set('Orchestrator', [...orch.filter((i) => i.id === 'hq'), ...orch.filter((i) => i.id !== 'hq')]);
   // Non-owners see Scaling as locked tiles (Modules grid only), never as routes.
   if (opts.lockedPreview && portal === 'masterminds' && !isOwner && !by.get('Scaling')?.length) {
     by.set('Scaling', MODULE_REGISTRY.filter((m) => m.category === 'Scaling').map((m) => ({ id: m.routes[0], label: m.label, glyph: glyphFor(m.label), locked: true })));

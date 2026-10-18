@@ -1,13 +1,16 @@
 import { MODULE_REGISTRY, moduleKeyForRoute } from './modules.config';
 
-/** Masterminds is one product with four portals. A portal is a section of
+/** Masterminds is one product with five portals. A portal is a section of
  *  the app with its own module list, landing screen and accent. Access is
  *  derived, never stored: a portal is visible when the account can open at
  *  least one module in it (canAccess, unchanged). Masterminds always is. */
-export type PortalKey = 'masterminds' | 'madeby' | 'content' | 'ecommerce';
+export type PortalKey = 'masterminds' | 'orchestrator' | 'madeby' | 'content' | 'ecommerce';
 
 export const PORTALS: { key: PortalKey; name: string; landing: string }[] = [
   { key: 'masterminds', name: 'Masterminds', landing: 'home' },
+  // Running Marq's own business (money, launches, orchestrators), as opposed
+  // to Made by, which is purely client work.
+  { key: 'orchestrator', name: 'Orchestrator', landing: 'hq' },
   { key: 'madeby', name: 'Made by', landing: 'client-modules' },
   { key: 'content', name: 'Content', landing: 'content-accounts' },
   { key: 'ecommerce', name: 'E-commerce', landing: 'ecommerce' },

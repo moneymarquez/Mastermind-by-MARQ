@@ -8,7 +8,8 @@ export interface FlagRow { id: string; domain: string; entity_type: string; enti
 /** Which flag domains each portal's top bar counts. */
 export const PORTAL_FLAG_DOMAINS: Record<PortalKey, string[]> = {
   masterminds: ['master', 'personal'],
-  madeby: ['madeby', 'marketing', 'master'],
+  orchestrator: ['master', 'marketing'],
+  madeby: ['madeby'],
   content: ['content'],
   ecommerce: ['ecommerce'],
 };

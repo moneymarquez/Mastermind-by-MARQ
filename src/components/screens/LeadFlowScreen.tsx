@@ -16,16 +16,15 @@ import './leadflow/leadflow.css';
 // Internal ids are unchanged; labels and order follow the redesign.
 type Tab = 'dashboard' | 'warroom' | 'leadpool' | 'leads' | 'playbook' | 'report' | 'history' | 'messages' | 'import';
 
+// War Room, Sales report, Messages and Import are hidden from the tab bar
+// (Marq's cleanup, Oct 2026), not deleted: their screens still render if
+// anything links to them, and adding the row back restores the tab.
 const TABS: { id: Tab; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
-  { id: 'warroom', label: 'War Room' },
   { id: 'leadpool', label: 'Lead pool' },
   { id: 'leads', label: 'Lead finder' },
   { id: 'playbook', label: 'Playbook' },
-  { id: 'report', label: 'Sales report' },
   { id: 'history', label: 'History' },
-  { id: 'messages', label: 'Messages' },
-  { id: 'import', label: 'Import' },
 ];
 
 /** LeadFlow: the owner-only cold-calling CRM. Its own design system

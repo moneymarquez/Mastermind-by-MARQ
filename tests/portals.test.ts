@@ -6,9 +6,9 @@ test('portals: access is derived from canAccess only', async () => {
   const { MODULE_REGISTRY } = await import('../src/modules.config');
   const { shellGroups, crumbFor } = await import('../src/components/shell/nav');
 
-  // Owner: every module, so all four portals.
+  // Owner: every module, so all five portals, Orchestrator right after Masterminds.
   const all = () => true;
-  assert.deepEqual(accessiblePortals(all), ['masterminds', 'madeby', 'content', 'ecommerce']);
+  assert.deepEqual(accessiblePortals(all), ['masterminds', 'orchestrator', 'madeby', 'content', 'ecommerce']);
 
   // A subscriber with only Personal modules: Masterminds alone (no switcher, no home cards).
   const personal = (k: string) => ['daily-plan', 'macros', 'budgeting'].includes(k);
@@ -22,7 +22,8 @@ test('portals: access is derived from canAccess only', async () => {
 
   // Every registry entry carries a portal, and the map matches the spec.
   for (const m of MODULE_REGISTRY) assert.ok(m.portal, `${m.key} has a portal`);
-  for (const k of ['leadflow', 'client-modules', 'client-crm', 'invoicing', 'marketing', 'support-inbox']) assert.equal(portalOfModule(k), 'madeby', k);
+  for (const k of ['leadflow', 'lead-engines', 'comms', 'client-modules', 'client-crm', 'scaling-start', 'brand-lab', 'delivery', 'invoicing', 'support-inbox']) assert.equal(portalOfModule(k), 'madeby', k);
+  for (const k of ['hq', 'ledger', 'waitlist', 'coupons', 'contracts', 'classroom', 'marketing']) assert.equal(portalOfModule(k), 'orchestrator', k);
   assert.equal(portalOfModule('content'), 'content');
   assert.equal(portalOfModule('ecommerce'), 'ecommerce');
   assert.equal(portalOfModule('budgeting'), 'masterminds');
@@ -38,6 +39,18 @@ test('portals: access is derived from canAccess only', async () => {
   assert.ok(madeby.includes('client-crm') && !madeby.includes('budgeting') && !madeby.includes('content'));
   const mm = shellGroups(all, true, {}, { portal: 'masterminds' }).flatMap((g) => g.items.map((i) => i.id));
   assert.ok(mm.includes('budgeting') && !mm.includes('client-crm') && !mm.includes('ecommerce'));
+
+  // Made by: Clients (winning and keeping clients), then Scaling (delivery, from Start).
+  const mbGroups = shellGroups(all, true, {}, { portal: 'madeby' });
+  const clients = mbGroups.find((g) => g.title === 'Clients')!.items.map((i) => i.id);
+  assert.deepEqual([...clients].sort(), ['client-crm', 'client-modules', 'comms', 'lead-engines', 'leadflow']);
+  const scaling = mbGroups.find((g) => g.title === 'Scaling')!.items.map((i) => i.id);
+  for (const k of ['scaling-start', 'brand-lab', 'delivery', 'invoicing']) assert.ok(scaling.includes(k), k);
+  assert.ok(!madeby.includes('hq') && !madeby.includes('ledger') && !madeby.includes('marketing'));
+  // Orchestrator: one group holding Marq's own-business tools.
+  const orch = shellGroups(all, true, {}, { portal: 'orchestrator' });
+  assert.deepEqual(orch.map((g) => g.title), ['Orchestrator']);
+  assert.deepEqual([...orch[0].items.map((i) => i.id)].sort(), ['classroom', 'contracts', 'coupons', 'hq', 'ledger', 'marketing', 'waitlist']);
 
   // Breadcrumb starts with the portal outside Masterminds.
   assert.deepEqual(crumbFor('leadflow', shellGroups(all, true, {}, { portal: 'madeby' }), 'madeby'), { group: 'Made by', label: 'LeadFlow' });

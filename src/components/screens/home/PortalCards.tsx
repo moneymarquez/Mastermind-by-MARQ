@@ -20,6 +20,15 @@ async function rows(table: string, cols: string, f?: (q: any) => any): Promise<a
 }
 
 const LOADERS: Record<Exclude<PortalKey, 'masterminds'>, () => Promise<Figures>> = {
+  // Everything waiting on Marq across the orchestrators, the waitlist, and open flags.
+  orchestrator: async () => {
+    const [waiting, signups, flags] = await Promise.all([
+      rows('ai_approvals', 'id', (q) => q.eq('status', 'pending')),
+      rows('waitlist', 'id'),
+      rows('ai_flags', 'id', (q) => q.is('resolved_at', null)),
+    ]);
+    return { main: waiting.length, mainLabel: 'Waiting on you', subs: [['Waitlist', signups.length], ['Open flags', flags.length]], empty: 'Nothing waiting on you.' };
+  },
   // Client CRM's "Active" column (active + retainer), Client Modules' open
   // tickets, and Invoicing's sent or overdue invoices.
   madeby: async () => {
