@@ -9,7 +9,7 @@ import { outcomeRange } from './pitch';
 import { breakdown } from '../../src/data/ecomFees';
 import { marginPct } from '../../src/data/ecomProducts';
 import { emptyCard } from '../../src/data/ecomCard';
-import type { CardData, SellerInfo, SupplierOption } from '../../src/data/ecomCard';
+import type { CardData, SellerInfo, SupplierOption, Signals, Signal } from '../../src/data/ecomCard';
 import type { ImportRow, ProductDetail } from '../../src/data/ecomProducts';
 import type { Sb } from './sb';
 import type { RunCtx } from './engine';
@@ -29,11 +29,12 @@ export function enrichSystem(brief: { playbooks: string; corrections: string[]; 
   return [
     'You are Supplier Finder and Product Analyst for a solo founder dropshipping through ONE shared Shopify store with about $50 to test and organic content only.',
     'For the product you are given, fill in what Marq needs to decide: a real US sell price, 2–3 suppliers (CJ Dropshipping and others) with unit cost, shipping cost to the US, ship days, warehouse (prefer US) and rating; the top 3 sellers (shop link, their price, estimated monthly orders/revenue only if a source supports it, how long they have sold it, what the shop looks like, a source link); the demand evidence with links; 3 hook ideas, how to film it on a phone in 10 seconds, the first post; a confidence % with 3 reasons and the top 2 risks.',
+    'Then run the Product playbook\'s tests and report each one in "signals", with the link you saw: rising (search or views climbing over 2–4 weeks), asking (buyers asking where to get it), spreading (several unrelated creators in the last 1–2 weeks), movers (climbing a movers list), ads_recent (true if ads are few and started in the last 2–4 weeks, false if many advertisers have run it for months), peaked (true if the trend already peaked, dupes flood it, or big stores carry it). Search Amazon for the same item: set amazon_checked true and give its price, Prime and link, or amazon_checked true with a null price if it is not there. Score 0–10 with one line each: ai_video (looks great in a short AI-generated Higgsfield clip without faking what it does), in_person (easy to demo face to face in under a minute), brandable (we can make it look premium or different). List the top 3 complaints from competitors\' reviews. seen is true, false, or null when the research does not show it; never mark a sign true without a link.',
     'Never invent a number or a link. Use ONLY the research given. If something cannot be found, set it to null and say why in "not_found" (field → one-line reason, e.g. "supplier_cost": "no supplier listing in the research"). Never use 0 for unknown. Never cite instagram.com, facebook.com or tiktok.com video pages.',
     brief.budgetNote,
     brief.corrections.length ? `Corrections from Marq on earlier work, follow every one:\n${brief.corrections.map((c) => `- ${c}`).join('\n')}` : '',
-    brief.playbooks ? `Playbooks:\n${brief.playbooks.slice(0, 3000)}` : '',
-    'Answer ONLY with JSON: {"sell_price":null,"supplier_cost":null,"ship_cost":null,"score":null,"days_trending":null,"velocity":"rising|flat|fading|null","content_difficulty":"easy|medium|hard|null","images":[],"sellers_count":null,"suppliers":[{"name":"","url":"","unit_cost":null,"ship_cost":null,"ship_days_min":null,"ship_days_max":null,"warehouse":"","rating":"","sample_cost":null}],"sellers":[{"name":"","shop_url":"","price":null,"est_monthly_orders":null,"est_monthly_revenue":null,"months_selling":null,"look":"","screenshot_url":"","source_url":""}],"gap":"","demand":[{"text":"","url":""}],"hooks":["","",""],"film":"","first_post":"","confidence_pct":null,"confidence_reasons":["","",""],"risks":["",""],"detail":{"problem":"","trigger":"","buyer":"","why_emotional":"","why_practical":"","principle":"","angle":"","competition":"","fail_risks":""},"not_found":{}}. score is 0–10.',
+    brief.playbooks ? `Playbooks:\n${brief.playbooks.slice(0, 6000)}` : '',
+    'Answer ONLY with JSON: {"sell_price":null,"supplier_cost":null,"ship_cost":null,"score":null,"days_trending":null,"velocity":"rising|flat|fading|null","content_difficulty":"easy|medium|hard|null","images":[],"sellers_count":null,"suppliers":[{"name":"","url":"","unit_cost":null,"ship_cost":null,"ship_days_min":null,"ship_days_max":null,"warehouse":"","rating":"","sample_cost":null}],"sellers":[{"name":"","shop_url":"","price":null,"est_monthly_orders":null,"est_monthly_revenue":null,"months_selling":null,"look":"","screenshot_url":"","source_url":""}],"gap":"","demand":[{"text":"","url":""}],"hooks":["","",""],"film":"","first_post":"","confidence_pct":null,"confidence_reasons":["","",""],"risks":["",""],"detail":{"problem":"","trigger":"","buyer":"","why_emotional":"","why_practical":"","principle":"","angle":"","competition":"","fail_risks":""},"signals":{"rising":{"seen":null,"note":"","url":null},"asking":{"seen":null,"note":"","url":null},"spreading":{"seen":null,"note":"","url":null},"movers":{"seen":null,"note":"","url":null},"ads_recent":{"seen":null,"note":"","url":null},"peaked":{"seen":null,"note":"","url":null},"amazon_checked":false,"amazon_price":null,"amazon_prime":null,"amazon_url":null,"ai_video":null,"ai_video_why":"","in_person":null,"in_person_why":"","brandable":null,"brandable_why":"","complaints":[]},"not_found":{}}. score is 0–10.',
   ].filter(Boolean).join('\n\n');
 }
 
@@ -91,7 +92,7 @@ export function applyEnrichment(row: ImportRow, text: string, tried: string[], a
     confidence_pct: conf == null ? null : Math.max(5, Math.min(95, Math.round(conf))),
     confidence_reasons: (Array.isArray(o.confidence_reasons) ? o.confidence_reasons : []).map((x) => str(x, 240)).filter(Boolean).slice(0, 3),
     risks: (Array.isArray(o.risks) ? o.risks : []).map((x) => str(x, 240)).filter(Boolean).slice(0, 2),
-    enriched_at: asOf, image_urls: (Array.isArray(o.images) ? o.images : []).map(okUrl).filter((x): x is string => !!x).slice(0, 5),
+    signals: parseSignals(o.signals), enriched_at: asOf, image_urls: (Array.isArray(o.images) ? o.images : []).map(okUrl).filter((x): x is string => !!x).slice(0, 5),
   };
   detail.card = card;
   const images = [...new Set([...row.images, ...card.image_urls])].slice(0, 5);
@@ -108,10 +109,10 @@ export { marginPct };
 
 /** One research + one Claude call for one product. Never throws on a cap or a thin answer: the gaps become "Not found". */
 export async function enrichRow(ctx: RunCtx, sb: Sb, row: ImportRow, instructions?: string | null): Promise<ImportRow> {
-  const tried = [`${row.name} supplier price`, `${row.name} best sellers shop`, `${row.name} reviews trend`];
+  const tried = [`${row.name} supplier price`, `${row.name} best sellers shop`, `${row.name} reviews trend`, `${row.name} amazon price`, `${row.name} trending tiktok`];
   const asOf = new Date().toISOString();
   try {
-    const r = await researchSearch(sb, ctx.userId, `For "${row.name}": sell price, dropship suppliers (CJ and others) with unit cost, US shipping cost and days, warehouse, rating; who sells it most (shop links, prices, monthly sales), demand evidence, buyer.`, tried, 10);
+    const r = await researchSearch(sb, ctx.userId, `For "${row.name}": sell price, dropship suppliers (CJ and others) with unit cost, US shipping cost and days, warehouse, rating; who sells it most (shop links, prices, monthly sales), demand evidence, buyer; is interest rising over the last month (search trends, new videos, "where do I get this" comments); how many sellers and how long their ads have run; its price on Amazon and whether it has Prime; top complaints in its reviews.`, tried, 12);
     const res = await ctx.ask({ maxTokens: 4000, system: enrichSystem(ctx.brief), user: enrichUser(row, r?.brief ?? null, instructions) });
     return applyEnrichment(row, res.text, r ? tried : [...tried, '(no Parallel research this run)'], asOf);
   } catch (e) {
@@ -120,4 +121,26 @@ export async function enrichRow(ctx: RunCtx, sb: Sb, row: ImportRow, instruction
     const reason = /cap/i.test(msg) ? 'daily research cap reached; tap Find the missing numbers tomorrow or raise the cap' : `research failed (${msg.slice(0, 80)})`;
     return { ...base, detail: { ...base.detail, card: { ...base.detail.card!, missing: base.detail.card!.missing.map((m) => ({ ...m, reason })) } } };
   }
+}
+
+/** The Analyst's "signals" block, defensively parsed. A sign is only true with a usable link. Pure. */
+export function parseSignals(raw: unknown): Signals | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const o = raw as Record<string, unknown>;
+  const sig = (v: unknown): Signal => {
+    const x = (v ?? {}) as Record<string, unknown>;
+    const url = okUrl(x.url);
+    const seen = x.seen === true ? (url ? true : null) : x.seen === false ? false : null;
+    return { seen, note: str(x.note, 240), url };
+  };
+  const score = (v: unknown) => { const n = num(v); return n == null ? null : Math.max(0, Math.min(10, Math.round(n))); };
+  return {
+    rising: sig(o.rising), asking: sig(o.asking), spreading: sig(o.spreading), movers: sig(o.movers),
+    ads_recent: sig(o.ads_recent), peaked: { ...sig(o.peaked), seen: (o.peaked as Record<string, unknown> | undefined)?.seen === true ? true : (o.peaked as Record<string, unknown> | undefined)?.seen === false ? false : null },
+    amazon_checked: o.amazon_checked === true, amazon_price: pos(o.amazon_price), amazon_prime: typeof o.amazon_prime === 'boolean' ? o.amazon_prime : null, amazon_url: okUrl(o.amazon_url),
+    ai_video: score(o.ai_video), ai_video_why: str(o.ai_video_why, 200),
+    in_person: score(o.in_person), in_person_why: str(o.in_person_why, 200),
+    brandable: score(o.brandable), brandable_why: str(o.brandable_why, 200),
+    complaints: (Array.isArray(o.complaints) ? o.complaints : []).map((c) => str(c, 200)).filter(Boolean).slice(0, 3),
+  };
 }

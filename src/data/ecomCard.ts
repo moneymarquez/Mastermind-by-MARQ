@@ -27,6 +27,43 @@ export interface CardData {
   tried: string[];
   enriched_at: string | null;
   image_urls: string[];
+  /** The Product playbook's tests, filled by the Analyst (absent on older cards). */
+  signals?: Signals;
+}
+
+/** One sign the Analyst looked for: seen (true/false) or unknown (null), what it saw, and the link. */
+export interface Signal { seen: boolean | null; note: string; url: string | null }
+export interface Signals {
+  /** Traction: search/views climbing 2–4 weeks; buyers asking where to get it; several creators at once; climbing a movers list. */
+  rising: Signal; asking: Signal; spreading: Signal; movers: Signal;
+  /** Room: seen = ads are few and recent (good). */
+  ads_recent: Signal;
+  /** Too late: seen = trend already peaked, dupes, in every store (bad). */
+  peaked: Signal;
+  /** amazon_checked with no price = searched and not on Amazon (good). */
+  amazon_checked: boolean; amazon_price: number | null; amazon_prime: boolean | null; amazon_url: string | null;
+  /** 0–10: looks great in a short AI (Higgsfield) clip / easy to demo in person / can be made premium or different. */
+  ai_video: number | null; ai_video_why: string;
+  in_person: number | null; in_person_why: string;
+  brandable: number | null; brandable_why: string;
+  /** Top complaints in competitors' reviews: each one is an angle. */
+  complaints: string[];
+}
+export const TRACTION_KEYS = ['rising', 'asking', 'spreading', 'movers'] as const;
+/** Amazon at or under this share of our price undercuts an organic store. */
+export const AMAZON_UNDERCUT = 0.7;
+export const MIN_FIT_SCORE = 6;
+
+/** The playbook's automatic rejects that Shopify's list doesn't already block. Pure. */
+export function hardCategoryReason(text: string): string | null {
+  const t = ` ${text.toLowerCase()} `;
+  const rules: [RegExp, string][] = [
+    [/\b(charger|charging|battery|batteries|power ?bank|power strip|surge protector|extension cord|headset|headphones|earbuds|e-?bike|scooter|space heater|heater|hair dryer|curling iron|vape)\b/, 'Electronics that need certification or carry a fire/safety risk.'],
+    [/\b(shirt|t-shirt|hoodie|dress|pants|leggings|jeans|shoes|sneakers|boots|bra|underwear|ring size|rings?)\b/, 'Has sizing: returns and exchanges eat the margin.'],
+    [/\b(protein|supplement|vitamin|gummies|capsule|serum|retinol|acne|teeth whitening|cat litter|dog food|coffee|tea|snack|candy)\b/, 'Consumable or skin/health product: repeat-purchase commodity or claims risk.'],
+  ];
+  for (const [re, why] of rules) if (re.test(t)) return why;
+  return null;
 }
 export const emptyCard = (): CardData => ({ suppliers: [], sellers: [], gap: '', demand: [], hooks: [], film: '', first_post: '', outcome: null, confidence_pct: null, confidence_reasons: [], risks: [], missing: [], tried: [], enriched_at: null, image_urls: [] });
 
@@ -91,8 +128,9 @@ export function cardView(p: CardProduct): CardView {
     { key: 'restricted', label: 'Restricted category', state: blocked && !/trademark|knockoff|brand/i.test(blocked) ? 'bad' : 'ok', why: blocked && !/trademark|knockoff|brand/i.test(blocked) ? blocked : 'Not on Shopify\'s prohibited or restricted lists.' },
     { key: 'fragile', label: 'Fragile / heavy', state: p.detail?.fail_risks && /fragile|heavy|breakable|glass/i.test(String(p.detail.fail_risks)) ? 'bad' : 'ok', why: p.detail?.fail_risks && /fragile|heavy|breakable|glass/i.test(String(p.detail.fail_risks)) ? 'Risks mention fragile or heavy shipping.' : 'Nothing says fragile or heavy.' },
     { key: 'ship', label: 'Ship time over 14 days', state: shipMax == null ? 'warn' : shipMax > 14 ? 'warn' : 'ok', why: shipMax == null ? 'Ship time unknown.' : shipMax > 14 ? `Up to ${shipMax} days to the US.` : `${shipMin ?? shipMax}–${shipMax} days.` },
-    { key: 'saturated', label: 'Saturated', state: sellers != null && sellers >= 20 ? 'warn' : 'ok', why: sellers == null ? 'Seller count unknown.' : sellers >= 20 ? `${sellers} sellers already.` : `${sellers} seller${sellers === 1 ? '' : 's'} found.` },
+    { key: 'saturated', label: 'Saturated', state: sellers == null || sellers >= 20 ? 'warn' : 'ok', why: sellers == null ? 'Seller count unknown, so not proven unsaturated.' : sellers >= 20 ? `${sellers} sellers already.` : `${sellers} seller${sellers === 1 ? '' : 's'} found.` },
   ];
+  risks.push(...signalChecks(card.signals, sell, `${p.name} ${p.category ?? ''}`));
   const anyRed = risks.some((r) => r.state === 'bad');
   let verdict: Verdict, verdictWhy: string;
   if (blocked) { verdict = 'BLOCKED'; verdictWhy = blocked; }
@@ -115,6 +153,7 @@ export function cardView(p: CardProduct): CardView {
     { label: 'Sellers (saturation)', value: sellers != null ? String(sellers) : 'Not found: no seller count in the research' },
     { label: 'Content difficulty', value: p.content_difficulty ?? 'Not found: not rated yet' },
     { label: 'Score', value: p.score != null ? `${p.score}/10` : nf('score') },
+    ...signalStats(card.signals),
     { label: 'Confidence', value: card.confidence_pct != null ? `${card.confidence_pct}%` : p.confidence === 'ai' ? 'AI read' : p.confidence === 'estimate' ? 'Estimate' : 'Verified' },
   ];
   const d = p.detail ?? {};
@@ -129,4 +168,39 @@ export function principleWords(code: string | undefined): string {
   const map: [RegExp, string][] = [[/psy-?25|demo/i, 'Demo-able: a before/after shows it works in seconds'], [/anchor/i, 'Anchoring: the "was" price makes the real price feel small'], [/social proof/i, 'Social proof: people copy what others are buying'], [/scarcity|urgency/i, 'Scarcity: a reason to buy now'], [/curiosity/i, 'Curiosity: people stop scrolling to find out how it works'], [/loss/i, 'Loss aversion: fear of missing out beats the wish to gain']];
   for (const [re, words] of map) if (re.test(c)) return words;
   return c;
+}
+
+const fit = (n: number | null | undefined) => (n == null ? 'Not rated' : `${n}/10`);
+
+/** The playbook's tests as card checks. Unknown is never a pass for traction,
+ *  Amazon, AI video or brandable, so a GO needs them all proven. Pure. */
+export function signalChecks(sg: Signals | undefined, sell: number | null, text: string): RiskCheck[] {
+  const out: RiskCheck[] = [];
+  const hard = hardCategoryReason(text);
+  if (hard) out.push({ key: 'category', label: 'Automatic reject', state: 'bad', why: hard });
+  const proven = sg ? TRACTION_KEYS.filter((k) => sg[k]?.seen === true && !!sg[k]?.url) : [];
+  const names: Record<(typeof TRACTION_KEYS)[number], string> = { rising: 'rising', asking: 'buyers asking', spreading: 'creators spreading it', movers: 'climbing a movers list' };
+  out.push({ key: 'traction', label: 'Gaining traction', state: proven.length >= 2 ? 'ok' : 'warn', why: proven.length ? `${proven.length} of 4 signs with links: ${proven.map((k) => names[k]).join(', ')}.` : 'No traction sign proven with a link yet.' });
+  if (sg?.peaked?.seen === true) out.push({ key: 'peaked', label: 'Already peaked', state: 'bad', why: sg.peaked.note || 'The trend is past its peak.' });
+  if (sg?.ads_recent?.seen === false) out.push({ key: 'ads', label: 'Ads running a long time', state: 'warn', why: sg.ads_recent.note || 'Many advertisers have run it for months.' });
+  const az = sg?.amazon_price ?? null;
+  out.push(az != null && sell != null
+    ? (az <= sell * AMAZON_UNDERCUT ? { key: 'amazon', label: 'Amazon undercuts us', state: 'bad', why: `On Amazon for $${az.toFixed(2)}${sg?.amazon_prime ? ' with Prime' : ''}, vs our $${sell.toFixed(2)}.` } : { key: 'amazon', label: 'Amazon price', state: 'ok', why: `Amazon $${az.toFixed(2)}: room for our price.` })
+    : sg?.amazon_checked && az == null ? { key: 'amazon', label: 'Not on Amazon', state: 'ok', why: 'Searched Amazon: not listed there.' }
+    : { key: 'amazon', label: 'Amazon price', state: 'warn', why: sg?.amazon_checked ? 'On Amazon but no price found.' : 'Not checked on Amazon yet.' });
+  out.push({ key: 'ai_video', label: 'AI video fit (Higgsfield)', state: (sg?.ai_video ?? 0) >= MIN_FIT_SCORE ? 'ok' : 'warn', why: sg?.ai_video != null ? `${sg.ai_video}/10. ${sg.ai_video_why}`.trim() : 'Not rated.' });
+  out.push({ key: 'brandable', label: 'Can be made premium/different', state: (sg?.brandable ?? 0) >= MIN_FIT_SCORE ? 'ok' : 'warn', why: sg?.brandable != null ? `${sg.brandable}/10. ${sg.brandable_why}`.trim() : 'Not rated.' });
+  return out;
+}
+
+export function signalStats(sg: Signals | undefined): { label: string; value: string }[] {
+  if (!sg) return [];
+  const n = TRACTION_KEYS.filter((k) => sg[k]?.seen === true && !!sg[k]?.url).length;
+  return [
+    { label: 'Traction signs', value: `${n} of 4 proven` },
+    { label: 'Amazon', value: sg.amazon_price != null ? `$${sg.amazon_price.toFixed(2)}${sg.amazon_prime ? ' (Prime)' : ''}` : sg.amazon_checked ? 'Not on Amazon' : 'Not checked yet' },
+    { label: 'AI video fit', value: fit(sg.ai_video) },
+    { label: 'In person', value: fit(sg.in_person) },
+    { label: 'Brandable', value: fit(sg.brandable) },
+  ];
 }

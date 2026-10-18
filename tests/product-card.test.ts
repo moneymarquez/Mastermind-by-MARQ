@@ -39,8 +39,13 @@ describe('card view: completeness, verdict, blocked', () => {
     expect(v.missing.find((m) => m.field === 'supplier_cost')!.text).toBe('Not found: no CJ listing (tried: cj search)');
   });
   it('GO / MAYBE / SKIP and the $10 + 35% floor', () => {
-    expect(cardView(prod()).verdict).toBe('GO');
-    expect(cardView(prod({ score: 6 })).verdict).toBe('MAYBE');
+    // Good numbers alone are a MAYBE now: a GO also needs the Product playbook's evidence (tests/productSignals.test.ts).
+    expect(cardView(prod()).verdict).toBe('MAYBE');
+    const u = 'https://x.com/proof', no = { seen: null, note: '', url: null };
+    const signals = { rising: { seen: true, note: '', url: u }, asking: { seen: true, note: '', url: u }, spreading: no, movers: no, ads_recent: no, peaked: no, amazon_checked: true, amazon_price: null, amazon_prime: null, amazon_url: null, ai_video: 8, ai_video_why: '', in_person: 6, in_person_why: '', brandable: 7, brandable_why: '', complaints: [] };
+    const proven = { detail: { ship_cost: 4.2, sellers: 6, card: { suppliers: [], sellers: [], gap: '', demand: [], hooks: [], film: '', first_post: '', outcome: null, confidence_pct: null, confidence_reasons: [], risks: [], missing: [], tried: [], enriched_at: null, image_urls: [], signals } } } as Partial<CardProduct>;
+    expect(cardView(prod(proven)).verdict).toBe('GO');
+    expect(cardView(prod({ ...proven, score: 6 })).verdict).toBe('MAYBE');
     expect(cardView(prod({ sell_price: 20, supplier_cost: 9 })).verdict).toBe('SKIP');
     expect(cardView(prod({ supplier_cost: 60 })).verdict).toBe('SKIP');
   });
