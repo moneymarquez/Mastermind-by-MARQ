@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import FocusLine from '../../solo/FocusLine';
+import TodaysWin from '../../solo/TodaysWin';
 import { readPins } from '../../../data/homePins';
 import type { CSSProperties, ReactNode } from 'react';
 import '../../shell/shell.css';
@@ -105,7 +107,7 @@ function DayCard({ phone, calls, goal, done, total, streak, onOpen }: { phone: b
     </section>
   );
 }
-const initials = (s: string) => s.split(/[\s.@]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '··';
+const initials = (s: string | null | undefined) => (s ?? '').split(/[\s.@]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '··';
 
 export default function HomeV2(p: HomeV2Props) {
   const phone = p.device === 'phone', desk = p.device === 'desktop';
@@ -294,7 +296,7 @@ export default function HomeV2(p: HomeV2Props) {
   if (phone) {
     return (
       <div className="mm-stagger" style={col}>
-        {head}{dayCard}{p.portalCards}{p.top}{hero}{stats}{leadCard}{attentionCard}{todayCard}{briefCard}{pinned}
+        {head}<FocusLine /><TodaysWin />{dayCard}{p.portalCards}{p.top}{hero}{stats}{leadCard}{attentionCard}{todayCard}{briefCard}{pinned}
       </div>
     );
   }
@@ -303,6 +305,8 @@ export default function HomeV2(p: HomeV2Props) {
   return (
     <div className="mm-stagger" style={{ ...col, gap: 20 }}>
       {head}
+      <FocusLine />
+      <TodaysWin />
       <div style={{ display: 'grid', gridTemplateColumns: threeColsTop ? 'minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(0, 1fr)', gap: 16 }}>{dayCard}{hero}{threeColsTop ? stats : null}</div>
       {!threeColsTop && stats}
       {p.portalCards}

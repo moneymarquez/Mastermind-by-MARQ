@@ -49,3 +49,6 @@ input::placeholder { color: rgba(23, 30, 48, .45); }
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; }
 }
+
+/* Waitlist form: placeholders readable on both the dark and light card. */
+.wl-field::placeholder { color: #8f8a7f; opacity: 1; }

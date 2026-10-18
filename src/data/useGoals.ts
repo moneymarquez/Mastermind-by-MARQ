@@ -154,6 +154,11 @@ export function useGoals() {
       auto_tracked_source: a.auto_tracked_source ?? null,
     }));
     if (stepRows.length > 0) await supabase.from('goal_steps').insert(stepRows);
+    // Brief §4.3: the path's one-off steps become Tasks linked to the goal,
+    // so finishing them moves the goal's pace bar. Daily/weekly habits stay
+    // as goal steps (the Daily Plan already schedules those).
+    const oneOffs = path.actions.filter((a: GoalAction) => !a.auto_tracked_source && !/daily|weekly/i.test(String(a.frequency ?? '')));
+    if (oneOffs.length) await supabase.from('tasks').insert(oneOffs.map((a: GoalAction) => ({ title: a.description, project: 'Personal', goal_id: goal.id, source: 'goal_path', priority: 'med', due: goal.deadline ?? null }))).then(() => {}, () => {});
 
     const today = todayStr();
     const reminderRows = path.actions

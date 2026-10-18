@@ -13,6 +13,7 @@
 // who may); the Worker only does what needs a secret: the model call, the
 // transcription, and push / SMS / email.
 import { requireUser } from '../lib/auth';
+import { senderFor } from '../lib/senders';
 import type { AuthedUser } from '../lib/auth';
 import { isMember } from '../lib/member';
 import { Sb, json, zonedNow, pushToUser } from '../lib/sb';
@@ -186,7 +187,7 @@ async function sendEmail(env: DispatchEnv, to: string, subject: string, text: st
   if (!env.RESEND_API_KEY || !env.RESEND_FROM_EMAIL) return false;
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST', headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
-    body: JSON.stringify({ from: env.RESEND_FROM_EMAIL, to, subject, text }),
+    body: JSON.stringify({ from: senderFor(env, 'dispatch'), to, subject, text }),
   }).catch(() => null);
   return !!res?.ok;
 }

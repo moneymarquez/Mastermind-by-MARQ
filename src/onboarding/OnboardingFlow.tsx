@@ -8,6 +8,9 @@ import CurationQuestions from './CurationQuestions';
 import AiNamingStep from './AiNamingStep';
 import OnboardingScreen from './OnboardingScreen';
 import PersonalizedDemo from './PersonalizedDemo';
+import TalkSetup from './TalkSetup';
+import type { ImportData } from '../data/importFormat';
+import { SOLO_LINEUP } from '../modules.config';
 import type { OnboardingAnswers, OnboardingStep } from '../data/useOnboardingProgress';
 
 interface Props {
@@ -98,6 +101,8 @@ export default function OnboardingFlow({ onComplete, onRedeemCode }: Props) {
   const { step, answers, draftModuleKeys, loading, save } = useOnboardingProgress();
   const { assistantName, saveAssistantName } = useNovaPreferences();
   const [finishing, setFinishing] = useState(false);
+  // "Set up by talking" is the main path; the questions are "Set up manually".
+  const [manual, setManual] = useState(false);
 
   if (loading) return <div style={{ minHeight: '100vh', background: 'var(--bg)' }} />;
 
@@ -119,6 +124,12 @@ export default function OnboardingFlow({ onComplete, onRedeemCode }: Props) {
     await save({ step: 'modules' });
   };
 
+  // After an import is applied, skip the questions: the AI already asked.
+  const talked = async (d: ImportData) => {
+    const top = d.goals[0];
+    await save({ step: 'ai-name', answers: { ...answers, role: answers.role ?? 'talked', ninety_day: top ? `${top.title}${top.deadline ? ` by ${top.deadline}` : ''}` : answers.ninety_day, week_win: d.tasks[0]?.title ?? answers.week_win } });
+  };
+
   const submitModules = async (keys: string[]) => {
     await save({ step: 'demo', draft_module_keys: keys });
   };
@@ -135,9 +146,10 @@ export default function OnboardingFlow({ onComplete, onRedeemCode }: Props) {
     <>
       <ProgressBar step={step} />
       <InviteCodeEntry onRedeem={onRedeemCode} />
-      {step === 'questions' && <CurationQuestions initial={answers} onComplete={submitQuestions} />}
+      {step === 'questions' && !manual && <TalkSetup onDone={(d) => void talked(d)} onManual={() => setManual(true)} />}
+      {step === 'questions' && manual && <CurationQuestions initial={answers} onComplete={submitQuestions} />}
       {step === 'ai-name' && <AiNamingStep initialName={assistantName} onComplete={submitName} />}
-      {step === 'modules' && <OnboardingScreen onComplete={submitModules} preselect={modulesForRole(answers.role)} />}
+      {step === 'modules' && <OnboardingScreen onComplete={submitModules} preselect={modulesForRole(answers.role) ?? SOLO_LINEUP} />}
       {step === 'demo' && <PersonalizedDemo assistantName={assistantName} selectedKeys={draftModuleKeys} onContinue={finish} submitting={finishing} />}
     </>
   );

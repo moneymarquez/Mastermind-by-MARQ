@@ -4,9 +4,17 @@
 // "Send back" note is read back into that worker's next prompt. Claude calls
 // go through lib/ai.ts, which enforces the per-domain daily cap.
 import { WORKERS, PLAYBOOK_MAX_CHARS, PLAYBOOK_LOAD_BUDGET } from '../../src/data/ecom';
+import { approveDomain } from './siteDomains';
 import type { Channel } from '../../src/data/ecom';
 import type { ImportRow } from '../../src/data/ecomProducts';
 import { Sb, zonedNow, addDaysIso } from './sb';
+import { loadControls, isPaused, controlDomainOf } from './controls';
+import { feedbackCorrections, addPlaybookRule } from './feedback';
+import { researchSearch } from './research';
+import { notifyStored, APPROVAL_EVENTS } from './notify';
+import { afterBrandOptions } from './visual';
+import { approvePitch, testProduct } from './ecomOctober';
+import { afterGrades, holdDuplicates, applyContentKit } from './contentOctober';
 import { ask, CapReached, spentToday, capFor } from './ai';
 import type { AskInput, AskResult } from './ai';
 import { scoutSystem, scoutUser, parseScout, BLOCKED_DOMAINS, SCOUT_CHANNELS } from './scout';
@@ -15,9 +23,10 @@ import type { BriefCtx, ProductForAnalysis, LeadLite, LeadTag, Gradable, Analysi
 import { funnelStats } from '../../src/data/mktEngine';
 import type { TouchOutcome, Venture, ScriptChannel } from '../../src/data/mktEngine';
 import { landedCost, marginPct } from '../../src/data/ecomProducts';
+import { cardView } from '../../src/data/ecomCard';
 import { trendSystem, trendUser, parseTrends, ideaSystem, ideaUser, parseIdeas, scriptBody, gradeMeasured, auditSystem, auditUser, parseAudit, analyticsSystem, analyticsUser, parseGrades, bestHours, plannerSystem as postPlannerSystem, plannerUser as postPlannerUser, parseSlots, clipSystem, clipUser, parseClipEdit, cleanSegments } from './contentWorkers';
 import { supplierSystem, supplierUser, parseSuppliers, brandSystem, brandUser, parseBrands, domainStatusFrom, storeSystem, storeUser, extractHtml, qualityGate, diagnoseFunnel, readSystem, parseRead } from './ecomWorkers';
-import type { BrandCtx, SupplierPayload, BrandOption, GateCheck, Flag } from './ecomWorkers';
+import type { BrandCtx, SupplierPayload, BrandOption } from './ecomWorkers';
 import { ruleSource, trackerSystem, trackerUser, mergeTrackerTags } from './inbound';
 import type { InboundLite, SourceTag, Source } from './inbound';
 import type { AccountLite, MeasuredPost, InspirationDraft, PostDraft, AuditPayload, GradeOut, SlotOut, PlanItemLite, EditPlan } from './contentWorkers';
@@ -30,10 +39,18 @@ export interface RunRow { id: string; worker_id: string; status: string; created
 
 /** "Start the company": one ai_workers row per worker in the spec, never
  *  resetting autonomy or enabled on a re-run; one cap row per domain. */
+/** Models earlier builds seeded as defaults; rows still on one follow the role map. */
+const RETIRED_DEFAULTS = ['claude-sonnet-5', 'claude-opus-5', 'claude-fable-5-1'];
+
 export async function ensureRoster(sb: Sb, userId: string): Promise<WorkerRow[]> {
   await sb.insert('ai_workers', WORKERS.map((w) => ({ user_id: userId, domain: w.domain, key: w.key, name: w.name, role: w.role, model: w.model })), { upsert: 'user_id,domain,key', ignore: true }).catch((e) => console.error('roster', e));
   // Keep model/role in sync with the config without touching autonomy.
-  for (const w of WORKERS) await sb.patch('ai_workers', `user_id=eq.${userId}&domain=eq.${w.domain}&key=eq.${w.key}`, { name: w.name, role: w.role, model: w.model }).catch(() => {});
+  // A model picked in Office (a per-worker override) is never reset: only
+  // rows still on a retired default move to the role model.
+  for (const w of WORKERS) {
+    await sb.patch('ai_workers', `user_id=eq.${userId}&domain=eq.${w.domain}&key=eq.${w.key}`, { name: w.name, role: w.role }).catch(() => {});
+    await sb.patch('ai_workers', `user_id=eq.${userId}&domain=eq.${w.domain}&key=eq.${w.key}&model=in.(${RETIRED_DEFAULTS.join(',')})`, { model: w.model }).catch(() => {});
+  }
   await sb.insert('ai_domain_caps', ENGINE_DOMAINS.map((d) => ({ user_id: userId, domain: d })), { upsert: 'user_id,domain', ignore: true }).catch((e) => console.error('caps', e));
   return sb.get<WorkerRow>(`ai_workers?user_id=eq.${userId}&order=domain.asc&select=*`);
 }
@@ -61,8 +78,12 @@ export async function playbooksFor(sb: Sb, userId: string, domain: string, max =
 
 /** The last ten "Send back" notes for this worker — the approvals loop. */
 export async function correctionsFor(sb: Sb, userId: string, workerId: string): Promise<string[]> {
-  const rows = await sb.get<{ my_note: string | null; title: string }>(`ai_approvals?user_id=eq.${userId}&worker_id=eq.${workerId}&status=eq.sent_back&my_note=not.is.null&order=decided_at.desc&limit=10&select=my_note,title`);
-  return rows.map((r) => `${r.my_note!.trim()} (on "${r.title}")`);
+  const [rows, thumbs] = await Promise.all([
+    sb.get<{ my_note: string | null; title: string }>(`ai_approvals?user_id=eq.${userId}&worker_id=eq.${workerId}&status=eq.sent_back&my_note=not.is.null&order=decided_at.desc&limit=10&select=my_note,title`),
+    feedbackCorrections(sb, userId, workerId),
+  ]);
+  // Send-back notes and 👎 reasons, at most ten in all.
+  return [...rows.map((r) => `${r.my_note!.trim()} (on "${r.title}")`), ...thumbs].slice(0, 10);
 }
 
 export async function alert(sb: Sb, userId: string, domain: string, severity: 'info' | 'warn' | 'urgent', kind: string, title: string, body?: string, entity?: { type: string; id: string }) {
@@ -98,8 +119,12 @@ const costDomain = (w: WorkerRow) => (w.domain === 'all' ? 'ecom' : w.domain);
 
 export async function runWorker(apiKey: string | undefined, sb: Sb, userId: string, job: Job): Promise<RunOutcome> {
   const w = await workerByKey(sb, userId, job.key);
+  // A request that was cut off (phone dropped, Worker time limit) leaves its run "running" forever. Close old ones; nothing is deleted.
+  if (w) await sb.patch('ai_worker_runs', `user_id=eq.${userId}&worker_id=eq.${w.id}&status=eq.running&created_at=lt.${new Date(Date.now() - 15 * 60000).toISOString()}`, { status: 'failed', error: 'Timed out: the request was cut off before it finished.', finished_at: new Date().toISOString() }).catch(() => {});
   if (!w) return { ok: false, error: `${job.key} is not in the roster. Open Setup → Start the company.` };
   if (!w.enabled) return { ok: false, error: `${w.name} is turned off.` };
+  // Kill switch (brief §2d): a paused domain starts nothing; queued work waits.
+  if (isPaused(await loadControls(sb, userId), controlDomainOf(w.domain))) return { ok: false, error: `${w.name} didn't start: ${w.domain === 'all' ? 'everything' : controlDomainOf(w.domain)} is paused by the kill switch.`, skipped: true };
   const domain = costDomain(w);
   const z = zonedNow(TZ);
   const [run] = await sb.insert<RunRow>('ai_worker_runs', { user_id: userId, worker_id: w.id, domain, entity_type: job.entityType ?? null, entity_id: job.entityId ?? null, input: job.input, status: 'running', started_at: new Date().toISOString(), trigger: job.trigger ?? 'manual', instructions: job.instructions ?? null });
@@ -126,6 +151,10 @@ export async function runWorker(apiKey: string | undefined, sb: Sb, userId: stri
         title: a.title.slice(0, 300), payload: { ...a.payload, instructions: job.instructions ?? null }, principle: a.principle ?? null, source_url: a.source_url ?? null, confidence: a.confidence ?? 'ai', is_money: false,
       });
       approvalId = row?.id;
+      // The approvals that matter tell Marq right away (brief §2e).
+      const ev = APPROVAL_EVENTS[a.type];
+      if (ev && row?.id) await notifyStored(sb, userId, ev.event, { title: `${ev.verb}: ${a.title.replace(/^[^:]+:\s*/, '').slice(0, 90)}`, body: typeof a.payload.summary === 'string' ? a.payload.summary.slice(0, 160) : undefined, deepLink: ev.link });
+      if (a.type === 'brand_options' && row?.id) await afterBrandOptions(sb, userId, row.id, a.payload).catch((e) => console.error('visuals', e));
     }
     await sb.patch('ai_worker_runs', `id=eq.${run.id}`, { status: 'done', finished_at: new Date().toISOString(), tokens_in: tokensIn, tokens_out: tokensOut, cost_usd: Number(cost.toFixed(5)), summary: r.summary.slice(0, 1000), output: { ...(r.output ?? {}), count: r.count ?? null, dropped: r.dropped ?? [], searches, approval_id: approvalId ?? null }, updated_at: new Date().toISOString() });
     await finishWorker('idle');
@@ -153,19 +182,36 @@ export function runScout(apiKey: string | undefined, sb: Sb, userId: string, inp
     key: 'scout', task: `Scouting ${SCOUT_CHANNELS[channel].label} (top ${count})`, input: { channel, count, instructions: input.instructions ?? null },
     instructions: input.instructions, trigger: input.trigger, entityType: 'channel',
     async execute(ctx) {
-      const res = await ctx.ask({
-        maxTokens: 9000,
-        system: scoutSystem({ ...ctx.brief, budgetNote: `${ctx.brief.budgetNote} Use at most 12 searches: a few for the channel's top products, the rest to find each product's real supplier price.` }),
-        user: scoutUser(channel, count, input.instructions),
-        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 12, blocked_domains: BLOCKED_DOMAINS }],
-      });
-      const parsed = parseScout(res.text, channel, new Date().toISOString(), { requireCosts: true });
-      if (parsed.rows.length === 0) throw new Error(`Scout returned no usable products${parsed.dropped.length ? ` (dropped: ${parsed.dropped.join('; ')})` : ''}.`);
-      const top = parsed.rows[0];
-      return {
-        summary: parsed.summary || `${parsed.rows.length} products`, count: parsed.rows.length, dropped: parsed.dropped,
-        approval: { type: 'scout_products', title: `Scout: ${parsed.rows.length} ${SCOUT_CHANNELS[channel].label} product${parsed.rows.length === 1 ? '' : 's'}`, payload: { channel, rows: parsed.rows, summary: parsed.summary, dropped: parsed.dropped, sources: res.sources.slice(0, 20) }, principle: top.detail.principle ?? null, source_url: top.source_url },
-      };
+      // Research through Parallel when it's connected; Claude formats what it
+      // found into Product Sheet rows. Otherwise Claude searches itself.
+      const r = await researchSearch(sb, userId, `Best-selling and fastest-rising products on ${SCOUT_CHANNELS[channel].label} right now: name, price, sales signals, sellers.`, [`${SCOUT_CHANNELS[channel].label} best sellers this week`, `trending products ${SCOUT_CHANNELS[channel].label} ${new Date().getFullYear()}`], 12);
+      const res = r
+        ? await ctx.ask({ maxTokens: 9000, system: scoutSystem({ ...ctx.brief, budgetNote: `${ctx.brief.budgetNote} Research is provided below — do not search.` }), user: `${scoutUser(channel, count, input.instructions)}\n\nRESEARCH (use only these sources; every product's source_url must be one of them):\n${r.brief}` })
+        : await ctx.ask({
+          maxTokens: 9000,
+          system: scoutSystem({ ...ctx.brief, budgetNote: `${ctx.brief.budgetNote} Use at most 5 searches.` }),
+          user: scoutUser(channel, count, input.instructions),
+          tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5, blocked_domains: BLOCKED_DOMAINS }],
+        });
+      if (r) res.sources.push(...r.sources);
+      const parsed = parseScout(res.text, channel, new Date().toISOString());
+      if (parsed.rows.length === 0) throw new Error(`Scout returned no usable products${parsed.dropped.length ? ` (dropped: ${parsed.dropped.join('; ')})` : ` (it answered: ${res.text.replace(/\s+/g, ' ').slice(0, 200) || 'nothing'})`}.`);
+      // Scout answers fast. Supplier Finder + Analyst then run on each find one at a time (/api/engine/enrich-next,
+      // driven by the Approvals tab) so no single request runs for minutes and gets cut off on a phone.
+      // Until a card is enriched it says so and can't be approved; blocked finds skip it.
+      const rows: ImportRow[] = parsed.rows;
+      const known = new Set((await sb.get<{ name: string }>(`ecom_products?user_id=eq.${userId}&channel=eq.${channel}&select=name`)).map((p) => p.name.trim().toLowerCase()));
+      const waiting = new Set((await sb.get<{ title: string }>(`ai_approvals?user_id=eq.${userId}&type=eq.product_card&status=eq.pending&select=title`)).map((a) => a.title.trim().toLowerCase()));
+      let made = 0, blocked = 0, skipped = 0;
+      for (const row of rows) {
+        const title = `Product: ${row.name}`.slice(0, 300);
+        if (known.has(row.name.trim().toLowerCase()) || waiting.has(title.toLowerCase())) { skipped++; continue; }
+        const v = cardView({ ...row, detail: row.detail, source_url: row.source_url ?? null } as never);
+        if (v.blocked) blocked++;
+        await sb.insert('ai_approvals', { user_id: userId, domain: ctx.domain, type: 'product_card', entity_type: 'product', entity_id: ctx.runId, worker_id: ctx.w.id, run_id: ctx.runId, title: `${title} — ${v.verdict}`.slice(0, 300), payload: { channel, row, verdict: v.verdict, summary: v.verdictWhy, instructions: input.instructions ?? null, pending_enrich: !v.blocked }, principle: row.detail.principle ?? null, source_url: row.source_url ?? null, confidence: row.confidence ?? 'estimate', is_money: false });
+        made++;
+      }
+      return { summary: `${parsed.summary || `${rows.length} products`} ${made} in Approvals${blocked ? ` (${blocked} blocked)` : ''}${skipped ? `, ${skipped} already known` : ''}.`.trim(), count: made, dropped: parsed.dropped, output: { channel, made, blocked, skipped } };
     },
   });
 }
@@ -184,7 +230,8 @@ export function runAnalyst(apiKey: string | undefined, sb: Sb, userId: string, i
     async execute(ctx) {
       const p = await productFor(sb, userId, input.productId);
       await sb.patch('ai_workers', `id=eq.${ctx.w.id}`, { current_task: `Analysing ${p.name}`.slice(0, 200) }).catch(() => {});
-      const res = await ctx.ask({ maxTokens: 3000, system: analystSystem(ctx.brief), user: analystUser(p, input.instructions) });
+      const r = await researchSearch(sb, userId, `Who buys "${p.name}", why, what they pay, complaints in reviews, and shipping/supplier costs.`, [`${p.name} reviews`, `${p.name} price supplier`], 8);
+      const res = await ctx.ask({ maxTokens: 3000, system: analystSystem(ctx.brief), user: r ? `${analystUser(p, input.instructions)}\n\nRESEARCH (cite these; never invent numbers):\n${r.brief}` : analystUser(p, input.instructions) });
       const a = parseAnalysis(res.text, p);
       const verdict = a.verdict === 'pass' ? 'passes Validate' : a.verdict === 'fail' ? `fails Validate (${a.validate!.rules.filter((r) => !r.pass).map((r) => r.name).join(', ')})` : 'needs numbers';
       return { summary: a.summary || `${p.name}: ${verdict}`, count: 1, approval: { type: 'analysis', title: `Analyst: ${p.name} — ${verdict}`, payload: { ...a }, principle: a.detail.principle ?? null, source_url: p.source_url, confidence: 'estimate', entity_type: 'product', entity_id: p.id } };
@@ -310,11 +357,11 @@ export function runScorer(apiKey: string | undefined, sb: Sb, userId: string, in
 
 // ── Content Engine workers (C2–C6) ────────────────────────────────────
 const ACCOUNT_COLS = 'id,platform,handle,owner,voice,posts_per_week_goal,followers';
-async function accountsFor(sb: Sb, userId: string, accountId?: string): Promise<AccountLite[]> {
+export async function accountsFor(sb: Sb, userId: string, accountId?: string): Promise<AccountLite[]> {
   return sb.get<AccountLite>(`social_accounts?user_id=eq.${userId}${accountId ? `&id=eq.${accountId}` : ''}&order=created_at.asc&select=${ACCOUNT_COLS}`);
 }
 /** Posts with their latest metrics row folded in. */
-async function measuredPosts(sb: Sb, userId: string, q: { accountId?: string; sinceIso?: string }): Promise<MeasuredPost[]> {
+export async function measuredPosts(sb: Sb, userId: string, q: { accountId?: string; sinceIso?: string }): Promise<MeasuredPost[]> {
   const posts = await sb.get<Omit<MeasuredPost, 'views' | 'likes' | 'comments' | 'shares' | 'saves' | 'follows'>>(`social_posts?user_id=eq.${userId}${q.accountId ? `&account_id=eq.${q.accountId}` : ''}${q.sinceIso ? `&posted_at=gte.${q.sinceIso}` : ''}&order=posted_at.asc&limit=1000&select=id,account_id,posted_at,type,hook,caption,length_sec,grade,content_item_id`);
   if (!posts.length) return [];
   const metrics: { post_id: string; captured_at: string; views: number | null; likes: number | null; comments: number | null; shares: number | null; saves: number | null; follows: number | null }[] = [];
@@ -323,7 +370,7 @@ async function measuredPosts(sb: Sb, userId: string, q: { accountId?: string; si
   for (const m of metrics) last.set(m.post_id, m);
   return posts.map((p) => { const m = last.get(p.id); return { ...p, views: m?.views ?? null, likes: m?.likes ?? null, comments: m?.comments ?? null, shares: m?.shares ?? null, saves: m?.saves ?? null, follows: m?.follows ?? null }; });
 }
-const handleOf = (a: AccountLite | undefined) => (a ? `@${a.handle}` : 'no account');
+export const handleOf = (a: AccountLite | undefined) => (a ? `@${a.handle}` : 'no account');
 
 export function runTrendResearcher(apiKey: string | undefined, sb: Sb, userId: string, input: { accountId?: string; instructions?: string | null; trigger?: Trigger }): Promise<RunOutcome> {
   return runWorker(apiKey, sb, userId, {
@@ -651,6 +698,29 @@ const now = () => new Date().toISOString();
 const chunks = <T,>(a: T[], n: number): T[][] => { const out: T[][] = []; for (let i = 0; i < a.length; i += n) out.push(a.slice(i, i + n)); return out; };
 
 export const APPLIERS: Record<string, Applier> = {
+  /** A correction Marq gave twice becomes a standing playbook rule. */
+  /** Product Pitch approved: the brand is born; Brand Lab and Supplier Finder run next (handlers/engine.ts). */
+  product_pitch: async (sb, u, raw) => approvePitch(sb, u, raw),
+  /** Buy a product site's domain: approved → a one-tap checklist step on the site (lib/siteDomains.ts). */
+  buy_domain: async (sb, u, raw) => approveDomain(sb, u, raw),
+  /** "Approve to ship": the supplier order over the threshold may be placed. */
+  supplier_order: async (sb, u, raw) => { await sb.patch('ecom_orders', `user_id=eq.${u}&brand_id=eq.${raw.brand_id}&external_id=eq.${raw.order_external_id}`, { supplier_status: 'to_place', problem: null, updated_at: now() }); return { ok: true }; },
+  content_kit: async (sb, u, raw) => applyContentKit(sb, u, raw),
+  playbook_rule: async (sb, u, raw) => addPlaybookRule(sb, u, String(raw.playbook), String(raw.domain ?? 'all'), String(raw.rule), 'Approved: the same correction twice'),
+
+  /** "Approve to test" on a Scout find: it joins the sheet, then runs the same pipeline as an approved pitch. Blocked or number-less finds can't be approved. */
+  product_card: async (sb, u, p) => {
+    const row = p.row as ImportRow | undefined;
+    if (!row) throw new Error('The approval has no product.');
+    const v = cardView({ ...row, source_url: row.source_url ?? null } as never);
+    if (v.blocked) throw new Error(`Blocked: ${v.blocked}`);
+    if (!v.canApprove) throw new Error('No sell price or supplier cost yet. Tap "Find the missing numbers" first.');
+    await importScoutRows(sb, u, [row]);
+    const [prod] = await sb.get<{ id: string }>(`ecom_products?user_id=eq.${u}&channel=eq.${row.channel}&name=eq.${encodeURIComponent(row.name)}&select=id&limit=1`);
+    if (!prod) throw new Error('The product could not be saved to the sheet.');
+    const t = await testProduct(sb, u, prod.id);
+    return { brand_id: t.brand_id, product_id: prod.id, note: t.note };
+  },
   scout_products: async (sb, u, p) => importScoutRows(sb, u, (p.rows ?? []) as ImportRow[]),
 
   /** Fills the product's drawer fields and records the Validate verdict.
@@ -743,7 +813,9 @@ export const APPLIERS: Record<string, Applier> = {
       await sb.patch('social_posts', `id=eq.${i.post_id}&user_id=eq.${u}`, { grade: i.grade, grade_note: note, updated_at: now() });
       if (i.content_item_id) await sb.patch('content_items', `id=eq.${i.content_item_id}&user_id=eq.${u}`, { grade: i.grade, grade_note: note, updated_at: now() }).catch(() => {});
     }
-    return { graded: items.length };
+    // The loop: breakouts become "do more like this" briefs, flops get a reason.
+    const loop = await afterGrades(sb, u, items).catch(() => ({ briefs: 0, flops: 0 }));
+    return { graded: items.length, ...loop };
   },
 
   /** Times and captions land on each post, and every post on an Instagram
@@ -759,7 +831,10 @@ export const APPLIERS: Record<string, Applier> = {
       await sb.patch('content_items', `id=eq.${s.item_id}&user_id=eq.${u}&status=neq.posted`, { scheduled_for: s.scheduled_for, scheduled_time: s.scheduled_time, caption: s.caption, hashtags: s.hashtags || null, ...(q ? { publish_status: 'queued', publish_error: null, publish_ref: null } : {}), updated_at: now() });
       if (q) queued++;
     }
-    return { scheduled: slots.length, queued };
+    // No identical caption + video on two accounts the same day.
+    let held = 0;
+    for (const day of [...new Set(slots.map((s) => s.scheduled_for))]) held += await holdDuplicates(sb, u, day).catch(() => 0);
+    return { scheduled: slots.length, queued: queued - held, held };
   },
 
   /** The picked supplier fills step 4, every option is saved on the

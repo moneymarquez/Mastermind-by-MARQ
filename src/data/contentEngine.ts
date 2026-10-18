@@ -13,13 +13,14 @@ export type AccountHealth = 'new' | 'growing' | 'steady' | 'quiet' | 'declining'
 
 export interface SocialAccount {
   id: string; platform: Platform; handle: string; display_name: string | null; avatar_url: string | null; owner: Owner;
-  brand_id: string | null; client_id: string | null; voice: string | null; posts_per_week_goal: number; connected: boolean; followers: number | null;
+  brand_id: string | null; client_id: string | null; voice: string | null; posts_per_week_goal: number; connected: boolean; followers: number | null; live_posting?: boolean; profile?: Record<string, unknown>; profile_draft?: Record<string, unknown> | null; profile_synced_at?: string | null;
   created_at: string; updated_at: string;
 }
 export interface AccountSnapshot { id: string; account_id: string; captured_at: string; followers: number | null; avg_views: number | null; source: 'manual' | 'api' }
 export interface SocialPost {
   id: string; account_id: string; external_id: string | null; url: string | null; type: Format; caption: string | null; hook: string | null; format: string | null;
   length_sec: number | null; thumbnail_url: string | null; posted_at: string; content_item_id: string | null; created_at: string; updated_at: string;
+  flop_reason?: string | null; pulled_at?: string | null;
   /** Set by the Analytics worker (C5) when its grades are approved. */
   grade?: number | null; grade_note?: string | null;
 }
@@ -42,6 +43,7 @@ export type ClipStatus = 'raw' | 'editing' | 'proposed' | 'approved' | 'sent_bac
 export interface Clip {
   id: string; content_item_id: string | null; account_id: string | null; storage_path: string | null; file_name: string | null; duration_s: number | null;
   transcript: string | null; segments: { start: number; end: number; text: string }[] | null; edit_plan: ClipPlan | null; status: ClipStatus; notes: string | null; created_at: string; updated_at: string;
+  render_status?: string | null; render_error?: string | null; rendered_path?: string | null;
 }
 export interface ClipPlan {
   hook: { start: number; end: number; text: string; why: string }; cuts: { start: number; end: number; why: string }[]; captions: { start: number; end: number; text: string }[];

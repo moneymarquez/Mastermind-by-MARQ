@@ -38,3 +38,46 @@
 @keyframes mmSheetUp { from { transform: translateY(100%); } to { transform: none; } }
 /* Sheet content scrolls; its rows never shrink to fit. */
 .mm-sheet-body > * { flex-shrink: 0; }
+
+/* ── October design pass (brief Phase 6) ─────────────────────────────
+   Depth, texture and motion through tokens, so it reaches every module
+   in light and dark without forking a theme. Restraint: no gradient
+   washes, one accent, motion only on state changes. */
+:root {
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --card-elev: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 1px 2px rgba(0, 0, 0, 0.25);
+  --card-elev-hover: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 24px rgba(0, 0, 0, 0.28);
+  --press: scale(0.97);
+}
+:root[data-theme="light"] {
+  --card-elev: 0 1px 0 rgba(16, 18, 40, 0.04), 0 1px 3px rgba(16, 18, 40, 0.06);
+  --card-elev-hover: 0 2px 4px rgba(16, 18, 40, 0.05), 0 12px 28px rgba(16, 18, 40, 0.08);
+}
+.mm-card { box-shadow: var(--card-elev); transition: box-shadow .25s var(--ease-out), transform .25s var(--ease-out); }
+.mm-card--hero { box-shadow: var(--card-elev-hover); border-color: color-mix(in srgb, var(--accent) 28%, var(--border)) !important; }
+.mm-btn { transition: transform .12s var(--ease-out), background-color .15s, border-color .15s, box-shadow .15s; }
+.mm-btn:not(:disabled):active { transform: var(--press); }
+.mm-btn:not(:disabled):hover { border-color: color-mix(in srgb, var(--text) 22%, var(--border)); }
+.mm-btn--primary { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 1px 2px rgba(0, 0, 0, 0.2); }
+.mm-btn:disabled { opacity: .5; cursor: default; }
+[role="tab"] { transition: background-color .18s var(--ease-out), color .18s, border-color .18s; }
+
+/* Progress that visibly moves. */
+.mm-progress { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.mm-progress > span { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .7s var(--ease-spring); }
+.mm-progress--good > span { background: var(--success); }
+.mm-progress--warn > span { background: var(--warning); }
+
+/* The completion moment: a check that pops where you tapped. */
+.mm-burst { position: fixed; z-index: 400; pointer-events: none; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; background: var(--success); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; animation: mmBurst .7s var(--ease-spring) forwards; box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 50%, transparent); }
+@keyframes mmBurst { 0% { transform: scale(.3); opacity: 0; box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 55%, transparent); } 35% { transform: scale(1.1); opacity: 1; } 70% { transform: scale(1); box-shadow: 0 0 0 18px transparent; } 100% { transform: scale(.9) translateY(-14px); opacity: 0; } }
+.mm-streak { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--text); background: color-mix(in srgb, var(--warning) 16%, var(--surface)); border: 1px solid color-mix(in srgb, var(--warning) 35%, var(--border)); font-variant-numeric: tabular-nums; }
+.mm-win { animation: mmWinIn .6s var(--ease-out) both; }
+@keyframes mmWinIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .mm-card, .mm-btn, [role="tab"], .mm-progress > span { transition: none !important; }
+  .mm-burst, .mm-win { animation: none !important; }
+  .mm-burst { display: none; }
+}

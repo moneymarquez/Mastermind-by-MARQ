@@ -154,6 +154,7 @@ export default function GrantAccessV2() {
     await load();
   };
 
+  const teamsCard = <TeamsCard />;
   const comp = (
     <Card title="Give someone the whole app, free">
       <p style={sub}>Their own login and data, every module except Scaling, no subscription. They need to have signed up already; this finds their account by email.</p>
@@ -202,9 +203,34 @@ export default function GrantAccessV2() {
       {two ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 16, alignItems: 'start' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>{comp}</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>{codeCard}{clients}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>{codeCard}{teamsCard}{clients}</div>
         </div>
-      ) : <>{comp}{codeCard}{clients}</>}
+      ) : <>{comp}{codeCard}{teamsCard}{clients}</>}
     </Page>
+  );
+}
+
+/** Teams entitlement (brief §4.1): Dispatch and Call Recordings. Turning it
+ *  off hides those modules; their data stays. */
+function TeamsCard() {
+  const [rows, setRows] = useState<{ user_id: string; email: string; teams: boolean; note: string | null }[]>([]);
+  const [email, setEmail] = useState('');
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const load = useCallback(async () => { const { data, error: e } = await supabase.rpc('list_entitlements'); if (e) { setErr(e.message.includes('function') ? 'Needs the October migration (schema_124).' : e.message); return; } setRows((data ?? []) as typeof rows); }, []);
+  useEffect(() => { void load(); }, [load]);
+  const set = async (target: string, on: boolean) => { setBusy(true); setErr(null); const { error: e } = await supabase.rpc('set_teams', { target_email: target, on_off: on }); setBusy(false); if (e) setErr(e.message.includes('No account') ? 'No account with that email yet.' : e.message); else { setEmail(''); await load(); } };
+  const on = rows.filter((r) => r.teams);
+  return (
+    <Card title="Teams" meta="Dispatch + Call Recordings">
+      <p style={sub}>Team features aren't in solo Masterminds. Turn Teams on for an account (James King at APHS has it) and they get Dispatch and Call Recordings. Turning it off hides them; nothing is deleted.</p>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Their email" aria-label="Teams email" style={{ ...field, flex: '1 1 200px', width: 'auto' }} />
+        <button className="mm-btn mm-btn--primary" style={{ height: 44 }} disabled={busy || !email.trim()} onClick={() => void set(email.trim(), true)}>Turn on Teams</button>
+      </div>
+      {err && <span style={{ fontSize: 13.5, color: 'var(--danger)' }}>{err}</span>}
+      {on.length ? <div>{on.map((r, i) => <Person key={r.user_id} first={i === 0} email={r.email} tone="good" line={r.note ?? 'Teams'} action={<button className="mm-btn" style={{ height: 32, fontSize: 13 }} disabled={busy} onClick={async () => { if (await askConfirm(`Turn Teams off for ${r.email}? Dispatch and Call Recordings hide; their data stays.`)) void set(r.email, false); }}>Turn off</button>} />)}</div>
+        : !err && <span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>No Teams accounts yet.</span>}
+    </Card>
   );
 }

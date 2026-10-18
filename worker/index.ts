@@ -15,6 +15,12 @@
 // been removed from the repo — nothing in this app depends on Netlify
 // anymore. The Netlify site itself (DNS, the hosted deploy) is an
 // account-level cleanup outside this repo's scope.
+import { serveMedia } from './lib/socialMedia';
+import { runSocialSyncTick } from './lib/socialSync';
+import { leadEnginesRoute, runEnginesTick } from './handlers/leadEngines';
+import type { EnginesEnv } from './handlers/leadEngines';
+import { outreachRoute, bookRoute, runOutreachTick } from './handlers/outreach';
+import type { OutreachRouteEnv } from './handlers/outreach';
 import { saveBrokerKeys, brokerKeysStatus } from './handlers/broker-keys';
 import { stocksAccount } from './handlers/stocks-account';
 import { runStocksBot } from './handlers/stocks-bot';
@@ -44,6 +50,18 @@ import type { PushSubscriptionEnv } from './handlers/push-subscription';
 import { runMorningDigest, digestTest, digestStatus, digestReply } from './handlers/digest';
 import { runOrchestratorTick } from './lib/orchestrator';
 import { runPublisherTick } from './lib/publisher';
+import { runFlagsTick } from './lib/flags';
+import { setResearchEnv } from './lib/research';
+import { setNotifyEnv } from './lib/notify';
+import { setVisualEnv } from './lib/visual';
+import { hqRoute } from './handlers/hq';
+import type { HqEnv } from './handlers/hq';
+import { smsInbound, smsSettingsRoute, smsOptin } from './handlers/sms';
+import { shopifyWebhook, ecomRoute, siteBeacon } from './handlers/ecom';
+import { siteConfig, waitlistJoin, waitlistAdmin } from './handlers/waitlist';
+import { couponsRoute } from './handlers/coupons';
+import type { EcomEnv } from './handlers/ecom';
+import type { SmsEnv } from './handlers/sms';
 import type { DigestEnv } from './handlers/digest';
 import { engineRoute } from './handlers/engine';
 import { setupRoute } from './handlers/setup';
@@ -55,17 +73,26 @@ import type { ContentEnv } from './handlers/content';
 import { inboundPost, runInboundWaitCheck } from './handlers/inbound';
 import { inboxReply } from './handlers/inbox';
 import type { InboxEnv } from './handlers/inbox';
-import { contentTranscribe } from './handlers/content';
+import { contentTranscribe, contentRoute } from './handlers/content';
+import { soloRoute } from './handlers/solo';
+import { madebyRoute } from './handlers/madeby';
+import type { MadebyRouteEnv } from './handlers/madeby';
+import { runCommsTick, runLedgerDaily } from './lib/madeby';
+import type { SoloEnv } from './handlers/solo';
+import { runSoloTick } from './lib/solo';
+import { Sb as SbClient } from './lib/sb';
+import type { ContentOctEnv } from './handlers/content';
 import { dispatchExtract, dispatchTranscribe, dispatchNotify, dispatchNudge, dispatchInvite, dispatchJoin } from './handlers/dispatch';
 import { accountRoute } from './handlers/account';
 import type { SetupEnv } from './handlers/setup';
 
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv, DispatchEnv, ContentEnv, InboxEnv {
+interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv, DispatchEnv, ContentEnv, InboxEnv, HqEnv, SmsEnv, EcomEnv, ContentOctEnv, SoloEnv, MadebyRouteEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
 }
 
 export default {
   async fetch(request: Request, env: Env, ctx?: { waitUntil: (promise: Promise<unknown>) => void }): Promise<Response> {
+    setResearchEnv(env); setNotifyEnv(env); setVisualEnv(env);
     const url = new URL(request.url);
 
     if (url.pathname === '/api/save-broker-keys') return saveBrokerKeys(request, env);
@@ -109,6 +136,29 @@ export default {
     if (url.pathname === '/api/digest/status') return digestStatus(request, env);
     if (url.pathname === '/api/digest/reply') return digestReply(request, env);
 
+    const hqMatch = url.pathname.match(/^\/api\/hq\/([a-z-]+)$/);
+    if (hqMatch) return hqRoute(request, env, hqMatch[1]);
+    if (url.pathname === '/api/sms/optin') return smsOptin(request, env);
+    if (url.pathname === '/api/sms/inbound') return smsInbound(request, env);
+    if (url.pathname === '/api/webhooks/shopify') return shopifyWebhook(request, env);
+    if (url.pathname === '/api/ecom/beacon') return siteBeacon(request, env);
+    if (url.pathname === '/api/site/config') return siteConfig(request, env);
+    if (url.pathname.startsWith('/api/media/') && request.method === 'GET') return serveMedia(env as never, url);
+    const cpMatch = url.pathname.match(/^\/api\/coupons\/(status|create|push|toggle|stats)$/);
+    if (cpMatch) return couponsRoute(request, env, cpMatch[1]);
+    if (url.pathname === '/api/waitlist') return waitlistJoin(request, env, ctx);
+    const wlMatch = url.pathname.match(/^\/api\/waitlist\/(mode|sync|launch)$/);
+    if (wlMatch) return waitlistAdmin(request, env, wlMatch[1]);
+    const ecomMatch = url.pathname.match(/^\/api\/ecom\/([a-z-]+)$/);
+    if (ecomMatch) return ecomRoute(request, env, ecomMatch[1]);
+    if (url.pathname === '/api/sms/settings') return smsSettingsRoute(request, env);
+
+    const outreachMatch = url.pathname.match(/^\/api\/outreach\/([a-z-]+)$/);
+    if (outreachMatch) return outreachRoute(request, env as unknown as OutreachRouteEnv, outreachMatch[1]);
+    const bookMatch = url.pathname.match(/^\/api\/book\/([a-z-]+)$/);
+    if (bookMatch) return bookRoute(request, env as unknown as OutreachRouteEnv, bookMatch[1]);
+    const enginesMatch = url.pathname.match(/^\/api\/engines\/([a-z-]+)$/);
+    if (enginesMatch) return leadEnginesRoute(request, env as unknown as EnginesEnv, enginesMatch[1]);
     const engineMatch = url.pathname.match(/^\/api\/engine\/([a-z-]+)$/);
     if (engineMatch) return engineRoute(request, env, engineMatch[1], ctx);
     const setupMatch = url.pathname.match(/^\/api\/(?:setup|connect)\/([a-z/-]+)$/);
@@ -120,6 +170,12 @@ export default {
     if (url.pathname === '/api/inbox/reply') return inboxReply(request, env);
     if (url.pathname.startsWith('/api/inbound/')) return inboundPost(request, env, url.pathname.slice('/api/inbound/'.length));
     if (url.pathname === '/api/content/transcribe') return contentTranscribe(request, env);
+    const madebyMatch = url.pathname.match(/^\/api\/(comms|contracts|invoices|marketing)\/([a-z-]+)$/);
+    if (madebyMatch && !(madebyMatch[1] === 'marketing' && madebyMatch[2] === 'visits')) return madebyRoute(request, env, madebyMatch[1], madebyMatch[2]);
+    const soloMatch = url.pathname.match(/^\/api\/solo\/([a-z-]+)$/);
+    if (soloMatch) return soloRoute(request, env, soloMatch[1]);
+    const contentMatch = url.pathname.match(/^\/api\/content\/([a-z-]+)$/);
+    if (contentMatch) return contentRoute(request, env, contentMatch[1]);
     if (url.pathname === '/api/dispatch/extract') return dispatchExtract(request, env);
     if (url.pathname === '/api/dispatch/transcribe') return dispatchTranscribe(request, env);
     if (url.pathname === '/api/dispatch/notify') return dispatchNotify(request, env);
@@ -156,17 +212,25 @@ export default {
   // runStocksBot itself; this only decides which handler a given firing
   // belongs to.
   async scheduled(event: { cron: string }, env: Env, ctx: { waitUntil: (promise: Promise<unknown>) => void }): Promise<void> {
+    setResearchEnv(env); setNotifyEnv(env); setVisualEnv(env);
     if (event.cron === '*/5 * * * *') {
       ctx.waitUntil(runShiftReminders(env));
       ctx.waitUntil(runOrchestratorTick(env));
       ctx.waitUntil(runInboundWaitCheck(env));
       ctx.waitUntil(runPublisherTick(env));
+      ctx.waitUntil(runFlagsTick(env));
+      if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runSocialSyncTick(env as never, new SbClient(env)).catch((e) => console.error('social sync tick', e)));
+      if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runEnginesTick(env as unknown as EnginesEnv, new SbClient(env)).catch((e) => console.error('engines tick', e)));
+      if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runOutreachTick(env as unknown as OutreachRouteEnv, new SbClient(env)).catch((e) => console.error('outreach tick', e)));
+      if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runSoloTick(env, new SbClient(env)).catch((e) => console.error('solo tick', e)));
+      if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runCommsTick(env, new SbClient(env)).catch((e) => console.error('comms tick', e)));
       return;
     }
     ctx.waitUntil(runStocksBot(env));
     ctx.waitUntil(runDailyPlan(env));
     ctx.waitUntil(runReminders(env));
     ctx.waitUntil(runMorningDigest(env));
+    if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runLedgerDaily(new SbClient(env)).catch((e) => console.error('ledger daily', e)));
   },
 
   // Cloudflare Email Routing → this Worker. Each address on

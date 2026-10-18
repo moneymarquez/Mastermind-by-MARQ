@@ -41,6 +41,7 @@ export const INBOX_DOMAINS: InboxDomain[] = [
       { local: 'billing', label: 'Billing', purpose: 'Subscription + payment questions' },
       { local: 'invoice', label: 'Invoice', purpose: 'Invoice replies + receipts' },
       { local: 'privacy', label: 'Privacy', purpose: 'Privacy / data requests' },
+      { local: 'accounts', label: 'Accounts', purpose: 'Sign-ups, receipts + renewals for the tools the business pays for' },
     ],
   },
   {

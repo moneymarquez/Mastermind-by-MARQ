@@ -19,8 +19,12 @@ import { runWorker, alert, TZ } from './engine';
 import type { RunOutcome, Trigger } from './engine';
 import { isDue, captionFor, contentTypeFor, isVideoType, chunkPlan } from './publishRules';
 
-export interface PublishEnv extends SbEnv, VaultEnv { INSTAGRAM_APP_SECRET?: string; TIKTOK_CLIENT_KEY?: string; TIKTOK_CLIENT_SECRET?: string }
+import { isDryRun, dryRunId } from './dryRun';
+import type { DryRunEnv } from './dryRun';
 
+export interface PublishEnv extends SbEnv, VaultEnv, DryRunEnv { INSTAGRAM_APP_SECRET?: string; TIKTOK_CLIENT_KEY?: string; TIKTOK_CLIENT_SECRET?: string }
+
+import { igProvider, ttProvider } from './socialSync';
 const IG = 'https://graph.instagram.com';
 const TT = 'https://open.tiktokapis.com/v2';
 const BUCKET = 'content-clips';
@@ -30,7 +34,7 @@ const PROCESSING_GIVE_UP_MIN = 60;
 export const PUBLISH_PLATFORMS = ['instagram', 'tiktok'] as const;
 
 interface Item { id: string; user_id: string; account_id: string | null; concept: string; caption: string | null; hashtags: string | null; hooks: string[] | null; format: string; thumbnail_url: string | null; scheduled_for: string | null; scheduled_time: string | null; publish_status: string | null; publish_ref: string | null; publish_started_at: string | null }
-interface Account { id: string; platform: string; handle: string; daily_post_cap: number | null }
+interface Account { id: string; platform: string; handle: string; daily_post_cap: number | null; live_posting?: boolean }
 interface Media { url: string; contentType: string; source: string }
 const ITEM_COLS = 'id,user_id,account_id,concept,caption,hashtags,hooks,format,thumbnail_url,scheduled_for,scheduled_time,publish_status,publish_ref,publish_started_at';
 
@@ -40,8 +44,10 @@ const now = () => new Date().toISOString();
 const minutesSince = (iso: string | null) => (iso ? (Date.now() - new Date(iso).getTime()) / 60000 : Infinity);
 
 // ── Tokens ────────────────────────────────────────────────────────────
-async function igToken(env: PublishEnv, sb: Sb, u: string): Promise<Token> {
-  const tok = await loadToken(env, sb, u, 'instagram');
+async function igToken(env: PublishEnv, sb: Sb, u: string, handle?: string): Promise<Token> {
+  // The account's own connection first; the single older connection is the fallback.
+  const provider = handle && (await loadToken(env, sb, u, igProvider(handle)).catch(() => null)) ? igProvider(handle) : 'instagram';
+  const tok = await loadToken(env, sb, u, provider);
   if (!tok?.token) throw new PublishError('Instagram isn\'t connected. Setup → Accounts → Instagram → Connect.');
   if (!hasScope(tok, 'instagram_business_content_publish')) throw new PublishError('Instagram is connected without posting permission. Setup → Accounts → Instagram → Disconnect, then Connect again to grant "content publish".');
   // Long-lived tokens last 60 days; refresh weekly so they never lapse.
@@ -50,20 +56,21 @@ async function igToken(env: PublishEnv, sb: Sb, u: string): Promise<Token> {
     const j = res ? ((await res.json().catch(() => ({}))) as { access_token?: string; expires_in?: number }) : {};
     if (j.access_token) {
       Object.assign(tok, { token: j.access_token, refreshed_at: now(), expires_at: new Date(Date.now() + (j.expires_in ?? 0) * 1000).toISOString() });
-      await saveToken(env, sb, u, 'instagram', tok, { refreshed: now(), scope: tok.scope });
+      await saveToken(env, sb, u, provider, tok, { refreshed: now(), scope: tok.scope });
     }
   }
   if (!tok.user_id) {
     const me = (await (await fetch(`${IG}/me?fields=user_id&access_token=${encodeURIComponent(tok.token)}`)).json().catch(() => ({}))) as { user_id?: string | number; id?: string };
     tok.user_id = String(me.user_id ?? me.id ?? '');
     if (!tok.user_id) throw new PublishError('Instagram didn\'t say which account this token is for. Reconnect Instagram in Setup.');
-    await saveToken(env, sb, u, 'instagram', tok, { scope: tok.scope });
+    await saveToken(env, sb, u, provider, tok, { scope: tok.scope });
   }
   return tok;
 }
 
-async function tiktokToken(env: PublishEnv, sb: Sb, u: string): Promise<Token> {
-  const tok = await loadToken(env, sb, u, 'tiktok');
+async function tiktokToken(env: PublishEnv, sb: Sb, u: string, handle?: string): Promise<Token> {
+  const provider = handle && (await loadToken(env, sb, u, ttProvider(handle)).catch(() => null)) ? ttProvider(handle) : 'tiktok';
+  const tok = await loadToken(env, sb, u, provider);
   if (!tok?.token) throw new PublishError('TikTok isn\'t connected. Setup → Accounts → TikTok → Connect.');
   if (!hasScope(tok, 'video.publish')) throw new PublishError('TikTok is connected without posting permission. Setup → Accounts → TikTok → Disconnect, then Connect again to grant "video.publish".');
   // Access tokens last 24 hours; the refresh token a year.
@@ -73,7 +80,7 @@ async function tiktokToken(env: PublishEnv, sb: Sb, u: string): Promise<Token> {
     const j = (await res.json().catch(() => ({}))) as { access_token?: string; refresh_token?: string; expires_in?: number; scope?: string; error_description?: string; error?: string };
     if (!j.access_token) throw new PublishError(`TikTok refused to renew the login: ${j.error_description ?? j.error ?? res.status}. Reconnect TikTok in Setup.`);
     Object.assign(tok, { token: j.access_token, refresh_token: j.refresh_token ?? tok.refresh_token, scope: j.scope ?? tok.scope, expires_at: new Date(Date.now() + (j.expires_in ?? 86400) * 1000).toISOString() });
-    await saveToken(env, sb, u, 'tiktok', tok, { refreshed: now(), scope: tok.scope });
+    await saveToken(env, sb, u, provider, tok, { refreshed: now(), scope: tok.scope });
   }
   return tok;
 }
@@ -90,7 +97,12 @@ async function signedUrl(env: PublishEnv, path: string, seconds = 86400): Promis
 /** The newest clip on the post: a rendered edit if one exists, otherwise
  *  the uploaded file. An image post with a thumbnail uses that. */
 async function mediaFor(env: PublishEnv, sb: Sb, item: Item): Promise<Media> {
-  const clips = await sb.get<{ storage_path: string | null; edited_url: string | null; file_name: string | null; edit_plan: unknown }>(`content_clips?content_item_id=eq.${item.id}&user_id=eq.${item.user_id}&order=updated_at.desc&select=storage_path,edited_url,file_name,edit_plan`);
+  let clips: { storage_path: string | null; edited_url: string | null; file_name: string | null; edit_plan: unknown; rendered_path?: string | null }[];
+  try { clips = await sb.get(`content_clips?content_item_id=eq.${item.id}&user_id=eq.${item.user_id}&order=updated_at.desc&select=storage_path,edited_url,file_name,edit_plan,rendered_path`); }
+  catch { clips = await sb.get(`content_clips?content_item_id=eq.${item.id}&user_id=eq.${item.user_id}&order=updated_at.desc&select=storage_path,edited_url,file_name,edit_plan`); }
+  // A file the render service cut from the approved plan beats everything.
+  const rendered = clips.find((c) => c.rendered_path);
+  if (rendered) return { url: await signedUrl(env, rendered.rendered_path!), contentType: 'video/mp4', source: 'rendered edit' };
   const edited = clips.find((c) => /^https:\/\//.test(c.edited_url ?? ''));
   if (edited) return { url: edited.edited_url!, contentType: contentTypeFor(edited.edited_url!), source: 'edited clip' };
   const raw = clips.find((c) => c.storage_path);
@@ -113,7 +125,7 @@ async function igCreate(tok: Token, media: Media, caption: string): Promise<stri
   return j.id;
 }
 /** FINISHED → publish it. IN_PROGRESS → come back. ERROR/EXPIRED → fail. */
-async function igAdvance(tok: Token, containerId: string): Promise<{ done: false } | { done: true; id: string; url: string | null }> {
+async function igAdvance(tok: Token, containerId: string): Promise<{ done: false } | { done: true; id: string; url: string | null; thumb?: string | null }> {
   const res = await fetch(`${IG}/${containerId}?fields=status_code,status&access_token=${encodeURIComponent(tok.token)}`);
   const s = (await res.json().catch(() => ({}))) as IgErr & { status_code?: string; status?: string };
   if (!res.ok) throw new PublishError(igErr(s, res.status));
@@ -122,8 +134,8 @@ async function igAdvance(tok: Token, containerId: string): Promise<{ done: false
   const pub = await fetch(`${IG}/${tok.user_id}/media_publish`, { method: 'POST', body: new URLSearchParams({ creation_id: containerId, access_token: tok.token }) });
   const pj = (await pub.json().catch(() => ({}))) as IgErr & { id?: string };
   if (!pj.id) throw new PublishError(igErr(pj, pub.status));
-  const link = (await (await fetch(`${IG}/${pj.id}?fields=permalink&access_token=${encodeURIComponent(tok.token)}`)).json().catch(() => ({}))) as { permalink?: string };
-  return { done: true, id: pj.id, url: link.permalink ?? null };
+  const link = (await (await fetch(`${IG}/${pj.id}?fields=permalink,media_type,media_url,thumbnail_url&access_token=${encodeURIComponent(tok.token)}`)).json().catch(() => ({}))) as { permalink?: string; media_type?: string; media_url?: string; thumbnail_url?: string };
+  return { done: true, id: pj.id, url: link.permalink ?? null, thumb: link.thumbnail_url ?? (link.media_type === 'IMAGE' ? link.media_url ?? null : null) };
 }
 
 // ── TikTok ────────────────────────────────────────────────────────────
@@ -191,9 +203,9 @@ async function markFailed(sb: Sb, item: Item, acct: Account | null, msg: string,
   await alert(sb, item.user_id, 'content', 'warn', 'publish_failed', `Not posted: ${item.concept.slice(0, 80)}${acct ? ` (@${acct.handle} on ${acct.platform})` : ''}`, msg, { type: 'content_item', id: item.id });
 }
 
-async function markPublished(sb: Sb, item: Item, acct: Account, res: { id: string; url: string | null }, logId: string | null) {
+async function markPublished(sb: Sb, item: Item, acct: Account, res: { id: string; url: string | null; thumb?: string | null }, logId: string | null) {
   const at = now();
-  const [post] = await sb.insert<{ id: string }>('social_posts', { user_id: item.user_id, account_id: acct.id, external_id: res.id, url: res.url, type: acct.platform === 'tiktok' ? 'video' : item.format === 'image' ? 'image' : 'reel', caption: item.caption, hook: item.hooks?.[0] ?? null, format: item.format, posted_at: at, content_item_id: item.id }).catch(() => [] as { id: string }[]);
+  const [post] = await sb.insert<{ id: string }>('social_posts', { user_id: item.user_id, account_id: acct.id, external_id: res.id, url: res.url, type: acct.platform === 'tiktok' ? 'video' : item.format === 'image' ? 'image' : 'reel', caption: item.caption, hook: item.hooks?.[0] ?? null, format: item.format, posted_at: at, content_item_id: item.id, thumbnail_url: res.thumb ?? null }).catch(() => [] as { id: string }[]);
   await sb.patch('content_items', `id=eq.${item.id}`, { status: 'posted', posted_post_id: post?.id ?? null, publish_status: 'published', published_at: at, external_post_id: res.id, publish_url: res.url, publish_error: null, updated_at: at });
   if (logId) await sb.patch('content_publish_log', `id=eq.${logId}`, { status: 'published', external_id: res.id, url: res.url, updated_at: at }).catch(() => {});
 }
@@ -221,10 +233,13 @@ async function startOne(env: PublishEnv, sb: Sb, item: Item, acct: Account | nul
   try {
     const media = await mediaFor(env, sb, item);
     logId = await logRow(sb, item, acct, date, 'publishing', { media_source: media.source });
+    // DRY_RUN: everything up to the platform call ran for real; the post itself is simulated.
+    // An account switched to live posting (Content → Accounts) posts for real even while the rest of the app is in test mode.
+    if (isDryRun(env) && !acct.live_posting) { await markPublished(sb, item, acct, { id: dryRunId(acct.platform), url: null }, logId); notes.push('dry run — nothing was posted'); return 'published'; }
     const caption = captionFor(item.caption, item.hashtags);
     let ref: string;
-    if (acct.platform === 'instagram') ref = await igCreate(await igToken(env, sb, item.user_id), media, caption);
-    else { const r = await ttStart(await tiktokToken(env, sb, item.user_id), media, caption); ref = r.publishId; if (r.privacy !== 'PUBLIC_TO_EVERYONE') notes.push(`TikTok only allowed a ${r.privacy.toLowerCase().replace(/_/g, ' ')} post (the app isn't through TikTok's audit yet)`); }
+    if (acct.platform === 'instagram') ref = await igCreate(await igToken(env, sb, item.user_id, acct.handle), media, caption);
+    else { const r = await ttStart(await tiktokToken(env, sb, item.user_id, acct.handle), media, caption); ref = r.publishId; if (r.privacy !== 'PUBLIC_TO_EVERYONE') notes.push(`TikTok only allowed a ${r.privacy.toLowerCase().replace(/_/g, ' ')} post (the app isn't through TikTok's audit yet)`); }
     await sb.patch('content_items', `id=eq.${item.id}`, { publish_status: 'processing', publish_ref: ref, updated_at: now() });
     if (logId) await sb.patch('content_publish_log', `id=eq.${logId}`, { status: 'processing', updated_at: now() });
     if (media.source.includes('aren\'t rendered')) notes.push(`"${item.concept.slice(0, 40)}" went out as the uploaded clip`);
@@ -242,7 +257,7 @@ async function advanceOne(env: PublishEnv, sb: Sb, item: Item, acct: Account, lo
   try {
     for (let i = 0; i < tries; i++) {
       if (i) await new Promise((r) => setTimeout(r, 4000));
-      const r = acct.platform === 'instagram' ? await igAdvance(await igToken(env, sb, item.user_id), item.publish_ref!) : await ttAdvance(await tiktokToken(env, sb, item.user_id), item.publish_ref!, acct.handle);
+      const r = acct.platform === 'instagram' ? await igAdvance(await igToken(env, sb, item.user_id, acct.handle), item.publish_ref!) : await ttAdvance(await tiktokToken(env, sb, item.user_id, acct.handle), item.publish_ref!, acct.handle);
       if (r.done) { await markPublished(sb, item, acct, r, logId ?? await logFor(sb, item)); return 'published'; }
     }
     if (minutesSince(item.publish_started_at) > PROCESSING_GIVE_UP_MIN) throw new PublishError(`${acct.platform === 'instagram' ? 'Instagram' : 'TikTok'} was still processing the video after an hour, so the Publisher stopped waiting. Check the app for a draft, then press Publish again if it isn't there.`);
@@ -276,7 +291,7 @@ export async function runPublisher(env: PublishEnv, sb: Sb, u: string, opts: { t
     async execute() {
       const { z, due, processing, stale } = await workFor(sb, u, opts.itemIds);
       const accountIds = [...new Set([...due, ...processing, ...stale].map((i) => i.account_id).filter(Boolean))] as string[];
-      const accts = accountIds.length ? await sb.get<Account>(`social_accounts?id=in.(${accountIds.join(',')})&user_id=eq.${u}&select=id,platform,handle,daily_post_cap`) : [];
+      const accts = accountIds.length ? await sb.get<Account>(`social_accounts?id=in.(${accountIds.join(',')})&user_id=eq.${u}&select=id,platform,handle,daily_post_cap,live_posting`) : [];
       const acctOf = (i: Item) => accts.find((a) => a.id === i.account_id) ?? null;
       const tally: Record<Step, number> = { published: 0, processing: 0, failed: 0, capped: 0, skipped: 0 };
       const notes: string[] = [];

@@ -28,7 +28,7 @@ function matches(c: Contact, q: string): boolean {
   const s = q.trim().toLowerCase();
   if (!s) return true;
   return (
-    c.name.toLowerCase().includes(s) ||
+    (c.name ?? '').toLowerCase().includes(s) ||
     (c.phone ?? '').includes(s) ||
     (c.email ?? '').toLowerCase().includes(s) ||
     (c.business_name ?? '').toLowerCase().includes(s) ||

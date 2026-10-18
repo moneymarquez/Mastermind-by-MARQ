@@ -1,3 +1,4 @@
+-- Renumbered from schema_121 (two branches both used 121). Already applied on 2026-10-15; safe to re-run.
 -- Mastermind by MARQ — Daily Plan "four pillars". One row per user per day:
 -- physical, mental, spiritual/mindset (each: what the commitment is + done),
 -- and the financial win (what it is; cold calling by default, auto-done when

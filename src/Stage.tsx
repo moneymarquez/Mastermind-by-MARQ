@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 import NovaPanel from './components/NovaPanel';
 import { useNavModulePrefs } from './data/useNavModulePrefs';
 import { useOwnerInbox } from './data/useOwnerInbox';
+import { usePendingApprovals } from './data/usePendingApprovals';
 import { HomeExtras } from './components/screens/home/HomeExtras';
 import PlaceholderScreen from './components/screens/PlaceholderScreen';
 import ProductTour, { filterTourSteps } from './components/ProductTour';
@@ -21,6 +22,7 @@ import { PhoneHeader, PhoneTabBar, AppSidebar, AppTopBar, NotificationsPanel, Se
 import { shellGroups, crumbFor } from './components/shell/nav';
 import { useLeadFeed } from './data/useLeadFeed';
 import { useNotifications } from './data/useNotifications';
+import { useFlags, PORTAL_FLAG_DOMAINS } from './data/useFlags';
 import { useResolvedTheme } from './data/useTheme';
 import { usePortal } from './data/usePortal';
 import PortalCards from './components/screens/home/PortalCards';
@@ -78,6 +80,19 @@ const VoiceCaptureV2 = lazyScreen(() => import('./components/screens/v2/VoiceCap
 const ManageModulesScreen = lazyScreen(() => import('./components/screens/ManageModulesScreen'));
 const GrantAccessV2 = lazyScreen(() => import('./components/screens/v2/GrantAccessV2'));
 const InboxScreen = lazyScreen(() => import('./components/screens/inbox/InboxScreen'));
+const HqScreen = lazyScreen(() => import('./components/screens/hq/HqScreen'));
+const BrainDumpScreen = lazyScreen(() => import('./components/screens/solo/BrainDumpScreen'));
+const TasksScreen = lazyScreen(() => import('./components/screens/solo/TasksScreen'));
+const MoneyMoveScreen = lazyScreen(() => import('./components/screens/solo/MoneyMoveScreen'));
+const PeptidesScreen = lazyScreen(() => import('./components/screens/solo/PeptidesScreen'));
+const FeedScreen = lazyScreen(() => import('./components/screens/solo/FeedScreen'));
+const ClassroomScreen = lazyScreen(() => import('./components/screens/madeby/ClassroomScreen'));
+const LedgerScreen = lazyScreen(() => import('./components/screens/madeby/LedgerScreen'));
+const ContractsScreen = lazyScreen(() => import('./components/screens/madeby/ContractsScreen'));
+const CommsScreen = lazyScreen(() => import('./components/screens/madeby/CommsScreen'));
+const WaitlistScreen = lazyScreen(() => import('./components/screens/madeby/WaitlistScreen'));
+const CouponsScreen = lazyScreen(() => import('./components/screens/madeby/CouponsScreen'));
+const LeadEnginesScreen = lazyScreen(() => import('./components/screens/madeby/LeadEnginesScreen'));
 const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 
 // Screens still on their pre-redesign layout: on phone they get the shared
@@ -86,10 +101,10 @@ const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 const LEGACY_SCREENS = new Set<string>([]);
 
 const BUILT_SCREENS = [
-  'home', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
+  'home', 'ecom-marketing', 'coupons', 'lead-engines', 'waitlist', 'comms', 'contracts', 'ledger', 'classroom', 'feed', 'peptides', 'money-move', 'tasks', 'brain-dump', 'ecom-clients', 'ecom-inbox', 'ecom-approvals', 'ecom-office', 'ecom-orders', 'ecom-stores', 'ecom-products', 'hq', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'leadflow', 'account-settings', 'prompt-voice-settings',
-  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'swipe-file', 'ecommerce', 'ecommerce-sheets', 'ecommerce-workers', 'ecommerce-performance', 'ecommerce-approvals', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access', 'changelog', 'dispatch', 'inbox', 'modules',
+  'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'content-accounts', 'content-profiles', 'content-ideas', 'content-plan', 'content-studio', 'content-history', 'content-inspiration', 'content-kits', 'content-workers', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access', 'changelog', 'dispatch', 'inbox', 'modules',
 ];
 
 interface Props {
@@ -125,6 +140,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // ── Redesign shell (design handoff: MM App) ─────────────────────────
   const leadFeed = useLeadFeed(isOwner);
   const notifs = useNotifications(ownerInbox.items, leadFeed.leads, leadFeed.now, true);
+  const flagsApi = useFlags(isOwner);
   const resolvedTheme = useResolvedTheme();
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -186,7 +202,8 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // portal switches to it like any deep link.
   const searchGroups = useMemo(() => portals.flatMap((p) => shellGroups(navAccess, isOwner, navPrefs.order, { portal: p }).map((g) => ({ ...g, title: p === 'masterminds' ? g.title : portalName(p) }))), [navAccess, isOwner, navPrefs.order, portals]);
   const crumb = crumbFor(state.screen, groups, portal);
-  const badges = { inbox: ownerInbox.items.filter((i) => i.unread).length, leads: leadFeed.waiting, urgent: leadFeed.urgent > 0 };
+  const ecomPending = usePendingApprovals(isOwner);
+  const badges = { inbox: ownerInbox.items.filter((i) => i.unread).length, leads: leadFeed.waiting, urgent: leadFeed.urgent > 0, screens: { 'ecom-approvals': ecomPending } };
   const toggleTheme = () => onThemeChange(resolvedTheme === 'dark' ? 'light' : 'dark');
   const toggleNova = () => (state.novaOpen ? actions.closeNova() : actions.openNova());
   // Desktop: Nova is a 360px column that pushes content. iPad: it slides
@@ -250,7 +267,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
     <div className="app-shine-bg" style={stageStyle}>
       {device === 'phone' ? (
         <>
-          <PhoneHeader portal={portal} screenLabel={crumb.label} onMenu={() => setMenuOpen(true)} onHome={() => shellNav('home')} onSearch={() => setSearchOpen(true)} onBell={() => setNotifOpen((v) => !v)} bellDot={notifs.unread > 0} bellOpen={notifOpen} />
+          <PhoneHeader portal={portal} screenLabel={crumb.label} onMenu={() => setMenuOpen(true)} onHome={() => shellNav('home')} onSearch={() => setSearchOpen(true)} onBell={() => setNotifOpen((v) => !v)} bellDot={notifs.unread > 0} bellOpen={notifOpen} reds={isOwner ? flagsApi.redsIn(PORTAL_FLAG_DOMAINS[portal]) : 0} onReds={() => shellNav('hq')} />
           {menuOpen && (
             <>
               <div onClick={() => setMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 95, background: 'rgba(0,0,0,.45)' }} />
@@ -263,7 +280,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
       ) : (
         <>
           <AppSidebar device={device} screen={state.screen} novaOpen={state.novaOpen} groups={groups} badges={badges} ownerName={ownerDisplayName} isOwner={isOwner} onNav={shellNav} onNova={toggleNova} onSearch={() => setSearchOpen(true)} portal={portalNav} />
-          <AppTopBar device={device} left={sidebarW(device)} right={novaDock} crumb={crumb} dark={resolvedTheme === 'dark'} novaOpen={state.novaOpen} bellDot={notifs.unread > 0} bellOpen={notifOpen} onToggleTheme={toggleTheme} onSearch={() => setSearchOpen(true)} onBell={() => setNotifOpen((v) => !v)} onNova={toggleNova} />
+          <AppTopBar device={device} left={sidebarW(device)} right={novaDock} crumb={crumb} dark={resolvedTheme === 'dark'} novaOpen={state.novaOpen} bellDot={notifs.unread > 0} bellOpen={notifOpen} onToggleTheme={toggleTheme} onSearch={() => setSearchOpen(true)} onBell={() => setNotifOpen((v) => !v)} onNova={toggleNova} reds={isOwner ? flagsApi.redsIn(PORTAL_FLAG_DOMAINS[portal]) : 0} onReds={() => shellNav('hq')} />
         </>
       )}
 
@@ -379,8 +396,8 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <LeadFlowScreen />
         )}
 
-        {state.screen.startsWith('ecommerce') && (
-          <EcomScreen screen={state.screen} onNavigate={actions.navigateTo} homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
+        {state.screen === 'ecommerce' && (
+          <EcomScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
         )}
 
         {state.screen === 'account-settings' && (
@@ -416,6 +433,16 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
             onNavigate={actions.navigateTo}
           />
         )}
+
+        {state.screen === 'content-accounts' && <ContentCreationScreen section="accounts" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} onAskNova={askNovaWithPrompt} />}
+        {state.screen === 'content-profiles' && <ContentCreationScreen section="profiles" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} onAskNova={askNovaWithPrompt} />}
+        {state.screen === 'content-ideas' && <ContentCreationScreen section="ideas" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} onAskNova={askNovaWithPrompt} />}
+        {state.screen === 'content-plan' && <ContentCreationScreen section="plan" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} onAskNova={askNovaWithPrompt} />}
+        {state.screen === 'content-studio' && <ContentCreationScreen section="studio" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} onAskNova={askNovaWithPrompt} />}
+        {state.screen === 'content-history' && <ContentCreationScreen section="history" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} onAskNova={askNovaWithPrompt} />}
+        {state.screen === 'content-inspiration' && <ContentCreationScreen section="inspiration" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} onAskNova={askNovaWithPrompt} />}
+        {state.screen === 'content-kits' && <ContentCreationScreen section="kits" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} onAskNova={askNovaWithPrompt} />}
+        {state.screen === 'content-workers' && <ContentCreationScreen section="workers" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} onAskNova={askNovaWithPrompt} />}
 
         {state.screen === 'content' && (
           <ContentCreationScreen
@@ -458,6 +485,27 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         
+        {state.screen === 'hq' && <HqScreen />}
+        {state.screen === 'ecom-products' && <EcomScreen section="products" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
+        {state.screen === 'ecom-approvals' && <EcomScreen section="approvals" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
+        {state.screen === 'ecom-stores' && <EcomScreen section="stores" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
+        {state.screen === 'ecom-orders' && <EcomScreen section="orders" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
+        {state.screen === 'ecom-office' && <EcomScreen section="office" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
+        {state.screen === 'ecom-inbox' && <EcomScreen section="inbox" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
+        {state.screen === 'ecom-clients' && <EcomScreen section="clients" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
+        {state.screen === 'brain-dump' && <BrainDumpScreen />}
+        {state.screen === 'tasks' && <TasksScreen />}
+        {state.screen === 'money-move' && <MoneyMoveScreen />}
+        {state.screen === 'peptides' && <PeptidesScreen />}
+        {state.screen === 'feed' && <FeedScreen />}
+        {state.screen === 'classroom' && <ClassroomScreen />}
+        {state.screen === 'ledger' && <LedgerScreen />}
+        {state.screen === 'contracts' && <ContractsScreen />}
+        {state.screen === 'comms' && <CommsScreen />}
+        {state.screen === 'waitlist' && <WaitlistScreen />}
+        {state.screen === 'coupons' && <CouponsScreen />}
+        {state.screen === 'lead-engines' && <LeadEnginesScreen />}
+        {state.screen === 'ecom-marketing' && <EcomScreen section="marketing" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
         {state.screen === 'modules' && <ModulesGrid groups={moduleTiles} onOpen={shellNav} />}
         {state.screen === 'inbox' && (
           <InboxScreen device={device} isOwner={isOwner} inbox={ownerInbox} feed={leadFeed} focus={inboxFocus} onFocusConsumed={() => setInboxFocus(null)}

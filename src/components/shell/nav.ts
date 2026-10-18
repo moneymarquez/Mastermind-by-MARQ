@@ -10,7 +10,7 @@ import type { PortalKey } from '../../portals.config';
 export interface ShellItem { id: string; label: string; glyph: string; locked?: boolean }
 export interface ShellGroup { title: string; items: ShellItem[]; owner?: boolean }
 
-export const SHELL_GROUPS = ['Personal', 'Cold Calling', 'Clients', 'Scaling', 'Side Hustles', 'Content', 'E-commerce'] as const;
+export const SHELL_GROUPS = ['HQ', 'Personal', 'Cold Calling', 'Clients', 'Scaling', 'Side Hustles', 'Content', 'E-commerce'] as const;
 const SKIP = new Set(['home', 'settings', 'codelab']);
 
 /** Two-letter module glyph: "Daily Plan" → DP, "Sobriety" → SO. */
@@ -24,7 +24,7 @@ export function glyphFor(label: string): string {
  *  (Client Modules, LeadFlow) then Scaling; Content and E-commerce are one
  *  group each; Masterminds keeps the registry's groups. */
 function groupIn(portal: PortalKey, id: string, natural: string): string {
-  if (portal === 'madeby') return id === 'client-modules' || id === 'leadflow' ? 'Clients' : 'Scaling';
+  if (portal === 'madeby') return id === 'hq' ? 'HQ' : id === 'client-modules' || id === 'leadflow' || id === 'classroom' || id === 'comms' ? 'Clients' : 'Scaling';
   if (portal === 'content') return 'Content';
   if (portal === 'ecommerce') return 'E-commerce';
   return natural;
@@ -58,5 +58,7 @@ export function crumbFor(screen: string, groups: ShellGroup[], portal: PortalKey
   const TOP: Record<string, string> = { home: 'Home', inbox: 'Inbox', leads: 'Leads', modules: 'Modules', 'account-settings': 'Settings' };
   if (TOP[screen]) return { group: null, label: TOP[screen] };
   for (const g of groups) { const it = g.items.find((i) => i.id === screen); if (it) return { group: g.title, label: it.label }; }
+  const m = MODULE_REGISTRY.find((x) => x.routes[0] === screen);
+  if (m) return { group: null, label: m.label };
   return { group: null, label: screen.replace(/-/g, ' ').replace(/^\w/, (c) => c.toUpperCase()) };
 }

@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { S, LINKS, Nav, Footer, useViewport, updateNavInk } from './shared';
 import { PRODUCT_MODULES, MODULE_COUNT, PERSONAL_TBD, SHOT_H } from './productContent';
+import Offers from './Offers';
 import type { ProductModule } from './productContent';
+import { useCta, WaitlistCard } from './waitlist';
 
 const shot = (k: string) => `/site/product/${k}.webp`;
 const MONO = "font-family:'IBM Plex Mono',monospace;";
@@ -55,13 +57,14 @@ function ModuleRow({ mod, i, m }: { mod: ProductModule; i: number; m: boolean })
         )}
         {mod.links && <Links links={mod.links} />}
       </div>
-      <div style={S(`order:${flip ? 1 : 2};`)}><Frame k={mod.img} alt={mod.alt} m={m} /></div>
+      {mod.img ? <div style={S(`order:${flip ? 1 : 2};`)}><Frame k={mod.img} alt={mod.alt} m={m} /></div> : <div style={S(`order:${flip ? 1 : 2}; border:1px solid #e3e3ea; border-radius:16px; background:#f3f4f8; padding:32px; font-size:15px; color:#6e6e7a;`)}>New in October. Screenshot coming with the next sample-data capture.</div>}
     </article>
   );
 }
 
 export default function Product() {
   const { mob: m } = useViewport();
+  const cta = useCta(false);
   const navRef = useRef<HTMLElement>(null);
   useEffect(() => {
     document.title = 'Product · Masterminds';
@@ -94,8 +97,8 @@ export default function Product() {
           <h1 style={S(`margin:0; font-size:${m ? '42px' : 'clamp(56px, 5.6vw, 80px)'}; line-height:1.0; font-weight:480; letter-spacing:-0.035em; max-width:900px; text-wrap:balance;`)}>{MODULE_COUNT} modules. One login.</h1>
           <p style={S(`margin:0; font-size:${m ? '17px' : '20px'}; line-height:1.45; max-width:640px; color:#252b3a; text-wrap:balance;`)}>Your day, your goals, your training, your calls and your side money in one app — and each part feeds the others, so the plan you wake up to already knows about your shift.</p>
           <div style={S('display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:6px;')}>
-            <a href={LINKS.signup} className="lp-h-primary" style={S(`${CTA} box-shadow:0 8px 20px rgba(16,15,18,.16);`)}>Start 7-day free trial</a>
-            <span style={S('font-size:14px; color:#4a4a55;')}>$19.99/mo after the trial · cancel any time</span>
+            <a href={cta.waitlist ? '#waitlist' : LINKS.signup} className="lp-h-primary" style={S(`${CTA} box-shadow:0 8px 20px rgba(16,15,18,.16);`)}>{cta.label}</a>
+            <span style={S('font-size:14px; color:#4a4a55;')}>{cta.waitlist ? 'Founding spots are limited · free to join' : '$19.99/mo after the trial · cancel any time'}</span>
           </div>
           <div style={S(`width:100%; max-width:1120px; margin-top:${m ? '32px' : '56px'};`)}><Frame k="daily-plan" alt="The Masterminds Daily Plan on a sample day" m={m} eager /></div>
           <span style={S(`${MONO} font-size:11px; letter-spacing:.06em; color:#8a8a98;`)}>Every screenshot on this page uses made-up sample data.</span>
@@ -112,12 +115,9 @@ export default function Product() {
       {/* ── Personal */}
       <section data-nav="ink" style={S(`padding:${m ? '72px 0' : '128px 0'};`)}>
         <div style={S(`max-width:1200px; margin:0 auto; padding:${pad}; display:flex; flex-direction:column; gap:${m ? '72px' : '128px'};`)}>
-          {groupHead('PERSONAL', 'Run the day instead of reacting to it.', 'Nine modules for the life around the work: the plan, the calendar, the goals, the body and how your head works. They share one set of data, so nothing has to be entered twice.')}
+          {groupHead('PERSONAL', 'Run the day instead of reacting to it.', `${personal.length} modules for the life around the work: the plan, the calendar, the goals, the body and how your head works. They share one set of data, so nothing has to be entered twice.`)}
           {personal.map((x, i) => <ModuleRow key={x.key} mod={x} i={i} m={m} />)}
-          <div style={S('border:1px dashed #c9c9d3; border-radius:14px; padding:24px; display:flex; flex-direction:column; gap:8px;')}>
-            <span style={S(`${MONO} font-size:10px; letter-spacing:.08em; color:#8a8a98;`)}>PLACEHOLDER · {PERSONAL_TBD} MORE PERSONAL MODULES</span>
-            <span style={S('font-size:15px; line-height:1.55; color:#4a4a55;')}>Marq to confirm which two of the remaining Personal modules are in the solo plan before this page goes live.</span>
-          </div>
+          {PERSONAL_TBD > 0 && <div style={S('border:1px dashed #c9c9d3; border-radius:14px; padding:24px;')}>{PERSONAL_TBD} more Personal modules</div>}
         </div>
       </section>
 
@@ -132,11 +132,11 @@ export default function Product() {
       {/* ── Side Hustles: screenshot first, one line each */}
       <section data-nav="ink" style={S(`padding:${m ? '72px 0' : '128px 0'};`)}>
         <div style={S(`max-width:1200px; margin:0 auto; padding:${pad}; display:flex; flex-direction:column; gap:${m ? '40px' : '64px'};`)}>
-          {groupHead('SIDE HUSTLES', 'The extra money, kept in one place.', 'Three small tools for the things on the side.')}
+          {groupHead('SIDE HUSTLES', 'The extra money, kept in one place.', `${side.length === 3 ? 'Three' : side.length} small tools for the things on the side.`)}
           <div style={S(`display:grid; grid-template-columns:${m ? 'minmax(0,1fr)' : 'repeat(3,minmax(0,1fr))'}; gap:${m ? '40px' : '32px'};`)}>
             {side.map((x) => (
               <article key={x.key} id={x.key} style={S('display:flex; flex-direction:column; gap:16px; scroll-margin-top:96px;')}>
-                <Frame k={x.img} alt={x.alt} m />
+                {x.img ? <Frame k={x.img} alt={x.alt} m /> : null}
                 <div style={S('display:flex; flex-direction:column; gap:6px;')}>
                   <h3 style={S('margin:0; font-size:24px; font-weight:500; letter-spacing:-0.02em;')}>{x.name}</h3>
                   <p style={S('margin:0; font-size:15px; line-height:1.55; color:#4a4a55;')}>{x.line}</p>
@@ -151,10 +151,12 @@ export default function Product() {
       {/* ── Close */}
       <section data-nav="light" style={S(`background:#171721; color:#ededf3; padding:${m ? '80px 20px' : '128px 64px'};`)}>
         <div style={S('max-width:880px; margin:0 auto; display:flex; flex-direction:column; align-items:center; text-align:center; gap:20px;')}>
-          <h2 style={S(`margin:0; font-size:${m ? '38px' : '56px'}; line-height:1.02; font-weight:480; letter-spacing:-0.035em; text-wrap:balance;`)}>Try all {MODULE_COUNT} for a week.</h2>
+          <h2 style={S(`margin:0; font-size:${m ? '38px' : '56px'}; line-height:1.02; font-weight:480; letter-spacing:-0.035em; text-wrap:balance;`)}>{cta.waitlist ? 'Get in early.' : `Try all ${MODULE_COUNT} for a week.`}</h2>
+          {cta.waitlist ? <div style={S('width:100%; max-width:520px; margin-top:8px;')}><WaitlistCard id="waitlist" /></div> : (<>
           <p style={S('margin:0; font-size:18px; line-height:1.55; color:#b8b8c6; max-width:560px;')}>One login, $19.99 a month after the trial. Cancel from Settings any time.</p>
-          <a href={LINKS.signup} className="lp-h-primary" style={S(`${CTA} margin-top:8px;`)}>Start 7-day free trial</a>
+          <a href={LINKS.signup} className="lp-h-primary" style={S(`${CTA} margin-top:8px;`)}>Start 7-day free trial</a></>)}
           <a href={LINKS.pricing} className="lp-h-ul" style={S('font-size:15px; color:#b8b8c6;')}>See pricing</a>
+          <div style={S('width:100%; max-width:900px; margin-top:16px;')}><Offers dark /></div>
         </div>
       </section>
 

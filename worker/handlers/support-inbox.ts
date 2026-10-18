@@ -1,3 +1,6 @@
+import { recordInbound } from '../lib/madeby';
+import { Sb } from '../lib/sb';
+import type { SbEnv } from '../lib/sb';
 import Anthropic from '@anthropic-ai/sdk';
 import PostalMime from 'postal-mime';
 import { OWNER_USER_ID } from '../lib/auth';
@@ -96,8 +99,23 @@ async function verifySvixSignature(secret: string, id: string, timestamp: string
   });
 }
 
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', ndash: '–', mdash: '—', rsquo: '’', lsquo: '‘', rdquo: '”', ldquo: '“', hellip: '…', copy: '©' };
+/** HTML mail → readable text. Drops <head>, <style>, <script> and comments (their
+ *  contents are code, not words), keeps paragraph/line breaks, decodes entities. */
+export function stripHtml(html: string): string {
+  return html
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<(head|style|script|title)\b[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<(br|\/p|\/div|\/tr|\/h[1-6]|\/li)\b[^>]*>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e: string) => {
+      if (e[0] === '#') { const n = e[1].toLowerCase() === 'x' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10); return Number.isFinite(n) && n > 0 && n < 0x110000 ? String.fromCodePoint(n) : ' '; }
+      return ENTITIES[e.toLowerCase()] ?? m;
+    })
+    .replace(/[ \t\f\v\u00a0]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function extractEmail(field: unknown): string {
@@ -156,7 +174,11 @@ interface InboundMessage {
 async function storeInboundMessage(env: SupportInboxEnv, m: InboundMessage): Promise<boolean> {
   let category: string | null = null;
   let draft: string | null = null;
-  if (env.ANTHROPIC_API_KEY) {
+  // accounts@ is the sign-up address for the business's own tools: receipts
+  // and renewals, nothing to reply to, so no AI triage (and no AI cost).
+  const isAccounts = /^accounts@/i.test((m.toEmail.match(/<([^>]+)>/)?.[1] ?? m.toEmail).trim());
+  if (isAccounts) category = 'billing';
+  else if (env.ANTHROPIC_API_KEY) {
     const triage = await triageWithClaude(env.ANTHROPIC_API_KEY, m.fromEmail, m.toEmail, m.subject, m.bodyText);
     if (triage) { category = triage.category; draft = triage.draft; }
   }
@@ -205,6 +227,8 @@ export async function handleInboundEmail(message: InboundEmailMessage, env: Supp
 
   // Store in the background so the forward never waits on Claude.
   ctx.waitUntil(storeInboundMessage(env, { fromEmail, toEmail: message.to, subject, bodyText }));
+  // A reply from a known contact or client also lands in their Comms thread (brief §5.6).
+  if ((env as { SUPABASE_SERVICE_ROLE_KEY?: string }).SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(recordInbound(new Sb(env as unknown as SbEnv), OWNER_USER_ID, { channel: 'email', from: fromEmail, to: message.to, subject, body: bodyText || '(no text)' }).catch(() => {}));
 
   if (!env.INBOX_FORWARD_TO) {
     console.error('support-inbox: INBOX_FORWARD_TO is not set — message stored in the app but NOT forwarded to a mailbox');

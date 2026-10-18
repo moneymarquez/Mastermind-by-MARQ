@@ -9,6 +9,7 @@ const PublicClientDashboard = lazyScreen(() => import('./PublicClientDashboard')
 import { isStandalone } from './lib/pwa'
 import { initOrientationLock } from './lib/orientationLock'
 import { initDemo } from './demo/lifecycle'
+import './lib/saveCode';
 import { captureJoinToken } from './dispatch/join';
 
 // Applies the data-force-portrait attribute index.css's rotate-lock keys
@@ -17,6 +18,8 @@ import { captureJoinToken } from './dispatch/join';
 initOrientationLock();
 // Demo Mode (?demo=1 / ?demo=record&speed=fast) — before the first render.
 captureJoinToken();
+const SignContract = lazyScreen(() => import('./site/SignContract'));
+const BookingPage = lazyScreen(() => import('./site/BookingPage'));
 initDemo();
 
 // The two genuinely public routes in the app — /audit (Part 1b: a prospect
@@ -28,6 +31,8 @@ initDemo();
 const path = window.location.pathname.replace(/\/+$/, '');
 const isPublicAudit = path === '/audit';
 const clientToken = path.startsWith('/client/') ? path.slice('/client/'.length) : null;
+const signToken = path.startsWith('/sign/') ? path.slice('/sign/'.length) : null;
+const bookSlug = path.startsWith('/book/') ? path.slice('/book/'.length) : null;
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -37,7 +42,11 @@ createRoot(document.getElementById('root')!).render(
         ? <PublicAuditScreen />
         : clientToken
           ? <PublicClientDashboard token={clientToken} />
-          : <App />}
+          : signToken
+            ? <SignContract token={signToken} />
+            : bookSlug
+              ? <BookingPage slug={bookSlug} />
+              : <App />}
       </Suspense>
     </ErrorBoundary>
   </StrictMode>,

@@ -76,7 +76,7 @@ export function reconcileCity(leads: LeadflowLead[], state: string, city: string
  *  slice of it. */
 export function pickForDialing(leads: LeadflowLead[], count: number): LeadflowLead[] {
   return leads
-    .filter((l) => !l.dialing_queued && !isTouched(l))
+    .filter((l) => !l.dialing_queued && !isTouched(l) && l.status !== 'do_not_contact')
     .sort((a, b) => (b.fizzle_score ?? 0) - (a.fizzle_score ?? 0))
     .slice(0, Math.max(0, count));
 }
@@ -85,7 +85,7 @@ export function pickForDialing(leads: LeadflowLead[], count: number): LeadflowLe
  *  Drives the disabled state and the "only 12 left" label, so the button
  *  never promises 50 leads it can't produce. */
 export function availableForDialing(leads: LeadflowLead[]): number {
-  return leads.filter((l) => !l.dialing_queued && !isTouched(l)).length;
+  return leads.filter((l) => !l.dialing_queued && !isTouched(l) && l.status !== 'do_not_contact').length;
 }
 
 /** How many of these leads were called today.

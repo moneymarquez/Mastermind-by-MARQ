@@ -8,6 +8,8 @@
 // client is the in-memory copy in ./client.ts, never the real database.
 type Row = Record<string, unknown>;
 
+import { ROLE_MODEL } from '../data/models';
+
 export const DEMO_USER = { id: 'a4b89df9-7122-424a-afb5-fc4871e0963b', email: 'marq@madebymarq.demo', name: 'Marq' };
 const U = DEMO_USER.id;
 /** A second workspace where the demo identity is a member (explore mode). */
@@ -104,16 +106,16 @@ export function buildSeed(): Record<string, Row[]> {
   // ── The Office (e-comm): orchestrator + 6 workers, mixed states ─────
   const W = (key: string, name: string, role: string, model: string, status: string, current_task: string | null, domain = 'ecom') => ({ id: uid('wrkr'), domain, key, name, role, model, autonomy_level: 0, status, current_task, enabled: true, playbook_name: null });
   const workers = [
-    W('orchestrator', 'Orchestrator', 'Assign work, read outputs, score, route your notes, write the daily summary.', 'claude-fable-5-1', 'running', 'Delegating tonight\'s plan', 'all'),
-    W('scout', 'Product Scout', 'Fill Product Sheets per channel; take snapshots.', 'claude-haiku-4-5', 'running', 'Scouting TikTok Shop (top 10)'),
-    W('analyst', 'Audience Analyst', 'Who buys, why, the angle, the margin math.', 'claude-sonnet-5', 'running', 'Analysing Cloud Neck Pillow'),
-    W('teardown', 'Competitor Teardown', 'Dossiers on the top sellers; 3 unclaimed angles.', 'claude-sonnet-5', 'idle', null),
-    W('supplier', 'Supplier Finder', 'Suppliers, sample order draft, inspection sheet.', 'claude-haiku-4-5', 'idle', null),
-    W('brandlab', 'Brand Lab', 'Three brand options from the buyer profile.', 'claude-sonnet-5', 'idle', null),
-    W('builder', 'Store Builder', 'Site code to a GitHub branch; quality gate.', 'claude-sonnet-5', 'idle', null),
-    W('content', 'Content Producer', 'Hooks, scripts, captions, visuals.', 'claude-sonnet-5', 'running', 'Scripting 3 hooks for Northline', 'content'),
-    W('script_copy', 'Script & Copy', 'Openers, voicemails, emails — 3 tones × 2 audiences.', 'claude-sonnet-5', 'idle', null, 'marketing'),
-    W('campaign_scorer', 'Campaign Scorer', 'Grades each campaign out of 4.', 'claude-sonnet-5', 'idle', null, 'marketing'),
+    W('orchestrator', 'Orchestrator', 'Assign work, read outputs, score, route your notes, write the daily summary.', ROLE_MODEL.domain, 'running', 'Delegating tonight\'s plan', 'all'),
+    W('scout', 'Product Scout', 'Fill Product Sheets per channel; take snapshots.', ROLE_MODEL.parse, 'running', 'Scouting TikTok Shop (top 10)'),
+    W('analyst', 'Audience Analyst', 'Who buys, why, the angle, the margin math.', ROLE_MODEL.writer, 'running', 'Analysing Cloud Neck Pillow'),
+    W('teardown', 'Competitor Teardown', 'Dossiers on the top sellers; 3 unclaimed angles.', ROLE_MODEL.writer, 'idle', null),
+    W('supplier', 'Supplier Finder', 'Suppliers, sample order draft, inspection sheet.', ROLE_MODEL.parse, 'idle', null),
+    W('brandlab', 'Brand Lab', 'Three brand options from the buyer profile.', ROLE_MODEL.writer, 'idle', null),
+    W('builder', 'Store Builder', 'Site code to a GitHub branch; quality gate.', ROLE_MODEL.writer, 'idle', null),
+    W('content', 'Content Producer', 'Hooks, scripts, captions, visuals.', ROLE_MODEL.writer, 'running', 'Scripting 3 hooks for Northline', 'content'),
+    W('script_copy', 'Script & Copy', 'Openers, voicemails, emails — 3 tones × 2 audiences.', ROLE_MODEL.writer, 'idle', null, 'marketing'),
+    W('campaign_scorer', 'Campaign Scorer', 'Grades each campaign out of 4.', ROLE_MODEL.writer, 'idle', null, 'marketing'),
   ];
   T('ai_workers', workers);
   const wk = (key: string) => workers.find((w) => w.key === key)!.id;
@@ -134,6 +136,8 @@ export function buildSeed(): Record<string, Row[]> {
     { id: uid('task'), domain: 'ecom', body: 'Swap the Northline hero video', worker_id: wk('builder'), instructions: 'Use the 4/4 reel as the hero', status: 'waiting', note: 'Waiting on your approval.', run_id: null, created_at: hoursAgo(1) },
   ]);
   T('ai_approvals', [
+    { id: uid('appr'), domain: 'ecom', type: 'product_card', entity_type: 'product', entity_id: null, title: 'Product: Pocket Fabric Shaver — GO', payload: { channel: 'tiktok', verdict: 'GO', summary: '$17.89 profit per order, 49% margin, fits the $50 budget.', row: { name: 'Pocket Fabric Shaver', category: 'Home', channel: 'tiktok', rank: 1, sell_price: 36.5, supplier_cost: 7.9, landed_cost: 18.6, margin_pct: 49, days_trending: 12, velocity: 'rising', score: 8, content_difficulty: 'easy', images: [], source_url: 'https://example.com/shaver', confidence: 'estimate', as_of: new Date().toISOString(), detail: { ship_cost: 3.9, sellers: 5, problem: 'Pilled sweaters make good clothes look old.', trigger: 'Cold weather, sweaters come out.', buyer: 'Women 25–45 with a closet of knitwear', why_emotional: 'Rescuing a favourite sweater.', why_practical: 'Costs less than replacing one sweater.', principle: 'Demo-able: before/after', angle: 'Film the pilled sleeve before and after in 10 seconds.', card: { suppliers: [{ name: 'CJ Dropshipping (US warehouse)', url: 'https://example.com/cj/shaver', unit_cost: 7.9, ship_cost: 3.9, ship_days_min: 3, ship_days_max: 6, warehouse: 'California, US', rating: '4.7/5', sample_cost: 11.8 }], sellers: [{ name: 'FuzzAway', shop_url: 'https://example.com/fuzzaway', price: 34, est_monthly_orders: 500, est_monthly_revenue: 17000, months_selling: 6, look: 'One-page store with a before/after video on top.', screenshot_url: null, source_url: 'https://example.com/r' }], gap: 'Everyone sells it as a gadget; nobody sells the "rescued sweater" story.', demand: [{ text: '2.3M views on #sweatershaver in 30 days.', url: 'https://example.com/trend' }], hooks: ['I almost threw this sweater out', 'The $12 fix for pilled knitwear', 'Watch this sleeve come back to life'], film: 'Phone on a stand, sleeve flat, shave one strip, show both halves.', first_post: 'Half-and-half sleeve before/after.', outcome: { conservative: { orders: 50, profit: 894 }, base: { orders: 100, profit: 1789 } }, confidence_pct: 66, confidence_reasons: ['Strong demo', 'Seller already at 500 orders/mo', 'US warehouse'], risks: ['Cheap clones', 'Seasonal'], missing: [], tried: [], enriched_at: new Date().toISOString(), image_urls: [] } } } }, principle: 'Demo-able: before/after', source_url: 'https://example.com/shaver', confidence: 'estimate', is_money: false, status: 'pending', my_note: null, worker_id: wk('scout'), run_id: runs[0].id, created_at: hoursAgo(2) },
+    { id: uid('appr'), domain: 'ecom', type: 'product_card', entity_type: 'product', entity_id: null, title: 'Product: Stanley-style Tumbler 40oz — BLOCKED', payload: { channel: 'tiktok', verdict: 'BLOCKED', summary: 'a brand knockoff', row: { name: 'Stanley-style Tumbler 40oz', category: 'Drinkware', channel: 'tiktok', rank: 2, sell_price: null, supplier_cost: null, landed_cost: null, margin_pct: null, days_trending: null, velocity: 'rising', score: null, content_difficulty: null, images: [], source_url: 'https://example.com/tumbler', confidence: 'ai', as_of: new Date().toISOString(), detail: {} } }, principle: null, source_url: 'https://example.com/tumbler', confidence: 'ai', is_money: false, status: 'pending', my_note: null, worker_id: wk('scout'), run_id: runs[0].id, created_at: hoursAgo(2) },
     { id: uid('appr'), domain: 'ecom', type: 'analysis', entity_type: 'product', entity_id: null, title: 'Analyst: Cloud Neck Pillow — passes Validate', payload: { summary: 'Desk workers 28–45, easy phone demo, 3.4× landed.', verdict: 'pass', numbers: { note: 'Supplier and shipping are typical CJ numbers — estimate.' }, validate: { rules: [{ name: 'Price ≥ 3× landed', pass: true, detail: '$39.00 vs $11.40 landed = 3.4×' }, { name: 'Ships in ≤ 12 days', pass: true, detail: '8 days' }, { name: 'Trend early or rising', pass: true, detail: 'rising' }] }, detail: { buyer: 'Women 28–45 who work from a kitchen-table desk', angle: 'The 3pm neck crunch, fixed in 10 seconds' } }, principle: 'Loss aversion', source_url: null, confidence: 'estimate', is_money: false, status: 'pending', my_note: null, worker_id: wk('analyst'), run_id: runs[1].id, created_at: hoursAgo(4) },
     { id: uid('appr'), domain: 'ecom', type: 'brand_options', entity_type: 'brand', entity_id: null, title: 'Brand Lab: Stillwater · Halfnine · Easy Hour (2 .com free)', payload: { summary: 'Three bets on the same buyer: calm, playful, premium.', options: [
       { name: 'Stillwater', domain: 'stillwaterdesk.com', domain_status: 'available', handles: '@stillwaterdesk', positioning: 'Quiet comfort for people who work from the kitchen table.', voice: 'Calm, exact, warm', palette: [{ hex: '#1f2a44', name: 'Deep navy', why: 'Trust for 30+ buyers' }, { hex: '#e8dccb', name: 'Warm sand', why: 'Softens the navy' }, { hex: '#c0583a', name: 'Rust', why: 'The one button' }], type: { heading: 'Fraunces', body: 'Inter', why: 'Warm serif + plain sans reads grown-up' }, logo_direction: 'A single wave line under a lowercase wordmark.', principle: 'Halo effect', why_this_buyer: 'They want their desk to feel like a choice, not a compromise.' },
@@ -154,7 +158,7 @@ export function buildSeed(): Record<string, Row[]> {
 
   // ── Product Sheets: 12 products across TikTok / Amazon / Rising ─────
   const P = (name: string, channel: string, rank: number, sell: number, supplier: number, score: number, img: string, category: string, velocity = 'rising') => {
-    const landed = supplier + 3 + sell * 0.105;
+    const landed = supplier + 3 + sell * 0.029 + 0.3 + sell * 0.05;
     return { id: uid('prod'), name, category, images: [`/demo/${img}.svg`], channel, rank, sell_price: sell, supplier_cost: supplier, landed_cost: Math.round(landed * 100) / 100, margin_pct: Math.round((1 - landed / sell) * 100), days_trending: 6 + rank * 2, velocity, score, content_difficulty: rank % 3 === 0 ? 'medium' : 'easy', source: 'Product Scout', source_url: 'https://example.com/trend', as_of: hoursAgo(5), confidence: 'estimate', watched: rank === 1,
       detail: { buyer: 'Women 28–45 who work from home and already own a standing mat', problem: 'Neck and shoulder ache by 3pm', why_emotional: 'Looking tired on video calls', why_practical: 'Cheaper than one massage', principle: 'Loss aversion', angle: 'Before/after side profile at the desk', competition: '14 sellers, 2 with real content', fail_risks: 'Returns if sizing runs small · seasonal dip in summer · copycats in 30 days', success_metrics: '10k views by day 5 · first sale by day 7 · 2% cart rate', ship_cost: 3, analysis: rank <= 2 ? { verdict: 'pass', rules: [{ name: 'Price ≥ 3× landed', pass: true, detail: `$${sell.toFixed(2)} vs $${landed.toFixed(2)} landed = ${(sell / landed).toFixed(1)}×` }, { name: 'Ships in ≤ 12 days', pass: true, detail: '8 days' }, { name: 'Trend early or rising', pass: true, detail: 'rising' }], ship_days: 8, trend: 'rising', note: 'Typical CJ numbers — estimate.', at: hoursAgo(4) } : undefined } };
   };
@@ -172,6 +176,20 @@ export function buildSeed(): Record<string, Row[]> {
     P('LED Closet Lights', 'rising', 3, 31, 6.0, 7, 'closet-light', 'Home'),
     P('Foldable Phone Stand', 'rising', 4, 22, 2.9, 5, 'phone-stand', 'Tech', 'fading'),
   ];
+  // A fully filled card on the first product, plus the kind of finds that used to show "?" and 0/10.
+  const full = products[1] as Record<string, any>;
+  full.detail = { ...full.detail, ship_cost: 4.2, sellers: 6, card: {
+    suppliers: [{ name: 'CJ Dropshipping (US warehouse)', url: 'https://example.com/cj/lamp', unit_cost: 8.5, ship_cost: 4.2, ship_days_min: 3, ship_days_max: 7, warehouse: 'Texas, US', rating: '4.8/5', sample_cost: 12.7 }, { name: 'Zendrop', url: 'https://example.com/zendrop/lamp', unit_cost: 7.9, ship_cost: 6.5, ship_days_min: 12, ship_days_max: 22, warehouse: 'China', rating: '4.4/5', sample_cost: 14.4 }],
+    sellers: [{ name: 'LumenDesk', shop_url: 'https://example.com/lumendesk', price: 46, est_monthly_orders: 600, est_monthly_revenue: 27600, months_selling: 8, look: 'Clean white store, one hero product, 4.6★ reviews.', screenshot_url: null, source_url: 'https://example.com/report' }, { name: 'BrightNest', shop_url: 'https://example.com/brightnest', price: 49, est_monthly_orders: 300, est_monthly_revenue: 14700, months_selling: 5, look: 'Busy marketplace listing, no video.', screenshot_url: null, source_url: 'https://example.com/report2' }],
+    gap: 'Nobody shows it on a real desk at night; every seller uses studio shots.', demand: [{ text: '41k TikTok views a day on "desk lamp" videos, rising for 3 weeks.', url: 'https://example.com/trend' }],
+    hooks: ['I stopped squinting at my laptop at 9pm', 'This sticks to my monitor with a magnet', 'Desk setup under $50 that looks like $200'], film: 'Stick it on a monitor, click it on in a dim room, 10 seconds.', first_post: 'Dim-room before/after on the desk setup.',
+    outcome: { conservative: { orders: 45, profit: 760 }, base: { orders: 90, profit: 1520 } }, confidence_pct: 68, confidence_reasons: ['Two sellers above 300 orders/mo', 'Easy to demo on a phone', 'US warehouse ships in 3–7 days'], risks: ['A sample + domain eats most of the $50 test budget', 'Copycat listings appear fast'],
+    missing: [], tried: [], enriched_at: iso(-1), image_urls: [] } };
+  (products as Record<string, unknown>[]).push(
+    { id: uid('prod'), name: 'tarte SPOTTED icons set', category: 'Beauty', images: [], channel: 'tiktok', rank: 5, sell_price: null, supplier_cost: null, landed_cost: null, margin_pct: null, days_trending: null, velocity: 'rising', score: null, content_difficulty: null, detail: {}, source: 'Scout', source_url: 'https://example.com/tarte', as_of: iso(-1), confidence: 'ai', watched: false, created_at: iso(-1), updated_at: iso(-1) },
+    { id: uid('prod'), name: 'Toplux Magnesium Complex', category: 'Health', images: [], channel: 'tiktok', rank: 6, sell_price: null, supplier_cost: null, landed_cost: null, margin_pct: null, days_trending: null, velocity: 'rising', score: null, content_difficulty: null, detail: {}, source: 'Scout', source_url: 'https://example.com/toplux', as_of: iso(-1), confidence: 'ai', watched: false, created_at: iso(-1), updated_at: iso(-1) },
+    { id: uid('prod'), name: 'Mini Steam Iron', category: 'Home', images: [], channel: 'tiktok', rank: 7, sell_price: 31, supplier_cost: null, landed_cost: null, margin_pct: null, days_trending: 4, velocity: 'rising', score: null, content_difficulty: 'easy', detail: { card: { suppliers: [], sellers: [], gap: '', demand: [], hooks: [], film: '', first_post: '', outcome: null, confidence_pct: null, confidence_reasons: [], risks: [], missing: [{ field: 'supplier_cost', reason: 'no supplier listing with a price in the research' }], tried: ['Mini Steam Iron supplier price', 'Mini Steam Iron best sellers shop'], enriched_at: iso(-1), image_urls: [] } }, source: 'Scout', source_url: 'https://example.com/iron', as_of: iso(-1), confidence: 'ai', watched: false, created_at: iso(-1), updated_at: iso(-1) },
+  );
   T('ecom_products', products);
   T('ecom_product_snapshots', products.flatMap((p) => Array.from({ length: 6 }, (_, i) => ({ id: uid('snap'), product_id: p.id, channel: p.channel, rank: Math.max(1, Number(p.rank) + 5 - i), price: p.sell_price, captured_at: iso(i - 6) }))));
   T('ecom_competitors', [{ id: uid('comp'), product_id: products[0].id, name: 'NeckEase Co', url: 'https://example.com/neckease', dossier: { hero_product: 'Memory foam pillow', price: 44, angle: 'Doctor-recommended', weaknesses: 'Looks medical; no real-desk content' }, images: [], links: [] }]);
@@ -193,11 +211,29 @@ export function buildSeed(): Record<string, Row[]> {
       '10': { fields: { reason: 'Analytics recommends scale: 18 sales at 1.6% CTR, 31% cart-to-sale. Next: make 3 more posts on the 3pm-neck angle.' } },
     } }]);
   T('ecom_brand_products', []);
-  T('ecom_orders', Array.from({ length: 11 }, (_, i) => ({ id: uid('ordr'), brand_id: null, total: 39, placed_at: hoursAgo(i * 5) })));
+  T('mkt_brands', [
+    { id: uid('mbrd'), key: 'app:masterminds', name: 'Masterminds by MARQ', brand_type: 'app', ecom_brand_id: null, client_id: null, voice: 'Straight, practical, a little dry. Builder to builder.', audience: 'People building something while working a job', goal: 'Grow the waitlist', success_metric: 'waitlist_signups', primary_url: 'https://mastermindsbymarq.com/', active: true },
+    { id: uid('mbrd'), key: 'business:madebymarq', name: 'Made by Marq', brand_type: 'business', ecom_brand_id: null, client_id: null, voice: 'Plain and confident.', audience: 'Local business owners who need a site and steady customers', goal: 'Book discovery calls', success_metric: 'leads', primary_url: 'https://madebymarquez.com/', active: true },
+  ]);
+  T('mkt_brand_plans', [{ id: uid('mpln'), brand_key: 'app:masterminds', week_start: dayStr(3), plan: { focus: 'Show the Money Move and the Brain Dump, then point everyone at the waitlist.', posts: [{ day: 'Mon', account: '@masterminds.app', hook: 'I let an app reverse-engineer my goals for 30 days', format: 'reel', why: 'Highest-curiosity angle; link in bio goes to the waitlist' }, { day: 'Wed', account: '@masterminds.app', hook: 'The weekly Money Move it gave me', format: 'carousel', why: 'Concrete and shareable' }], paid_test: null, next_20: 'Organic only this week: spend the $20 on nothing until the waitlist link converts.' } }]);
+  T('coupons', [
+    { id: uid('coup'), code: 'MARQ20', label: 'Promoter code (example)', owner_label: 'Example', kind: 'promoter', percent_off: 20, amount_off_usd: null, duration: 'repeating', duration_months: 3, max_redemptions: null, expires_at: null, active: true, stripe_test_coupon_id: null, stripe_test_promo_id: null, stripe_live_coupon_id: null, stripe_live_promo_id: null, last_error: null },
+    { id: uid('coup'), code: 'FOUNDING', label: 'Founding member: first month free', owner_label: null, kind: 'founding', percent_off: 100, amount_off_usd: null, duration: 'once', duration_months: null, max_redemptions: 100, expires_at: null, active: true, stripe_test_coupon_id: null, stripe_test_promo_id: null, stripe_live_coupon_id: null, stripe_live_promo_id: null, last_error: null },
+    { id: uid('coup'), code: 'FAMILY', label: 'Friends and family', owner_label: null, kind: 'family', percent_off: 50, amount_off_usd: null, duration: 'repeating', duration_months: 3, max_redemptions: 20, expires_at: null, active: true, stripe_test_coupon_id: null, stripe_test_promo_id: null, stripe_live_coupon_id: null, stripe_live_promo_id: null, last_error: null },
+  ]);
+  T('waitlist', Array.from({ length: 23 }, (_, i) => ({ id: uid('wait'), email: `person${i + 1}@example.com`, name: i % 3 ? null : ['Ana', 'Ben', 'Cara'][i % 3], code: i % 4 === 0 ? 'MARQ20' : i % 7 === 0 ? 'JAMES20' : null, source: i % 2 ? 'tiktok' : null, spot_number: i + 1, founding_spot: true, mailerlite_synced_at: null, mailerlite_error: null, created_at: iso(-(i % 9)) })));
+  const brandId = (db.ecom_brands[0] as { id: string }).id;
+  const siteId = uid('site');
+  T('ecom_sites', [{ id: siteId, brand_id: brandId, build_id: null, slug: 'northline-goods', domain: 'northlinegoods.com', domain_status: 'awaiting_purchase', pages_project: 'northline-goods', deploy_url: 'https://northline-goods.pages.dev', status: 'live', checkout_url: 'https://marq-goods.myshopify.com/cart/1:1?attributes[mm_site]=northline-goods', last_error: null, launched_at: iso(-9) }]);
+  T('ecom_site_daily', Array.from({ length: 14 }, (_, i) => ({ site_id: siteId, date: dayStr(-i), views: 900 + ((i * 137) % 600), buy_clicks: 14 + ((i * 7) % 9) })));
+  T('ecom_orders', Array.from({ length: 11 }, (_, i) => ({ id: uid('ordr'), brand_id: i === 10 ? null : brandId, site_id: i === 10 ? null : siteId, external_id: String(1042 + i), order_number: `#${1042 + i}`, product_title: 'Squish Pillow', customer_name: ['Ana R.', 'Ben T.', 'Cara M.'][i % 3], status: 'paid', fulfillment_status: i < 3 ? null : 'fulfilled', supplier_status: i < 2 ? 'to_place' : 'placed', supplier_cost: 9.5, ship_cost: 4, margin_usd: 21.4, total: 39, placed_at: hoursAgo(i * 5) })));
 
   // ── Content: 7-day plan, one clip pair, grades 4/3/2/1 ──────────────
   const acct = (platform: string, handle: string, owner: string, followers: number) => ({ id: uid('acct'), platform, handle, display_name: null, avatar_url: null, owner, brand_id: null, client_id: null, voice: 'Short, direct, no fluff.', posts_per_week_goal: 10, connected: false, followers });
   const accounts = [acct('tiktok', 'northlinegoods', 'ecom', 8400), acct('instagram', 'madebymarq', 'madebymarq', 2140), acct('tiktok', 'marq.builds', 'personal', 11900)];
+  (accounts[1] as Record<string, unknown>).profile = { name: 'Made by MARQ', username: 'madebymarq', biography: 'We build websites and apps for small businesses.\nDM "BUILD" to start.', website: 'https://madebymarq.com', followers_count: 2140, follows_count: 312, media_count: 48, account_type: 'BUSINESS' };
+  (accounts[1] as Record<string, unknown>).profile_draft = { category: 'Web designer', email: 'hello@madebymarq.com', highlights: ['Work', 'Reviews', 'Process', 'FAQ'] };
+  (accounts[1] as Record<string, unknown>).profile_synced_at = iso(-1);
   T('social_accounts', accounts);
   T('social_account_snapshots', accounts.flatMap((a) => [0, 7, 14, 21, 28].map((d) => ({ id: uid('asnp'), account_id: a.id, captured_at: iso(-d), followers: Math.round(Number(a.followers) * (1 - d / 120)), avg_views: null, source: 'manual' }))));
   const hooks = ['Your 3pm neck, fixed in 10 seconds', 'I stopped looking tired on Zoom', 'The $42 thing my chiropractor asked about', 'POV: your desk finally fits you', 'Three trucks, one menu', 'Cold calling a taco truck at 9am', 'I deleted every app but one'];
@@ -276,7 +312,22 @@ export function buildSeed(): Record<string, Row[]> {
   // ── Montage screens: invoices, client CRM ───────────────────────────
   const crm = (business_name: string, contact_name: string, stage: string) => ({ id: uid('crmc'), business_name, contact_name, contact_email: `${contact_name.split(' ')[0].toLowerCase()}@example.com`, contact_phone: null, stage, reveal_full_schedule: false, source: 'cold call', notes: null, stripe_customer_id: null, last_activity_at: hoursAgo(10), public_token: uid('tokn'), client_type: 'client', transcript: null });
   const clients = [crm('Blue Door Bakery', 'Nina Brooks', 'active'), crm('Summit Auto Spa', 'Dev Patel', 'active'), crm('Juniper Tacos', 'Rosa Diaz', 'proposal')];
+  Object.assign(clients[0], { delivery_phase: 3, business_kind: 'restaurant', phase_started_at: hoursAgo(72), last_contact_at: hoursAgo(20) });
+  Object.assign(clients[1], { delivery_phase: 2, business_kind: 'service', phase_started_at: hoursAgo(130), last_contact_at: hoursAgo(2.5) });
   T('crm_clients', clients);
+  // Tasks (brief §4.3) across the projects, so Tasks and the Daily Plan pick-up have real rows.
+  const tk = (title: string, project: string, due: number | null, priority: 'high' | 'med' | 'low', done = false, source = 'manual') => ({ id: uid('task'), user_id: U, title, project, due: due == null ? null : dayStr(due), priority, goal_id: null, source, notes: null, done, done_at: done ? hoursAgo(5) : null, created_at: hoursAgo(48), updated_at: hoursAgo(5) });
+  T('tasks', [
+    tk('Send James the October dev invoice', 'APHS', 0, 'high'), tk('Review Blue Door launch sign-off', 'Made by Marq', -1, 'high'), tk('Record the Masterminds onboarding walkthrough', 'Masterminds', 2, 'med'),
+    tk('Reorder Northline sample pillows', 'E-commerce', 3, 'med'), tk('Film 3 hooks for @mastermindsbymarq', 'Content', 1, 'med'), tk('Meal prep for the week', 'Personal', 0, 'low', true),
+    tk('Call back Rosa about the taco truck menu', 'Made by Marq', 0, 'med', true, 'follow_up'), tk('Pressure-wash gear: book the rental', 'Money Move', 4, 'low', false, 'money_move'),
+  ]);
+  // Delivery checklists (brief §5.2) so the Classroom and Overview have something to show.
+  const ck = (client: number, phase: number, title: string, owner: 'marq' | 'client' | 'bot', done: boolean, ageH: number) => ({ id: uid('chk'), user_id: U, client_id: clients[client].id, phase, title, owner, due: dayStr(Math.round(-ageH / 24) + 5), done, done_at: done ? hoursAgo(ageH / 2) : null, play_id: null, sort: 0, created_at: hoursAgo(ageH), updated_at: hoursAgo(ageH) });
+  T('client_checklist', [
+    ck(0, 3, 'Site / app live on the client domain', 'marq', true, 70), ck(0, 3, 'Client signs off on launch', 'client', false, 70), ck(0, 3, 'Walkthrough video recorded and sent', 'marq', false, 96), ck(0, 3, 'First campaign or posts live', 'bot', false, 70),
+    ck(1, 2, 'Strategy doc approved by client', 'client', true, 120), ck(1, 2, 'Brand kit (logo, palette, voice) finished', 'marq', false, 40), ck(1, 2, 'Accounts and tools set up', 'marq', false, 40), ck(1, 2, 'Content plan for the first month', 'bot', false, 40),
+  ]);
   // Unified Inbox: mail on both domains (with the triage's drafts), a
   // portal ticket and a portal question. The demo client doesn't join, so
   // the embedded crm_clients the real query would return is inlined.
@@ -289,7 +340,7 @@ export function buildSeed(): Record<string, Row[]> {
   T('client_tickets', [{ id: uid('tick'), client_id: clients[0].id, deliverable_id: null, kind: 'bug', title: 'Booking button missing on mobile', avoid: "Don't move the menu — customers know where it is.", prefer: 'Put the button back where it was, under the hero photo.', status: 'open', owner_note: null, created_at: hoursAgo(26), updated_at: hoursAgo(26), resolved_at: null, crm_clients: { business_name: 'Blue Door Bakery', contact_name: 'Nina Brooks' } }]);
   T('client_messages', [{ id: uid('cmsg'), client_id: clients[1].id, sender: 'client', body: 'Can we move Thursday\'s review to 11:30? Something came up at 11.', read_at: null, created_at: hoursAgo(2.5), crm_clients: { business_name: 'Summit Auto Spa', contact_name: 'Dev Patel' } }]);
   T('client_documents', [
-    { id: 'cdoc-blue-door-invoice', doc_type: 'invoice', contact_id: null, label: 'Blue Door Bakery — Invoice', status: 'sent', paid_at: null, data: { client_name: 'Nina Brooks', client_company: 'Blue Door Bakery', invoice_number: 'INV-0042', line_items: [{ type: 'Build', description: 'Website + online ordering', qty: '1', rate: '1800', amount: '1800' }, { type: 'Retainer', description: 'Monthly care plan', qty: '1', rate: '550', amount: '550' }] } },
+    { id: 'cdoc-blue-door-invoice', doc_type: 'invoice', contact_id: null, label: 'Blue Door Bakery — Invoice', status: 'sent', paid_at: null, data: { client_name: 'Nina Brooks', client_company: 'Blue Door Bakery', client_email: 'nina@bluedoorbakery.demo', project_ref: 'BDB-WEB-01', issue_date: '2026-10-01', due_date: '2026-10-16', payment_terms: 'Net 15', invoice_number: 'INV-0042', line_items: [{ type: 'Build', description: 'Website + online ordering', qty: '1', rate: '1800', amount: '1800' }, { type: 'Retainer', description: 'Monthly care plan', qty: '1', rate: '550', amount: '550' }] } },
     { id: uid('cdoc'), doc_type: 'proposal', contact_id: null, label: 'Juniper Tacos — Project Brief', status: 'draft', paid_at: null, data: {} },
   ]);
   const deliveryInvoice = 'cdoc-blue-door-invoice';

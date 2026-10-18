@@ -8,7 +8,8 @@ export type Proposal =
   | { kind: 'playbook'; playbook: string; before: string; after: string; why: string; applied_at?: string }
   | { kind: 'settings'; model?: string; autonomy_level?: number; enabled?: boolean; why: string; applied_at?: string };
 
-export const ALLOWED_MODELS = ['claude-haiku-4-5', 'claude-sonnet-5', 'claude-opus-5', 'claude-fable-5-1'];
+import { ALLOWED_MODELS } from './models';
+export { ALLOWED_MODELS };
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
 
 /** Keep only well-formed proposals; the orchestrator may suggest at most one of each kind. */
@@ -48,10 +49,11 @@ export function applyPlaybookEdit(body: string, before: string, after: string): 
   return { body: trimmed ? `${trimmed}\n${after}` : after, mode: 'appended' };
 }
 
-export interface RouteDecision { workerKey: string | null; instructions: string; channel: string | null; reply: string; productId: string | null; scriptChannel: string | null }
+export type RouteDomain = 'ecom' | 'content' | 'marketing';
+export interface RouteDecision { workerKey: string | null; instructions: string; channel: string | null; reply: string; productId: string | null; scriptChannel: string | null; domain: RouteDomain | null }
 export function parseRoute(text: string, allowedKeys: string[]): RouteDecision {
   let obj: Record<string, unknown>;
-  try { obj = extractJson(text) as Record<string, unknown>; } catch { return { workerKey: null, instructions: '', channel: null, reply: text.trim(), productId: null, scriptChannel: null }; }
+  try { obj = extractJson(text) as Record<string, unknown>; } catch { return { workerKey: null, instructions: '', channel: null, reply: text.trim(), productId: null, scriptChannel: null, domain: null }; }
   const key = str(obj.worker_key);
   const channel = str(obj.channel);
   return {
@@ -61,6 +63,7 @@ export function parseRoute(text: string, allowedKeys: string[]): RouteDecision {
     reply: str(obj.reply),
     productId: /^[0-9a-f-]{36}$/i.test(str(obj.product_id)) ? str(obj.product_id) : null,
     scriptChannel: ['call', 'voicemail', 'email', 'dm', 'landing'].includes(str(obj.script_channel)) ? str(obj.script_channel) : null,
+    domain: (['ecom', 'content', 'marketing'] as const).find((d) => d === str(obj.domain)) ?? null,
   };
 }
 
@@ -84,3 +87,10 @@ export const ROUTE_SYSTEM = (workers: { key: string; name: string; role: string;
   products.length ? `Products in the sheet:\n${products.map((p) => `- ${p.id}: ${p.name}`).join('\n')}` : '',
   'Answer ONLY with JSON: {"worker_key":"","channel":null,"product_id":null,"script_channel":null,"instructions":"","reply":"one sentence telling Marq who you gave it to and what they will do"}',
 ].filter(Boolean).join('\n\n');
+
+/** HQ's first hop (brief §2a): which domain orchestrator gets Marq's order. */
+export const HQ_ROUTE_SYSTEM = [
+  'You are HQ, the master orchestrator. Marq talks only to you. Decide which domain orchestrator should take his message, or answer it yourself if it is a question about the business as a whole.',
+  'Domains: ecom (product research, brands, stores, suppliers, orders), content (social accounts, posts, ideas, clips, performance), marketing (Masterminds and Made by Marq growth, campaigns, leads, cold calling scripts, offers, budget).',
+  'Answer ONLY with JSON: {"domain":"ecom|content|marketing|null","reply":"one or two sentences to Marq","instructions":"the order rewritten for that orchestrator, or empty"}',
+].join('\n\n');

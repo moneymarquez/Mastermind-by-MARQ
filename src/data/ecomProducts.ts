@@ -6,6 +6,8 @@ import type { Channel, Confidence } from './ecom';
 export type Velocity = 'rising' | 'flat' | 'fading';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
+import { breakdown } from './ecomFees';
+import type { CardData } from './ecomCard';
 export interface ProductDetail {
   problem?: string; trigger?: string; evidence?: string;
   buyer?: string;
@@ -19,6 +21,12 @@ export interface ProductDetail {
   videos?: string;
   ship_cost?: number;
   sellers?: number;
+  /** Everything the rich card shows beyond the basics (suppliers, sellers, hooks, outcomes, what's missing). */
+  card?: CardData;
+  notes?: string;
+  recheck_at?: string;
+  rejected?: string;
+  blocked?: string;
 }
 
 export interface Product {
@@ -48,9 +56,9 @@ export interface Product {
 
 export interface Snapshot { id: string; product_id: string; channel: string; rank: number | null; price: number | null; captured_at: string }
 
-/** Spec §6 step 2: landed = supplier + shipping + 3% fees + ~7.5% returns. */
+/** Landed = supplier + shipping + payment processing + packaging + the refund allowance (rates in ecomFees.ts). */
 export function landedCost(supplier: number, ship: number, sellPrice: number): number {
-  return supplier + ship + sellPrice * 0.03 + sellPrice * 0.075;
+  return breakdown(sellPrice, supplier, ship).landed;
 }
 export function marginPct(sellPrice: number, landed: number): number {
   return sellPrice > 0 ? ((sellPrice - landed) / sellPrice) * 100 : 0;
@@ -161,7 +169,21 @@ export function importProducts(text: string, defaultChannel: Channel, today: str
 
 // ── Filters (§5) ───────────────────────────────────────────────────────
 export type PriceBand = 'any' | 'under20' | '20to50' | '50to100' | 'over100';
-export interface SheetFilters { category: string; priceBand: PriceBand; minMargin: number; difficulty: Difficulty | 'any'; minDays: number; hideSaturated: boolean; watchedOnly: boolean }
+/** The e-commerce test budget (Addendum 2 §4): a sample plus the site's domain must fit. */
+export const TEST_BUDGET_USD = 50;
+export const TEST_DOMAIN_USD = 12;
+export const MIN_PROFIT_USD = 10;
+export const MIN_MARGIN_PCT = 35;
+/** What it costs to try a product: one sample (supplier + shipping) plus its domain. */
+export const testCost = (supplier: number, ship: number): number => Math.round((supplier + ship + TEST_DOMAIN_USD) * 100) / 100;
+/** Sample + domain fits the test budget. Unknown supplier cost doesn't fit. */
+export const fitsBudget = (supplier: number | null | undefined, ship: number | null | undefined, budget = TEST_BUDGET_USD): boolean =>
+  supplier != null && testCost(Number(supplier), Number(ship ?? 0)) <= budget;
+/** The Product Pitch bar on a sheet row: at least $10 profit per order and a 35% margin. */
+export const clearsMarginFloor = (p: Pick<Product, 'sell_price' | 'landed_cost' | 'margin_pct'>): boolean =>
+  p.sell_price != null && p.landed_cost != null && p.sell_price - p.landed_cost >= MIN_PROFIT_USD && (p.margin_pct ?? 0) >= MIN_MARGIN_PCT;
+
+export interface SheetFilters { category: string; priceBand: PriceBand; minMargin: number; difficulty: Difficulty | 'any'; minDays: number; hideSaturated: boolean; watchedOnly: boolean; fitsBudget?: boolean; marginFloor?: boolean }
 export const DEFAULT_FILTERS: SheetFilters = { category: 'all', priceBand: 'any', minMargin: 0, difficulty: 'any', minDays: 0, hideSaturated: false, watchedOnly: false };
 
 export function inPriceBand(price: number | null, band: PriceBand): boolean {
@@ -188,6 +210,8 @@ export function filterProducts(list: Product[], f: SheetFilters, search = ''): P
     && (f.minDays <= 0 || (p.days_trending ?? 0) >= f.minDays)
     && (!f.hideSaturated || !isSaturated(p))
     && (!f.watchedOnly || p.watched)
+    && (!f.fitsBudget || fitsBudget(p.supplier_cost, p.detail.ship_cost))
+    && (!f.marginFloor || clearsMarginFloor(p))
     && (!q || p.name.toLowerCase().includes(q) || (p.category ?? '').toLowerCase().includes(q)));
 }
 export function rankSort(a: Product, b: Product): number {

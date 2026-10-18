@@ -132,7 +132,7 @@ export default function LeadFlowFinder() {
         <span className="lf-trunc" style={{ fontWeight: 500, paddingRight: 8 }} title={lead.business_name}>{lead.business_name}</span>
         <span className="lf-cell-2 lf-trunc">{leadCategory(lead)}</span>
         <span className="lf-cell-2 lf-trunc">{lead.city}</span>
-        <span>{lead.phone ? <a className="lf-mono" href={`tel:${lead.phone.replace(/[^\d+]/g, '')}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: 13, color: 'var(--lf-text-secondary)' }}>{fmtPhone(lead.phone)}</a> : <span className="lf-label">None</span>}</span>
+        <span>{lead.phone ? (lead.status === 'do_not_contact' ? <span className="lf-mono" title="Do not contact" style={{ fontSize: 13, color: 'var(--lf-text-tertiary)', textDecoration: 'line-through' }}>{fmtPhone(lead.phone)}</span> : <a className="lf-mono" href={`tel:${lead.phone.replace(/[^\d+]/g, '')}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: 13, color: 'var(--lf-text-secondary)' }}>{fmtPhone(lead.phone)}</a>) : <span className="lf-label">None</span>}</span>
         <span className="lf-num">{lead.review_count ?? ''}</span>
         <span className="lf-mono" style={{ paddingLeft: 16, fontSize: 13, color: 'var(--lf-text-secondary)' }}>{fmtReviewAge(lead.days_since_last_review)}</span>
         <span>{tg}</span>

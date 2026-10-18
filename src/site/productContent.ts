@@ -3,6 +3,8 @@
 // Screenshots are public/site/product/*.webp, captured from the app's demo
 // mode on made-up sample data (see docs/PUBLIC-SITE.md → Product page).
 
+import { MODULE_REGISTRY, SOLO_LINEUP } from '../modules.config';
+
 export type Depth = 'deep' | 'standard' | 'light';
 export interface ProductModule {
   key: string;
@@ -19,12 +21,11 @@ export interface ProductModule {
   alt: string;
 }
 
-export const MODULE_COUNT = 13;
 
 /** Pixel height of each 1600-wide screenshot (trimmed to its content). */
 export const SHOT_H: Record<string, number> = {'daily-plan':963, 'macros': 1178, 'goals': 1139, 'brain': 1247, 'schedule': 932, 'fitness': 814, 'opening-closing': 1247, 'dialing': 1247, 'stocks': 1247, 'streaming': 1247, 'sticky-spot': 901};
 
-export const PRODUCT_MODULES: ProductModule[] = [
+const DETAILED: ProductModule[] = [
   {
     key: 'goals', name: 'Goals', group: 'Personal', depth: 'deep',
     line: 'You set the finish line. It works backward to today.',
@@ -137,5 +138,17 @@ export const PRODUCT_MODULES: ProductModule[] = [
   },
 ];
 
-/** Personal has 9 modules in the solo plan; 7 are confirmed above. */
-export const PERSONAL_TBD = 2;
+const GROUP: Record<string, ProductModule['group']> = { Personal: 'Personal', 'Cold Calling': 'Cold Calling', 'Side Hustles': 'Side Hustles' };
+/** The page's module list IS the app's solo lineup (modules.config.ts →
+ *  SOLO_LINEUP), so the site can never drift from the app again. Modules
+ *  with written copy above use it; the rest use the registry's own line
+ *  until they get a screenshot and a write-up. */
+export const PRODUCT_MODULES: ProductModule[] = SOLO_LINEUP.map((key) => {
+  const d = DETAILED.find((x) => x.key === key);
+  if (d) return d;
+  const m = MODULE_REGISTRY.find((x) => x.key === key)!;
+  return { key, name: m.label, group: GROUP[m.category ?? ''] ?? 'Personal', depth: 'light' as const, line: m.description, img: '', alt: '' };
+}).filter((m) => !!m);
+export const MODULE_COUNT = PRODUCT_MODULES.length;
+/** Every solo module is listed now; no placeholder rows. */
+export const PERSONAL_TBD = 0;

@@ -10,6 +10,7 @@ import type { Notif, NotifGroup } from '../../data/useNotifications';
 import { fmtAgo } from '../../data/useLeadFeed';
 import { useAvatar } from '../../data/useAvatar';
 import { demoLongPress } from '../../demo/longPress';
+import { RedCount } from '../mm/FlagDot';
 
 // ── Sizes (design handoff: App shell) ─────────────────────────────────
 export type Device = 'phone' | 'ipad' | 'desktop';
@@ -21,7 +22,7 @@ export const sidebarW = (d: Device) => (d === 'desktop' ? 248 : 232);
 export const NOVA_DOCK_W = 360;
 const SAFE_BOTTOM = 'max(env(safe-area-inset-bottom), 20px)';
 
-export interface Badges { inbox: number; leads: number; urgent: boolean }
+export interface Badges { inbox: number; leads: number; urgent: boolean; /** Pending count per module screen (sidebar row badges). */ screens?: Record<string, number> }
 /** The current portal and the ones this account can open. */
 export interface PortalNav { current: PortalKey; list: PortalKey[]; onSwitch: (k: PortalKey) => void }
 
@@ -58,7 +59,7 @@ function PortalMenu({ portal, sheet, onClose }: { portal: PortalNav; sheet: bool
 }
 
 // ── Phone ─────────────────────────────────────────────────────────────
-export function PhoneHeader({ onMenu, onHome, onSearch, onBell, bellDot, bellOpen, portal, screenLabel }: { onMenu: () => void; onHome: () => void; onSearch: () => void; onBell: () => void; bellDot: boolean; bellOpen: boolean; portal?: PortalKey; screenLabel?: string }) {
+export function PhoneHeader({ onMenu, onHome, onSearch, onBell, bellDot, bellOpen, portal, screenLabel, reds = 0, onReds }: { onMenu: () => void; onHome: () => void; onSearch: () => void; onBell: () => void; bellDot: boolean; bellOpen: boolean; portal?: PortalKey; screenLabel?: string; reds?: number; onReds?: () => void }) {
   const inPortal = portal && portal !== 'masterminds';
   return (
     <header style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 29, height: `calc(${PHONE_HEADER_H}px + env(safe-area-inset-top))`, padding: '0 16px 10px', paddingTop: 'env(safe-area-inset-top)', boxSizing: 'border-box', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', background: 'color-mix(in srgb, var(--bg) 88%, transparent)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
@@ -78,6 +79,7 @@ export function PhoneHeader({ onMenu, onHome, onSearch, onBell, bellDot, bellOpe
         )}
       </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <RedCount n={reds} onClick={onReds} />
         <button className="mm-icon-btn" style={{ width: 40, height: 40 }} onClick={onSearch} aria-label="Search"><GSearch /></button>
         <button className="mm-icon-btn" data-on={bellOpen || undefined} style={{ width: 40, height: 40 }} onClick={onBell} aria-label="Notifications"><GBell />{bellDot && <Dot top={9} right={10} />}</button>
         <button {...demoLongPress} onClick={onHome} aria-label="Home" style={{ padding: 0, border: 0, background: 'transparent', cursor: 'pointer', userSelect: 'none', WebkitTouchCallout: 'none' }}><Logo size={40} /></button>
@@ -208,6 +210,7 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
                   <button key={m.id} className="mm-nav-row" data-active={active || undefined} aria-current={active ? 'page' : undefined} style={{ height: rowH }} onClick={() => onNav(m.id)}>
                     <span style={{ width: 20, height: 20, flex: 'none', borderRadius: 6, background: active ? 'var(--accent)' : 'var(--surface-3)', color: active ? 'var(--bg)' : 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8.5, fontWeight: 700, letterSpacing: '-0.02em' }}>{m.glyph}</span>
                     <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.label}</span>
+                    {!!badges.screens?.[m.id] && <Badge n={badges.screens[m.id]} urgent={false} />}
                   </button>
                 );
               })}
@@ -230,7 +233,7 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
   );
 }
 
-export function AppTopBar({ device, left, right, crumb, dark, novaOpen, bellDot, bellOpen, onToggleTheme, onSearch, onBell, onNova }: { device: Device; left: number; right: number; crumb: { group: string | null; label: string }; dark: boolean; novaOpen: boolean; bellDot: boolean; bellOpen: boolean; onToggleTheme: () => void; onSearch: () => void; onBell: () => void; onNova: () => void }) {
+export function AppTopBar({ device, left, right, crumb, dark, novaOpen, bellDot, bellOpen, onToggleTheme, onSearch, onBell, onNova, reds = 0, onReds }: { device: Device; left: number; right: number; crumb: { group: string | null; label: string }; dark: boolean; novaOpen: boolean; bellDot: boolean; bellOpen: boolean; onToggleTheme: () => void; onSearch: () => void; onBell: () => void; onNova: () => void; reds?: number; onReds?: () => void }) {
   const btn = device === 'desktop' ? 36 : 40;
   return (
     <header style={{ position: 'absolute', top: 0, left, right, height: TOP_BAR_H, zIndex: 29, display: 'flex', alignItems: 'center', gap: 10, padding: '0 24px 0 32px', boxSizing: 'border-box', borderBottom: '1px solid var(--border)', background: 'color-mix(in srgb, var(--bg) 88%, transparent)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
@@ -244,6 +247,7 @@ export function AppTopBar({ device, left, right, crumb, dark, novaOpen, bellDot,
         </button>
       )}
       {device !== 'desktop' && <button className="mm-icon-btn" style={{ width: btn, height: btn }} onClick={onSearch} aria-label="Search"><GSearch size={17} /></button>}
+      <RedCount n={reds} onClick={onReds} />
       <button className="mm-icon-btn" style={{ width: btn, height: btn }} onClick={onToggleTheme} aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}>{dark ? <GSun size={17} /> : <GMoon size={17} />}</button>
       <button className="mm-icon-btn" data-on={bellOpen || undefined} style={{ width: btn, height: btn }} onClick={onBell} aria-label="Notifications"><GBell size={17} />{bellDot && <Dot top={8} right={9} />}</button>
       <button className="mm-icon-btn" data-on={novaOpen || undefined} style={{ height: btn, padding: '0 12px', gap: 6, color: 'var(--text)', fontSize: 13.5, fontWeight: 500 }} onClick={onNova}><GNova size={15} fill color="var(--accent)" />Ask Nova</button>
@@ -252,7 +256,7 @@ export function AppTopBar({ device, left, right, crumb, dark, novaOpen, bellDot,
 }
 
 // ── Notifications (bell) ──────────────────────────────────────────────
-const NOTIF_GROUPS: NotifGroup[] = ['New leads', 'Inbox', 'Bills and deadlines', 'Clients'];
+const NOTIF_GROUPS: NotifGroup[] = ['Alerts', 'New leads', 'Inbox', 'Bills and deadlines', 'Clients'];
 export function NotificationsPanel({ device, items, isRead, onOpen, onMarkAll, onClose, now }: { device: Device; items: Notif[]; isRead: (id: string) => boolean; onOpen: (n: Notif) => void; onMarkAll: () => void; onClose: () => void; now: number }) {
   const phone = device === 'phone';
   const panel: CSSProperties = phone
@@ -339,4 +343,4 @@ function Dot({ top, right }: { top: number; right: number }) { return <span styl
 export function Badge({ n, urgent }: { n: number; urgent: boolean }) {
   return <span style={{ minWidth: 18, height: 18, padding: '0 5px', boxSizing: 'border-box', borderRadius: 999, background: urgent ? 'var(--danger)' : 'var(--accent)', color: 'var(--bg)', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{n > 99 ? '99+' : n}</span>;
 }
-const initials = (s: string) => s.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || 'MM';
+const initials = (s: string | null | undefined) => (s ?? '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || 'MM';

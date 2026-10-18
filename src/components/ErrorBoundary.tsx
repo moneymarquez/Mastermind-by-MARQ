@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { Component, Suspense, lazy } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 
 /** Bug inventory B-05: a render error used to turn the whole app into an
@@ -8,6 +8,16 @@ import type { ErrorInfo, ReactNode } from 'react';
  *  The error is logged to the console and kept in localStorage
  *  ('mm:last-error') so it can be read back when you report it; Sentry
  *  replaces that in Phase 2. */
+const RunnerGame = lazy(() => import('./game/RunnerGame'));
+/** The game gets its own boundary: if it throws, the plain error screen is all you see. */
+class GameBoundary extends Component<{ children: ReactNode }, { bad: boolean }> {
+  state = { bad: false };
+  static getDerivedStateFromError() { return { bad: true }; }
+  componentDidCatch(e: Error) { recordError(e, 'runner-game'); }
+  render() { return this.state.bad ? null : this.props.children; }
+}
+export function Runner() { return <GameBoundary><Suspense fallback={null}><RunnerGame /></Suspense></GameBoundary>; }
+
 interface Props { children: ReactNode; scope: 'app' | 'screen'; resetKey?: string; label?: string }
 interface State { error: Error | null; key?: string }
 
@@ -30,7 +40,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     const app = this.props.scope === 'app';
     return (
       <div role="alert" style={{ minHeight: app ? '100dvh' : 320, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: app ? 'var(--bg)' : 'transparent', color: 'var(--text)' }}>
-        <div style={{ maxWidth: 360, textAlign: 'center' }}>
+        <div style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
           <div style={{ fontSize: 'var(--text-title, 22px)', fontWeight: 700 }}>Something broke</div>
           <p style={{ fontSize: 'var(--text-body, 15px)', color: 'var(--text-secondary)', lineHeight: 1.5, margin: '10px 0 18px' }}>
             {app ? 'Nothing you saved is lost. Reload to pick up where you were.' : `${this.props.label ?? 'This screen'} hit an error. Everything else still works — reload, or open another screen from the menu.`}
@@ -40,6 +50,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             Tap to reload
           </button>
           <div style={{ fontSize: 'var(--text-caption, 12px)', color: 'var(--text-tertiary)', marginTop: 14, overflowWrap: 'anywhere' }}>{this.state.error.message.slice(0, 160)}</div>
+          <Runner />
         </div>
       </div>
     );

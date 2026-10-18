@@ -21,7 +21,7 @@ test('office: orchestrator replies, playbook edits, routing', async () => {
   assert.deepEqual(applyPlaybookEdit('- a\n- b', '- b', '- c'), { body: '- a\n- c', mode: 'replaced' });
   assert.deepEqual(applyPlaybookEdit('- a\n', '- zz', '- c'), { body: '- a\n- c', mode: 'appended' });
   assert.deepEqual(applyPlaybookEdit('', '', '- c'), { body: '- c', mode: 'appended' });
-  assert.deepEqual(parseRoute('{"worker_key":"scout","channel":"amazon","instructions":"over $30","reply":"Scout is on it"}', ['scout']), { workerKey: 'scout', instructions: 'over $30', channel: 'amazon', reply: 'Scout is on it', productId: null, scriptChannel: null });
+  assert.deepEqual(parseRoute('{"worker_key":"scout","channel":"amazon","instructions":"over $30","reply":"Scout is on it"}', ['scout']), { workerKey: 'scout', instructions: 'over $30', channel: 'amazon', reply: 'Scout is on it', productId: null, scriptChannel: null, domain: null });
   assert.equal(parseRoute('{"worker_key":"analyst","product_id":"0f8fad5b-d9cb-469f-a165-70867728950e","script_channel":"email"}', ['analyst']).productId, '0f8fad5b-d9cb-469f-a165-70867728950e');
   assert.equal(parseRoute('{"worker_key":"script_copy","product_id":"x","script_channel":"email"}', ['script_copy']).productId, null);
   assert.equal(parseRoute('{"worker_key":"nobody","channel":"mars"}', ['scout']).workerKey, null);

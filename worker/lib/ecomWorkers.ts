@@ -117,7 +117,8 @@ export function storeSystem(ctx: BriefCtx): string {
   return brief(
     'You are Store Builder. Write a one-product landing page for a new brand as ONE self-contained HTML file.',
     [
-      'Mobile-first (375px), inline <style>, no external JS, fonts from Google Fonts only. Sections: hero with the angle as the headline and the price, the problem, how it works (3 steps), proof (what the buyer gets — no invented reviews or fake numbers), FAQ (shipping time, returns), and a sticky "Buy" button linking to #checkout.',
+      'Mobile-first (375px), inline <style>, no external JS, fonts from Google Fonts only. Sections: hero with the angle as the headline and the price, the problem, how it works (3 steps), proof (what the buyer gets — no invented reviews or fake numbers), a short FAQ about the product itself, and a sticky "Buy" button linking to #checkout.',
+      'This site is one of several that check out through ONE shared Shopify store whose refund, shipping and privacy policies apply to every site. NEVER state return windows, refund terms, guarantees, shipping times or costs, or free-shipping promises — the page footer links to the store\'s own policy pages (added at launch). If the FAQ touches shipping or returns, the answer is only "See our Shipping / Refund policy below." Don\'t write a footer, a contact address or policy pages; launch adds them.',
       'Use the brand\'s palette and type. Real copy in the brand voice — no lorem ipsum, no [brackets], no "Your Brand", no TODO.',
       'Doesn\'t-look-AI-made: no purple gradients unless the palette has them, no emoji bullets, no "Elevate your…", no "Unlock", no three identical cards with icons.',
       'Every <img> has alt text; use https://placehold.co/600x600?text=Product+photo only where a real product photo will go.',

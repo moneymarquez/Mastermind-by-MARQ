@@ -6,6 +6,8 @@ import { PLATFORMS, PLATFORM, OWNERS, FORMATS, followerChange30, avgViews30, pos
 import { dateStr } from '../../../data/time';
 import { E, Badge, Drawer, Metric, Section, TeachingEmpty, btn, field, label } from '../ecom/ecomShared';
 import { askConfirm } from '../../../lib/confirm';
+import { api as callApi } from '../../../lib/api';
+import { useModule } from '../../mm/Page';
 
 type Api = ReturnType<typeof useSocialAccounts>;
 interface Props { api: Api; items: ContentItem[]; newOpen: boolean; onCloseNew: () => void; onOpenPlan: () => void }
@@ -18,10 +20,35 @@ export default function AccountsTab({ api, items, newOpen, onCloseNew, onOpenPla
   const [logId, setLogId] = useState<string | null>(null);
   const today = dateStr(new Date());
   const open = api.accounts.find((a) => a.id === openId) ?? null;
+  const { isOwner } = useModule();
+  const [seedMsg, setSeedMsg] = useState('');
+  const own = api.accounts.filter((a) => a.owner === 'mastermind' || a.owner === 'madebymarq' || a.owner === 'personal').length;
+  const [syncMsg, setSyncMsg] = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const sync = async () => {
+    setSyncing(true); setSyncMsg('');
+    const r = await callApi<{ results?: { handle: string; ok: boolean; detail: string }[]; error?: string }>('/api/content/sync-accounts', { body: {} });
+    setSyncing(false);
+    setSyncMsg(r.error ?? ((r.results ?? []).map((x) => `${x.ok ? '✓' : '✕'} @${x.handle}: ${x.detail}`).join('\n') || 'No Instagram accounts to sync.'));
+    await api.reload();
+  };
+  const seed = async () => { const r = await callApi<{ added?: number; error?: string }>('/api/content/own-accounts', { body: {} }); setSeedMsg(r.error ?? `Added ${r.added ?? 0} account${r.added === 1 ? '' : 's'}. Connect each in Setup → Accounts.`); await api.reload(); };
+  // Brief §3.4: 3–5 accounts, every post a unique variant.
+  const perOwner = Object.values(api.accounts.reduce<Record<string, number>>((m, a) => { m[a.owner] = (m[a.owner] ?? 0) + 1; return m; }, {}));
 
   return (
     <div>
       {api.error && <div style={{ color: E.red, marginBottom: 10 }}>{api.error}</div>}
+      <div style={{ ...E.card, padding: 12, marginBottom: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ flex: '1 1 260px', fontSize: 'var(--text-caption)', color: E.muted, lineHeight: 1.5 }}>
+          <strong style={{ color: E.text }}>Run 3–5 accounts, every post a unique variant.</strong> A different hook, caption and cut on each. The same clip posted identically across many accounts is what Instagram and TikTok flag as spam, so the Post Planner holds an identical caption + video going to two accounts on the same day.
+          {perOwner.some((n) => n > 5) && <div style={{ color: E.amber, marginTop: 4 }}>You have more than 5 accounts under one owner; that's past where variants stay genuinely different.</div>}
+        </div>
+        {isOwner && own < 6 && <button style={btn('ghost')} onClick={() => void seed()}>Add Masterminds, Made by Marq + personal accounts</button>}
+        {isOwner && <button style={btn('primary')} disabled={syncing} onClick={() => void sync()}>{syncing ? 'Syncing…' : 'Refresh from Instagram + TikTok'}</button>}
+        {syncMsg && <div style={{ fontSize: 'var(--text-caption)', color: E.muted, width: '100%', whiteSpace: 'pre-line' }}>{syncMsg}</div>}
+        {seedMsg && <div style={{ fontSize: 'var(--text-caption)', color: E.muted, width: '100%' }}>{seedMsg}</div>}
+      </div>
       {!api.loading && api.accounts.length === 0 && (
         <TeachingEmpty what="No accounts yet. Add every account this engine will run: Mastermind, Made by Marq, your personal one, each e-comm brand." worker="you for now — once Instagram and TikTok are connected, the numbers fill in by themselves" />
       )}
@@ -54,6 +81,8 @@ function AccountCard({ a, api, items, today, onOpen, onLog, onOpenPlan }: { a: S
   const health = accountHealth(posts, change);
   const best = bestPostThisWeek(posts, api.metrics);
   const next = nextScheduled(items.filter((i) => i.account_id === a.id), today);
+  const prof = (a.profile ?? {}) as { sync_error?: string; sync_reconnect?: boolean; media_count?: number };
+  const recent = [...posts].sort((x, y) => +new Date(y.posted_at) - +new Date(x.posted_at)).slice(0, 4);
   const trend = change.delta == null ? '' : change.delta > 0 ? `↑${compact(change.delta)}` : change.delta < 0 ? `↓${compact(-change.delta)}` : '→0';
   return (
     <div style={{ ...E.card, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -65,7 +94,23 @@ function AccountCard({ a, api, items, today, onOpen, onLog, onOpenPlan }: { a: S
         </div>
         <Badge color={HEALTH_COLOR[health]}>{HEALTH_LABEL[health]}</Badge>
       </div>
+      {prof.sync_error && (
+        <div role="alert" style={{ padding: '8px 10px', borderRadius: 10, border: `1px solid ${E.red}`, fontSize: 'var(--text-caption)', color: E.red, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ flex: '1 1 180px' }}>{prof.sync_error}</span>
+          {prof.sync_reconnect && <a href="/?screen=setup" style={{ ...btn('danger'), textDecoration: 'none', minHeight: 30, fontSize: 12.5 }}>Reconnect</a>}
+        </div>
+      )}
+      {recent.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+          {recent.map((p) => (
+            <a key={p.id} href={p.url ?? undefined} target="_blank" rel="noopener noreferrer" title={p.caption ?? ''} style={{ aspectRatio: '1 / 1', borderRadius: 8, overflow: 'hidden', background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, var(--surface)), color-mix(in srgb, var(--success) 18%, var(--surface)))', display: 'block', position: 'relative' }}>
+              {p.thumbnail_url ? <img src={p.thumbnail_url} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ position: 'absolute', inset: 0, padding: 4, fontSize: 10, color: E.text, overflow: 'hidden' }}>{(p.hook || p.caption || '').slice(0, 40)}</span>}
+            </a>
+          ))}
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        <Metric label="Posts" value={compact(prof.media_count ?? posts.length)} />
         <Metric label="Followers" value={compact(change.now)} trend={trend} asOf={a.followers != null ? a.updated_at : null} />
         <Metric label="Avg views · 30d" value={compact(avg == null ? null : Math.round(avg))} />
         <Metric label="Streak" value={String(streak)} unit="wk" />
@@ -140,6 +185,53 @@ function LogNumbersDrawer({ a, api, onClose }: { a: SocialAccount; api: Api; onC
 
 const num = (s: string): number | null => (s.trim() === '' ? null : Number(s.replace(/[,\s]/g, '')));
 
+/** A profile-page preview of the account, in Masterminds' own look: a ringed avatar, three numbers, a bio line, and a tile grid of what's posted and what's planned. */
+function ProfilePreview({ a, api, posts, metrics, planned, followers, avg }: { a: SocialAccount; api: Api; posts: SocialPost[]; metrics: Api['metrics']; planned: ContentItem[]; followers: number | null; avg: number | null }) {
+  const recent = [...posts].sort((x, y) => +new Date(y.posted_at) - +new Date(x.posted_at)).slice(0, 9);
+  const upcoming = planned.slice(0, 9);
+  const tiles = [...recent.map((p) => { const m = latestMetrics(metrics[p.id] ?? []); return { key: p.id, kind: 'posted' as const, img: p.thumbnail_url, text: p.hook || p.caption || '', views: m?.views ?? null, likes: m?.likes ?? null, type: p.type as string, href: p.url }; }), ...upcoming.map((i) => ({ key: i.id, kind: 'planned' as const, img: i.thumbnail_url, text: i.concept, views: null as number | null, likes: null as number | null, type: i.format as string, href: null as string | null }))];
+  const [tab, setTab] = useState<'posted' | 'planned'>('posted');
+  const shown = tiles.filter((t) => t.kind === tab);
+  const bio = a.voice?.trim() || `${OWNERS.find((o) => o.id === a.owner)?.label ?? ''} · ${PLATFORM[a.platform].label}`;
+  return (
+    <div style={{ ...E.card, padding: 16, marginBottom: 14, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+        <div style={{ padding: 3, borderRadius: '50%', background: 'conic-gradient(from 200deg, var(--accent), var(--success), var(--accent))', flexShrink: 0 }}>
+          <div style={{ padding: 3, borderRadius: '50%', background: 'var(--surface)' }}><Avatar a={a} size={72} /></div>
+        </div>
+        <div style={{ flex: 1, minWidth: 0, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', textAlign: 'center', gap: 4 }}>
+          {[['Posts', String(posts.length)], ['Followers', compact(followers)], ['Avg views', compact(avg == null ? null : Math.round(avg))]].map(([k, v]) => (
+            <div key={k}><div style={{ fontSize: 20, fontWeight: 700, color: E.text, fontVariantNumeric: 'tabular-nums' }}>{v}</div><div style={{ fontSize: 12, color: E.faint }}>{k}</div></div>
+          ))}
+        </div>
+      </div>
+      <div style={{ marginTop: 10 }}>
+        <div style={{ fontWeight: 700, color: E.text }}>{a.display_name || a.handle}</div>
+        <div style={{ fontSize: 13.5, color: E.muted, lineHeight: 1.45 }}>{bio}</div>
+        <div style={{ fontSize: 12, color: E.faint, marginTop: 2 }}>@{a.handle} · {a.connected ? 'connected' : 'not connected'} · {a.posts_per_week_goal} posts a week</div>
+      </div>
+      <div style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <Badge color={a.live_posting ? E.red : E.faint}>{a.live_posting ? 'LIVE: approved posts really go out' : 'Test mode: nothing posts'}</Badge>
+        <button style={{ ...btn('ghost'), minHeight: 30, fontSize: 12.5, padding: '0 10px' }} onClick={async () => { const to = !a.live_posting; if (to && !(await askConfirm(`Post for real to @${a.handle}? Approved posts will publish publicly at their planned times.`))) return; await api.updateAccount(a.id, { live_posting: to } as Partial<SocialAccount>); }}>{a.live_posting ? 'Back to test mode' : 'Turn on live posting'}</button>
+      </div>
+      <div style={{ display: 'flex', gap: 6, margin: '12px 0 10px' }}>
+        {(['posted', 'planned'] as const).map((t) => <button key={t} onClick={() => setTab(t)} style={{ ...btn(tab === t ? 'primary' : 'ghost'), minHeight: 32, padding: '0 14px', fontSize: 13, borderRadius: 999 }}>{t === 'posted' ? `Posted ${recent.length}` : `Planned ${upcoming.length}`}</button>)}
+      </div>
+      {shown.length === 0 ? <div style={{ fontSize: 13, color: E.faint, padding: '10px 0' }}>{tab === 'posted' ? 'Nothing posted yet. Log or publish a post and it appears here.' : 'Nothing planned. Open the plan to schedule the week.'}</div> : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+          {shown.map((t, i) => (
+            <a key={t.key} href={t.href ?? undefined} target="_blank" rel="noopener noreferrer" style={{ position: 'relative', aspectRatio: '4 / 5', borderRadius: 12, overflow: 'hidden', display: 'block', textDecoration: 'none', border: t.kind === 'planned' ? `1px dashed ${E.border}` : `1px solid ${E.border}`, background: t.img ? 'var(--surface-4)' : `linear-gradient(${140 + i * 25}deg, color-mix(in srgb, var(--accent) 22%, var(--surface)), color-mix(in srgb, var(--success) 18%, var(--surface)))` }}>
+              {t.img && <img src={t.img} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+              {!t.img && <div style={{ position: 'absolute', inset: 0, padding: 8, fontSize: 12, lineHeight: 1.3, color: E.text, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', overflow: 'hidden' }}>{t.text.slice(0, 70) || FORMATS.find((f) => f.id === t.type)?.label}</div>}
+              <span style={{ position: 'absolute', left: 6, bottom: 6, fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: 'color-mix(in srgb, var(--bg) 78%, transparent)', color: E.text }}>{t.kind === 'planned' ? (t.img ? 'Planned' : 'Planned · no image yet') : `▶ ${compact(t.views)} · ♥ ${compact(t.likes)}`}</span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AccountDetail({ a, api, items, today, onClose, onOpenPlan }: { a: SocialAccount; api: Api; items: ContentItem[]; today: string; onClose: () => void; onOpenPlan: () => void }) {
   const [edit, setEdit] = useState(false);
   const [addPost, setAddPost] = useState(false);
@@ -156,6 +248,7 @@ function AccountDetail({ a, api, items, today, onClose, onOpenPlan }: { a: Socia
   return (
     <Drawer open onClose={onClose} title={<span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}><Avatar a={a} size={28} />@{a.handle}</span>} subtitle={`${PLATFORM[a.platform].label} · ${OWNERS.find((o) => o.id === a.owner)?.label}${a.voice ? ` · voice: ${a.voice.slice(0, 60)}` : ''}`} width={640}
       actions={<button style={btn('ghost')} onClick={() => setEdit(true)}>Edit</button>}>
+      <ProfilePreview a={a} api={api} posts={posts} metrics={api.metrics} planned={items.filter((i) => i.account_id === a.id && !i.posted_post_id && !!i.scheduled_for && i.scheduled_for >= today)} followers={change.now} avg={avg} />
       <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
         <Metric label="Followers" value={compact(change.now)} trend={change.delta == null ? '' : change.delta >= 0 ? `↑${compact(change.delta)} / 30d` : `↓${compact(-change.delta)} / 30d`} big />
         <Metric label="Avg views · 30d" value={compact(avg == null ? null : Math.round(avg))} big />

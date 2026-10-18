@@ -21,3 +21,12 @@ export async function api<T = Record<string, unknown>>(path: string, opts: { met
     return { error: e instanceof Error ? e.message : String(e) } as T & { error?: string };
   }
 }
+
+/** Raw fetch to a Worker route with the user's token (for FormData uploads). */
+export async function authedFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return new Response(JSON.stringify({ error: 'Not signed in.' }), { status: 401 });
+  try { return await fetch(path, { ...init, headers: { ...(init.headers ?? {}), authorization: `Bearer ${token}` } }); }
+  catch (e) { return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), { status: 503 }); }
+}

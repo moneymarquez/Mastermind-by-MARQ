@@ -14,7 +14,7 @@ function buildId(): string {
 
 // The public marketing site: its own HTML pages, built beside the app but
 // never part of it (no app CSS, not in the service worker's precache).
-const SITE_PAGES = ['home', 'product', 'concepts', 'jobs', 'apply', 'team', 'refund', 'disclaimers', 'roadmap'];
+const SITE_PAGES = ['home', 'product', 'concepts', 'jobs', 'apply', 'team', 'refund', 'disclaimers', 'roadmap', 'sms', 'privacy', 'terms'];
 
 export default defineConfig({
   define: { __APP_BUILD__: JSON.stringify(buildId()) },

@@ -1,3 +1,4 @@
+import { supabase } from '../../../lib/supabase';
 import { useEffect, useState } from 'react';
 import { usePlaybooks, STARTER_PLAYBOOKS } from '../../../data/useEngine';
 import type { Playbook, PlaybookVersion } from '../../../data/useEngine';
@@ -52,6 +53,7 @@ export default function PlaybooksV2() {
         </section>
       )}
       {adding && <NewPlaybook onClose={() => setAdding(false)} onAdd={async (n, d) => { await pb.create(n, d); setAdding(false); }} />}
+      {!(phone && open) && <ScalingPlays />}
     </Page>
   );
 }
@@ -146,5 +148,31 @@ function Editor({ p, api }: { p: Playbook; api: ReturnType<typeof usePlaybooks> 
         ))}
       </div>
     </div>
+  );
+}
+
+/** Scaling plays (brief §5.7): saved from a finished client phase ("Save as
+ *  play" on the Delivery tab), offered to the next client of the same type,
+ *  and read by the bots like any playbook. */
+function ScalingPlays() {
+  const [rows, setRows] = useState<{ id: string; title: string; business_kind: string | null; phase: number | null; steps: { title: string; owner?: string }[]; uses: number }[]>([]);
+  const [openId, setOpenId] = useState<string | null>(null);
+  useEffect(() => { void supabase.from('plays').select('id,title,business_kind,phase,steps,uses').order('uses', { ascending: false }).then(({ data, error }) => { if (!error) setRows((data ?? []) as typeof rows); }); }, []);
+  const remove = async (id: string) => { if (!window.confirm('Delete this play?')) return; await supabase.from('plays').delete().eq('id', id); setRows((r) => r.filter((x) => x.id !== id)); };
+  return (
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ fontWeight: 600, fontSize: 16 }}>Scaling plays</div>
+      <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Saved from a finished client phase. A new client of the same type entering that phase is offered the play.</div>
+      {rows.length === 0 && <div style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>No plays yet. Open a client → Delivery → "Save as play".</div>}
+      {rows.map((r) => (
+        <div key={r.id} style={{ borderTop: '1px solid var(--grid)', paddingTop: 8 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button onClick={() => setOpenId(openId === r.id ? null : r.id)} style={{ all: 'unset', cursor: 'pointer', flex: 1, fontSize: 14 }}><strong>{r.title}</strong> <span style={{ color: 'var(--text-tertiary)' }}>· {r.business_kind ?? 'any type'} · phase {r.phase ?? '—'} · {r.steps.length} steps · used {r.uses}×</span></button>
+            <button className="mm-btn" style={{ height: 28, fontSize: 12 }} onClick={() => void remove(r.id)}>Delete</button>
+          </div>
+          {openId === r.id && <ol style={{ margin: '6px 0 0', paddingLeft: 20, fontSize: 13.5 }}>{r.steps.map((s, i) => <li key={i}>{s.title}{s.owner ? ` (${s.owner})` : ''}</li>)}</ol>}
+        </div>
+      ))}
+    </section>
   );
 }

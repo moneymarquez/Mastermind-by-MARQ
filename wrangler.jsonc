@@ -58,7 +58,12 @@
     "INBOX_FORWARD_TO": "madebymarquez@icloud.com",
     "VITE_SUPABASE_URL": "https://jqkxaxjuvurciqmvnsbw.supabase.co",
     "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impxa3hheGp1dnVyY2lxbXZuc2J3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNDE1ODAsImV4cCI6MjEwMTYxNzU4MH0.TjKqBJCBlqVQLXnQZIL6tyyGE3KEIdCdaa7FySOfOHA",
-    "STRIPE_PRICE_ID": "price_1U6YjXRyuG1KPb7GE5a7AamS"
+    "STRIPE_PRICE_ID": "price_1U6YjXRyuG1KPb7GE5a7AamS",
+    // Test mode (worker/lib/dryRun.ts): every outbound post, text, email,
+    // store launch and paid generation is logged instead of performed.
+    // Committed here because dashboard variables are wiped on each deploy.
+    // Go live by deleting this line and pushing.
+    "DRY_RUN": "1"
   },
   "assets": {
     "directory": "./dist",
@@ -89,7 +94,7 @@
   //   VITE_SUPABASE_ANON_KEY     (plain variable — already public in the built frontend)
   //   SUPABASE_SERVICE_ROLE_KEY  (secret)
   //   ANTHROPIC_API_KEY          (secret — optional; Nova commentary is skipped without it)
-  //   GOOGLE_PLACES_API_KEY      (secret — LeadFlow's "Find leads" button; restrict the key to Places API (New).
+  //   GOOGLE_PLACES_API_KEY      (secret — Lead Engines and LeadFlow's "Find leads" button; restrict the key to Places API (New).
   //                               MUST also be on the Deploy command's `wrangler secret bulk` list, or the next deploy wipes it)
   //   STRIPE_SECRET_KEY          (secret — optional; billing gate shows "not configured" without it)
   //   STRIPE_PRICE_ID            (secret — the $19.99/mo recurring Price you create in your own Stripe dashboard)

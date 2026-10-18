@@ -4,6 +4,7 @@
  *  health, and the LeadFlow-standard presentation helpers (labelled
  *  numbers, confidence badges). No React, no network. */
 
+import { ROLE_MODEL } from './models';
 export type Channel = 'tiktok' | 'amazon' | 'meta' | 'etsy' | 'walmart' | 'rising';
 export type Confidence = 'hard' | 'estimate' | 'ai';
 export type Health = 'building' | 'testing' | 'growing' | 'stalled' | 'killed';
@@ -224,33 +225,39 @@ export function trendArrow(current: number | null | undefined, previous: number 
   return '→';
 }
 
-// ── Workers config (§9) — the one place model choices live ─────────────
+// ── Workers config (§9) — models come from the role map in models.ts ───
+const P = ROLE_MODEL.parse, W = ROLE_MODEL.writer, D = ROLE_MODEL.domain, M = ROLE_MODEL.master;
 export interface WorkerDef { key: string; name: string; role: string; model: string; domain: Domain; tools: string[]; phase: number }
 export const WORKERS: WorkerDef[] = [
-  { key: 'scout', name: 'Product Scout', role: 'Fill Product Sheets per channel; take snapshots.', model: 'claude-haiku-4-5', domain: 'ecom', tools: ['web search'], phase: 3 },
-  { key: 'analyst', name: 'Audience Analyst', role: 'Who buys, why, the angle, the margin math.', model: 'claude-sonnet-5', domain: 'ecom', tools: [], phase: 3 },
-  { key: 'teardown', name: 'Competitor Teardown', role: 'Dossiers on the top sellers; 3 unclaimed angles.', model: 'claude-sonnet-5', domain: 'ecom', tools: ['web search'], phase: 4 },
-  { key: 'supplier', name: 'Supplier Finder', role: 'Suppliers, sample order draft, inspection sheet.', model: 'claude-haiku-4-5', domain: 'ecom', tools: ['web search', 'CJ Dropshipping API'], phase: 5 },
-  { key: 'brandlab', name: 'Brand Lab', role: 'Three brand options from the buyer profile.', model: 'claude-sonnet-5', domain: 'ecom', tools: ['Higgsfield'], phase: 5 },
-  { key: 'builder', name: 'Store Builder', role: 'Site code to a GitHub branch; quality gate.', model: 'claude-sonnet-5', domain: 'ecom', tools: ['GitHub', 'Cloudflare Pages', 'Playwright'], phase: 6 },
+  { key: 'scout', name: 'Product Scout', role: 'Fill Product Sheets per channel; take snapshots.', model: P, domain: 'ecom', tools: ['web search'], phase: 3 },
+  { key: 'analyst', name: 'Audience Analyst', role: 'Who buys, why, the angle, the margin math.', model: W, domain: 'ecom', tools: [], phase: 3 },
+  { key: 'teardown', name: 'Competitor Teardown', role: 'Dossiers on the top sellers; 3 unclaimed angles.', model: W, domain: 'ecom', tools: ['web search'], phase: 4 },
+  { key: 'supplier', name: 'Supplier Finder', role: 'Suppliers, sample order draft, inspection sheet.', model: P, domain: 'ecom', tools: ['web search', 'CJ Dropshipping API'], phase: 5 },
+  { key: 'brandlab', name: 'Brand Lab', role: 'Three brand options from the buyer profile.', model: W, domain: 'ecom', tools: ['Higgsfield'], phase: 5 },
+  { key: 'builder', name: 'Store Builder', role: 'Site code to a GitHub branch; quality gate.', model: W, domain: 'ecom', tools: ['GitHub', 'Cloudflare Pages', 'Playwright'], phase: 6 },
   { key: 'launcher', name: 'Launcher', role: 'Takes an approved store page live: Shopify product + checkout, Cloudflare Pages production.', model: 'no AI (API only)', domain: 'ecom', tools: ['Shopify', 'Cloudflare Pages'], phase: 6 },
-  { key: 'content', name: 'Content Producer', role: 'Hooks, scripts, captions, visuals. Shared with the Content Engine.', model: 'claude-sonnet-5', domain: 'content', tools: ['Higgsfield'], phase: 7 },
-  { key: 'analytics', name: 'Analytics', role: 'Pull metrics, compute the funnel, raise flags.', model: 'claude-haiku-4-5', domain: 'ecom', tools: ['Shopify', 'TikTok', 'Instagram'], phase: 7 },
-  { key: 'orchestrator', name: 'Orchestrator', role: 'Assign work, read outputs, score, route your notes, write the daily summary.', model: 'claude-fable-5-1', domain: 'all', tools: ['playbooks'], phase: 4 },
+  { key: 'content', name: 'Content Producer', role: 'Hooks, scripts, captions, visuals. Shared with the Content Engine.', model: W, domain: 'content', tools: ['Higgsfield'], phase: 7 },
+  { key: 'analytics', name: 'Analytics', role: 'Pull metrics, compute the funnel, raise flags.', model: P, domain: 'ecom', tools: ['Shopify', 'TikTok', 'Instagram'], phase: 7 },
+  { key: 'orchestrator', name: 'E-commerce Orchestrator', role: 'Runs the nightly plan (products → brand → store), routes your notes, sums up e-commerce for HQ.', model: D, domain: 'all', tools: ['playbooks'], phase: 4 },
+  // The chain of command (October brief §2a): HQ reads every domain
+  // orchestrator and is the only one that pings Marq.
+  { key: 'hq', name: 'HQ', role: 'Master orchestrator: reads every domain, writes the one morning report, routes your orders.', model: M, domain: 'all', tools: ['playbooks', 'flags'], phase: 8 },
+  { key: 'content_orchestrator', name: 'Content Orchestrator', role: 'Owns the nightly content plan per account and the performance loop; reports to HQ.', model: D, domain: 'content', tools: ['playbooks'], phase: 8 },
+  { key: 'marketing_orchestrator', name: 'Marketing Orchestrator', role: 'Masterminds, Made by Marq and Marq\'s own accounts: weekly plan, budget, offers; reports to HQ.', model: D, domain: 'marketing', tools: ['playbooks'], phase: 8 },
   // Marketing Engine (spec 08 §3). Phases are M-phases.
-  { key: 'lead_filter', name: 'Lead Filter', role: 'Flag and remove chains/franchises, tag single vs. multi-location, dedupe the 58k list.', model: 'claude-haiku-4-5', domain: 'marketing', tools: ['LeadFlow'], phase: 2 },
-  { key: 'campaign_planner', name: 'Campaign Planner', role: 'Weekly plan: which list, which script, which channel, target numbers.', model: 'claude-sonnet-5', domain: 'marketing', tools: ['playbooks'], phase: 4 },
-  { key: 'script_copy', name: 'Script & Copy', role: 'Openers, voicemails, emails, DMs, landing copy — 3 tones × 2 audiences; cites the principle.', model: 'claude-sonnet-5', domain: 'marketing', tools: ['playbooks'], phase: 4 },
-  { key: 'inbound_tracker', name: 'Inbound Tracker', role: "Tags each inbound lead's source; alerts you if one waits over an hour.", model: 'claude-haiku-4-5', domain: 'marketing', tools: ['website form'], phase: 3 },
-  { key: 'campaign_scorer', name: 'Campaign Scorer', role: 'Grades each campaign out of 4, names the weak funnel stage, writes the fix.', model: 'claude-sonnet-5', domain: 'marketing', tools: [], phase: 4 },
+  { key: 'lead_filter', name: 'Lead Filter', role: 'Flag and remove chains/franchises, tag single vs. multi-location, dedupe the 58k list.', model: P, domain: 'marketing', tools: ['LeadFlow'], phase: 2 },
+  { key: 'campaign_planner', name: 'Campaign Planner', role: 'Weekly plan: which list, which script, which channel, target numbers.', model: W, domain: 'marketing', tools: ['playbooks'], phase: 4 },
+  { key: 'script_copy', name: 'Script & Copy', role: 'Openers, voicemails, emails, DMs, landing copy — 3 tones × 2 audiences; cites the principle.', model: W, domain: 'marketing', tools: ['playbooks'], phase: 4 },
+  { key: 'inbound_tracker', name: 'Inbound Tracker', role: "Tags each inbound lead's source; alerts you if one waits over an hour.", model: P, domain: 'marketing', tools: ['website form'], phase: 3 },
+  { key: 'campaign_scorer', name: 'Campaign Scorer', role: 'Grades each campaign out of 4, names the weak funnel stage, writes the fix.', model: W, domain: 'marketing', tools: [], phase: 4 },
   // Content Engine (spec 07 §4). Phases are C-phases.
-  { key: 'account_auditor', name: 'Account Auditor', role: 'Weekly: your posts vs. results. 3 things to repeat, 3 to stop.', model: 'claude-sonnet-5', domain: 'content', tools: ['Instagram', 'TikTok'], phase: 3 },
-  { key: 'trend_researcher', name: 'Trend Researcher', role: 'Trends, formats, audio and example posts in your niches. Fills Inspiration.', model: 'claude-haiku-4-5', domain: 'content', tools: ['web search', 'TikTok Creative Center'], phase: 3 },
-  { key: 'idea_script', name: 'Idea & Script', role: 'Weekly plan: 3 hooks per post, script, shot list, on-screen text, CTA.', model: 'claude-sonnet-5', domain: 'content', tools: ['playbooks'], phase: 3 },
-  { key: 'clip_editor', name: 'Clip Editor', role: 'Best moments from raw clips, cuts, 9:16, captions, enhancements.', model: 'claude-sonnet-5', domain: 'content', tools: ['Higgsfield'], phase: 4 },
-  { key: 'post_planner', name: 'Post Planner', role: 'Best time per account from your data, caption, hashtags, cross-post plan.', model: 'claude-haiku-4-5', domain: 'content', tools: [], phase: 5 },
+  { key: 'account_auditor', name: 'Account Auditor', role: 'Weekly: your posts vs. results. 3 things to repeat, 3 to stop.', model: W, domain: 'content', tools: ['Instagram', 'TikTok'], phase: 3 },
+  { key: 'trend_researcher', name: 'Trend Researcher', role: 'Trends, formats, audio and example posts in your niches. Fills Inspiration.', model: P, domain: 'content', tools: ['web search', 'TikTok Creative Center'], phase: 3 },
+  { key: 'idea_script', name: 'Idea & Script', role: 'Weekly plan: 3 hooks per post, script, shot list, on-screen text, CTA.', model: W, domain: 'content', tools: ['playbooks'], phase: 3 },
+  { key: 'clip_editor', name: 'Clip Editor', role: 'Best moments from raw clips, cuts, 9:16, captions, enhancements.', model: W, domain: 'content', tools: ['Higgsfield'], phase: 4 },
+  { key: 'post_planner', name: 'Post Planner', role: 'Best time per account from your data, caption, hashtags, cross-post plan.', model: P, domain: 'content', tools: [], phase: 5 },
   { key: 'publisher', name: 'Publisher', role: 'Posts approved posts to Instagram and TikTok at their time; writes the post link back.', model: 'no AI (API only)', domain: 'content', tools: ['Instagram', 'TikTok'], phase: 6 },
-  { key: 'content_analytics', name: 'Analytics', role: 'Daily metric pull, grades out of 4, flags breakouts and flops.', model: 'claude-haiku-4-5', domain: 'content', tools: ['Instagram', 'TikTok'], phase: 5 },
+  { key: 'content_analytics', name: 'Analytics', role: 'Daily metric pull, grades out of 4, flags breakouts and flops.', model: P, domain: 'content', tools: ['Instagram', 'TikTok'], phase: 5 },
 ];
 /** Workers a screen shows: its own domain plus the shared orchestrator. */
 export function workersFor(domain: Domain): WorkerDef[] {
@@ -259,7 +266,7 @@ export function workersFor(domain: Domain): WorkerDef[] {
 
 /** Workers whose runtime exists in this build. Everyone else shows the
  *  phase they arrive in (and a lights-off room in View Office). */
-export const LIVE_WORKERS = ['scout', 'analyst', 'teardown', 'lead_filter', 'script_copy', 'campaign_planner', 'campaign_scorer', 'trend_researcher', 'idea_script', 'account_auditor', 'content_analytics', 'post_planner', 'clip_editor', 'inbound_tracker', 'supplier', 'brandlab', 'builder', 'content', 'analytics', 'publisher', 'launcher'];
+export const LIVE_WORKERS = ['scout', 'analyst', 'teardown', 'lead_filter', 'script_copy', 'campaign_planner', 'campaign_scorer', 'trend_researcher', 'idea_script', 'account_auditor', 'content_analytics', 'post_planner', 'clip_editor', 'inbound_tracker', 'supplier', 'brandlab', 'builder', 'content', 'analytics', 'publisher', 'launcher', 'hq', 'content_orchestrator', 'marketing_orchestrator'];
 
 /** Longest a single playbook may be. Enforced in the editor, on save, and
  *  when the orchestrator applies an edit. */

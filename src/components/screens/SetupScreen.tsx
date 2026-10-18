@@ -12,7 +12,7 @@ import { askConfirm } from '../../lib/confirm';
 
 interface Props { homeHeadStyle?: CSSProperties; homeSubStyle?: CSSProperties; onNavigate?: (id: string) => void }
 interface Status {
-  owner: boolean; canWriteSecrets: boolean; encryption: string; replyWebhook: string; oauthRedirect: string;
+  owner: boolean; canWriteSecrets: boolean; encryption: string; replyWebhook: string; smsWebhook?: string; oauthRedirect: string;
   platform: { id: string; present: { secret: string; set: boolean }[] }[];
   accounts: { id: string; connected: boolean; appReady: boolean }[];
   connections: { provider: string; status: string; last_tested_at: string | null; note: string | null }[];
@@ -66,7 +66,7 @@ export default function SetupScreen({ onNavigate }: Props) {
                 </div>
               </div>
             )}
-            {[...PLATFORM_SETUP].sort((a, b) => (status.canWriteSecrets ? 0 : (a.id === 'cloudflare_secrets' ? -1 : b.id === 'cloudflare_secrets' ? 1 : 0))).map((p) => <PlatformCard key={p.id} startOpen={!status.canWriteSecrets && p.id === 'cloudflare_secrets'} p={p} present={status.platform.find((x) => x.id === p.id)?.present ?? []} conn={conn(p.id)} canWrite={status.canWriteSecrets} extra={p.id === 'twilio' ? status.replyWebhook : undefined} onChanged={load} />)}
+            {[...PLATFORM_SETUP].sort((a, b) => (status.canWriteSecrets ? 0 : (a.id === 'cloudflare_secrets' ? -1 : b.id === 'cloudflare_secrets' ? 1 : 0))).map((p) => <PlatformCard key={p.id} startOpen={!status.canWriteSecrets && p.id === 'cloudflare_secrets'} p={p} present={status.platform.find((x) => x.id === p.id)?.present ?? []} conn={conn(p.id)} canWrite={status.canWriteSecrets} extra={p.id === 'twilio' ? (status.smsWebhook ?? status.replyWebhook) : undefined} onChanged={load} />)}
             <AppSecretsCard status={status} onChanged={load} />
           </>
         )}
@@ -149,7 +149,7 @@ function PlatformCard({ p, present, conn, canWrite, extra, onChanged, startOpen 
               );
             })}
           </div>
-          {extra && <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 8 }}>Reply webhook for Twilio: <span style={{ fontFamily: 'var(--font-mono)', color: E.muted, wordBreak: 'break-all' }}>{extra}</span> (HTTP POST)</div>}
+          {extra && <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 8 }}>Texting line webhook (Messaging → A message comes in): <span style={{ fontFamily: 'var(--font-mono)', color: E.muted, wordBreak: 'break-all' }}>{extra}</span> (HTTP POST)</div>}
           <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
             <button style={btn('primary')} disabled={!!busy || !Object.values(vals).some((v) => v.trim())} onClick={save}>{busy === 'save' ? 'Saving…' : 'Save'}</button>
             {p.testable && <button style={btn('ghost')} disabled={!!busy} onClick={test}>{busy === 'test' ? 'Testing…' : 'Test'}</button>}
@@ -212,15 +212,21 @@ function AccountCard({ a, state, conn, onChanged }: { a: SetupEntry; state?: { c
   const [vals, setVals] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState('');
   const [msg, setMsg] = useState('');
-  const connectOauth = async () => {
+  const connectOauth = async (debug = false) => {
     setBusy('connect'); setMsg('');
-    const r = await api<{ url?: string }>(`/api/connect/oauth/start?provider=${a.id}`, { method: 'POST' });
+    const r = await api<{ url?: string }>(`/api/connect/oauth/start?provider=${a.id}${debug === true ? '&debug=1' : ''}`, { method: 'POST' });
     if (r.url) window.location.href = r.url; else { setMsg(r.error ?? 'Could not start.'); setBusy(''); }
   };
   const connectToken = async () => {
     setBusy('connect'); setMsg('');
     const r = await api<{ ok: boolean; detail: string }>('/api/connect/token', { body: { provider: a.id, values: vals } });
     setBusy(''); setMsg(r.error ?? r.detail); if (r.ok) setVals({}); onChanged();
+  };
+  const [igTok, setIgTok] = useState('');
+  const connectIgToken = async () => {
+    setBusy('igtoken'); setMsg('');
+    const r = await api<{ ok?: boolean; detail?: string }>('/api/connect/instagram-token', { body: { token: igTok } });
+    setBusy(''); setMsg(r.error ?? r.detail ?? 'Done.'); if (!r.error) setIgTok(''); onChanged();
   };
   const test = async () => { setBusy('test'); await api('/api/setup/test', { body: { provider: a.id } }); setBusy(''); onChanged(); };
   const disconnect = async () => { if (!(await askConfirm(`Disconnect ${a.name}?`))) return; await api('/api/connect/disconnect', { body: { provider: a.id } }); onChanged(); };
@@ -249,11 +255,21 @@ function AccountCard({ a, state, conn, onChanged }: { a: SetupEntry; state?: { c
           )}
           <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
             {a.connect === 'oauth'
-              ? <button style={btn('primary')} disabled={!!busy || !state?.appReady} onClick={connectOauth}>{busy === 'connect' ? 'Opening…' : state?.connected ? 'Reconnect' : 'Connect'}</button>
-              : <button style={btn('primary')} disabled={!!busy || a.fields.some((f) => !vals[f.secret]?.trim())} onClick={connectToken}>{busy === 'connect' ? 'Testing…' : state?.connected ? 'Replace & test' : 'Connect & test'}</button>}
+              ? <button style={btn('primary')} disabled={!!busy || !state?.appReady} onClick={() => void connectOauth()}>{busy === 'connect' ? 'Opening…' : state?.connected ? 'Reconnect' : 'Connect'}</button>
+              : <button style={btn('primary')} disabled={!!busy || a.fields.some((f) => !f.optional && !vals[f.secret]?.trim())} onClick={connectToken}>{busy === 'connect' ? 'Testing…' : state?.connected ? 'Replace & test' : 'Connect & test'}</button>}
             {state?.connected && <button style={btn('ghost')} disabled={!!busy} onClick={test}>{busy === 'test' ? 'Testing…' : 'Test'}</button>}
             {state?.connected && <button style={btn('danger')} onClick={disconnect}>Disconnect</button>}
           </div>
+          {a.connect === 'oauth' && state?.appReady && (
+            <div style={{ marginTop: 8, fontSize: 'var(--text-caption)', color: E.faint }}>Allow does nothing? <button type="button" disabled={!!busy} onClick={() => void connectOauth(true)} style={{ background: 'none', border: 0, padding: 0, color: E.blue, textDecoration: 'underline', cursor: 'pointer', font: 'inherit' }}>Run the redirect check</button> (first add <code>{typeof window !== 'undefined' ? window.location.origin : ''}/api/connect/oauth/echo</code> as a second redirect address in the {a.name.split(' ')[0]} app).</div>
+          )}
+          {a.id === 'instagram' && (
+            <div style={{ marginTop: 12, padding: 10, borderRadius: 10, border: `1px dashed ${E.border}`, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ fontSize: 'var(--text-caption)', color: E.muted }}>If Allow does nothing: in the Meta app, Instagram → API setup with Instagram login → <strong>Generate token</strong> next to the account, then paste it here. Do one account at a time.</div>
+              <input style={field} type="password" autoComplete="off" placeholder="Instagram access token" value={igTok} onChange={(e) => setIgTok(e.target.value)} />
+              <div><button style={btn('ghost')} disabled={!!busy || igTok.trim().length < 20} onClick={connectIgToken}>{busy === 'igtoken' ? 'Checking…' : 'Connect with this token'}</button></div>
+            </div>
+          )}
           {a.connect === 'oauth' && !state?.appReady && <div style={{ fontSize: 'var(--text-caption)', color: E.amber, marginTop: 6 }}>Connect goes live once Mastermind's {a.name.split(' ')[0]} developer app keys are saved in Platform setup.</div>}
           {msg && <div style={{ fontSize: 'var(--text-caption)', color: msg.startsWith('Connected') ? E.green : E.red, marginTop: 6 }}>{msg}</div>}
         </div>

@@ -60,6 +60,10 @@ export const SPINE_STATIONS: { key: SpineStationKey; label: string }[] = [
   { key: 'teach_back', label: 'Teach-back' },
 ];
 
+/** Which spine station each delivery phase lights up. */
+export const PHASE_STATION: SpineStationKey[] = ['call', 'brand_site', 'systems', 'marketing', 'teach_back'];
+const PHASE_LABEL = ['Onboard & Audit', 'Strategy & Setup', 'Launch', 'Active Growth', 'Maintain & Report'];
+
 const STAGE_RANK: Record<string, number> = { new_lead: 0, discovery_complete: 1, analysis_sent: 2, invoice_sent: 3, active: 4, retainer: 5 };
 
 function shortDate(iso: string | null | undefined): string {
@@ -147,6 +151,20 @@ export function buildSpine(input: SpineInput): SpineStation[] {
       return { state: 'next', detail: 'Guides get assigned as each piece goes live' };
     })(),
   };
+
+  // Delivery phases (brief §5.2) drive the spine once a client is in one:
+  // the phase's station is active, everything before it done. Overrides
+  // set by hand still win below.
+  const phase = Number((client as { delivery_phase?: number | null } | null)?.delivery_phase ?? 0);
+  if (phase >= 1 && phase <= 5) {
+    const at = PHASE_STATION[phase - 1];
+    const order = SPINE_STATIONS.map((x) => x.key);
+    for (const k of order) {
+      const i = order.indexOf(k), j = order.indexOf(at);
+      if (i < j && k !== 'intake') raw[k] = { state: 'done', detail: raw[k].state === 'done' ? raw[k].detail : 'Done' };
+      if (k === at) raw[k] = { state: 'active', detail: `Phase ${phase} of 5 · ${PHASE_LABEL[phase - 1]}` };
+    }
+  }
 
   const overrides = settings?.spine_overrides ?? {};
   const stations: SpineStation[] = SPINE_STATIONS.map((s) => {

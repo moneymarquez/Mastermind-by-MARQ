@@ -5,18 +5,24 @@
 // ones through Cloudflare's API. Account connections (per user) are sealed
 // with lib/vault.ts into ai_user_tokens, which only the service role reads.
 import { requireUser, isOwnerUser } from '../lib/auth';
+import { gmailReady, gmailToken } from '../lib/outreach/mail';
+import { testPlacesKey } from '../lib/harvester';
+import { makeCache } from '../lib/socialMedia';
+import { fetchIgNumbers, fetchTtNumbers, applyIgNumbers, igProvider, ttProvider } from '../lib/socialSync';
+import { cleanShop, isShopDomain, shopifyMode, resolveShopifyToken, SHOPIFY_API, grantedScopes, missingScopes, scopeFixHint } from '../lib/shopify';
 import { Sb, json } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
 import { signState, verifyState } from '../lib/vault';
 import { loadToken, saveToken } from '../lib/tokens';
+import { search as parallelSearch } from '../lib/parallel';
 import { PLATFORM_SETUP, ACCOUNT_SETUP, WRITABLE_SECRETS } from '../../src/data/setupCatalog';
 import { toE164 } from '../lib/phone';
 
 export interface SetupEnv extends SbEnv {
   ANTHROPIC_API_KEY?: string; TWILIO_ACCOUNT_SID?: string; TWILIO_AUTH_TOKEN?: string; TWILIO_FROM_NUMBER?: string; DIGEST_TO_NUMBER?: string;
   CF_API_TOKEN?: string; CF_ACCOUNT_ID?: string; CF_WORKER_NAME?: string; ETSY_API_KEY?: string; CJ_API_KEY?: string; HIGGSFIELD_API_KEY?: string;
-  INSTAGRAM_APP_ID?: string; INSTAGRAM_APP_SECRET?: string; TIKTOK_CLIENT_KEY?: string; TIKTOK_CLIENT_SECRET?: string; TOKEN_ENCRYPTION_KEY?: string;
-  XAI_API_KEY?: string; FACEBOOK_APP_ID?: string; FACEBOOK_APP_SECRET?: string;
+  INSTAGRAM_APP_ID?: string; INSTAGRAM_APP_SECRET?: string; TIKTOK_CLIENT_KEY?: string; TIKTOK_CLIENT_SECRET?: string; TIKTOK_EXTRA_SCOPES?: string; TIKTOK_POST_SCOPES?: string; TOKEN_ENCRYPTION_KEY?: string;
+  XAI_API_KEY?: string; FACEBOOK_APP_ID?: string; FACEBOOK_APP_SECRET?: string; PARALLEL_API_KEY?: string; GOOGLE_PLACES_API_KEY?: string; GMAIL_CLIENT_ID?: string; GMAIL_CLIENT_SECRET?: string; GMAIL_REFRESH_TOKEN?: string;
 }
 type Env = SetupEnv & Record<string, string | undefined>;
 
@@ -24,7 +30,11 @@ type Env = SetupEnv & Record<string, string | undefined>;
 // post approved content; accounts connected before they were added must
 // reconnect (the Setup card says so when the saved scope is missing them).
 export const IG_SCOPES = 'instagram_business_basic,instagram_business_content_publish,instagram_business_manage_insights';
-export const TIKTOK_SCOPES = 'user.info.basic,video.list,video.publish';
+export const TIKTOK_SCOPES = 'user.info.basic';
+/** TikTok refuses a connect that asks for a scope the app doesn't have, so only the one every app has is asked for by default.
+ *  TIKTOK_POST_SCOPES=1 adds video.list + video.publish (after Display API and Direct Post are on the app);
+ *  TIKTOK_EXTRA_SCOPES=1 adds user.info.profile + user.info.stats (handle and follower count). */
+export const tiktokScopes = (e: { TIKTOK_EXTRA_SCOPES?: string; TIKTOK_POST_SCOPES?: string }) => [TIKTOK_SCOPES, ...(e.TIKTOK_POST_SCOPES === '1' ? ['video.list', 'video.publish'] : []), ...(e.TIKTOK_EXTRA_SCOPES === '1' ? ['user.info.profile', 'user.info.stats'] : [])].join(',');
 // pages_show_list rides along so the token can see which Pages it may post to.
 export const FB_SCOPES = 'pages_manage_posts,pages_read_engagement,pages_show_list';
 const FB = 'https://graph.facebook.com/v23.0';
@@ -70,6 +80,16 @@ async function testTwilioInner(env: Env): Promise<TestResult> {
     try { count = ((JSON.parse(raw) as { incoming_phone_numbers?: unknown[] }).incoming_phone_numbers ?? []).length; } catch { /* not JSON */ }
     lines.push(`Lookup GET /IncomingPhoneNumbers.json?PhoneNumber=… → HTTP ${look.status}, ${count} match${count === 1 ? '' : 'es'}${look.ok ? '' : ` — raw: ${redact(raw)}`}.`);
   } else lines.push('Lookup request failed to reach Twilio.');
+
+  // A2P 10DLC: texting anyone but yourself from a 10-digit number needs a
+  // registered brand + campaign. Clue only; the send below decides.
+  const brands = await fetch('https://messaging.twilio.com/v1/a2p/BrandRegistrations', { headers: auth }).catch(() => null);
+  if (brands?.ok) {
+    const bj = (await brands.json().catch(() => ({}))) as { data?: { status?: string }[]; results?: { status?: string }[] };
+    const list = bj.data ?? bj.results ?? [];
+    const approved = list.some((x) => /approved|verified/i.test(x.status ?? ''));
+    lines.push(`10DLC: ${approved ? 'registered' : list.length ? `in review (${list.map((x) => x.status).join(', ')})` : 'not registered yet — texts to leads may be filtered until it is'}.`);
+  } else lines.push('10DLC: couldn\'t check registration (fine for toll-free numbers).');
 
   // The real test: send one text.
   const send = await fetch(`${base}/Messages.json`, {
@@ -135,6 +155,21 @@ async function testPlatform(id: string, env: Env, sb: Sb): Promise<TestResult> {
       const j = (await res.json().catch(() => ({}))) as { data?: { id: string }[] };
       return { ok: true, detail: `Key works. ${(j.data ?? []).length} models available${j.data?.length ? ` (${j.data.slice(0, 3).map((m) => m.id).join(', ')}…)` : ''}.` };
     }
+    case 'parallel': {
+      if (!env.PARALLEL_API_KEY) return { ok: false, detail: 'PARALLEL_API_KEY is not set.' };
+      try {
+        const hits = await parallelSearch(env, { objective: 'What is Masterminds by MARQ? (connection test)', maxResults: 1 });
+        return { ok: true, detail: `Parallel answered: ${hits.length} result${hits.length === 1 ? '' : 's'}. One search costs about half a cent.` };
+      } catch (e) { return { ok: false, detail: e instanceof Error ? e.message : String(e) }; }
+    }
+    case 'google_places': {
+      if (!env.GOOGLE_PLACES_API_KEY) return { ok: false, detail: 'GOOGLE_PLACES_API_KEY is not set.' };
+      try { return await testPlacesKey(env.GOOGLE_PLACES_API_KEY); } catch (e) { return { ok: false, detail: e instanceof Error ? e.message : String(e) }; }
+    }
+    case 'outreach_mailbox': {
+      if (!gmailReady(env)) return { ok: false, detail: 'GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET and GMAIL_REFRESH_TOKEN are all needed.' };
+      try { await gmailToken(env); return { ok: true, detail: 'Signed in to the mailbox.' }; } catch (e) { return { ok: false, detail: e instanceof Error ? e.message : String(e) }; }
+    }
     case 'higgsfield':
       return env.HIGGSFIELD_API_KEY ? { ok: true, detail: 'Key saved. Checked on first real use (no free test call exists).' } : { ok: false, detail: 'HIGGSFIELD_API_KEY is not set.' };
     default:
@@ -156,12 +191,17 @@ async function testAccount(id: string, tok: Record<string, string>): Promise<Tes
       return j.success ? { ok: true, detail: `Token can read Pages (${(j.result ?? []).length} project(s)).` } : { ok: false, detail: `Cloudflare: ${j.errors?.[0]?.message ?? res.status}` };
     }
     case 'shopify': {
-      const shop = (tok.shop ?? '').replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-      if (!/\.myshopify\.com$/.test(shop)) return { ok: false, detail: 'Store domain must look like yourstore.myshopify.com.' };
-      const res = await fetch(`https://${shop}/admin/api/2025-07/shop.json`, { headers: { 'X-Shopify-Access-Token': tok.token } });
+      const shop = cleanShop(tok.shop ?? '');
+      if (!isShopDomain(shop)) return { ok: false, detail: 'Store domain must look like yourstore.myshopify.com.' };
+      if (!shopifyMode(tok)) return { ok: false, detail: 'Paste either the Client ID and Client Secret (Dev Dashboard app) or an shpat_ Admin API token (older custom app).' };
+      let token: string;
+      try { token = (await resolveShopifyToken(tok, { force: true })).token; } catch (e) { return { ok: false, detail: e instanceof Error ? e.message : String(e) }; }
+      const res = await fetch(`https://${shop}/admin/api/${SHOPIFY_API}/shop.json`, { headers: { 'X-Shopify-Access-Token': token } });
       if (!res.ok) return { ok: false, detail: `Shopify ${res.status}: ${await errText(res)}` };
       const j = (await res.json()) as { shop: { name: string; plan_display_name?: string } };
-      return { ok: true, detail: `Connected to ${j.shop.name}${j.shop.plan_display_name ? ` (${j.shop.plan_display_name})` : ''}.` };
+      const scopes = await grantedScopes(shop, token).catch(() => null);
+      const missing = scopes ? missingScopes(scopes) : [];
+      return { ok: true, detail: `Connected to ${j.shop.name}${j.shop.plan_display_name ? ` (${j.shop.plan_display_name})` : ''}${shopifyMode(tok) === 'client' ? ' through the Dev Dashboard app — tokens refresh on their own every 24 hours' : ''}. ${scopes ? (missing.length ? `⚠ ${scopeFixHint(missing)}` : 'All 5 permissions are granted.') : ''}`.trim() };
     }
     case 'instagram': {
       const res = await fetch(`https://graph.instagram.com/me?fields=user_id,username,account_type&access_token=${encodeURIComponent(tok.token)}`);
@@ -193,6 +233,12 @@ export async function setupRoute(request: Request, env: SetupEnv, path: string):
   const e = env as Env;
   const url = new URL(request.url);
   if (path === 'oauth/callback') return oauthCallback(request, e);
+  // Diagnostic landing page: shows what a platform sent back after Allow (the code itself is never printed).
+  if (path === 'oauth/echo') {
+    const q = [...url.searchParams.entries()].map(([k, v]) => `<tr><td>${escHtml(k)}</td><td>${escHtml(k === 'code' || k === 'state' ? `${v.slice(0, 6)}… (${v.length} characters, hidden)` : v)}</td></tr>`).join('') || '<tr><td colspan="2">Nothing was sent. The platform did not add a code or an error.</td></tr>';
+    const html = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Connect check</title><body style="font:16px system-ui;margin:24px;max-width:640px"><h2>The platform sent you back here</h2><p>That means Allow worked and the redirect address is registered. What it sent:</p><table border="1" cellpadding="8" style="border-collapse:collapse;word-break:break-all">${q}</table><p>${url.searchParams.get('code') ? '<strong>A login code arrived.</strong> The normal Connect should work; go back to Setup and press Connect.' : '<strong>No code.</strong> Read the error above and send it to Claude.'}</p></body>`;
+    return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+  }
   const user = await requireUser(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
   if (user instanceof Response) return user;
   const sb = new Sb(env);
@@ -211,6 +257,7 @@ export async function setupRoute(request: Request, env: SetupEnv, path: string):
         connections: conns,
         encryption: e.TOKEN_ENCRYPTION_KEY ? 'dedicated key' : 'derived from the service key',
         replyWebhook: `${url.origin}/api/digest/reply`,
+        smsWebhook: `${url.origin}/api/sms/inbound`,
         oauthRedirect: `${url.origin}/api/connect/oauth/callback`,
       });
     }
@@ -245,9 +292,11 @@ export async function setupRoute(request: Request, env: SetupEnv, path: string):
       const entry = ACCOUNT_SETUP.find((a) => a.id === id && a.connect === 'token');
       if (!entry) return json({ error: 'Unknown token connection.' }, 400);
       const tok: Record<string, string> = {};
-      for (const f of entry.fields) { const v = String((b.values as Record<string, unknown> | undefined)?.[f.secret] ?? '').trim(); if (!v) return json({ error: `${f.label} is required.` }, 400); tok[f.secret] = v; }
+      for (const f of entry.fields) { const v = String((b.values as Record<string, unknown> | undefined)?.[f.secret] ?? '').trim(); if (!v && !f.optional) return json({ error: `${f.label} is required.` }, 400); if (v) tok[f.secret] = v; }
       const r = await testAccount(id, tok);
       if (r.ok) await saveToken(e, sb, user.id, id, tok, { tested: new Date().toISOString() });
+      // Incoming order webhooks find their account by shop domain.
+      if (r.ok && id === 'shopify') await sb.insert('ecom_shops', { user_id: user.id, shop_domain: cleanShop(tok.shop) }, { upsert: 'shop_domain' }).catch(() => {});
       await recordStatus(sb, user.id, id, r);
       return json(r, r.ok ? 200 : 400);
     }
@@ -257,9 +306,26 @@ export async function setupRoute(request: Request, env: SetupEnv, path: string):
       await recordStatus(sb, user.id, id, { ok: false, detail: 'Disconnected.' });
       return json({ ok: true });
     }
+    // The no-redirect way in: a token generated in the Meta app's own dashboard for an added Instagram account.
+    if (path === 'instagram-token') {
+      const token = String(b.token ?? '').trim();
+      if (token.length < 20) return json({ error: 'Paste the whole token from the Meta dashboard.' }, 400);
+      try {
+        const n = await fetchIgNumbers(token);
+        const tok = { token, user_id: '', scope: IG_SCOPES, refreshed_at: new Date().toISOString(), expires_at: new Date(Date.now() + 60 * 86400000).toISOString() };
+        const me = (await (await fetch(`https://graph.instagram.com/me?fields=user_id&access_token=${encodeURIComponent(token)}`)).json().catch(() => ({}))) as { user_id?: string | number; id?: string };
+        tok.user_id = String(me.user_id ?? me.id ?? '');
+        await saveToken(e, sb, user.id, 'instagram', tok, { connected: new Date().toISOString(), scope: tok.scope, via: 'dashboard token' });
+        await saveToken(e, sb, user.id, igProvider(n.username), tok, { connected: new Date().toISOString(), scope: tok.scope, username: n.username, via: 'dashboard token' });
+        await applyIgNumbers(sb, user.id, n, 'instagram', makeCache(e as never, user.id));
+        await recordStatus(sb, user.id, 'instagram', { ok: true, detail: `Connected @${n.username} with a pasted token. ${n.followers ?? 'No'} followers${n.avgViews != null ? `, ${n.avgViews} avg views` : ''}. Posting assumes the token includes content publish.` });
+        return json({ ok: true, detail: `Connected @${n.username}: ${n.followers ?? 'no'} followers${n.avgViews != null ? `, ${n.avgViews} average views` : ''}. Its Content profile is filled in.` });
+      } catch (err) { return json({ ok: false, error: err instanceof Error ? err.message : String(err) }, 400); }
+    }
     if (path === 'oauth/start') {
       const id = String(url.searchParams.get('provider') ?? b.provider ?? '');
-      const redirect = `${url.origin}/api/connect/oauth/callback`;
+      // debug=1 sends the browser to the echo page instead, to see what the platform returns.
+      const redirect = `${url.origin}/api/connect/oauth/${url.searchParams.get('debug') === '1' ? 'echo' : 'callback'}`;
       const state = await signState(e, { u: user.id, p: id });
       if (id === 'instagram') {
         if (!e.INSTAGRAM_APP_ID) return json({ error: 'Mastermind\'s Instagram app isn\'t set up yet (INSTAGRAM_APP_ID missing).' }, 409);
@@ -267,7 +333,7 @@ export async function setupRoute(request: Request, env: SetupEnv, path: string):
       }
       if (id === 'tiktok') {
         if (!e.TIKTOK_CLIENT_KEY) return json({ error: 'Mastermind\'s TikTok app isn\'t set up yet (TIKTOK_CLIENT_KEY missing).' }, 409);
-        return json({ url: `https://www.tiktok.com/v2/auth/authorize/?client_key=${e.TIKTOK_CLIENT_KEY}&scope=${TIKTOK_SCOPES}&response_type=code&redirect_uri=${encodeURIComponent(redirect)}&state=${state}` });
+        return json({ url: `https://www.tiktok.com/v2/auth/authorize/?client_key=${e.TIKTOK_CLIENT_KEY}&scope=${tiktokScopes(e)}&response_type=code&redirect_uri=${encodeURIComponent(redirect)}&state=${state}` });
       }
       if (id === 'facebook') {
         if (!e.FACEBOOK_APP_ID) return json({ error: 'Mastermind\'s Facebook app isn\'t set up yet (FACEBOOK_APP_ID missing).' }, 409);
@@ -284,12 +350,16 @@ export async function setupRoute(request: Request, env: SetupEnv, path: string):
 /** Browser lands here from Instagram/TikTok/Facebook; no bearer token, so the signed
  *  state carries who started it. Always ends by sending the browser back to
  *  the Setup screen with ?connected= or ?connect_error=. */
+const escHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+
 async function oauthCallback(request: Request, e: Env): Promise<Response> {
   const url = new URL(request.url);
   const back = (q: string) => Response.redirect(`${url.origin}/?screen=setup&${q}`, 302);
   const st = await verifyState(e, url.searchParams.get('state') ?? '');
   if (!st) return back('connect_error=expired');
   const code = url.searchParams.get('code');
+  // Leave a trace in Setup's status so a stalled connect can be diagnosed from the app itself.
+  await recordStatus(new Sb(e), st.u, st.p, { ok: false, detail: code ? 'Sent back with a code; finishing the connection…' : `Sent back without a code: ${url.searchParams.get('error_description') ?? url.searchParams.get('error') ?? 'denied'}` }).catch(() => {});
   if (!code) return back(`connect_error=${encodeURIComponent(url.searchParams.get('error_description') ?? url.searchParams.get('error') ?? 'denied')}`);
   const redirect = `${url.origin}/api/connect/oauth/callback`;
   const sb = new Sb(e);
@@ -319,10 +389,27 @@ async function oauthCallback(request: Request, e: Env): Promise<Response> {
       tok = { token: lj.access_token ?? j.access_token, scope: (perms.data ?? []).filter((p) => p.status === 'granted').map((p) => p.permission).join(','), expires_at: lj.expires_in ? new Date(Date.now() + lj.expires_in * 1000).toISOString() : '' };
     } else throw new Error('unknown provider');
     await saveToken(e, sb, st.u, st.p, tok, { connected: new Date().toISOString(), scope: tok.scope });
+    if (st.p === 'instagram') {
+      // One token per Instagram account, so Masterminds, Made by Marq and personal can all stay connected; the Content profile gets the real numbers.
+      try {
+        const n = await fetchIgNumbers(tok.token);
+        await saveToken(e, sb, st.u, igProvider(n.username), tok, { connected: new Date().toISOString(), scope: tok.scope, username: n.username });
+        await applyIgNumbers(sb, st.u, n, 'instagram', makeCache(e as never, st.u));
+      } catch (err) { console.error('instagram import', err); }
+    }
+    if (st.p === 'tiktok') {
+      // One token per TikTok account, and its real numbers into the matching Content profile.
+      try {
+        const n = await fetchTtNumbers(tok.token, tok.scope);
+        await saveToken(e, sb, st.u, ttProvider(n.username), tok, { connected: new Date().toISOString(), scope: tok.scope, username: n.username });
+        await applyIgNumbers(sb, st.u, n, 'tiktok', makeCache(e as never, st.u));
+      } catch (err) { console.error('tiktok import', err); }
+    }
     const r = await testAccount(st.p, tok);
     await recordStatus(sb, st.u, st.p, r);
     return back(`connected=${st.p}`);
   } catch (err) {
+    await recordStatus(sb, st.u, st.p, { ok: false, detail: `Connect failed: ${err instanceof Error ? err.message : String(err)}` }).catch(() => {});
     return back(`connect_error=${encodeURIComponent(err instanceof Error ? err.message : String(err))}`);
   }
 }

@@ -32,6 +32,9 @@ export interface ModuleDef {
   /** Which portal lists this module (see portals.config.ts). New modules
    *  belong to 'masterminds' unless they say otherwise. */
   portal: PortalKey;
+  /** Needs an entitlement on top of being enabled: 'teams' modules are for
+   *  accounts Marq flags as Teams in Grant Access (user_entitlements). */
+  entitlement?: 'teams';
 }
 
 // Every selectable section in the app, used by both the onboarding module
@@ -43,22 +46,29 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { key: 'macros', label: 'Macros & Meals', category: 'Personal', description: 'Photo-based AI calorie/macro logging, symptom + water tracking, meal suggestions.', icon: 'ph-fork-knife', routes: ['macros'], requiresAI: true, portal: 'masterminds' },
   { key: 'sobriety', label: 'Sobriety', category: 'Personal', description: 'Streak tracking, Bender Mode journal, AI pattern check-ins.', icon: 'ph-heart', routes: ['sobriety'], requiresAI: true, portal: 'masterminds' },
   { key: 'goals', label: 'Goals', category: 'Personal', description: 'Living-contract goals with AI-generated paths, pace tracking, and check-ins.', icon: 'ph-target', routes: ['goals'], requiresAI: true, portal: 'masterminds' },
+  { key: 'tasks', label: 'Tasks', category: 'Personal', description: 'Your master to-do list by project, due date and goal. Today\'s picks land on your Daily Plan.', icon: 'ph-check-square', routes: ['tasks'], requiresAI: false, portal: 'masterminds' },
   { key: 'mental', label: 'Mental Health', category: 'Personal', description: 'Deep mental-health profile with AI reflection on your check-ins.', icon: 'ph-brain', routes: ['mental'], requiresAI: true, portal: 'masterminds' },
-  { key: 'dispatch', label: 'Dispatch', category: 'Personal', description: 'Talk it out, it lands on the right person: hold the mic, say who does what by when, review, send. A live board of who has what.', icon: 'dispatch', routes: ['dispatch'], requiresAI: true, portal: 'masterminds' },
-  { key: 'brain', label: 'Brain', category: 'Personal', description: 'A four-minute assessment of how you sell and follow through, a daily check-in on the calling hour, and the patterns in your own data.', icon: 'ph-brain', routes: ['brain'], requiresAI: false, portal: 'masterminds' },
+  { key: 'dispatch', label: 'Dispatch', category: 'Personal', description: 'Talk it out, it lands on the right person: hold the mic, say who does what by when, review, send. A live board of who has what.', icon: 'dispatch', routes: ['dispatch'], requiresAI: true, portal: 'masterminds', entitlement: 'teams' },
+  { key: 'brain', label: 'Brain', category: 'Personal', description: 'A four-minute assessment of how you sell and follow through, a daily check-in on the calling hour, and the patterns in your own data.', icon: 'ph-brain', routes: ['brain', 'brain-dump'], requiresAI: false, portal: 'masterminds' },
   { key: 'schedule', label: 'Schedule', category: 'Personal', description: 'Month calendar, day-zoom drag-to-create timeline, holiday shift calendar.', icon: 'ph-calendar-blank', routes: ['schedule'], requiresAI: false, portal: 'masterminds' },
   { key: 'budgeting', label: 'Budgeting', category: 'Personal', description: 'Categories, recurring bills, month-over-month history, and a subscription tracker.', icon: 'ph-wallet', routes: ['budgeting'], requiresAI: false, portal: 'masterminds' },
   { key: 'decisions', label: 'Decision Log', category: 'Personal', description: 'Log real decisions with reasoning, review them later, and see the pattern in how you decide.', icon: 'ph-scales', routes: ['decisions'], requiresAI: true, portal: 'masterminds' },
-  { key: 'weekly-review', label: 'Weekly Review', category: 'Personal', description: 'A self-writing, honest weekly review pulled from every active module.', icon: 'ph-notepad', routes: ['weekly-review'], requiresAI: true, portal: 'masterminds' },
+  { key: 'weekly-review', label: 'Weekly Check-in', category: 'Personal', description: 'Sunday: planned vs actual across every module, where you fell short and why, and 3 adjustments you can apply in one tap.', icon: 'ph-notepad', routes: ['weekly-review'], requiresAI: true, portal: 'masterminds' },
+  { key: 'money-move', label: 'Money Move', category: 'Personal', description: 'Every Monday, one specific, doable way to make money this week from your skills, time, budget and city.', icon: 'ph-currency-dollar', routes: ['money-move'], requiresAI: true, portal: 'masterminds' },
+  { key: 'peptides', label: 'Peptides', category: 'Personal', description: 'Track what you take, when, sites, effects and inventory, with reminders. Tracking only, not medical advice.', icon: 'ph-syringe', routes: ['peptides'], requiresAI: false, portal: 'masterminds' },
+  { key: 'feed', label: 'Feed', category: 'Personal', description: 'Share real wins and cheer on other members. Reactions only, private by default.', icon: 'ph-fire', routes: ['feed'], requiresAI: false, portal: 'masterminds' },
   { key: 'cashflow', label: 'Cash-Flow Forecast', category: 'Personal', description: '30/60/90-day balance projection from invoices, recurring items, and spending, with scenario questions.', icon: 'ph-chart-line', routes: ['cashflow'], requiresAI: true, portal: 'masterminds' },
   { key: 'patterns', label: 'Patterns', category: 'Personal', description: 'Real cross-module correlations in your own data — spending, sobriety, calls, workouts.', icon: 'ph-chart-scatter', routes: ['patterns'], requiresAI: true, portal: 'masterminds' },
   { key: 'voice-capture', label: 'Voice Capture', category: 'Personal', description: 'Speak a task, expense, contact, decision, note, or follow-up — it files itself into the right module.', icon: 'ph-microphone', routes: ['voice-capture'], requiresAI: true, portal: 'masterminds' },
   { key: 'opening-closing', label: 'Opening/Closing', category: 'Personal', description: 'Self-running shift checklist with real push notifications.', icon: 'ph-clock', routes: ['opening-closing'], requiresAI: false, portal: 'masterminds' },
   { key: 'fitness', label: 'Fitness', category: 'Personal', description: 'AI-generated workout/diet plans, full workout library, live workout mode.', icon: 'ph-barbell', routes: ['fitness'], requiresAI: true, portal: 'masterminds' },
   { key: 'dialing', label: 'Dialing/Contacts', category: 'Cold Calling', description: 'Cold-calling queue, outcome tracking, and your Dialing/Scaling contacts.', icon: 'ph-phone-call', routes: ['dialing', 'contacts'], requiresAI: false, portal: 'masterminds' },
-  { key: 'call-recordings', label: 'Call Recordings', category: 'Cold Calling', description: 'Upload and organize call recordings, linked to contacts.', icon: 'ph-microphone', routes: ['call-recordings'], requiresAI: false, portal: 'masterminds' },
+  { key: 'call-recordings', label: 'Call Recordings', category: 'Cold Calling', description: 'Upload and organize call recordings, linked to contacts.', icon: 'ph-microphone', routes: ['call-recordings'], requiresAI: false, portal: 'masterminds', entitlement: 'teams' },
   { key: 'leadflow', label: 'LeadFlow', category: 'Cold Calling', description: 'Your LeadFlow CRM — Dashboard, War Room, Lead Pool, Lead Finder, and more.', icon: 'ph-users-three', routes: ['leadflow'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
+  { key: 'lead-engines', label: 'Lead Engines', category: 'Cold Calling', description: 'Client Finder and Complaint Scanner with on/off and daily budgets, cold-email outreach, call list, booking page and the old scraper import.', icon: 'ph-magnifying-glass', routes: ['lead-engines'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
   { key: 'client-modules', label: 'Client Modules', category: 'Clients', description: "Every client's portal from your side — progress spine, tickets, change log, guides, handoff, and a preview of exactly what they see.", icon: 'ph-users-three', routes: ['client-modules'], requiresAI: false, ownerOnly: true, portal: 'madeby' },
+  { key: 'classroom', label: 'Classroom', category: 'Scaling', description: 'Every client as an avatar in their delivery phase room, plus APHS and own brands. Drag to move; see what is waiting on you.', icon: 'ph-chalkboard', routes: ['classroom'], requiresAI: false, ownerOnly: true, portal: 'madeby' },
+  { key: 'hq', label: 'HQ', category: 'Scaling', description: 'The master orchestrator: one morning report, one chat that routes to every orchestrator, everything waiting on you, flags, spend vs caps and the kill switch.', icon: 'ph-command', routes: ['hq'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
   // The entire Scaling category is owner-only, not just Marketing —
   // ownerOnly: true on every entry below is deliberate, per the explicit
   // "entire Scaling section is owner-only" requirement, not an oversight.
@@ -72,19 +82,41 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { key: 'brand-lab', label: 'Brand Lab', category: 'Scaling', description: 'AI-generated visual brand design directions.', icon: 'ph-flask', routes: ['brand-lab'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
   { key: 'idea-maker', label: 'Idea Maker', category: 'Scaling', description: 'Real back-and-forth AI conversation to pressure-test a business idea.', icon: 'ph-lightbulb', routes: ['idea-maker'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
   { key: 'invoicing', label: 'Invoicing', category: 'Scaling', description: 'The Made by Marq 9-document client invoicing system.', icon: 'ph-receipt', routes: ['invoicing'], requiresAI: false, ownerOnly: true, portal: 'madeby' },
+  { key: 'ledger', label: 'Ledger', category: 'Scaling', description: 'Business income and expenses, monthly P&L, a tax set-aside estimate, CSV, recurring rows and invoices to anyone.', icon: 'ph-bank', routes: ['ledger'], requiresAI: false, ownerOnly: true, portal: 'madeby' },
+  { key: 'waitlist', label: 'Waitlist', category: 'Scaling', description: 'Everyone on the Masterminds waitlist: signups, founding spots, per code, CSV, and the launch switch.', icon: 'ph-list-checks', routes: ['waitlist'], requiresAI: false, ownerOnly: true, portal: 'madeby' },
+  { key: 'coupons', label: 'Coupons', category: 'Scaling', description: 'Make discount codes: Stripe coupon plus promotion code, a shareable link, signups, redemptions and revenue per code.', icon: 'ph-ticket', routes: ['coupons'], requiresAI: false, ownerOnly: true, portal: 'madeby' },
+  { key: 'contracts', label: 'Contracts', category: 'Scaling', description: 'A contracts playbook, fill-in variables, signing links by email and a signed record.', icon: 'ph-signature', routes: ['contracts'], requiresAI: false, ownerOnly: true, portal: 'madeby' },
+  { key: 'comms', label: 'Comms', category: 'Scaling', description: 'Every text and email with anyone, sent from Masterminds and kept forever, with templates and sequences.', icon: 'ph-chats', routes: ['comms'], requiresAI: false, ownerOnly: true, portal: 'madeby' },
   { key: 'marketing', label: 'Marketing', category: 'Scaling', description: 'Asset storage, campaign tracking, and content pipeline.', icon: 'ph-megaphone', routes: ['marketing'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
   // Recategorized from Side Hustles (a subscriber-facing, unbuilt
   // placeholder) — the Marketing rebuild's social-profile-build tooling
   // lives here, client-scoped like everything else in Scaling, with
   // Marketing linking to it rather than duplicating it.
+  { key: 'content-accounts', label: 'Accounts', category: 'Scaling', description: 'Your Instagram and TikTok accounts with real numbers.', icon: 'ph-users', routes: ['content-accounts'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content-profiles', label: 'Profiles', category: 'Scaling', description: 'Every account\'s public page, drawn like a profile, with AI help editing the bio, name and link.', icon: 'ph-identification-card', routes: ['content-profiles'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content-ideas', label: 'Ideas', category: 'Scaling', description: 'Post ideas for each account.', icon: 'ph-lightbulb', routes: ['content-ideas'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content-plan', label: 'Plan', category: 'Scaling', description: 'The week\'s posts, timed and approved.', icon: 'ph-calendar-check', routes: ['content-plan'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content-studio', label: 'Studio', category: 'Scaling', description: 'Upload, edit and post videos and photos.', icon: 'ph-film-slate', routes: ['content-studio'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content-history', label: 'History', category: 'Scaling', description: 'Every post on every account, newest first, with its numbers.', icon: 'ph-clock-counter-clockwise', routes: ['content-history'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content-inspiration', label: 'Inspiration', category: 'Scaling', description: 'Saved trends and references.', icon: 'ph-sparkle', routes: ['content-inspiration'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content-kits', label: 'Brand kits', category: 'Scaling', description: 'Voice and look for each brand.', icon: 'ph-palette', routes: ['content-kits'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content-workers', label: 'Workers', category: 'Scaling', description: 'The content workers and what they did.', icon: 'ph-robot', routes: ['content-workers'], requiresAI: true, ownerOnly: true, portal: 'content' },
   // 'swipe-file' rides the same module toggle as 'content' — "its own
   // tab, not buried in the module," same shape as Dialing/Contacts
   // above: a separate nav row and screen, gated by one module choice,
   // not a second onboarding toggle of its own.
-  { key: 'content', label: 'Content Creation', category: 'Scaling', description: 'Per-client social profile build and launch kits, congruent with the Marketing campaign driving them.', icon: 'ph-video-camera', routes: ['content', 'swipe-file'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content', label: 'Growth plans', category: 'Scaling', description: 'Per-client social profile build and launch kits, congruent with the Marketing campaign driving them.', icon: 'ph-video-camera', routes: ['content', 'swipe-file'], requiresAI: true, ownerOnly: true, portal: 'content' },
   { key: 'stocks', label: 'Stocks', category: 'Side Hustles', description: 'Paper-trading bot on Alpaca with AI daily commentary.', icon: 'ph-chart-line-up', routes: ['stocks'], requiresAI: true, portal: 'masterminds' },
   { key: 'streaming', label: 'Streaming', category: 'Side Hustles', description: 'Streaming idea bank and calendar.', icon: 'ph-video-camera', routes: ['streaming'], requiresAI: false, portal: 'masterminds' },
-  { key: 'ecommerce', label: 'E-commerce', category: 'Side Hustles', description: 'Dropshipping brands built by AI workers you steer: product sheets, a 10-step brand pipeline, approvals, and performance.', icon: 'ph-rocket-launch', routes: ['ecommerce', 'ecommerce-sheets', 'ecommerce-workers', 'ecommerce-performance', 'ecommerce-approvals'], requiresAI: true, ownerOnly: true, portal: 'ecommerce' },
+  { key: 'ecommerce', label: 'E-commerce', category: 'Side Hustles', description: 'Dropshipping brands built by AI workers you steer: product sheets, a 10-step brand pipeline, approvals, and performance.', icon: 'ph-rocket-launch', routes: ['ecommerce'], requiresAI: true, ownerOnly: true, portal: 'ecommerce' },
+  { key: 'ecom-products', label: 'Products', category: 'Side Hustles', description: 'Tonight\'s pitch, the research queue and every product sheet.', icon: 'ph-package', routes: ['ecom-products'], requiresAI: true, ownerOnly: true, portal: 'ecommerce' },
+  { key: 'ecom-approvals', label: 'Approvals', category: 'Side Hustles', description: 'Products, brand directions, store previews and money moves waiting for your OK.', icon: 'ph-check-circle', routes: ['ecom-approvals'], requiresAI: true, ownerOnly: true, portal: 'ecommerce' },
+  { key: 'ecom-stores', label: 'Sites', category: 'Side Hustles', description: 'Every product\'s own website, idea to live, on one shared Shopify checkout.', icon: 'ph-storefront', routes: ['ecom-stores'], requiresAI: true, ownerOnly: true, portal: 'ecommerce' },
+  { key: 'ecom-orders', label: 'Orders', category: 'Side Hustles', description: 'Shopify orders with margins, supplier status and problems.', icon: 'ph-receipt', routes: ['ecom-orders'], requiresAI: true, ownerOnly: true, portal: 'ecommerce' },
+  { key: 'ecom-marketing', label: 'Marketing', category: 'Side Hustles', description: 'One marketing plan per product: hooks, drafts waiting for approval, budget, and the orders each brand drives.', icon: 'ph-megaphone', routes: ['ecom-marketing'], requiresAI: true, ownerOnly: true, portal: 'ecommerce' },
+  { key: 'ecom-office', label: 'Office', category: 'Side Hustles', description: 'The live graph of orchestrators and workers, task log and kill switch.', icon: 'ph-graph', routes: ['ecom-office'], requiresAI: true, ownerOnly: true, portal: 'ecommerce' },
+  { key: 'ecom-inbox', label: 'Inbox', category: 'Side Hustles', description: 'Customer email and order problems.', icon: 'ph-tray', routes: ['ecom-inbox'], requiresAI: true, ownerOnly: true, portal: 'ecommerce' },
+  { key: 'ecom-clients', label: 'Client Stores', category: 'Side Hustles', description: 'Every subscriber\'s sites, revenue, flags and last run (one Shopify store each).', icon: 'ph-users-three', routes: ['ecom-clients'], requiresAI: true, ownerOnly: true, portal: 'ecommerce' },
   { key: 'sticky-spot', label: 'Sticky Spot', category: null, description: 'Quick fast-cash idea list.', icon: 'ph-lightning', routes: ['sticky-spot'], requiresAI: false, portal: 'masterminds' },
 ];
 
@@ -109,4 +141,8 @@ export function moduleKeyForRoute(route: string): string | undefined {
  *  later via Manage modules. Excludes ownerOnly modules entirely — those
  *  are shown as locked preview tiles instead (see ModulePicker.tsx), never
  *  toggled on for a non-owner account. */
-export const SELECTABLE_MODULE_KEYS = MODULE_REGISTRY.filter((m) => !m.ownerOnly).map((m) => m.key);
+export const SELECTABLE_MODULE_KEYS = MODULE_REGISTRY.filter((m) => !m.ownerOnly && !m.entitlement).map((m) => m.key);
+/** Modules gated by the Teams entitlement (Dispatch, Call Recordings). */
+export const TEAMS_MODULE_KEYS = MODULE_REGISTRY.filter((m) => m.entitlement === 'teams').map((m) => m.key);
+/** The solo $19.99 lineup (brief §4.2): what onboarding pre-selects. */
+export const SOLO_LINEUP = ['daily-plan', 'goals', 'tasks', 'macros', 'fitness', 'schedule', 'brain', 'opening-closing', 'weekly-review', 'money-move', 'peptides', 'feed', 'dialing', 'stocks', 'streaming', 'sticky-spot'];

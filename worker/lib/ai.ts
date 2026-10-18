@@ -5,17 +5,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { Sb } from './sb';
 
-/** $ per million tokens [input, output]. Conservative (list, not intro). */
-const PRICE: Record<string, [number, number]> = {
-  'claude-haiku-4-5': [1, 5],
-  'claude-sonnet-5': [3, 15],
-  'claude-opus-5': [5, 25],
-  'claude-fable-5-1': [10, 50],
-};
-export function costOf(model: string, tokensIn: number, tokensOut: number, searches = 0): number {
-  const [i, o] = PRICE[model] ?? [10, 50];
-  return (tokensIn * i + tokensOut * o) / 1_000_000 + searches * 0.01;
-}
+export { costOf } from './models';
+import { costOf } from './models';
 
 export const DEFAULT_DAILY_CAP_USD = 1;
 
@@ -46,7 +37,7 @@ export async function ask(apiKey: string | undefined, sb: Sb, input: AskInput): 
   if (spent >= cap) throw new CapReached(`Daily cap reached for ${input.domain}: $${spent.toFixed(2)} of $${cap.toFixed(2)}.`);
   const client = new Anthropic({ apiKey });
   const messages: Anthropic.MessageParam[] = [{ role: 'user', content: input.user }];
-  let tokensIn = 0, tokensOut = 0, searches = 0;
+  let tokensIn = 0, tokensOut = 0, searches = 0, cachedIn = 0;
   const texts: string[] = [];
   const sources: { url: string; title: string }[] = [];
   // Server tools (web search) can stop with pause_turn mid-loop; hand the
@@ -55,12 +46,15 @@ export async function ask(apiKey: string | undefined, sb: Sb, input: AskInput): 
     const res = await client.messages.create({
       model: input.model,
       max_tokens: input.maxTokens ?? 1200,
-      system: input.system,
+      // Big stable prompts (playbooks + the worker brief) are cached: the
+      // second run of the night reads them at a tenth of the price.
+      system: input.system.length > 4000 ? [{ type: 'text', text: input.system, cache_control: { type: 'ephemeral' } }] : input.system,
       messages,
       ...(input.tools ? { tools: input.tools } : {}),
     });
-    const usage = res.usage as unknown as { input_tokens: number; output_tokens: number; server_tool_use?: { web_search_requests?: number } };
-    tokensIn += usage.input_tokens; tokensOut += usage.output_tokens; searches += usage.server_tool_use?.web_search_requests ?? 0;
+    const usage = res.usage as unknown as { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number; cache_creation_input_tokens?: number; server_tool_use?: { web_search_requests?: number } };
+    cachedIn += usage.cache_read_input_tokens ?? 0;
+    tokensIn += usage.input_tokens + (usage.cache_read_input_tokens ?? 0) + (usage.cache_creation_input_tokens ?? 0); tokensOut += usage.output_tokens; searches += usage.server_tool_use?.web_search_requests ?? 0;
     for (const b of res.content) {
       if (b.type === 'text') texts.push(b.text);
       const r = b as unknown as { type: string; content?: { type: string; url?: string; title?: string }[] };
@@ -69,7 +63,15 @@ export async function ask(apiKey: string | undefined, sb: Sb, input: AskInput): 
     if (res.stop_reason !== 'pause_turn') break;
     messages.push({ role: 'assistant', content: res.content });
   }
-  const costUsd = costOf(input.model, tokensIn, tokensOut, searches);
-  await sb.insert('ai_cost_ledger', { user_id: input.userId, date: input.date, domain: input.domain, worker_id: input.workerId ?? null, cost_usd: Number(costUsd.toFixed(5)) }).catch((e) => console.error('ledger', e));
+  const costUsd = costOf(input.model, tokensIn, tokensOut, searches, { cachedIn });
+  await recordCost(sb, { user_id: input.userId, date: input.date, domain: input.domain, worker_id: input.workerId ?? null, cost_usd: Number(costUsd.toFixed(5)) }, { model: input.model, tokens_in: tokensIn, tokens_out: tokensOut });
   return { text: texts.join('\n').trim(), tokensIn, tokensOut, costUsd, searches, sources };
+}
+
+/** Writes one ledger row. The model/token columns arrive with schema_121;
+ *  until that is applied the row is written without them, so the cap
+ *  arithmetic never depends on a migration. */
+export async function recordCost(sb: Sb, row: { user_id: string; date: string; domain: string; worker_id: string | null; cost_usd: number }, detail: { model: string; tokens_in: number; tokens_out: number }) {
+  try { await sb.insert('ai_cost_ledger', { ...row, ...detail }); }
+  catch { await sb.insert('ai_cost_ledger', row).catch((e) => console.error('ledger', e)); }
 }

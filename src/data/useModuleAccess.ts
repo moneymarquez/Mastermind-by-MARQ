@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { MODULE_KEYS, MODULE_REGISTRY, SELECTABLE_MODULE_KEYS } from '../modules.config';
+import { MODULE_KEYS, MODULE_REGISTRY, SELECTABLE_MODULE_KEYS, TEAMS_MODULE_KEYS } from '../modules.config';
 
 // The authoritative enforcement point for "owner-only modules are never
 // accessible to a non-owner" — independent of what onboarding/Manage
@@ -8,6 +8,7 @@ import { MODULE_KEYS, MODULE_REGISTRY, SELECTABLE_MODULE_KEYS } from '../modules
 // user_modules happens to contain for them. Even if a stray row somehow
 // existed there, canAccess() below still refuses it for these keys.
 const OWNER_ONLY_KEYS = new Set(MODULE_REGISTRY.filter((m) => m.ownerOnly).map((m) => m.key));
+const TEAMS_KEYS = new Set(TEAMS_MODULE_KEYS);
 
 export interface ModuleAccess {
   loading: boolean;
@@ -44,6 +45,9 @@ export function useModuleAccess(userId: string, isOwner: boolean): ModuleAccess 
   // grants a row; never settable by the account itself (see that
   // migration's RLS — only the owner can write here).
   const [grantedKeys, setGrantedKeys] = useState<Set<string>>(new Set());
+  // Teams entitlement (schema_124). Dispatch and Call Recordings need it;
+  // the migration keeps it on for anyone who already used either one.
+  const [teams, setTeams] = useState<boolean | null>(false);
 
   const load = useCallback(async () => {
     if (isOwner) {
@@ -53,11 +57,14 @@ export function useModuleAccess(userId: string, isOwner: boolean): ModuleAccess 
       return;
     }
     setLoading(true);
-    const [{ data }, { data: comped }, { data: grants }] = await Promise.all([
+    const [{ data }, { data: comped }, { data: grants }, ent] = await Promise.all([
       supabase.from('user_modules').select('module_key, enabled'),
       supabase.rpc('is_comped'),
       supabase.from('owner_only_grants').select('module_key'),
+      supabase.from('user_entitlements').select('teams').maybeSingle(),
     ]);
+    // Before schema_124 the table doesn't exist: nothing changes for anyone yet.
+    setTeams(ent.error ? null : !!(ent.data as { teams?: boolean } | null)?.teams);
     setGrantedKeys(new Set((grants ?? []).map((r) => r.module_key)));
     const rows = data ?? [];
     // A comped (owner-granted, no real subscription) account skips the
@@ -85,6 +92,8 @@ export function useModuleAccess(userId: string, isOwner: boolean): ModuleAccess 
 
   const canAccess = (moduleKey: string) => {
     if (OWNER_ONLY_KEYS.has(moduleKey)) return isOwner || grantedKeys.has(moduleKey);
+    // Hiding a Teams module is visibility only; its data stays put.
+    if (TEAMS_KEYS.has(moduleKey)) return isOwner || (teams == null ? enabledKeys.has(moduleKey) : teams);
     return isOwner || enabledKeys.has(moduleKey);
   };
 

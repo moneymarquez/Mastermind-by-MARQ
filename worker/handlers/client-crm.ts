@@ -1,4 +1,5 @@
 import { requireOwner, OWNER_USER_ID } from '../lib/auth';
+import { senderFor } from '../lib/senders';
 
 // ── Client login (Step 1 of the client-login/audit/invoice build) ──────────
 // provisionClientLogin: the actual work, shared by two callers —
@@ -408,7 +409,7 @@ function buildProductSheetHtml(businessName: string, clientName: string, lineIte
 }
 
 async function sendProductSheetEmail(env: ClientCrmEnv, to: string, businessName: string, clientName: string, lineItems: InvoiceLineItemInput[], teachingPhilosophy: string, productSheetIntro: string | null, recurringPlanOutro: string | null): Promise<boolean> {
-  const fromEmail = env.MADEBYMARQUEZ_FROM_EMAIL || env.RESEND_FROM_EMAIL;
+  const fromEmail = senderFor(env, 'proposal');
   if (!env.RESEND_API_KEY || !fromEmail) return false;
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -445,7 +446,7 @@ async function sendInvoiceCopyEmail(
   invoiceNumber: string | null,
   lineItems: InvoiceLineItemInput[] | null,
 ): Promise<boolean> {
-  const fromEmail = env.MADEBYMARQUEZ_FROM_EMAIL || env.RESEND_FROM_EMAIL;
+  const fromEmail = senderFor(env, 'invoice');
   if (!env.RESEND_API_KEY || !fromEmail) return false;
   const money = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
   const lines = lineItems && lineItems.length > 0

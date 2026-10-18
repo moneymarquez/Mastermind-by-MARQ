@@ -6,6 +6,8 @@ import { Sb } from '../lib/sb';
 import { buildPlan, mergePlan, planNotifications, toMinutes } from '../lib/planBuilder';
 import type { PlanBlock, PlanEvent, PlanInput, PlanReminder, PlanShift, PlanStep } from '../lib/planBuilder';
 import { dailyCallGoalFrom } from '../../src/data/callGoal';
+import { pickToday } from '../../src/data/tasks';
+import type { Task } from '../../src/data/tasks';
 
 // Ported from netlify/functions/generate-daily-plan.ts, then rebuilt.
 //
@@ -88,7 +90,7 @@ function eventLabel(details: Record<string, unknown>, type: string, notes: strin
 
 /** Everything the deterministic builder needs for one user on one date. */
 async function fetchPlanInput(supabaseUrl: string, headers: Headers, userId: string, date: string): Promise<PlanInput> {
-  const [eventsRes, shiftsRes, stepsRes, remindersRes, goalsRes] = await Promise.all([
+  const [eventsRes, shiftsRes, stepsRes, remindersRes, goalsRes, tasksRes] = await Promise.all([
     fetch(`${supabaseUrl}/rest/v1/events?user_id=eq.${userId}&event_date=eq.${date}&select=type,event_date,start_time,end_time,notes,details`, { headers }),
     fetch(`${supabaseUrl}/rest/v1/holiday_shifts?user_id=eq.${userId}&shift_date=eq.${date}&is_self=eq.true&select=start_time,end_time`, { headers }),
     // Every step on every goal, with the goal's title. Daily/weekly is
@@ -97,7 +99,10 @@ async function fetchPlanInput(supabaseUrl: string, headers: Headers, userId: str
     fetch(`${supabaseUrl}/rest/v1/goal_steps?user_id=eq.${userId}&select=id,goal_id,description,frequency,done,auto_tracked_source,goals(title)&order=sort_order`, { headers }),
     fetch(`${supabaseUrl}/rest/v1/reminders?user_id=eq.${userId}&done=eq.false&due_date=lt.${date}&select=id,title,due_date&order=due_date`, { headers }),
     fetch(`${supabaseUrl}/rest/v1/goals?user_id=eq.${userId}&target_unit=eq.per_day&select=title,target_cost,target_unit,goal_steps(auto_tracked_source)`, { headers }),
+    // Tasks (schema_124); a 404 before the migration just means no tasks.
+    fetch(`${supabaseUrl}/rest/v1/tasks?user_id=eq.${userId}&done=eq.false&select=id,title,project,due,priority,goal_id,done,created_at&limit=300`, { headers }).catch(() => null),
   ]);
+  const taskRows = tasksRes && tasksRes.ok ? ((await tasksRes.json()) as Task[]) : [];
   const goalRows = (await goalsRes.json()) as { title: string; target_cost: number | string | null; target_unit: string; goal_steps: { auto_tracked_source: string | null }[] }[];
   const callGoal = dailyCallGoalFrom((Array.isArray(goalRows) ? goalRows : []).map((g) => ({ ...g, steps: g.goal_steps })));
   const events = (await eventsRes.json()) as EventRow[];
@@ -121,7 +126,7 @@ async function fetchPlanInput(supabaseUrl: string, headers: Headers, userId: str
     description: s.description, frequency: s.frequency, done: s.done, auto_tracked_source: s.auto_tracked_source,
   }));
   const overdue: PlanReminder[] = Array.isArray(reminderRows) ? reminderRows : [];
-  return { date, shifts, events: planEvents, steps, overdue, callGoal };
+  return { date, shifts, events: planEvents, steps, overdue, callGoal, tasks: pickToday(Array.isArray(taskRows) ? taskRows : [], date, 4) };
 }
 
 /** Asks Claude for extra blocks in the hours the floor leaves open —

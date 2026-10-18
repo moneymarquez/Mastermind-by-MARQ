@@ -4,7 +4,7 @@
  *  the Setup screen and the Worker (which only uses ids and secret names). */
 
 export type SetupKind = 'platform' | 'account';
-export interface SetupField { secret: string; label: string; placeholder?: string; hint?: string }
+export interface SetupField { secret: string; label: string; placeholder?: string; hint?: string; optional?: boolean }
 export interface SetupEntry {
   id: string;
   kind: SetupKind;
@@ -38,26 +38,27 @@ export const PLATFORM_SETUP: SetupEntry[] = [
   },
   {
     id: 'xai', kind: 'platform', name: 'Grok (xAI)', testable: true, phase: 'Texting',
-    powers: 'Two-way texting: a text to the Mastermind number that isn\'t a digest command gets a Grok reply, in the voice set in Settings (lead response by default).',
+    powers: 'Two-way texting: a text to the Mastermind number that isn\'t a digest command gets an AI reply, in the voice set in Settings (lead response by default). Optional: with no key, replies use Cloudflare\'s free Workers AI model; add a key to use Grok instead.',
     steps: [
       { text: 'Open the xAI console and sign in.', link: 'https://console.x.ai/' },
       { text: 'API Keys → Create API key, name it mastermind-texting, copy it.' },
       { text: 'Add a little credit and set a spend limit in Billing as a backstop.' },
       { text: 'Paste the key below and press Save, then Test.' },
     ],
-    withoutIt: 'Texts that aren\'t digest commands get no reply.',
+    withoutIt: 'Replies still work, using Cloudflare\'s free Workers AI model (a bit less polished than Grok).',
     fields: [{ secret: 'XAI_API_KEY', label: 'API key', placeholder: 'xai-…' }],
   },
   {
-    id: 'twilio', kind: 'platform', name: 'Twilio (Morning Digest texts)', testable: true,
-    powers: 'The 5:30am text from "Morning Digest" and the reply commands (ECOM, dials 30, done).',
+    id: 'twilio', kind: 'platform', name: 'Twilio (texts)', testable: true,
+    powers: 'The 5:30am Morning Digest and its reply commands (ECOM, dials 30, done), the two-way texting line (anyone who texts the number gets a Grok reply in lead-response mode), and SMS alerts like "Sale made" and "Store preview ready".',
     steps: [
       { text: 'Sign up at Twilio, verify your email and your phone.', link: 'https://www.twilio.com/try-twilio' },
       { text: 'Console → Phone Numbers → Buy a number → Toll-Free → buy one.', link: 'https://console.twilio.com/us1/develop/phone-numbers/manage/search' },
       { text: 'Messaging → Regulatory Compliance → Toll-Free Verification → submit with use case "Account notifications — a daily planning summary sent only to the account owner", under 100/month.', link: 'https://console.twilio.com/us1/develop/sms/regulatory-compliance/toll-free-verification' },
       { text: 'Copy the Account SID and Auth Token from the Console home page.', link: 'https://console.twilio.com/' },
       { text: 'Upgrade from trial (~$20) or every text starts with "Sent from your Twilio trial account".' },
-      { text: 'Paste all four values below, Save, Test. Then set the reply webhook (shown after Test) under the number\'s Messaging → "A message comes in".' },
+      { text: 'Texting anyone besides yourself (leads, clients) from a 10-digit number needs A2P 10DLC registration: Messaging → Regulatory Compliance → A2P 10DLC → register the brand and a campaign. Until it\'s approved, Test shows "10DLC: not registered yet".', link: 'https://console.twilio.com/us1/develop/sms/regulatory-compliance/a2p-10dlc-overview' },
+      { text: 'Paste all four values below, Save, Test. Then point the number\'s Messaging → "A message comes in" webhook at the texting line URL shown after Test (/api/sms/inbound). The digest reply commands keep working through it.' },
     ],
     withoutIt: 'The digest arrives as a push notification from the app instead of a text, and reply commands don\'t work.',
     fields: [
@@ -113,12 +114,49 @@ export const PLATFORM_SETUP: SetupEntry[] = [
     fields: [{ secret: 'CJ_API_KEY', label: 'API key' }],
   },
   {
+    id: 'parallel', kind: 'platform', name: 'Parallel (research)', testable: true, phase: 'October',
+    powers: 'The research worker\'s web access: Product Scout and Audience Analyst search through Parallel, and Money Move researches each week\'s opportunity live and local. Every number keeps its source link.',
+    steps: [
+      { text: 'Sign up at Parallel and open the platform dashboard.', link: 'https://platform.parallel.ai/' },
+      { text: 'API Keys → Create key, name it masterminds-research, copy it.' },
+      { text: 'Search is about $1–5 per 1,000 calls; deep Task runs are $5 (Lite) to $100 (Pro) per 1,000. The research bucket in HQ caps it at $40 a month by default.' },
+      { text: 'Paste the key below, Save, then Test (one cheap search).' },
+    ],
+    withoutIt: 'Scout and Analyst fall back to Claude\'s built-in web search; Money Move uses your profile only, without live local research.',
+    fields: [{ secret: 'PARALLEL_API_KEY', label: 'API key' }],
+  },
+  {
+    id: 'google_places', kind: 'platform', name: 'Google Places (lead scraper)', testable: true, phase: 'Addendum 6',
+    powers: 'The Harvester: Client Finder searches Google Places for businesses and reads their website and mobile speed. Replaces running the scraper from a terminal.',
+    steps: [
+      { text: 'Open Google Cloud Console → APIs & Services → Library, and enable "Places API (New)" and "PageSpeed Insights API" for your project.', link: 'https://console.cloud.google.com/apis/library' },
+      { text: 'Credentials → Create credentials → API key. Restrict it to those two APIs.' },
+      { text: 'Billing must be on. A Places search costs about $0.035 per 20 businesses (only the fields the engines need are requested); PageSpeed is free.' },
+      { text: 'Paste the key below, Save, then Test (an IDs-only request, which is free).' },
+    ],
+    withoutIt: 'Client Finder can only work from leads already in LeadFlow; it can\'t search for new ones.',
+    fields: [{ secret: 'GOOGLE_PLACES_API_KEY', label: 'API key' }],
+  },
+  {
+    id: 'outreach_mailbox', kind: 'platform', name: 'Outreach mailbox (Gmail / Google Workspace)', testable: true, phase: 'Addendum 6',
+    powers: 'Sends the cold emails from a real mailbox on your outreach domain and reads the replies into Outreach, where the classifier sorts them. App and receipt emails stay on the current provider.',
+    steps: [
+      { text: 'Use a Google Workspace mailbox on your separate outreach domain (not your main domain). Add the domain under Outreach → Outreach domain first, and set SPF, DKIM and DMARC.' },
+      { text: 'Google Cloud Console → enable the Gmail API → OAuth consent screen (Internal is fine for Workspace) → Credentials → OAuth client ID (Web). Add https://developers.google.com/oauthplayground as a redirect URI.', link: 'https://console.cloud.google.com/apis/library/gmail.googleapis.com' },
+      { text: 'Open the OAuth Playground, use your own client ID and secret (gear icon), authorize the scope https://www.googleapis.com/auth/gmail.modify while signed in as the outreach mailbox, then exchange the code. Copy the refresh token.', link: 'https://developers.google.com/oauthplayground' },
+      { text: 'Paste the client ID, client secret and refresh token below, Save, then Test.' },
+    ],
+    withoutIt: 'Cold emails stay in test mode: they go to your own inbox labeled [TEST] and nothing reaches a lead.',
+    fields: [{ secret: 'GMAIL_CLIENT_ID', label: 'OAuth client ID' }, { secret: 'GMAIL_CLIENT_SECRET', label: 'OAuth client secret' }, { secret: 'GMAIL_REFRESH_TOKEN', label: 'Refresh token' }],
+  },
+  {
     id: 'higgsfield', kind: 'platform', name: 'Higgsfield', testable: false, phase: 'E-comm 5 / Content 4',
     powers: 'Brand Lab mockups, content visuals, and the Clip Editor\'s enhancements.',
     steps: [
       { text: 'Sign in to Higgsfield and open the API / developer settings for your workspace.', link: 'https://higgsfield.ai/' },
       { text: 'Create an API key, paste below, Save.' },
-      { text: 'There is no free test call for this one; it is checked the first time Brand Lab or the Clip Editor uses it.' },
+      { text: 'The API has its own wallet, separate from a Higgsfield website subscription — the subscription does not pay for API calls. Top it up ($5–$25 to start) in the API dashboard.' },
+      { text: 'There is no free test call for this one; it is checked the first time Brand Lab or the Clip Editor uses it. Every generation goes through the visual-spend cap in HQ ($60/month by default).' },
     ],
     withoutIt: 'Brand Lab gives written brand options with no mockups; the Clip Editor can\'t enhance clips.',
     fields: [{ secret: 'HIGGSFIELD_API_KEY', label: 'API key' }],
@@ -154,16 +192,25 @@ export const ACCOUNT_SETUP: SetupEntry[] = [
   },
   {
     id: 'shopify', kind: 'account', name: 'Shopify', testable: true, connect: 'token', phase: 'E-comm 7',
-    powers: 'Orders, revenue and conversion on every brand card; checkout for the stores. The Launcher creates each approved store\'s product here and points its Buy button at Shopify checkout.',
+    powers: 'The one Shopify store behind every product site: products, checkout, payments and orders. The Launcher adds each approved product here and points that site\'s Buy button at this store\'s checkout.',
     unlocks: ['E-comm: live revenue, orders, conversion', 'Read loop: funnel from real orders'],
     steps: [
-      { text: 'Shopify admin → Settings → Apps and sales channels → Develop apps → Create an app.' },
-      { text: 'Configure Admin API scopes: read_orders, read_products, write_products, write_publications, read_analytics. Install the app. (Added scopes later? Reinstall the app and paste the new token.)' },
+      { text: 'Name the store as a neutral parent brand (e.g. "MARQ Goods"), not a product. Every product site checks out through this one store, so its name and logo show on checkout, order emails and card statements. Settings → Store details for the name; Settings → Checkout → Customize for the checkout and email logo.' },
+      { text: 'Open Shopify\'s Dev Dashboard (Settings → Apps → Develop apps → "Build apps in Dev Dashboard", or dev.shopify.com/dashboard) → Create app → name it Masterminds.', link: 'https://dev.shopify.com/dashboard' },
+      { text: 'In the app\'s Versions/Configuration, add Admin API scopes: read_orders, read_products, write_products, write_publications, read_analytics. Release the version.' },
+      { text: 'Install the app on your store (Home → Install app → pick this store). The app and the store must be in the same Shopify organization.' },
+      { text: 'Settings → copy the Client ID and Client Secret, plus your store domain (yourstore.myshopify.com). Paste them below. Masterminds gets a fresh 24-hour token from them on its own.' },
       { text: 'Online Store → Preferences: remove the storefront password before launching, or customers hit it at checkout.' },
-      { text: 'Copy the Admin API access token (shown once) and your store domain (yourstore.myshopify.com). Paste both below.' },
+      { text: 'Older custom app with an shpat_ token? Paste that token instead of the Client ID/Secret (plus its API secret key for sale alerts).' },
     ],
     withoutIt: 'Brand cards show "Connect Shopify" instead of revenue.',
-    fields: [{ secret: 'token', label: 'Admin API access token', placeholder: 'shpat_…' }, { secret: 'shop', label: 'Store domain', placeholder: 'yourstore.myshopify.com' }],
+    fields: [
+      { secret: 'shop', label: 'Store domain', placeholder: 'yourstore.myshopify.com' },
+      { secret: 'client_id', label: 'Client ID (Dev Dashboard app)', placeholder: 'from the app\'s Settings', optional: true },
+      { secret: 'client_secret', label: 'Client Secret (Dev Dashboard app)', placeholder: 'from the app\'s Settings', optional: true, hint: 'Also signs the sale alerts (order webhooks).' },
+      { secret: 'token', label: 'or: Admin API access token (older custom app)', placeholder: 'shpat_…', optional: true },
+      { secret: 'webhook_secret', label: 'API secret key (older custom app only)', placeholder: 'from the app\'s API credentials', optional: true, hint: 'Only for an shpat_ token: Shopify signs order webhooks with it.' },
+    ],
   },
   {
     id: 'github', kind: 'account', name: 'GitHub (store repos only)', testable: true, connect: 'token', phase: 'E-comm 6',

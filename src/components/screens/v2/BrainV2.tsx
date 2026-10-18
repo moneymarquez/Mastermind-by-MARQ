@@ -11,7 +11,7 @@ import Chip from '../../mm/Chip';
 import Stat from '../../mm/Stat';
 import { Bars, Ring } from '../../mm/charts';
 import { Empty } from '../../mm/States';
-import { Page, useModule, useAi, AiOffCard, NovaCard } from '../../mm/Page';
+import { Page, Tabs, useModule, useAi, AiOffCard, NovaCard } from '../../mm/Page';
 import { lastDays, shortDate, ymd } from './util';
 
 const pct = (t: Trait, s: Parameters<typeof tendency>[1]) => Math.round(((tendency(t, s) - 1) / 4) * 100);
@@ -19,7 +19,7 @@ const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16];
 const h12 = (h: number) => String(((h + 11) % 12) + 1);
 
 export default function BrainV2() {
-  const { device, novaOpen } = useModule();
+  const { device, novaOpen, nav } = useModule();
   const phone = device === 'phone', three = device === 'desktop' && !novaOpen;
   const ai = useAi();
   const b = useBrain();
@@ -56,6 +56,7 @@ export default function BrainV2() {
   if (!b.loading && !a) {
     return (
       <Page title="Brain" sub="Sales and follow-through" more={more} openMore={moreKey}>
+        <Tabs tabs={[{ id: 'brain', label: 'Brain' }, { id: 'dump', label: 'Brain Dump' }]} value="brain" onChange={(t) => { if (t === 'dump') nav('brain-dump'); }} />
         <Empty text="Take the 4-minute assessment to get your profile." cta="Start assessment" onCta={() => { setMoreMode('assess'); setMoreKey((k) => k + 1); }} />
         {ai === false && <AiOffCard text="Profile scoring needs AI. Your daily check-ins and calling patterns still record." />}
       </Page>
@@ -119,6 +120,7 @@ export default function BrainV2() {
   );
   return (
     <Page title="Brain" sub="Sales and follow-through" more={more} openMore={moreKey}>
+        <Tabs tabs={[{ id: 'brain', label: 'Brain' }, { id: 'dump', label: 'Brain Dump' }]} value="brain" onChange={(t) => { if (t === 'dump') nav('brain-dump'); }} />
       {phone ? <>{profile}{map}{checkin}{bars}</> : (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 16 }}>
