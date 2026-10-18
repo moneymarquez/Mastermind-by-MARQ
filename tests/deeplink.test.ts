@@ -10,7 +10,7 @@ test('B-06 deep links beat the remembered screen', async () => {
   assert.equal(pickInitialScreen('?screen=setup&connected=etsy', null, now), 'setup');
   assert.equal(pickInitialScreen('', fresh, now), 'budgeting', 'no link: remembered screen');
   assert.equal(pickInitialScreen('?screen=nonsense', fresh, now), 'budgeting', 'unknown screen ignored');
-  assert.equal(pickInitialScreen('', null, now), 'home');
+  assert.equal(pickInitialScreen('', null, now), 'today');
   assert.equal(deepLinkScreen('?screen=placeholder'), null);
 
 });

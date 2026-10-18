@@ -1,7 +1,7 @@
 // Which screen the app opens on — pure, no React, so it's testable.
 import type { Screen } from './types';
 
-export const DIRECT_SCREENS: Screen[] = ['home', 'ecom-marketing', 'content-accounts', 'content-profiles', 'content-ideas', 'content-plan', 'content-studio', 'content-history', 'content-inspiration', 'content-kits', 'content-workers', 'ecom-approvals', 'coupons', 'lead-engines', 'waitlist', 'comms', 'contracts', 'ledger', 'classroom', 'feed', 'peptides', 'money-move', 'tasks', 'brain-dump', 'ecom-clients', 'ecom-inbox', 'ecom-office', 'ecom-orders', 'ecom-stores', 'ecom-products', 'hq', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain', 'ecommerce', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing', 'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings', 'call-recordings', 'website', 'invoicing', 'manage-modules', 'edit-home-widgets', 'grant-access', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'content', 'swipe-file', 'changelog', 'dispatch', 'inbox', 'modules'];
+export const DIRECT_SCREENS: Screen[] = ['home', 'today', 'ecom-marketing', 'content-accounts', 'content-profiles', 'content-ideas', 'content-plan', 'content-studio', 'content-history', 'content-inspiration', 'content-kits', 'content-workers', 'ecom-approvals', 'coupons', 'lead-engines', 'waitlist', 'comms', 'contracts', 'ledger', 'classroom', 'feed', 'peptides', 'money-move', 'tasks', 'brain-dump', 'ecom-clients', 'ecom-inbox', 'ecom-office', 'ecom-orders', 'ecom-stores', 'ecom-products', 'hq', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain', 'ecommerce', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing', 'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'stocks', 'leadflow', 'account-settings', 'prompt-voice-settings', 'call-recordings', 'website', 'invoicing', 'manage-modules', 'edit-home-widgets', 'grant-access', 'budgeting', 'marketing', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'content', 'swipe-file', 'changelog', 'dispatch', 'inbox', 'modules'];
 
 // Which screen the app was on last, so a reload comes back to it instead
 // of dumping you on Home. Matters most as an installed PWA: iOS silently
@@ -23,24 +23,27 @@ export interface StoredScreen {
 }
 
 /** Decide what a stored value restores to. Pure so it can be tested. */
+/** Where the app opens with nothing to restore: the Today screen. */
+export const DEFAULT_SCREEN: Screen = 'today';
+
 export function restoreScreen(stored: string | null, now: number): Screen {
-  if (!stored) return 'home';
+  if (!stored) return DEFAULT_SCREEN;
   let parsed: Partial<StoredScreen>;
   try {
     parsed = JSON.parse(stored) as Partial<StoredScreen>;
   } catch {
     // Pre-TTL builds stored the bare screen name. There's no timestamp to
     // judge it by, so it's treated as expired rather than trusted forever.
-    return 'home';
+    return DEFAULT_SCREEN;
   }
-  if (typeof parsed.screen !== 'string' || typeof parsed.at !== 'number') return 'home';
-  if (!Number.isFinite(parsed.at) || now - parsed.at > LAST_SCREEN_TTL_MS) return 'home';
+  if (typeof parsed.screen !== 'string' || typeof parsed.at !== 'number') return DEFAULT_SCREEN;
+  if (!Number.isFinite(parsed.at) || now - parsed.at > LAST_SCREEN_TTL_MS) return DEFAULT_SCREEN;
   // A clock that went backwards (device time changed) is not a reason to
   // trust a stale screen either.
-  if (parsed.at > now + 5 * 60 * 1000) return 'home';
+  if (parsed.at > now + 5 * 60 * 1000) return DEFAULT_SCREEN;
   // Validated rather than trusted: a screen that existed in an older build
   // would otherwise restore into a blank placeholder.
-  if (!(DIRECT_SCREENS as string[]).includes(parsed.screen)) return 'home';
+  if (!(DIRECT_SCREENS as string[]).includes(parsed.screen)) return DEFAULT_SCREEN;
   return parsed.screen as Screen;
 }
 

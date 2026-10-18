@@ -90,12 +90,13 @@ export function PhoneHeader({ onMenu, onHome, onSearch, onBell, bellDot, bellOpe
 
 export function PhoneTabBar({ screen, novaOpen, badges, onNav, onNova }: { screen: string; novaOpen: boolean; badges: Badges; onNav: (s: string) => void; onNova: () => void }) {
   const inboxCount = badges.inbox + badges.leads;
-  const onModules = screen === 'modules' || (!['home', 'inbox', 'leads'].includes(screen) && !novaOpen);
+  const onModules = screen === 'modules' || (!['today', 'home', 'inbox', 'leads'].includes(screen) && !novaOpen);
   const tabs = [
+    { key: 'today', label: 'Today', icon: <GSun size={22} />, active: screen === 'today' && !novaOpen, tap: () => onNav('today') },
     { key: 'home', label: 'Home', icon: <GHome size={22} />, active: screen === 'home' && !novaOpen, tap: () => onNav('home') },
     { key: 'inbox', label: 'Inbox', icon: <GInbox size={22} />, active: (screen === 'inbox' || screen === 'leads') && !novaOpen, tap: () => onNav('inbox'), badge: inboxCount },
     { key: 'nova', label: 'Nova', icon: <GNova size={22} />, active: novaOpen, tap: onNova },
-    { key: 'modules', label: 'Modules', icon: <GGrid size={22} />, active: onModules && screen !== 'home', tap: () => onNav('modules') },
+    { key: 'modules', label: 'Modules', icon: <GGrid size={22} />, active: onModules && screen !== 'home' && screen !== 'today', tap: () => onNav('modules') },
   ];
   return (
     <nav aria-label="Main" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 61, height: `calc(${PHONE_TAB_H - 20}px + ${SAFE_BOTTOM})`, background: 'color-mix(in srgb, var(--bg) 88%, transparent)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderTop: '1px solid var(--border)', display: 'flex', padding: '8px 8px 0', boxSizing: 'border-box' }}>
@@ -163,6 +164,7 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
   useEffect(() => { if (currentGroup && !open[currentGroup]) setOpen((o) => ({ ...o, [currentGroup]: true })); }, [currentGroup]); // eslint-disable-line react-hooks/exhaustive-deps
   const toggle = (t: string) => setOpen((o) => { const n = { ...o, [t]: !o[t] }; try { localStorage.setItem('mm-sidebar-open', JSON.stringify(n)); } catch { /* private mode */ } return n; });
   const top = [
+    { id: 'today', l: 'Today', icon: <GSun size={17} />, active: screen === 'today' },
     { id: 'home', l: 'Home', icon: <GHome size={17} />, active: screen === 'home' },
     { id: 'nova', l: 'Nova', icon: <GNova size={17} fill color="var(--accent)" />, active: novaOpen },
     { id: 'inbox', l: 'Inbox', icon: <GInbox size={17} />, active: screen === 'inbox', badge: badges.inbox, urgent: false },
@@ -305,7 +307,7 @@ export function SearchPalette({ groups, onOpen, onClose }: { groups: ShellGroup[
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => { ref.current?.focus(); }, []);
   const all = useMemo(() => [
-    { id: 'home', label: 'Home', group: '' }, { id: 'inbox', label: 'Inbox', group: '' }, { id: 'leads', label: 'Leads', group: '' }, { id: 'account-settings', label: 'Settings', group: '' },
+    { id: 'today', label: 'Today', group: '' }, { id: 'home', label: 'Home', group: '' }, { id: 'inbox', label: 'Inbox', group: '' }, { id: 'leads', label: 'Leads', group: '' }, { id: 'account-settings', label: 'Settings', group: '' },
     ...groups.flatMap((g) => g.items.filter((i) => !i.locked).map((i) => ({ id: i.id, label: i.label, group: g.title }))),
   ], [groups]);
   const hits = all.filter((x) => !q.trim() || `${x.label} ${x.group}`.toLowerCase().includes(q.trim().toLowerCase())).slice(0, 12);

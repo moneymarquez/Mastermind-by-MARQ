@@ -1,5 +1,6 @@
 export type Screen =
   | 'home'
+  | 'today'
   | 'ecom-marketing'
   | 'coupons'
   | 'lead-engines'

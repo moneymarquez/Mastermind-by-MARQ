@@ -152,7 +152,7 @@ function initialScreen(): Screen {
     }
     return picked;
   } catch { /* SSR / no window */ }
-  return 'home';
+  return 'today';
 }
 
 const initialState: AppState = {

@@ -63,7 +63,7 @@ export function shellGroups(canAccess: (k: string) => boolean, isOwner: boolean,
 export function crumbFor(screen: string, groups: ShellGroup[], portal: PortalKey = 'masterminds'): { group: string | null; label: string } {
   // Outside Masterminds the crumb starts with the portal: "Made by › LeadFlow".
   if (portal !== 'masterminds') return { group: portalName(portal), label: crumbFor(screen, groups, 'masterminds').label };
-  const TOP: Record<string, string> = { home: 'Home', inbox: 'Inbox', leads: 'Leads', modules: 'Modules', 'account-settings': 'Settings' };
+  const TOP: Record<string, string> = { today: 'Today', home: 'Home', inbox: 'Inbox', leads: 'Leads', modules: 'Modules', 'account-settings': 'Settings' };
   if (TOP[screen]) return { group: null, label: TOP[screen] };
   for (const g of groups) { const it = g.items.find((i) => i.id === screen); if (it) return { group: g.title, label: it.label }; }
   const m = MODULE_REGISTRY.find((x) => x.routes[0] === screen);
