@@ -15,7 +15,8 @@ describe('goal pace', () => {
     const p = goalPace(goal({ current_saved: 3000, deadline: '2026-12-31' }), 0, now)!;
     expect(p.onPace).toBe(false);
     expect(p.k).toBe('warn');
-    expect(p.chip).toMatch(/^Behind pace by \$2,0\d\d$/);
+    // About $2,000 behind; a daylight-saving hour in the local timezone can make it $1,999.
+    expect(p.chip).toMatch(/^Behind pace by \$(1,99\d|2,0\d\d)$/);
     expect(p.mark).toBeGreaterThan(49);
     expect(p.mark).toBeLessThan(51);
     expect(p.fill).toBe(30);

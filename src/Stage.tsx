@@ -203,7 +203,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   const searchGroups = useMemo(() => portals.flatMap((p) => shellGroups(navAccess, isOwner, navPrefs.order, { portal: p }).map((g) => ({ ...g, title: p === 'masterminds' ? g.title : portalName(p) }))), [navAccess, isOwner, navPrefs.order, portals]);
   const crumb = crumbFor(state.screen, groups, portal);
   const ecomPending = usePendingApprovals(isOwner);
-  const badges = { inbox: ownerInbox.items.filter((i) => i.unread).length, leads: leadFeed.waiting, urgent: leadFeed.urgent > 0, screens: { 'ecom-approvals': ecomPending } };
+  const badges = { inbox: ownerInbox.items.filter((i) => i.unread).length, leads: leadFeed.waiting, urgent: leadFeed.urgent > 0, screens: { 'ecom-products': ecomPending, 'ecom-approvals': ecomPending } };
   const toggleTheme = () => onThemeChange(resolvedTheme === 'dark' ? 'light' : 'dark');
   const toggleNova = () => (state.novaOpen ? actions.closeNova() : actions.openNova());
   // Desktop: Nova is a 360px column that pushes content. iPad: it slides

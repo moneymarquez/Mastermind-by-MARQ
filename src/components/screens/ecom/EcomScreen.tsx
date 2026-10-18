@@ -30,7 +30,7 @@ interface Props {
 /** The split nav (brief §2.1): each section is its own screen in the
  *  E-commerce portal; 'overview' is the landing page with counts. */
 export const SECTIONS: { id: Exclude<EcomSection, 'overview'>; screen: string; label: string; sub: string }[] = [
-  { id: 'products', screen: 'ecom-products', label: 'Products', sub: 'Tonight\'s pitch, the research queue, and every product the bots found.' },
+  { id: 'products', screen: 'ecom-products', label: 'Product sheets', sub: 'Approvals waiting on you, tonight\'s pitch, and every product the bots found.' },
   { id: 'approvals', screen: 'ecom-approvals', label: 'Approvals', sub: 'Products, brand directions, store previews and money moves waiting for your OK.' },
   { id: 'stores', screen: 'ecom-stores', label: 'Sites', sub: 'Every product\'s own website — all checking out through your one Shopify store.' },
   { id: 'orders', screen: 'ecom-orders', label: 'Orders', sub: 'Shopify orders, margins and supplier status.' },
@@ -39,6 +39,11 @@ export const SECTIONS: { id: Exclude<EcomSection, 'overview'>; screen: string; l
   { id: 'inbox', screen: 'ecom-inbox', label: 'Inbox', sub: 'Customer email and order problems.' },
   { id: 'clients', screen: 'ecom-clients', label: 'Client Stores', sub: 'Every subscriber\'s stores, revenue and flags.' },
 ];
+/** The E-commerce tabs Marq kept (Oct 2026 cleanup). Approvals lives inside
+ *  Product sheets, Office moved to Orchestrator, Inbox and Client Stores are
+ *  hidden; their screens still work for deep links and flags. */
+const OVERVIEW_TILES = new Set<string>(['products', 'stores', 'orders', 'marketing']);
+
 /** Which section an open flag belongs to, from its deep link. */
 export function sectionOfFlag(link: string | null, entityType: string): Exclude<EcomSection, 'overview'> {
   const l = link ?? '';
@@ -145,8 +150,8 @@ export default function EcomScreen({ section = 'overview' }: Props) {
   const buildBrand = async (input: { name: string; owner_type: 'mine' | 'client'; client_id: string | null; positioning: string | null; steps: Record<string, unknown>; current_step: number }) => { const b = await brands.createBrand({ ...input, steps: input.steps as Brand['steps'] }); if (b) openInStores(b.id); return b?.id ?? null; };
 
   return (
-    <Page title={meta?.label ?? 'E-commerce'} sub={meta?.sub ?? 'Products, sites, orders and the office. Money never moves without your tap.'}
-      backTo={meta ? 'ecommerce' : 'modules'} back={meta ? 'E-commerce' : 'All modules'}
+    <Page title={meta?.label ?? 'Overview'} sub={meta?.sub ?? 'How every site is doing. Money never moves without your tap.'}
+      backTo={section === 'office' ? 'hq' : meta ? 'ecommerce' : 'modules'} back={section === 'office' ? 'HQ' : meta ? 'Overview' : 'All modules'}
       fab={section === 'stores' || section === 'overview' ? { t: 'Brand', onClick: () => openInStores(null, true) } : undefined}
       menu={[{ t: 'Floor plan view', onClick: () => setOfficeOpen(true) }]}>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -161,9 +166,9 @@ export default function EcomScreen({ section = 'overview' }: Props) {
             Since {since.data ? new Date(since.data.since).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : 'you last looked'}: {sinceText}{since.data?.failed ? `, ${since.data.failed} failed` : ''} · {money(counters.spentToday)} spent today
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: phone ? '1fr 1fr' : 'repeat(3,minmax(0,1fr))', gap: 10 }}>
-            {SECTIONS.map((x) => {
+            {SECTIONS.filter((x) => OVERVIEW_TILES.has(x.id)).map((x) => {
               const c = counts(x.id);
-              const extra = x.id === 'approvals' ? counters.pendingApprovals : 0;
+              const extra = x.id === 'products' ? counters.pendingApprovals : 0;
               return (
                 <button key={x.id} className="mm-btn" onClick={() => nav(x.screen)} style={{ height: 'auto', padding: 14, borderRadius: 14, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, textAlign: 'left' }}>
                   <span style={{ display: 'flex', gap: 6, alignItems: 'center', width: '100%' }}>
@@ -177,11 +182,11 @@ export default function EcomScreen({ section = 'overview' }: Props) {
               );
             })}
           </div>
-          <EcomOverview brands={brands.brands} orders30d={brands.orders30d} approvals={approvals.approvals} onOpenBrand={(id) => openInStores(id)} onOpenApprovals={() => nav('ecom-approvals')} />
+          <EcomOverview brands={brands.brands} orders30d={brands.orders30d} approvals={approvals.approvals} onOpenBrand={(id) => openInStores(id)} onOpenApprovals={() => nav('ecom-products')} />
         </>
       )}
       {section === 'approvals' && <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: phone ? 14 : 16 }}><ApprovalsTab api={approvals} onDecided={refreshAll} /></div>}
-      {section === 'products' && <ProductsSection approvals={approvals} onOpenApprovals={() => nav('ecom-approvals')} search={search} onBuildBrand={buildBrand} onDecided={refreshAll} />}
+      {section === 'products' && <ProductsSection approvals={approvals} onOpenApprovals={() => document.getElementById('ecom-approvals')?.scrollIntoView({ behavior: 'smooth' })} search={search} onBuildBrand={buildBrand} onDecided={refreshAll} />}
       {section === 'stores' && (
         <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: phone ? 14 : 20, minWidth: 0 }}>
           <StoresSection api={brands} clients={clients.clients} search={search} openBrandId={openBrandId} onOpenBrand={setOpenBrandId} newBrandOpen={newBrandOpen} onCloseNewBrand={() => setNewBrandOpen(false)} />

@@ -7,6 +7,8 @@ import type { ChipKind } from '../../mm/Chip';
 import Row from '../../mm/Row';
 import Stat from '../../mm/Stat';
 import { useModule } from '../../mm/Page';
+import { useSites } from '../../../data/useEcomOctober';
+import { siteRows } from './siteStats';
 
 const usd = (n: number) => `$${n.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
 const HK: Record<string, ChipKind> = { building: 'accent', testing: 'warn', growing: 'good', stalled: 'warn', killed: 'neutral' };
@@ -19,6 +21,8 @@ export default function EcomOverview({ brands, orders30d, approvals, onOpenBrand
   onOpenBrand: (id: string) => void; onOpenApprovals: () => void;
 }) {
   const { device, novaOpen } = useModule();
+  const sitesApi = useSites();
+  const sites = siteRows(sitesApi.sites, sitesApi.days, brands, orders30d);
   const phone = device === 'phone';
   const now = new Date();
   const all = Object.values(orders30d);
@@ -66,14 +70,27 @@ export default function EcomOverview({ brands, orders30d, approvals, onOpenBrand
       {pending.length > 0 && <button className="mm-btn mm-btn--primary" style={{ margin: '4px 0 14px', height: 40 }} onClick={onOpenApprovals}>Review all</button>}
     </Card>
   );
-  const brandCard = (
+  // How each product site is doing over 30 days: views, Buy clicks, orders,
+  // revenue, and orders per 100 views. Falls back to brands before any site exists.
+  const sitesCard = sites.length > 0 && (
+    <Card title="Your sites" meta={`${sites.filter((x) => x.live).length} live of ${sites.length}`} flush wide={!phone}>
+      <div>{sites.map((x, n) => (
+        <Row key={x.id} first={n === 0} name={x.name}
+          meta={x.live ? `${x.views} views · ${x.clicks} Buy clicks · ${x.orders} orders${x.conv != null ? ` · ${x.conv.toFixed(1)} per 100 views` : ''}` : (x.error ?? x.status)}
+          chip={x.live ? (x.orders > 0 ? 'Selling' : x.views > 0 ? 'Live, no sales' : 'Live, no traffic') : x.error ? 'Problem' : 'Not live'}
+          k={x.live ? (x.orders > 0 ? 'good' : 'warn') : x.error ? 'warn' : 'neutral'}
+          amt={x.revenue ? usd(x.revenue) : undefined} onClick={() => onOpenBrand(x.brandId)} />
+      ))}</div>
+    </Card>
+  );
+  const brandCard = sitesCard || (
     <Card title="Brands" meta={String(brands.length)} flush wide={!phone}>
       {brands.length ? <div>{brands.slice(0, 5).map((b, n) => { const h = health(b); return <Row key={b.id} first={n === 0} name={b.name} meta={`Step ${nextStep(b)} of 10`} chip={HEALTH_LABEL[h]} k={HK[h]} amt={orders30d[b.id]?.total ? usd(orders30d[b.id].total) : undefined} onClick={() => onOpenBrand(b.id)} />; })}</div>
         : <div style={{ padding: '10px 0 14px', fontSize: 14, color: 'var(--text-tertiary)' }}>No brands yet.</div>}
     </Card>
-  );
+  ));
 
-  if (phone) return <><div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>{stats[0]}{stats[3]}</div>{approvalCard}{pipeline}</>;
+  if (phone) return <><div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>{stats[0]}{stats[3]}</div>{brandCard}{approvalCard}{pipeline}</>;
   return (
     <>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 16 }}>{stats}</div>

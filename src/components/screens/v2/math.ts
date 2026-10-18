@@ -70,8 +70,11 @@ export const lateNight = (iso: string) => { const h = new Date(iso).getHours(); 
 
 /** Week of the year, Sunday-start (matches weekStartOf). Pure. */
 export function weekNo(start: string): number {
-  const d = new Date(`${start}T00:00:00`), j = new Date(d.getFullYear(), 0, 1);
-  return Math.floor(((d.getTime() - j.getTime()) / 86400000 + j.getDay()) / 7) + 1;
+  // Calendar math in UTC: local midnights are 23 or 25 hours apart across a
+  // daylight-saving change, which put Sundays in the previous week.
+  const [y, m, d] = start.split('-').map(Number);
+  const day = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 1)) / 86400000);
+  return Math.floor((day + new Date(Date.UTC(y, 0, 1)).getUTCDay()) / 7) + 1;
 }
 
 /** Every Nth day of the forecast up to the horizon, always keeping the last. Pure. */
