@@ -31,6 +31,7 @@ import type { ReminderEnv } from './handlers/reminders';
 import type { ShiftReminderEnv } from './handlers/shift-reminders';
 import { runDailyPlan, dailyPlanToday } from './handlers/daily-plan';
 import type { DailyPlanEnv } from './handlers/daily-plan';
+import { runFollowUpsTick } from './lib/followups';
 import { leadflowLeads, leadflowLeadUpdate, leadflowLeadsBulk, leadflowHistory, leadflowMessages, leadflowAiReport, leadflowFind } from './handlers/leadflow';
 import type { LeadflowEnv } from './handlers/leadflow';
 import { createSubscriptionIntent, stripeWebhook, createPortalSession } from './handlers/billing';
@@ -213,24 +214,35 @@ export default {
   // belongs to.
   async scheduled(event: { cron: string }, env: Env, ctx: { waitUntil: (promise: Promise<unknown>) => void }): Promise<void> {
     setResearchEnv(env); setNotifyEnv(env); setVisualEnv(env);
+    // Every job is awaited, not only handed to waitUntil. Cloudflare keeps a
+    // scheduled() invocation alive up to 15 minutes while its own promise is
+    // pending, but work left to waitUntil after the handler returns gets about
+    // 30 seconds. Returning straight away cut off every AI step longer than
+    // that: Product Scout, Audience Analyst, Idea & Script and HQ never once
+    // finished on the timer, while the same workers finished when run by hand.
+    const jobs: Promise<unknown>[] = [];
+    const run = (p: Promise<unknown>) => { ctx.waitUntil(p); jobs.push(p); };
     if (event.cron === '*/5 * * * *') {
-      ctx.waitUntil(runShiftReminders(env));
-      ctx.waitUntil(runOrchestratorTick(env));
-      ctx.waitUntil(runInboundWaitCheck(env));
-      ctx.waitUntil(runPublisherTick(env));
-      ctx.waitUntil(runFlagsTick(env));
-      if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runSocialSyncTick(env as never, new SbClient(env)).catch((e) => console.error('social sync tick', e)));
-      if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runEnginesTick(env as unknown as EnginesEnv, new SbClient(env)).catch((e) => console.error('engines tick', e)));
-      if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runOutreachTick(env as unknown as OutreachRouteEnv, new SbClient(env)).catch((e) => console.error('outreach tick', e)));
-      if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runSoloTick(env, new SbClient(env)).catch((e) => console.error('solo tick', e)));
-      if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runCommsTick(env, new SbClient(env)).catch((e) => console.error('comms tick', e)));
+      run(runShiftReminders(env));
+      run(runOrchestratorTick(env));
+      if (env.SUPABASE_SERVICE_ROLE_KEY) run(runFollowUpsTick(env.ANTHROPIC_API_KEY, new SbClient(env)).catch((e) => console.error('follow-ups tick', e)));
+      run(runInboundWaitCheck(env));
+      run(runPublisherTick(env));
+      run(runFlagsTick(env));
+      if (env.SUPABASE_SERVICE_ROLE_KEY) run(runSocialSyncTick(env as never, new SbClient(env)).catch((e) => console.error('social sync tick', e)));
+      if (env.SUPABASE_SERVICE_ROLE_KEY) run(runEnginesTick(env as unknown as EnginesEnv, new SbClient(env)).catch((e) => console.error('engines tick', e)));
+      if (env.SUPABASE_SERVICE_ROLE_KEY) run(runOutreachTick(env as unknown as OutreachRouteEnv, new SbClient(env)).catch((e) => console.error('outreach tick', e)));
+      if (env.SUPABASE_SERVICE_ROLE_KEY) run(runSoloTick(env, new SbClient(env)).catch((e) => console.error('solo tick', e)));
+      if (env.SUPABASE_SERVICE_ROLE_KEY) run(runCommsTick(env, new SbClient(env)).catch((e) => console.error('comms tick', e)));
+      await Promise.allSettled(jobs);
       return;
     }
-    ctx.waitUntil(runStocksBot(env));
-    ctx.waitUntil(runDailyPlan(env));
-    ctx.waitUntil(runReminders(env));
-    ctx.waitUntil(runMorningDigest(env));
-    if (env.SUPABASE_SERVICE_ROLE_KEY) ctx.waitUntil(runLedgerDaily(new SbClient(env)).catch((e) => console.error('ledger daily', e)));
+    run(runStocksBot(env));
+    run(runDailyPlan(env));
+    run(runReminders(env));
+    run(runMorningDigest(env));
+    if (env.SUPABASE_SERVICE_ROLE_KEY) run(runLedgerDaily(new SbClient(env)).catch((e) => console.error('ledger daily', e)));
+    await Promise.allSettled(jobs);
   },
 
   // Cloudflare Email Routing → this Worker. Each address on
