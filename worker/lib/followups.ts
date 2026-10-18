@@ -12,6 +12,8 @@
 // paused or failed Supplier Finder never reruns (and re-bills) Brand Lab.
 import type { Sb } from './sb';
 import { RUNNERS } from './engine';
+import { queueProductVideos } from './productVideos';
+import { zonedNow } from './sb';
 
 const PREFIX = 'followup:brand:';
 const PER_TICK = 2;
@@ -53,6 +55,8 @@ async function runBrandFollowUp(apiKey: string, sb: Sb, t: TaskRow): Promise<voi
       if (lab.skipped) return void (await set('routed', lab.error ?? 'Waiting: paused.'));
       if (!lab.ok) return void (await set('failed', `Brand Lab: ${lab.error ?? 'failed'}`));
       await set('routed', 'brandlab_done');
+      // 5 video drafts in the Content plan (free; generating each clip stays a tap).
+      await queueProductVideos(sb, t.user_id, brandId, zonedNow('America/Denver').date).catch((e) => console.error('product videos', e));
       await sb.patch('ai_tasks', `id=eq.${t.id}`, { status: 'running' }).catch(() => {});
     }
     const sup = await RUNNERS.supplier(apiKey, sb, t.user_id, { brandId, trigger: 'approval' });
