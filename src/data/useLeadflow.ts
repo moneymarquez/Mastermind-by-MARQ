@@ -256,7 +256,7 @@ export function useLeadflowLeads() {
       call_count: (lead.call_count ?? 0) + 1,
       last_called_at: new Date().toISOString(),
     } as Partial<LeadflowLead>);
-    if (ok) recordLeadTouch(lead, status);
+    if (ok) { recordLeadTouch(lead, status); if (status === 'interested') void ensureCrmClientForLead(lead).catch(() => {}); }
     return ok;
   };
 
@@ -287,6 +287,28 @@ export interface LeadHandoffResult {
  *  the call actually gets prepared, and re-opening the lead to remember why
  *  it was worth calling defeats the handoff. fizzle_reasons especially —
  *  those are the talking points. */
+/** An "Interested" call puts the business straight into Client CRM (stage
+ *  new_lead), so the path to pricing and a Stripe invoice starts on the
+ *  same tap. Reuses an existing client with the same name or phone, so a
+ *  second "Interested" or a later kickoff booking never makes a duplicate.
+ *  Returns the client id, or null if it couldn't be created. */
+export async function ensureCrmClientForLead(lead: LeadflowLead): Promise<string | null> {
+  const name = (lead.business_name ?? '').trim();
+  if (!name) return null;
+  const phone = (lead.phone ?? '').trim();
+  const or = [`business_name.eq.${JSON.stringify(name)}`, phone ? `contact_phone.eq.${JSON.stringify(phone)}` : ''].filter(Boolean).join(',');
+  const { data: found } = await supabase.from('crm_clients').select('id').or(or).limit(1);
+  if (found && found.length) return (found[0] as { id: string }).id;
+  const { data, error } = await supabase.from('crm_clients').insert({
+    business_name: name,
+    contact_name: lead.owner_name || null,
+    contact_phone: phone || null,
+    notes: `${handoffNotes(lead)}\n\nMarked Interested in LeadFlow on ${new Date().toLocaleDateString()}. Next: discovery call, then pricing.`,
+  }).select('id').single();
+  if (error || !data) return null;
+  return (data as { id: string }).id;
+}
+
 function handoffNotes(lead: LeadflowLead): string {
   const lines = [
     `Sourced from LeadFlow${lead.tier ? ` (tier ${lead.tier}` : ''}${lead.fizzle_score != null ? `, score ${lead.fizzle_score})` : lead.tier ? ')' : ''}`,
@@ -319,19 +341,10 @@ export async function sendLeadToCrm(
   startTime: string,
   endTime: string,
 ): Promise<LeadHandoffResult> {
-  const { data: client, error: clientErr } = await supabase
-    .from('crm_clients')
-    .insert({
-      business_name: lead.business_name,
-      contact_name: lead.owner_name || null,
-      contact_phone: lead.phone || null,
-      notes: handoffNotes(lead),
-      // stage/source/client_type all take their column defaults
-      // ('new_lead' / 'internal' / 'client') — the right ones here.
-    })
-    .select('id')
-    .single();
-  if (clientErr || !client) throw new Error(clientErr?.message || 'Could not create the client.');
+  // The same client an "Interested" tap may already have made; created here otherwise.
+  const clientId = await ensureCrmClientForLead(lead);
+  if (!clientId) throw new Error('Could not create the client.');
+  const client = { id: clientId };
 
   const { data: ev, error: evErr } = await supabase
     .from('events')
@@ -420,7 +433,7 @@ export function useLeadflowPool() {
       last_called_at: new Date().toISOString(),
     } as Partial<LeadflowLead>);
     // Marketing Engine: the same tap is a funnel touch (spec 08 §6).
-    if (ok) recordLeadTouch(lead, status);
+    if (ok) { recordLeadTouch(lead, status); if (status === 'interested') void ensureCrmClientForLead(lead).catch(() => {}); }
     return ok;
   };
 
@@ -487,7 +500,7 @@ export function useDialingQueue() {
       last_called_at: new Date().toISOString(),
     } as Partial<LeadflowLead>);
     // Marketing Engine: the same tap is a funnel touch (spec 08 §6).
-    if (ok) recordLeadTouch(lead, status);
+    if (ok) { recordLeadTouch(lead, status); if (status === 'interested') void ensureCrmClientForLead(lead).catch(() => {}); }
     return ok;
   };
 
