@@ -121,6 +121,31 @@ export interface LeadFilters {
   city?: string;
 }
 
+/** What one press of "Find leads" returns. */
+export interface FindLeadsResult {
+  query: string;
+  found: number;
+  lookedUp: number;
+  added: { id: string; business_name: string; tier: string; fizzle_score: number; city: string | null }[];
+  skipped: { chain: number; weak: number; existing: number; noPhone: number; doNotContact: number; lookupFailed: number };
+  estCostUsd: number;
+  warning: string | null;
+}
+
+/** Search Google for "<industry> in <city>", score the results the same way
+ *  the scraper does, and add the new ones to LeadFlow. Throws with the
+ *  server's message so the panel can show it as-is. */
+export async function findLeads(city: string, industry: string, limit: number): Promise<FindLeadsResult> {
+  const res = await authedFetch('/api/leadflow/find', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ city, industry, limit }),
+  });
+  const body = await res.json().catch(() => null) as (FindLeadsResult & { error?: string }) | null;
+  if (!res.ok || !body) throw new Error(body?.error ?? `Lead search failed (${res.status}).`);
+  return body;
+}
+
 /** Flip a column on many leads in one request.
  *
  *  The alternative — one PATCH per lead — is 100 round-trips for a "send

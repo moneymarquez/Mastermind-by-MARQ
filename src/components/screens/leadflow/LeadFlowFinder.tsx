@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useLeadflowLeads } from '../../../data/useLeadflow';
-import type { LeadflowLead } from '../../../data/useLeadflow';
+import { useLeadflowLeads, findLeads } from '../../../data/useLeadflow';
+import type { LeadflowLead, FindLeadsResult } from '../../../data/useLeadflow';
 import { US_STATES, NICHES } from './shared';
 import { LeadRecord } from './LeadCard';
 import { hasOwnerContact } from './leadLinks';
@@ -19,6 +19,10 @@ import { WithRecord, HeaderAction, SidePanel, useRecordMode } from './layout';
 
 const TAGS = ['Hot', 'Warm', 'Not Ready'];
 const COLS = '36px minmax(160px,1.6fr) minmax(90px,1fr) minmax(70px,.7fr) 128px 70px 100px 100px 80px 112px';
+// Suggestions only — any industry can be typed. Home services first: those
+// owners run on few reviews and high tickets, and the score bands fit them.
+const FIND_INDUSTRIES = ['HVAC', 'plumber', 'electrician', 'roofing', 'landscaping', 'house cleaning', 'handyman', 'auto repair', 'restaurant', 'hair salon', 'barbershop', 'nail salon', 'dentist', 'chiropractor'];
+const FIND_COUNTS = [5, 10, 20];
 const BLANK = { business_name: '', phone: '', industry: NICHES[0], website_status: 'no_website', tag: 'Warm', state: '', city: '', pooled: false };
 
 export default function LeadFlowFinder() {
@@ -34,6 +38,11 @@ export default function LeadFlowFinder() {
   const [form, setForm] = useState(BLANK);
   const [addErr, setAddErr] = useState('');
   const [adding, setAdding] = useState(false);
+  const [showFind, setShowFind] = useState(false);
+  const [find, setFind] = useState({ city: 'Sandy, UT', industry: 'HVAC', count: 10 });
+  const [finding, setFinding] = useState(false);
+  const [findErr, setFindErr] = useState('');
+  const [found, setFound] = useState<FindLeadsResult | null>(null);
 
   // States come from the cities endpoint, not the static 50: offering
   // Wyoming when every lead is in Utah is 49 ways to an empty screen.
@@ -70,6 +79,22 @@ export default function LeadFlowFinder() {
     const created = await addLead(form);
     setAdding(false);
     if (created) { setShowAdd(false); setForm(BLANK); } else setAddErr('Could not add the lead. Check the connection and try again.');
+  };
+
+  const doFind = async () => {
+    if (!find.city.trim() || !find.industry.trim() || finding) return;
+    setFinding(true);
+    setFindErr('');
+    setFound(null);
+    try {
+      const r = await findLeads(find.city.trim(), find.industry.trim(), find.count);
+      setFound(r);
+      if (r.added.length) applyFilters(industry, tag, state, city);
+    } catch (e) {
+      setFindErr(e instanceof Error ? e.message : 'Lead search failed.');
+    } finally {
+      setFinding(false);
+    }
   };
 
   // Reads lead.pooled rather than a local list, so the button tells the
@@ -126,7 +151,10 @@ export default function LeadFlowFinder() {
 
   return (
     <WithRecord panel={panel}>
-      <HeaderAction><button className="lf-btn lf-btn--primary" onClick={() => { setOpenId(null); setShowAdd(true); }}>Add lead</button></HeaderAction>
+      <HeaderAction>
+        <button className="lf-btn lf-btn--secondary" onClick={() => { setOpenId(null); setShowAdd(true); }}>Add lead</button>
+        <button className="lf-btn lf-btn--primary" onClick={() => { setOpenId(null); setFound(null); setFindErr(''); setShowFind(true); }}>Find leads</button>
+      </HeaderAction>
       {notConnected && <NotConnected />}
       {error && <Banner s="stop">{error}</Banner>}
       <Lede>Open a lead, track down the owner, then send it to the pool.{pooledCount > 0 && <> <span className="lf-mono">{pooledCount}</span> of these {leads.length} are already pooled.</>}</Lede>
@@ -162,6 +190,36 @@ export default function LeadFlowFinder() {
           </div>
         )}
       </div>
+
+      {showFind && (
+        <SidePanel title="Find leads" onClose={() => setShowFind(false)} footer={<>
+          <button className="lf-btn lf-btn--secondary" onClick={() => setShowFind(false)}>{found ? 'Done' : 'Cancel'}</button>
+          <button className="lf-btn lf-btn--primary" onClick={doFind} disabled={!find.city.trim() || !find.industry.trim() || finding}>{finding ? 'Searching…' : found ? 'Search again' : 'Find leads'}</button>
+        </>}>
+          <Field label="City"><input className="lf-input" value={find.city} onChange={(e) => setFind({ ...find, city: e.target.value })} placeholder="Sandy, UT" /></Field>
+          <Field label="Industry"><input className="lf-input" list="lf-find-industries" value={find.industry} onChange={(e) => setFind({ ...find, industry: e.target.value })} placeholder="HVAC" /></Field>
+          <datalist id="lf-find-industries">{FIND_INDUSTRIES.map((i) => <option key={i} value={i} />)}</datalist>
+          <Field label="How many to look up"><select className="lf-input" value={find.count} onChange={(e) => setFind({ ...find, count: Number(e.target.value) })}>{FIND_COUNTS.map((n) => <option key={n} value={n}>{n}</option>)}</select></Field>
+          <span className="lf-label">Chains, closed businesses, weak ratings and leads you already have are skipped before anything is paid for. About ${(0.1 + find.count * 0.025).toFixed(2)} in Google fees at most.</span>
+          {finding && <Banner s="info">Searching Google and scoring each business. This takes 10–20 seconds.</Banner>}
+          {findErr && <Banner s="stop">{findErr}</Banner>}
+          {found && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <Banner s={found.added.length ? 'go' : 'wait'} title={found.added.length ? `${found.added.length} new lead${found.added.length === 1 ? '' : 's'} added` : 'No new leads this time'}>
+                {found.found} found for “{found.query}”. Skipped: {found.skipped.chain} chains, {found.skipped.weak} weak fits, {found.skipped.existing} already in LeadFlow
+                {found.skipped.noPhone ? `, ${found.skipped.noPhone} with no phone` : ''}{found.skipped.doNotContact ? `, ${found.skipped.doNotContact} do-not-contact` : ''}{found.skipped.lookupFailed ? `, ${found.skipped.lookupFailed} lookups failed` : ''}. About ${found.estCostUsd.toFixed(2)}.
+              </Banner>
+              {found.warning && <Banner s="wait">{found.warning}</Banner>}
+              {found.added.map((l) => (
+                <button key={l.id} className="lf-row" style={{ display: 'flex', gap: 8, alignItems: 'center', textAlign: 'left', minHeight: 40 }} onClick={() => { setShowFind(false); setOpenId(l.id); }}>
+                  <TierMark tier={l.tier} /><span className="lf-trunc" style={{ flex: 1, fontWeight: 500 }}>{l.business_name}</span>
+                  <span className="lf-label">{l.city}</span><span className="lf-mono" style={{ fontSize: 13 }}>{l.fizzle_score}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </SidePanel>
+      )}
 
       {showAdd && (
         <SidePanel title="Add lead" onClose={() => setShowAdd(false)} footer={<>

@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { requireUser, isOwnerUser } from '../lib/auth';
+import { preDisqualify, scoreLead, knownChain, localChains, normName, cityState } from '../lib/leadScore';
 
 // LeadFlow used to live in its own separate Supabase project
 // (buuntdpgiwvarvtyncfx, github.com/moneymarquez/leadflow), reached with a
@@ -23,6 +24,7 @@ export interface LeadflowEnv {
   VITE_SUPABASE_ANON_KEY: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   ANTHROPIC_API_KEY?: string;
+  GOOGLE_PLACES_API_KEY?: string;
 }
 
 function leadflowHeaders(env: LeadflowEnv): Record<string, string> {
@@ -301,4 +303,165 @@ export async function leadflowAiReport(request: Request, env: LeadflowEnv): Prom
   });
   const text = msg.content.filter((b): b is Anthropic.TextBlock => b.type === 'text').map((b) => b.text).join('\n').trim();
   return new Response(JSON.stringify({ text }), { status: 200, headers: { 'content-type': 'application/json' } });
+}
+
+// ---------------------------------------------------------------- find leads
+//
+// The "Find leads" button. One click = one Google Places search for
+// "<industry> in <city>", the same filters and fizzle score the marqleads
+// scraper uses (worker/lib/leadScore.ts), and new rows inserted straight
+// into `leads`. Existing leads are never touched: a re-run can't reset a
+// called lead back to "new" or wipe its notes, it just skips it.
+//
+// Capped at FIND_MAX per click so one request stays well under the Workers
+// outside-request limit (50 on the free plan): auth ≤2 + search ≤3 +
+// dedupe 1 + details ≤20 + do-not-contact 1 + insert 1. It also caps spend:
+// roughly $0.03 per search page and $0.025 per business looked up.
+
+
+const PLACES_SEARCH = 'https://places.googleapis.com/v1/places:searchText';
+const PLACES_DETAILS = 'https://places.googleapis.com/v1/places/';
+const SEARCH_MASK = 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.businessStatus,places.primaryType,places.location,nextPageToken';
+const DETAIL_MASK = 'id,nationalPhoneNumber,websiteUri,rating,userRatingCount,businessStatus,reviews.publishTime,editorialSummary';
+const FIND_MAX = 20;
+
+interface FoundPlace {
+  id: string; name: string; address: string; primaryType: string;
+  rating: number | null; reviewCount: number; status: string; lat: number | null; lng: number | null;
+}
+
+type PlacesEnv = LeadflowEnv;
+
+async function placesSearch(key: string, query: string): Promise<{ places: FoundPlace[]; pages: number; error?: string }> {
+  const out: FoundPlace[] = [];
+  let pageToken: string | undefined;
+  let pages = 0;
+  do {
+    const res = await fetch(PLACES_SEARCH, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': SEARCH_MASK },
+      body: JSON.stringify({ textQuery: query, pageSize: 20, ...(pageToken ? { pageToken } : {}) }),
+    });
+    pages++;
+    if (!res.ok) return { places: out, pages, error: `Google search failed (${res.status}): ${(await res.text()).slice(0, 200)}` };
+    const data = (await res.json()) as { places?: Record<string, any>[]; nextPageToken?: string };
+    for (const p of data.places ?? []) {
+      out.push({
+        id: String(p.id), name: p.displayName?.text ?? '', address: p.formattedAddress ?? '',
+        primaryType: p.primaryType ?? '', rating: typeof p.rating === 'number' ? p.rating : null,
+        reviewCount: Number(p.userRatingCount) || 0, status: p.businessStatus ?? '',
+        lat: p.location?.latitude ?? null, lng: p.location?.longitude ?? null,
+      });
+    }
+    pageToken = data.nextPageToken;
+  } while (pageToken && pages < 3);
+  return { places: out, pages };
+}
+
+async function placeDetails(key: string, id: string): Promise<Record<string, any> | null> {
+  const res = await fetch(PLACES_DETAILS + encodeURIComponent(id), {
+    headers: { 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': DETAIL_MASK },
+  }).catch(() => null);
+  if (!res || !res.ok) return null;
+  return (await res.json()) as Record<string, any>;
+}
+
+export async function leadflowFind(request: Request, env: PlacesEnv): Promise<Response> {
+  const denied = await requireLeadflowAuth(request, env);
+  if (denied) return denied;
+  if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+  const key = env.GOOGLE_PLACES_API_KEY;
+  if (!key) return jsonError('Lead search is not connected yet — set GOOGLE_PLACES_API_KEY on the Worker.', 503);
+
+  const body = (await request.json().catch(() => ({}))) as { city?: unknown; industry?: unknown; limit?: unknown };
+  const city = typeof body.city === 'string' ? body.city.trim().slice(0, 80) : '';
+  const industry = typeof body.industry === 'string' ? body.industry.trim().slice(0, 60) : '';
+  const limit = Math.max(1, Math.min(FIND_MAX, Math.floor(Number(body.limit) || 10)));
+  if (!city || !industry) return jsonError('Pick a city and an industry.', 400);
+
+  // 1. Search.
+  const search = await placesSearch(key, `${industry} in ${city}`);
+  if (search.error && search.places.length === 0) return jsonError(search.error, 502);
+
+  // 2. Free filters: chains, closed, too few reviews, low rating.
+  const skipped = { chain: 0, weak: 0, existing: 0, noPhone: 0, doNotContact: 0, lookupFailed: 0 };
+  const multi = localChains(search.places.map((p) => p.name));
+  const candidates = search.places.filter((p) => {
+    if (knownChain(p.name) || multi.has(normName(p.name))) { skipped.chain++; return false; }
+    if (preDisqualify({ status: p.status, reviewCount: p.reviewCount, rating: p.rating, searchCategory: industry, primaryType: p.primaryType })) { skipped.weak++; return false; }
+    return true;
+  });
+
+  // 3. Skip anything already in LeadFlow before paying to look it up.
+  let fresh = candidates;
+  if (candidates.length) {
+    const ids = candidates.map((p) => `"${p.id.replace(/"/g, '')}"`).join(',');
+    const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?select=place_id&place_id=in.(${encodeURIComponent(ids)})`, { headers: leadflowHeaders(env) });
+    if (!res.ok) return jsonError(`Could not check existing leads (${res.status}).`, 502);
+    const have = new Set(((await res.json()) as { place_id: string }[]).map((r) => r.place_id));
+    fresh = candidates.filter((p) => { if (have.has(p.id)) { skipped.existing++; return false; } return true; });
+  }
+  // Most reviews first: the strong-period half of the score, known before paying.
+  const toLookUp = [...fresh].sort((a, z) => z.reviewCount - a.reviewCount).slice(0, limit);
+
+  // 4. Details (phone, website, newest review dates), 5 at a time.
+  const details: (Record<string, any> | null)[] = [];
+  for (let i = 0; i < toLookUp.length; i += 5) {
+    details.push(...await Promise.all(toLookUp.slice(i, i + 5).map((p) => placeDetails(key, p.id))));
+  }
+
+  const now = new Date();
+  const rows: Record<string, unknown>[] = [];
+  toLookUp.forEach((p, i) => {
+    const d = details[i];
+    if (!d) { skipped.lookupFailed++; return; }
+    const phone = d.nationalPhoneNumber ?? '';
+    const res = scoreLead({
+      name: p.name, searchCategory: industry, primaryType: p.primaryType,
+      status: d.businessStatus ?? p.status, rating: d.rating ?? p.rating, reviewCount: Number(d.userRatingCount) || p.reviewCount,
+      phone, website: d.websiteUri ?? '', reviewDates: (d.reviews ?? []).map((r: { publishTime?: string }) => r.publishTime).filter(Boolean),
+    }, now);
+    if (res.tier === 'X') { if (!phone) skipped.noPhone++; else skipped.weak++; return; }
+    const { city: c, state } = cityState(p.address);
+    rows.push({
+      place_id: p.id, business_name: p.name, phone, address: p.address, city: c || null, state: state || null,
+      lat: p.lat, lng: p.lng, category: p.primaryType || null, industry: p.primaryType || industry.toLowerCase(),
+      search_category: industry.toLowerCase(), website: d.websiteUri ?? null, summary: d.editorialSummary?.text ?? null,
+      rating: d.rating ?? p.rating, review_count: Number(d.userRatingCount) || p.reviewCount,
+      days_since_last_review: res.daysSinceLastReview, fizzle_score: res.score, tier: res.tier, fizzle_reasons: res.reasons,
+      maps_url: `https://www.google.com/maps/place/?q=place_id:${p.id}`, status: 'new', pooled: false,
+    });
+  });
+
+  // 5. Never re-add a number someone asked not to be called on.
+  let toInsert = rows;
+  const phones = [...new Set(rows.map((r) => r.phone as string).filter(Boolean))];
+  if (phones.length) {
+    const list = phones.map((ph) => `"${ph.replace(/"/g, '')}"`).join(',');
+    const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?select=phone&status=eq.do_not_contact&phone=in.(${encodeURIComponent(list)})`, { headers: leadflowHeaders(env) });
+    if (res.ok) {
+      const dnc = new Set(((await res.json()) as { phone: string }[]).map((r) => r.phone));
+      toInsert = rows.filter((r) => { if (dnc.has(r.phone as string)) { skipped.doNotContact++; return false; } return true; });
+    }
+  }
+
+  // 6. Insert new rows only. ignore-duplicates means a race with another
+  // click (or the scraper) can't overwrite a lead that just landed.
+  let added: { id: string; business_name: string; tier: string; fizzle_score: number; city: string | null }[] = [];
+  if (toInsert.length) {
+    const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?on_conflict=place_id&select=id,business_name,tier,fizzle_score,city`, {
+      method: 'POST',
+      headers: { ...leadflowHeaders(env), Prefer: 'resolution=ignore-duplicates,return=representation' },
+      body: JSON.stringify(toInsert),
+    });
+    if (!res.ok) return jsonError(`Saving leads failed (${res.status}): ${(await res.text()).slice(0, 200)}`, 502);
+    added = await res.json();
+  }
+
+  const estCost = Math.round((search.pages * 0.035 + toLookUp.length * 0.025) * 100) / 100;
+  return new Response(JSON.stringify({
+    query: `${industry} in ${city}`, found: search.places.length, lookedUp: toLookUp.length,
+    added: added.sort((a, z) => z.fizzle_score - a.fizzle_score), skipped, estCostUsd: estCost,
+    warning: search.error ?? null,
+  }), { status: 200, headers: { 'content-type': 'application/json' } });
 }

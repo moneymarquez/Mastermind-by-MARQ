@@ -25,7 +25,7 @@ import type { ReminderEnv } from './handlers/reminders';
 import type { ShiftReminderEnv } from './handlers/shift-reminders';
 import { runDailyPlan, dailyPlanToday } from './handlers/daily-plan';
 import type { DailyPlanEnv } from './handlers/daily-plan';
-import { leadflowLeads, leadflowLeadUpdate, leadflowLeadsBulk, leadflowHistory, leadflowMessages, leadflowAiReport } from './handlers/leadflow';
+import { leadflowLeads, leadflowLeadUpdate, leadflowLeadsBulk, leadflowHistory, leadflowMessages, leadflowAiReport, leadflowFind } from './handlers/leadflow';
 import type { LeadflowEnv } from './handlers/leadflow';
 import { createSubscriptionIntent, stripeWebhook, createPortalSession } from './handlers/billing';
 import type { BillingEnv } from './handlers/billing';
@@ -77,6 +77,7 @@ export default {
     if (url.pathname === '/api/leadflow/leads') return leadflowLeads(request, env);
     // Before the /leads/:id match below, which would otherwise take "bulk"
     // for a lead id and PATCH a row that doesn't exist.
+    if (url.pathname === '/api/leadflow/find') return leadflowFind(request, env);
     if (url.pathname === '/api/leadflow/leads/bulk') return leadflowLeadsBulk(request, env);
     const leadMatch = url.pathname.match(/^\/api\/leadflow\/leads\/([^/]+)$/);
     if (leadMatch) return leadflowLeadUpdate(request, env, leadMatch[1]);

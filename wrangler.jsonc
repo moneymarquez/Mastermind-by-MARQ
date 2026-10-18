@@ -89,6 +89,8 @@
   //   VITE_SUPABASE_ANON_KEY     (plain variable — already public in the built frontend)
   //   SUPABASE_SERVICE_ROLE_KEY  (secret)
   //   ANTHROPIC_API_KEY          (secret — optional; Nova commentary is skipped without it)
+  //   GOOGLE_PLACES_API_KEY      (secret — LeadFlow's "Find leads" button; restrict the key to Places API (New).
+  //                               MUST also be on the Deploy command's `wrangler secret bulk` list, or the next deploy wipes it)
   //   STRIPE_SECRET_KEY          (secret — optional; billing gate shows "not configured" without it)
   //   STRIPE_PRICE_ID            (secret — the $19.99/mo recurring Price you create in your own Stripe dashboard)
   //   STRIPE_WEBHOOK_SECRET      (secret — from a webhook endpoint pointed at /api/billing/webhook)
