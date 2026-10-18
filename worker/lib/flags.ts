@@ -6,6 +6,7 @@
 // The rules are pure (evaluateFlags/diffFlags) and tested in
 // tests/flags.test.ts; runFlagsTick gathers the facts with the service role
 // on the five-minute cron.
+import { notifyStored } from './notify';
 import { Sb } from './sb';
 import { DEFAULT_CAPS, AI_MONTHLY_ALERT_USD, spentInGroup } from './controls';
 import type { SpendBucket } from './controls';
@@ -55,7 +56,13 @@ export interface FlagFacts {
   flops: { id: string; account: string; hook: string | null }[];
   /** Last 7 days of Shopify orders: how many, and how many no site could claim. */
   attribution?: { orders: number; unattributed: number };
+  /** Newest run that failed because the Anthropic balance ran out, and the newest run that finished after any failure. */
+  credits?: { lastOutAt: string | null; lastSuccessAt: string | null };
 }
+
+/** Rules worth a push the moment they open: everything stops until Marq acts. */
+export const PUSH_RULES = new Set(['ai_credits_out', 'connection_broken']);
+export const CREDIT_ERROR = /credit balance is too low/i;
 
 const hoursSince = (iso: string | null, now: number) => (iso ? (now - new Date(iso).getTime()) / 3600000 : Infinity);
 const money = (n: number) => `$${n.toFixed(2)}`;
@@ -80,6 +87,11 @@ export function evaluateFlags(f: FlagFacts, t: Thresholds = DEFAULT_THRESHOLDS):
     if (b.flag === 'kill' || b.flag === 'fix') out.push({ domain: 'ecommerce', entity_type: 'brand', entity_id: b.brand_id, severity: b.flag === 'kill' ? 'red' : 'amber', rule: 'funnel', message: `${b.name}: funnel says ${b.flag}`, link: 'stores' });
   }
   for (const p of f.publishFailed) out.push({ domain: 'content', entity_type: 'content_item', entity_id: p.id, severity: 'red', rule: 'publish_failed', message: `Not posted: ${p.concept.slice(0, 80)}${p.error ? ` — ${p.error.slice(0, 120)}` : ''}`, link: 'content' });
+  // Out of Anthropic credits: every AI worker fails until it's topped up. Clears itself once a run succeeds again.
+  const cr = f.credits;
+  if (cr?.lastOutAt && hoursSince(cr.lastOutAt, f.now) < 48 && (!cr.lastSuccessAt || cr.lastSuccessAt < cr.lastOutAt)) {
+    out.push({ domain: 'master', entity_type: 'connection', entity_id: 'anthropic_credits', severity: 'red', rule: 'ai_credits_out', message: 'Anthropic credits ran out: every AI worker is failing. Add credits (and turn on auto-reload) in the Anthropic console under Billing.', link: 'setup' });
+  }
   for (const c of f.connections) {
     if (c.status !== 'failed') continue;
     if (/disconnected/i.test(c.note ?? '')) continue;
@@ -152,6 +164,10 @@ export async function gatherFacts(sb: Sb, u: string, now = Date.now()): Promise<
     sb.get<{ id: string; account_id: string; hook: string | null }>(`social_posts?user_id=eq.${u}&grade=eq.1&posted_at=gte.${since7}&select=id,account_id,hook&limit=20`),
     sb.get<{ cost_usd: number }>(`ai_cost_ledger?user_id=eq.${u}&date=gte.${month}-01&select=cost_usd&limit=5000`),
   ]);
+  const [creditOut, lastDone] = await Promise.all([
+    sb.get<{ created_at: string }>(`ai_worker_runs?user_id=eq.${u}&status=eq.failed&error=ilike.*credit%20balance*&order=created_at.desc&limit=1&select=created_at`).catch(() => []),
+    sb.get<{ created_at: string }>(`ai_worker_runs?user_id=eq.${u}&status=eq.done&order=created_at.desc&limit=1&select=created_at`).catch(() => []),
+  ]);
   const brandIds = [...new Set([...builds.map((b) => b.brand_id), ...reads.map((r) => r.entity_id)])];
   const week = await sb.get<{ site_id: string | null }>(`ecom_orders?user_id=eq.${u}&placed_at=gte.${new Date(now - 7 * 86400000).toISOString()}&select=site_id&limit=2000`).catch(() => []);
   const [brands, orders, accts] = await Promise.all([
@@ -188,6 +204,7 @@ export async function gatherFacts(sb: Sb, u: string, now = Date.now()): Promise<
     spend,
     flops: flops.map((p) => ({ id: p.id, account: accts.find((a) => a.id === p.account_id)?.handle ?? 'account', hook: p.hook })),
     attribution: { orders: week.length, unattributed: week.filter((o) => !o.site_id).length },
+    credits: { lastOutAt: creditOut[0]?.created_at ?? null, lastSuccessAt: lastDone[0]?.created_at ?? null },
   };
   return { facts, thresholds: thresholdsFrom(controls[0]?.flag_thresholds) };
 }
@@ -211,6 +228,10 @@ export async function runFlagsTick(env: SbEnv): Promise<void> {
   const sb = new Sb(env);
   const owners = await sb.get<{ user_id: string }>('ai_workers?key=eq.orchestrator&select=user_id');
   for (const o of owners) {
-    try { await syncFlags(sb, o.user_id); } catch (e) { console.error('flags tick', o.user_id, e); }
+    try {
+      const { opened } = await syncFlags(sb, o.user_id);
+      // A push only when a stop-everything problem first appears, not every tick it stays open.
+      for (const f of opened.filter((x) => PUSH_RULES.has(x.rule))) await notifyStored(sb, o.user_id, 'worker_problem', { title: f.rule === 'ai_credits_out' ? 'AI workers stopped: out of credits' : 'A connection is failing', body: f.message.slice(0, 160), deepLink: 'today', priority: 'high' });
+    } catch (e) { console.error('flags tick', o.user_id, e); }
   }
 }

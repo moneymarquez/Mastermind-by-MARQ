@@ -104,10 +104,12 @@ export async function notifyStored(sb: Sb, u: string, event: NotifyEvent, msg: N
 
 /** Which approvals ping Marq the moment a worker files them, and where the link goes. */
 export const APPROVAL_EVENTS: Record<string, { event: NotifyEvent; link: string; verb: string }> = {
-  product_pitch: { event: 'product_pitch', link: 'ecom-approvals', verb: 'Product pitch ready' },
-  brand_options: { event: 'brand_directions', link: 'ecom-approvals', verb: 'Brand directions ready to pick' },
-  store_draft: { event: 'store_preview', link: 'ecom-approvals', verb: 'Store preview ready to approve' },
-  post_plan: { event: 'post_batch', link: 'content', verb: 'Posts ready to approve' },
-  content_plan: { event: 'post_batch', link: 'content', verb: 'Post batch ready to approve' },
-  content_kit: { event: 'post_batch', link: 'content', verb: 'Content kit ready for a new brand' },
+  // Every approval link opens Today, where it can be approved in one tap
+  // (Approvals and Growth plans are no longer sidebar tabs).
+  product_pitch: { event: 'product_pitch', link: 'today', verb: 'Product pitch ready' },
+  brand_options: { event: 'brand_directions', link: 'today', verb: 'Brand directions ready to pick' },
+  store_draft: { event: 'store_preview', link: 'today', verb: 'Store preview ready to approve' },
+  post_plan: { event: 'post_batch', link: 'today', verb: 'Posts ready to approve' },
+  content_plan: { event: 'post_batch', link: 'today', verb: 'Post batch ready to approve' },
+  content_kit: { event: 'post_batch', link: 'today', verb: 'Content kit ready for a new brand' },
 };

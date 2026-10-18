@@ -211,6 +211,8 @@ export function runScout(apiKey: string | undefined, sb: Sb, userId: string, inp
         await sb.insert('ai_approvals', { user_id: userId, domain: ctx.domain, type: 'product_card', entity_type: 'product', entity_id: ctx.runId, worker_id: ctx.w.id, run_id: ctx.runId, title: `${title} — ${v.verdict}`.slice(0, 300), payload: { channel, row, verdict: v.verdict, summary: v.verdictWhy, instructions: input.instructions ?? null, pending_enrich: !v.blocked }, principle: row.detail.principle ?? null, source_url: row.source_url ?? null, confidence: row.confidence ?? 'estimate', is_money: false });
         made++;
       }
+      // One push per Scout batch, not one per product.
+      if (made > blocked) await notifyStored(sb, userId, 'product_pitch', { title: `${made - blocked} new product${made - blocked === 1 ? '' : 's'} to review`, body: parsed.summary?.slice(0, 160) || undefined, deepLink: 'today' });
       return { summary: `${parsed.summary || `${rows.length} products`} ${made} in Approvals${blocked ? ` (${blocked} blocked)` : ''}${skipped ? `, ${skipped} already known` : ''}.`.trim(), count: made, dropped: parsed.dropped, output: { channel, made, blocked, skipped } };
     },
   });
