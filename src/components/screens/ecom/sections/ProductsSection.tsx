@@ -7,20 +7,27 @@ import { usePitches, useBuilds, productStatus } from '../../../../data/useEcomOc
 import { E, Badge, btn, label } from '../ecomShared';
 import ApprovalsTab, { ApprovalCard } from '../ApprovalsTab';
 import ProductSheetsTab from '../ProductSheetsTab';
+import BrandsTab from '../BrandsTab';
+import type { useEcomBrands } from '../../../../data/useEcom';
+import type { ClientListItem } from '../../../../data/useClients';
 import { confidenceColor } from '../PitchCard';
 import Card from '../../../mm/Card';
 
 const STATUS_COLOR: Record<string, string> = { researching: E.faint, pitched: E.blue, approved: E.green, rejected: E.red, building: E.amber, live: E.green };
 
-/** Product sheets (brief §2.1/2.2): everything waiting on you first (Approvals
- *  lives here now, not in its own tab), then tonight's pitch, the research queue,
- *  how past picks did against their confidence, then every product. */
-export default function ProductsSection({ approvals, search, onBuildBrand, onDecided, onOpenApprovals }: { approvals: ReturnType<typeof useApprovals>; onOpenApprovals: () => void; search: string; onBuildBrand: (input: { name: string; owner_type: 'mine' | 'client'; client_id: string | null; positioning: string | null; steps: Record<string, unknown>; current_step: number }, productId: string) => Promise<string | null>; onDecided: () => void }) {
+/** Product sheets: your live products (the brand boxes) on top, then
+ *  Product Scout, with Approvals behind a button that opens right under it.
+ *  Tonight's pitch, the research queue and past picks sit at the bottom. */
+export default function ProductsSection({ approvals, brands, clients, search, onBuildBrand, onDecided }: { approvals: ReturnType<typeof useApprovals>; brands: ReturnType<typeof useEcomBrands>; clients: ClientListItem[]; search: string; onBuildBrand: (input: { name: string; owner_type: 'mine' | 'client'; client_id: string | null; positioning: string | null; steps: Record<string, unknown>; current_step: number }, productId: string) => Promise<string | null>; onDecided: () => void }) {
   const pitches = usePitches();
   const builds = useBuilds();
   const [links, setLinks] = useState<{ brand_id: string; product_id: string }[]>([]);
   const [queue, setQueue] = useState<{ id: string; name: string; score: number | null; detail: Record<string, unknown>; created_at: string }[]>([]);
   const [busy, setBusy] = useState(false);
+  const [openBrandId, setOpenBrandId] = useState<string | null>(null);
+  // Closed by default; "Review all" elsewhere opens it on arrival.
+  const [showApprovals, setShowApprovals] = useState(() => { try { const v = sessionStorage.getItem('ecom-open-approvals') === '1'; sessionStorage.removeItem('ecom-open-approvals'); return v; } catch { return false; } });
+  const openApprovals = () => { setShowApprovals(true); setTimeout(() => document.getElementById('ecom-approvals')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); };
   const [msg, setMsg] = useState('');
   useEffect(() => {
     supabase.from('ecom_brand_products').select('brand_id,product_id').then(({ data }) => setLinks((data ?? []) as typeof links));
@@ -40,12 +47,34 @@ export default function ProductsSection({ approvals, search, onBuildBrand, onDec
   const waiting = ecomApprovals.approvals.filter((a) => a.status === 'pending' && a.type !== 'product_pitch').length;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div id="ecom-approvals">
-        <div style={{ ...label, marginBottom: 8 }}>Approvals{waiting ? ` · ${waiting} waiting on you` : ''}</div>
+      <div>
+        <div style={{ ...label, marginBottom: 8 }}>Your products</div>
         <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: 14, minWidth: 0 }}>
-          <ApprovalsTab api={ecomApprovals} onDecided={onDecided} />
+          <BrandsTab api={brands} clients={clients} search={search} openBrandId={openBrandId} onOpenBrand={setOpenBrandId} newBrandOpen={false} onCloseNewBrand={() => {}} />
         </div>
       </div>
+
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+          <div style={{ ...label, flex: 1 }}>Product Scout · every product the bots found</div>
+          <button style={btn(showApprovals ? 'ghost' : 'primary')} onClick={() => (showApprovals ? setShowApprovals(false) : openApprovals())}>
+            {showApprovals ? 'Hide approvals' : `Approvals${waiting ? ` · ${waiting} waiting` : ''}`}
+          </button>
+        </div>
+        <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: 14, minWidth: 0 }}>
+          <ProductSheetsTab search={search} onBuildBrand={onBuildBrand} statusOf={statusOf} onOpenApprovals={openApprovals} />
+        </div>
+      </div>
+
+      {showApprovals && (
+        <div id="ecom-approvals" style={{ scrollMarginTop: 80 }}>
+          <div style={{ ...label, marginBottom: 8 }}>Approvals{waiting ? ` · ${waiting} waiting on you` : ''}</div>
+          <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: 14, minWidth: 0 }}>
+            <ApprovalsTab api={ecomApprovals} onDecided={onDecided} />
+          </div>
+        </div>
+      )}
+
       <Card title="Tonight's pitch" meta="the E-commerce orchestrator's #1 product" action={<button style={btn('ghost')} disabled={busy} onClick={() => void pitchNow()}>{busy ? 'Researching… (1–2 min)' : pending.length ? 'Pitch another now' : 'Pitch one now'}</button>}>
         {msg && <div style={{ fontSize: 13, color: E.muted, marginBottom: 8 }}>{msg}</div>}
         {pending.length === 0 ? (
@@ -71,12 +100,6 @@ export default function ProductsSection({ approvals, search, onBuildBrand, onDec
         </Card>
       </div>
 
-      <div>
-        <div style={{ ...label, marginBottom: 8 }}>Every product the bots found</div>
-        <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: 14, minWidth: 0 }}>
-          <ProductSheetsTab search={search} onBuildBrand={onBuildBrand} statusOf={statusOf} onOpenApprovals={onOpenApprovals} />
-        </div>
-      </div>
     </div>
   );
 }

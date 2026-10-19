@@ -76,8 +76,10 @@ export default function ProductSheetsTab({ search, onBuildBrand, statusOf, onOpe
         {CHANNELS.map((c) => <Pill key={c.id} active={channel === c.id} onClick={() => { setChannel(c.id); setLimit(20); }}>{c.label}{counts[c.id] ? <span style={{ opacity: 0.7, fontFamily: 'var(--font-mono)', fontSize: 11 }}>{counts[c.id]}</span> : null}</Pill>)}
         <div style={{ flex: 1 }} />
         <button style={btn('ghost')} onClick={() => setView(view === 'cards' ? 'table' : 'cards')}>{view === 'cards' ? '☰ Table' : '▦ Cards'}</button>
-        <button style={btn('primary')} onClick={() => setImportOpen(true)}>📥 Import CSV</button>
+        <button style={btn('primary')} disabled={scout.searching} onClick={() => { void scout.start(channel, 10); }}>{scout.searching ? 'Scout is searching…' : 'Run Product Scout'}</button>
+        <button style={btn('ghost')} onClick={() => setImportOpen(true)}>📥 Import CSV</button>
       </div>
+      {inChannel.length > 0 && (scout.searching || scoutMsg) && <div style={{ marginTop: 8, fontSize: 'var(--text-caption)', color: scout.searching ? E.faint : scout.error ? E.red : E.green }}>{scout.searching ? 'Scout is searching (1–3 min). It keeps going if you leave; new finds land in Approvals.' : scoutMsg}{!scout.searching && !scout.error && onOpenApprovals && <> <button type="button" onClick={onOpenApprovals} style={{ background: 'none', border: 0, padding: 0, color: E.blue, textDecoration: 'underline', cursor: 'pointer', font: 'inherit' }}>Open Approvals →</button></>}</div>}
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 12, fontSize: 'var(--text-body)' }}>
         <select style={{ ...field, width: 'auto' }} value={filters.category} onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value }))}><option value="all">All categories</option>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select>

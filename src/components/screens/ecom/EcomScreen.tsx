@@ -182,11 +182,11 @@ export default function EcomScreen({ section = 'overview' }: Props) {
               );
             })}
           </div>
-          <EcomOverview brands={brands.brands} orders30d={brands.orders30d} approvals={approvals.approvals} onOpenBrand={(id) => openInStores(id)} onOpenApprovals={() => nav('ecom-products')} />
+          <EcomOverview brands={brands.brands} orders30d={brands.orders30d} approvals={approvals.approvals} onOpenBrand={(id) => openInStores(id)} onOpenApprovals={() => { try { sessionStorage.setItem('ecom-open-approvals', '1'); } catch { /* fine */ } nav('ecom-products'); }} />
         </>
       )}
       {section === 'approvals' && <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: phone ? 14 : 16 }}><ApprovalsTab api={approvals} onDecided={refreshAll} /></div>}
-      {section === 'products' && <ProductsSection approvals={approvals} onOpenApprovals={() => document.getElementById('ecom-approvals')?.scrollIntoView({ behavior: 'smooth' })} search={search} onBuildBrand={buildBrand} onDecided={refreshAll} />}
+      {section === 'products' && <ProductsSection approvals={approvals} brands={brands} clients={clients.clients} search={search} onBuildBrand={buildBrand} onDecided={refreshAll} />}
       {section === 'stores' && (
         <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: phone ? 14 : 20, minWidth: 0 }}>
           <StoresSection api={brands} clients={clients.clients} search={search} openBrandId={openBrandId} onOpenBrand={setOpenBrandId} newBrandOpen={newBrandOpen} onCloseNewBrand={() => setNewBrandOpen(false)} />
