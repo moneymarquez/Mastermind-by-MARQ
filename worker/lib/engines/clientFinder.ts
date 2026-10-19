@@ -69,7 +69,7 @@ export async function runClientFinder(d: FinderDeps, opts: { manual?: boolean } 
   if (!leads.length) {
     const ok = await mayCharge(sb, userId, state, PLACES_RESERVE);
     if (!ok.ok) { const s = `Pool used up; ${ok.reason}`; await saveEngine(sb, userId, 'client_finder', { last_run_at: new Date().toISOString(), last_summary: s, config: { ...cfg, day } }); return fail(s, ok.reason.startsWith('Paused') ? ok.reason : null); }
-    const areas = ((cfg.areas as string[] | undefined)?.length ? (cfg.areas as string[]) : ['Denver, CO']);
+    const areas = ((cfg.areas as string[] | undefined)?.length ? (cfg.areas as string[]) : ['Sandy, UT', 'Draper, UT', 'South Jordan, UT', 'West Jordan, UT', 'Riverton, UT', 'Murray, UT', 'Midvale, UT', 'Cottonwood Heights, UT']);
     const s = nextSearch(Number(cfg.search_idx ?? 0), areas);
     cfg.search_idx = s.next;
     const res = await harvest({ purpose: 'client_finder', source: 'googlePlaces', query: s.query, area: s.area, limit: 40, budget_usd: room, engine: 'client_finder' }, ctx);
