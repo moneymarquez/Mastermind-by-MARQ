@@ -109,15 +109,14 @@ export async function runEnginesTick(env: EnginesEnv, sb: Sb, now = new Date()):
   if (z.minutes >= DAILY_END_MIN && z.minutes < DAILY_END_MIN + 20) await morningReport(sb, z.date).catch((e) => console.error('engines morning', e));
   if (z.minutes < DAILY_START_MIN || z.minutes >= DAILY_END_MIN) return 0;
   const rows = await sb.get<{ user_id: string; engine: EngineId }>('lead_engines?enabled=eq.true&select=user_id,engine&limit=50').catch(() => []);
-  let n = 0;
-  for (const r of rows) {
-    try {
-      const deps = { sb, userId: r.user_id, env };
-      if (r.engine === 'client_finder') await runClientFinder(deps); else await runComplaintScanner(deps);
-      n++;
-    } catch (e) { console.error('engines tick', r.engine, e); }
-  }
-  return n;
+  // Side by side, not one after the other: a slow Complaint Scanner run used
+  // to hold the line every tick, so Client Finder never got a turn.
+  const done = await Promise.allSettled(rows.map(async (r) => {
+    const deps = { sb, userId: r.user_id, env };
+    if (r.engine === 'client_finder') await runClientFinder(deps); else await runComplaintScanner(deps);
+  }));
+  done.forEach((d, i) => { if (d.status === 'rejected') console.error('engines tick', rows[i].engine, d.reason); });
+  return done.filter((d) => d.status === 'fulfilled').length;
 }
 
 /** Once a morning: "Client Finder found N businesses with website problems overnight." */

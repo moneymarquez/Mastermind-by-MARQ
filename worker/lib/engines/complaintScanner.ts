@@ -86,6 +86,9 @@ export async function runComplaintScanner(d: ScannerDeps, opts: { manual?: boole
   const today = denverDate();
   if (!opts.manual && row.last_run_date === today) return { ok: true, summary: 'Already scanned today.', clusters: 0, spent: 0, paused: null };
   if (!d.env.ANTHROPIC_API_KEY) return end('Claude isn\'t connected.');
+  // Claim today's scan before paying for anything: a run that gets cut off
+  // mid-way must not start over (and bill again) on every 5-minute tick.
+  if (!opts.manual) await saveEngine(sb, userId, 'complaint_scanner', { last_run_date: today, last_run_at: new Date().toISOString(), last_summary: 'Scanning…' });
   const need = 0.005 + 0.03;
   const may = await mayCharge(sb, userId, state, need);
   if (!may.ok) return end(may.reason, may.reason.startsWith('Paused') ? may.reason : null);
