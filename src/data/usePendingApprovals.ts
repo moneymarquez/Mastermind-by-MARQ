@@ -7,7 +7,7 @@ export function usePendingApprovals(enabled: boolean): number {
   useEffect(() => {
     if (!enabled) { setN(0); return; }
     let on = true;
-    const load = () => { supabase.from('ai_approvals').select('id', { count: 'exact', head: true }).eq('status', 'pending').then(({ count }) => { if (on) setN(count ?? 0); }, () => {}); };
+    const load = () => { supabase.from('ai_approvals').select('id', { count: 'exact', head: true }).eq('status', 'pending').eq('domain', 'ecom').then(({ count }) => { if (on) setN(count ?? 0); }, () => {}); };
     load();
     const t = setInterval(load, 60000);
     window.addEventListener('focus', load);

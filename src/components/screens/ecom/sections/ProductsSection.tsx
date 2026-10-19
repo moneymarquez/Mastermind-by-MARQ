@@ -35,13 +35,15 @@ export default function ProductsSection({ approvals, search, onBuildBrand, onDec
   const judged = past.filter((p) => p.actual_orders_30d != null);
   const pitchNow = async () => { setBusy(true); setMsg(''); const r = await api<{ ok?: boolean; summary?: string; error?: string; skipped?: boolean }>('/api/engine/pitch', { body: {} }); setBusy(false); setMsg(r.error ?? r.summary ?? ''); approvals.reload(); pitches.reload(); };
 
-  const waiting = approvals.approvals.filter((a) => a.status === 'pending' && a.type !== 'product_pitch').length;
+  // Only E-commerce's own approvals here; Content's trend finds live in Content → Trends.
+  const ecomApprovals = { ...approvals, approvals: approvals.approvals.filter((a) => a.domain === 'ecom') };
+  const waiting = ecomApprovals.approvals.filter((a) => a.status === 'pending' && a.type !== 'product_pitch').length;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div id="ecom-approvals">
         <div style={{ ...label, marginBottom: 8 }}>Approvals{waiting ? ` · ${waiting} waiting on you` : ''}</div>
         <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: 14, minWidth: 0 }}>
-          <ApprovalsTab api={approvals} onDecided={onDecided} />
+          <ApprovalsTab api={ecomApprovals} onDecided={onDecided} />
         </div>
       </div>
       <Card title="Tonight's pitch" meta="the E-commerce orchestrator's #1 product" action={<button style={btn('ghost')} disabled={busy} onClick={() => void pitchNow()}>{busy ? 'Researching… (1–2 min)' : pending.length ? 'Pitch another now' : 'Pitch one now'}</button>}>

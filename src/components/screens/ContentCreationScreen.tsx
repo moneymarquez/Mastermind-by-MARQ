@@ -43,7 +43,7 @@ const ENGINE_TABS: { id: EngineTab; label: string }[] = [
   { id: 'plan', label: 'Plan' },
   { id: 'studio', label: 'Studio' },
   { id: 'history', label: 'History' },
-  { id: 'inspiration', label: 'Inspiration' },
+  { id: 'inspiration', label: 'Trends' },
   { id: 'kits', label: 'Brand kits' },
   { id: 'workers', label: 'Workers' },
   { id: 'growth', label: 'Growth plans' },

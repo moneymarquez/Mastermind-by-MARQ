@@ -184,7 +184,10 @@ export function runScout(apiKey: string | undefined, sb: Sb, userId: string, inp
     async execute(ctx) {
       // Research through Parallel when it's connected; Claude formats what it
       // found into Product Sheet rows. Otherwise Claude searches itself.
-      const r = await researchSearch(sb, userId, `Best-selling and fastest-rising products on ${SCOUT_CHANNELS[channel].label} right now: name, price, sales signals, sellers.`, [`${SCOUT_CHANNELS[channel].label} best sellers this week`, `trending products ${SCOUT_CHANNELS[channel].label} ${new Date().getFullYear()}`], 12);
+      // Momentum, not fame: the playbook skips famous best-sellers, so research
+      // looks for products climbing right now, not the ones already on top.
+      const yr = new Date().getFullYear();
+      const r = await researchSearch(sb, userId, `Specific products gaining traction on ${SCOUT_CHANNELS[channel].label} in the last 2–4 weeks but not yet saturated: climbing movers lists, new viral videos, buyers asking where to get them. Name, price, the sign of momentum, roughly how many sellers.`, [`${SCOUT_CHANNELS[channel].label} movers and shakers this week`, `new viral products ${SCOUT_CHANNELS[channel].label} ${yr}`, `"where do I get this" trending product ${yr}`, `products blowing up on TikTok this week ${yr}`], 15);
       const res = r
         ? await ctx.ask({ maxTokens: 9000, system: scoutSystem({ ...ctx.brief, budgetNote: `${ctx.brief.budgetNote} Research is provided below — do not search.` }), user: `${scoutUser(channel, count, input.instructions)}\n\nRESEARCH (use only these sources; every product's source_url must be one of them):\n${r.brief}` })
         : await ctx.ask({
@@ -194,7 +197,14 @@ export function runScout(apiKey: string | undefined, sb: Sb, userId: string, inp
           tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5, blocked_domains: BLOCKED_DOMAINS }],
         });
       if (r) res.sources.push(...r.sources);
-      const parsed = parseScout(res.text, channel, new Date().toISOString());
+      let parsed = parseScout(res.text, channel, new Date().toISOString());
+      // Thin research (nothing usable in what Parallel returned): search directly once instead of failing.
+      if (r && parsed.rows.length === 0) {
+        const again = await ctx.ask({ maxTokens: 9000, system: scoutSystem({ ...ctx.brief, budgetNote: `${ctx.brief.budgetNote} Use at most 6 searches.` }), user: scoutUser(channel, count, input.instructions), tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 6, blocked_domains: BLOCKED_DOMAINS }] });
+        res.sources.push(...again.sources);
+        parsed = parseScout(again.text, channel, new Date().toISOString());
+        if (parsed.rows.length) res.text = again.text;
+      }
       if (parsed.rows.length === 0) throw new Error(`Scout returned no usable products${parsed.dropped.length ? ` (dropped: ${parsed.dropped.join('; ')})` : ` (it answered: ${res.text.replace(/\s+/g, ' ').slice(0, 200) || 'nothing'})`}.`);
       // Scout answers fast. Supplier Finder + Analyst then run on each find one at a time (/api/engine/enrich-next,
       // driven by the Approvals tab) so no single request runs for minutes and gets cut off on a phone.
