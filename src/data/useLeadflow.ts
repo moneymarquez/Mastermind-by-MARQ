@@ -121,29 +121,53 @@ export interface LeadFilters {
   city?: string;
 }
 
-/** What one press of "Find leads" returns. */
+/** Where a lead search job is: what was found, how far the lookups got, and the leads added so far. */
 export interface FindLeadsResult {
+  jobId: string;
   query: string;
   found: number;
-  lookedUp: number;
+  total: number;
+  processed: number;
+  done: boolean;
   added: { id: string; business_name: string; tier: string; fizzle_score: number; city: string | null }[];
-  skipped: { chain: number; weak: number; existing: number; noPhone: number; doNotContact: number; lookupFailed: number };
+  skipped: { chain: number; weak: number; existing: number; outside: number; noPhone: number; doNotContact: number; lookupFailed: number };
   estCostUsd: number;
   warning: string | null;
 }
 
-/** Search Google for "<industry> in <city>", score the results the same way
- *  the scraper does, and add the new ones to LeadFlow. Throws with the
- *  server's message so the panel can show it as-is. */
-export async function findLeads(city: string, industry: string, limit: number): Promise<FindLeadsResult> {
-  const res = await authedFetch('/api/leadflow/find', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ city, industry, limit }),
-  });
+async function leadJobCall(path: string, init: RequestInit): Promise<FindLeadsResult> {
+  const res = await authedFetch(path, init);
   const body = await res.json().catch(() => null) as (FindLeadsResult & { error?: string }) | null;
   if (!res.ok || !body) throw new Error(body?.error ?? `Lead search failed (${res.status}).`);
   return body;
+}
+
+/** Search Google for "<industry> in <city>, <state>" (up to 100), then look
+ *  the candidates up in batches until done, reporting progress after each.
+ *  Batches keep every request under the Worker's outside-request limit. */
+export async function findLeads(city: string, state: string, industry: string, limit: number, onProgress?: (r: FindLeadsResult) => void, resumeJobId?: string): Promise<FindLeadsResult> {
+  let r = resumeJobId
+    ? await leadJobCall('/api/leadflow/find/next', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jobId: resumeJobId }) })
+    : await leadJobCall('/api/leadflow/find', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ city, state, industry, limit }) });
+  onProgress?.(r);
+  for (let i = 0; i < 20 && !r.done; i++) {
+    r = await leadJobCall('/api/leadflow/find/next', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jobId: r.jobId }) });
+    onProgress?.(r);
+  }
+  return r;
+}
+
+/** The newest unfinished lead search (last 24h), to offer "Continue". */
+export async function latestLeadJob(): Promise<FindLeadsResult | null> {
+  const res = await authedFetch('/api/leadflow/find');
+  return res.ok ? ((await res.json().catch(() => null)) as FindLeadsResult | null) : null;
+}
+
+/** City suggestions for a state, as you type. */
+export async function citySuggestions(q: string, state: string): Promise<string[]> {
+  if (q.trim().length < 2 || !state) return [];
+  const res = await authedFetch(`/api/leadflow/cities?q=${encodeURIComponent(q.trim())}&state=${encodeURIComponent(state)}`).catch(() => null);
+  return res && res.ok ? ((await res.json().catch(() => [])) as string[]) : [];
 }
 
 /** Flip a column on many leads in one request.

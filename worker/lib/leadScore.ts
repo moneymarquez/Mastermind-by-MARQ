@@ -178,3 +178,24 @@ export function cityState(address: string): { city: string; state: string } {
   const state = (parts[parts.length - 2].match(/^([A-Z]{2})\b/) ?? [])[1] ?? '';
   return { city, state };
 }
+
+/** Extra phrasings per industry: Google caps one search at 60 results, so
+ *  reaching 100 in a city takes a few ways of asking. */
+const SYNONYMS: Record<string, string[]> = {
+  hvac: ['heating and air conditioning', 'furnace repair'], plumber: ['plumbing', 'drain cleaning'], electrician: ['electrical contractor'],
+  roofing: ['roofer', 'roof repair'], landscaping: ['landscaper', 'lawn care'], 'house cleaning': ['cleaning service', 'maid service'],
+  handyman: ['home repair'], 'auto repair': ['mechanic', 'auto shop'], restaurant: ['family restaurant', 'diner'], 'hair salon': ['beauty salon'],
+  barbershop: ['barber'], dentist: ['dental office'], chiropractor: ['chiropractic'], gym: ['fitness studio'], 'med spa': ['medical spa', 'aesthetics clinic'],
+  'real estate agent': ['realtor'], 'law firm': ['attorney', 'lawyer'], 'food truck': ['food trucks'], 'pest control': ['exterminator'], 'auto detailing': ['car detailing'],
+};
+export function queryVariants(industry: string): string[] {
+  const k = industry.trim().toLowerCase();
+  return [industry.trim(), ...(SYNONYMS[k] ?? [])].slice(0, 3);
+}
+
+/** Only businesses whose address is in the city that was asked for. Pure. */
+export function inCity(address: string, city: string, state: string): boolean {
+  const cs = cityState(address);
+  return cs.city.trim().toLowerCase() === city.trim().toLowerCase() && (!state || cs.state === state);
+}
+

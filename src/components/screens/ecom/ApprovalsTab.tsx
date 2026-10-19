@@ -23,9 +23,17 @@ export default function ApprovalsTab({ api, onDecided }: { api: ReturnType<typeo
   const [toast, setToast] = useState('');
   // Scout finds arrive without their numbers; fill them in one at a time (each call is short, so a phone connection survives it).
   const waiting = pending.filter((a) => a.type === 'product_card' && a.payload.pending_enrich === true).length;
+  // The server also checks finds 4 at a time ('working'); refresh so finished cards unlock without a reload.
+  const checking = pending.filter((a) => a.type === 'product_card' && (a.payload.pending_enrich === true || a.payload.pending_enrich === 'working')).length;
+  useEffect(() => {
+    if (!checking) return;
+    const t = setInterval(() => { void reloadRef.current(); }, 15000);
+    return () => clearInterval(t);
+  }, [checking > 0]); // eslint-disable-line react-hooks/exhaustive-deps
   const [filling, setFilling] = useState(false);
   const running = useRef(false);
   const reload = api.reload;
+  const reloadRef = useRef(reload); reloadRef.current = reload;
   useEffect(() => {
     if (!waiting || running.current) return;
     running.current = true; setFilling(true);
@@ -43,7 +51,7 @@ export default function ApprovalsTab({ api, onDecided }: { api: ReturnType<typeo
   }, [waiting > 0]);
   return (
     <div>
-      {(waiting > 0 || filling) && <div role="status" style={{ ...E.card, padding: 10, marginBottom: 10, fontSize: 'var(--text-body)', color: E.muted }}>Finding supplier costs, sellers and shipping for {waiting} new find{waiting === 1 ? '' : 's'}… cards update by themselves. Keep this tab open.</div>}
+      {(checking > 0 || filling) && <div role="status" style={{ ...E.card, padding: 10, marginBottom: 10, fontSize: 'var(--text-body)', color: E.muted }}>Checking {checking} new find{checking === 1 ? '' : 's'}: supplier cost, sellers, shipping, Amazon and traction. About a minute each, 4 at a time, and it keeps going if you leave. Each card unlocks <strong>Approve to test</strong> when its numbers are in.</div>}
       {toast && <div style={{ ...E.card, padding: 10, marginBottom: 10, borderColor: E.green, color: E.text, fontSize: 'var(--text-body)' }}>{toast}</div>}
       {!api.loading && pending.length === 0 && (
         <TeachingEmpty what="Nothing waiting on you." worker="every worker — Scout runs, drafts, brand options, supplier picks and store previews all land here" />
@@ -106,7 +114,7 @@ function ProductApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string)
   const [msg, setMsg] = useState('');
   if (!row) return <div style={{ ...E.card, padding: 14, color: E.muted }}>{a.title}: this find has no product data. Kill it from the sheet.</div>;
   const finish = (m: string) => { setBusy(''); setMsg(m); onDone(m); };
-  const lookingUp = a.payload.pending_enrich === true;
+  const lookingUp = a.payload.pending_enrich === true || a.payload.pending_enrich === 'working';
   const approve = async () => {
     setBusy('approve'); setMsg('');
     const r = await decideApproval(a.id, 'approved');
@@ -117,7 +125,7 @@ function ProductApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string)
   const watch = async () => { setBusy('watch'); const r = await api<{ ok?: boolean; error?: string; detail?: string }>('/api/engine/watch-card', { body: { approval_id: a.id } }); if (r.error) { setBusy(''); setMsg(r.error); return; } finish(r.detail ?? 'Watching.'); };
   const enrich = async () => { setBusy('enrich'); setMsg('Looking up the missing numbers… (1–2 min)'); const r = await api<{ ok?: boolean; error?: string; summary?: string }>('/api/engine/enrich', { body: { approval_id: a.id } }); finish(r.error ?? r.summary ?? 'Done.'); };
   return (
-    <RichProductCard p={{ ...row, source_url: row.source_url ?? null } as never} busy={lookingUp ? 'enrich' : busy} message={lookingUp && !msg ? 'Finding supplier costs, sellers and shipping…' : msg}
+    <RichProductCard p={{ ...row, source_url: row.source_url ?? null } as never} busy={lookingUp ? 'enrich' : busy} message={lookingUp && !msg ? 'Checking supplier cost, sellers, shipping, Amazon and traction… Approve unlocks when the numbers are in (about a minute).' : msg}
       onApprove={() => void approve()} onReject={(r) => void reject(r)} onWatch={() => void watch()} onEnrich={() => void enrich()} />
   );
 }

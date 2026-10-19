@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { requireUser, isOwnerUser } from '../lib/auth';
-import { preDisqualify, scoreLead, knownChain, localChains, normName, cityState } from '../lib/leadScore';
+import { preDisqualify, scoreLead, knownChain, localChains, normName, cityState, inCity, queryVariants } from '../lib/leadScore';
 import { guardInsert, guardPatch, entersCallList, DNC_STATUS } from '../lib/leadflowGuard';
 
 // LeadFlow used to live in its own separate Supabase project
@@ -338,40 +338,56 @@ export async function leadflowAiReport(request: Request, env: LeadflowEnv): Prom
 
 // ---------------------------------------------------------------- find leads
 //
-// The "Find leads" button. One click = one Google Places search for
-// "<industry> in <city>", the same filters and fizzle score the marqleads
-// scraper uses (worker/lib/leadScore.ts), and new rows inserted straight
-// into `leads`. Existing leads are never touched: a re-run can't reset a
-// called lead back to "new" or wipe its notes, it just skips it.
+// "Find leads": Google Places search for an industry in one city, the same
+// filters and fizzle score as the marqleads scraper (worker/lib/leadScore.ts),
+// and new rows inserted into `leads`. Existing leads are never touched.
 //
-// Capped at FIND_MAX per click so one request stays well under the Workers
-// outside-request limit (50 on the free plan): auth ≤2 + search ≤3 +
-// dedupe 1 + details ≤20 + do-not-contact 1 + insert 1. It also caps spend:
-// roughly $0.03 per search page and $0.025 per business looked up.
-
+// Up to FIND_MAX (100) per search, run as a job in batches so every request
+// stays under the Workers outside-request limit (50 on the free plan):
+//   POST /api/leadflow/find        finds the city, searches, filters, saves
+//                                  the candidate list as a job (ai_tasks)
+//   POST /api/leadflow/find/next   looks up the next FIND_BATCH candidates
+//   GET  /api/leadflow/find        the latest unfinished job (to resume)
+//   GET  /api/leadflow/cities      city suggestions for one state
+// Results are restricted to the city's own map area and then to addresses in
+// that city, so a Draper search returns Draper businesses, not all of Salt
+// Lake County. Cost: about $0.035 per search page, $0.025 per business.
 
 const PLACES_SEARCH = 'https://places.googleapis.com/v1/places:searchText';
 const PLACES_DETAILS = 'https://places.googleapis.com/v1/places/';
+const PLACES_AUTOCOMPLETE = 'https://places.googleapis.com/v1/places:autocomplete';
 const SEARCH_MASK = 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.businessStatus,places.primaryType,places.location,nextPageToken';
 const DETAIL_MASK = 'id,nationalPhoneNumber,websiteUri,rating,userRatingCount,businessStatus,reviews.publishTime,editorialSummary';
-const FIND_MAX = 20;
+const FIND_MAX = 100;
+const FIND_BATCH = 15;
+
+export const US_STATES: Record<string, string> = { AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', DC: 'District of Columbia', FL: 'Florida', GA: 'Georgia', HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa', KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland', MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming' };
 
 interface FoundPlace {
   id: string; name: string; address: string; primaryType: string;
   rating: number | null; reviewCount: number; status: string; lat: number | null; lng: number | null;
 }
-
+interface Viewport { low: { latitude: number; longitude: number }; high: { latitude: number; longitude: number } }
 type PlacesEnv = LeadflowEnv;
 
-async function placesSearch(key: string, query: string): Promise<{ places: FoundPlace[]; pages: number; error?: string }> {
+const gHeaders = (key: string, mask: string) => ({ 'content-type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': mask });
+
+/** The city's own map area, so the business search can't wander into the next town. */
+async function findCity(key: string, city: string, state: string): Promise<{ viewport: Viewport | null; error?: string }> {
+  const res = await fetch(PLACES_SEARCH, { method: 'POST', headers: gHeaders(key, 'places.viewport,places.formattedAddress'), body: JSON.stringify({ textQuery: `${city}, ${US_STATES[state] ?? state}`, includedType: 'locality', pageSize: 1 }) });
+  if (!res.ok) return { viewport: null, error: `Google couldn't look up the city (${res.status}): ${(await res.text()).slice(0, 160)}` };
+  const data = (await res.json()) as { places?: { viewport?: Viewport }[] };
+  return { viewport: data.places?.[0]?.viewport ?? null };
+}
+
+async function placesSearch(key: string, query: string, viewport: Viewport | null): Promise<{ places: FoundPlace[]; pages: number; error?: string }> {
   const out: FoundPlace[] = [];
   let pageToken: string | undefined;
   let pages = 0;
   do {
     const res = await fetch(PLACES_SEARCH, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': SEARCH_MASK },
-      body: JSON.stringify({ textQuery: query, pageSize: 20, ...(pageToken ? { pageToken } : {}) }),
+      method: 'POST', headers: gHeaders(key, SEARCH_MASK),
+      body: JSON.stringify({ textQuery: query, pageSize: 20, ...(viewport ? { locationRestriction: { rectangle: viewport } } : {}), ...(pageToken ? { pageToken } : {}) }),
     });
     pages++;
     if (!res.ok) return { places: out, pages, error: `Google search failed (${res.status}): ${(await res.text()).slice(0, 200)}` };
@@ -390,109 +406,187 @@ async function placesSearch(key: string, query: string): Promise<{ places: Found
 }
 
 async function placeDetails(key: string, id: string): Promise<Record<string, any> | null> {
-  const res = await fetch(PLACES_DETAILS + encodeURIComponent(id), {
-    headers: { 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': DETAIL_MASK },
-  }).catch(() => null);
+  const res = await fetch(PLACES_DETAILS + encodeURIComponent(id), { headers: { 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': DETAIL_MASK } }).catch(() => null);
   if (!res || !res.ok) return null;
   return (await res.json()) as Record<string, any>;
+}
+
+type Skipped = { chain: number; weak: number; existing: number; outside: number; noPhone: number; doNotContact: number; lookupFailed: number };
+interface LeadJob {
+  query: string; city: string; state: string; industry: string; limit: number;
+  found: number; candidates: FoundPlace[]; next: number;
+  added: { id: string; business_name: string; tier: string; fizzle_score: number; city: string | null }[];
+  skipped: Skipped; pages: number; warning: string | null;
+}
+const JOB_BODY = 'leadjob';
+const estCost = (j: LeadJob) => Math.round((0.035 * (j.pages + 1) + 0.025 * j.next) * 100) / 100;
+const progress = (id: string, j: LeadJob, status: string) => ({
+  jobId: id, query: j.query, found: j.found, total: j.candidates.length, processed: Math.min(j.next, j.candidates.length), done: status === 'done',
+  added: [...j.added].sort((a, z) => z.fizzle_score - a.fizzle_score), skipped: j.skipped, estCostUsd: estCost(j), warning: j.warning,
+});
+
+async function leadflowUserId(request: Request, env: PlacesEnv): Promise<string | Response> {
+  const user = await requireUser(request, env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+  return user instanceof Response ? user : user.id;
 }
 
 export async function leadflowFind(request: Request, env: PlacesEnv): Promise<Response> {
   const denied = await requireLeadflowAuth(request, env);
   if (denied) return denied;
-  if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
   const key = env.GOOGLE_PLACES_API_KEY;
   if (!key) return jsonError('Lead search is not connected yet — set GOOGLE_PLACES_API_KEY on the Worker.', 503);
+  const uid = await leadflowUserId(request, env);
+  if (uid instanceof Response) return uid;
+  const sb = { url: LEADFLOW_URL, h: leadflowHeaders(env) };
 
-  const body = (await request.json().catch(() => ({}))) as { city?: unknown; industry?: unknown; limit?: unknown };
-  const city = typeof body.city === 'string' ? body.city.trim().slice(0, 80) : '';
+  // Resume: the newest unfinished search from the last day.
+  if (request.method === 'GET') {
+    const since = new Date(Date.now() - 86400000).toISOString();
+    const res = await fetch(`${sb.url}/rest/v1/ai_tasks?user_id=eq.${uid}&body=eq.${JOB_BODY}&status=eq.running&created_at=gte.${since}&order=created_at.desc&limit=1&select=id,instructions,status`, { headers: sb.h });
+    const [t] = res.ok ? ((await res.json()) as { id: string; instructions: string; status: string }[]) : [];
+    return new Response(JSON.stringify(t ? progress(t.id, JSON.parse(t.instructions) as LeadJob, t.status) : null), { headers: { 'content-type': 'application/json' } });
+  }
+  if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+
+  const body = (await request.json().catch(() => ({}))) as { city?: unknown; state?: unknown; industry?: unknown; limit?: unknown };
+  const state = typeof body.state === 'string' ? body.state.trim().toUpperCase() : '';
+  const city = typeof body.city === 'string' ? body.city.trim().replace(/,\s*[A-Za-z]{2}$/, '').slice(0, 80) : '';
   const industry = typeof body.industry === 'string' ? body.industry.trim().slice(0, 60) : '';
-  const limit = Math.max(1, Math.min(FIND_MAX, Math.floor(Number(body.limit) || 10)));
+  const limit = Math.max(1, Math.min(FIND_MAX, Math.floor(Number(body.limit) || 20)));
   if (!city || !industry) return jsonError('Pick a city and an industry.', 400);
+  if (!US_STATES[state]) return jsonError('Pick a state.', 400);
 
-  // 1. Search.
-  const search = await placesSearch(key, `${industry} in ${city}`);
-  if (search.error && search.places.length === 0) return jsonError(search.error, 502);
+  const geo = await findCity(key, city, state);
+  if (geo.error) return jsonError(geo.error, 502);
+  if (!geo.viewport) return jsonError(`Couldn't find ${city} in ${US_STATES[state]}. Check the spelling or pick it from the suggestions.`, 404);
 
-  // 2. Free filters: chains, closed, too few reviews, low rating.
-  const skipped = { chain: 0, weak: 0, existing: 0, noPhone: 0, doNotContact: 0, lookupFailed: 0 };
-  const multi = localChains(search.places.map((p) => p.name));
-  const candidates = search.places.filter((p) => {
+  // Search a few phrasings inside the city's area; keep each business once.
+  const byId = new Map<string, FoundPlace>();
+  let pages = 0; let warning: string | null = null;
+  for (const q of queryVariants(industry)) {
+    const r = await placesSearch(key, `${q} in ${city}, ${state}`, geo.viewport);
+    pages += r.pages; if (r.error) warning = r.error;
+    for (const p of r.places) if (!byId.has(p.id)) byId.set(p.id, p);
+    if (byId.size >= limit * 2.5) break;
+  }
+  const all = [...byId.values()];
+  if (!all.length && warning) return jsonError(warning, 502);
+
+  const skipped: Skipped = { chain: 0, weak: 0, existing: 0, outside: 0, noPhone: 0, doNotContact: 0, lookupFailed: 0 };
+  const multi = localChains(all.map((p) => p.name));
+  const candidates = all.filter((p) => {
+    if (!inCity(p.address, city, state)) { skipped.outside++; return false; }
     if (knownChain(p.name) || multi.has(normName(p.name))) { skipped.chain++; return false; }
     if (preDisqualify({ status: p.status, reviewCount: p.reviewCount, rating: p.rating, searchCategory: industry, primaryType: p.primaryType })) { skipped.weak++; return false; }
     return true;
   });
-
-  // 3. Skip anything already in LeadFlow before paying to look it up.
   let fresh = candidates;
   if (candidates.length) {
     const ids = candidates.map((p) => `"${p.id.replace(/"/g, '')}"`).join(',');
-    const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?select=place_id&place_id=in.(${encodeURIComponent(ids)})`, { headers: leadflowHeaders(env) });
+    const res = await fetch(`${sb.url}/rest/v1/leads?select=place_id&place_id=in.(${encodeURIComponent(ids)})`, { headers: sb.h });
     if (!res.ok) return jsonError(`Could not check existing leads (${res.status}).`, 502);
     const have = new Set(((await res.json()) as { place_id: string }[]).map((r) => r.place_id));
     fresh = candidates.filter((p) => { if (have.has(p.id)) { skipped.existing++; return false; } return true; });
   }
-  // Most reviews first: the strong-period half of the score, known before paying.
-  const toLookUp = [...fresh].sort((a, z) => z.reviewCount - a.reviewCount).slice(0, limit);
+  const job: LeadJob = {
+    query: `${industry} in ${city}, ${state}`, city, state, industry, limit, found: all.length,
+    candidates: [...fresh].sort((a, z) => z.reviewCount - a.reviewCount).slice(0, limit), next: 0, added: [], skipped, pages, warning,
+  };
+  const ins = await fetch(`${sb.url}/rest/v1/ai_tasks`, {
+    method: 'POST', headers: { ...sb.h, Prefer: 'return=representation' },
+    body: JSON.stringify({ user_id: uid, domain: 'madeby', body: JOB_BODY, instructions: JSON.stringify(job), status: job.candidates.length ? 'running' : 'done', note: job.query }),
+  });
+  if (!ins.ok) return jsonError(`Could not start the search (${ins.status}).`, 502);
+  const [row] = (await ins.json()) as { id: string }[];
+  return new Response(JSON.stringify(progress(row.id, job, job.candidates.length ? 'running' : 'done')), { headers: { 'content-type': 'application/json' } });
+}
 
-  // 4. Details (phone, website, newest review dates), 5 at a time.
+/** Look up the next batch of a search job and save the good ones as leads. */
+export async function leadflowFindNext(request: Request, env: PlacesEnv): Promise<Response> {
+  const denied = await requireLeadflowAuth(request, env);
+  if (denied) return denied;
+  if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+  const key = env.GOOGLE_PLACES_API_KEY;
+  if (!key) return jsonError('Lead search is not connected yet — set GOOGLE_PLACES_API_KEY on the Worker.', 503);
+  const uid = await leadflowUserId(request, env);
+  if (uid instanceof Response) return uid;
+  const b = (await request.json().catch(() => ({}))) as { jobId?: unknown };
+  const jobId = typeof b.jobId === 'string' && /^[0-9a-f-]{36}$/i.test(b.jobId) ? b.jobId : '';
+  if (!jobId) return jsonError('jobId is required.', 400);
+  const h = leadflowHeaders(env);
+  const res = await fetch(`${LEADFLOW_URL}/rest/v1/ai_tasks?id=eq.${jobId}&user_id=eq.${uid}&body=eq.${JOB_BODY}&select=id,instructions,status`, { headers: h });
+  const [t] = res.ok ? ((await res.json()) as { id: string; instructions: string; status: string }[]) : [];
+  if (!t) return jsonError('That search is gone. Start a new one.', 404);
+  const job = JSON.parse(t.instructions) as LeadJob;
+  if (t.status === 'done' || job.next >= job.candidates.length) return new Response(JSON.stringify(progress(t.id, job, 'done')), { headers: { 'content-type': 'application/json' } });
+
+  const batch = job.candidates.slice(job.next, job.next + FIND_BATCH);
   const details: (Record<string, any> | null)[] = [];
-  for (let i = 0; i < toLookUp.length; i += 5) {
-    details.push(...await Promise.all(toLookUp.slice(i, i + 5).map((p) => placeDetails(key, p.id))));
-  }
+  for (let i = 0; i < batch.length; i += 5) details.push(...await Promise.all(batch.slice(i, i + 5).map((p) => placeDetails(key, p.id))));
 
   const now = new Date();
   const rows: Record<string, unknown>[] = [];
-  toLookUp.forEach((p, i) => {
+  batch.forEach((p, i) => {
     const d = details[i];
-    if (!d) { skipped.lookupFailed++; return; }
+    if (!d) { job.skipped.lookupFailed++; return; }
     const phone = d.nationalPhoneNumber ?? '';
     const res = scoreLead({
-      name: p.name, searchCategory: industry, primaryType: p.primaryType,
+      name: p.name, searchCategory: job.industry, primaryType: p.primaryType,
       status: d.businessStatus ?? p.status, rating: d.rating ?? p.rating, reviewCount: Number(d.userRatingCount) || p.reviewCount,
       phone, website: d.websiteUri ?? '', reviewDates: (d.reviews ?? []).map((r: { publishTime?: string }) => r.publishTime).filter(Boolean),
     }, now);
-    if (res.tier === 'X') { if (!phone) skipped.noPhone++; else skipped.weak++; return; }
+    if (res.tier === 'X') { if (!phone) job.skipped.noPhone++; else job.skipped.weak++; return; }
     const { city: c, state } = cityState(p.address);
     rows.push({
       place_id: p.id, business_name: p.name, phone, address: p.address, city: c || null, state: state || null,
-      lat: p.lat, lng: p.lng, category: p.primaryType || null, industry: p.primaryType || industry.toLowerCase(),
-      search_category: industry.toLowerCase(), website: d.websiteUri ?? null, summary: d.editorialSummary?.text ?? null,
+      lat: p.lat, lng: p.lng, category: p.primaryType || null, industry: p.primaryType || job.industry.toLowerCase(),
+      search_category: job.industry.toLowerCase(), website: d.websiteUri ?? null, summary: d.editorialSummary?.text ?? null,
       rating: d.rating ?? p.rating, review_count: Number(d.userRatingCount) || p.reviewCount,
       days_since_last_review: res.daysSinceLastReview, fizzle_score: res.score, tier: res.tier, fizzle_reasons: res.reasons,
       maps_url: `https://www.google.com/maps/place/?q=place_id:${p.id}`, status: 'new', pooled: false,
     });
   });
 
-  // 5. Never re-add a number someone asked not to be called on.
+  // Never re-add a number someone asked not to be called on.
   let toInsert = rows;
   const phones = [...new Set(rows.map((r) => r.phone as string).filter(Boolean))];
   if (phones.length) {
     const list = phones.map((ph) => `"${ph.replace(/"/g, '')}"`).join(',');
-    const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?select=phone&status=eq.do_not_contact&phone=in.(${encodeURIComponent(list)})`, { headers: leadflowHeaders(env) });
-    if (res.ok) {
-      const dnc = new Set(((await res.json()) as { phone: string }[]).map((r) => r.phone));
-      toInsert = rows.filter((r) => { if (dnc.has(r.phone as string)) { skipped.doNotContact++; return false; } return true; });
+    const dnc = await fetch(`${LEADFLOW_URL}/rest/v1/leads?select=phone&status=eq.do_not_contact&phone=in.(${encodeURIComponent(list)})`, { headers: h });
+    if (dnc.ok) {
+      const blocked = new Set(((await dnc.json()) as { phone: string }[]).map((r) => r.phone));
+      toInsert = rows.filter((r) => { if (blocked.has(r.phone as string)) { job.skipped.doNotContact++; return false; } return true; });
     }
   }
-
-  // 6. Insert new rows only. ignore-duplicates means a race with another
-  // click (or the scraper) can't overwrite a lead that just landed.
-  let added: { id: string; business_name: string; tier: string; fizzle_score: number; city: string | null }[] = [];
   if (toInsert.length) {
-    const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?on_conflict=place_id&select=id,business_name,tier,fizzle_score,city`, {
-      method: 'POST',
-      headers: { ...leadflowHeaders(env), Prefer: 'resolution=ignore-duplicates,return=representation' },
-      body: JSON.stringify(toInsert),
+    const ins = await fetch(`${LEADFLOW_URL}/rest/v1/leads?on_conflict=place_id&select=id,business_name,tier,fizzle_score,city`, {
+      method: 'POST', headers: { ...h, Prefer: 'resolution=ignore-duplicates,return=representation' }, body: JSON.stringify(toInsert),
     });
-    if (!res.ok) return jsonError(`Saving leads failed (${res.status}): ${(await res.text()).slice(0, 200)}`, 502);
-    added = await res.json();
+    if (!ins.ok) return jsonError(`Saving leads failed (${ins.status}): ${(await ins.text()).slice(0, 200)}`, 502);
+    job.added.push(...((await ins.json()) as LeadJob['added']));
   }
+  job.next += batch.length;
+  const status = job.next >= job.candidates.length ? 'done' : 'running';
+  await fetch(`${LEADFLOW_URL}/rest/v1/ai_tasks?id=eq.${t.id}`, { method: 'PATCH', headers: h, body: JSON.stringify({ instructions: JSON.stringify(job), status, updated_at: new Date().toISOString() }) });
+  return new Response(JSON.stringify(progress(t.id, job, status)), { headers: { 'content-type': 'application/json' } });
+}
 
-  const estCost = Math.round((search.pages * 0.035 + toLookUp.length * 0.025) * 100) / 100;
-  return new Response(JSON.stringify({
-    query: `${industry} in ${city}`, found: search.places.length, lookedUp: toLookUp.length,
-    added: added.sort((a, z) => z.fizzle_score - a.fizzle_score), skipped, estCostUsd: estCost,
-    warning: search.error ?? null,
-  }), { status: 200, headers: { 'content-type': 'application/json' } });
+/** City suggestions in one state (Places Autocomplete, cities only). */
+export async function leadflowCities(request: Request, env: PlacesEnv): Promise<Response> {
+  const denied = await requireLeadflowAuth(request, env);
+  if (denied) return denied;
+  const key = env.GOOGLE_PLACES_API_KEY;
+  if (!key) return new Response('[]', { headers: { 'content-type': 'application/json' } });
+  const url = new URL(request.url);
+  const q = (url.searchParams.get('q') ?? '').trim().slice(0, 60);
+  const state = (url.searchParams.get('state') ?? '').trim().toUpperCase();
+  if (q.length < 2 || !US_STATES[state]) return new Response('[]', { headers: { 'content-type': 'application/json' } });
+  const res = await fetch(PLACES_AUTOCOMPLETE, { method: 'POST', headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': key }, body: JSON.stringify({ input: `${q}, ${US_STATES[state]}`, includedPrimaryTypes: ['locality'], includedRegionCodes: ['us'] }) }).catch(() => null);
+  if (!res || !res.ok) return new Response('[]', { headers: { 'content-type': 'application/json' } });
+  const data = (await res.json()) as { suggestions?: { placePrediction?: { structuredFormat?: { mainText?: { text?: string }; secondaryText?: { text?: string } } } }[] };
+  const names = (data.suggestions ?? [])
+    .map((s) => ({ city: s.placePrediction?.structuredFormat?.mainText?.text ?? '', rest: s.placePrediction?.structuredFormat?.secondaryText?.text ?? '' }))
+    .filter((s) => s.city && (s.rest.startsWith(`${state},`) || s.rest.includes(US_STATES[state])))
+    .map((s) => s.city);
+  return new Response(JSON.stringify([...new Set(names)].slice(0, 8)), { headers: { 'content-type': 'application/json' } });
 }

@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useLeadflowLeads, findLeads } from '../../../data/useLeadflow';
+import { useEffect, useMemo, useState } from 'react';
+import { useLeadflowLeads, findLeads, latestLeadJob, citySuggestions } from '../../../data/useLeadflow';
 import type { LeadflowLead, FindLeadsResult } from '../../../data/useLeadflow';
 import { US_STATES, NICHES } from './shared';
 import { LeadRecord } from './LeadCard';
@@ -21,8 +21,28 @@ const TAGS = ['Hot', 'Warm', 'Not Ready'];
 const COLS = '36px minmax(160px,1.6fr) minmax(90px,1fr) minmax(70px,.7fr) 128px 70px 100px 100px 80px 112px';
 // Suggestions only — any industry can be typed. Home services first: those
 // owners run on few reviews and high tickets, and the score bands fit them.
-const FIND_INDUSTRIES = ['HVAC', 'plumber', 'electrician', 'roofing', 'landscaping', 'house cleaning', 'handyman', 'auto repair', 'restaurant', 'hair salon', 'barbershop', 'nail salon', 'dentist', 'chiropractor'];
-const FIND_COUNTS = [5, 10, 20];
+const FIND_INDUSTRIES = [
+  // Home services
+  'HVAC', 'plumber', 'electrician', 'roofing', 'landscaping', 'lawn care', 'tree service', 'house cleaning', 'carpet cleaning', 'window cleaning',
+  'pressure washing', 'handyman', 'painter', 'flooring', 'remodeling contractor', 'general contractor', 'concrete contractor', 'fencing', 'garage door repair',
+  'pest control', 'pool service', 'junk removal', 'moving company', 'appliance repair', 'locksmith', 'solar installer', 'snow removal',
+  // Auto
+  'auto repair', 'auto detailing', 'auto body shop', 'tire shop', 'towing', 'mobile mechanic',
+  // Food
+  'restaurant', 'food truck', 'coffee shop', 'bakery', 'catering', 'pizza', 'taco shop', 'dessert shop',
+  // Beauty and wellness
+  'hair salon', 'barbershop', 'nail salon', 'med spa', 'lash studio', 'tattoo shop', 'massage therapist', 'day spa',
+  // Health
+  'dentist', 'orthodontist', 'chiropractor', 'physical therapy', 'optometrist', 'veterinarian',
+  // Fitness
+  'gym', 'yoga studio', 'pilates studio', 'martial arts', 'personal trainer', 'dance studio',
+  // Professional
+  'real estate agent', 'mortgage broker', 'insurance agency', 'law firm', 'accountant', 'financial advisor', 'photographer', 'wedding venue', 'event planner',
+  // Local retail and family
+  'retail boutique', 'florist', 'jewelry store', 'furniture store', 'daycare', 'tutoring', 'music lessons', 'pet grooming', 'dog trainer', 'storage facility',
+].filter((v, i, a) => a.indexOf(v) === i);
+const FIND_COUNTS = [10, 20, 50, 100];
+const STATE_ABBR: Record<string, string> = { Alabama: 'AL', Alaska: 'AK', Arizona: 'AZ', Arkansas: 'AR', California: 'CA', Colorado: 'CO', Connecticut: 'CT', Delaware: 'DE', 'District of Columbia': 'DC', Florida: 'FL', Georgia: 'GA', Hawaii: 'HI', Idaho: 'ID', Illinois: 'IL', Indiana: 'IN', Iowa: 'IA', Kansas: 'KS', Kentucky: 'KY', Louisiana: 'LA', Maine: 'ME', Maryland: 'MD', Massachusetts: 'MA', Michigan: 'MI', Minnesota: 'MN', Mississippi: 'MS', Missouri: 'MO', Montana: 'MT', Nebraska: 'NE', Nevada: 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ', 'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', Ohio: 'OH', Oklahoma: 'OK', Oregon: 'OR', Pennsylvania: 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC', 'South Dakota': 'SD', Tennessee: 'TN', Texas: 'TX', Utah: 'UT', Vermont: 'VT', Virginia: 'VA', Washington: 'WA', 'West Virginia': 'WV', Wisconsin: 'WI', Wyoming: 'WY' };
 const BLANK = { business_name: '', phone: '', industry: NICHES[0], website_status: 'no_website', tag: 'Warm', state: '', city: '', pooled: false };
 
 export default function LeadFlowFinder() {
@@ -39,7 +59,9 @@ export default function LeadFlowFinder() {
   const [addErr, setAddErr] = useState('');
   const [adding, setAdding] = useState(false);
   const [showFind, setShowFind] = useState(false);
-  const [find, setFind] = useState({ city: 'Sandy, UT', industry: 'HVAC', count: 10 });
+  const [find, setFind] = useState({ city: 'Draper', state: 'UT', industry: 'HVAC', count: 20 });
+  const [citySugg, setCitySugg] = useState<string[]>([]);
+  const [resumable, setResumable] = useState<FindLeadsResult | null>(null);
   const [finding, setFinding] = useState(false);
   const [findErr, setFindErr] = useState('');
   const [found, setFound] = useState<FindLeadsResult | null>(null);
@@ -81,13 +103,26 @@ export default function LeadFlowFinder() {
     if (created) { setShowAdd(false); setForm(BLANK); } else setAddErr('Could not add the lead. Check the connection and try again.');
   };
 
-  const doFind = async () => {
-    if (!find.city.trim() || !find.industry.trim() || finding) return;
+  // City suggestions as you type, for the chosen state.
+  useEffect(() => {
+    if (!showFind) return;
+    const t = setTimeout(() => { citySuggestions(find.city, find.state).then(setCitySugg).catch(() => setCitySugg([])); }, 250);
+    return () => clearTimeout(t);
+  }, [find.city, find.state, showFind]);
+  // A search that stopped part-way (closed the app, lost signal) can pick up where it left off.
+  useEffect(() => {
+    if (!showFind || finding) return;
+    latestLeadJob().then((j) => setResumable(j && !j.done ? j : null)).catch(() => {});
+  }, [showFind, finding]);
+
+  const doFind = async (resumeId?: string) => {
+    if ((!resumeId && (!find.city.trim() || !find.industry.trim())) || finding) return;
     setFinding(true);
     setFindErr('');
     setFound(null);
+    setResumable(null);
     try {
-      const r = await findLeads(find.city.trim(), find.industry.trim(), find.count);
+      const r = await findLeads(find.city.trim(), find.state, find.industry.trim(), find.count, setFound, resumeId);
       setFound(r);
       if (r.added.length) applyFilters(industry, tag, state, city);
     } catch (e) {
@@ -194,19 +229,34 @@ export default function LeadFlowFinder() {
       {showFind && (
         <SidePanel title="Find leads" onClose={() => setShowFind(false)} footer={<>
           <button className="lf-btn lf-btn--secondary" onClick={() => setShowFind(false)}>{found ? 'Done' : 'Cancel'}</button>
-          <button className="lf-btn lf-btn--primary" onClick={doFind} disabled={!find.city.trim() || !find.industry.trim() || finding}>{finding ? 'Searching…' : found ? 'Search again' : 'Find leads'}</button>
+          <button className="lf-btn lf-btn--primary" onClick={() => doFind()} disabled={!find.city.trim() || !find.industry.trim() || finding}>{finding ? 'Searching…' : found ? 'Search again' : 'Find leads'}</button>
         </>}>
-          <Field label="City"><input className="lf-input" value={find.city} onChange={(e) => setFind({ ...find, city: e.target.value })} placeholder="Sandy, UT" /></Field>
+          {resumable && !finding && (
+            <Banner s="wait" title="Unfinished search">
+              “{resumable.query}”: looked up {resumable.processed} of {resumable.total}, {resumable.added.length} added so far.{' '}
+              <button className="lf-btn lf-btn--secondary" style={{ marginTop: 6 }} onClick={() => doFind(resumable.jobId)}>Continue it</button>
+            </Banner>
+          )}
+          <Field label="State"><select className="lf-input" value={find.state} onChange={(e) => setFind({ ...find, state: e.target.value })}>
+            {US_STATES.map((n) => <option key={n} value={STATE_ABBR[n] ?? n}>{n}</option>)}
+          </select></Field>
+          <Field label="City"><input className="lf-input" list="lf-find-cities" value={find.city} onChange={(e) => setFind({ ...find, city: e.target.value })} placeholder="Draper" /></Field>
+          <datalist id="lf-find-cities">{citySugg.map((c) => <option key={c} value={c} />)}</datalist>
           <Field label="Industry"><input className="lf-input" list="lf-find-industries" value={find.industry} onChange={(e) => setFind({ ...find, industry: e.target.value })} placeholder="HVAC" /></Field>
           <datalist id="lf-find-industries">{FIND_INDUSTRIES.map((i) => <option key={i} value={i} />)}</datalist>
           <Field label="How many to look up"><select className="lf-input" value={find.count} onChange={(e) => setFind({ ...find, count: Number(e.target.value) })}>{FIND_COUNTS.map((n) => <option key={n} value={n}>{n}</option>)}</select></Field>
-          <span className="lf-label">Chains, closed businesses, weak ratings and leads you already have are skipped before anything is paid for. About ${(0.1 + find.count * 0.025).toFixed(2)} in Google fees at most.</span>
-          {finding && <Banner s="info">Searching Google and scoring each business. This takes 10–20 seconds.</Banner>}
+          <span className="lf-label">Only businesses inside {find.city.trim() || 'the city'} itself are kept, not the whole county. Chains, closed businesses, weak ratings and leads you already have are skipped. About ${(0.15 + find.count * 0.025).toFixed(2)} in Google fees at most.</span>
+          {finding && (
+            <Banner s="info" title={found ? `Looked up ${found.processed} of ${found.total}` : 'Searching Google…'}>
+              {found ? `${found.added.length} added so far. Keep this panel open until it finishes; if it stops, Continue picks up where it left off.` : 'Finding every match inside the city lines.'}
+              {found && found.total > 0 && <div style={{ height: 6, borderRadius: 3, background: 'var(--lf-line, #e5e5e5)', marginTop: 8, overflow: 'hidden' }}><div style={{ width: `${Math.round((found.processed / found.total) * 100)}%`, height: '100%', background: 'var(--lf-go, #2e7d32)' }} /></div>}
+            </Banner>
+          )}
           {findErr && <Banner s="stop">{findErr}</Banner>}
-          {found && (
+          {found && !finding && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <Banner s={found.added.length ? 'go' : 'wait'} title={found.added.length ? `${found.added.length} new lead${found.added.length === 1 ? '' : 's'} added` : 'No new leads this time'}>
-                {found.found} found for “{found.query}”. Skipped: {found.skipped.chain} chains, {found.skipped.weak} weak fits, {found.skipped.existing} already in LeadFlow
+                {found.found} found for “{found.query}”. Skipped: {found.skipped.chain} chains, {found.skipped.weak} weak fits, {found.skipped.existing} already in LeadFlow{found.skipped.outside ? `, ${found.skipped.outside} outside ${find.city.trim() || 'the city'}` : ''}
                 {found.skipped.noPhone ? `, ${found.skipped.noPhone} with no phone` : ''}{found.skipped.doNotContact ? `, ${found.skipped.doNotContact} do-not-contact` : ''}{found.skipped.lookupFailed ? `, ${found.skipped.lookupFailed} lookups failed` : ''}. About ${found.estCostUsd.toFixed(2)}.
               </Banner>
               {found.warning && <Banner s="wait">{found.warning}</Banner>}
