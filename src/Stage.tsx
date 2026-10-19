@@ -37,6 +37,7 @@ const ClientModulesV2 = lazyScreen(() => import('./components/screens/v2/ClientM
 const DialingV2 = lazyScreen(() => import('./components/screens/v2/DialingV2'));
 const StickySpotV2 = lazyScreen(() => import('./components/screens/v2/StickySpotV2'));
 const TodayScreen = lazyScreen(() => import('./components/screens/today/TodayScreen'));
+const OrchestratorOverview = lazyScreen(() => import('./components/screens/orchestrator/OrchestratorOverview'));
 const SobrietyV2 = lazyScreen(() => import('./components/screens/v2/SobrietyV2'));
 const FitnessV2 = lazyScreen(() => import('./components/screens/v2/FitnessV2'));
 const GoalsV2 = lazyScreen(() => import('./components/screens/v2/GoalsV2'));
@@ -102,7 +103,7 @@ const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 const LEGACY_SCREENS = new Set<string>([]);
 
 const BUILT_SCREENS = [
-  'today',
+  'today', 'orchestrator',
   'home', 'ecom-marketing', 'coupons', 'lead-engines', 'waitlist', 'comms', 'contracts', 'ledger', 'classroom', 'feed', 'peptides', 'money-move', 'tasks', 'brain-dump', 'ecom-clients', 'ecom-inbox', 'ecom-approvals', 'ecom-office', 'ecom-orders', 'ecom-stores', 'ecom-products', 'hq', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'leadflow', 'account-settings', 'prompt-voice-settings',
@@ -319,6 +320,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'sticky-spot' && <StickySpotV2 />}
         {state.screen === 'today' && <TodayScreen />}
+        {state.screen === 'orchestrator' && <OrchestratorOverview />}
 
         {state.screen === 'sobriety' && <SobrietyV2 />}
 

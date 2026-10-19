@@ -165,6 +165,7 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
   const toggle = (t: string) => setOpen((o) => { const n = { ...o, [t]: !o[t] }; try { localStorage.setItem('mm-sidebar-open', JSON.stringify(n)); } catch { /* private mode */ } return n; });
   const top = [
     { id: 'today', l: 'Today', icon: <GSun size={17} />, active: screen === 'today' },
+    ...(isOwner ? [{ id: 'hq', l: 'HQ', icon: <GSliders size={17} />, active: screen === 'hq' }] : []),
     { id: 'home', l: 'Home', icon: <GHome size={17} />, active: screen === 'home' },
     { id: 'nova', l: 'Nova', icon: <GNova size={17} fill color="var(--accent)" />, active: novaOpen },
     { id: 'inbox', l: 'Inbox', icon: <GInbox size={17} />, active: screen === 'inbox', badge: badges.inbox, urgent: false },

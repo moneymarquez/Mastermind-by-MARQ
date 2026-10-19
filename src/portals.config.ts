@@ -10,7 +10,7 @@ export const PORTALS: { key: PortalKey; name: string; landing: string }[] = [
   { key: 'masterminds', name: 'Masterminds', landing: 'home' },
   // Running Marq's own business (money, launches, orchestrators), as opposed
   // to Made by, which is purely client work.
-  { key: 'orchestrator', name: 'Orchestrator', landing: 'hq' },
+  { key: 'orchestrator', name: 'Orchestrator', landing: 'orchestrator' },
   { key: 'madeby', name: 'Made by', landing: 'client-modules' },
   { key: 'content', name: 'Content', landing: 'content-accounts' },
   { key: 'ecommerce', name: 'E-commerce', landing: 'ecommerce' },

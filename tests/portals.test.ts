@@ -23,7 +23,7 @@ test('portals: access is derived from canAccess only', async () => {
   // Every registry entry carries a portal, and the map matches the spec.
   for (const m of MODULE_REGISTRY) assert.ok(m.portal, `${m.key} has a portal`);
   for (const k of ['leadflow', 'lead-engines', 'comms', 'client-modules', 'client-crm', 'scaling-start', 'brand-lab', 'delivery', 'invoicing', 'support-inbox']) assert.equal(portalOfModule(k), 'madeby', k);
-  for (const k of ['hq', 'ecom-office', 'ledger', 'waitlist', 'coupons', 'contracts', 'classroom', 'marketing']) assert.equal(portalOfModule(k), 'orchestrator', k);
+  for (const k of ['orch-overview', 'hq', 'ecom-office', 'ledger', 'waitlist', 'coupons', 'contracts', 'classroom', 'marketing']) assert.equal(portalOfModule(k), 'orchestrator', k);
   assert.equal(portalOfModule('content'), 'content');
   assert.equal(portalOfModule('ecommerce'), 'ecommerce');
   assert.equal(portalOfModule('budgeting'), 'masterminds');
@@ -49,8 +49,12 @@ test('portals: access is derived from canAccess only', async () => {
   assert.ok(!madeby.includes('hq') && !madeby.includes('ledger') && !madeby.includes('marketing'));
   // Orchestrator: one group holding Marq's own-business tools.
   const orch = shellGroups(all, true, {}, { portal: 'orchestrator' });
-  assert.deepEqual(orch.map((g) => g.title), ['Orchestrator']);
-  assert.deepEqual([...orch[0].items.map((i) => i.id)].sort(), ['classroom', 'contracts', 'coupons', 'ecom-office', 'hq', 'ledger', 'marketing', 'waitlist']);
+  const ids = (t: string) => orch.find((g) => g.title === t)!.items.map((i) => i.id);
+  assert.deepEqual(orch.map((g) => g.title), ['Overview', 'Command', 'Financial', 'Growth']);
+  assert.deepEqual(ids('Overview'), ['orchestrator']);
+  assert.deepEqual(ids('Command'), ['hq', 'classroom', 'ecom-office']);
+  assert.deepEqual([...ids('Financial')].sort(), ['contracts', 'coupons', 'ledger']);
+  assert.deepEqual([...ids('Growth')].sort(), ['marketing', 'waitlist']);
 
   // Breadcrumb starts with the portal outside Masterminds.
   assert.deepEqual(crumbFor('leadflow', shellGroups(all, true, {}, { portal: 'madeby' }), 'madeby'), { group: 'Made by', label: 'LeadFlow' });
