@@ -6,7 +6,10 @@ import Card from '../../mm/Card';
 import Chip from '../../mm/Chip';
 import Stat from '../../mm/Stat';
 import { Empty } from '../../mm/States';
-import { monthlyPnl, ytd, taxSetAside, TAX_LABEL, ledgerCsv, EXPENSE_CATEGORIES, INCOME_SOURCES, nextInvoiceNumber, invoiceTotal } from '../../../data/madeby';
+import { Bars, Line } from '../../mm/charts';
+import { RANGES, toEntries, summarize, socialGrowth } from '../../../data/ledgerRange';
+import type { Range } from '../../../data/ledgerRange';
+import { taxSetAside, TAX_LABEL, ledgerCsv, EXPENSE_CATEGORIES, INCOME_SOURCES, nextInvoiceNumber, invoiceTotal } from '../../../data/madeby';
 import type { LedgerRow } from '../../../data/madeby';
 
 type Row = LedgerRow & { id: string; party: string | null; note: string | null; auto: boolean; confirmed: boolean; bucket: string | null; receipt_path: string | null };
@@ -30,7 +33,18 @@ export default function LedgerScreen() {
   const [rec, setRec] = useState<Partial<Rec> | null>(null);
   const [msg, setMsg] = useState('');
   const [missing, setMissing] = useState(false);
+  const [range, setRange] = useState<Range>('1m');
+  const [extra, setExtra] = useState<{ ai: { date: string; cost_usd: number }[]; orders: { placed_at: string | null; created_at: string; total: number; supplier_cost: number | null; ship_cost: number | null; product_title: string | null }[]; accounts: { id: string; platform: string; handle: string | null; followers: number | null }[]; snaps: { account_id: string; captured_at: string; followers: number | null }[] }>({ ai: [], orders: [], accounts: [], snaps: [] });
   const load = useCallback(async () => {
+    // Every money source, not just Ledger rows: Claude spend and Shopify sales
+    // never land in biz_ledger, which is why the P&L looked stuck.
+    const [ai, ord, acc, sn] = await Promise.all([
+      supabase.from('ai_cost_ledger').select('date,cost_usd').order('date', { ascending: false }).limit(10000),
+      supabase.from('ecom_orders').select('placed_at,created_at,total,supplier_cost,ship_cost,product_title').limit(5000),
+      supabase.from('social_accounts').select('id,platform,handle,followers'),
+      supabase.from('social_account_snapshots').select('account_id,captured_at,followers').order('captured_at', { ascending: true }).limit(10000),
+    ]);
+    setExtra({ ai: (ai.data ?? []) as never[], orders: (ord.data ?? []) as never[], accounts: (acc.data ?? []) as never[], snaps: (sn.data ?? []) as never[] });
     const [l, i, r, b] = await Promise.all([
       supabase.from('biz_ledger').select('*').order('date', { ascending: false }).limit(2000),
       supabase.from('biz_invoices').select('*').order('issue_date', { ascending: false }).limit(300),
@@ -42,11 +56,18 @@ export default function LedgerScreen() {
     const p = (b.data as { tax_set_aside_pct?: number | null } | null)?.tax_set_aside_pct; if (p != null) setPct(Number(p));
   }, []);
   useEffect(() => { void load(); }, [load]);
+  // Comes back to the tab after a sale or a bot run: show fresh numbers.
+  useEffect(() => { const f = () => { if (document.visibilityState === 'visible') void load(); }; document.addEventListener('visibilitychange', f); return () => document.removeEventListener('visibilitychange', f); }, [load]);
   const year = new Date().getFullYear();
-  const pnl = useMemo(() => monthlyPnl(rows), [rows]);
-  const y = useMemo(() => ytd(rows, year), [rows, year]);
+  const now = useMemo(() => new Date(), [rows, extra]); // eslint-disable-line react-hooks/exhaustive-deps
+  const entries = useMemo(() => toEntries({ ledger: rows, aiCosts: extra.ai, orders: extra.orders }), [rows, extra]);
+  const sum = useMemo(() => summarize(entries, range, now), [entries, range, now]);
+  const growth = useMemo(() => socialGrowth(extra.accounts, extra.snaps, range, now), [extra, range, now]);
+  const rangeLabel = RANGES.find((x) => x.id === range)!.label;
+  // Monthly P&L and the tax estimate use every source too.
+  const pnl = useMemo(() => summarize(entries, 'all', now).buckets.filter((b) => b.income || b.expense).map((b) => ({ month: b.key, income: b.income, expense: b.expense, profit: b.profit })), [entries, now]);
+  const y = useMemo(() => { const yr = pnl.filter((p) => p.month.startsWith(String(year))); const income = yr.reduce((a, p) => a + p.income, 0), expense = yr.reduce((a, p) => a + p.expense, 0); return { income, expense, profit: income - expense }; }, [pnl, year]);
   const unconfirmed = rows.filter((r) => !r.confirmed);
-  const thisMonth = pnl.find((p) => p.month === new Date().toISOString().slice(0, 7));
 
   const saveEntry = async () => {
     if (!entry?.amount_usd || !entry.kind) return;
@@ -79,9 +100,10 @@ export default function LedgerScreen() {
   const list = (kind: 'income' | 'expense') => rows.filter((r) => r.kind === kind);
   return (
     <Page title="Ledger" sub="Business money in and out. Separate from client invoicing." fab={{ t: tab === 'invoices' ? 'Invoice' : tab === 'recurring' ? 'Recurring' : 'Entry', onClick: () => tab === 'invoices' ? setInv({ items: [{ description: '', qty: 1, rate: 0 }] }) : tab === 'recurring' ? setRec({ kind: 'income', day_of_month: 1, active: true }) : setEntry({ kind: tab === 'expenses' ? 'expense' : 'income', date: new Date().toISOString().slice(0, 10), category: tab === 'expenses' ? 'software/tools' : 'Client' }) }} menu={[{ t: 'Export CSV for your accountant', onClick: csv }]}>
+      <Tabs tabs={RANGES} value={range} onChange={setRange} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 10 }}>
-        <Stat label="This month profit" value={usd(thisMonth?.profit ?? 0)} pill={`${usd(thisMonth?.income ?? 0)} in · ${usd(thisMonth?.expense ?? 0)} out`} k={(thisMonth?.profit ?? 0) >= 0 ? 'good' : 'bad'} />
-        <Stat label={`Profit ${year}`} value={usd(y.profit)} pill={`${usd(y.income)} income`} />
+        <Stat label={`Profit · ${rangeLabel}`} value={usd(sum.profit)} pill={`${usd(sum.income)} in · ${usd(sum.expense)} out`} k={sum.profit >= 0 ? 'good' : 'bad'} />
+        <Stat label="Best day" value={sum.bestDay ? usd(sum.bestDay.profit) : '—'} pill={sum.bestDay ? `${sum.bestDay.date} · ${usd(sum.bestDay.income)} in` : 'No sales yet'} k={sum.bestDay ? 'good' : undefined} />
         <Stat label="Set aside for taxes" value={usd(taxSetAside(y.profit, pct))} pill={`${pct}% · estimate`} />
         <Stat label="To confirm" value={String(unconfirmed.length)} k={unconfirmed.length ? 'warn' : undefined} />
       </div>
@@ -94,7 +116,41 @@ export default function LedgerScreen() {
       )}
       {tab === 'overview' && (
         <>
-          <Card title="Monthly P&L">
+          <Card title={sum.bucketBy === 'day' ? 'Money in, day by day' : 'Money in, month by month'} meta={`${rangeLabel} · ${usd(sum.income)} in`}>
+            {sum.income > 0
+              ? <Bars vals={sum.buckets.map((b) => b.income)} labels={sum.buckets.map((b) => b.label)} />
+              : <div style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>No money in for this range yet. Sales, paid invoices and income you log show up here.</div>}
+            {sum.buckets.filter((b) => b.income || b.expense).slice(-14).reverse().map((b, i) => (
+              <div key={b.key} style={{ display: 'grid', gridTemplateColumns: '90px repeat(3,minmax(0,1fr))', gap: 8, padding: '6px 0', borderTop: i ? '1px solid var(--grid)' : 'none', fontSize: 14, fontVariantNumeric: 'tabular-nums' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>{b.label}{sum.bestDay?.date === b.key ? ' ★' : ''}</span><span>+{usd(b.income)}</span><span>−{usd(b.expense)}</span><strong style={{ color: b.profit >= 0 ? 'var(--success)' : 'var(--danger)' }}>{usd(b.profit)}</strong>
+              </div>
+            ))}
+          </Card>
+          <Card title="Where it came from" meta={rangeLabel}>
+            {sum.bySource.length === 0 && <div style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Nothing in this range.</div>}
+            {sum.bySource.map((x, i) => (
+              <div key={x.source} style={{ display: 'flex', gap: 8, padding: '6px 0', borderTop: i ? '1px solid var(--grid)' : 'none', fontSize: 14, fontVariantNumeric: 'tabular-nums' }}>
+                <span style={{ flex: 1 }}>{x.source}</span>{x.income > 0 && <span style={{ color: 'var(--success)' }}>+{usd(x.income)}</span>}{x.expense > 0 && <span style={{ color: 'var(--text-secondary)' }}>−{usd(x.expense)}</span>}
+              </div>
+            ))}
+          </Card>
+          <Card title="Audience growth" meta={rangeLabel}>
+            {growth.length === 0 && <div style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Connect an account in Content → Accounts to track followers here.</div>}
+            {growth.map((g, i) => (
+              <div key={g.id} style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '8px 0', borderTop: i ? '1px solid var(--grid)' : 'none' }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', fontSize: 14 }}>
+                  <span style={{ flex: 1, minWidth: 0 }}>@{g.handle} <span style={{ color: 'var(--text-tertiary)' }}>· {g.platform}</span></span>
+                  <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{g.followersNow != null ? g.followersNow.toLocaleString('en-US') : '—'}</strong>
+                  {g.change != null
+                    ? <Chip k={g.change > 0 ? 'good' : g.change < 0 ? 'bad' : 'neutral'}>{g.change >= 0 ? '+' : ''}{g.change.toLocaleString('en-US')}{g.pct != null ? ` (${g.pct >= 0 ? '+' : ''}${g.pct}%)` : ''}</Chip>
+                    : <Chip k="neutral">tracking started</Chip>}
+                </div>
+                {g.points.length > 2 && <Line vals={g.points} h={60} />}
+              </div>
+            ))}
+            <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>Followers are saved every few hours while an account stays connected; growth shows once there are two readings in the range.</span>
+          </Card>
+          <Card title="Monthly P&L" meta="all sources">
             {pnl.length === 0 && <div style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>No entries yet. Paid invoices, Masterminds subscriptions and approved bot spend land here on their own.</div>}
             {[...pnl].reverse().slice(0, 12).map((p, i) => (
               <div key={p.month} style={{ display: 'grid', gridTemplateColumns: '90px repeat(3,minmax(0,1fr))', gap: 8, padding: '8px 0', borderTop: i ? '1px solid var(--grid)' : 'none', fontSize: 14, fontVariantNumeric: 'tabular-nums' }}>
