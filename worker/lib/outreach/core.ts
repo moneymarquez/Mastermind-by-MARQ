@@ -3,24 +3,58 @@
 export interface OutreachLead { business_name: string; owner_name?: string | null; city?: string | null; category?: string | null }
 export interface FindingLite { kind: string; summary: string; evidence?: Record<string, unknown> }
 
-/** The finding as a short, specific observation and one yes/no question. Text only: no link, video, preview or payment. */
-const OBSERVE: Record<string, (l: OutreachLead, f: FindingLite) => { line: string; ask: string }> = {
-  no_website: (l) => ({ line: `I looked for ${l.business_name} online and couldn't find a website of your own, only listings.`, ask: 'Would a simple site where people can find your hours and call or book you be useful?' }),
-  site_down: (l) => ({ line: `When I tried to open the ${l.business_name} website it didn't load.`, ask: 'Is that something you already know about?' }),
-  no_https: (l) => ({ line: `The ${l.business_name} website shows a "Not secure" warning in browsers.`, ask: 'Would you like that fixed?' }),
-  no_mobile: (l) => ({ line: `On a phone, the ${l.business_name} website shows up tiny because it has no mobile layout.`, ask: 'Is getting it to work on phones something you want sorted?' }),
-  slow_mobile: (l, f) => ({ line: `The ${l.business_name} website scores ${(f.evidence?.pagespeed_mobile as number | undefined) ?? 'low'}/100 for speed on phones, so people may leave before it loads.`, ask: 'Would you want it faster?' }),
-  stale_site: (l, f) => ({ line: `The ${l.business_name} website still says © ${(f.evidence?.copyright_year as number | undefined) ?? 'a few years ago'}, so it looks like nobody's updating it.`, ask: 'Would a refresh be useful?' }),
-  no_cta: (l) => ({ line: `The ${l.business_name} website has no clear button to call, order or book.`, ask: 'Would you want one added?' }),
+/** What a customer of this kind of business is trying to do, so the email talks about their money, not "your website". */
+type Job = 'book' | 'order' | 'quote' | 'visit';
+const JOB_WORDS: [RegExp, Job][] = [
+  [/salon|barber|nail|lash|spa|massage|tattoo|dent|ortho|chiro|therap|optom|vet|gym|yoga|pilates|martial|dance|fitness|trainer|tutor|lesson|daycare|groom|photograph/i, 'book'],
+  [/restaurant|pizza|taco|food|truck|coffee|cafe|bakery|bake|catering|dessert|grill|pub|bar\b|diner|kitchen|burger|sushi|bbq/i, 'order'],
+  [/plumb|hvac|heat|air|electric|roof|landscap|lawn|tree|clean|wash|handyman|paint|floor|remodel|contract|concrete|fenc|garage|pest|pool|junk|mov|appliance|locksmith|solar|auto|mechanic|tire|tow|detail|body shop|repair/i, 'quote'],
+];
+export const jobFor = (category: string | null | undefined): Job => (JOB_WORDS.find(([re]) => re.test(category ?? ''))?.[1] ?? 'visit');
+const WANT: Record<Job, { act: string; who: string }> = {
+  book: { act: 'book an appointment', who: 'new clients' },
+  order: { act: 'see the menu and order', who: 'hungry people nearby' },
+  quote: { act: 'call or ask for a quote', who: 'homeowners searching on their phone' },
+  visit: { act: 'check your hours and find you', who: 'people searching nearby' },
+};
+
+/** "RECHARGE PUB & GRUB" reads like a spreadsheet; "Recharge Pub & Grub" reads like a person typed it. */
+export function tidyName(name: string): string {
+  const t = name.trim().replace(/\s+/g, ' ');
+  if (t !== t.toUpperCase() || !/[A-Z]{3}/.test(t)) return t;
+  return t.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase()).replace(/\b(Llc|Inc|Usa|Hvac)\b/g, (m) => m.toUpperCase());
+}
+const pick = <T,>(seed: string, xs: T[]): T => { let h = 0; for (const c of seed) h = (h * 31 + c.charCodeAt(0)) | 0; return xs[Math.abs(h) % xs.length]; };
+
+/** The finding as one specific observation, what it costs them, and one yes/no question.
+ *  Text only (no link, video, price or payment): plain short emails from a real local person land in the inbox and get answered. */
+const OBSERVE: Record<string, (n: string, w: { act: string; who: string }, f: FindingLite) => { subject: string; line: string; cost: string; ask: string }> = {
+  no_website: (n, w) => ({ subject: `couldn't find ${n}'s website`, line: `I went looking for ${n} on Google and only found listings, no website of your own.`, cost: `When ${w.who} search, the businesses with a site where they can ${w.act} usually get picked first.`, ask: `Would a simple site that does that be worth a quick chat?` }),
+  site_down: (n) => ({ subject: `${n}'s website isn't loading`, line: `I tried to open the ${n} website a couple of times today and it wouldn't load.`, cost: `Anyone who clicks through from Google right now hits a dead end and goes to the next result.`, ask: `Did you already know about it?` }),
+  no_https: (n) => ({ subject: `"Not secure" warning on ${n}'s site`, line: `When I opened the ${n} website, my browser showed a "Not secure" warning before the page.`, cost: `A lot of people back out the second they see that, especially on a phone.`, ask: `Want me to tell you what it takes to clear it?` }),
+  no_mobile: (n, w) => ({ subject: `${n}'s site on a phone`, line: `I pulled up the ${n} website on my phone and it loads as the desktop page shrunk down, so you have to pinch and zoom to read anything.`, cost: `Most people looking to ${w.act} are on their phone, and they rarely stick around to zoom.`, ask: `Is fixing that on your list at all?` }),
+  slow_mobile: (n, w, f) => ({ subject: `${n}'s site is slow on phones`, line: `Google's own speed test gives the ${n} website ${(f.evidence?.pagespeed_mobile as number | undefined) ?? 'a low score'}/100 on phones.`, cost: `Past about three seconds, half of people leave before they ever ${w.act}.`, ask: `Would a faster version be worth looking at?` }),
+  stale_site: (n, _w, f) => ({ subject: `${n}'s website`, line: `The bottom of the ${n} website still says © ${(f.evidence?.copyright_year as number | undefined) ?? 'a few years back'}.`, cost: `Small thing, but customers read it as a sign nobody's minding the shop.`, ask: `Would a refresh be useful this year?` }),
+  no_cta: (n, w) => ({ subject: `quick thing on ${n}'s site`, line: `On the ${n} website I couldn't find an obvious button to ${w.act}.`, cost: `People who can't see the next step usually just leave and try someone else.`, ask: `Want me to show you where one would go?` }),
 };
 export function draftColdEmail(lead: OutreachLead, finding: FindingLite, sender = 'Marq'): { subject: string; body: string } {
-  const o = (OBSERVE[finding.kind] ?? ((_l: OutreachLead, f: FindingLite) => ({ line: f.summary, ask: 'Is that something you want help with?' })))(lead, finding);
-  const hi = lead.owner_name ? `Hi ${lead.owner_name.split(' ')[0]},` : 'Hi,';
+  const n = tidyName(lead.business_name);
+  const w = WANT[jobFor(lead.category)];
+  const o = (OBSERVE[finding.kind] ?? ((_n: string) => ({ subject: `${n}`, line: finding.summary, cost: '', ask: 'Is that something you want help with?' })))(n, w, finding);
+  const first = lead.owner_name?.trim().split(/\s+/)[0];
+  const where = lead.city?.trim() ? `around ${lead.city.trim()}` : 'here in the Salt Lake valley';
+  const intro = pick(n, [
+    `I'm Marq. I build websites for local businesses ${where}.`,
+    `My name's Marq, I'm a web designer based in Sandy and I work with businesses ${where}.`,
+    `Marq here. I'm local, I build sites for small businesses ${where}.`,
+  ]);
   return {
-    subject: `Quick question about ${lead.business_name}`,
-    body: `${hi}\n\n${o.line}\n\n${o.ask} A one-word yes or no is fine.\n\n${sender}\nMade by Marq\n\nIf you'd rather not hear from me, reply "stop" and I won't write again.`,
+    subject: o.subject,
+    body: [first ? `Hi ${first},` : 'Hi there,', intro, `${o.line}${o.cost ? ` ${o.cost}` : ''}`, `${o.ask} A one-word yes or no is fine.`, `${sender}\nMade by Marq · Sandy, UT`, `If you'd rather not hear from me, reply "stop" and I won't write again.`].join('\n\n'),
   };
 }
+/** Drafts written by the first template, safe to rewrite (Marq never edited them). */
+export const isOldTemplate = (body: string | null) => !!body && /^Hi,?[^\n]*\n\n/.test(body) && !/Made by Marq · /.test(body) && /A one-word yes or no is fine\.\n\n\w+\nMade by Marq\n/.test(body);
 export const TEST_TAG = '[TEST]';
 export const testSubject = (s: string) => (s.startsWith(TEST_TAG) ? s : `${TEST_TAG} ${s}`);
 

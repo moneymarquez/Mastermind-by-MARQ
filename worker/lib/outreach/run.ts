@@ -5,7 +5,7 @@ import { MODELS } from '../models';
 import { extractJson } from '../scout';
 import { notifyStored } from '../notify';
 import { isDryRun } from '../dryRun';
-import { callDueDate, callScript, dailyCap, draftColdEmail, looksLikeStop, parseClassification, routeReply, shouldPause, type Classified, type ReplyClass } from './core';
+import { callDueDate, callScript, dailyCap, draftColdEmail, isOldTemplate, looksLikeStop, parseClassification, routeReply, shouldPause, type Classified, type ReplyClass } from './core';
 import { sendMail, type MailEnv } from './mail';
 import { TZ } from '../engines/budget';
 
@@ -19,6 +19,15 @@ const ownerEmail = async (sb: Sb, userId: string) => (await sb.get<{ owner_email
 
 /** Turn the best findings into drafted cold emails (not sent: each waits for Marq's approval). */
 export async function draftOutreach(sb: Sb, userId: string, limit = 10): Promise<number> {
+  // Unsent drafts from the old template get rewritten with the new one (edited ones are left alone).
+  const old = await sb.get<{ id: string; lead_id: string | null; finding_kind: string | null; finding_summary: string | null; body: string | null }>(`lead_outreach?user_id=eq.${userId}&status=eq.drafted&select=id,lead_id,finding_kind,finding_summary,body&limit=200`);
+  for (const o of old.filter((x) => isOldTemplate(x.body) && x.lead_id)) {
+    const [lead] = await sb.get<{ business_name: string; owner_name: string | null; city: string | null; category: string | null }>(`leads?id=eq.${o.lead_id}&select=business_name,owner_name,city,category&limit=1`);
+    const [fd] = await sb.get<{ evidence: Record<string, unknown> }>(`lead_findings?user_id=eq.${userId}&lead_id=eq.${o.lead_id}&kind=eq.${encodeURIComponent(o.finding_kind ?? '')}&select=evidence&limit=1`).catch(() => []);
+    if (!lead) continue;
+    const e = draftColdEmail(lead, { kind: o.finding_kind ?? '', summary: o.finding_summary ?? '', evidence: fd?.evidence });
+    await sb.patch('lead_outreach', `id=eq.${o.id}&status=eq.drafted`, { subject: e.subject, body: e.body }).catch(() => {});
+  }
   const f = await sb.get<{ place_id: string; kind: string; summary: string; score: number; evidence: Record<string, unknown> }>(`lead_findings?user_id=eq.${userId}&kind=neq.checked&order=score.desc&limit=200&select=place_id,kind,summary,score,evidence`);
   const seen = new Set<string>(), top: typeof f = [];
   for (const x of f) if (!seen.has(x.place_id)) { seen.add(x.place_id); top.push(x); }

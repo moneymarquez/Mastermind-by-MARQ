@@ -5,10 +5,27 @@ describe('cold email', () => {
   it('is text only: one finding, one yes/no question, an opt-out, no links or media', () => {
     const e = draftColdEmail({ business_name: "Joe's Pizza", owner_name: 'Joe Smith' }, { kind: 'no_mobile', summary: 'x' });
     expect(e.body).toMatch(/^Hi Joe,/);
-    expect(e.body).toMatch(/no mobile layout/);
+    expect(e.body).toMatch(/pinch and zoom/);
     expect(e.body.match(/\?/g)).toHaveLength(1);
     expect(e.body).toMatch(/reply "stop"/i);
     expect(e.body).not.toMatch(/https?:|www\.|loom|video|preview|\$/i);
+  });
+  it('every finding: one question, no links or prices, local intro, tidy name', () => {
+    for (const kind of ['no_website', 'site_down', 'no_https', 'no_mobile', 'slow_mobile', 'stale_site', 'no_cta']) {
+      for (const category of ['hair_salon', 'restaurant', 'plumber', 'florist']) {
+        const e = draftColdEmail({ business_name: 'RECHARGE PUB & GRUB', city: 'Draper', category }, { kind, summary: 'x', evidence: { pagespeed_mobile: 31, copyright_year: 2019 } });
+        expect(e.body.match(/\?/g)).toHaveLength(1);
+        expect(e.body).not.toMatch(/https?:|www\.|\$/i);
+        expect(e.body).toMatch(/Draper/);
+        expect(e.body).toMatch(/Recharge Pub & Grub/);
+        expect(e.body).not.toMatch(/RECHARGE/);
+      }
+    }
+  });
+  it('talks about what their customers do', () => {
+    expect(draftColdEmail({ business_name: 'Fade Co', category: 'barber_shop' }, { kind: 'no_cta', summary: '' }).body).toMatch(/book an appointment/);
+    expect(draftColdEmail({ business_name: 'Taco Spot', category: 'restaurant' }, { kind: 'no_cta', summary: '' }).body).toMatch(/menu and order/);
+    expect(draftColdEmail({ business_name: 'Drip Fix', category: 'plumber' }, { kind: 'no_cta', summary: '' }).body).toMatch(/quote/);
   });
   it('labels test sends', () => { expect(testSubject('Hello')).toBe('[TEST] Hello'); expect(testSubject('[TEST] Hello')).toBe('[TEST] Hello'); });
 });

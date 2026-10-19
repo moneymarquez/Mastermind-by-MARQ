@@ -15,6 +15,9 @@ export const hasRealWebsite = (w: string | null | undefined) => !!w && w.trim().
 export function gapsFromFacts(lead: Pick<PoolLead, 'website'>, facts: SiteFacts | null, psi: number | null, year = new Date().getFullYear()): Gap[] {
   if (!hasRealWebsite(lead.website)) return [{ kind: 'no_website', tier: 1, severity: 3, text: lead.website ? 'Their only web presence is a social or listing page, not a website of their own.' : 'They have no website.', evidence: { website: lead.website ?? null } }];
   if (!facts) return [];
+  // 401/403/429: the site blocked our checker (bot protection), not a customer.
+  // The page we got is a block page, so nothing about it can be judged.
+  if (facts.status === 401 || facts.status === 403 || facts.status === 429) return [];
   const g: Gap[] = [];
   if (!facts.reachable) g.push({ kind: 'site_down', tier: 2, severity: 3, text: `Their website doesn't load${facts.status ? ` (it answers with error ${facts.status})` : ''}.`, evidence: { url: facts.url, status: facts.status, error: facts.error ?? null } });
   else {
