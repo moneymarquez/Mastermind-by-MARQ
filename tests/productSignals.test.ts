@@ -65,3 +65,13 @@ test('a sign only counts with a real link', () => {
   assert.equal(s.amazon_price, 19.99);
   assert.equal(parseSignals('nope'), undefined);
 });
+
+test('Scout rejects: skincare, fans, vague names', async () => {
+  const { vagueNameReason } = await import('../src/data/ecomCard');
+  for (const n of ['Neck cream with visible lift claim', 'Under-eye patches (gel, cooling)', 'Overnight Toning Whip', 'Portable cooling fan']) assert.ok(hardCategoryReason(n), n);
+  assert.ok(vagueNameReason('Heatless curler or curl-setting tool'));
+  assert.ok(vagueNameReason('Beach gear (e.g., sand-repellent mat)'));
+  assert.equal(vagueNameReason('Rotating makeup organizer'), null);
+  assert.equal(hardCategoryReason('Rotating makeup organizer'), null);
+  assert.equal(hardCategoryReason('Digital timer (compact, countdown display)'), null);
+});

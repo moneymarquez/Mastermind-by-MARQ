@@ -223,3 +223,45 @@ export async function engineRoute(request: Request, env: EngineEnv, path: string
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
 }
+
+// ── Deep checks on the server ──────────────────────────────────────────
+// Scout's finds used to get their Analyst pass one at a time, only while the
+// Approvals tab was open in a browser (/enrich-next), so 10 products took
+// 5–10 minutes and stopped if Marq left the page. The 5-minute timer now does
+// them 4 at a time. Each card is claimed first (pending_enrich: 'working'),
+// so the browser loop, which only picks pending_enrich = true, never runs
+// (and bills) the same card twice.
+const ENRICH_BATCH = 4;
+const ENRICH_BUDGET_MS = 10 * 60000;
+const ENRICH_STALE_MS = 20 * 60000;
+
+type CardRow = { id: string; user_id: string; payload: Record<string, unknown> };
+
+export async function runEnrichTick(env: EngineEnv): Promise<void> {
+  if (!env.ANTHROPIC_API_KEY || !env.SUPABASE_SERVICE_ROLE_KEY) return;
+  const sb = new Sb(env);
+  const started = Date.now();
+  // A tick that died mid-card leaves it "working": put it back in line.
+  const stuck = await sb.get<CardRow>(`ai_approvals?type=eq.product_card&status=eq.pending&payload->>pending_enrich=eq.working&select=id,user_id,payload&limit=50`).catch(() => []);
+  for (const c of stuck) if (Date.now() - Date.parse(String(c.payload.enrich_started_at ?? 0)) > ENRICH_STALE_MS) await sb.patch('ai_approvals', `id=eq.${c.id}`, { payload: { ...c.payload, pending_enrich: true } }).catch(() => {});
+
+  while (Date.now() - started < ENRICH_BUDGET_MS) {
+    const next = await sb.get<CardRow>(`ai_approvals?type=eq.product_card&status=eq.pending&payload->>pending_enrich=eq.true&order=created_at.asc&limit=${ENRICH_BATCH}&select=id,user_id,payload`).catch(() => []);
+    if (!next.length) return;
+    const claimed: CardRow[] = [];
+    for (const c of next) {
+      const got = await sb.patchReturning<CardRow>('ai_approvals', `id=eq.${c.id}&payload->>pending_enrich=eq.true`, { payload: { ...c.payload, pending_enrich: 'working', enrich_started_at: new Date().toISOString() } }).catch(() => []);
+      if (got.length) claimed.push(c);
+    }
+    if (!claimed.length) return;
+    const results = await Promise.all(claimed.map(async (c) => {
+      const r = await enrichOne(env, sb, c.user_id, 'approval', c.id).catch((e) => ({ ok: false, error: String(e), skipped: false }) as { ok: boolean; error?: string; skipped?: boolean });
+      if (r.ok) return r;
+      // Paused by the kill switch: back in line for when it's switched on. Any other failure: shown as "Not found" with the retry button.
+      const [now] = await sb.get<CardRow>(`ai_approvals?id=eq.${c.id}&select=id,user_id,payload`).catch(() => []);
+      if (now) await sb.patch('ai_approvals', `id=eq.${c.id}`, { payload: { ...now.payload, pending_enrich: r.skipped ? true : false } }).catch(() => {});
+      return r;
+    }));
+    if (results.some((r) => r.skipped)) return;
+  }
+}

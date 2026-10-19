@@ -55,12 +55,17 @@ export const AMAZON_UNDERCUT = 0.7;
 export const MIN_FIT_SCORE = 6;
 
 /** The playbook's automatic rejects that Shopify's list doesn't already block. Pure. */
+/** "Heatless curler or curl-setting tool", "beach gear (e.g., …)": a category, not one product. Pure. */
+export function vagueNameReason(name: string): string | null {
+  return /\s(or|and\/or)\s|\be\.g\.|\betc\.?|\bvariant\b|\bvarious\b/i.test(name) ? 'Not one specific product (a category or a list of options).' : null;
+}
+
 export function hardCategoryReason(text: string): string | null {
   const t = ` ${text.toLowerCase()} `;
   const rules: [RegExp, string][] = [
-    [/\b(charger|charging|battery|batteries|power ?bank|power strip|surge protector|extension cord|headset|headphones|earbuds|e-?bike|scooter|space heater|heater|hair dryer|curling iron|vape)\b/, 'Electronics that need certification or carry a fire/safety risk.'],
+    [/\b(charger|charging|battery|batteries|power ?bank|power strip|surge protector|extension cord|headset|headphones|earbuds|e-?bike|scooter|space heater|heater|hair dryer|curling iron|vape|fan|fans|personal ac|air conditioner|humidifier|diffuser)\b/, 'Electronics that need certification or carry a fire/safety risk.'],
     [/\b(shirt|t-shirt|hoodie|dress|pants|leggings|jeans|shoes|sneakers|boots|bra|underwear|ring size|rings?)\b/, 'Has sizing: returns and exchanges eat the margin.'],
-    [/\b(protein|supplement|vitamin|gummies|capsule|serum|retinol|acne|teeth whitening|cat litter|dog food|coffee|tea|snack|candy)\b/, 'Consumable or skin/health product: repeat-purchase commodity or claims risk.'],
+    [/\b(protein|supplement|vitamin|gummies|capsule|serum|retinol|acne|teeth whitening|cat litter|dog food|coffee|tea|snack|candy|cream|creams|lotion|patch|patches|toner|toning|cleanser|moisturi[sz]er|sunscreen|spf|collagen|face mask|sheet mask|eye mask gel|whip|balm|ointment)\b/, 'Consumable or skin/health product: repeat-purchase commodity or claims risk.'],
   ];
   for (const [re, why] of rules) if (re.test(t)) return why;
   return null;

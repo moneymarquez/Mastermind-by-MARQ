@@ -23,7 +23,7 @@ import type { BriefCtx, ProductForAnalysis, LeadLite, LeadTag, Gradable, Analysi
 import { funnelStats } from '../../src/data/mktEngine';
 import type { TouchOutcome, Venture, ScriptChannel } from '../../src/data/mktEngine';
 import { landedCost, marginPct } from '../../src/data/ecomProducts';
-import { cardView } from '../../src/data/ecomCard';
+import { cardView, hardCategoryReason, vagueNameReason } from '../../src/data/ecomCard';
 import { trendSystem, trendUser, parseTrends, ideaSystem, ideaUser, parseIdeas, scriptBody, gradeMeasured, auditSystem, auditUser, parseAudit, analyticsSystem, analyticsUser, parseGrades, bestHours, plannerSystem as postPlannerSystem, plannerUser as postPlannerUser, parseSlots, clipSystem, clipUser, parseClipEdit, cleanSegments } from './contentWorkers';
 import { supplierSystem, supplierUser, parseSuppliers, brandSystem, brandUser, parseBrands, domainStatusFrom, storeSystem, storeUser, extractHtml, qualityGate, diagnoseFunnel, readSystem, parseRead } from './ecomWorkers';
 import type { BrandCtx, SupplierPayload, BrandOption } from './ecomWorkers';
@@ -212,10 +212,13 @@ export function runScout(apiKey: string | undefined, sb: Sb, userId: string, inp
       const rows: ImportRow[] = parsed.rows;
       const known = new Set((await sb.get<{ name: string }>(`ecom_products?user_id=eq.${userId}&channel=eq.${channel}&select=name`)).map((p) => p.name.trim().toLowerCase()));
       const waiting = new Set((await sb.get<{ title: string }>(`ai_approvals?user_id=eq.${userId}&type=eq.product_card&status=eq.pending&select=title`)).map((a) => a.title.trim().toLowerCase()));
-      let made = 0, blocked = 0, skipped = 0;
+      let made = 0, blocked = 0, skipped = 0, rejected = 0;
       for (const row of rows) {
         const title = `Product: ${row.name}`.slice(0, 300);
         if (known.has(row.name.trim().toLowerCase()) || waiting.has(title.toLowerCase())) { skipped++; continue; }
+        // The playbook's automatic rejects never reach Marq as cards: enforced in code, not left to the model.
+        const reject = hardCategoryReason(`${row.name} ${row.category ?? ''}`) ?? vagueNameReason(row.name);
+        if (reject) { parsed.dropped.push(`${row.name}: ${reject}`); rejected++; continue; }
         const v = cardView({ ...row, detail: row.detail, source_url: row.source_url ?? null } as never);
         if (v.blocked) blocked++;
         await sb.insert('ai_approvals', { user_id: userId, domain: ctx.domain, type: 'product_card', entity_type: 'product', entity_id: ctx.runId, worker_id: ctx.w.id, run_id: ctx.runId, title: `${title} — ${v.verdict}`.slice(0, 300), payload: { channel, row, verdict: v.verdict, summary: v.verdictWhy, instructions: input.instructions ?? null, pending_enrich: !v.blocked }, principle: row.detail.principle ?? null, source_url: row.source_url ?? null, confidence: row.confidence ?? 'estimate', is_money: false });
@@ -223,7 +226,7 @@ export function runScout(apiKey: string | undefined, sb: Sb, userId: string, inp
       }
       // One push per Scout batch, not one per product.
       if (made > blocked) await notifyStored(sb, userId, 'product_pitch', { title: `${made - blocked} new product${made - blocked === 1 ? '' : 's'} to review`, body: parsed.summary?.slice(0, 160) || undefined, deepLink: 'today' });
-      return { summary: `${parsed.summary || `${rows.length} products`} ${made} in Approvals${blocked ? ` (${blocked} blocked)` : ''}${skipped ? `, ${skipped} already known` : ''}.`.trim(), count: made, dropped: parsed.dropped, output: { channel, made, blocked, skipped } };
+      return { summary: `${parsed.summary || `${rows.length} products`} ${made} in Approvals${blocked ? ` (${blocked} blocked)` : ''}${skipped ? `, ${skipped} already known` : ''}${rejected ? `, ${rejected} auto-rejected` : ''}.`.trim(), count: made, dropped: parsed.dropped, output: { channel, made, rejected, blocked, skipped } };
     },
   });
 }
