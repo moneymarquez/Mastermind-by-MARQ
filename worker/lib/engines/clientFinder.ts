@@ -48,7 +48,13 @@ export const CATEGORIES = [
 ];
 /** Where it searches when you haven't set areas: the Salt Lake valley and Utah County. */
 export const DEFAULT_AREAS = ['Sandy, UT', 'Draper, UT', 'South Jordan, UT', 'West Jordan, UT', 'Riverton, UT', 'Herriman, UT', 'Murray, UT', 'Midvale, UT', 'Cottonwood Heights, UT', 'Holladay, UT', 'Millcreek, UT', 'Salt Lake City, UT', 'Taylorsville, UT', 'West Valley City, UT', 'Bluffdale, UT', 'Lehi, UT', 'American Fork, UT', 'Orem, UT', 'Provo, UT', 'Saratoga Springs, UT', 'Eagle Mountain, UT', 'Pleasant Grove, UT', 'Springville, UT', 'Bountiful, UT', 'Layton, UT', 'Ogden, UT', 'Park City, UT'];
-export const nextSearch = (idx: number, areas: string[], cats = CATEGORIES) => ({ query: cats[idx % cats.length], area: areas[Math.floor(idx / cats.length) % areas.length], next: idx + 1 });
+/** Industry and city both step every search, so a night spreads across the valley
+ *  instead of 59 searches in one city. With co-prime list lengths (59 x 27) every
+ *  pair comes up once before any repeats; otherwise it shifts a step each lap. */
+export const nextSearch = (idx: number, areas: string[], cats = CATEGORIES) => {
+  const lap = Math.floor(idx / (cats.length * areas.length));
+  return { query: cats[idx % cats.length], area: areas[(idx + lap) % areas.length], next: idx + 1 };
+};
 
 export interface FinderDeps { sb: Sb; userId: string; env: HarvestEnv; fetchImpl?: typeof fetch; now?: () => number }
 export interface FinderResult { ok: boolean; summary: string; checked: number; found: number; spent: number; paused: string | null }

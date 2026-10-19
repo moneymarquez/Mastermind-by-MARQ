@@ -28,6 +28,9 @@ describe('Client Finder gaps', () => {
   });
   it('rotates through category and area', () => {
     expect(nextSearch(0, ['Denver, CO', 'Aurora, CO']).query).toBe('restaurant');
-    expect(nextSearch(10, ['Denver, CO', 'Aurora, CO'])).toMatchObject({ query: 'restaurant', area: 'Aurora, CO' });
+    expect(nextSearch(1, ['Denver, CO', 'Aurora, CO'])).toMatchObject({ query: 'plumber', area: 'Aurora, CO' });
+    // Every industry/city pair comes up before any repeats.
+    const seen = new Set(Array.from({ length: 59 * 27 }, (_, i) => { const s = nextSearch(i, Array.from({ length: 27 }, (_, k) => `c${k}`)); return `${s.query}|${s.area}`; }));
+    expect(seen.size).toBe(59 * 27);
   });
 });
