@@ -43,7 +43,46 @@ export function useWorkers(domain: Domain) {
 
 export interface RunResult { ok: boolean; runId?: string; approvalId?: string; summary?: string; count?: number; dropped?: string[]; costUsd?: number; searches?: number; error?: string; capReached?: boolean }
 export interface RunRes extends RunResult { skipped?: boolean }
-export const runScout = (channel: string, count: number, instructions?: string) => api<RunRes>('/api/engine/run', { body: { worker: 'scout', channel, count, instructions } });
+export const runScout = (channel: string, count: number, instructions?: string) => api<RunRes & { job?: ScoutJob; already?: boolean }>('/api/engine/scout', { body: { channel, count, instructions } });
+
+/** A Product Scout run kept on the server: it keeps going when you leave the page. */
+export interface ScoutJob { id: string; status: 'routed' | 'running' | 'done' | 'failed'; body: string; note: string | null; created_at: string; updated_at: string }
+export interface ScoutState { job: ScoutJob | null; searching: boolean; count: number | null; error: string | null; finishedAt: string | null }
+const readNote = (n: string | null): { count?: number; error?: string } => { try { return JSON.parse(n ?? '{}'); } catch { return {}; } };
+export function scoutState(job: ScoutJob | null): ScoutState {
+  if (!job) return { job, searching: false, count: null, error: null, finishedAt: null };
+  const note = readNote(job.note);
+  const searching = job.status === 'routed' || job.status === 'running';
+  return { job, searching, count: job.status === 'done' ? Number(note.count ?? 0) : null, error: job.status === 'failed' ? note.error ?? 'Scout failed.' : null, finishedAt: searching ? null : job.updated_at };
+}
+
+/** The latest Scout run, re-read every 8 seconds while it's searching, so
+ *  any screen can show "Scout is searching…" and then what it found. */
+export function useScoutJob() {
+  const [job, setJob] = useState<ScoutJob | null>(null);
+  const [starting, setStarting] = useState(false);
+  const load = useCallback(async () => {
+    const r = await api<{ job: ScoutJob | null }>('/api/engine/scout', { method: 'GET' });
+    if (!r.error) setJob(r.job ?? null);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+  const state = scoutState(job);
+  useEffect(() => {
+    if (!state.searching && !starting) return;
+    const t = setInterval(load, 8000);
+    return () => clearInterval(t);
+  }, [state.searching, starting, load]);
+  const start = useCallback(async (channel: string, count = 10) => {
+    setStarting(true);
+    // Show "searching" right away; the request itself runs the whole search.
+    setJob({ id: 'pending', status: 'running', body: `scout:${channel}`, note: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+    const r = await runScout(channel, count);
+    setStarting(false);
+    if (r.job) setJob(r.job); else await load();
+    return r;
+  }, [load]);
+  return { ...state, searching: state.searching || starting, start, reload: load };
+}
 /** Any live worker: body carries what that worker needs (product_id,
  *  venture, script_channel, all…). */
 /** "Publish again" on one post (one attempt), or post whatever is due. */

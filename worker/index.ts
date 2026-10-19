@@ -32,6 +32,7 @@ import type { ShiftReminderEnv } from './handlers/shift-reminders';
 import { runDailyPlan, dailyPlanToday } from './handlers/daily-plan';
 import type { DailyPlanEnv } from './handlers/daily-plan';
 import { runFollowUpsTick } from './lib/followups';
+import { runScoutTick } from './lib/scoutJobs';
 import { runEnrichTick } from './handlers/engine';
 import { leadflowLeads, leadflowLeadUpdate, leadflowLeadsBulk, leadflowHistory, leadflowMessages, leadflowAiReport, leadflowFind, leadflowFindNext, leadflowCities } from './handlers/leadflow';
 import type { LeadflowEnv } from './handlers/leadflow';
@@ -230,6 +231,7 @@ export default {
       run(runOrchestratorTick(env));
       if (env.SUPABASE_SERVICE_ROLE_KEY) run(runFollowUpsTick(env.ANTHROPIC_API_KEY, new SbClient(env)).catch((e) => console.error('follow-ups tick', e)));
       run(runEnrichTick(env as never).catch((e) => console.error('enrich tick', e)));
+      if (env.SUPABASE_SERVICE_ROLE_KEY) run(runScoutTick(env.ANTHROPIC_API_KEY, new SbClient(env)).catch((e) => console.error('scout tick', e)));
       run(runInboundWaitCheck(env));
       run(runPublisherTick(env));
       run(runFlagsTick(env));

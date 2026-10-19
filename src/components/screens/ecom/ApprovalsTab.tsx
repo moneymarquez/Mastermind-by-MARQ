@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { useApprovals, Approval } from '../../../data/useEcom';
-import { decideApproval } from '../../../data/useEngine';
+import { decideApproval, useScoutJob } from '../../../data/useEngine';
 import Thumbs from '../../mm/Thumbs';
 import { api } from '../../../lib/api';
 import { api as callApi } from '../../../lib/api';
@@ -25,6 +25,9 @@ export default function ApprovalsTab({ api, onDecided }: { api: ReturnType<typeo
   const waiting = pending.filter((a) => a.type === 'product_card' && a.payload.pending_enrich === true).length;
   // The server also checks finds 4 at a time ('working'); refresh so finished cards unlock without a reload.
   const checking = pending.filter((a) => a.type === 'product_card' && (a.payload.pending_enrich === true || a.payload.pending_enrich === 'working')).length;
+  const scout = useScoutJob();
+  // When a Scout run finishes, its new cards appear without a manual refresh.
+  useEffect(() => { if (!scout.searching && scout.finishedAt) void reloadRef.current(); }, [scout.searching, scout.finishedAt]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!checking) return;
     const t = setInterval(() => { void reloadRef.current(); }, 15000);
@@ -51,6 +54,7 @@ export default function ApprovalsTab({ api, onDecided }: { api: ReturnType<typeo
   }, [waiting > 0]);
   return (
     <div>
+      {scout.searching && <div role="status" style={{ ...E.card, padding: 10, marginBottom: 10, fontSize: 'var(--text-body)', color: E.muted }}>Product Scout is searching for new products (1–3 minutes). It keeps going if you leave or close the app; new finds show up here.</div>}
       {(checking > 0 || filling) && <div role="status" style={{ ...E.card, padding: 10, marginBottom: 10, fontSize: 'var(--text-body)', color: E.muted }}>Checking {checking} new find{checking === 1 ? '' : 's'}: supplier cost, sellers, shipping, Amazon and traction. About a minute each, 4 at a time, and it keeps going if you leave. Each card unlocks <strong>Approve to test</strong> when its numbers are in.</div>}
       {toast && <div style={{ ...E.card, padding: 10, marginBottom: 10, borderColor: E.green, color: E.text, fontSize: 'var(--text-body)' }}>{toast}</div>}
       {!api.loading && pending.length === 0 && (

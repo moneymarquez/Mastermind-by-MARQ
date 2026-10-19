@@ -10,7 +10,7 @@ import RichProductCard from './RichProductCard';
 import { cardView } from '../../../data/ecomCard';
 import CsvImportDrawer from './CsvImportDrawer';
 import { api as callApi } from '../../../lib/api';
-import { runScout } from '../../../data/useEngine';
+import { useScoutJob } from '../../../data/useEngine';
 
 interface Props {
   search: string;
@@ -24,8 +24,8 @@ interface Props {
  *  pictures (table is the optional toggle), the drawer with every section,
  *  CSV import as the v1 source adapter. */
 export default function ProductSheetsTab({ search, onBuildBrand, statusOf, onOpenApprovals }: Props) {
-  const [scouting, setScouting] = useState(false);
-  const [scoutMsg, setScoutMsg] = useState('');
+  const scout = useScoutJob();
+  const scoutMsg = scout.searching ? '' : scout.error ?? (scout.count != null && scout.finishedAt && Date.now() - Date.parse(scout.finishedAt) < 6 * 3600000 ? `Scout found ${scout.count}.` : '');
   const api = useEcomProducts();
   const [channel, setChannel] = useState<Channel>('tiktok');
   const [filters, setFilters] = useState<SheetFilters>(DEFAULT_FILTERS);
@@ -96,7 +96,8 @@ export default function ProductSheetsTab({ search, onBuildBrand, statusOf, onOpe
         <div style={{ marginTop: 14 }}>
           <TeachingEmpty what={`No ${CHANNELS.find((c) => c.id === channel)?.label} products yet.`} worker="Product Scout (web search over public pages; FastMoss / Jungle Scout later) — or a CSV from any tool" connection="Anthropic key (Setup)"
             action={<div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <button style={btn('primary')} disabled={scouting} onClick={async () => { setScouting(true); setScoutMsg(''); const r = await runScout(channel, 10); setScouting(false); setScoutMsg(r.ok ? `Scout found ${r.count}.` : r.error ?? 'Scout failed.'); }}>{scouting ? 'Scouting… (30–90s)' : 'Run Product Scout'}</button>
+              <button style={btn('primary')} disabled={scout.searching} onClick={() => { void scout.start(channel, 10); }}>{scout.searching ? 'Scout is searching… (1–3 min)' : 'Run Product Scout'}</button>
+              {scout.searching && <span style={{ fontSize: 'var(--text-caption)', color: E.faint }}>Keeps going if you leave this page or close the app. New finds land in Approvals.</span>}
               <button style={btn('ghost')} onClick={() => setImportOpen(true)}>Import a CSV</button>
               {scoutMsg && <span style={{ fontSize: 'var(--text-caption)', color: scoutMsg.startsWith('Scout found') ? E.green : E.red }}>{scoutMsg}{scoutMsg.startsWith('Scout found') && onOpenApprovals && <> <button type="button" onClick={onOpenApprovals} style={{ background: 'none', border: 0, padding: 0, color: E.blue, textDecoration: 'underline', cursor: 'pointer', font: 'inherit' }}>Review them in Approvals →</button></>}</span>}
             </div>} />

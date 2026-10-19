@@ -15,6 +15,7 @@ import type { PublishEnv } from '../lib/publisher';
 import { runLauncher } from '../lib/launcher';
 import { rejectPitch, runProductPitch, testProduct } from '../lib/ecomOctober';
 import { queueBrandFollowUp } from '../lib/followups';
+import { queueScout, latestScout, runScoutJob } from '../lib/scoutJobs';
 import type { Venture, ScriptChannel } from '../../src/data/mktEngine';
 import type { Channel } from '../../src/data/ecom';
 import { PLAYBOOK_MAX_CHARS } from '../../src/data/ecom';
@@ -71,6 +72,19 @@ export async function engineRoute(request: Request, env: EngineEnv, path: string
       const workers = await sb.get(`ai_workers?user_id=eq.${user.id}&order=domain.asc&select=*`);
       const spend = await Promise.all(ENGINE_DOMAINS.map(async (d) => ({ domain: d, spent: await spentToday(sb, user.id, d, date), cap: await capFor(sb, user.id, d) })));
       return json({ workers, spend, anthropic: !!env.ANTHROPIC_API_KEY, date });
+    }
+    // Product Scout as a job: GET = the latest one (any screen shows its
+    // state), POST = queue it and run it now. Leaving the page doesn't stop
+    // it; if the app closes mid-run, the 5-minute timer finishes it.
+    if (path === 'scout') {
+      if (request.method === 'GET') return json({ job: await latestScout(sb, user.id) });
+      const b = await body<{ channel?: string; count?: number; instructions?: string }>(request);
+      const channel = CHANNELS.includes(b?.channel as Channel) ? (b!.channel as Channel) : 'tiktok';
+      const count = Math.max(1, Math.min(20, Math.floor(Number(b?.count) || 10)));
+      const { job, fresh } = await queueScout(sb, user.id, { channel, count, instructions: b?.instructions?.slice(0, PLAYBOOK_MAX_CHARS) || null });
+      if (!fresh) return json({ ok: true, job, already: true });
+      const r = await runScoutJob(env.ANTHROPIC_API_KEY, sb, user.id, job.id);
+      return json({ ...(r ?? { ok: true }), job: await latestScout(sb, user.id) });
     }
     if (path === 'run') {
       const b = await body<{ worker?: string; channel?: string; count?: number; product_id?: string; venture?: string; script_channel?: string; all?: boolean; account_id?: string; clip_id?: string; brand_id?: string; instructions?: string }>(request);
