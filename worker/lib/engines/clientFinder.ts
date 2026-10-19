@@ -37,7 +37,17 @@ export function rankLead(lead: Pick<PoolLead, 'rating' | 'review_count' | 'is_ch
   return Math.min(100, Math.round(health + one + top.severity * 3 + (top.tier === 1 ? 6 : 0)));
 }
 
-export const CATEGORIES = ['restaurant', 'plumber', 'HVAC contractor', 'hair salon', 'barber shop', 'auto repair', 'landscaping', 'dentist', 'house cleaning', 'roofing contractor'];
+/** What the overnight search cycles through: local businesses that buy websites. */
+export const CATEGORIES = [
+  'restaurant', 'plumber', 'HVAC contractor', 'hair salon', 'barber shop', 'auto repair', 'landscaping', 'dentist', 'house cleaning', 'roofing contractor',
+  'electrician', 'food truck', 'coffee shop', 'bakery', 'nail salon', 'med spa', 'chiropractor', 'auto detailing', 'pest control', 'handyman',
+  'painter', 'flooring', 'remodeling contractor', 'concrete contractor', 'fencing', 'garage door repair', 'tree service', 'carpet cleaning', 'pressure washing',
+  'window cleaning', 'junk removal', 'moving company', 'appliance repair', 'locksmith', 'tire shop', 'auto body shop', 'towing', 'catering', 'pizza',
+  'lash studio', 'tattoo shop', 'massage therapist', 'physical therapy', 'veterinarian', 'gym', 'yoga studio', 'martial arts', 'dance studio',
+  'photographer', 'florist', 'jewelry store', 'retail boutique', 'pet grooming', 'dog trainer', 'daycare', 'tutoring', 'music lessons', 'insurance agency', 'accountant',
+];
+/** Where it searches when you haven't set areas: the Salt Lake valley and Utah County. */
+export const DEFAULT_AREAS = ['Sandy, UT', 'Draper, UT', 'South Jordan, UT', 'West Jordan, UT', 'Riverton, UT', 'Herriman, UT', 'Murray, UT', 'Midvale, UT', 'Cottonwood Heights, UT', 'Holladay, UT', 'Millcreek, UT', 'Salt Lake City, UT', 'Taylorsville, UT', 'West Valley City, UT', 'Bluffdale, UT', 'Lehi, UT', 'American Fork, UT', 'Orem, UT', 'Provo, UT', 'Saratoga Springs, UT', 'Eagle Mountain, UT', 'Pleasant Grove, UT', 'Springville, UT', 'Bountiful, UT', 'Layton, UT', 'Ogden, UT', 'Park City, UT'];
 export const nextSearch = (idx: number, areas: string[], cats = CATEGORIES) => ({ query: cats[idx % cats.length], area: areas[Math.floor(idx / cats.length) % areas.length], next: idx + 1 });
 
 export interface FinderDeps { sb: Sb; userId: string; env: HarvestEnv; fetchImpl?: typeof fetch; now?: () => number }
@@ -69,7 +79,7 @@ export async function runClientFinder(d: FinderDeps, opts: { manual?: boolean } 
   if (!leads.length) {
     const ok = await mayCharge(sb, userId, state, PLACES_RESERVE);
     if (!ok.ok) { const s = `Pool used up; ${ok.reason}`; await saveEngine(sb, userId, 'client_finder', { last_run_at: new Date().toISOString(), last_summary: s, config: { ...cfg, day } }); return fail(s, ok.reason.startsWith('Paused') ? ok.reason : null); }
-    const areas = ((cfg.areas as string[] | undefined)?.length ? (cfg.areas as string[]) : ['Sandy, UT', 'Draper, UT', 'South Jordan, UT', 'West Jordan, UT', 'Riverton, UT', 'Murray, UT', 'Midvale, UT', 'Cottonwood Heights, UT']);
+    const areas = ((cfg.areas as string[] | undefined)?.length ? (cfg.areas as string[]) : DEFAULT_AREAS);
     const s = nextSearch(Number(cfg.search_idx ?? 0), areas);
     cfg.search_idx = s.next;
     const res = await harvest({ purpose: 'client_finder', source: 'googlePlaces', query: s.query, area: s.area, limit: 40, budget_usd: room, engine: 'client_finder' }, ctx);

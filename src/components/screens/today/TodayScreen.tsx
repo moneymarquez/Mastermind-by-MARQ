@@ -58,6 +58,13 @@ export default function TodayScreen() {
         <Stat label="Posts due today" value={String(t.posts.length)} pill="Content" k={t.posts.length ? 'warn' : 'neutral'} onClick={() => nav('content-plan')} />
       </div>
 
+      {t.overnight.places > 0 && (
+        <Card title="Found overnight" meta="Client Finder" action={<button className="mm-btn mm-btn--primary" style={{ height: 36 }} onClick={() => nav('lead-engines')}>See them</button>}>
+          <span style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            <strong style={{ color: 'var(--text)' }}>{t.overnight.places} business{t.overnight.places === 1 ? '' : 'es'}</strong> with website problems: {t.overnight.noSite} with no website at all, {t.overnight.places - t.overnight.noSite} with a broken or weak one. Ranked best first, ready to call.
+          </span>
+        </Card>
+      )}
       <Card title="Calling hour" meta={`${pct}% of today's goal`} action={<button className="mm-btn mm-btn--primary" style={{ height: 36 }} onClick={() => nav('leadflow')}>{callsToday ? 'Keep calling' : 'Start calling'}</button>}>
         <div style={{ height: 8, borderRadius: 999, background: 'var(--surface-3)', overflow: 'hidden' }}>
           <div style={{ width: `${pct}%`, height: '100%', background: callsLeft ? 'var(--accent)' : 'var(--success)' }} />

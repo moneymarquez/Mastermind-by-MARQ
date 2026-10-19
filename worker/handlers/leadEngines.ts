@@ -15,6 +15,7 @@ import { ENGINE_DEFAULTS, loadState, saveEngine, TZ, type EngineId } from '../li
 import { runClientFinder } from '../lib/engines/clientFinder';
 import { runComplaintScanner } from '../lib/engines/complaintScanner';
 import { DAILY_START_MIN, DAILY_END_MIN } from '../lib/orchestrator';
+import { notifyStored } from '../lib/notify';
 
 export type EnginesEnv = SbEnv & { VITE_SUPABASE_ANON_KEY: string; ANTHROPIC_API_KEY?: string; PARALLEL_API_KEY?: string; GOOGLE_PLACES_API_KEY?: string };
 const ENGINES: EngineId[] = ['client_finder', 'complaint_scanner'];
@@ -104,6 +105,8 @@ export async function leadEnginesRoute(request: Request, env: EnginesEnv, path: 
 /** Every 5 minutes: inside the overnight window, each user with an engine switched on gets one batch of work. */
 export async function runEnginesTick(env: EnginesEnv, sb: Sb, now = new Date()): Promise<number> {
   const z = zonedNow(TZ, now);
+  // Just after the night window closes: one push with what was found overnight.
+  if (z.minutes >= DAILY_END_MIN && z.minutes < DAILY_END_MIN + 20) await morningReport(sb, z.date).catch((e) => console.error('engines morning', e));
   if (z.minutes < DAILY_START_MIN || z.minutes >= DAILY_END_MIN) return 0;
   const rows = await sb.get<{ user_id: string; engine: EngineId }>('lead_engines?enabled=eq.true&select=user_id,engine&limit=50').catch(() => []);
   let n = 0;
@@ -115,4 +118,23 @@ export async function runEnginesTick(env: EnginesEnv, sb: Sb, now = new Date()):
     } catch (e) { console.error('engines tick', r.engine, e); }
   }
   return n;
+}
+
+/** Once a morning: "Client Finder found N businesses with website problems overnight." */
+async function morningReport(sb: Sb, today: string): Promise<void> {
+  const rows = await sb.get<{ user_id: string; config: Record<string, unknown> }>('lead_engines?engine=eq.client_finder&enabled=eq.true&select=user_id,config&limit=50');
+  for (const r of rows) {
+    if (r.config?.morning_sent === today) continue;
+    await saveEngine(sb, r.user_id, 'client_finder', { config: { ...r.config, morning_sent: today } });
+    const since = new Date(Date.now() - 14 * 3600000).toISOString();
+    const f = await sb.get<{ place_id: string; kind: string }>(`lead_findings?user_id=eq.${r.user_id}&kind=neq.checked&created_at=gte.${since}&select=place_id,kind&limit=5000`);
+    const places = new Set(f.map((x) => x.place_id)).size;
+    if (!places) continue;
+    const noSite = new Set(f.filter((x) => x.kind === 'no_website').map((x) => x.place_id)).size;
+    await notifyStored(sb, r.user_id, 'hq_report', {
+      title: `Overnight: ${places} business${places === 1 ? '' : 'es'} with website problems`,
+      body: `${noSite} with no website at all, ${places - noSite} with a broken or weak one. Ranked and ready to call.`,
+      deepLink: 'lead-engines',
+    });
+  }
 }

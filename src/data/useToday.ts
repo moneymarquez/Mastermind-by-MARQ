@@ -16,6 +16,8 @@ export function useToday() {
   const [posts, setPosts] = useState<TodayPost[]>([]);
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
+  // Client Finder's overnight work: businesses with a website problem, last 14 hours.
+  const [overnight, setOvernight] = useState<{ places: number; noSite: number }>({ places: 0, noSite: 0 });
 
   const load = useCallback(async () => {
     const today = dateStr(new Date());
@@ -34,9 +36,13 @@ export function useToday() {
     setFlags((f.data ?? []) as TodayFlag[]);
     setPosts((p.data ?? []) as TodayPost[]);
     setBoard(moneyBoard({ orders: (o.data ?? []) as never[], invoices: (i.data ?? []) as never[], ledgerIncome: (l.data ?? []) as never[], spend: (s.data ?? []) as never[] }));
+    const since = new Date(Date.now() - 14 * 3600000).toISOString();
+    const gf = await supabase.from('lead_findings').select('place_id,kind').neq('kind', 'checked').gte('created_at', since).limit(5000);
+    const rows = (gf.data ?? []) as { place_id: string; kind: string }[];
+    setOvernight({ places: new Set(rows.map((r) => r.place_id)).size, noSite: new Set(rows.filter((r) => r.kind === 'no_website').map((r) => r.place_id)).size });
     setLoading(false);
   }, []);
 
   useEffect(() => { void load(); }, [load]);
-  return { approvals, flags, posts, board, loading, reload: load };
+  return { approvals, flags, posts, board, overnight, loading, reload: load };
 }
