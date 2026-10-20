@@ -16,12 +16,24 @@ export type GovconEnv = SbEnv & { VITE_SUPABASE_ANON_KEY: string; ANTHROPIC_API_
 const TZ = 'America/Denver';
 const DOMAIN = 'govcon';
 
+/** USAspending sits behind Cloudflare; its 5xx answers (520–527 are Cloudflare
+ *  failing to reach the government server) are usually brief, so try a few times. */
+async function postWithRetry(b: Record<string, unknown>, tries = 3): Promise<Response | null> {
+  let last: Response | null = null;
+  for (let i = 0; i < tries; i++) {
+    last = await fetch(USASPENDING, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json', 'user-agent': 'MastermindsByMarq/1.0 (govcon briefing)' }, body: JSON.stringify(b) }).catch(() => null);
+    if (last && last.status < 500) return last;
+    if (i < tries - 1) await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+  }
+  return last;
+}
+
 async function fetchAwards(body: Record<string, unknown>): Promise<{ awards: Award[]; error?: string }> {
-  const go = (b: Record<string, unknown>) => fetch(USASPENDING, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(b) });
-  let res = await go(body).catch(() => null);
+  let res = await postWithRetry(body);
   // A field name the API no longer accepts: ask again with the basics.
-  if (res && res.status >= 400 && res.status < 500) res = await go({ ...body, fields: AWARD_FIELDS_MIN }).catch(() => null);
-  if (!res) return { awards: [], error: "Couldn't reach USAspending.gov." };
+  if (res && res.status >= 400 && res.status < 500) res = await postWithRetry({ ...body, fields: AWARD_FIELDS_MIN }, 1);
+  if (!res) return { awards: [], error: "Couldn't reach USAspending.gov. Try again in a few minutes." };
+  if (res.status >= 520 && res.status <= 527) return { awards: [], error: `USAspending.gov is having trouble right now (Cloudflare error ${res.status} between it and the government server). Nothing was charged. Try again in a few minutes.` };
   if (!res.ok) return { awards: [], error: `USAspending.gov answered ${res.status}: ${(await res.text()).slice(0, 200)}` };
   const data = (await res.json()) as { results?: Record<string, unknown>[] };
   return { awards: (data.results ?? []).map(toAward).filter((a): a is Award => !!a) };
@@ -46,10 +58,8 @@ export async function govconRoute(request: Request, env: GovconEnv, path: string
       const keywords = settings?.keywords ?? [];
       const n = Math.max(1, Math.min(5, settings?.per_day ?? 3));
       const now = new Date();
-      const [local, national] = await Promise.all([
-        fetchAwards(awardsQuery({ now, states, keywords })),
-        fetchAwards(awardsQuery({ now, keywords })),
-      ]);
+      const local = await fetchAwards(awardsQuery({ now, states, keywords }));
+      const national = await fetchAwards(awardsQuery({ now, keywords }));
       if (!local.awards.length && !national.awards.length) return json({ error: local.error ?? national.error ?? 'No new contracts found for your watch list. Try fewer keywords.' }, 502);
       const seenRows = await sb.get<{ award_id: string }>(`gov_contracts?user_id=eq.${uid}&select=award_id&limit=5000`);
       const picks = pickAwards(local.awards, national.awards, new Set(seenRows.map((r) => r.award_id)), n);
