@@ -10,6 +10,7 @@ export type Screen =
   | 'contracts'
   | 'ledger'
   | 'classroom'
+  | 'govcon'
   | 'feed'
   | 'peptides'
   | 'money-move'

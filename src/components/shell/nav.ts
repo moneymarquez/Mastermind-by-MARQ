@@ -10,7 +10,7 @@ import type { PortalKey } from '../../portals.config';
 export interface ShellItem { id: string; label: string; glyph: string; locked?: boolean }
 export interface ShellGroup { title: string; items: ShellItem[]; owner?: boolean }
 
-export const SHELL_GROUPS = ['Overview', 'Command', 'Financial', 'Growth', 'Personal', 'Cold Calling', 'Clients', 'Scaling', 'Side Hustles', 'Content', 'E-commerce'] as const;
+export const SHELL_GROUPS = ['Overview', 'Command', 'Financial', 'Growth', 'GovCon', 'Personal', 'Cold Calling', 'Clients', 'Scaling', 'Side Hustles', 'Content', 'E-commerce'] as const;
 const SKIP = new Set(['home', 'settings', 'codelab']);
 
 /** Two-letter module glyph: "Daily Plan" → DP, "Sobriety" → SO. */
@@ -24,7 +24,7 @@ export function glyphFor(label: string): string {
  *  Made by is Scaling, the A-to-Z delivery path starting at Start. */
 /** Orchestrator's sidebar: the overview, then how the system runs (Command),
  *  the money (Financial), and what brings people in (Growth). */
-const ORCH_GROUP: Record<string, string> = { orchestrator: 'Overview', hq: 'Command', classroom: 'Command', 'ecom-office': 'Command', ledger: 'Financial', contracts: 'Financial', coupons: 'Financial', waitlist: 'Growth', marketing: 'Growth' };
+const ORCH_GROUP: Record<string, string> = { orchestrator: 'Overview', hq: 'Command', classroom: 'Command', 'ecom-office': 'Command', ledger: 'Financial', contracts: 'Financial', coupons: 'Financial', waitlist: 'Growth', marketing: 'Growth', govcon: 'GovCon' };
 const COMMAND_ORDER = ['hq', 'classroom', 'ecom-office'];
 
 const MADEBY_CLIENTS = new Set(['client-crm', 'comms', 'leadflow', 'lead-engines', 'client-modules']);

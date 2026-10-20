@@ -23,7 +23,7 @@ test('portals: access is derived from canAccess only', async () => {
   // Every registry entry carries a portal, and the map matches the spec.
   for (const m of MODULE_REGISTRY) assert.ok(m.portal, `${m.key} has a portal`);
   for (const k of ['leadflow', 'lead-engines', 'comms', 'client-modules', 'client-crm', 'scaling-start', 'brand-lab', 'delivery', 'invoicing', 'support-inbox']) assert.equal(portalOfModule(k), 'madeby', k);
-  for (const k of ['orch-overview', 'hq', 'ecom-office', 'ledger', 'waitlist', 'coupons', 'contracts', 'classroom', 'marketing']) assert.equal(portalOfModule(k), 'orchestrator', k);
+  for (const k of ['orch-overview', 'hq', 'ecom-office', 'ledger', 'waitlist', 'coupons', 'contracts', 'classroom', 'marketing', 'govcon']) assert.equal(portalOfModule(k), 'orchestrator', k);
   assert.equal(portalOfModule('content'), 'content');
   assert.equal(portalOfModule('ecommerce'), 'ecommerce');
   assert.equal(portalOfModule('budgeting'), 'masterminds');
@@ -50,7 +50,8 @@ test('portals: access is derived from canAccess only', async () => {
   // Orchestrator: one group holding Marq's own-business tools.
   const orch = shellGroups(all, true, {}, { portal: 'orchestrator' });
   const ids = (t: string) => orch.find((g) => g.title === t)!.items.map((i) => i.id);
-  assert.deepEqual(orch.map((g) => g.title), ['Overview', 'Command', 'Financial', 'Growth']);
+  assert.deepEqual(orch.map((g) => g.title), ['Overview', 'Command', 'Financial', 'Growth', 'GovCon']);
+  assert.deepEqual(ids('GovCon'), ['govcon']);
   assert.deepEqual(ids('Overview'), ['orchestrator']);
   assert.deepEqual(ids('Command'), ['hq', 'classroom', 'ecom-office']);
   assert.deepEqual([...ids('Financial')].sort(), ['contracts', 'coupons', 'ledger']);

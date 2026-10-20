@@ -34,9 +34,9 @@ export default function OrchestratorOverview() {
 
       <PortalCards portals={businesses} phone={phone} onOpen={(k) => nav(portalLanding(k))} />
 
-      <Card title="Government Contracts" meta="Next business">
+      <Card title="GovCon" meta="Learning phase" action={<button className="mm-btn mm-btn--primary" style={{ height: 32 }} onClick={() => nav('govcon')}>Open</button>}>
         <span style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-          Research phase. It gets its own portal here once there's a first workflow: catching contracts as they post on SAM.gov and USAspending.gov, researching who they affect, and where to position before the money moves.
+          Three public contracts a day: read them, quiz yourself on who they hit and how, write your prediction, and check it at 30 and 90 days. Winners can go straight to LeadFlow.
         </span>
       </Card>
 

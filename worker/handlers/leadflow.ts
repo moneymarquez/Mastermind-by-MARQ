@@ -551,7 +551,7 @@ export async function leadflowFindNext(request: Request, env: PlacesEnv): Promis
       search_category: job.industry.toLowerCase(), website: d.websiteUri ?? null, summary: d.editorialSummary?.text ?? null,
       rating: d.rating ?? p.rating, review_count: Number(d.userRatingCount) || p.reviewCount,
       days_since_last_review: res.daysSinceLastReview, fizzle_score: res.score, tier: res.tier, fizzle_reasons: p.multi ? ['3+ locations nearby: check if it\'s a franchise before calling', ...res.reasons] : res.reasons,
-      maps_url: `https://www.google.com/maps/place/?q=place_id:${p.id}`, status: 'new', pooled: false,
+      maps_url: `https://www.google.com/maps/place/?q=place_id:${p.id}`, status: 'new', pooled: false, ...(p.multi ? { flagged: true, business_size: 'multi' } : {}),
     });
   });
 
