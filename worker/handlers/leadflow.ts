@@ -360,12 +360,19 @@ const SEARCH_MASK = 'places.id,places.displayName,places.formattedAddress,places
 const DETAIL_MASK = 'id,nationalPhoneNumber,websiteUri,rating,userRatingCount,businessStatus,reviews.publishTime,editorialSummary';
 const FIND_MAX = 100;
 const FIND_BATCH = 15;
+/** Most one search may spend in Google fees (Marq's call: cheap, but good leads). */
+export const FIND_MAX_USD = 1;
+const SEARCH_PAGE_USD = 0.035, LOOKUP_USD = 0.025;
+/** How many businesses a search can still look up after its search pages, inside the cap. Pure. */
+export const lookupsAllowed = (pages: number, cap = FIND_MAX_USD) => Math.max(0, Math.floor((cap - SEARCH_PAGE_USD * (pages + 1)) / LOOKUP_USD));
 
 export const US_STATES: Record<string, string> = { AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', DC: 'District of Columbia', FL: 'Florida', GA: 'Georgia', HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa', KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland', MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming' };
 
 interface FoundPlace {
   id: string; name: string; address: string; primaryType: string;
   rating: number | null; reviewCount: number; status: string; lat: number | null; lng: number | null;
+  /** 3+ locations showed up in this search: kept, but flagged so Marq can check whether it's a franchise. */
+  multi?: boolean;
 }
 interface Viewport { low: { latitude: number; longitude: number }; high: { latitude: number; longitude: number } }
 type PlacesEnv = LeadflowEnv;
@@ -467,7 +474,7 @@ export async function leadflowFind(request: Request, env: PlacesEnv): Promise<Re
     const r = await placesSearch(key, `${q} in ${city}, ${state}`, geo.viewport);
     pages += r.pages; if (r.error) warning = r.error;
     for (const p of r.places) if (!byId.has(p.id)) byId.set(p.id, p);
-    if (byId.size >= limit * 2.5) break;
+    if (byId.size >= limit * 2.5 || lookupsAllowed(pages) < limit) break;
   }
   const all = [...byId.values()];
   if (!all.length && warning) return jsonError(warning, 502);
@@ -476,7 +483,8 @@ export async function leadflowFind(request: Request, env: PlacesEnv): Promise<Re
   const multi = localChains(all.map((p) => p.name));
   const candidates = all.filter((p) => {
     if (!inCity(p.address, city, state)) { skipped.outside++; return false; }
-    if (knownChain(p.name) || multi.has(normName(p.name))) { skipped.chain++; return false; }
+    if (knownChain(p.name)) { skipped.chain++; return false; }
+    if (multi.has(normName(p.name))) p.multi = true;
     if (preDisqualify({ status: p.status, reviewCount: p.reviewCount, rating: p.rating, searchCategory: industry, primaryType: p.primaryType })) { skipped.weak++; return false; }
     return true;
   });
@@ -490,7 +498,7 @@ export async function leadflowFind(request: Request, env: PlacesEnv): Promise<Re
   }
   const job: LeadJob = {
     query: `${industry} in ${city}, ${state}`, city, state, industry, limit, found: all.length,
-    candidates: [...fresh].sort((a, z) => z.reviewCount - a.reviewCount).slice(0, limit), next: 0, added: [], skipped, pages, warning,
+    candidates: [...fresh].sort((a, z) => z.reviewCount - a.reviewCount).slice(0, Math.min(limit, lookupsAllowed(pages))), next: 0, added: [], skipped, pages, warning,
   };
   const ins = await fetch(`${sb.url}/rest/v1/ai_tasks`, {
     method: 'POST', headers: { ...sb.h, Prefer: 'return=representation' },
@@ -542,7 +550,7 @@ export async function leadflowFindNext(request: Request, env: PlacesEnv): Promis
       lat: p.lat, lng: p.lng, category: p.primaryType || null, industry: p.primaryType || job.industry.toLowerCase(),
       search_category: job.industry.toLowerCase(), website: d.websiteUri ?? null, summary: d.editorialSummary?.text ?? null,
       rating: d.rating ?? p.rating, review_count: Number(d.userRatingCount) || p.reviewCount,
-      days_since_last_review: res.daysSinceLastReview, fizzle_score: res.score, tier: res.tier, fizzle_reasons: res.reasons,
+      days_since_last_review: res.daysSinceLastReview, fizzle_score: res.score, tier: res.tier, fizzle_reasons: p.multi ? ['3+ locations nearby: check if it\'s a franchise before calling', ...res.reasons] : res.reasons,
       maps_url: `https://www.google.com/maps/place/?q=place_id:${p.id}`, status: 'new', pooled: false,
     });
   });

@@ -4,6 +4,7 @@ import { MODELS } from '../models';
 import { extractJson } from '../scout';
 import { harvest, makeHttp } from '../harvester';
 import type { HarvestCtx } from '../harvester';
+import { SERVICES_LINE } from '../../../src/data/madebyServices';
 import { charge, denverDate, loadState, mayCharge, roomNow, saveEngine } from './budget';
 
 export const INDUSTRIES = [
@@ -13,7 +14,7 @@ export const INDUSTRIES = [
   'new parents (childcare costs and scheduling)', 'contractors (permits, leads, paperwork)',
 ];
 /** What Marq's company can actually build and run today; "can do now" means the easy way in uses these. */
-export const CAN_DO = 'websites and landing pages, online ordering or booking pages, lead-capture forms, text and email follow-up automations, review-request automations, simple dashboards, AI answering/triage, product sheets and e-commerce stores';
+export const CAN_DO = SERVICES_LINE;
 const EXCLUDED = /\b(crypto|bitcoin|meme ?coin|token launch|nft|stock (pick|tip)s?|penny stock|forex|gambl\w*|casino|sports ?bet\w*|betting|mlm|multi-?level|network marketing|pyramid|payday loan|prescription|medical advice|legal advice|securities|insider)\b/i;
 export const isExcluded = (text: string) => EXCLUDED.test(text);
 

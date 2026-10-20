@@ -1,3 +1,4 @@
+import { pitchFor } from '../../../../data/madebyServices';
 import { useState } from 'react';
 import Card from '../../../mm/Card';
 import Chip from '../../../mm/Chip';
@@ -86,6 +87,7 @@ export function FindingsList({ items, onDraft, drafting }: { items: FindingGroup
             <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>{[f.lead.category, f.lead.city, f.lead.rating ? `${f.lead.rating}★ (${f.lead.review_count ?? 0})` : null, f.lead.phone].filter(Boolean).join(' · ')}</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{f.gaps.map((g) => <Chip key={g.kind} k={g.kind === 'no_website' ? 'bad' : 'warn'}>{KIND_LABEL[g.kind] ?? g.kind}</Chip>)}</div>
             <div style={{ fontSize: 13.5, color: 'var(--text-secondary)' }}>{f.gaps[0]?.text}</div>
+            <div style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}><span style={{ color: 'var(--text-tertiary)' }}>Pitch: </span>{pitchFor(f.lead.category, f.gaps.map((g) => g.kind)).map((p) => p.label).join(' · ')}</div>
             {f.gaps[0] && <details style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}><summary style={{ cursor: 'pointer' }}>Evidence</summary><code style={{ overflowWrap: 'anywhere' }}>{JSON.stringify(f.gaps[0].evidence)}</code></details>}
             {f.lead.website && <a href={f.lead.website.startsWith('http') ? f.lead.website : `http://${f.lead.website}`} target="_blank" rel="noreferrer" style={{ fontSize: 12.5, color: 'var(--accent)' }}>{f.lead.website}</a>}
           </div>

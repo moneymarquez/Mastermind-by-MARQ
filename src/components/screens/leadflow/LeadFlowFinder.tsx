@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLeadflowLeads, findLeads, latestLeadJob, citySuggestions } from '../../../data/useLeadflow';
 import type { LeadflowLead, FindLeadsResult } from '../../../data/useLeadflow';
 import { US_STATES, NICHES } from './shared';
+import { CITIES, PACKAGE_INDUSTRIES } from './findOptions';
 import { LeadRecord } from './LeadCard';
 import { hasOwnerContact } from './leadLinks';
 import { ALL } from './leadFilters';
@@ -41,7 +42,12 @@ const FIND_INDUSTRIES = [
   // Local retail and family
   'retail boutique', 'florist', 'jewelry store', 'furniture store', 'daycare', 'tutoring', 'music lessons', 'pet grooming', 'dog trainer', 'storage facility',
 ].filter((v, i, a) => a.indexOf(v) === i);
-const FIND_COUNTS = [10, 20, 50, 100];
+// Each search is capped at $1 in Google fees (the Worker enforces it), which is about 30 lookups.
+const FIND_COUNTS = [10, 20, 30];
+const OTHER = '__other__';
+const PACKAGE_SEARCHES = new Set(PACKAGE_INDUSTRIES.map((i) => i.search.toLowerCase()));
+const MORE_INDUSTRIES = FIND_INDUSTRIES.filter((i) => !PACKAGE_SEARCHES.has(i.toLowerCase()) && i !== 'plumber');
+const ALL_FIND_INDUSTRIES = [...PACKAGE_INDUSTRIES.map((i) => i.search), ...MORE_INDUSTRIES];
 const STATE_ABBR: Record<string, string> = { Alabama: 'AL', Alaska: 'AK', Arizona: 'AZ', Arkansas: 'AR', California: 'CA', Colorado: 'CO', Connecticut: 'CT', Delaware: 'DE', 'District of Columbia': 'DC', Florida: 'FL', Georgia: 'GA', Hawaii: 'HI', Idaho: 'ID', Illinois: 'IL', Indiana: 'IN', Iowa: 'IA', Kansas: 'KS', Kentucky: 'KY', Louisiana: 'LA', Maine: 'ME', Maryland: 'MD', Massachusetts: 'MA', Michigan: 'MI', Minnesota: 'MN', Mississippi: 'MS', Missouri: 'MO', Montana: 'MT', Nebraska: 'NE', Nevada: 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ', 'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', Ohio: 'OH', Oklahoma: 'OK', Oregon: 'OR', Pennsylvania: 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC', 'South Dakota': 'SD', Tennessee: 'TN', Texas: 'TX', Utah: 'UT', Vermont: 'VT', Virginia: 'VA', Washington: 'WA', 'West Virginia': 'WV', Wisconsin: 'WI', Wyoming: 'WY' };
 const BLANK = { business_name: '', phone: '', industry: NICHES[0], website_status: 'no_website', tag: 'Warm', state: '', city: '', pooled: false };
 
@@ -114,6 +120,10 @@ export default function LeadFlowFinder() {
     if (!showFind || finding) return;
     latestLeadJob().then((j) => setResumable(j && !j.done ? j : null)).catch(() => {});
   }, [showFind, finding]);
+
+  const stateCities = CITIES[find.state] ?? [];
+  const cityListed = stateCities.includes(find.city);
+  const industryListed = ALL_FIND_INDUSTRIES.includes(find.industry);
 
   const doFind = async (resumeId?: string) => {
     if ((!resumeId && (!find.city.trim() || !find.industry.trim())) || finding) return;
@@ -237,15 +247,27 @@ export default function LeadFlowFinder() {
               <button className="lf-btn lf-btn--secondary" style={{ marginTop: 6 }} onClick={() => doFind(resumable.jobId)}>Continue it</button>
             </Banner>
           )}
-          <Field label="State"><select className="lf-input" value={find.state} onChange={(e) => setFind({ ...find, state: e.target.value })}>
+          <Field label="State"><select className="lf-input" value={find.state} onChange={(e) => setFind({ ...find, state: e.target.value, city: CITIES[e.target.value]?.[0] ?? '' })}>
             {US_STATES.map((n) => <option key={n} value={STATE_ABBR[n] ?? n}>{n}</option>)}
           </select></Field>
-          <Field label="City"><input className="lf-input" list="lf-find-cities" value={find.city} onChange={(e) => setFind({ ...find, city: e.target.value })} placeholder="Draper" /></Field>
-          <datalist id="lf-find-cities">{citySugg.map((c) => <option key={c} value={c} />)}</datalist>
-          <Field label="Industry"><input className="lf-input" list="lf-find-industries" value={find.industry} onChange={(e) => setFind({ ...find, industry: e.target.value })} placeholder="HVAC" /></Field>
-          <datalist id="lf-find-industries">{FIND_INDUSTRIES.map((i) => <option key={i} value={i} />)}</datalist>
+          <Field label="City"><select className="lf-input" value={cityListed ? find.city : OTHER} onChange={(e) => setFind({ ...find, city: e.target.value === OTHER ? '' : e.target.value })}>
+            {stateCities.map((c) => <option key={c} value={c}>{c}</option>)}
+            <option value={OTHER}>Another city…</option>
+          </select></Field>
+          {!cityListed && (
+            <>
+              <input className="lf-input" value={find.city} onChange={(e) => setFind({ ...find, city: e.target.value })} placeholder="Type the city" autoFocus />
+              {citySugg.length > 0 && <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{citySugg.filter((c) => c !== find.city).map((c) => <button key={c} type="button" className="lf-btn lf-btn--secondary" style={{ minHeight: 32 }} onClick={() => setFind({ ...find, city: c })}>{c}</button>)}</div>}
+            </>
+          )}
+          <Field label="Industry"><select className="lf-input" value={industryListed ? find.industry : OTHER} onChange={(e) => setFind({ ...find, industry: e.target.value === OTHER ? '' : e.target.value })}>
+            <optgroup label="Made by packages">{PACKAGE_INDUSTRIES.map((i) => <option key={i.search} value={i.search}>{i.label}</option>)}</optgroup>
+            <optgroup label="More industries">{MORE_INDUSTRIES.map((i) => <option key={i} value={i}>{i[0].toUpperCase() + i.slice(1)}</option>)}</optgroup>
+            <option value={OTHER}>Something else…</option>
+          </select></Field>
+          {!industryListed && <input className="lf-input" value={find.industry} onChange={(e) => setFind({ ...find, industry: e.target.value })} placeholder="Type the industry" />}
           <Field label="How many to look up"><select className="lf-input" value={find.count} onChange={(e) => setFind({ ...find, count: Number(e.target.value) })}>{FIND_COUNTS.map((n) => <option key={n} value={n}>{n}</option>)}</select></Field>
-          <span className="lf-label">Only businesses inside {find.city.trim() || 'the city'} itself are kept, not the whole county. Chains, closed businesses, weak ratings and leads you already have are skipped. About ${(0.15 + find.count * 0.025).toFixed(2)} in Google fees at most.</span>
+          <span className="lf-label">Only businesses inside {find.city.trim() || 'the city'} itself are kept, not the whole county. Closed businesses, weak ratings and leads you already have are skipped; businesses with 3+ locations are kept but flagged so you can check if they're a franchise. Never more than $1 in Google fees per search.</span>
           {finding && (
             <Banner s="info" title={found ? `Looked up ${found.processed} of ${found.total}` : 'Searching Google…'}>
               {found ? `${found.added.length} added so far. Keep this panel open until it finishes; if it stops, Continue picks up where it left off.` : 'Finding every match inside the city lines.'}
@@ -256,7 +278,7 @@ export default function LeadFlowFinder() {
           {found && !finding && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <Banner s={found.added.length ? 'go' : 'wait'} title={found.added.length ? `${found.added.length} new lead${found.added.length === 1 ? '' : 's'} added` : 'No new leads this time'}>
-                {found.found} found for “{found.query}”. Skipped: {found.skipped.chain} chains, {found.skipped.weak} weak fits, {found.skipped.existing} already in LeadFlow{found.skipped.outside ? `, ${found.skipped.outside} outside ${find.city.trim() || 'the city'}` : ''}
+                {found.found} found for “{found.query}”. Skipped: {found.skipped.chain} national chains, {found.skipped.weak} weak fits, {found.skipped.existing} already in LeadFlow{found.skipped.outside ? `, ${found.skipped.outside} outside ${find.city.trim() || 'the city'}` : ''}
                 {found.skipped.noPhone ? `, ${found.skipped.noPhone} with no phone` : ''}{found.skipped.doNotContact ? `, ${found.skipped.doNotContact} do-not-contact` : ''}{found.skipped.lookupFailed ? `, ${found.skipped.lookupFailed} lookups failed` : ''}. About ${found.estCostUsd.toFixed(2)}.
               </Banner>
               {found.warning && <Banner s="wait">{found.warning}</Banner>}
