@@ -14,6 +14,8 @@ const usd = (n: number) => `${n < 0 ? '-' : ''}$${Math.abs(n).toLocaleString('en
 const PORTAL_OF: Record<string, string> = { ecom: 'E-commerce', ecommerce: 'E-commerce', content: 'Content', marketing: 'Made by', madeby: 'Made by', master: 'HQ' };
 const SCREEN_OF: Record<string, string> = { ecom: 'ecom-products', ecommerce: 'ecom-products', content: 'content-plan', marketing: 'hq', madeby: 'hq', master: 'hq' };
 
+const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; };
+
 /** Today: the one screen that says what to do right now to make money.
  *  Problems first, then the calling hour, what's waiting on Marq (approve in
  *  one tap), what to post, and money in vs AI spend this week. Nothing else. */
@@ -39,7 +41,7 @@ export default function TodayScreen() {
   const grid = (cols: number) => ({ display: 'grid', gridTemplateColumns: phone ? '1fr 1fr' : `repeat(${cols},minmax(0,1fr))`, gap: 12 });
 
   return (
-    <Page title="Today" sub="What to do right now. Everything else can wait." back="Home" backTo="home">
+    <Page title={`${greeting()}, Marq`} sub="Here's what makes money today. Everything else can wait." back="Home" backTo="home">
       {t.flags.length > 0 && (
         <Card title="Fix first" meta={`${t.flags.length} problem${t.flags.length === 1 ? '' : 's'}`} action={<button className="mm-btn" style={{ height: 32 }} onClick={() => nav('hq')}>Open HQ</button>}>
           {t.flags.map((f) => (
@@ -52,9 +54,9 @@ export default function TodayScreen() {
       )}
 
       <div style={grid(4)}>
+        <Stat hero label="Money in · this week" value={t.board ? usd(t.board.totalIn) : '…'} pill={t.board ? `${usd(t.board.totalSpend)} AI spend` : undefined} k={t.board && t.board.net > 0 ? 'good' : 'neutral'} />
         <Stat label="Calls today" value={`${callsToday} / ${goal}`} pill={callsLeft ? `${callsLeft} to go` : 'Goal hit'} k={callsLeft ? 'warn' : 'good'} onClick={() => nav('leadflow')} />
         <Stat label="Waiting on you" value={String(t.approvals.length)} pill="Approvals" k={t.approvals.length ? 'warn' : 'neutral'} />
-        <Stat label="Money in · this week" value={t.board ? usd(t.board.totalIn) : '…'} pill={t.board ? `${usd(t.board.totalSpend)} AI spend` : undefined} k={t.board && t.board.net > 0 ? 'good' : 'neutral'} />
         <Stat label="Posts due today" value={String(t.posts.length)} pill="Content" k={t.posts.length ? 'warn' : 'neutral'} onClick={() => nav('content-plan')} />
       </div>
 

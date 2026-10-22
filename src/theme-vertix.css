@@ -1,0 +1,108 @@
+/* ── "Vertix" design pass (Marq's reference, Oct 2026) ──────────────────
+   Soft gray ground, white cards with big round corners and soft shadows,
+   black pill tabs and buttons, big bold numbers, and ONE glowing
+   orange-red hero card per screen. Done through the shared tokens so every
+   module picks it up in light and dark. Loaded after index.css; selectors
+   are a notch more specific so they win over the older theme blocks. */
+
+html:root {
+  --bg: #0b0b0d;
+  --surface: #151517;
+  --surface-2: #1c1c1f;
+  --surface-3: #232327;
+  --surface-4: #18181b;
+  --border: #26262b;
+  --border-2: #36363c;
+  --text: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #74747c;
+  --text-quaternary: #d4d4d8;
+  --text-quaternary-2: #a1a1aa;
+  --shine: #232327;
+  --accent: #ff6a3d;
+  --accent-2: #ff8a5c;
+  --accent-strong: #f2542d;
+  --accent-soft: #3a1c12;
+  --danger: #ff6b6b;
+  --success: #3ddc84;
+  --warning: #ffb547;
+  --hero-grad: radial-gradient(120% 140% at 0% 0%, #ff9a6b 0%, #ff6a3d 38%, #e8442a 70%, #b8301a 100%);
+  --hero-glow: 0 18px 40px -14px rgba(242, 84, 45, 0.55);
+  --card-radius: 22px;
+  --card-elev: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 10px 30px -18px rgba(0, 0, 0, 0.8);
+  --card-elev-hover: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 18px 40px -18px rgba(0, 0, 0, 0.9);
+}
+html:root[data-theme="light"] {
+  --bg: #eeeef1;
+  --surface: #ffffff;
+  --surface-2: #f5f5f7;
+  --surface-3: #ececef;
+  --surface-4: #f7f7f9;
+  --border: #e7e7eb;
+  --border-2: #d6d6dc;
+  --text: #0e0e10;
+  --text-secondary: #5f6068;
+  --text-tertiary: #8c8d96;
+  --text-quaternary: #2a2a2f;
+  --text-quaternary-2: #4a4a52;
+  --shine: #ececef;
+  --accent: #f2542d;
+  --accent-2: #ff7a45;
+  --accent-strong: #d9411c;
+  --accent-soft: #ffe9e1;
+  --danger: #d93636;
+  --success: #179b55;
+  --warning: #c98712;
+  --card-elev: 0 1px 2px rgba(17, 17, 26, 0.04), 0 8px 24px -12px rgba(17, 17, 26, 0.12);
+  --card-elev-hover: 0 2px 4px rgba(17, 17, 26, 0.05), 0 16px 36px -14px rgba(17, 17, 26, 0.18);
+}
+
+/* Cards and tiles: bigger radius, borderless-feeling in light, soft lift. */
+.mm-card, .mm-stat, .mm-tile { border-radius: var(--card-radius) !important; box-shadow: var(--card-elev); }
+html:root[data-theme="light"] .mm-card, html:root[data-theme="light"] .mm-stat, html:root[data-theme="light"] .mm-tile { border-color: transparent !important; }
+.mm-card:hover, .mm-tile:hover { box-shadow: var(--card-elev-hover); }
+
+/* The one hero per screen: orange-red glow, white text. Tokens are
+   re-pointed inside it so every child (chips, pills, links) follows. */
+.mm-card--hero, .mm-stat--hero {
+  background: var(--hero-grad) !important;
+  border-color: transparent !important;
+  box-shadow: var(--hero-glow) !important;
+  color: #fff;
+  --text: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.82);
+  --text-tertiary: rgba(255, 255, 255, 0.68);
+  --surface-2: rgba(255, 255, 255, 0.16);
+  --surface-3: rgba(255, 255, 255, 0.2);
+  --border: rgba(255, 255, 255, 0.28);
+  --accent: #ffffff;
+  --success: #ffffff;
+  --warning: #ffffff;
+  --danger: #ffffff;
+  position: relative;
+  overflow: hidden;
+}
+.mm-card--hero::after, .mm-stat--hero::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(60% 50% at 85% 10%, rgba(255, 255, 255, 0.28), transparent 70%);
+}
+.mm-card--hero > *, .mm-stat--hero > * { position: relative; z-index: 1; }
+
+/* Buttons: pills. Primary is the black ink pill (white in dark mode). */
+.mm-btn { border-radius: 999px !important; }
+.mm-btn--primary { box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.45); }
+.mm-card--hero .mm-btn--primary { background: #fff; color: #0e0e10; border-color: #fff; }
+.mm-card--hero .mm-btn:not(.mm-btn--primary) { border-color: rgba(255, 255, 255, 0.45); color: #fff; }
+
+/* Sidebar: active row is a solid ink pill, like the reference's top tabs. */
+.mm-nav-row { border-radius: 999px !important; }
+.mm-nav-row[data-active="true"] { background: var(--text) !important; color: var(--bg) !important; }
+.mm-nav-row[data-active="true"] * { color: inherit !important; }
+
+/* Chips and inputs follow the rounder language. */
+.mm-chip { border-radius: 999px; }
+.mm-icon-btn { border-radius: 999px !important; }
+.mm-progress > span { background: var(--accent); }
+
+/* Page titles: bigger and tighter, like "Good morning, Code XR". */
+.mm-page-title { font-size: clamp(26px, 4.2vw, 34px) !important; font-weight: 700 !important; letter-spacing: -0.035em !important; }

@@ -26,7 +26,7 @@ export default function OrchestratorOverview() {
     <Page title="Orchestrator" sub="Every business at a glance. Open one to work it." back="Today" backTo="today"
       right={{ t: 'HQ', onClick: () => nav('hq') }}>
       <div style={{ display: 'grid', gridTemplateColumns: phone ? '1fr 1fr' : 'repeat(4,minmax(0,1fr))', gap: 12 }}>
-        <Stat label="Money in · this week" value={b ? usd(b.totalIn) : '…'} pill={b ? `Net ${usd(b.net)}` : undefined} k={b && b.net > 0 ? 'good' : 'neutral'} />
+        <Stat hero label="Money in · this week" value={b ? usd(b.totalIn) : '…'} pill={b ? `Net ${usd(b.net)}` : undefined} k={b && b.net > 0 ? 'good' : 'neutral'} />
         <Stat label="AI spend · this week" value={b ? usd(b.totalSpend) : '…'} pill="All workers" />
         <Stat label="Waiting on you" value={String(t.approvals.length)} pill="Approvals" k={t.approvals.length ? 'warn' : 'neutral'} onClick={() => nav('today')} />
         <Stat label="Problems" value={String(t.flags.length)} pill={t.flags.length ? 'Fix in HQ' : 'All clear'} k={t.flags.length ? 'bad' : 'good'} onClick={() => nav('hq')} />

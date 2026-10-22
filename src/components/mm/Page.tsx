@@ -128,7 +128,7 @@ export function Page({ title, sub, back = 'All modules', backTo = 'modules', onB
       )}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, marginBottom: phone ? 20 : 0, flexWrap: phone ? 'nowrap' : 'wrap' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-          <h1 style={{ margin: 0, color: 'var(--text)', fontSize: phone ? 24 : 28, fontWeight: 700, letterSpacing: '-0.035em', lineHeight: 1.15, textWrap: 'balance' } as CSSProperties}>{title}</h1>
+          <h1 className="mm-page-title" style={{ margin: 0, color: 'var(--text)', fontSize: phone ? 24 : 28, fontWeight: 700, letterSpacing: '-0.035em', lineHeight: 1.15, textWrap: 'balance' } as CSSProperties}>{title}</h1>
           {sub && <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-tertiary)' }}>{sub}</span>}
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flex: 'none' }}>
