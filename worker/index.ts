@@ -93,12 +93,59 @@ import type { SetupEnv } from './handlers/setup';
 
 interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv, DispatchEnv, ContentEnv, InboxEnv, HqEnv, SmsEnv, EcomEnv, ContentOctEnv, SoloEnv, MadebyRouteEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
+  /** Service binding to this same Worker (wrangler.jsonc "services"): each timer job runs as its own invocation. */
+  SELF?: { fetch: (request: Request) => Promise<Response> };
+}
+
+/** The 5-minute timer's jobs, by name. On the free Workers plan one invocation
+ *  may make only 50 outside requests in total; with all of these sharing one
+ *  invocation, the budget ran out in the first second and later jobs (Client
+ *  Finder's site checks, Complaint Scanner, Brand Lab…) failed silently every
+ *  night. Run through SELF, each job is its own invocation with its own 50. */
+function tickJobs(env: Env): Record<string, () => Promise<unknown>> {
+  const sbOk = !!env.SUPABASE_SERVICE_ROLE_KEY;
+  const log = (name: string) => (e: unknown) => console.error(name, e);
+  const jobs: Record<string, () => Promise<unknown>> = {
+    shift: () => runShiftReminders(env),
+    orchestrator: () => runOrchestratorTick(env),
+    enrich: () => runEnrichTick(env as never).catch(log('enrich tick')),
+    inbound: () => runInboundWaitCheck(env),
+    publisher: () => runPublisherTick(env),
+    flags: () => runFlagsTick(env),
+  };
+  if (sbOk) Object.assign(jobs, {
+    followups: () => runFollowUpsTick(env.ANTHROPIC_API_KEY, new SbClient(env)).catch(log('follow-ups tick')),
+    scout: () => runScoutTick(env.ANTHROPIC_API_KEY, new SbClient(env)).catch(log('scout tick')),
+    social: () => runSocialSyncTick(env as never, new SbClient(env)).catch(log('social sync tick')),
+    engines: () => runEnginesTick(env as unknown as EnginesEnv, new SbClient(env)).catch(log('engines tick')),
+    outreach: () => runOutreachTick(env as unknown as OutreachRouteEnv, new SbClient(env)).catch(log('outreach tick')),
+    solo: () => runSoloTick(env, new SbClient(env)).catch(log('solo tick')),
+    comms: () => runCommsTick(env, new SbClient(env)).catch(log('comms tick')),
+  });
+  return jobs;
+}
+/** Only the timer may start a job: a key derived from the service-role secret, never the secret itself. */
+async function tickKey(env: Env): Promise<string> {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`tick:${env.SUPABASE_SERVICE_ROLE_KEY ?? ''}`));
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 export default {
   async fetch(request: Request, env: Env, ctx?: { waitUntil: (promise: Promise<unknown>) => void }): Promise<Response> {
     setResearchEnv(env); setNotifyEnv(env); setVisualEnv(env);
     const url = new URL(request.url);
+
+    // One timer job, started by scheduled() through the SELF binding.
+    const tick = url.pathname.match(/^\/__tick\/([a-z]+)$/);
+    if (tick && request.method === 'POST') {
+      if (!env.SUPABASE_SERVICE_ROLE_KEY || request.headers.get('x-tick-key') !== (await tickKey(env))) return new Response('Not found', { status: 404 });
+      const job = tickJobs(env)[tick[1]];
+      if (!job) return new Response('Unknown job', { status: 404 });
+      const p = job();
+      ctx?.waitUntil(p);
+      await p.catch((e) => console.error('tick', tick[1], e));
+      return new Response('ok');
+    }
 
     if (url.pathname === '/api/save-broker-keys') return saveBrokerKeys(request, env);
     if (url.pathname === '/api/broker-keys-status') return brokerKeysStatus(request, env);
@@ -231,19 +278,17 @@ export default {
     const jobs: Promise<unknown>[] = [];
     const run = (p: Promise<unknown>) => { ctx.waitUntil(p); jobs.push(p); };
     if (event.cron === '*/5 * * * *') {
-      run(runShiftReminders(env));
-      run(runOrchestratorTick(env));
-      if (env.SUPABASE_SERVICE_ROLE_KEY) run(runFollowUpsTick(env.ANTHROPIC_API_KEY, new SbClient(env)).catch((e) => console.error('follow-ups tick', e)));
-      run(runEnrichTick(env as never).catch((e) => console.error('enrich tick', e)));
-      if (env.SUPABASE_SERVICE_ROLE_KEY) run(runScoutTick(env.ANTHROPIC_API_KEY, new SbClient(env)).catch((e) => console.error('scout tick', e)));
-      run(runInboundWaitCheck(env));
-      run(runPublisherTick(env));
-      run(runFlagsTick(env));
-      if (env.SUPABASE_SERVICE_ROLE_KEY) run(runSocialSyncTick(env as never, new SbClient(env)).catch((e) => console.error('social sync tick', e)));
-      if (env.SUPABASE_SERVICE_ROLE_KEY) run(runEnginesTick(env as unknown as EnginesEnv, new SbClient(env)).catch((e) => console.error('engines tick', e)));
-      if (env.SUPABASE_SERVICE_ROLE_KEY) run(runOutreachTick(env as unknown as OutreachRouteEnv, new SbClient(env)).catch((e) => console.error('outreach tick', e)));
-      if (env.SUPABASE_SERVICE_ROLE_KEY) run(runSoloTick(env, new SbClient(env)).catch((e) => console.error('solo tick', e)));
-      if (env.SUPABASE_SERVICE_ROLE_KEY) run(runCommsTick(env, new SbClient(env)).catch((e) => console.error('comms tick', e)));
+      const all = tickJobs(env);
+      if (env.SELF && env.SUPABASE_SERVICE_ROLE_KEY) {
+        const key = await tickKey(env);
+        for (const name of Object.keys(all)) {
+          run(env.SELF.fetch(new Request(`https://self.internal/__tick/${name}`, { method: 'POST', headers: { 'x-tick-key': key } }))
+            .then((r) => { if (!r.ok) console.error('tick', name, r.status); })
+            .catch((e) => console.error('tick', name, e)));
+        }
+      } else {
+        for (const job of Object.values(all)) run(job());
+      }
       await Promise.allSettled(jobs);
       return;
     }

@@ -84,6 +84,9 @@
   //   */5  * * * * — Opening/Closing push reminders
   //                  (worker/handlers/shift-reminders.ts), same cadence as
   //                  the Netlify Scheduled Function it replaces.
+  // This Worker bound to itself: the 5-minute timer runs each job as its own
+  // invocation, so each gets its own 50-outside-request budget (free plan).
+  "services": [{ "binding": "SELF", "service": "mastermind-by-marq" }],
   "triggers": {
     "crons": ["*/15 * * * *", "*/5 * * * *"]
   }
