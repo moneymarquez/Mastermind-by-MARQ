@@ -577,7 +577,7 @@ export function runSupplierFinder(apiKey: string | undefined, sb: Sb, userId: st
     async execute(ctx) {
       const b = await brandFor(sb, userId, input.brandId);
       if (!b.ctx.product) return { summary: 'Pick the product (step 1) first.', skipped: true };
-      const res = await ctx.ask({ maxTokens: 5000, system: supplierSystem(ctx.brief), user: supplierUser(b.ctx, input.instructions), tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5, blocked_domains: BLOCKED_DOMAINS }] });
+      const res = await ctx.ask({ maxTokens: 8000, system: supplierSystem(ctx.brief), user: supplierUser(b.ctx, input.instructions), tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 8, blocked_domains: BLOCKED_DOMAINS }] });
       const p = parseSuppliers(res.text, b.ctx, b.productId, BLOCKED_DOMAINS);
       const pick = p.suppliers[p.pick];
       return { summary: p.summary || `${p.suppliers.length} suppliers, pick: ${pick.name}`, count: p.suppliers.length, dropped: p.dropped, approval: { type: 'supplier_pick', title: `Supplier Finder: ${b.row.name} — ${p.suppliers.length} suppliers, pick ${pick.name}`, payload: { ...p, sources: res.sources.slice(0, 15) }, principle: p.why_pick || null, source_url: pick.url, confidence: 'estimate', entity_type: 'brand', entity_id: b.row.id } };

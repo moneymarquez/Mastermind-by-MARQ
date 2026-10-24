@@ -310,10 +310,20 @@ export function ApprovalBody({ type, payload: p, choice = 0, onChoice, approvalI
     );
   }
   if (type === 'supplier_pick') {
-    const sup = arr<{ name: string; url: string | null; unit_cost: number | null; ship_cost: number | null; ship_days: number | null; rating: number | null; moq: number | null; branded_packaging: boolean | null; notes: string }>(p.suppliers);
+    const sup = arr<{ name: string; url: string | null; unit_cost: number | null; ship_cost: number | null; ship_days: number | null; rating: number | null; moq: number | null; branded_packaging: boolean | null; notes: string;
+      listing_title?: string; landed?: number | null; reviews?: number | null; years?: number | null; trade_assurance?: boolean | null; ships_from?: string; why?: string; pros?: string[]; risks?: string[]; evidence?: { fact: string; url: string | null }[] }>(p.suppliers);
+    const whyNot = typeof p.why_not_others === 'string' ? p.why_not_others : '';
+    const dropped = arr<string>(p.dropped);
     const sample = (p.sample ?? {}) as { qty: number; variant: string; est_cost: number | null };
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
+        {(typeof p.why_pick === 'string' && p.why_pick) || whyNot ? (
+          <Box>
+            {typeof p.why_pick === 'string' && p.why_pick && <Line k="Why the pick" v={p.why_pick} />}
+            {whyNot && <Line k="Why not the others" v={whyNot} />}
+            {dropped.length > 0 && <Line k="Left out" v={dropped.join(' · ')} />}
+          </Box>
+        ) : null}
         <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>Tap the one to use — the worker's pick is preselected.</div>
         {sup.map((x, i) => (
           <label key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: 8, borderRadius: 'var(--radius-sm)', background: i === choice ? tint(E.accent, 10) : E.sunk, border: `1px solid ${i === choice ? E.accent : E.border}`, cursor: 'pointer', minWidth: 0 }}>
@@ -325,6 +335,24 @@ export function ApprovalBody({ type, payload: p, choice = 0, onChoice, approvalI
                 {x.url && <a href={x.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ fontSize: 'var(--text-caption)', color: E.blue }}>open ↗</a>}
               </div>
               <div style={{ fontSize: 'var(--text-caption)', color: E.muted, fontFamily: 'var(--font-mono)', marginTop: 2 }}>{money(x.unit_cost)} + {money(x.ship_cost)} ship · {x.ship_days ?? '?'}d · ★{x.rating ?? '?'} · MOQ {x.moq ?? '?'}{x.branded_packaging ? ' · branded box' : ''}</div>
+              {(x.listing_title || x.ships_from || x.reviews != null || x.years != null || x.trade_assurance != null || x.landed != null) && (
+                <div style={{ fontSize: 'var(--text-caption)', color: E.muted, marginTop: 2 }}>
+                  {[x.listing_title ? `“${x.listing_title}”` : '', x.landed != null ? `${money(x.landed)} landed` : '', x.ships_from ? `ships from ${x.ships_from}` : '', x.reviews != null ? `${x.reviews} reviews` : '', x.years != null ? `${x.years} yrs on platform` : '', x.trade_assurance ? 'Trade Assurance' : x.trade_assurance === false ? 'no buyer protection' : ''].filter(Boolean).join(' · ')}
+                </div>
+              )}
+              {x.why && <div style={{ fontSize: 'var(--text-body)', color: E.text, marginTop: 6, lineHeight: 1.5 }}>{x.why}</div>}
+              {((x.pros?.length ?? 0) > 0 || (x.risks?.length ?? 0) > 0) && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 6, marginTop: 6, fontSize: 'var(--text-caption)' }}>
+                  {(x.pros?.length ?? 0) > 0 && <div>{x.pros!.map((t) => <div key={t} style={{ color: E.green }}>+ <span style={{ color: E.muted }}>{t}</span></div>)}</div>}
+                  {(x.risks?.length ?? 0) > 0 && <div>{x.risks!.map((t) => <div key={t} style={{ color: E.red }}>− <span style={{ color: E.muted }}>{t}</span></div>)}</div>}
+                </div>
+              )}
+              {(x.evidence?.length ?? 0) > 0 && (
+                <details style={{ marginTop: 6, fontSize: 'var(--text-caption)', color: E.muted }} onClick={(e) => e.stopPropagation()}>
+                  <summary style={{ cursor: 'pointer', color: E.blue }}>Research ({x.evidence!.length})</summary>
+                  {x.evidence!.map((ev, k) => <div key={k} style={{ marginTop: 4 }}>{ev.fact}{ev.url && <> · <a href={ev.url} target="_blank" rel="noopener noreferrer" style={{ color: E.blue }}>source ↗</a></>}</div>)}
+                </details>
+              )}
               {x.notes && <div style={{ fontSize: 'var(--text-caption)', color: E.muted }}>{x.notes}</div>}
             </div>
           </label>

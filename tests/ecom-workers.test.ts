@@ -16,6 +16,17 @@ describe('Supplier Finder', () => {
     expect(p.sample.qty).toBe(10);
     expect(landedOf(p.suppliers[0])).toBeCloseTo(8.2);
   });
+  it('drops listings for a different product, keeps only sourced evidence, re-picks if the pick was dropped', () => {
+    const p = parseSuppliers(j({ suppliers: [
+      { name: 'Hoodie Co', url: 'https://alibaba.com/1', same_product: false, listing_title: 'Wearable blanket hoodie', unit_cost: 9.99 },
+      { name: 'Throw Co', url: 'https://alibaba.com/2', same_product: true, unit_cost: 4.8, ship_cost: 3, why: 'Fast US warehouse', pros: ['MOQ 2'], risks: ['New store'], evidence: [{ fact: '4.9 from 312 reviews', url: 'https://alibaba.com/2#reviews' }, { fact: 'trust me', url: '' }] },
+    ], pick: 0, why_not_others: 'Hoodie Co sells hoodies' }), b, 'p1', BLOCKED_DOMAINS);
+    expect(p.suppliers.map((x) => x.name)).toEqual(['Throw Co']);
+    expect(p.pick).toBe(0);
+    expect(p.suppliers[0].evidence).toHaveLength(1);
+    expect(p.suppliers[0].landed).toBeCloseTo(7.8);
+    expect(p.dropped.join(' ')).toMatch(/different product/);
+  });
 });
 
 describe('Brand Lab', () => {

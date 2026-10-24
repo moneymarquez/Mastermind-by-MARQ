@@ -20,46 +20,78 @@ const brandLines = (b: BrandCtx) => [
 ].filter(Boolean).join('\n');
 
 // ── Supplier Finder (step 4) ──────────────────────────────────────────
-export interface SupplierOpt { name: string; url: string | null; unit_cost: number | null; ship_cost: number | null; ship_days: number | null; rating: number | null; moq: number | null; branded_packaging: boolean | null; notes: string }
-export interface SupplierPayload { brand_id: string; product_id: string | null; suppliers: SupplierOpt[]; pick: number; why_pick: string; sample: { qty: number; variant: string; est_cost: number | null; notes: string }; inspection: string[]; shot_list: string[]; summary: string; dropped: string[] }
+export interface Evidence { fact: string; url: string | null }
+export interface SupplierOpt {
+  name: string; url: string | null; unit_cost: number | null; ship_cost: number | null; ship_days: number | null; rating: number | null; moq: number | null; branded_packaging: boolean | null; notes: string;
+  /** What the listing actually sells, and whether that is the product (a hoodie is not a throw). */
+  listing_title: string; same_product: boolean | null;
+  landed: number | null; reviews: number | null; years: number | null; trade_assurance: boolean | null; ships_from: string;
+  why: string; pros: string[]; risks: string[]; evidence: Evidence[];
+}
+export interface SupplierPayload { brand_id: string; product_id: string | null; suppliers: SupplierOpt[]; pick: number; why_pick: string; why_not_others: string; sample: { qty: number; variant: string; est_cost: number | null; notes: string }; inspection: string[]; shot_list: string[]; summary: string; dropped: string[] }
 export function supplierSystem(ctx: BriefCtx): string {
   return brief(
-    'You are Supplier Finder for a solo founder launching a dropshipping brand on about $100.',
+    'You are Supplier Finder for a solo founder launching a dropshipping brand on about $100. He decides from your research, so every claim needs a reason and a source.',
     [
-      'Use web search to find 3–5 real suppliers for the product (AliExpress, CJ Dropshipping, Alibaba, Zendrop, Spocket listings as they appear in search). A URL you actually saw for each.',
-      'Compare unit cost, shipping to the US (cost and days), rating, MOQ, and whether they do branded packaging. Unknown = null, never a guess dressed as a number.',
-      'Pick one (pick = its index) and say why in one sentence. Ships in 12 days or less matters more than the last dollar.',
-      'Draft the sample order (quantity, variant, estimated cost) — the founder buys it themselves. Write the inspection checklist (what to check when it arrives: the hard-no list) and the product shot list to film from the sample.',
+      'Use web search to find 3–5 real suppliers whose listing is THE SAME product (same item type, size range and material). A wearable hoodie is not a throw blanket; a different item is not "close enough". Open each listing you cite. One URL you actually saw for each.',
+      'For each supplier report: listing_title (what the listing says it sells), same_product (true/false), unit_cost, ship_cost and ship_days to the US, ships_from (country/warehouse), rating and number of reviews, MOQ, years on the platform, Trade Assurance (Alibaba) or buyer protection, branded packaging. Unknown = null, never a guess dressed as a number.',
+      'landed = unit_cost + ship_cost to the US, and note duties if they matter.',
+      'why: 2–3 sentences on why this supplier is or is not smart for HIS situation (tiny budget, testing first, needs fast US delivery for TikTok, wants to brand it later). pros and risks: 2–4 short, specific points each (e.g. "MOQ 300 = $1,440 upfront, too much for a test").',
+      'evidence: 2–4 facts you found that back the why, each with the URL where you saw it (reviews mentioning pilling, response time, sold count, certificate, shipping complaints...). No fact without a URL you saw.',
+      'pick = index of the best one for a first test (fast shipping and low MOQ beat the last dollar; only a same_product supplier can be picked). why_pick: why it beats the others. why_not_others: one line per other supplier on why not.',
+      'Draft the sample order (quantity, variant, estimated cost) — the founder buys it himself. Write the inspection checklist (the hard-no list) and the product shot list to film from the sample.',
     ],
     ctx,
-    '{"suppliers":[{"name":"","url":"","unit_cost":null,"ship_cost":null,"ship_days":null,"rating":null,"moq":null,"branded_packaging":null,"notes":""}],"pick":0,"why_pick":"","sample":{"qty":2,"variant":"","est_cost":null,"notes":""},"inspection":[""],"shot_list":[""],"summary":"one sentence"}',
+    '{"suppliers":[{"name":"","url":"","listing_title":"","same_product":true,"unit_cost":null,"ship_cost":null,"ship_days":null,"landed":null,"ships_from":"","rating":null,"reviews":null,"moq":null,"years":null,"trade_assurance":null,"branded_packaging":null,"why":"","pros":[""],"risks":[""],"evidence":[{"fact":"","url":""}],"notes":""}],"pick":0,"why_pick":"","why_not_others":"","sample":{"qty":2,"variant":"","est_cost":null,"notes":""},"inspection":[""],"shot_list":[""],"summary":"one sentence"}',
   );
 }
 export function supplierUser(b: BrandCtx, instructions?: string | null): string {
-  return [brandLines(b), 'Use at most 5 searches.', instructions ? `Extra instructions for this run: ${instructions}` : ''].filter(Boolean).join('\n\n');
+  return [brandLines(b), 'Use at most 8 searches: find candidates, then open each listing and look for reviews or complaints about the supplier.', instructions ? `Extra instructions for this run: ${instructions}` : ''].filter(Boolean).join('\n\n');
 }
 /** Landed cost per unit for ranking (unit + shipping), null if unknown. */
 export const landedOf = (s: Pick<SupplierOpt, 'unit_cost' | 'ship_cost'>) => (s.unit_cost == null ? null : s.unit_cost + (s.ship_cost ?? 0));
+const httpUrl = (v: unknown, blocked: string[]) => { const u = str(v, 600); return u && /^https?:\/\//i.test(u) && !blockedUrl(u, blocked) ? u : null; };
+const bool = (v: unknown) => (typeof v === 'boolean' ? v : null);
 export function parseSuppliers(text: string, b: BrandCtx, productId: string | null, blocked: string[]): SupplierPayload {
   const o = extractJson(text) as Record<string, unknown>;
   const dropped: string[] = [];
-  const suppliers: SupplierOpt[] = [];
+  const all: SupplierOpt[] = [];
   for (const raw of Array.isArray(o.suppliers) ? o.suppliers : []) {
     const r = raw as Record<string, unknown>;
     const name = str(r.name, 160);
     if (!name) continue;
-    let url: string | null = str(r.url, 600) || null;
-    if (url && (!/^https?:\/\//i.test(url) || blockedUrl(url, blocked))) { dropped.push(`${name}: link dropped`); url = null; }
+    const url = httpUrl(r.url, blocked);
+    if (!url && str(r.url)) dropped.push(`${name}: link dropped`);
     const rating = num(r.rating);
-    suppliers.push({ name, url, unit_cost: num(r.unit_cost), ship_cost: num(r.ship_cost), ship_days: num(r.ship_days), rating: rating != null && rating >= 0 && rating <= 5 ? rating : null, moq: num(r.moq), branded_packaging: typeof r.branded_packaging === 'boolean' ? r.branded_packaging : null, notes: str(r.notes, 400) });
+    const unit = num(r.unit_cost), ship = num(r.ship_cost);
+    const ev = (Array.isArray(r.evidence) ? r.evidence : []).map((e) => e as Record<string, unknown>)
+      .map((e) => ({ fact: str(e.fact, 300), url: httpUrl(e.url, blocked) })).filter((e) => e.fact && e.url).slice(0, 5);
+    all.push({
+      name, url, unit_cost: unit, ship_cost: ship, ship_days: num(r.ship_days), rating: rating != null && rating >= 0 && rating <= 5 ? rating : null,
+      moq: num(r.moq), branded_packaging: bool(r.branded_packaging), notes: str(r.notes, 400),
+      listing_title: str(r.listing_title, 200), same_product: bool(r.same_product),
+      landed: num(r.landed) ?? landedOf({ unit_cost: unit, ship_cost: ship }), reviews: num(r.reviews), years: num(r.years), trade_assurance: bool(r.trade_assurance), ships_from: str(r.ships_from, 80),
+      why: str(r.why, 700), pros: strs(r.pros, 4, 200), risks: strs(r.risks, 4, 200), evidence: ev,
+    });
   }
-  if (!suppliers.length) throw new Error('Supplier Finder found no usable suppliers.');
+  // A listing for a different item is not an option, however cheap.
+  const suppliers = all.filter((x) => {
+    if (x.same_product === false) { dropped.push(`${x.name}: listing is a different product (${x.listing_title || 'not the same item'})`); return false; }
+    return true;
+  });
+  if (!suppliers.length) throw new Error('Supplier Finder found no supplier selling this exact product.');
   const p = num(o.pick);
-  const pick = p != null && p >= 0 && p < suppliers.length ? Math.round(p) : 0;
+  const pickedName = p != null && p >= 0 && p < all.length ? all[Math.round(p)].name : null;
+  let pick = Math.max(0, suppliers.findIndex((x) => x.name === pickedName));
+  if (pickedName == null || suppliers[pick]?.name !== pickedName) {
+    // The model's pick was dropped: take the cheapest landed same-product one.
+    const ranked = suppliers.map((x, i) => ({ i, l: x.landed ?? Infinity })).sort((a, z) => a.l - z.l);
+    pick = ranked[0].i;
+  }
   const s = (o.sample ?? {}) as Record<string, unknown>;
   const qty = num(s.qty);
   return {
-    brand_id: b.id, product_id: productId, suppliers: suppliers.slice(0, 5), pick, why_pick: str(o.why_pick, 400),
+    brand_id: b.id, product_id: productId, suppliers: suppliers.slice(0, 5), pick: Math.min(pick, 4), why_pick: str(o.why_pick, 800), why_not_others: str(o.why_not_others, 1200),
     sample: { qty: qty != null && qty > 0 ? Math.min(10, Math.round(qty)) : 2, variant: str(s.variant, 200), est_cost: num(s.est_cost), notes: str(s.notes, 400) },
     inspection: strs(o.inspection, 15), shot_list: strs(o.shot_list, 15), summary: str(o.summary, 400), dropped,
   };
