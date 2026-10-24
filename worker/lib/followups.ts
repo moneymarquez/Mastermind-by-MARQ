@@ -16,7 +16,8 @@ import { queueProductVideos } from './productVideos';
 import { zonedNow } from './sb';
 
 const PREFIX = 'followup:brand:';
-const PER_TICK = 2;
+// One per tick: Brand Lab or Supplier Finder each use a big share of an invocation's 50 outside requests.
+const PER_TICK = 1;
 const STALE_MIN = 20;
 
 export async function queueBrandFollowUp(sb: Sb, userId: string, brandId: string): Promise<void> {
@@ -57,7 +58,8 @@ async function runBrandFollowUp(apiKey: string, sb: Sb, t: TaskRow): Promise<voi
       await set('routed', 'brandlab_done');
       // 5 video drafts in the Content plan (free; generating each clip stays a tap).
       await queueProductVideos(sb, t.user_id, brandId, zonedNow('America/Denver').date).catch((e) => console.error('product videos', e));
-      await sb.patch('ai_tasks', `id=eq.${t.id}`, { status: 'running' }).catch(() => {});
+      // Supplier Finder runs on the next tick, in a fresh invocation.
+      return;
     }
     const sup = await RUNNERS.supplier(apiKey, sb, t.user_id, { brandId, trigger: 'approval' });
     if (sup.skipped) return void (await set('routed', 'brandlab_done'));

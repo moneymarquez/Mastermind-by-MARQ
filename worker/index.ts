@@ -108,7 +108,10 @@ function tickJobs(env: Env): Record<string, () => Promise<unknown>> {
   const jobs: Record<string, () => Promise<unknown>> = {
     shift: () => runShiftReminders(env),
     orchestrator: () => runOrchestratorTick(env),
-    enrich: () => runEnrichTick(env as never).catch(log('enrich tick')),
+    // Product checks: up to 3 at once, each in its own invocation (one card each).
+    enrich1: () => runEnrichTick(env as never, { batch: 1, once: true }).catch(log('enrich tick')),
+    enrich2: () => runEnrichTick(env as never, { batch: 1, once: true }).catch(log('enrich tick')),
+    enrich3: () => runEnrichTick(env as never, { batch: 1, once: true }).catch(log('enrich tick')),
     inbound: () => runInboundWaitCheck(env),
     publisher: () => runPublisherTick(env),
     flags: () => runFlagsTick(env),
@@ -136,7 +139,7 @@ export default {
     const url = new URL(request.url);
 
     // One timer job, started by scheduled() through the SELF binding.
-    const tick = url.pathname.match(/^\/__tick\/([a-z]+)$/);
+    const tick = url.pathname.match(/^\/__tick\/([a-z0-9]+)$/);
     if (tick && request.method === 'POST') {
       if (!env.SUPABASE_SERVICE_ROLE_KEY || request.headers.get('x-tick-key') !== (await tickKey(env))) return new Response('Not found', { status: 404 });
       const job = tickJobs(env)[tick[1]];

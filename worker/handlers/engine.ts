@@ -251,7 +251,12 @@ const ENRICH_STALE_MS = 20 * 60000;
 
 type CardRow = { id: string; user_id: string; payload: Record<string, unknown> };
 
-export async function runEnrichTick(env: EngineEnv): Promise<void> {
+/** `once`: check one card and stop. The timer runs several of these side by
+ *  side, each in its own invocation, because one Analyst (web search plus
+ *  saving) already uses a big share of the 50 outside requests an invocation
+ *  gets on the free plan; four in one invocation ran out mid-way and died. */
+export async function runEnrichTick(env: EngineEnv, opts: { batch?: number; once?: boolean } = {}): Promise<void> {
+  const batch = opts.batch ?? ENRICH_BATCH;
   if (!env.ANTHROPIC_API_KEY || !env.SUPABASE_SERVICE_ROLE_KEY) return;
   const sb = new Sb(env);
   const started = Date.now();
@@ -260,7 +265,7 @@ export async function runEnrichTick(env: EngineEnv): Promise<void> {
   for (const c of stuck) if (Date.now() - Date.parse(String(c.payload.enrich_started_at ?? 0)) > ENRICH_STALE_MS) await sb.patch('ai_approvals', `id=eq.${c.id}`, { payload: { ...c.payload, pending_enrich: true } }).catch(() => {});
 
   while (Date.now() - started < ENRICH_BUDGET_MS) {
-    const next = await sb.get<CardRow>(`ai_approvals?type=eq.product_card&status=eq.pending&payload->>pending_enrich=eq.true&order=created_at.asc&limit=${ENRICH_BATCH}&select=id,user_id,payload`).catch(() => []);
+    const next = await sb.get<CardRow>(`ai_approvals?type=eq.product_card&status=eq.pending&payload->>pending_enrich=eq.true&order=created_at.asc&limit=${batch}&select=id,user_id,payload`).catch(() => []);
     if (!next.length) return;
     const claimed: CardRow[] = [];
     for (const c of next) {
@@ -276,6 +281,6 @@ export async function runEnrichTick(env: EngineEnv): Promise<void> {
       if (now) await sb.patch('ai_approvals', `id=eq.${c.id}`, { payload: { ...now.payload, pending_enrich: r.skipped ? true : false } }).catch(() => {});
       return r;
     }));
-    if (results.some((r) => r.skipped)) return;
+    if (results.some((r) => r.skipped) || opts.once) return;
   }
 }
