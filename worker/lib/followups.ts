@@ -50,11 +50,12 @@ async function runBrandFollowUp(apiKey: string, sb: Sb, t: TaskRow): Promise<voi
   const brandId = t.body.slice(PREFIX.length);
   const set = (status: 'routed' | 'done' | 'failed', note: string) => sb.patch('ai_tasks', `id=eq.${t.id}`, { status, note: note.slice(0, 1000), updated_at: new Date().toISOString() }).catch(() => {});
   try {
-    if (t.note !== 'brandlab_done') {
+    if (t.note !== 'brandlab_done' && t.note !== 'brandlab_failed') {
       const lab = await RUNNERS.brandlab(apiKey, sb, t.user_id, { brandId, trigger: 'approval' });
       // Paused by the kill switch: leave it waiting, it runs once switched back on.
       if (lab.skipped) return void (await set('routed', lab.error ?? 'Waiting: paused.'));
-      if (!lab.ok) return void (await set('failed', `Brand Lab: ${lab.error ?? 'failed'}`));
+      // Brand Lab failing must not hold up the supplier: Step 4 needs it first.
+      if (!lab.ok) return void (await set('routed', 'brandlab_failed'));
       await set('routed', 'brandlab_done');
       // 5 video drafts in the Content plan (free; generating each clip stays a tap).
       await queueProductVideos(sb, t.user_id, brandId, zonedNow('America/Denver').date).catch((e) => console.error('product videos', e));
