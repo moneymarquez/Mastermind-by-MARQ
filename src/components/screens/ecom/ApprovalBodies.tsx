@@ -41,6 +41,7 @@ export const APPROVE_LABEL: Record<string, (p: P) => string> = {
   product_pitch: () => 'Approve · build the brand',
   supplier_order: () => 'Approve to ship',
   playbook_rule: () => 'Approve · make it a rule',
+  invoice_reminder: (p) => (p.to ? 'Approve · send reminder' : 'Approve (no email on file)'),
   content_kit: (p) => `Approve · add ${plural(arr(p.posts).length, 'post')} to the Plan`,
 };
 const DAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -49,6 +50,16 @@ const gradeColor = (g: number) => (g >= 4 ? E.green : g === 3 ? E.blue : g === 2
 
 export function ApprovalBody({ type, payload: p, choice = 0, onChoice, approvalId }: { type: string; payload: P; choice?: number; onChoice?: (i: number) => void; approvalId?: string }) {
   if (type === 'product_pitch') return <RichPitch p={p} />;
+  if (type === 'invoice_reminder') return (
+    <div style={{ marginTop: 10 }}>
+      <Box>
+        <Line k="To" v={p.to ?? 'No email on file'} />
+        <Line k="Subject" v={p.subject} />
+        <div style={{ fontSize: 'var(--text-body)', color: E.text, whiteSpace: 'pre-wrap', marginTop: 6 }}>{String(p.body ?? '')}</div>
+      </Box>
+      <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 6 }}>Nothing is sent until you approve. If the invoice gets paid first, approving sends nothing.</div>
+    </div>
+  );
   if (type === 'supplier_order') return <div style={{ marginTop: 10, fontSize: 'var(--text-body)', color: E.muted }}>{String(p.summary ?? '')} Approving marks it ready to place with the supplier; nothing is bought automatically.</div>;
   if (type === 'playbook_rule') return <div style={{ marginTop: 10, padding: 10, borderRadius: 'var(--radius-sm)', background: E.sunk, fontFamily: 'var(--font-mono)', fontSize: 13, color: E.text }}>{String(p.rule ?? '')}<div style={{ fontFamily: 'inherit', fontSize: 12, color: E.faint, marginTop: 6 }}>Goes into {String(p.playbook ?? '')}</div></div>;
   if (type === 'analysis') {

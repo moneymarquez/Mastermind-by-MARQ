@@ -11,8 +11,11 @@ export interface SmsResult { sent: boolean; error?: string; sid?: string; dryRun
 export const twilioReady = (env: TwilioEnv) => !!(env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_FROM_NUMBER);
 
 export async function sendTwilioSms(env: TwilioEnv, to: string, body: string): Promise<SmsResult> {
-  if (isDryRun(env)) return { sent: true, dryRun: true, sid: 'dry-run' };
-  if (env.TWILIO_LIVE !== '1' && env.TWILIO_LIVE !== 'true') return { sent: false, error: 'Texting is off until Twilio approves the number (10DLC). Once it\'s approved, set TWILIO_LIVE=1 in Cloudflare → Build variables.' };
+  // Texting has its own switch: TWILIO_LIVE=1 sends real texts even while the
+  // rest of the app stays in DRY_RUN (emails, posts, orders). Unset, texts
+  // are simulated like everything else.
+  const live = env.TWILIO_LIVE === '1' || env.TWILIO_LIVE === 'true';
+  if (!live) return isDryRun(env) ? { sent: true, dryRun: true, sid: 'dry-run' } : { sent: false, error: 'Texting is off until Twilio approves the number (10DLC). Once it\'s approved, add TWILIO_LIVE=1 as a Worker secret.' };
   if (!twilioReady(env)) return { sent: false, error: 'Twilio isn\'t connected (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER). Connect it in Setup.' };
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}/Messages.json`, {
     method: 'POST',

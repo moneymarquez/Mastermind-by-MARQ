@@ -22,6 +22,8 @@ import { govconRoute } from './handlers/govcon';
 import { archiveRoute } from './handlers/archive';
 import { scoresRoute } from './handlers/scores';
 import type { ScoresEnv } from './handlers/scores';
+import { videoRoute } from './handlers/videos';
+import { runInvoiceTick } from './lib/invoiceReminders';
 import { runScoreTick } from './lib/scoring';
 import type { ArchiveEnv } from './handlers/archive';
 import type { GovconEnv } from './handlers/govcon';
@@ -131,6 +133,7 @@ function tickJobs(env: Env): Record<string, () => Promise<unknown>> {
     comms: () => runCommsTick(env, new SbClient(env)).catch(log('comms tick')),
     // Scores for new AI outputs (Logic / Trust / On-target), 2 per run in its own invocation.
     score: () => runScoreTick(env.ANTHROPIC_API_KEY, new SbClient(env), 2).catch(log('score tick')),
+    invoices: () => runInvoiceTick(new SbClient(env)).catch(log('invoice tick')),
   });
   return jobs;
 }
@@ -219,6 +222,8 @@ export default {
 
     const outreachMatch = url.pathname.match(/^\/api\/outreach\/([a-z-]+)$/);
     if (outreachMatch) return outreachRoute(request, env as unknown as OutreachRouteEnv, outreachMatch[1]);
+    const videoMatch = url.pathname.match(/^\/api\/video\/(view|reply)$/);
+    if (videoMatch) return videoRoute(request, env, videoMatch[1]);
     const bookMatch = url.pathname.match(/^\/api\/book\/([a-z-]+)$/);
     if (bookMatch) return bookRoute(request, env as unknown as OutreachRouteEnv, bookMatch[1]);
     const scoresMatch = url.pathname.match(/^\/api\/scores\/([a-z-]+)$/);

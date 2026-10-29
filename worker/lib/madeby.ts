@@ -18,6 +18,7 @@ import { ask } from './ai';
 import { ROLE_MODEL } from './models';
 import { extractJson } from './scout';
 import { notifyStored } from './notify';
+import { toE164 } from './phone';
 import { dueRecurring, renderMessage, nextSequenceAt, IDEA_BANK, DEFAULT_SENDER } from '../../src/data/madeby';
 import type { SeqStep } from '../../src/data/madeby';
 
@@ -44,6 +45,26 @@ export async function sendEmail(env: MadebyEnv, to: string, subject: string, htm
 }
 
 export interface SendInput { channel: 'email' | 'sms'; to: string; subject?: string | null; body: string; contact_id?: string | null; client_id?: string | null; scheduled_for?: string | null; attachments?: { doc_id?: string; name: string }[]; sequence_run_id?: string | null; purpose?: SendPurpose }
+/** Texts only go to people who texted us first or opted in on the site, and
+ *  never after STOP (TCPA: no cold texts to personal cells). Pure. */
+export function smsConsent(o: { repliedIn: boolean; optedIn: boolean; optedOut: boolean }): string | null {
+  if (o.optedOut) return 'They replied STOP, so no more texts to this number.';
+  if (o.repliedIn || o.optedIn) return null;
+  return 'No cold texts: this number hasn\'t texted you or opted in. Email or call instead.';
+}
+const STOP_RE = /^\s*(stop|stopall|unsubscribe|cancel|end|quit|revoke|optout)\s*$/i;
+async function smsBlocked(sb: Sb, u: string | undefined, to: string): Promise<string | null> {
+  const e164 = toE164(to);
+  if (e164.length < 11) return 'That phone number doesn\'t look right.';
+  const [inbound, opt] = await Promise.all([
+    // The two-way line stores every inbound text in sms_messages, newest first.
+    u ? sb.get<{ body: string }>(`sms_messages?user_id=eq.${u}&direction=eq.in&counterpart=eq.${encodeURIComponent(e164)}&select=body&order=created_at.desc&limit=1`).catch(() => []) : Promise.resolve([] as { body: string }[]),
+    sb.get<{ opted_out_at: string | null }>(`sms_optins?phone=eq.${encodeURIComponent(e164)}&select=opted_out_at&order=opted_in_at.desc&limit=1`).catch(() => []),
+  ]);
+  const lastIn = inbound[0]?.body ?? null;
+  return smsConsent({ repliedIn: lastIn != null, optedIn: opt.length > 0 && !opt[0].opted_out_at, optedOut: (opt.length > 0 && !!opt[0].opted_out_at) || (lastIn != null && STOP_RE.test(lastIn)) });
+}
+
 /** Send (or schedule) one message and keep it in the thread. */
 export async function sendMessage(env: MadebyEnv, sb: Sb, u: string, m: SendInput): Promise<{ ok: boolean; id?: string; status: string; error?: string }> {
   if (!m.to?.trim() || !m.body?.trim()) return { ok: false, status: 'failed', error: 'A recipient and a message are required.' };
@@ -52,14 +73,18 @@ export async function sendMessage(env: MadebyEnv, sb: Sb, u: string, m: SendInpu
     const [row] = await sb.insert<{ id: string }>('comm_messages', { ...base, status: 'scheduled', scheduled_for: m.scheduled_for });
     return { ok: true, id: row?.id, status: 'scheduled' };
   }
-  const r = await deliver(env, sb, base.channel, base.to_addr, base.subject, base.body, base.attachments, m.purpose);
+  const r = await deliver(env, sb, base.channel, base.to_addr, base.subject, base.body, base.attachments, m.purpose, u);
   const [row] = await sb.insert<{ id: string }>('comm_messages', { ...base, status: r.dryRun ? 'dry_run' : r.ok ? 'sent' : 'failed', sent_at: r.ok ? now() : null, error: r.error ?? null, external_id: r.id ?? null });
   if (r.ok) await touchContact(sb, u, m.contact_id, m.client_id);
   return { ok: r.ok, id: row?.id, status: r.dryRun ? 'dry_run' : r.ok ? 'sent' : 'failed', error: r.error };
 }
 
-async function deliver(env: MadebyEnv, sb: Sb, channel: 'email' | 'sms', to: string, subject: string | null, body: string, attachments: { doc_id?: string; name: string }[], purpose: SendPurpose = 'comms'): Promise<{ ok: boolean; id?: string; error?: string; dryRun?: boolean }> {
-  if (channel === 'sms') { const r = await sendTwilioSms(env, to, body); return { ok: r.sent, id: r.sid, error: r.error, dryRun: r.dryRun }; }
+async function deliver(env: MadebyEnv, sb: Sb, channel: 'email' | 'sms', to: string, subject: string | null, body: string, attachments: { doc_id?: string; name: string }[], purpose: SendPurpose = 'comms', u?: string): Promise<{ ok: boolean; id?: string; error?: string; dryRun?: boolean }> {
+  if (channel === 'sms') {
+    const why = await smsBlocked(sb, u, to);
+    if (why) return { ok: false, error: why };
+    const r = await sendTwilioSms(env, to, body); return { ok: r.sent, id: r.sid, error: r.error, dryRun: r.dryRun };
+  }
   // Brain Dump documents go along as their text, inline (no binary attachments yet).
   let extra = '';
   for (const a of attachments) if (a.doc_id) { const [d] = await sb.get<{ title: string; body_text: string | null }>(`brain_documents?id=eq.${a.doc_id}&select=title,body_text`).catch(() => []); if (d?.body_text) extra += `\n\n— ${d.title} —\n${d.body_text.slice(0, 20000)}`; }
@@ -88,7 +113,7 @@ export async function runCommsTick(env: MadebyEnv, sb: Sb): Promise<{ sent: numb
   const due = await sb.get<{ id: string; user_id: string; channel: 'email' | 'sms'; to_addr: string; subject: string | null; body: string; attachments: { doc_id?: string; name: string }[]; contact_id: string | null; client_id: string | null }>(`comm_messages?status=eq.scheduled&scheduled_for=lte.${now()}&select=id,user_id,channel,to_addr,subject,body,attachments,contact_id,client_id&limit=50`).catch(() => []);
   for (const m of due) {
     await sb.patch('comm_messages', `id=eq.${m.id}&status=eq.scheduled`, { status: 'sending' });
-    const r = await deliver(env, sb, m.channel, m.to_addr, m.subject, m.body, m.attachments ?? []);
+    const r = await deliver(env, sb, m.channel, m.to_addr, m.subject, m.body, m.attachments ?? [], 'comms', m.user_id);
     await sb.patch('comm_messages', `id=eq.${m.id}`, { status: r.dryRun ? 'dry_run' : r.ok ? 'sent' : 'failed', sent_at: r.ok ? now() : null, error: r.error ?? null, external_id: r.id ?? null });
     if (r.ok) { sent++; await touchContact(sb, m.user_id, m.contact_id, m.client_id); }
   }
@@ -170,13 +195,13 @@ export async function signContract(sb: Sb, token: string, sig: { name: string; a
 
 // ── Invoices to anyone + ledger ───────────────────────────────────────
 export async function sendBizInvoice(env: MadebyEnv, sb: Sb, u: string, id: string): Promise<{ ok: boolean; status: string; error?: string }> {
-  const [inv] = await sb.get<{ id: string; number: string; to_name: string; to_email: string | null; items: { description: string; qty: number; rate: number }[]; amount_usd: number; due_date: string | null; contact_id: string | null; client_id: string | null; note: string | null }>(`biz_invoices?id=eq.${id}&user_id=eq.${u}&select=*`);
+  const [inv] = await sb.get<{ id: string; number: string; to_name: string; to_email: string | null; items: { description: string; qty: number; rate: number }[]; amount_usd: number; due_date: string | null; contact_id: string | null; client_id: string | null; note: string | null; pay_url: string | null }>(`biz_invoices?id=eq.${id}&user_id=eq.${u}&select=*`);
   if (!inv) return { ok: false, status: 'missing', error: 'That invoice is gone.' };
   if (!inv.to_email) return { ok: false, status: 'no_email', error: 'Add an email to send it to.' };
   const [bp] = await sb.get<{ sender_entity: string | null; business_name: string | null }>(`business_profile?user_id=eq.${u}&select=sender_entity,business_name`).catch(() => []);
   const sender = bp?.sender_entity || bp?.business_name || DEFAULT_SENDER;
   const lines = inv.items.map((i) => `${i.description} — ${i.qty} × $${Number(i.rate).toFixed(2)} = $${(i.qty * i.rate).toFixed(2)}`).join('\n');
-  const body = `Hi ${inv.to_name.split(' ')[0]},\n\nInvoice ${inv.number} from ${sender}.\n\n${lines}\n\nTotal: $${Number(inv.amount_usd).toFixed(2)}${inv.due_date ? `\nDue: ${inv.due_date}` : ''}${inv.note ? `\n\n${inv.note}` : ''}\n\nThank you.`;
+  const body = `Hi ${inv.to_name.split(' ')[0]},\n\nInvoice ${inv.number} from ${sender}.\n\n${lines}\n\nTotal: $${Number(inv.amount_usd).toFixed(2)}${inv.due_date ? `\nDue: ${inv.due_date}` : ''}${inv.pay_url ? `\nPay online: ${inv.pay_url}` : ''}${inv.note ? `\n\n${inv.note}` : ''}\n\nThank you.`;
   const r = await sendMessage(env, sb, u, { channel: 'email', to: inv.to_email, subject: `Invoice ${inv.number} from ${sender}`, body, contact_id: inv.contact_id, client_id: inv.client_id, purpose: 'invoice' });
   if (!r.ok) return { ok: false, status: r.status, error: r.error };
   await sb.patch('biz_invoices', `id=eq.${id}`, { status: 'sent', sent_at: now(), updated_at: now() });

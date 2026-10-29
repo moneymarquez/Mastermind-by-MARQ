@@ -7,7 +7,7 @@ test('fresh start covers leads, findings, drafts, products, approvals and cluste
   for (const r of ARCHIVE_RULES) assert.match(r.active, /archived_at=is\.null/);
   // Brand steps you are building are kept.
   assert.match(ruleFor('ai_approvals')!.active, /status=eq\.pending/);
-  assert.match(ruleFor('ai_approvals')!.active, /entity_type\.neq\.brand/);
+  assert.match(ruleFor('ai_approvals')!.active, /entity_type\.not\.in\.\(brand,invoice\)/);
   // Only unsent drafts.
   assert.match(ruleFor('lead_outreach')!.active, /status=eq\.drafted/);
 });

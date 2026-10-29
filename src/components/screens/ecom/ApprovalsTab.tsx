@@ -87,6 +87,7 @@ const CHOOSES = new Set(['brand_options', 'supplier_pick']);
 const RERUNNABLE = new Set(['analysis', 'teardown', 'lead_tags', 'scripts', 'campaign_plan', 'inspiration', 'content_plan', 'content_audit', 'content_grades', 'post_plan', 'clip_edit', 'inbound_tags', 'supplier_pick', 'brand_options', 'store_draft', 'brand_read']);
 function appliedMessage(type: string, a: Record<string, number> | null | undefined): string {
   if (!a) return 'Approved.';
+  if (type === 'invoice_reminder') { const r = a as unknown as { ok?: boolean; error?: string; status?: string }; return r.ok ? (r.status?.startsWith('skipped') ? 'Approved — the invoice is already settled, so nothing was sent.' : r.status === 'dry_run' ? 'Approved — test mode is on, so it was logged, not emailed.' : 'Reminder sent.') : `Approved, but it didn't send: ${r.error ?? 'unknown error'}`; }
   if (type === 'scout_products') return `Approved — ${a.inserted} new, ${a.updated} refreshed in Product Sheets.`;
   if (type === 'analysis') return 'Approved — the product drawer is filled in.';
   if (type === 'teardown') return `Approved — ${a.competitors} dossiers and ${a.angles} angles saved on the product.`;

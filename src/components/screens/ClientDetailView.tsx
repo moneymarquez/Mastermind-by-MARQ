@@ -13,6 +13,7 @@ import type { AnswerConfidence } from '../../data/types';
 import ClientCampaigns from './marketing/ClientCampaigns';
 import { Tabs } from '../mm/Page';
 import { ClientOverview, DeliveryTab, ClientComms, ClientContracts } from '../madeby/ClientSections';
+import ClientVideos from '../madeby/ClientVideos';
 
 interface Props {
   client: CrmClientWithChildren;
@@ -395,7 +396,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
       <div style={{ marginTop: 16 }}><Tabs tabs={SECTIONS} value={section} onChange={(s) => { setSection(s); const first = SECTION_TABS[s][0]; if (first) setTab(first); }} /></div>
       {section === 'overview' && <ClientOverview client={client} onOpen={(s) => setSection(s)} />}
       {section === 'delivery' && <DeliveryTab client={client} onChanged={() => crm.reload()} />}
-      {section === 'comms' && <ClientComms client={client} />}
+      {section === 'comms' && <><ClientVideos client={client} /><ClientComms client={client} /></>}
       {section === 'sales' && (<>
       {onOpenCampaign && onStartCampaign && <ClientCampaigns clientId={client.id} onOpenCampaign={onOpenCampaign} onStartCampaign={onStartCampaign} />}
 

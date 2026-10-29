@@ -1,6 +1,8 @@
 // /api/engine/* — the shared worker engine's HTTP surface. Runs are
 // synchronous from the caller's point of view ("Run now" waits for the
 // answer); the overnight plan runs from the */5 cron (lib/orchestrator.ts).
+import { sendInvoiceReminder } from '../lib/invoiceReminders';
+import type { MadebyEnv } from '../lib/madeby';
 import { requireMember } from '../lib/member';
 import { json, zonedNow, Sb } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
@@ -126,6 +128,11 @@ export async function engineRoute(request: Request, env: EngineEnv, path: string
       const b = await body<{ approval_id?: string; status?: 'approved' | 'sent_back' | 'killed'; note?: string; rerun?: boolean; choice?: number }>(request);
       if (!b?.approval_id || !b.status || !['approved', 'sent_back', 'killed'].includes(b.status)) return json({ error: 'approval_id and status are required.' }, 400);
       const r = await decide(env.ANTHROPIC_API_KEY, sb, user.id, { approvalId: b.approval_id, status: b.status, note: b.note, rerun: b.rerun, choice: Number.isInteger(b.choice) && b.choice! >= 0 && b.choice! < 10 ? b.choice : undefined });
+      // An approved invoice reminder is the only thing that emails the client.
+      if (r.ok && b.status === 'approved' && r.type === 'invoice_reminder') {
+        const [a] = await sb.get<{ payload: Record<string, unknown> }>(`ai_approvals?id=eq.${b.approval_id}&user_id=eq.${user.id}&select=payload`);
+        r.applied = a ? await sendInvoiceReminder(env as unknown as MadebyEnv, sb, user.id, a.payload) : { ok: false, error: 'Card not found.' };
+      }
       // A send-back or kill keeps its reason on the card's score, so the
       // Trust trend shows each worker's recurring failures.
       if (r.ok && b.status !== 'approved') await sb.patch('ai_output_scores', `output_type=eq.approval&output_id=eq.${b.approval_id}&user_id=eq.${user.id}`, { rejected_reason: `${b.status === 'killed' ? 'Killed' : 'Sent back'}${b.note ? `: ${String(b.note).slice(0, 300)}` : ''}`, updated_at: new Date().toISOString() }).catch(() => {});

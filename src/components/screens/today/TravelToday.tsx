@@ -22,23 +22,29 @@ export default function TravelToday() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [products, setProducts] = useState<{ id: string; title: string }[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [reminders, setReminders] = useState(0);
   const [workouts, setWorkouts] = useState<{ today: number; last: string | null }>({ today: 0, last: null });
   const [macros, setMacros] = useState<{ cal: number; protein: number; tCal: number | null; tProtein: number | null }>({ cal: 0, protein: 0, tCal: null, tProtein: null });
 
   useEffect(() => {
     const today = dateStr(new Date());
     void (async () => {
-      const [l, p, inv, w, m, t] = await Promise.all([
+      const [l, p, inv, w, m, t, biz, rem] = await Promise.all([
         supabase.from('leads').select('id,business_name,phone,owner_phone,city,industry,fizzle_score').is('archived_at', null).or('status.is.null,status.eq.new').not('phone', 'is', null).order('fizzle_score', { ascending: false, nullsFirst: false }).limit(CALL_TARGET),
         supabase.from('ai_approvals').select('id,title').eq('status', 'pending').eq('domain', 'ecom').order('created_at', { ascending: true }).limit(20),
         supabase.from('client_invoices').select('id,description,amount,due_date,status,invoice_number').not('status', 'in', '(paid,void,draft)').order('due_date', { ascending: true }).limit(20),
         supabase.from('fitness_workouts').select('workout_date').order('workout_date', { ascending: false }).limit(30),
         supabase.from('meals').select('calories,protein_g').eq('meal_date', today),
         supabase.from('nutrition_targets').select('daily_calories,daily_protein_g').eq('active', true).limit(1).maybeSingle(),
+        supabase.from('biz_invoices').select('id,number,to_name,amount_usd,due_date,status').eq('status', 'sent').order('due_date', { ascending: true }).limit(20),
+        supabase.from('ai_approvals').select('id', { count: 'exact', head: true }).eq('status', 'pending').eq('type', 'invoice_reminder'),
       ]);
       setLeads((l.data ?? []) as Lead[]);
       setProducts((p.data ?? []) as { id: string; title: string }[]);
-      setInvoices((inv.data ?? []) as Invoice[]);
+      const bizRows = ((biz.data ?? []) as { id: string; number: string; to_name: string; amount_usd: number; due_date: string | null; status: string }[])
+        .map((b) => ({ id: b.id, description: b.to_name, amount: b.amount_usd, due_date: b.due_date, status: b.status, invoice_number: b.number }));
+      setInvoices([...((inv.data ?? []) as Invoice[]), ...bizRows].sort((x, y) => (x.due_date ?? '9').localeCompare(y.due_date ?? '9')));
+      setReminders(rem.count ?? 0);
       const wd = ((w.data ?? []) as { workout_date: string }[]).map((x) => x.workout_date);
       setWorkouts({ today: wd.filter((d) => d === today).length, last: wd[0] ?? null });
       const meals = (m.data ?? []) as { calories: number | null; protein_g: number | null }[];
@@ -90,6 +96,7 @@ export default function TravelToday() {
             {i.due_date && <Chip k={i.due_date < today ? 'bad' : 'neutral'}>{i.due_date < today ? 'overdue' : `due ${i.due_date}`}</Chip>}
           </div>
         ))}
+        {reminders > 0 && <button className="mm-btn" style={{ height: 34, alignSelf: 'flex-start' }} onClick={() => nav('hq')}>{reminders} payment reminder{reminders === 1 ? '' : 's'} waiting on you</button>}
       </Card>
 
       <Card title="Macros today" action={<button className="mm-btn" style={{ height: 32 }} onClick={() => nav('macros')}>Log a meal</button>}>

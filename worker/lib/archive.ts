@@ -29,7 +29,7 @@ export const ARCHIVE_RULES: ArchiveRule[] = [
   // Products already linked to a brand stay: they are mid-build.
   { table: 'ecom_products', label: 'Products', active: 'archived_at=is.null', userScoped: true, nameCol: 'name', subCols: 'channel,sell_price,score' },
   // Pending approvals, except the ones driving a brand you are building.
-  { table: 'ai_approvals', label: 'Pending approvals', active: 'archived_at=is.null&status=eq.pending&or=(entity_type.is.null,entity_type.neq.brand)', onArchive: { status: 'archived' }, onRestore: { status: 'pending' }, userScoped: true, nameCol: 'title', subCols: 'type,domain' },
+  { table: 'ai_approvals', label: 'Pending approvals', active: 'archived_at=is.null&status=eq.pending&or=(entity_type.is.null,entity_type.not.in.(brand,invoice))', onArchive: { status: 'archived' }, onRestore: { status: 'pending' }, userScoped: true, nameCol: 'title', subCols: 'type,domain' },
   { table: 'complaint_clusters', label: 'Complaint clusters', active: 'archived_at=is.null', userScoped: true, nameCol: 'title', subCols: 'industry' },
 ];
 
