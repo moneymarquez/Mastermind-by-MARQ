@@ -3,6 +3,7 @@ import Card from '../../../mm/Card';
 import Chip from '../../../mm/Chip';
 import { Empty } from '../../../mm/States';
 import { api } from '../../../../lib/api';
+import ScorePills from '../../../mm/ScorePills';
 import { CLASS_LABEL, type OutreachRow, type OutreachState, type ReplyRow } from './types';
 
 const SAMPLES: { label: string; text: string }[] = [
@@ -34,6 +35,7 @@ function EmailRow({ o, reload, setMsg }: { o: OutreachRow; reload: () => void; s
         <span style={{ display: 'flex', gap: 6 }}>{o.is_test && o.status === 'sent' && <Chip k="warn">test</Chip>}<Chip k={STATUS_K[o.status]}>{o.status.replace('_', ' ')}</Chip></span>
       </div>
       <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{o.finding_summary}</div>
+      {o.status === 'drafted' && <ScorePills type="outreach" id={o.id} compact />}
       <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{o.to_email ? `To ${o.to_email}` : 'No email on file: goes to the call list, and test mode sends it to your inbox.'}</div>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         <button className="mm-btn" style={btn} onClick={() => setOpen(!open)}>{open ? 'Hide' : editable ? 'Read / edit' : 'Read'}</button>

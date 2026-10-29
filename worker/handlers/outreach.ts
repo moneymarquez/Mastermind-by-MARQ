@@ -68,7 +68,7 @@ export async function outreachRoute(request: Request, env: OutreachRouteEnv, pat
 
   if (path === 'overview') {
     const [emails, replies, calls, [dom], settings] = await Promise.all([
-      sb.get(`lead_outreach?user_id=eq.${u}&order=created_at.desc&limit=120&select=*`),
+      sb.get(`lead_outreach?user_id=eq.${u}&status=neq.archived&order=created_at.desc&limit=120&select=*`),
       sb.get(`lead_replies?user_id=eq.${u}&order=created_at.desc&limit=60&select=*`),
       callList(sb, u),
       sb.get<Record<string, unknown>>(`outreach_domain?user_id=eq.${u}&select=*&limit=1`),

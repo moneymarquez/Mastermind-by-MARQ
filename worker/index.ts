@@ -20,6 +20,9 @@ import { runSocialSyncTick } from './lib/socialSync';
 import { leadEnginesRoute, runEnginesTick } from './handlers/leadEngines';
 import { govconRoute } from './handlers/govcon';
 import { archiveRoute } from './handlers/archive';
+import { scoresRoute } from './handlers/scores';
+import type { ScoresEnv } from './handlers/scores';
+import { runScoreTick } from './lib/scoring';
 import type { ArchiveEnv } from './handlers/archive';
 import type { GovconEnv } from './handlers/govcon';
 import type { EnginesEnv } from './handlers/leadEngines';
@@ -126,6 +129,8 @@ function tickJobs(env: Env): Record<string, () => Promise<unknown>> {
     outreach: () => runOutreachTick(env as unknown as OutreachRouteEnv, new SbClient(env)).catch(log('outreach tick')),
     solo: () => runSoloTick(env, new SbClient(env)).catch(log('solo tick')),
     comms: () => runCommsTick(env, new SbClient(env)).catch(log('comms tick')),
+    // Scores for new AI outputs (Logic / Trust / On-target), 2 per run in its own invocation.
+    score: () => runScoreTick(env.ANTHROPIC_API_KEY, new SbClient(env), 2).catch(log('score tick')),
   });
   return jobs;
 }
@@ -216,6 +221,8 @@ export default {
     if (outreachMatch) return outreachRoute(request, env as unknown as OutreachRouteEnv, outreachMatch[1]);
     const bookMatch = url.pathname.match(/^\/api\/book\/([a-z-]+)$/);
     if (bookMatch) return bookRoute(request, env as unknown as OutreachRouteEnv, bookMatch[1]);
+    const scoresMatch = url.pathname.match(/^\/api\/scores\/([a-z-]+)$/);
+    if (scoresMatch) return scoresRoute(request, env as unknown as ScoresEnv, scoresMatch[1]);
     const archiveMatch = url.pathname.match(/^\/api\/archive\/([a-z-]+)$/);
     if (archiveMatch) return archiveRoute(request, env as unknown as ArchiveEnv, archiveMatch[1]);
     const govconMatch = url.pathname.match(/^\/api\/govcon\/([a-z-]+)$/);

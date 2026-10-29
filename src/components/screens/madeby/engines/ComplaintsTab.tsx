@@ -3,6 +3,7 @@ import Card from '../../../mm/Card';
 import Chip from '../../../mm/Chip';
 import { Empty } from '../../../mm/States';
 import { api } from '../../../../lib/api';
+import ScorePills from '../../../mm/ScorePills';
 import type { Cluster, EngineCard, EnginesState } from './types';
 
 export default function ComplaintsTab({ state, onState }: { state: EnginesState; onState: (s: EnginesState) => void }) {
@@ -27,6 +28,7 @@ export default function ComplaintsTab({ state, onState }: { state: EnginesState;
       {state.clusters.length === 0 && <Empty text="No complaint groups yet. Switch Complaint Scanner on in Engines, or press Run now." />}
       {state.clusters.map((c) => (
         <Card key={c.id} title={c.title} meta={`rank ${Math.round(c.rank_score)} · ${c.repeat_count} people`} action={<Chip k={c.tag === 'can_do_now' ? 'good' : 'accent'}>{c.tag === 'can_do_now' ? 'Made by Marq can do this now' : 'New opportunity'}</Chip>}>
+          <ScorePills type="complaint" id={c.id} compact />
           <div style={{ fontSize: 14.5, color: 'var(--text)', lineHeight: 1.5 }}>{c.plain}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {c.quotes.map((q, i) => (

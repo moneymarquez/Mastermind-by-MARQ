@@ -126,6 +126,9 @@ export async function engineRoute(request: Request, env: EngineEnv, path: string
       const b = await body<{ approval_id?: string; status?: 'approved' | 'sent_back' | 'killed'; note?: string; rerun?: boolean; choice?: number }>(request);
       if (!b?.approval_id || !b.status || !['approved', 'sent_back', 'killed'].includes(b.status)) return json({ error: 'approval_id and status are required.' }, 400);
       const r = await decide(env.ANTHROPIC_API_KEY, sb, user.id, { approvalId: b.approval_id, status: b.status, note: b.note, rerun: b.rerun, choice: Number.isInteger(b.choice) && b.choice! >= 0 && b.choice! < 10 ? b.choice : undefined });
+      // A send-back or kill keeps its reason on the card's score, so the
+      // Trust trend shows each worker's recurring failures.
+      if (r.ok && b.status !== 'approved') await sb.patch('ai_output_scores', `output_type=eq.approval&output_id=eq.${b.approval_id}&user_id=eq.${user.id}`, { rejected_reason: `${b.status === 'killed' ? 'Killed' : 'Sent back'}${b.note ? `: ${String(b.note).slice(0, 300)}` : ''}`, updated_at: new Date().toISOString() }).catch(() => {});
       if (r.ok && r.type === 'product_pitch' && b.status !== 'approved') {
         // A rejected pitch: the note is already a correction (send-back); the pitch is marked rejected.
         const [a] = await sb.get<{ payload: { pitch_id?: string } }>(`ai_approvals?id=eq.${b.approval_id}&user_id=eq.${user.id}&select=payload`);

@@ -28,7 +28,7 @@ export interface SupplierOpt {
   landed: number | null; reviews: number | null; years: number | null; trade_assurance: boolean | null; ships_from: string;
   why: string; pros: string[]; risks: string[]; evidence: Evidence[];
 }
-export interface SupplierPayload { brand_id: string; product_id: string | null; suppliers: SupplierOpt[]; pick: number; why_pick: string; why_not_others: string; sample: { qty: number; variant: string; est_cost: number | null; notes: string }; inspection: string[]; shot_list: string[]; summary: string; dropped: string[] }
+export interface SupplierPayload { brand_id: string; product_id: string | null; sell_price?: number | null; product?: string; suppliers: SupplierOpt[]; pick: number; why_pick: string; why_not_others: string; sample: { qty: number; variant: string; est_cost: number | null; notes: string }; inspection: string[]; shot_list: string[]; summary: string; dropped: string[] }
 export function supplierSystem(ctx: BriefCtx): string {
   return brief(
     'You are Supplier Finder for a solo founder launching a dropshipping brand on about $100. He decides from your research, so every claim needs a reason and a source.',
@@ -91,7 +91,7 @@ export function parseSuppliers(text: string, b: BrandCtx, productId: string | nu
   const s = (o.sample ?? {}) as Record<string, unknown>;
   const qty = num(s.qty);
   return {
-    brand_id: b.id, product_id: productId, suppliers: suppliers.slice(0, 5), pick: Math.min(pick, 4), why_pick: str(o.why_pick, 800), why_not_others: str(o.why_not_others, 1200),
+    brand_id: b.id, product_id: productId, sell_price: b.sell_price, product: b.product, suppliers: suppliers.slice(0, 5), pick: Math.min(pick, 4), why_pick: str(o.why_pick, 800), why_not_others: str(o.why_not_others, 1200),
     sample: { qty: qty != null && qty > 0 ? Math.min(10, Math.round(qty)) : 2, variant: str(s.variant, 200), est_cost: num(s.est_cost), notes: str(s.notes, 400) },
     inspection: strs(o.inspection, 15), shot_list: strs(o.shot_list, 15), summary: str(o.summary, 400), dropped,
   };

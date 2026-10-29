@@ -3,6 +3,7 @@ import Stat from '../../mm/Stat';
 import Chip from '../../mm/Chip';
 import { Page, useModule } from '../../mm/Page';
 import PortalCards from '../home/PortalCards';
+import TrustTrendCard from './TrustTrendCard';
 import { useToday } from '../../../data/useToday';
 import { portalLanding } from '../../../portals.config';
 import type { PortalKey } from '../../../portals.config';
@@ -39,6 +40,8 @@ export default function OrchestratorOverview() {
           Three public contracts a day: read them, quiz yourself on who they hit and how, write your prediction, and check it at 30 and 90 days. Winners can go straight to LeadFlow.
         </span>
       </Card>
+
+      <TrustTrendCard />
 
       {b && b.rows.some((r) => r.moneyIn || r.aiSpend) && (
         <Card title="By business, this week" meta={`Net ${usd(b.net)}`}>

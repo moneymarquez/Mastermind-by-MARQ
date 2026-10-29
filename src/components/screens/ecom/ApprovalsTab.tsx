@@ -9,6 +9,7 @@ import { marginHealthy } from '../../../data/ecomProducts';
 import { E, Badge, ConfidenceBadge, TeachingEmpty, btn, field, label, tint, useIsMobile } from './ecomShared';
 import { ApprovalBody, APPROVE_LABEL } from './ApprovalBodies';
 import RichProductCard from './RichProductCard';
+import ScorePills, { useNeedsConfirm } from '../../mm/ScorePills';
 import { money, ago, CHANNELS } from '../../../data/ecom';
 
 /** §7 — one inbox for everything waiting on you, across domains. Every card
@@ -116,10 +117,12 @@ function ProductApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string)
   const row = a.payload.row as ImportRow | undefined;
   const [busy, setBusy] = useState('');
   const [msg, setMsg] = useState('');
+  const gate = useNeedsConfirm('approval', a.id);
   if (!row) return <div style={{ ...E.card, padding: 14, color: E.muted }}>{a.title}: this find has no product data. Kill it from the sheet.</div>;
   const finish = (m: string) => { setBusy(''); setMsg(m); onDone(m); };
   const lookingUp = a.payload.pending_enrich === true || a.payload.pending_enrich === 'working';
   const approve = async () => {
+    if (gate.red && !confirm(`This card scores ${gate.overall}/100 (red). Approve anyway?`)) return;
     setBusy('approve'); setMsg('');
     const r = await decideApproval(a.id, 'approved');
     if (!r.ok) { setBusy(''); setMsg(r.error ?? 'Could not approve that.'); return; }
@@ -129,8 +132,11 @@ function ProductApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string)
   const watch = async () => { setBusy('watch'); const r = await api<{ ok?: boolean; error?: string; detail?: string }>('/api/engine/watch-card', { body: { approval_id: a.id } }); if (r.error) { setBusy(''); setMsg(r.error); return; } finish(r.detail ?? 'Watching.'); };
   const enrich = async () => { setBusy('enrich'); setMsg('Looking up the missing numbers… (1–2 min)'); const r = await api<{ ok?: boolean; error?: string; summary?: string }>('/api/engine/enrich', { body: { approval_id: a.id } }); finish(r.error ?? r.summary ?? 'Done.'); };
   return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    {!lookingUp && <ScorePills type="approval" id={a.id} />}
     <RichProductCard p={{ ...row, source_url: row.source_url ?? null } as never} busy={lookingUp ? 'enrich' : busy} message={lookingUp && !msg ? 'Checking supplier cost, sellers, shipping, Amazon and traction… Approve unlocks when the numbers are in (about a minute).' : msg}
       onApprove={() => void approve()} onReject={(r) => void reject(r)} onWatch={() => void watch()} onEnrich={() => void enrich()} />
+    </div>
   );
 }
 
@@ -152,7 +158,9 @@ function GenericApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string)
   const rows = a.type === 'scout_products' ? ((a.payload.rows ?? []) as ImportRow[]) : [];
   const channel = CHANNELS.find((c) => c.id === a.payload.channel)?.label;
 
+  const gate = useNeedsConfirm('approval', a.id);
   const go = async (status: 'approved' | 'sent_back' | 'killed') => {
+    if (status === 'approved' && gate.red && !confirm(`This card scores ${gate.overall}/100 (red). Approve anyway?`)) return;
     if (status === 'sent_back' && !note.trim()) { setErr('Write what to change first — that note is what the worker learns from.'); noteRef.current?.focus(); return; }
     setBusy(status); setErr('');
     const r = await decideApproval(a.id, status, note.trim() || null, status === 'sent_back' && rerun, CHOOSES.has(a.type) ? choice : undefined);
@@ -187,6 +195,7 @@ function GenericApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string)
         <span style={{ fontSize: 'var(--text-caption)', color: E.faint, marginLeft: 'auto' }}>{ago(a.created_at)}</span>
       </div>
       <div style={{ fontWeight: 700, color: E.text, fontSize: 'var(--text-subhead)', marginTop: 8 }}>{a.title}</div>
+      <div style={{ marginTop: 6 }}><ScorePills type="approval" id={a.id} /></div>
       {typeof a.payload.summary === 'string' && a.payload.summary && <div style={{ fontSize: 'var(--text-body)', color: E.muted, marginTop: 4 }}>{a.payload.summary}</div>}
       {a.principle && <div style={{ fontSize: 'var(--text-body)', color: E.muted, marginTop: 4 }}><span style={label}>Why</span> {a.principle}</div>}
       {a.source_url && <a href={a.source_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 'var(--text-caption)', color: E.blue }}>Source ↗</a>}

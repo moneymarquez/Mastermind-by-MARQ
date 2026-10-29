@@ -6,6 +6,7 @@ import Card from '../../mm/Card';
 import Chip from '../../mm/Chip';
 import { Page, field, useModule } from '../../mm/Page';
 import { Empty } from '../../mm/States';
+import ScorePills from '../../mm/ScorePills';
 import { dateStr } from '../../../data/time';
 
 /** GovCon: learn to read government contracts the way money moves.
@@ -177,6 +178,7 @@ function ContractCard({ n, c, phone, flagged, onFlag, onSave, onSaveTerm, onLead
         {c.score != null && <Chip k={c.score === quiz.length ? 'good' : c.score > 0 ? 'warn' : 'bad'}>Quiz {c.score}/{quiz.length}</Chip>}
         {c.prediction && <Chip k="good">Prediction saved</Chip>}
       </div>
+      <ScorePills type="gov_contract" id={c.id} compact />
       <span style={muted}>{[c.sub_agency, c.naics ? `Industry ${c.naics}` : null, c.start_date ? `${c.start_date} → ${c.end_date ?? '?'}` : null].filter(Boolean).join(' · ')}{c.url && <> · <a href={c.url} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)' }}>Full record</a></>}</span>
 
       <Section label="1 · Read the contract"><TapText text={c.description ?? ''} flagged={flagged} onFlag={flag} style={{ fontFamily: 'var(--font-mono, ui-monospace)', fontSize: 14 }} /></Section>
