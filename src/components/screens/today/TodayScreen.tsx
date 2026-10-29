@@ -10,6 +10,7 @@ import { useDailyCallGoal } from '../../../data/useDailyCallGoal';
 import { decideApproval } from '../../../data/useEngine';
 import { useTravelMode } from '../../../data/useTravelMode';
 import TravelToday from './TravelToday';
+import { YourLineCard } from '../../mm/TopTasks';
 import { ageOf } from '../../../data/todayMath';
 
 const usd = (n: number) => `${n < 0 ? '-' : ''}$${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
@@ -22,7 +23,7 @@ const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good 
  *  Problems first, then the calling hour, what's waiting on Marq (approve in
  *  one tap), what to post, and money in vs AI spend this week. Nothing else. */
 export default function TodayScreen() {
-  const { device, nav } = useModule();
+  const { device, nav, isOwner } = useModule();
   const phone = device === 'phone';
   const t = useToday();
   const travel = useTravelMode();
@@ -50,6 +51,7 @@ export default function TodayScreen() {
       </Page>
     ) : (
     <Page title={`${greeting()}, Marq`} sub="Here's what makes money today. Everything else can wait." back="Home" backTo="home">
+      <YourLineCard nav={nav} owner={isOwner} />
       {t.flags.length > 0 && (
         <Card title="Fix first" meta={`${t.flags.length} problem${t.flags.length === 1 ? '' : 's'}`} action={<button className="mm-btn" style={{ height: 32 }} onClick={() => nav('hq')}>Open HQ</button>}>
           {t.flags.map((f) => (

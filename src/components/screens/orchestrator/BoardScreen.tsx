@@ -8,7 +8,9 @@ import { STREAMS, PHASES, cleanLabels } from '../../../data/board';
 import type { Board, BoardStream, BoardWorker, Label, Phase, QueueEntry, QueueItem, WorkerState } from '../../../data/board';
 import IsoOffice from '../../office3d/IsoOffice';
 import ClassroomLine from '../../office3d/ClassroomLine';
-import PhaseRooms from '../../office3d/PhaseRooms';
+import School from '../../office3d/School';
+import { TopTaskRow, useTopTasks } from '../../mm/TopTasks';
+import type { TopTask } from '../../../data/topTasks';
 import { DELIVERY_PHASES } from '../../../data/madeby';
 import { nextSteps } from '../../../data/board';
 import type { BoardItem, Step } from '../../../data/board';
@@ -59,6 +61,8 @@ export default function BoardScreen() {
   const [open, setOpen] = useState<BoardWorker | null>(null);
   const [line, setLine] = useState<QueueEntry | null>(null);
   const [person, setPerson] = useState<{ item: BoardItem; phase: number | 'waiting' | 'top' } | null>(null);
+  const [topOpen, setTopOpen] = useState<TopTask | null>(null);
+  const tops = useTopTasks();
   const load = useCallback(async () => {
     const r = await api<Board>('/api/orchestrator/board', { method: 'GET' });
     if (r.error) setErr(r.error); else { setErr(''); setBoard(r); }
@@ -78,13 +82,19 @@ export default function BoardScreen() {
       {board && tab === 'classroom' && <ClassroomLine queue={board.queue ?? []} workers={board.workers} onOpen={setLine} />}
       {board && tab === 'classroom' && board.streams.map((s) => s.key === 'madeby' ? (
         <section key={s.key} style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
-          <strong style={{ fontSize: 16 }}>Made by · phases</strong>
-          <PhaseRooms stream={s} onOpen={(item, phase) => setPerson({ item, phase })} />
+          <strong style={{ fontSize: 16 }}>Made by · the building</strong>
+          <School stream={s} top={board.top ?? []} onOpen={(item, phase) => setPerson({ item, phase })} onOpenTop={setTopOpen} />
+          <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>When someone moves to the next phase they walk down the hall to their new room. Tap anyone.</span>
         </section>
       ) : <Room key={s.key} s={s} onChanged={load} onWaiting={() => setTab('classroom')} />)}
       {open && (
         <Sheet title={open.name} onClose={() => setOpen(null)}>
           <WorkerDetail w={open} onApprovals={() => { setOpen(null); nav('today'); }} />
+        </Sheet>
+      )}
+      {topOpen && (
+        <Sheet title={`#${topOpen.rank} in your line`} onClose={() => setTopOpen(null)}>
+          <TopTaskRow t={topOpen} expanded onDone={() => { void load(); void tops.reload(); }} onNav={(to) => { setTopOpen(null); nav(to); }} />
         </Sheet>
       )}
       {person && (

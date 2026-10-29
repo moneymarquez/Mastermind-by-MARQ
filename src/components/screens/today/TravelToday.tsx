@@ -5,6 +5,7 @@ import Stat from '../../mm/Stat';
 import Chip from '../../mm/Chip';
 import { useModule } from '../../mm/Page';
 import { useCallsToday } from '../../../data/useCallsToday';
+import { YourLineCard } from '../../mm/TopTasks';
 import { dateStr } from '../../../data/time';
 
 /** Today in travel mode (spec Part 2): only production and health.
@@ -16,7 +17,7 @@ interface Invoice { id: string; description: string | null; amount: number | nul
 const usd = (n: number) => `$${n.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
 
 export default function TravelToday() {
-  const { device, nav } = useModule();
+  const { device, nav, isOwner } = useModule();
   const phone = device === 'phone';
   const { callsToday } = useCallsToday();
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -67,6 +68,7 @@ export default function TravelToday() {
         <Stat label="Workout" value={workouts.today ? 'Done' : 'Not yet'} pill={workouts.last ? `last ${workouts.last}` : 'none logged'} k={workouts.today ? 'good' : 'warn'} onClick={() => nav('fitness')} />
       </div>
 
+      <YourLineCard nav={nav} owner={isOwner} />
       <Card title="Call list" meta={`${leads.length} ready`} action={<button className="mm-btn mm-btn--primary" style={{ height: 34 }} onClick={() => nav('leadflow')}>Open LeadFlow</button>}>
         {leads.length === 0 ? <span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>No uncalled leads with a phone. Run Find leads in LeadFlow (Kansas City is the default).</span> : leads.map((l) => {
           const tel = l.owner_phone || l.phone;

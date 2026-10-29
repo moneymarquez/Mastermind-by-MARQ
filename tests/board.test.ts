@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { outreachPhase, brandPhase, streamOfDomain, workerState, cleanLabels, columnsFor, queueFrom, rankTopTasks, nextSteps, STREAMS } from '../src/data/board';
+import { outreachPhase, brandPhase, streamOfDomain, workerState, cleanLabels, columnsFor, queueFrom, nextSteps, STREAMS } from '../src/data/board';
 import { buildBoard } from '../worker/handlers/board';
+import { rankAllTasks } from '../src/data/topTasks';
 
 describe('board phases', () => {
   it('outreach status → Made by phase', () => {
@@ -35,31 +36,6 @@ describe('board phases', () => {
     expect(cols.map((c) => c.name)).toEqual(['Found', 'Drafted', 'Contacted', 'Talking', 'Client']);
     expect(cols[0].count).toBe(377);
     expect(cols[0].items).toHaveLength(1);
-  });
-});
-
-describe('Your top 5', () => {
-  const today = '2026-10-29';
-  it('ranks replies first, then late client work, calls due, approvals, then new leads', () => {
-    const top = rankTopTasks({
-      outreach: [{ id: 'o1', business_name: 'A Cafe', status: 'sent', call_due_at: '2026-10-27' }, { id: 'o2', business_name: 'B Salon', status: 'replied' }],
-      clientTasks: [{ client_id: 'c1', business_name: 'Gym', title: 'Audit summary', due: '2026-10-25' }, { client_id: 'c2', business_name: 'Later', title: 'Not yet', due: '2026-11-20' }],
-      approvals: [{ id: 'a1', title: 'Approve email', created_at: '2026-10-28' }],
-      leads: [{ id: 'l1', business_name: 'Tacos', city: 'Kansas City' }, { id: 'l2', business_name: 'Barber' }],
-    }, today);
-    expect(top.map((t) => t.title)).toEqual(['Reply to B Salon', 'Gym: Audit summary', 'Call A Cafe', 'Approve email', 'Call Tacos']);
-    expect(top.map((t) => t.rank)).toEqual([1, 2, 3, 4, 5]);
-  });
-  it('never more than five, never a task that is not due yet', () => {
-    const top = rankTopTasks({ outreach: [], clientTasks: [{ client_id: 'c', business_name: 'X', title: 't', due: '2026-12-01' }], approvals: [], leads: Array.from({ length: 9 }, (_, i) => ({ id: `l${i}`, business_name: `L${i}` })) }, today);
-    expect(top).toHaveLength(5);
-    expect(top.every((t) => t.kind === 'lead')).toBe(true);
-  });
-  it('next steps for a lead and a sent email', () => {
-    expect(nextSteps('lead', { phone: '816', owner_name: 'Rosa' })[0].text).toBe('Call Rosa');
-    const s = nextSteps('outreach', { status: 'sent', bump_due_at: '2026-10-28', call_due_at: '2026-11-02' }, new Date('2026-10-29'));
-    expect(s[0].when).toMatch(/now/);
-    expect(s[1].when).toBe('due 2026-11-02');
   });
 });
 
@@ -111,5 +87,31 @@ describe('GET /api/orchestrator/board', () => {
     expect(mostfit.waiting).toEqual([]);
     expect(mostfit.columns[2].items).toEqual([{ id: 'm1', title: 'Beta testers' }]);
     expect(b.queue.map((q) => q.name)).toEqual(['Product Scout']);
+  });
+});
+
+describe('Your line: most important across everything', () => {
+  const today = '2026-10-29';
+  it('ranks money and people waiting above everything else', () => {
+    const top = rankAllTasks({
+      outreach: [{ id: 'o1', business_name: 'A Cafe', status: 'sent', call_due_at: '2026-10-27' }, { id: 'o2', business_name: 'B Salon', status: 'replied' }],
+      invoices: [{ id: 'i1', table: 'client_invoices', who: 'Gym', amount: 500, due_date: '2026-10-20' }],
+      approvals: [{ id: 'a1', title: 'Buy the sample', domain: 'ecom', type: 'sample_purchase', is_money: true, amount_usd: 21, created_at: '2026-10-26' }, { id: 'a2', title: 'Approve email', domain: 'marketing', type: 'outreach', created_at: '2026-10-28' }],
+      tasks: [{ id: 't1', title: 'Renew license', due: '2026-10-28', priority: 'high' }],
+      reminders: [{ id: 'r1', title: 'Call mom', due_date: '2026-10-29' }],
+      leads: [{ id: 'l1', business_name: 'Tacos', phone: '816' }],
+    }, today);
+    expect(top.map((t) => t.title)).toEqual(['Reply to B Salon', 'Chase $500 from Gym', 'Buy the sample', 'Renew license', 'Call mom']);
+    expect(top.map((t) => t.rank)).toEqual([1, 2, 3, 4, 5]);
+    expect(top[2].is_money).toBe(true);
+  });
+  it('five at most, nothing that is not due, new leads fill empty spots', () => {
+    const top = rankAllTasks({ tasks: [{ id: 't', title: 'Later', due: '2026-12-01', priority: 'med' }], bills: [{ id: 'b', name: 'Rent', amount: 900, next_occurrence: '2026-11-20' }], leads: Array.from({ length: 9 }, (_, i) => ({ id: `l${i}`, business_name: `L${i}` })) }, today);
+    expect(top).toHaveLength(5);
+    expect(top.every((t) => t.kind === 'lead')).toBe(true);
+  });
+  it('a bill due today outranks a call due today', () => {
+    const top = rankAllTasks({ bills: [{ id: 'b', name: 'Phone', amount: 80, next_occurrence: today }], outreach: [{ id: 'o', business_name: 'X', status: 'call_list', call_due_at: today }] }, today);
+    expect(top[0].kind).toBe('bill');
   });
 });

@@ -4,9 +4,10 @@
 // you"). MostFit and side hustles are labels Marq types — status only.
 // About 12 Supabase reads: well under the 50-request budget. Owner only.
 import { requireUser, isOwnerUser } from '../lib/auth';
-import { Sb, json, zonedNow } from '../lib/sb';
+import { Sb, json } from '../lib/sb';
+import { buildTop } from './top';
 import type { SbEnv } from '../lib/sb';
-import { STREAMS, outreachPhase, brandPhase, streamOfDomain, workerState, cleanLabels, columnsFor, queueFrom, rankTopTasks } from '../../src/data/board';
+import { STREAMS, outreachPhase, brandPhase, streamOfDomain, workerState, cleanLabels, columnsFor, queueFrom } from '../../src/data/board';
 import type { Board, BoardItem, BoardStream, BoardWorker, Phase, StreamKey } from '../../src/data/board';
 
 export type BoardEnv = SbEnv & { VITE_SUPABASE_ANON_KEY: string };
@@ -28,7 +29,7 @@ export async function boardRoute(request: Request, env: BoardEnv): Promise<Respo
 export async function buildBoard(sb: Sb, u: string): Promise<Board> {
   const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
   const since7 = new Date(Date.now() - 7 * 86400 * 1000).toISOString();
-  const [workers, runs, approvals, scores, leadsTop, leadsNew, outreach, clients, productsTop, productsN, brands, settings, checklist] = await Promise.all([
+  const [workers, runs, approvals, scores, leadsTop, leadsNew, outreach, clients, productsTop, productsN, brands, settings] = await Promise.all([
     sb.get<{ id: string; key: string; name: string; domain: string; current_task: string | null; enabled: boolean }>(`ai_workers?user_id=eq.${u}&enabled=eq.true&select=id,key,name,domain,current_task,enabled&order=domain,name`),
     sb.get<{ worker_id: string | null; status: string; summary: string | null; instructions: string | null; created_at: string; finished_at: string | null }>(`ai_worker_runs?user_id=eq.${u}&created_at=gte.${since}&select=worker_id,status,summary,instructions,created_at,finished_at&order=created_at.desc&limit=300`),
     sb.get<{ id: string; worker_id: string | null; domain: string; type: string; title: string; created_at: string }>(`ai_approvals?user_id=eq.${u}&status=eq.pending&select=id,worker_id,domain,type,title,created_at&order=created_at.asc&limit=200`),
@@ -41,7 +42,6 @@ export async function buildBoard(sb: Sb, u: string): Promise<Board> {
     countOf(sb, `ecom_products?user_id=eq.${u}&archived_at=is.null&select=id`),
     sb.get<{ id: string; name: string; current_step: number | null }>(`ecom_brands?user_id=eq.${u}&select=id,name,current_step&order=last_activity_at.desc.nullslast&limit=50`),
     sb.get<{ board_labels: Record<string, unknown> }>(`user_settings?user_id=eq.${u}&select=board_labels`),
-    sb.get<{ client_id: string; title: string; due: string | null }>(`client_checklist?user_id=eq.${u}&done=eq.false&owner=eq.marq&due=not.is.null&select=client_id,title,due&order=due.asc&limit=50`),
   ]);
 
   // ── Office: one character per worker ──
@@ -76,23 +76,15 @@ export async function buildBoard(sb: Sb, u: string): Promise<Board> {
     ...pitches.map((a) => ({ phase: 2 as Phase, item: { id: a.id, title: a.title } })),
     ...brands.map((b) => ({ phase: brandPhase(b.current_step), item: { id: b.id, title: b.name, sub: `Step ${b.current_step ?? 1} of 10` } })),
   ];
-  const today = zonedNow('America/Denver').date;
-  const nameOf = new Map(clients.map((c) => [c.id, c.business_name]));
-  const top = rankTopTasks({
-    outreach,
-    clientTasks: checklist.map((t) => ({ ...t, business_name: nameOf.get(t.client_id) ?? 'Client' })),
-    approvals: approvals.filter((a) => streamOfDomain(a.domain) === 'madeby'),
-    leads: leadsTop,
-  }, today);
+  const top = await buildTop(sb, u);
   const labels = settings[0]?.board_labels ?? {};
   const fromLabels = (k: 'mostfit' | 'side') => cleanLabels(labels[k]).map((l) => ({ phase: l.phase, item: { id: l.id, title: l.label } }));
   const streams: BoardStream[] = STREAMS.map((s) => ({
     key: s.key, name: s.name, labelsOnly: s.labelsOnly,
     waiting: s.key === 'mostfit' ? [] : waitingFor(s.key),
-    ...(s.key === 'madeby' ? { top } : {}),
     columns: s.key === 'madeby' ? columnsFor('madeby', madeby, { 1: leadsNew }, 10)
       : s.key === 'ecom' ? columnsFor('ecom', ecom, { 1: productsN })
         : columnsFor(s.key, fromLabels(s.key)),
   }));
-  return { workers: outWorkers, streams, queue: queueFrom(approvals, workers), at: new Date().toISOString() };
+  return { workers: outWorkers, streams, queue: queueFrom(approvals, workers), top, at: new Date().toISOString() };
 }
