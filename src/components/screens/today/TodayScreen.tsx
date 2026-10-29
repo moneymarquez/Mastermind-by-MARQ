@@ -8,6 +8,8 @@ import type { TodayApproval } from '../../../data/useToday';
 import { useCallsToday } from '../../../data/useCallsToday';
 import { useDailyCallGoal } from '../../../data/useDailyCallGoal';
 import { decideApproval } from '../../../data/useEngine';
+import { useTravelMode } from '../../../data/useTravelMode';
+import TravelToday from './TravelToday';
 import { ageOf } from '../../../data/todayMath';
 
 const usd = (n: number) => `${n < 0 ? '-' : ''}$${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
@@ -23,6 +25,7 @@ export default function TodayScreen() {
   const { device, nav } = useModule();
   const phone = device === 'phone';
   const t = useToday();
+  const travel = useTravelMode();
   const { callsToday } = useCallsToday();
   const goal = useDailyCallGoal();
   const [busy, setBusy] = useState<string | null>(null);
@@ -41,6 +44,11 @@ export default function TodayScreen() {
   const grid = (cols: number) => ({ display: 'grid', gridTemplateColumns: phone ? '1fr 1fr' : `repeat(${cols},minmax(0,1fr))`, gap: 12 });
 
   return (
+    travel ? (
+      <Page title={`${greeting()}, Marq`} sub="Travel mode: calls, products, invoices, training. Nothing else." back="Home" backTo="home">
+        <TravelToday />
+      </Page>
+    ) : (
     <Page title={`${greeting()}, Marq`} sub="Here's what makes money today. Everything else can wait." back="Home" backTo="home">
       {t.flags.length > 0 && (
         <Card title="Fix first" meta={`${t.flags.length} problem${t.flags.length === 1 ? '' : 's'}`} action={<button className="mm-btn" style={{ height: 32 }} onClick={() => nav('hq')}>Open HQ</button>}>
@@ -118,5 +126,6 @@ export default function TodayScreen() {
         </Card>
       )}
     </Page>
+    )
   );
 }

@@ -26,6 +26,8 @@ import { useFlags, PORTAL_FLAG_DOMAINS } from './data/useFlags';
 import { useResolvedTheme } from './data/useTheme';
 import { usePortal } from './data/usePortal';
 import PortalCards from './components/screens/home/PortalCards';
+import { useTravelMode } from './data/useTravelMode';
+import { travelHides } from './config/travelMode';
 import { portalName } from './portals.config';
 
 // Screens load on demand; Overview ships in the main bundle.
@@ -193,13 +195,17 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
     actions.openNova();
     actions.sendNova(promptText);
   };
-  const navAccess = (moduleKey: string) => canAccess(moduleKey) && !navPrefs.hidden.has(moduleKey);
+  // Travel mode (Settings → Workspace) hides non-production sections from the
+  // nav, search and portal list. UI-only: real access (screenBlocked) is unchanged.
+  const travel = useTravelMode();
+  const travelAccess = useCallback((moduleKey: string) => canAccess(moduleKey) && !travelHides(moduleKey, travel), [canAccess, travel]);
+  const navAccess = (moduleKey: string) => travelAccess(moduleKey) && !navPrefs.hidden.has(moduleKey);
   const vm = buildViewModel(state, actions.navigateTo, onSignOut, navAccess, isOwner, navPrefs.order);
   const { isMobile } = vm;
   const device = deviceFor(vm.stageWidth);
   // Portals: a display layer over canAccess. The nav shows only the current
   // portal's modules; screenBlocked below never looks at the portal.
-  const { portal, accessible: portals, switchPortal } = usePortal(canAccess, state.screen, actions.navigateTo);
+  const { portal, accessible: portals, switchPortal } = usePortal(travelAccess, state.screen, actions.navigateTo);
   const portalNav = { current: portal, list: portals, onSwitch: (k: typeof portal) => { setNotifOpen(false); setMenuOpen(false); if (state.novaOpen && device !== 'desktop') actions.closeNova(); switchPortal(k); } };
   const groups = useMemo(() => shellGroups(navAccess, isOwner, navPrefs.order, { portal }), [navAccess, isOwner, navPrefs.order, portal]);
   const moduleTiles = useMemo(() => shellGroups(navAccess, isOwner, navPrefs.order, { lockedPreview: true, portal }), [navAccess, isOwner, navPrefs.order, portal]);
@@ -235,6 +241,12 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // links work it must say so instead of rendering an empty page.
   const screenBlocked = routeModuleKey ? !canAccess(routeModuleKey) : state.screen === 'grant-access' && !isOwner;
   const lfFull = state.screen === 'leadflow' && !screenBlocked;
+  // A route hidden by travel mode (bookmark, deep link, old tab) lands on Today.
+  const [travelBanner, setTravelBanner] = useState(false);
+  useEffect(() => {
+    if (travel && routeModuleKey && travelHides(routeModuleKey, true)) { setTravelBanner(true); actions.navigateTo('today'); }
+  }, [travel, routeModuleKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!travelBanner) return; const t = setTimeout(() => setTravelBanner(false), 6000); return () => clearTimeout(t); }, [travelBanner]);
 
   // Product tour — on-demand only (help icon or Settings), never
   // auto-started. Steps are filtered by the same canAccess used for
@@ -307,6 +319,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <Suspense fallback={<ScreenLoading />}>
           <ModuleProvider value={moduleCtx}>
           <div data-demo-content="">
+        {travelBanner && state.screen === 'today' && <div role="status" style={{ margin: '0 0 12px', padding: '10px 14px', borderRadius: 12, background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))', fontSize: 14, color: 'var(--text-secondary)' }}>Hidden in travel mode. Switch it off in Settings → Workspace to see everything again.</div>}
         {LEGACY_SCREENS.has(state.screen) && <BackRow />}
         {state.screen === 'home' && (
           <HomeV2 device={device} isOwner={isOwner} novaOpen={state.novaOpen} leads={leadFeed.leads} leadsNow={leadFeed.now} inboxItems={ownerInbox.items}

@@ -10,6 +10,7 @@ import type { Notif, NotifGroup } from '../../data/useNotifications';
 import { fmtAgo } from '../../data/useLeadFeed';
 import { useAvatar } from '../../data/useAvatar';
 import { demoLongPress } from '../../demo/longPress';
+import { useTravelMode } from '../../data/useTravelMode';
 import { RedCount } from '../mm/FlagDot';
 
 // ── Sizes (design handoff: App shell) ─────────────────────────────────
@@ -153,6 +154,7 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
   const onNav = (id: string) => { drawer?.onClose(); nav(id); };
   const { avatarUrl } = useAvatar();
   const [portalMenu, setPortalMenu] = useState(false);
+  const travel = useTravelMode();
   const canSwitch = !!portal && portal.list.length > 1;
   const sub = portal && portal.current !== 'masterminds' ? portalName(portal.current) : 'by MARQ';
   const currentGroup = groups.find((g) => g.items.some((i) => i.id === screen))?.title;
@@ -186,6 +188,9 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
         {drawer && <button className="mm-icon-btn" aria-label="Close menu" onClick={drawer.onClose} style={{ width: 36, height: 36 }}><GClose size={16} /></button>}
       </div>
       {portalMenu && portal && <PortalMenu portal={portal} sheet={!!drawer} onClose={() => setPortalMenu(false)} />}
+      {travel && isOwner && (
+        <button type="button" onClick={() => onNav('account-settings')} title="Travel mode is on. Tap to change it in Settings." style={{ alignSelf: 'flex-start', marginLeft: 6, height: 24, padding: '0 10px', borderRadius: 999, border: 0, background: 'color-mix(in srgb, var(--accent) 18%, transparent)', color: 'var(--accent)', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>✈ Travel mode</button>
+      )}
       <button onClick={() => { drawer?.onClose(); onSearch(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, height: rowH, padding: '0 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-tertiary)', fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit' }}>
         <GSearch size={15} /><span style={{ flex: 1, textAlign: 'left' }}>Search</span>
         {device === 'desktop' && <Kbd>⌘K</Kbd>}
