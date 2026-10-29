@@ -336,10 +336,12 @@ export function useMastermindState(userDisplayName: string | null) {
     // person via write_data on nova_memory in past conversations (see
     // worker/handlers/nova-chat.ts) — both folded into the system prompt
     // so Nova isn't starting cold every message.
-    const [memoryRes, nudgesRes] = await Promise.all([
+    const [memoryRes, nudgesRes, inboxRes] = await Promise.all([
       supabase.from('nova_memory').select('fact').order('created_at', { ascending: false }).limit(20),
       supabase.from('nudges').select('message').is('dismissed_at', null).order('created_at', { ascending: false }).limit(5),
+      supabase.from('claude_inbox').select('request,status,reply').order('updated_at', { ascending: false }).limit(6),
     ]);
+    const inbox = (inboxRes.data ?? []) as { request: string; status: string; reply: string | null }[];
     const memoryFacts = (memoryRes.data ?? []).map((r) => r.fact);
     const activeNudges = (nudgesRes.data ?? []).map((r) => r.message);
 
@@ -369,6 +371,11 @@ export function useMastermindState(userDisplayName: string | null) {
           "remembering long-term, write it to nova_memory (fact: string) via write_data — not every message, just things " +
           "actually worth carrying forward. " +
           `They are currently on the "${state.screen}" screen — factor that in if relevant. ` +
+          "You can't change the app itself. When they ask for a change to how the app works or looks, a new feature, " +
+          "a fix for something broken, or a change to how a worker behaves, call send_to_claude with their request in " +
+          `their words and screen "${state.screen}", then tell them it's queued for Claude, who builds the app, and that ` +
+          "the reply will show in the Claude inbox on the Orchestrator page and in the bell. Don't promise when. " +
+          (inbox.length ? `\n\nTheir recent requests to Claude:\n${inbox.map((r) => `- [${r.status}] ${r.request.slice(0, 140)}${r.reply ? ` → Claude: ${r.reply.slice(0, 200)}` : ''}`).join('\n')}` : '') +
           (memoryFacts.length ? `\n\nWhat you've learned about them so far:\n${memoryFacts.map((f) => `- ${f}`).join('\n')}` : '') +
           (activeNudges.length ? `\n\nActive nudges they haven't dismissed (mention proactively if relevant to what they're asking):\n${activeNudges.map((n) => `- ${n}`).join('\n')}` : '') +
           (onMarketingScreen

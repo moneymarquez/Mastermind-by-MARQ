@@ -25,6 +25,7 @@ const MODEL = 'claude-opus-5';
 // LeadFlow proxy tables) are simply never reachable, regardless of what
 // a prompt asks for.
 const ALLOWED_TABLES = new Set([
+  'claude_inbox',
   'reminders', 'budget_categories', 'budget_transactions', 'budget_recurring', 'tracked_subscriptions',
   'contacts', 'call_outcomes', 'goals', 'goal_steps', 'goal_paths', 'decisions', 'events', 'bender_sessions',
   'journal_entries', 'fitness_workouts', 'meals', 'streaming_ideas', 'client_documents',
@@ -70,6 +71,23 @@ const TOOLS: Anthropic.Tool[] = [
       required: ['table', 'operation'],
     },
   },
+  {
+    name: 'send_to_claude',
+    description:
+      "File a request for Claude, the builder of this app, when they ask for something you can't do with their data: " +
+      'change how the app works or looks, fix something broken, add a feature, change how a worker behaves. ' +
+      "Write the request in their own words, specific enough to act on without asking. Don't use this for things " +
+      'you can do yourself with query_data/write_data.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        request: { type: 'string', description: 'What they want changed, in their words, with any details they gave.' },
+        why: { type: 'string', description: 'Optional: the reason or the problem it solves.' },
+        screen: { type: 'string', description: 'The screen they were on, if it matters.' },
+      },
+      required: ['request'],
+    },
+  },
 ];
 
 function restHeaders(env: NovaChatEnv, userToken: string): Record<string, string> {
@@ -85,7 +103,17 @@ function buildQuery(filters: Record<string, string> | undefined, select: string 
   return params.toString();
 }
 
-async function runTool(env: NovaChatEnv, userToken: string, name: string, input: Record<string, unknown>): Promise<string> {
+async function runTool(env: NovaChatEnv, userToken: string, name: string, input: Record<string, unknown>, owner = false): Promise<string> {
+  if (name === 'send_to_claude') {
+    if (!owner) return JSON.stringify({ error: 'Only the owner can send build requests.' });
+    const request = String(input.request ?? '').trim().slice(0, 4000);
+    if (request.length < 4) return JSON.stringify({ error: 'The request is empty.' });
+    const res = await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/claude_inbox`, {
+      method: 'POST', headers: { ...restHeaders(env, userToken), Prefer: 'return=representation' },
+      body: JSON.stringify({ source: 'nova', request, why: input.why ? String(input.why).slice(0, 1000) : null, screen: input.screen ? String(input.screen).slice(0, 80) : null }),
+    });
+    return res.ok ? JSON.stringify({ ok: true, note: 'Filed for Claude. Tell them it is queued and the reply will show in the Claude inbox and the bell.' }) : JSON.stringify({ error: await res.text() });
+  }
   const table = String(input.table ?? '');
   if (!ALLOWED_TABLES.has(table)) return JSON.stringify({ error: `Table "${table}" isn't accessible.` });
 
@@ -170,7 +198,7 @@ export async function novaChat(request: Request, env: NovaChatEnv): Promise<Resp
     const toolResults: Anthropic.ToolResultBlockParam[] = [];
     for (const block of msg.content) {
       if (block.type !== 'tool_use') continue;
-      const result = await runTool(env, userToken, block.name, block.input as Record<string, unknown>);
+      const result = await runTool(env, userToken, block.name, block.input as Record<string, unknown>, m.owner);
       toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result });
     }
     conversation.push({ role: 'user', content: toolResults });
