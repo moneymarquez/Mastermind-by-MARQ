@@ -140,9 +140,12 @@ describe('smoke: every worker output gets a score row', () => {
       expect(row?.worker).toBeTruthy();
     });
   }
-  it('the timer scores pending approvals that have no row yet', async () => {
+  it('the timer scores every kind of output that has no row yet, n at a time', async () => {
     const { sb, written } = fakeSb({ ...tables, ai_output_scores: [] });
-    expect(await runScoreTick(undefined, sb, 2)).toBe(1);
-    expect(written.length).toBe(1);
+    expect(await runScoreTick(undefined, sb, 10)).toBe(4);
+    expect(written.map((w) => w.output_type).sort()).toEqual(['approval', 'complaint', 'gov_contract', 'outreach']);
+    const two = fakeSb({ ...tables, ai_output_scores: [] });
+    expect(await runScoreTick(undefined, two.sb, 2)).toBe(2);
+    expect(two.written.map((w) => w.output_type)).toEqual(['approval', 'outreach']);
   });
 });

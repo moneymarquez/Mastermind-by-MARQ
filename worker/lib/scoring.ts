@@ -138,18 +138,29 @@ export async function scoreOutput(apiKey: string | undefined, sb: Sb, userId: st
   return row;
 }
 
-/** Five-minute timer: score up to `n` recent approvals that have no score yet. */
+/** Five-minute timer: score up to `n` recent outputs that have no score yet —
+ *  approval cards first, then email drafts, GovCon contracts and complaint
+ *  clusters. Leads are scored when they're looked at (there are hundreds). */
 export async function runScoreTick(apiKey: string | undefined, sb: Sb, n = 2): Promise<number> {
   const since = new Date(Date.now() - 7 * 86400000).toISOString();
-  const recent = await sb.get<{ id: string; user_id: string }>(`ai_approvals?status=eq.pending&created_at=gte.${since}&order=created_at.desc&limit=60&select=id,user_id`).catch(() => []);
-  if (!recent.length) return 0;
-  const have = new Set((await sb.get<{ output_id: string }>(`ai_output_scores?output_type=eq.approval&output_id=in.(${recent.map((r) => r.id).join(',')})&select=output_id`).catch(() => [])).map((r) => r.output_id));
+  const sources: { type: OutputType; path: string }[] = [
+    { type: 'approval', path: `ai_approvals?status=eq.pending&created_at=gte.${since}&order=created_at.desc&limit=60&select=id,user_id` },
+    { type: 'outreach', path: `lead_outreach?status=eq.drafted&archived_at=is.null&created_at=gte.${since}&order=created_at.desc&limit=60&select=id,user_id` },
+    { type: 'gov_contract', path: `gov_contracts?created_at=gte.${since}&order=created_at.desc&limit=30&select=id,user_id` },
+    { type: 'complaint', path: `complaint_clusters?archived_at=is.null&created_at=gte.${since}&order=created_at.desc&limit=30&select=id,user_id` },
+  ];
   let done = 0;
-  for (const r of recent) {
+  for (const src of sources) {
     if (done >= n) break;
-    if (have.has(r.id)) continue;
-    await scoreOutput(apiKey, sb, r.user_id, 'approval', r.id).catch((e) => console.error('score', r.id, e));
-    done++;
+    const recent = await sb.get<{ id: string; user_id: string }>(src.path).catch(() => []);
+    if (!recent.length) continue;
+    const have = new Set((await sb.get<{ output_id: string }>(`ai_output_scores?output_type=eq.${src.type}&output_id=in.(${recent.map((r) => r.id).join(',')})&select=output_id`).catch(() => [])).map((r) => r.output_id));
+    for (const r of recent) {
+      if (done >= n) break;
+      if (have.has(r.id)) continue;
+      await scoreOutput(apiKey, sb, r.user_id, src.type, r.id).catch((e) => console.error('score', src.type, r.id, e));
+      done++;
+    }
   }
   return done;
 }
