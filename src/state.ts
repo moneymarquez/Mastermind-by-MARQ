@@ -339,9 +339,9 @@ export function useMastermindState(userDisplayName: string | null) {
     const [memoryRes, nudgesRes, inboxRes] = await Promise.all([
       supabase.from('nova_memory').select('fact').order('created_at', { ascending: false }).limit(20),
       supabase.from('nudges').select('message').is('dismissed_at', null).order('created_at', { ascending: false }).limit(5),
-      supabase.from('claude_inbox').select('request,status,reply').order('updated_at', { ascending: false }).limit(6),
+      supabase.from('claude_inbox').select('id,request,status,reply').order('updated_at', { ascending: false }).limit(6),
     ]);
-    const inbox = (inboxRes.data ?? []) as { request: string; status: string; reply: string | null }[];
+    const inbox = (inboxRes.data ?? []) as { id: string; request: string; status: string; reply: string | null }[];
     const memoryFacts = (memoryRes.data ?? []).map((r) => r.fact);
     const activeNudges = (nudgesRes.data ?? []).map((r) => r.message);
 
@@ -375,7 +375,8 @@ export function useMastermindState(userDisplayName: string | null) {
           "a fix for something broken, or a change to how a worker behaves, call send_to_claude with their request in " +
           `their words and screen "${state.screen}", then tell them it's queued for Claude, who builds the app, and that ` +
           "the reply will show in the Claude inbox on the Orchestrator page and in the bell. Don't promise when. " +
-          (inbox.length ? `\n\nTheir recent requests to Claude:\n${inbox.map((r) => `- [${r.status}] ${r.request.slice(0, 140)}${r.reply ? ` → Claude: ${r.reply.slice(0, 200)}` : ''}`).join('\n')}` : '') +
+          (inbox.length ? `\n\nTheir recent requests to Claude:\n${inbox.map((r) => `- [${r.status}] (id ${r.id}) ${r.request.slice(0, 140)}${r.reply ? ` → Claude: ${r.reply.slice(0, 200)}` : ''}`).join('\n')}` +
+            "\nIf one is [question] and they answer it to you, save their answer with write_data: update claude_inbox set answer = their words, status = 'new', matching that id." : '') +
           (memoryFacts.length ? `\n\nWhat you've learned about them so far:\n${memoryFacts.map((f) => `- ${f}`).join('\n')}` : '') +
           (activeNudges.length ? `\n\nActive nudges they haven't dismissed (mention proactively if relevant to what they're asking):\n${activeNudges.map((n) => `- ${n}`).join('\n')}` : '') +
           (onMarketingScreen

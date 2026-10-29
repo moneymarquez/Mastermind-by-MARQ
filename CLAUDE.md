@@ -5,12 +5,17 @@ Marq asks Nova (in-app) for changes Nova can't make; Nova files them in
 `claude_inbox` (Supabase project jqkxaxjuvurciqmvnsbw). When Marq says
 "check the inbox" (or at the start of a session):
 
-1. Read: `select id, request, why, screen, created_at from claude_inbox where status = 'new' order by created_at;`
+1. Read: `select id, request, why, screen, answer, reply, created_at from claude_inbox where status = 'new' order by created_at;`
+   (`answer` is Marq's answer to a question you asked earlier; `reply` holds that question.)
 2. Mark each one you take: `status = 'working'`.
 3. Do the work. Push straight to `main`, one commit per request.
 4. Reply in plain words (what changed, where to see it):
    `update claude_inbox set status = 'done', reply = '…', replied_at = now(), updated_at = now() where id = '…';`
    Use `status = 'wontdo'` with the reason when it shouldn't be built.
+   If it's unclear or it's a big judgment call (redesigns, anything that changes
+   how money, outreach or posting works), don't guess: set `status = 'question'`
+   with one short question in `reply`. He answers in the app and it comes back
+   as `new` with `answer` filled in.
 5. Ping the bell: `insert into app_notifications (user_id, event, title, body, deep_link, priority) values ('a4b89df9-7122-424a-afb5-fc4871e0963b', 'hq_report', 'Claude: <short>', '<reply>', 'orchestrator', 'normal');`
 
 Ask before anything that spends money, contacts a customer, or posts publicly.
