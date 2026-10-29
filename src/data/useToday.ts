@@ -37,7 +37,7 @@ export function useToday() {
     setPosts((p.data ?? []) as TodayPost[]);
     setBoard(moneyBoard({ orders: (o.data ?? []) as never[], invoices: (i.data ?? []) as never[], ledgerIncome: (l.data ?? []) as never[], spend: (s.data ?? []) as never[] }));
     const since = new Date(Date.now() - 14 * 3600000).toISOString();
-    const gf = await supabase.from('lead_findings').select('place_id,kind').neq('kind', 'checked').gte('created_at', since).limit(5000);
+    const gf = await supabase.from('lead_findings').select('place_id,kind').is('archived_at', null).neq('kind', 'checked').gte('created_at', since).limit(5000);
     const rows = (gf.data ?? []) as { place_id: string; kind: string }[];
     setOvernight({ places: new Set(rows.map((r) => r.place_id)).size, noSite: new Set(rows.filter((r) => r.kind === 'no_website').map((r) => r.place_id)).size });
     setLoading(false);

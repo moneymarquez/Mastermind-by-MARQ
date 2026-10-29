@@ -130,9 +130,11 @@ export interface FindLeadsResult {
   processed: number;
   done: boolean;
   added: { id: string; business_name: string; tier: string; fizzle_score: number; city: string | null }[];
-  skipped: { chain: number; weak: number; existing: number; outside: number; noPhone: number; doNotContact: number; lookupFailed: number };
+  skipped: { chain: number; weak: number; existing: number; archived?: number; outside: number; noPhone: number; doNotContact: number; lookupFailed: number };
   estCostUsd: number;
   warning: string | null;
+  /** Already in Settings → Archive: not looked up again (no charge); can be restored. */
+  inArchive?: { place_id: string; name: string }[];
 }
 
 async function leadJobCall(path: string, init: RequestInit): Promise<FindLeadsResult> {

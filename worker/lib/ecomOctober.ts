@@ -29,7 +29,7 @@ export function runProductPitch(apiKey: string | undefined, sb: Sb, u: string, i
     key: 'orchestrator', task: 'Picking tonight\'s #1 product', input: { exclude: input.exclude ?? [] }, instructions: input.instructions, trigger: input.trigger, entityType: 'pitch',
     async execute(ctx) {
       const [products, pitched] = await Promise.all([
-        sb.get<PitchCandidate & { images: string[]; channel: Channel }>(`ecom_products?user_id=eq.${u}&score=not.is.null&order=score.desc&limit=60&select=id,name,sell_price,supplier_cost,score,detail,category,images,channel`),
+        sb.get<PitchCandidate & { images: string[]; channel: Channel }>(`ecom_products?user_id=eq.${u}&archived_at=is.null&score=not.is.null&order=score.desc&limit=60&select=id,name,sell_price,supplier_cost,score,detail,category,images,channel`),
         sb.get<{ product_id: string }>(`ecom_pitches?user_id=eq.${u}&select=product_id`),
       ]);
       const skip = new Set([...pitched.map((x) => x.product_id), ...(input.exclude ?? [])]);

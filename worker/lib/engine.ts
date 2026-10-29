@@ -210,7 +210,7 @@ export function runScout(apiKey: string | undefined, sb: Sb, userId: string, inp
       // driven by the Approvals tab) so no single request runs for minutes and gets cut off on a phone.
       // Until a card is enriched it says so and can't be approved; blocked finds skip it.
       const rows: ImportRow[] = parsed.rows;
-      const known = new Set((await sb.get<{ name: string }>(`ecom_products?user_id=eq.${userId}&channel=eq.${channel}&select=name`)).map((p) => p.name.trim().toLowerCase()));
+      const known = new Set((await sb.get<{ name: string }>(`ecom_products?user_id=eq.${userId}&archived_at=is.null&channel=eq.${channel}&select=name`)).map((p) => p.name.trim().toLowerCase()));
       const waiting = new Set((await sb.get<{ title: string }>(`ai_approvals?user_id=eq.${userId}&type=eq.product_card&status=eq.pending&select=title`)).map((a) => a.title.trim().toLowerCase()));
       let made = 0, blocked = 0, skipped = 0, rejected = 0;
       for (const row of rows) {
@@ -274,7 +274,7 @@ export function runLeadFilter(apiKey: string | undefined, sb: Sb, userId: string
     async execute(ctx) {
       // Duplicates need the whole list to compare against; only the
       // unfiltered ones (or all, on a re-check) get new tags.
-      const every = await sb.get<LeadLite & { filtered_at: string | null }>('leads?select=id,business_name,phone,place_id,address,city,created_at,filtered_at&order=created_at.asc&limit=20000');
+      const every = await sb.get<LeadLite & { filtered_at: string | null }>('leads?select=id,business_name,phone,place_id,address,city,created_at,filtered_at&archived_at=is.null&order=created_at.asc&limit=20000');
       if (!every.length) return { summary: 'No leads in LeadFlow yet.', skipped: true };
       const { tags, ambiguous } = ruleTags(every);
       const todo = new Set(every.filter((l) => input.all || !l.filtered_at).slice(0, LEAD_BATCH).map((l) => l.id));
@@ -324,9 +324,9 @@ export function runScriptCopy(apiKey: string | undefined, sb: Sb, userId: string
 // ── Campaign Planner + Scorer ─────────────────────────────────────────
 async function leadCounts(sb: Sb) {
   const [total, uncalled, single, multi, chains, unfiltered] = await Promise.all([
-    sb.count('leads'), sb.count('leads?or=(call_count.is.null,call_count.eq.0)'),
-    sb.count('leads?business_size=eq.single&is_chain=is.false&duplicate_of=is.null'), sb.count('leads?business_size=eq.multi&is_chain=is.false&duplicate_of=is.null'),
-    sb.count('leads?is_chain=is.true'), sb.count('leads?filtered_at=is.null'),
+    sb.count('leads?archived_at=is.null'), sb.count('leads?archived_at=is.null&or=(call_count.is.null,call_count.eq.0)'),
+    sb.count('leads?archived_at=is.null&business_size=eq.single&is_chain=is.false&duplicate_of=is.null'), sb.count('leads?archived_at=is.null&business_size=eq.multi&is_chain=is.false&duplicate_of=is.null'),
+    sb.count('leads?archived_at=is.null&is_chain=is.true'), sb.count('leads?archived_at=is.null&filtered_at=is.null'),
   ]);
   return { total, uncalled, single, multi, chains, unfiltered };
 }
@@ -695,7 +695,7 @@ export const RUNNERS: Record<string, (apiKey: string | undefined, sb: Sb, userId
 export async function importScoutRows(sb: Sb, userId: string, rows: ImportRow[]): Promise<{ inserted: number; updated: number }> {
   let inserted = 0, updated = 0;
   const channels = [...new Set(rows.map((r) => r.channel))];
-  const existing = await sb.get<{ id: string; name: string; channel: string; detail: Record<string, unknown> }>(`ecom_products?user_id=eq.${userId}&channel=in.(${channels.join(',')})&select=id,name,channel,detail`);
+  const existing = await sb.get<{ id: string; name: string; channel: string; detail: Record<string, unknown> }>(`ecom_products?user_id=eq.${userId}&archived_at=is.null&channel=in.(${channels.join(',')})&select=id,name,channel,detail`);
   for (const r of rows) {
     const hit = existing.find((p) => p.channel === r.channel && p.name.trim().toLowerCase() === r.name.trim().toLowerCase());
     const base = { name: r.name, category: r.category, images: r.images, channel: r.channel, rank: r.rank, sell_price: r.sell_price, supplier_cost: r.supplier_cost, landed_cost: r.landed_cost, margin_pct: r.margin_pct, days_trending: r.days_trending, velocity: r.velocity, score: r.score, content_difficulty: r.content_difficulty, source: 'Product Scout', source_url: r.source_url, as_of: r.as_of, confidence: r.confidence, updated_at: new Date().toISOString() };
@@ -731,7 +731,7 @@ export const APPLIERS: Record<string, Applier> = {
     if (v.blocked) throw new Error(`Blocked: ${v.blocked}`);
     if (!v.canApprove) throw new Error('No sell price or supplier cost yet. Tap "Find the missing numbers" first.');
     await importScoutRows(sb, u, [row]);
-    const [prod] = await sb.get<{ id: string }>(`ecom_products?user_id=eq.${u}&channel=eq.${row.channel}&name=eq.${encodeURIComponent(row.name)}&select=id&limit=1`);
+    const [prod] = await sb.get<{ id: string }>(`ecom_products?user_id=eq.${u}&archived_at=is.null&channel=eq.${row.channel}&name=eq.${encodeURIComponent(row.name)}&select=id&limit=1`);
     if (!prod) throw new Error('The product could not be saved to the sheet.');
     const t = await testProduct(sb, u, prod.id);
     return { brand_id: t.brand_id, product_id: prod.id, note: t.note };

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLeadflowLeads, findLeads, latestLeadJob, citySuggestions } from '../../../data/useLeadflow';
+import { api } from '../../../lib/api';
 import type { LeadflowLead, FindLeadsResult } from '../../../data/useLeadflow';
 import { US_STATES, NICHES } from './shared';
 import { CITIES, PACKAGE_INDUSTRIES } from './findOptions';
@@ -65,7 +66,8 @@ export default function LeadFlowFinder() {
   const [addErr, setAddErr] = useState('');
   const [adding, setAdding] = useState(false);
   const [showFind, setShowFind] = useState(false);
-  const [find, setFind] = useState({ city: 'Draper', state: 'UT', industry: 'HVAC', count: 20 });
+  // Kansas City by default (Marq is working the KC metro); the KS side is one state switch away.
+  const [find, setFind] = useState({ city: 'Kansas City', state: 'MO', industry: 'HVAC', count: 20 });
   const [citySugg, setCitySugg] = useState<string[]>([]);
   const [resumable, setResumable] = useState<FindLeadsResult | null>(null);
   const [finding, setFinding] = useState(false);
@@ -282,6 +284,15 @@ export default function LeadFlowFinder() {
                 {found.skipped.noPhone ? `, ${found.skipped.noPhone} with no phone` : ''}{found.skipped.doNotContact ? `, ${found.skipped.doNotContact} do-not-contact` : ''}{found.skipped.lookupFailed ? `, ${found.skipped.lookupFailed} lookups failed` : ''}. About ${found.estCostUsd.toFixed(2)}.
               </Banner>
               {found.warning && <Banner s="wait">{found.warning}</Banner>}
+              {(found.inArchive?.length ?? 0) > 0 && (
+                <Banner s="info" title={`${found.inArchive!.length} already in your archive`}>
+                  Skipped so you don't pay to look them up again: {found.inArchive!.slice(0, 6).map((x) => x.name).join(', ')}{found.inArchive!.length > 6 ? '…' : ''}.{' '}
+                  <button className="lf-btn lf-btn--secondary" style={{ marginTop: 6 }} onClick={async () => {
+                    const r = await api<{ restored?: number; error?: string }>('/api/archive/restore', { body: { table: 'leads', place_ids: found.inArchive!.map((x) => x.place_id) } });
+                    if (!r.error) { setFound({ ...found, inArchive: [] }); applyFilters(industry, tag, state, city); }
+                  }}>Restore them to the pool</button>
+                </Banner>
+              )}
               {found.added.map((l) => (
                 <button key={l.id} className="lf-row" style={{ display: 'flex', gap: 8, alignItems: 'center', textAlign: 'left', minHeight: 40 }} onClick={() => { setShowFind(false); setOpenId(l.id); }}>
                   <TierMark tier={l.tier} /><span className="lf-trunc" style={{ flex: 1, fontWeight: 500 }}>{l.business_name}</span>

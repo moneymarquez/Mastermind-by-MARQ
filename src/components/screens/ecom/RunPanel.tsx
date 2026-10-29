@@ -67,7 +67,7 @@ export function RunPanel({ workerKey, workerName, enabled, onRan }: { workerKey:
 
   useEffect(() => {
     if (!needsProduct) return;
-    supabase.from('ecom_products').select('id,name,score,channel').order('score', { ascending: false, nullsFirst: false }).limit(200)
+    supabase.from('ecom_products').select('id,name,score,channel').is('archived_at', null).order('score', { ascending: false, nullsFirst: false }).limit(200)
       .then(({ data }) => { const rows = (data ?? []) as typeof products; setProducts(rows); setProductId((cur) => cur || rows[0]?.id || ''); });
   }, [needsProduct]);
 

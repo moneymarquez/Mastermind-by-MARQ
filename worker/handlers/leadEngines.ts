@@ -32,10 +32,10 @@ export async function leadEnginesState(sb: Sb, userId: string) {
     if (e === 'client_finder') {
       const day = (row.config as { day?: { date: string; found: number } }).day;
       foundToday = day?.date === today ? day.found : 0;
-      const f = await sb.get<{ place_id: string }>(`lead_findings?user_id=eq.${userId}&kind=neq.checked&created_at=gte.${month}&select=place_id&limit=5000`);
+      const f = await sb.get<{ place_id: string }>(`lead_findings?user_id=eq.${userId}&archived_at=is.null&kind=neq.checked&created_at=gte.${month}&select=place_id&limit=5000`);
       foundMonth = new Set(f.map((x) => x.place_id)).size;
     } else {
-      const c = await sb.get<{ found_on: string }>(`complaint_clusters?user_id=eq.${userId}&found_on=gte.${month}&select=found_on&limit=2000`);
+      const c = await sb.get<{ found_on: string }>(`complaint_clusters?user_id=eq.${userId}&archived_at=is.null&found_on=gte.${month}&select=found_on&limit=2000`);
       foundMonth = c.length; foundToday = c.filter((x) => x.found_on === today).length;
     }
     cards.push({
@@ -48,7 +48,7 @@ export async function leadEnginesState(sb: Sb, userId: string) {
 }
 
 async function topFindings(sb: Sb, userId: string) {
-  const f = await sb.get<{ place_id: string; kind: string; summary: string; score: number; severity: number; evidence: Record<string, unknown> }>(`lead_findings?user_id=eq.${userId}&kind=neq.checked&order=score.desc&limit=150&select=place_id,kind,summary,score,severity,evidence`);
+  const f = await sb.get<{ place_id: string; kind: string; summary: string; score: number; severity: number; evidence: Record<string, unknown> }>(`lead_findings?user_id=eq.${userId}&archived_at=is.null&kind=neq.checked&order=score.desc&limit=150&select=place_id,kind,summary,score,severity,evidence`);
   const by = new Map<string, typeof f>();
   for (const x of f) by.set(x.place_id, [...(by.get(x.place_id) ?? []), x]);
   const ids = [...by.keys()].slice(0, 40);
@@ -67,7 +67,7 @@ export async function leadEnginesRoute(request: Request, env: EnginesEnv, path: 
   if (path === 'state') {
     const [s, findings, clusters] = await Promise.all([
       leadEnginesState(sb, user.id), topFindings(sb, user.id),
-      sb.get(`complaint_clusters?user_id=eq.${user.id}&status=neq.dismissed&order=rank_score.desc&limit=30&select=*`),
+      sb.get(`complaint_clusters?user_id=eq.${user.id}&archived_at=is.null&status=neq.dismissed&order=rank_score.desc&limit=30&select=*`),
     ]);
     const cov = await sb.get<{ industry: string; covered_on: string }>(`complaint_coverage?user_id=eq.${user.id}&order=covered_on.desc&limit=30&select=industry,covered_on`);
     return json({ ...s, findings, clusters, coverage: cov, keys: { places: !!env.GOOGLE_PLACES_API_KEY, parallel: !!env.PARALLEL_API_KEY, claude: !!env.ANTHROPIC_API_KEY } });
@@ -126,7 +126,7 @@ async function morningReport(sb: Sb, today: string): Promise<void> {
     if (r.config?.morning_sent === today) continue;
     await saveEngine(sb, r.user_id, 'client_finder', { config: { ...r.config, morning_sent: today } });
     const since = new Date(Date.now() - 14 * 3600000).toISOString();
-    const f = await sb.get<{ place_id: string; kind: string }>(`lead_findings?user_id=eq.${r.user_id}&kind=neq.checked&created_at=gte.${since}&select=place_id,kind&limit=5000`);
+    const f = await sb.get<{ place_id: string; kind: string }>(`lead_findings?user_id=eq.${r.user_id}&archived_at=is.null&kind=neq.checked&created_at=gte.${since}&select=place_id,kind&limit=5000`);
     const places = new Set(f.map((x) => x.place_id)).size;
     if (!places) continue;
     const noSite = new Set(f.filter((x) => x.kind === 'no_website').map((x) => x.place_id)).size;

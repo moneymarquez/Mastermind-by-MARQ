@@ -78,7 +78,7 @@ async function workerId(sb: Sb, userId: string, key: string): Promise<string | n
  *  that don't already have an analysis waiting. */
 async function analystTargets(sb: Sb, userId: string, n: number): Promise<string[]> {
   const [cands, pending] = await Promise.all([
-    sb.get<{ id: string }>(`ecom_products?user_id=eq.${userId}&detail->analysis=is.null&score=not.is.null&order=score.desc,updated_at.desc&limit=12&select=id`),
+    sb.get<{ id: string }>(`ecom_products?user_id=eq.${userId}&archived_at=is.null&detail->analysis=is.null&score=not.is.null&order=score.desc,updated_at.desc&limit=12&select=id`),
     sb.get<{ entity_id: string }>(`ai_approvals?user_id=eq.${userId}&type=eq.analysis&status=eq.pending&select=entity_id`),
   ]);
   const skip = new Set(pending.map((p) => p.entity_id));
@@ -86,7 +86,7 @@ async function analystTargets(sb: Sb, userId: string, n: number): Promise<string
 }
 async function teardownTarget(sb: Sb, userId: string): Promise<string | null> {
   const [watched, done, pending] = await Promise.all([
-    sb.get<{ id: string }>(`ecom_products?user_id=eq.${userId}&watched=eq.true&order=score.desc.nullslast&select=id`),
+    sb.get<{ id: string }>(`ecom_products?user_id=eq.${userId}&archived_at=is.null&watched=eq.true&order=score.desc.nullslast&select=id`),
     sb.get<{ product_id: string }>(`ecom_competitors?user_id=eq.${userId}&select=product_id`),
     sb.get<{ entity_id: string }>(`ai_approvals?user_id=eq.${userId}&type=eq.teardown&status=eq.pending&select=entity_id`),
   ]);

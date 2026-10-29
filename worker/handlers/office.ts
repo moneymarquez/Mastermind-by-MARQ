@@ -135,7 +135,7 @@ export async function assignToDomain(env: OfficeEnv, sb: Sb, userId: string, dom
   const orch = await orchestrator(sb, userId);
   const res = await ask(env.ANTHROPIC_API_KEY, sb, {
     model: orch?.model ?? ROLE_MODEL.domain, domain, userId: userId, date, workerId: orch?.id ?? null, maxTokens: 400,
-    system: ROUTE_SYSTEM(workers.map((w) => ({ key: w.key, name: w.name, role: w.role, live: LIVE.has(w.key) })), domain === 'ecom' ? await sb.get<{ id: string; name: string }>(`ecom_products?user_id=eq.${userId}&order=score.desc.nullslast&limit=30&select=id,name`) : []),
+    system: ROUTE_SYSTEM(workers.map((w) => ({ key: w.key, name: w.name, role: w.role, live: LIVE.has(w.key) })), domain === 'ecom' ? await sb.get<{ id: string; name: string }>(`ecom_products?user_id=eq.${userId}&archived_at=is.null&order=score.desc.nullslast&limit=30&select=id,name`) : []),
     user: text,
   });
   const route = parseRoute(res.text, workers.map((w) => w.key));

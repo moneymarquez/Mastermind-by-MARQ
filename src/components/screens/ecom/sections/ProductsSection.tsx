@@ -31,7 +31,7 @@ export default function ProductsSection({ approvals, brands, clients, search, on
   const [msg, setMsg] = useState('');
   useEffect(() => {
     supabase.from('ecom_brand_products').select('brand_id,product_id').then(({ data }) => setLinks((data ?? []) as typeof links));
-    supabase.from('ecom_products').select('id,name,score,detail,created_at').order('created_at', { ascending: false }).limit(12).then(({ data }) => setQueue((data ?? []) as typeof queue));
+    supabase.from('ecom_products').select('id,name,score,detail,created_at').is('archived_at', null).order('created_at', { ascending: false }).limit(12).then(({ data }) => setQueue((data ?? []) as typeof queue));
   }, []);
   const pending = approvals.approvals.filter((a) => a.type === 'product_pitch' && a.status === 'pending');
   const brandOf = useMemo(() => Object.fromEntries(links.map((l) => [l.product_id, l.brand_id])), [links]);
@@ -100,6 +100,7 @@ export default function ProductsSection({ approvals, brands, clients, search, on
         </Card>
       </div>
 
+      <a href="/?screen=archive" style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Archived products and approvals → Archive</a>
     </div>
   );
 }

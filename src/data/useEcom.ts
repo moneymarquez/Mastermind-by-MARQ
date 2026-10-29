@@ -149,7 +149,7 @@ export function useEcomProducts() {
 
   const load = useCallback(async () => {
     const [p, s] = await Promise.all([
-      supabase.from('ecom_products').select('*').order('rank', { ascending: true, nullsFirst: false }),
+      supabase.from('ecom_products').select('*').is('archived_at', null).order('rank', { ascending: true, nullsFirst: false }),
       supabase.from('ecom_product_snapshots').select('*').order('captured_at', { ascending: true }).limit(5000),
     ]);
     if (p.error) setError(p.error.message); else setError('');

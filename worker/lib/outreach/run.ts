@@ -28,7 +28,7 @@ export async function draftOutreach(sb: Sb, userId: string, limit = 10): Promise
     const e = draftColdEmail(lead, { kind: o.finding_kind ?? '', summary: o.finding_summary ?? '', evidence: fd?.evidence });
     await sb.patch('lead_outreach', `id=eq.${o.id}&status=eq.drafted`, { subject: e.subject, body: e.body }).catch(() => {});
   }
-  const f = await sb.get<{ place_id: string; kind: string; summary: string; score: number; evidence: Record<string, unknown> }>(`lead_findings?user_id=eq.${userId}&kind=neq.checked&order=score.desc&limit=200&select=place_id,kind,summary,score,evidence`);
+  const f = await sb.get<{ place_id: string; kind: string; summary: string; score: number; evidence: Record<string, unknown> }>(`lead_findings?user_id=eq.${userId}&archived_at=is.null&kind=neq.checked&order=score.desc&limit=200&select=place_id,kind,summary,score,evidence`);
   const seen = new Set<string>(), top: typeof f = [];
   for (const x of f) if (!seen.has(x.place_id)) { seen.add(x.place_id); top.push(x); }
   if (!top.length) return 0;

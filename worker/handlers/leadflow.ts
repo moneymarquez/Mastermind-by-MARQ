@@ -61,7 +61,8 @@ async function requireLeadflowAuth(request: Request, env: LeadflowEnv): Promise<
 // supabase-js's `.select('*', { count: 'exact', head: true })` uses under
 // the hood — a cheap row count without pulling any actual rows.
 async function countRows(env: LeadflowEnv, filterQuery: string): Promise<number> {
-  const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?${filterQuery}`, {
+  // Archived leads (Settings → Fresh start) never count.
+  const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?${filterQuery}&archived_at=is.null`, {
     method: 'HEAD',
     headers: { ...leadflowHeaders(env), Prefer: 'count=exact' },
   });
@@ -88,7 +89,7 @@ export async function leadflowLeads(request: Request, env: LeadflowEnv): Promise
         const rows = (await rpc.json()) as { industry: string | null }[];
         return new Response(JSON.stringify(rows.map((r) => r.industry).filter((v): v is string => !!v)), { status: 200, headers: { 'content-type': 'application/json' } });
       }
-      const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?select=industry&industry=not.is.null&limit=${DISTINCT_SCAN_CAP}`, { headers: leadflowHeaders(env) });
+      const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?select=industry&industry=not.is.null&archived_at=is.null&limit=${DISTINCT_SCAN_CAP}`, { headers: leadflowHeaders(env) });
       const rows = (await res.json()) as { industry: string | null }[];
       const unique = [...new Set(rows.map((r) => r.industry).filter((v): v is string => !!v))].sort();
       return new Response(JSON.stringify(unique), { status: 200, headers: { 'content-type': 'application/json' } });
@@ -104,7 +105,7 @@ export async function leadflowLeads(request: Request, env: LeadflowEnv): Promise
         const list = rows.map((r) => ({ city: r.city, state: (r.state || '').toUpperCase(), count: Number(r.n) })).sort((a, b) => b.count - a.count || a.city.localeCompare(b.city));
         return new Response(JSON.stringify(list), { status: 200, headers: { 'content-type': 'application/json' } });
       }
-      const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?select=city,state&city=not.is.null&limit=${DISTINCT_SCAN_CAP}`, { headers: leadflowHeaders(env) });
+      const res = await fetch(`${LEADFLOW_URL}/rest/v1/leads?select=city,state&city=not.is.null&archived_at=is.null&limit=${DISTINCT_SCAN_CAP}`, { headers: leadflowHeaders(env) });
       const rows = (await res.json()) as { city: string | null; state: string | null }[];
       const counts = new Map<string, { city: string; state: string; count: number }>();
       for (const r of rows) {
@@ -142,6 +143,8 @@ export async function leadflowLeads(request: Request, env: LeadflowEnv): Promise
     // Ordering uuids desc is valid SQL but effectively random.
     qs.set('order', 'created_at.desc');
     qs.set('limit', params.get('limit') ?? '50');
+    // Archived leads live in Settings → Archive, not in the pool.
+    if (params.get('archived') !== 'include') qs.set('archived_at', 'is.null');
     qs.set('offset', params.get('offset') ?? '0');
     const industry = params.get('industry');
     const tag = params.get('tag');
@@ -311,7 +314,7 @@ export async function leadflowAiReport(request: Request, env: LeadflowEnv): Prom
     countRows(env, 'select=id&tag=eq.Hot'),
     countRows(env, 'select=id&tag=eq.Warm'),
     countRows(env, 'select=id&tag=eq.Not+Ready'),
-    fetch(`${LEADFLOW_URL}/rest/v1/leads?select=business_name,industry,tag,state&order=created_at.desc&limit=25`, { headers: leadflowHeaders(env) }),
+    fetch(`${LEADFLOW_URL}/rest/v1/leads?select=business_name,industry,tag,state&archived_at=is.null&order=created_at.desc&limit=25`, { headers: leadflowHeaders(env) }),
     fetch(`${LEADFLOW_URL}/rest/v1/history?select=*&order=created_at.desc&limit=25`, { headers: leadflowHeaders(env) }),
   ]);
   const recentLeads = await recentLeadsRes.json();
@@ -418,18 +421,20 @@ async function placeDetails(key: string, id: string): Promise<Record<string, any
   return (await res.json()) as Record<string, any>;
 }
 
-type Skipped = { chain: number; weak: number; existing: number; outside: number; noPhone: number; doNotContact: number; lookupFailed: number };
+type Skipped = { chain: number; weak: number; existing: number; archived?: number; outside: number; noPhone: number; doNotContact: number; lookupFailed: number };
 interface LeadJob {
   query: string; city: string; state: string; industry: string; limit: number;
   found: number; candidates: FoundPlace[]; next: number;
   added: { id: string; business_name: string; tier: string; fizzle_score: number; city: string | null }[];
+  /** Businesses already in Settings → Archive: skipped (no paid lookup), offered for restore. */
+  inArchive?: { place_id: string; name: string }[];
   skipped: Skipped; pages: number; warning: string | null;
 }
 const JOB_BODY = 'leadjob';
 const estCost = (j: LeadJob) => Math.round((0.035 * (j.pages + 1) + 0.025 * j.next) * 100) / 100;
 const progress = (id: string, j: LeadJob, status: string) => ({
   jobId: id, query: j.query, found: j.found, total: j.candidates.length, processed: Math.min(j.next, j.candidates.length), done: status === 'done',
-  added: [...j.added].sort((a, z) => z.fizzle_score - a.fizzle_score), skipped: j.skipped, estCostUsd: estCost(j), warning: j.warning,
+  added: [...j.added].sort((a, z) => z.fizzle_score - a.fizzle_score), skipped: j.skipped, estCostUsd: estCost(j), warning: j.warning, inArchive: j.inArchive ?? [],
 });
 
 async function leadflowUserId(request: Request, env: PlacesEnv): Promise<string | Response> {
@@ -489,16 +494,24 @@ export async function leadflowFind(request: Request, env: PlacesEnv): Promise<Re
     return true;
   });
   let fresh = candidates;
+  const inArchive: { place_id: string; name: string }[] = [];
   if (candidates.length) {
     const ids = candidates.map((p) => `"${p.id.replace(/"/g, '')}"`).join(',');
-    const res = await fetch(`${sb.url}/rest/v1/leads?select=place_id&place_id=in.(${encodeURIComponent(ids)})`, { headers: sb.h });
+    const res = await fetch(`${sb.url}/rest/v1/leads?select=place_id,archived_at&place_id=in.(${encodeURIComponent(ids)})`, { headers: sb.h });
     if (!res.ok) return jsonError(`Could not check existing leads (${res.status}).`, 502);
-    const have = new Set(((await res.json()) as { place_id: string }[]).map((r) => r.place_id));
-    fresh = candidates.filter((p) => { if (have.has(p.id)) { skipped.existing++; return false; } return true; });
+    const rows = (await res.json()) as { place_id: string; archived_at: string | null }[];
+    const have = new Set(rows.filter((r) => !r.archived_at).map((r) => r.place_id));
+    const archived = new Set(rows.filter((r) => r.archived_at).map((r) => r.place_id));
+    skipped.archived = 0;
+    fresh = candidates.filter((p) => {
+      if (archived.has(p.id)) { skipped.archived = (skipped.archived ?? 0) + 1; inArchive.push({ place_id: p.id, name: p.name }); return false; }
+      if (have.has(p.id)) { skipped.existing++; return false; }
+      return true;
+    });
   }
   const job: LeadJob = {
     query: `${industry} in ${city}, ${state}`, city, state, industry, limit, found: all.length,
-    candidates: [...fresh].sort((a, z) => z.reviewCount - a.reviewCount).slice(0, Math.min(limit, lookupsAllowed(pages))), next: 0, added: [], skipped, pages, warning,
+    candidates: [...fresh].sort((a, z) => z.reviewCount - a.reviewCount).slice(0, Math.min(limit, lookupsAllowed(pages))), next: 0, added: [], skipped, pages, warning, inArchive,
   };
   const ins = await fetch(`${sb.url}/rest/v1/ai_tasks`, {
     method: 'POST', headers: { ...sb.h, Prefer: 'return=representation' },

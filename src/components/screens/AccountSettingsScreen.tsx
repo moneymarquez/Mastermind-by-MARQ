@@ -8,6 +8,7 @@ import { startDemo } from '../../demo/state';
 import type { DemoSpeed } from '../../demo/state';
 import type { ReactNode } from 'react';
 import { Page, Sheet, Field, field, useModule } from '../mm/Page';
+import WorkspaceCard from './settings/WorkspaceCard';
 import Card from '../mm/Card';
 
 interface Props {
@@ -170,6 +171,7 @@ export default function AccountSettingsScreen({ onSignOut, onStartTour, theme, o
   const left = (
     <>
       {appearance}
+      {isOwner && <WorkspaceCard nav={nav} />}
       {group('Modules', [
         { l: 'Manage modules', on: () => nav('manage-modules') },
         { l: 'Pinned to Home', on: () => nav('manage-modules') },

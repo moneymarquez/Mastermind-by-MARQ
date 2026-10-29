@@ -19,6 +19,8 @@ import { serveMedia } from './lib/socialMedia';
 import { runSocialSyncTick } from './lib/socialSync';
 import { leadEnginesRoute, runEnginesTick } from './handlers/leadEngines';
 import { govconRoute } from './handlers/govcon';
+import { archiveRoute } from './handlers/archive';
+import type { ArchiveEnv } from './handlers/archive';
 import type { GovconEnv } from './handlers/govcon';
 import type { EnginesEnv } from './handlers/leadEngines';
 import { outreachRoute, bookRoute, runOutreachTick } from './handlers/outreach';
@@ -214,6 +216,8 @@ export default {
     if (outreachMatch) return outreachRoute(request, env as unknown as OutreachRouteEnv, outreachMatch[1]);
     const bookMatch = url.pathname.match(/^\/api\/book\/([a-z-]+)$/);
     if (bookMatch) return bookRoute(request, env as unknown as OutreachRouteEnv, bookMatch[1]);
+    const archiveMatch = url.pathname.match(/^\/api\/archive\/([a-z-]+)$/);
+    if (archiveMatch) return archiveRoute(request, env as unknown as ArchiveEnv, archiveMatch[1]);
     const govconMatch = url.pathname.match(/^\/api\/govcon\/([a-z-]+)$/);
     if (govconMatch) return govconRoute(request, env as unknown as GovconEnv, govconMatch[1]);
     const enginesMatch = url.pathname.match(/^\/api\/engines\/([a-z-]+)$/);

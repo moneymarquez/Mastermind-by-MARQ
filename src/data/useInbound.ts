@@ -85,7 +85,7 @@ export function useLists() {
   /** Live counts for a filter set, straight from LeadFlow's leads table. */
   const countFor = useCallback(async (f: ListFilters) => {
     const q = () => {
-      let x = supabase.from('leads').select('id', { count: 'exact', head: true });
+      let x = supabase.from('leads').select('id', { count: 'exact', head: true }).is('archived_at', null);
       if (f.state) x = x.ilike('state', f.state);
       if (f.city) x = x.ilike('city', `%${f.city}%`);
       if (f.category) x = x.ilike('category', `%${f.category}%`);

@@ -70,7 +70,7 @@ function useSinceLastLook(): { data: SinceLook | null; reload: () => void } {
     let live = true;
     (async () => {
       const [p, r, w] = await Promise.all([
-        supabase.from('ecom_products').select('channel').gte('created_at', since),
+        supabase.from('ecom_products').select('channel').is('archived_at', null).gte('created_at', since),
         supabase.from('ai_worker_runs').select('worker_id,status,summary').eq('domain', 'ecom').gte('created_at', since).order('created_at', { ascending: false }).limit(20),
         supabase.from('ai_workers').select('id,name').eq('domain', 'ecom'),
       ]);

@@ -197,6 +197,9 @@ export default function LeadFlowPool() {
             {shown < sorted.length && <button className="lf-btn lf-btn--secondary lf-btn--sm" onClick={() => setShown((n) => n + PAGE)}>Load more</button>}
           </div>
         )}
+        <div style={{ padding: '8px 12px 16px', fontSize: 13 }}>
+          <a href="/?screen=archive" style={{ color: 'var(--lf-text-tertiary)' }}>Archived leads → Archive</a>
+        </div>
       </div>
     </WithRecord>
   );

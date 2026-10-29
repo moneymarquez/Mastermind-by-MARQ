@@ -132,7 +132,7 @@ async function poolBatch(sb: Sb, userId: string, cfg: Record<string, unknown>): 
   const cols = 'id,place_id,business_name,website,rating,review_count,category,city,phone,is_chain';
   for (let page = 0; page < 3; page++) {
     const cursor = cfg.cursor ? `&id=gt.${cfg.cursor}` : '';
-    const rows2 = await sb.get<PoolLead>(`leads?select=${cols}&is_chain=not.is.true&duplicate_of=is.null&or=(status.is.null,status.neq.do_not_contact)${cursor}&order=id.asc&limit=24`);
+    const rows2 = await sb.get<PoolLead>(`leads?select=${cols}&archived_at=is.null&is_chain=not.is.true&duplicate_of=is.null&or=(status.is.null,status.neq.do_not_contact)${cursor}&order=id.asc&limit=24`);
     if (!rows2.length) return [];
     cfg.cursor = rows2[rows2.length - 1].id;
     const ids = rows2.map((r) => `"${r.place_id.replace(/"/g, '')}"`).join(',');
@@ -148,7 +148,9 @@ async function adoptPlaces(sb: Sb, places: Record<string, unknown>[], category: 
   const out: PoolLead[] = [];
   for (const p of places) {
     const pid = String(p.place_id ?? ''); if (!pid) continue;
-    const [have] = await sb.get<PoolLead>(`leads?place_id=eq.${encodeURIComponent(pid)}&select=id,place_id,business_name,website,rating,review_count,category,city,phone,is_chain&limit=1`);
+    const [have] = await sb.get<PoolLead & { archived_at: string | null }>(`leads?place_id=eq.${encodeURIComponent(pid)}&select=id,place_id,business_name,website,rating,review_count,category,city,phone,is_chain,archived_at&limit=1`);
+    // Archived in a fresh start: leave it there (restore it from Settings → Archive).
+    if (have?.archived_at) continue;
     if (have) { out.push(have); continue; }
     const row = { place_id: pid, business_name: String(p.name ?? 'Unknown'), phone: (p.phone as string) ?? null, address: (p.address as string) ?? null, city: (p.city as string) ?? null, state: (p.state as string) ?? null, website: (p.website as string) ?? null, rating: p.rating ?? null, review_count: p.review_count ?? null, category, search_category: category, maps_url: (p.maps_url as string) ?? null, tag: 'client_finder', status: 'new' };
     const [ins] = await sb.insert<PoolLead>('leads', row, { upsert: 'place_id', ignore: true }).catch(() => []);
