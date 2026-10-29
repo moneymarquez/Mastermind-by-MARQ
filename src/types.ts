@@ -11,6 +11,7 @@ export type Screen =
   | 'ledger'
   | 'classroom'
   | 'govcon'
+  | 'board'
   | 'archive'
   | 'feed'
   | 'peptides'

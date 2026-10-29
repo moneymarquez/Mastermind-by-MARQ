@@ -22,6 +22,7 @@ import { govconRoute } from './handlers/govcon';
 import { archiveRoute } from './handlers/archive';
 import { scoresRoute } from './handlers/scores';
 import type { ScoresEnv } from './handlers/scores';
+import { boardRoute } from './handlers/board';
 import { videoRoute } from './handlers/videos';
 import { runInvoiceTick } from './lib/invoiceReminders';
 import { runScoreTick } from './lib/scoring';
@@ -222,6 +223,7 @@ export default {
 
     const outreachMatch = url.pathname.match(/^\/api\/outreach\/([a-z-]+)$/);
     if (outreachMatch) return outreachRoute(request, env as unknown as OutreachRouteEnv, outreachMatch[1]);
+    if (url.pathname === '/api/orchestrator/board' && request.method === 'GET') return boardRoute(request, env);
     const videoMatch = url.pathname.match(/^\/api\/video\/(view|reply)$/);
     if (videoMatch) return videoRoute(request, env, videoMatch[1]);
     const bookMatch = url.pathname.match(/^\/api\/book\/([a-z-]+)$/);

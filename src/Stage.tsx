@@ -41,6 +41,7 @@ const StickySpotV2 = lazyScreen(() => import('./components/screens/v2/StickySpot
 const TodayScreen = lazyScreen(() => import('./components/screens/today/TodayScreen'));
 const OrchestratorOverview = lazyScreen(() => import('./components/screens/orchestrator/OrchestratorOverview'));
 const GovConScreen = lazyScreen(() => import('./components/screens/orchestrator/GovConScreen'));
+const BoardScreen = lazyScreen(() => import('./components/screens/orchestrator/BoardScreen'));
 const ArchiveScreen = lazyScreen(() => import('./components/screens/ArchiveScreen'));
 const SobrietyV2 = lazyScreen(() => import('./components/screens/v2/SobrietyV2'));
 const FitnessV2 = lazyScreen(() => import('./components/screens/v2/FitnessV2'));
@@ -338,6 +339,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         {state.screen === 'orchestrator' && <OrchestratorOverview />}
         {state.screen === 'govcon' && <GovConScreen />}
         {state.screen === 'archive' && isOwner && <ArchiveScreen />}
+        {state.screen === 'board' && isOwner && <BoardScreen />}
 
         {state.screen === 'sobriety' && <SobrietyV2 />}
 

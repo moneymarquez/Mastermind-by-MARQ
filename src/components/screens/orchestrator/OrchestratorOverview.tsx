@@ -35,6 +35,12 @@ export default function OrchestratorOverview() {
 
       <PortalCards portals={businesses} phone={phone} onOpen={(k) => nav(portalLanding(k))} />
 
+      <Card title="Office & Classroom" meta="Live" action={<button className="mm-btn mm-btn--primary" style={{ height: 32 }} onClick={() => nav('board')}>Open</button>}>
+        <span style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+          Every worker at their desk (or waving a flag at you), and every workstream in Phase 1–5 with what's waiting on you first.
+        </span>
+      </Card>
+
       <Card title="GovCon" meta="Learning phase" action={<button className="mm-btn mm-btn--primary" style={{ height: 32 }} onClick={() => nav('govcon')}>Open</button>}>
         <span style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
           Three public contracts a day: read them, quiz yourself on who they hit and how, write your prediction, and check it at 30 and 90 days. Winners can go straight to LeadFlow.
