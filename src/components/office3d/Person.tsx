@@ -2,7 +2,7 @@ import { hash } from './iso';
 
 const SKIN = ['#f3d2b3', '#e8b892', '#c98e63', '#a46a43', '#7a4a2c', '#f6dcc4'];
 const HAIR = ['#2b1d16', '#4a2f1d', '#7a4b26', '#c58b3f', '#1b1b1f', '#8e3b2a', '#d9c7a3'];
-export type Pose = 'sit' | 'type' | 'stand' | 'raise' | 'stuck';
+export type Pose = 'sit' | 'type' | 'stand' | 'raise' | 'stuck' | 'walk';
 
 /** An original little office character, drawn upright at (0,0) = feet.
  *  Looks are picked from the name, so each worker always looks the same. */
@@ -16,8 +16,8 @@ export default function Person({ seed, shirt, pose, scale = 1 }: { seed: string;
       <ellipse cx="0" cy="1" rx="9" ry="3.5" fill="rgba(0,0,0,.28)" />
       {seated && <rect x="-6" y="-14" width="12" height="7" rx="3" fill="#2d3346" />}
       {!seated && <>
-        <rect x="-5" y="-14" width="4" height="14" rx="2" fill="#2d3346" />
-        <rect x="1" y="-14" width="4" height="14" rx="2" fill="#2d3346" />
+        <rect className="o3-leg-l" x="-5" y="-14" width="4" height="14" rx="2" fill="#2d3346" />
+        <rect className="o3-leg-r" x="1" y="-14" width="4" height="14" rx="2" fill="#2d3346" />
       </>}
       <g transform={`translate(0 ${y0})`}>
         {/* body */}

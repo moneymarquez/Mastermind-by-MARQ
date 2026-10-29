@@ -4,9 +4,11 @@
 
 export type StreamKey = 'madeby' | 'ecom' | 'mostfit' | 'side';
 export type Phase = 1 | 2 | 3 | 4 | 5;
-export interface BoardItem { id: string; title: string; sub?: string | null }
+export interface BoardItem { id: string; title: string; sub?: string | null; kind?: 'lead' | 'outreach' | 'client' | 'approval' | 'product' | 'brand' | 'label' }
 export interface BoardColumn { phase: Phase; name: string; count: number; items: BoardItem[] }
-export interface BoardStream { key: StreamKey; name: string; labelsOnly: boolean; waiting: BoardItem[]; columns: BoardColumn[] }
+export interface BoardStream { key: StreamKey; name: string; labelsOnly: boolean; waiting: BoardItem[]; columns: BoardColumn[]; top?: TopTask[] }
+/** One of Marq's most important tasks, ranked. */
+export interface TopTask extends BoardItem { rank: number; reason: string; score: number }
 export type WorkerState = 'running' | 'waiting' | 'error' | 'idle';
 export interface BoardWorker { id: string; key: string; name: string; domain: string; state: WorkerState; job: string | null; lastOutput: string | null; lastAt: string | null; trust: number | null; trust7: number | null; waiting: number }
 export interface QueueItem { id: string; title: string; type: string; created_at: string }
@@ -78,4 +80,52 @@ export function queueFrom(approvals: { id: string; worker_id: string | null; dom
     by.set(key, e);
   }
   return [...by.values()].sort((a, b) => a.since.localeCompare(b.since));
+}
+
+export interface Step { text: string; when?: string | null; done?: boolean; owner?: string | null }
+const day = (iso: string | null | undefined) => (iso ? iso.slice(0, 10) : null);
+/** What's next for one Made by person, in plain words. Pure. */
+export function nextSteps(kind: 'lead' | 'outreach', row: Record<string, unknown>, now = new Date()): Step[] {
+  const s = String(row.status ?? 'new');
+  const due = (v: unknown) => { const d = day(v as string | null); return d ? (d <= now.toISOString().slice(0, 10) ? `due ${d} (now)` : `due ${d}`) : null; };
+  if (kind === 'lead') {
+    const out: Step[] = [];
+    if (row.phone || row.owner_phone) out.push({ text: `Call ${row.owner_name ? String(row.owner_name) : 'the owner'}`, when: due(row.next_followup_at) });
+    else out.push({ text: 'Find a phone number or owner email' });
+    out.push({ text: 'Check the website problems found and pick the one to lead with' });
+    if (Number(row.call_count ?? 0) > 0) out.push({ text: `Called ${row.call_count}× already`, done: true });
+    return out;
+  }
+  if (s === 'drafted' || s === 'approved') return [{ text: s === 'drafted' ? 'Read and approve the cold email' : 'Email approved, sending next' }, { text: 'Call after it lands' }];
+  if (s === 'sent') return [{ text: 'Follow-up email', when: due(row.bump_due_at), done: !!row.bumped_at }, { text: 'Call them', when: due(row.call_due_at) }];
+  if (s === 'call_list') return [{ text: 'Call them', when: due(row.call_due_at) }, { text: 'Check in', when: due(row.next_checkin_at) }];
+  if (s === 'replied') return [{ text: 'They replied: answer and book a call' }];
+  if (s === 'booked') return [{ text: 'Call is booked: prep the audit before it' }];
+  return [];
+}
+
+export interface TaskCandidate { id: string; kind: BoardItem['kind']; title: string; reason: string; score: number }
+/** Rank what matters most for Made by right now. Replies and booked calls beat
+ *  everything (money is closest), then overdue client work, calls due, cards
+ *  waiting on you, follow-ups, and fresh leads to fill the line. Pure. */
+export function rankTopTasks(c: {
+  outreach: { id: string; business_name: string; status: string; call_due_at?: string | null; bump_due_at?: string | null; bumped_at?: string | null }[];
+  clientTasks: { client_id: string; business_name: string; title: string; due: string | null }[];
+  approvals: { id: string; title: string; created_at: string }[];
+  leads: { id: string; business_name: string; city?: string | null }[];
+}, today: string, n = 5): TopTask[] {
+  const out: TaskCandidate[] = [];
+  const daysLate = (d: string | null | undefined) => (d ? Math.max(0, Math.round((Date.parse(today) - Date.parse(d.slice(0, 10))) / 86400000)) : 0);
+  for (const o of c.outreach) {
+    if (o.status === 'replied') out.push({ id: o.id, kind: 'outreach', title: `Reply to ${o.business_name}`, reason: 'They replied: closest to money', score: 100 });
+    else if (o.status === 'booked') out.push({ id: o.id, kind: 'outreach', title: `Prep for ${o.business_name}`, reason: 'Call is booked', score: 92 });
+    else if ((o.status === 'sent' || o.status === 'call_list') && o.call_due_at && o.call_due_at.slice(0, 10) <= today) out.push({ id: o.id, kind: 'outreach', title: `Call ${o.business_name}`, reason: daysLate(o.call_due_at) ? `Call was due ${daysLate(o.call_due_at)}d ago` : 'Call due today', score: 70 + Math.min(10, daysLate(o.call_due_at)) });
+    else if (o.status === 'sent' && !o.bumped_at && o.bump_due_at && o.bump_due_at.slice(0, 10) <= today) out.push({ id: o.id, kind: 'outreach', title: `Follow up with ${o.business_name}`, reason: 'Follow-up email due', score: 50 });
+  }
+  for (const t of c.clientTasks) if (t.due && t.due <= today) out.push({ id: t.client_id, kind: 'client', title: `${t.business_name}: ${t.title}`, reason: daysLate(t.due) ? `Client task ${daysLate(t.due)}d late` : 'Client task due today', score: 80 + Math.min(10, daysLate(t.due)) });
+  for (const a of c.approvals) out.push({ id: a.id, kind: 'approval', title: a.title, reason: 'Waiting on your OK', score: 60 + Math.min(8, daysLate(a.created_at)) });
+  for (const l of c.leads) out.push({ id: l.id, kind: 'lead', title: `Call ${l.business_name}`, reason: `New lead${l.city ? ` in ${l.city}` : ''}`, score: 20 });
+  const seen = new Set<string>();
+  return out.sort((a, b) => b.score - a.score).filter((x) => { const k = `${x.kind}:${x.id}`; if (seen.has(k)) return false; seen.add(k); return true; })
+    .slice(0, n).map((x, i) => ({ id: x.id, kind: x.kind, title: x.title, sub: x.reason, reason: x.reason, score: x.score, rank: i + 1 }));
 }

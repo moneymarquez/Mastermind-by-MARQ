@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { outreachPhase, brandPhase, streamOfDomain, workerState, cleanLabels, columnsFor, queueFrom, STREAMS } from '../src/data/board';
+import { outreachPhase, brandPhase, streamOfDomain, workerState, cleanLabels, columnsFor, queueFrom, rankTopTasks, nextSteps, STREAMS } from '../src/data/board';
 import { buildBoard } from '../worker/handlers/board';
 
 describe('board phases', () => {
@@ -35,6 +35,31 @@ describe('board phases', () => {
     expect(cols.map((c) => c.name)).toEqual(['Found', 'Drafted', 'Contacted', 'Talking', 'Client']);
     expect(cols[0].count).toBe(377);
     expect(cols[0].items).toHaveLength(1);
+  });
+});
+
+describe('Your top 5', () => {
+  const today = '2026-10-29';
+  it('ranks replies first, then late client work, calls due, approvals, then new leads', () => {
+    const top = rankTopTasks({
+      outreach: [{ id: 'o1', business_name: 'A Cafe', status: 'sent', call_due_at: '2026-10-27' }, { id: 'o2', business_name: 'B Salon', status: 'replied' }],
+      clientTasks: [{ client_id: 'c1', business_name: 'Gym', title: 'Audit summary', due: '2026-10-25' }, { client_id: 'c2', business_name: 'Later', title: 'Not yet', due: '2026-11-20' }],
+      approvals: [{ id: 'a1', title: 'Approve email', created_at: '2026-10-28' }],
+      leads: [{ id: 'l1', business_name: 'Tacos', city: 'Kansas City' }, { id: 'l2', business_name: 'Barber' }],
+    }, today);
+    expect(top.map((t) => t.title)).toEqual(['Reply to B Salon', 'Gym: Audit summary', 'Call A Cafe', 'Approve email', 'Call Tacos']);
+    expect(top.map((t) => t.rank)).toEqual([1, 2, 3, 4, 5]);
+  });
+  it('never more than five, never a task that is not due yet', () => {
+    const top = rankTopTasks({ outreach: [], clientTasks: [{ client_id: 'c', business_name: 'X', title: 't', due: '2026-12-01' }], approvals: [], leads: Array.from({ length: 9 }, (_, i) => ({ id: `l${i}`, business_name: `L${i}` })) }, today);
+    expect(top).toHaveLength(5);
+    expect(top.every((t) => t.kind === 'lead')).toBe(true);
+  });
+  it('next steps for a lead and a sent email', () => {
+    expect(nextSteps('lead', { phone: '816', owner_name: 'Rosa' })[0].text).toBe('Call Rosa');
+    const s = nextSteps('outreach', { status: 'sent', bump_due_at: '2026-10-28', call_due_at: '2026-11-02' }, new Date('2026-10-29'));
+    expect(s[0].when).toMatch(/now/);
+    expect(s[1].when).toBe('due 2026-11-02');
   });
 });
 

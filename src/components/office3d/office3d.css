@@ -24,6 +24,16 @@
 @keyframes o3Screen{0%,100%{opacity:.75}50%{opacity:1}}
 @keyframes o3Dot{0%,100%{opacity:.3}50%{opacity:1}}
 @keyframes o3Road{to{stroke-dashoffset:-32}}
+/* Walking: legs swing, body bobs; the wander path loops around a small square. */
+.o3-walk .o3-leg-l,.o3-walk .o3-leg-r{transform-box:fill-box;transform-origin:50% 0;animation:o3Leg .5s ease-in-out infinite alternate}
+.o3-walk .o3-leg-r{animation-direction:alternate-reverse}
+.o3-walk{animation:o3Step .25s ease-in-out infinite alternate}
+.o3-wander{animation:o3Wander var(--dur,9s) linear infinite;animation-delay:var(--delay,0s)}
+.o3-wander2{animation-name:o3Wander2}
+@keyframes o3Leg{from{transform:rotate(-14deg)}to{transform:rotate(14deg)}}
+@keyframes o3Step{from{transform:translateY(0)}to{transform:translateY(-1.5px)}}
+@keyframes o3Wander{0%{transform:translate(0,0)}25%{transform:translate(17px,10px)}50%{transform:translate(0,20px)}75%{transform:translate(-17px,10px)}100%{transform:translate(0,0)}}
+@keyframes o3Wander2{0%{transform:translate(0,0)}25%{transform:translate(-17px,10px)}50%{transform:translate(0,20px)}75%{transform:translate(17px,10px)}100%{transform:translate(0,0)}}
 @media (prefers-reduced-motion: reduce){.o3-stage *{animation:none!important;transition:none!important}}
 .o3-panel{display:flex;flex-direction:column;gap:2px;margin-top:10px}
 .o3-row{display:flex;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid var(--border);background:none;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left;font-family:inherit;color:var(--text);cursor:pointer;font-size:14px}

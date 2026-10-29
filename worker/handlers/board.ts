@@ -4,9 +4,9 @@
 // you"). MostFit and side hustles are labels Marq types — status only.
 // About 12 Supabase reads: well under the 50-request budget. Owner only.
 import { requireUser, isOwnerUser } from '../lib/auth';
-import { Sb, json } from '../lib/sb';
+import { Sb, json, zonedNow } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
-import { STREAMS, outreachPhase, brandPhase, streamOfDomain, workerState, cleanLabels, columnsFor, queueFrom } from '../../src/data/board';
+import { STREAMS, outreachPhase, brandPhase, streamOfDomain, workerState, cleanLabels, columnsFor, queueFrom, rankTopTasks } from '../../src/data/board';
 import type { Board, BoardItem, BoardStream, BoardWorker, Phase, StreamKey } from '../../src/data/board';
 
 export type BoardEnv = SbEnv & { VITE_SUPABASE_ANON_KEY: string };
@@ -28,19 +28,20 @@ export async function boardRoute(request: Request, env: BoardEnv): Promise<Respo
 export async function buildBoard(sb: Sb, u: string): Promise<Board> {
   const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
   const since7 = new Date(Date.now() - 7 * 86400 * 1000).toISOString();
-  const [workers, runs, approvals, scores, leadsTop, leadsNew, outreach, clients, productsTop, productsN, brands, settings] = await Promise.all([
+  const [workers, runs, approvals, scores, leadsTop, leadsNew, outreach, clients, productsTop, productsN, brands, settings, checklist] = await Promise.all([
     sb.get<{ id: string; key: string; name: string; domain: string; current_task: string | null; enabled: boolean }>(`ai_workers?user_id=eq.${u}&enabled=eq.true&select=id,key,name,domain,current_task,enabled&order=domain,name`),
     sb.get<{ worker_id: string | null; status: string; summary: string | null; instructions: string | null; created_at: string; finished_at: string | null }>(`ai_worker_runs?user_id=eq.${u}&created_at=gte.${since}&select=worker_id,status,summary,instructions,created_at,finished_at&order=created_at.desc&limit=300`),
     sb.get<{ id: string; worker_id: string | null; domain: string; type: string; title: string; created_at: string }>(`ai_approvals?user_id=eq.${u}&status=eq.pending&select=id,worker_id,domain,type,title,created_at&order=created_at.asc&limit=200`),
     sb.get<{ worker: string | null; overall: number | null; created_at: string }>(`ai_output_scores?user_id=eq.${u}&created_at=gte.${since7}&select=worker,overall,created_at&order=created_at.desc&limit=500`),
-    sb.get<{ id: string; business_name: string; city: string | null }>(`leads?archived_at=is.null&or=(status.is.null,status.eq.new)&select=id,business_name,city&order=fizzle_score.desc.nullslast&limit=6`),
+    sb.get<{ id: string; business_name: string; city: string | null }>(`leads?archived_at=is.null&or=(status.is.null,status.eq.new)&select=id,business_name,city&order=fizzle_score.desc.nullslast&limit=10`),
     countOf(sb, `leads?archived_at=is.null&or=(status.is.null,status.eq.new)&select=id`),
-    sb.get<{ id: string; business_name: string; status: string }>(`lead_outreach?user_id=eq.${u}&archived_at=is.null&status=in.(drafted,approved,sent,call_list,replied,booked)&select=id,business_name,status&order=updated_at.desc&limit=200`),
+    sb.get<{ id: string; business_name: string; status: string; call_due_at: string | null; bump_due_at: string | null; bumped_at: string | null }>(`lead_outreach?user_id=eq.${u}&archived_at=is.null&status=in.(drafted,approved,sent,call_list,replied,booked)&select=id,business_name,status,call_due_at,bump_due_at,bumped_at&order=updated_at.desc&limit=200`),
     sb.get<{ id: string; business_name: string; stage: string }>(`crm_clients?user_id=eq.${u}&select=id,business_name,stage&order=updated_at.desc&limit=50`),
     sb.get<{ id: string; name: string }>(`ecom_products?user_id=eq.${u}&archived_at=is.null&select=id,name&order=created_at.desc&limit=6`),
     countOf(sb, `ecom_products?user_id=eq.${u}&archived_at=is.null&select=id`),
     sb.get<{ id: string; name: string; current_step: number | null }>(`ecom_brands?user_id=eq.${u}&select=id,name,current_step&order=last_activity_at.desc.nullslast&limit=50`),
     sb.get<{ board_labels: Record<string, unknown> }>(`user_settings?user_id=eq.${u}&select=board_labels`),
+    sb.get<{ client_id: string; title: string; due: string | null }>(`client_checklist?user_id=eq.${u}&done=eq.false&owner=eq.marq&due=not.is.null&select=client_id,title,due&order=due.asc&limit=50`),
   ]);
 
   // ── Office: one character per worker ──
@@ -63,11 +64,11 @@ export async function buildBoard(sb: Sb, u: string): Promise<Board> {
   });
 
   // ── Classroom: each workstream in Phase 1–5 ──
-  const waitingFor = (k: StreamKey): BoardItem[] => approvals.filter((a) => streamOfDomain(a.domain) === k).map((a) => ({ id: a.id, title: a.title, sub: a.type.replace(/_/g, ' ') }));
+  const waitingFor = (k: StreamKey): BoardItem[] => approvals.filter((a) => streamOfDomain(a.domain) === k).map((a) => ({ id: a.id, title: a.title, sub: a.type.replace(/_/g, ' '), kind: 'approval' as const }));
   const madeby = [
-    ...leadsTop.map((l) => ({ phase: 1 as Phase, item: { id: l.id, title: l.business_name, sub: l.city } })),
-    ...outreach.flatMap((o) => { const p = outreachPhase(o.status); return p ? [{ phase: p, item: { id: o.id, title: o.business_name, sub: o.status.replace('_', ' ') } }] : []; }),
-    ...clients.filter((c) => !['lost', 'churned', 'archived'].includes(c.stage)).map((c) => ({ phase: 5 as Phase, item: { id: c.id, title: c.business_name, sub: c.stage.replace(/_/g, ' ') } })),
+    ...leadsTop.map((l) => ({ phase: 1 as Phase, item: { id: l.id, title: l.business_name, sub: l.city, kind: 'lead' as const } })),
+    ...outreach.flatMap((o) => { const p = outreachPhase(o.status); return p ? [{ phase: p, item: { id: o.id, title: o.business_name, sub: o.status.replace('_', ' '), kind: 'outreach' as const } }] : []; }),
+    ...clients.filter((c) => !['lost', 'churned', 'archived'].includes(c.stage)).map((c) => ({ phase: 5 as Phase, item: { id: c.id, title: c.business_name, sub: c.stage.replace(/_/g, ' '), kind: 'client' as const } })),
   ];
   const pitches = approvals.filter((a) => a.type === 'product_pitch');
   const ecom = [
@@ -75,12 +76,21 @@ export async function buildBoard(sb: Sb, u: string): Promise<Board> {
     ...pitches.map((a) => ({ phase: 2 as Phase, item: { id: a.id, title: a.title } })),
     ...brands.map((b) => ({ phase: brandPhase(b.current_step), item: { id: b.id, title: b.name, sub: `Step ${b.current_step ?? 1} of 10` } })),
   ];
+  const today = zonedNow('America/Denver').date;
+  const nameOf = new Map(clients.map((c) => [c.id, c.business_name]));
+  const top = rankTopTasks({
+    outreach,
+    clientTasks: checklist.map((t) => ({ ...t, business_name: nameOf.get(t.client_id) ?? 'Client' })),
+    approvals: approvals.filter((a) => streamOfDomain(a.domain) === 'madeby'),
+    leads: leadsTop,
+  }, today);
   const labels = settings[0]?.board_labels ?? {};
   const fromLabels = (k: 'mostfit' | 'side') => cleanLabels(labels[k]).map((l) => ({ phase: l.phase, item: { id: l.id, title: l.label } }));
   const streams: BoardStream[] = STREAMS.map((s) => ({
     key: s.key, name: s.name, labelsOnly: s.labelsOnly,
     waiting: s.key === 'mostfit' ? [] : waitingFor(s.key),
-    columns: s.key === 'madeby' ? columnsFor('madeby', madeby, { 1: leadsNew })
+    ...(s.key === 'madeby' ? { top } : {}),
+    columns: s.key === 'madeby' ? columnsFor('madeby', madeby, { 1: leadsNew }, 10)
       : s.key === 'ecom' ? columnsFor('ecom', ecom, { 1: productsN })
         : columnsFor(s.key, fromLabels(s.key)),
   }));

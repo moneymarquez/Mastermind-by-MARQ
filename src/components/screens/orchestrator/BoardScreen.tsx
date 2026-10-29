@@ -8,6 +8,10 @@ import { STREAMS, PHASES, cleanLabels } from '../../../data/board';
 import type { Board, BoardStream, BoardWorker, Label, Phase, QueueEntry, QueueItem, WorkerState } from '../../../data/board';
 import IsoOffice from '../../office3d/IsoOffice';
 import ClassroomLine from '../../office3d/ClassroomLine';
+import PhaseRooms from '../../office3d/PhaseRooms';
+import { DELIVERY_PHASES } from '../../../data/madeby';
+import { nextSteps } from '../../../data/board';
+import type { BoardItem, Step } from '../../../data/board';
 import ScorePills, { useNeedsConfirm } from '../../mm/ScorePills';
 import { decideApproval } from '../../../data/useEngine';
 
@@ -54,6 +58,7 @@ export default function BoardScreen() {
   const [err, setErr] = useState('');
   const [open, setOpen] = useState<BoardWorker | null>(null);
   const [line, setLine] = useState<QueueEntry | null>(null);
+  const [person, setPerson] = useState<{ item: BoardItem; phase: number | 'waiting' | 'top' } | null>(null);
   const load = useCallback(async () => {
     const r = await api<Board>('/api/orchestrator/board', { method: 'GET' });
     if (r.error) setErr(r.error); else { setErr(''); setBoard(r); }
@@ -71,10 +76,22 @@ export default function BoardScreen() {
       {!board && !err && <span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Loading…</span>}
       {board && tab === 'office' && <IsoOffice workers={board.workers} onOpen={setOpen} />}
       {board && tab === 'classroom' && <ClassroomLine queue={board.queue ?? []} workers={board.workers} onOpen={setLine} />}
-      {board && tab === 'classroom' && board.streams.map((s) => <Room key={s.key} s={s} onChanged={load} onWaiting={() => setTab('classroom')} />)}
+      {board && tab === 'classroom' && board.streams.map((s) => s.key === 'madeby' ? (
+        <section key={s.key} style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
+          <strong style={{ fontSize: 16 }}>Made by · phases</strong>
+          <PhaseRooms stream={s} onOpen={(item, phase) => setPerson({ item, phase })} />
+        </section>
+      ) : <Room key={s.key} s={s} onChanged={load} onWaiting={() => setTab('classroom')} />)}
       {open && (
         <Sheet title={open.name} onClose={() => setOpen(null)}>
           <WorkerDetail w={open} onApprovals={() => { setOpen(null); nav('today'); }} />
+        </Sheet>
+      )}
+      {person && (
+        <Sheet title={person.item.title} onClose={() => setPerson(null)}>
+          {person.item.kind === 'approval'
+            ? <LineItem i={{ id: person.item.id, title: person.item.title, type: (person.item.sub ?? '').replace(/ /g, '_'), created_at: new Date().toISOString() }} onDone={() => void load()} onOpen={() => { setPerson(null); nav('today'); }} />
+            : <PersonDetail item={person.item} phase={person.phase} phaseName={board?.streams.find((x) => x.key === 'madeby')?.columns.find((c) => c.phase === person.phase)?.name ?? ''} onNav={(to) => { setPerson(null); nav(to); }} />}
         </Sheet>
       )}
       {line && (
@@ -191,6 +208,73 @@ function LineItem({ i, onDone, onOpen }: { i: QueueItem; onDone: () => void; onO
           <button className="mm-btn" style={{ height: 34 }} onClick={onOpen}>Open</button>
         </div>
       )}
+    </div>
+  );
+}
+
+type Detail = { rows: [string, string][]; steps: Step[]; phone: string | null; stage: string; problems: string[] };
+/** One Made by person: where they are and what's next. */
+function PersonDetail({ item, phase, phaseName, onNav }: { item: BoardItem; phase: number | 'waiting' | 'top'; phaseName: string; onNav: (screen: string) => void }) {
+  const [d, setD] = useState<Detail | null>(null);
+  useEffect(() => {
+    void (async () => {
+      if (item.kind === 'client') {
+        const [{ data: c }, { data: items }] = await Promise.all([
+          supabase.from('crm_clients').select('business_name,stage,delivery_phase,contact_name,contact_email,contact_phone').eq('id', item.id).maybeSingle(),
+          supabase.from('client_checklist').select('title,owner,due,done,phase').eq('client_id', item.id).order('sort'),
+        ]);
+        const p = (c?.delivery_phase as number | null) ?? null;
+        const dp = DELIVERY_PHASES.find((x) => x.n === p);
+        const mine = ((items ?? []) as { title: string; owner: string; due: string | null; done: boolean; phase: number }[]).filter((x) => p == null || x.phase === p);
+        setD({ stage: dp ? `Client · delivery phase ${p}: ${dp.label}` : `Client · ${String(c?.stage ?? '').replace(/_/g, ' ')} (delivery not started)`,
+          rows: [['Contact', String(c?.contact_name ?? '—')], ['Email', String(c?.contact_email ?? '—')]],
+          steps: mine.length ? mine.map((x) => ({ text: x.title, when: x.due ? `due ${x.due}` : null, done: x.done, owner: x.owner })) : [{ text: p == null ? 'Start delivery: move them into phase 1 in the client CRM' : 'No checklist for this phase yet' }],
+          phone: (c?.contact_phone as string | null) ?? null, problems: [] });
+        return;
+      }
+      if (item.kind === 'outreach') {
+        const { data: o } = await supabase.from('lead_outreach').select('*').eq('id', item.id).maybeSingle();
+        const row = (o ?? {}) as Record<string, unknown>;
+        setD({ stage: `${phase === 'top' ? 'Outreach' : `Phase ${phase} · ${phaseName}`} (${String(row.status ?? '').replace('_', ' ')})`,
+          rows: [['Email', String(row.to_email ?? '—')], ['Subject', String(row.subject ?? '—')], ['Sent', row.sent_at ? String(row.sent_at).slice(0, 10) : 'Not yet']],
+          steps: nextSteps('outreach', row), phone: (row.phone as string | null) ?? null, problems: row.finding_summary ? [String(row.finding_summary)] : [] });
+        return;
+      }
+      const [{ data: l }, { data: f }] = await Promise.all([
+        supabase.from('leads').select('*').eq('id', item.id).maybeSingle(),
+        supabase.from('lead_findings').select('summary').eq('lead_id', item.id).is('archived_at', null).neq('kind', 'checked').limit(5),
+      ]);
+      const row = (l ?? {}) as Record<string, unknown>;
+      setD({ stage: phase === 'top' ? 'Phase 1 · Found' : `Phase ${phase} · ${phaseName}`,
+        rows: [['Where', [row.city, row.state].filter(Boolean).join(', ') || '—'], ['Type', String(row.industry ?? row.category ?? '—')], ['Website', String(row.website ?? 'None')], ['Owner', String(row.owner_name ?? 'Unknown')]],
+        steps: nextSteps('lead', row), phone: (row.owner_phone as string | null) ?? (row.phone as string | null) ?? null,
+        problems: ((f ?? []) as { summary: string | null }[]).map((x) => x.summary ?? '').filter(Boolean) });
+    })();
+  }, [item, phase, phaseName]);
+  if (!d) return <span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Loading…</span>;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 14.5 }}>
+      <Chip k="accent">{d.stage}</Chip>
+      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px' }}>
+        {d.rows.map(([k, v]) => [<span key={`${k}k`} style={{ color: 'var(--text-tertiary)' }}>{k}</span>, <span key={`${k}v`} style={{ overflowWrap: 'anywhere' }}>{v}</span>])}
+      </div>
+      {d.problems.length > 0 && (
+        <div><div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 4 }}>Website problems found</div>{d.problems.map((p, i) => <div key={i} style={{ fontSize: 14 }}>• {p}</div>)}</div>
+      )}
+      <div>
+        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 4 }}>Tasks</div>
+        {d.steps.map((s, i) => (
+          <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'baseline', padding: '4px 0' }}>
+            <span style={{ color: s.done ? 'var(--success)' : 'var(--text-tertiary)' }}>{s.done ? '✓' : '○'}</span>
+            <span style={{ flex: 1, textDecoration: s.done ? 'line-through' : undefined, color: s.done ? 'var(--text-tertiary)' : 'var(--text)' }}>{s.text}{s.owner && s.owner !== 'marq' ? <span style={{ color: 'var(--text-tertiary)' }}> · {s.owner}</span> : null}</span>
+            {s.when && <span style={{ fontSize: 12.5, color: s.when.includes('now') ? 'var(--danger)' : 'var(--text-tertiary)' }}>{s.when}</span>}
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {d.phone && <a className="mm-btn mm-btn--primary" style={{ height: 38, display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }} href={`tel:${d.phone}`}>Call</a>}
+        <button className="mm-btn" style={{ height: 38 }} onClick={() => onNav(item.kind === 'client' ? 'client-crm' : item.kind === 'outreach' ? 'lead-engines' : 'leadflow')}>{item.kind === 'client' ? 'Open in client CRM' : item.kind === 'outreach' ? 'Open in Engines' : 'Open in LeadFlow'}</button>
+      </div>
     </div>
   );
 }
