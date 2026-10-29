@@ -522,7 +522,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         {state.screen === 'money-move' && <MoneyMoveScreen />}
         {state.screen === 'peptides' && <PeptidesScreen />}
         {state.screen === 'feed' && <FeedScreen />}
-        {state.screen === 'classroom' && <ClassroomScreen />}
+        {state.screen === 'classroom' && (isOwner ? <BoardScreen initialTab="classroom" /> : <ClassroomScreen />)}
         {state.screen === 'ledger' && <LedgerScreen />}
         {state.screen === 'contracts' && <ContractsScreen />}
         {state.screen === 'comms' && <CommsScreen />}

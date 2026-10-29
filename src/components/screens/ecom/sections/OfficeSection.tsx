@@ -6,7 +6,8 @@ import { money, ago } from '../../../../data/ecom';
 import { useFlags } from '../../../../data/useFlags';
 import { buildGraphData } from '../../../../data/officeGraph';
 import type { GWorker, GHandoff } from '../../../../data/officeGraph';
-import OfficeGraph from '../../../office/OfficeGraph';
+import IsoOffice from '../../../office3d/IsoOffice';
+import type { Board } from '../../../../data/board';
 import type { GraphNode } from '../../../office/OfficeGraph';
 import TaskLog from '../../../office/TaskLog';
 import type { LogRun, LogTask } from '../../../office/TaskLog';
@@ -31,6 +32,8 @@ export default function OfficeSection({ onRan }: { onRan: () => void }) {
   const [pick, setPick] = useState<GraphNode | null>(null);
   const [floor, setFloor] = useState(false);
   const [tick, setTick] = useState(0);
+  const [board, setBoard] = useState<Board | null>(null);
+  useEffect(() => { void api<Board>('/api/orchestrator/board', { method: 'GET' }).then((b) => { if (!b.error) setBoard(b); }); }, [tick]);
   const flags = useFlags(true);
   const hq = useHqStatus();
   useEffect(() => {
@@ -57,8 +60,10 @@ export default function OfficeSection({ onRan }: { onRan: () => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {hq.s && <KillSwitch controls={hq.s.controls} onChanged={() => void hq.load()} />}
-      <Card title="Who's working" meta="tap a node · lines pulse while a run is live" action={<button style={btn('ghost')} onClick={() => setFloor(true)}>Floor plan view</button>}>
-        {workers.length === 0 ? <div style={{ fontSize: 14, color: E.muted }}>Nobody's hired yet. Setup → Start the company.</div> : <OfficeGraph data={data} onPick={setPick} focusDomain="ecom" />}
+      <Card title="Who's working" meta="tap a room to zoom in · tap anyone for their work" action={<button style={btn('ghost')} onClick={() => setFloor(true)}>Floor plan view</button>}>
+        {workers.length === 0 ? <div style={{ fontSize: 14, color: E.muted }}>Nobody's hired yet. Setup → Start the company.</div>
+          : board ? <IsoOffice workers={board.workers} onOpen={(w) => setPick(data.nodes.find((n) => n.id === w.id) ?? { id: w.id, label: w.name, kind: 'worker', domain: w.domain, state: 'idle' } as GraphNode)} />
+          : <div style={{ fontSize: 14, color: E.muted }}>Loading the office…</div>}
       </Card>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(320px,1fr))', gap: 16 }}>
         <OrchestratorChat onDone={refresh} />

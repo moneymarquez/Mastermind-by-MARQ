@@ -52,10 +52,10 @@ const ago = (iso: string | null) => { if (!iso) return ''; const m = Math.round(
  *  idles in the corner, raises a flag when waiting on you. Tap for the job,
  *  last output and Trust Score. Classroom: each workstream in Phase 1–5 with
  *  "Waiting on you" first. MostFit and side hustles are labels you type. */
-export default function BoardScreen() {
+export default function BoardScreen({ initialTab }: { initialTab?: 'office' | 'classroom' } = {}) {
   const { device, nav } = useModule();
   const phone = device === 'phone';
-  const [tab, setTab] = useState<'office' | 'classroom'>(() => { try { return (localStorage.getItem('board_tab') as 'office' | 'classroom') || 'office'; } catch { return 'office'; } });
+  const [tab, setTab] = useState<'office' | 'classroom'>(() => { if (initialTab) return initialTab; try { return (localStorage.getItem('board_tab') as 'office' | 'classroom') || 'office'; } catch { return 'office'; } });
   const [board, setBoard] = useState<Board | null>(null);
   const [err, setErr] = useState('');
   const [open, setOpen] = useState<BoardWorker | null>(null);

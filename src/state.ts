@@ -318,7 +318,7 @@ export function useMastermindState(userDisplayName: string | null) {
     if (e.key === 'Enter') sendNova();
   };
   const sendNova = async (overrideText?: string) => {
-    const text = (overrideText ?? state.novaInput).trim();
+    const text = (typeof overrideText === 'string' ? overrideText : state.novaInput).trim();
     if (!text || state.novaThinking) return;
     const lower = text.toLowerCase();
 

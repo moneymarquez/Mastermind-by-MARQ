@@ -137,7 +137,7 @@ export default function NovaPanel({
         )}
         <div
           style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--bg)', cursor: 'pointer', flexShrink: 0 }}
-          onClick={onSend}
+          onClick={() => onSend()}
         >
           <Icon name="arrow-up" color="var(--bg)" />
         </div>
@@ -183,7 +183,7 @@ function NovaShellPanel({ layout, assistantName, messages, input, thinking, list
             <Icon name="microphone" size={17} />
           </button>
         )}
-        <button onClick={onSend} aria-label="Send" style={{ width: screen ? 46 : 42, height: screen ? 46 : 42, flex: 'none', borderRadius: 8, border: 0, background: 'var(--text)', color: 'var(--bg)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <button onClick={() => onSend()} aria-label="Send" style={{ width: screen ? 46 : 42, height: screen ? 46 : 42, flex: 'none', borderRadius: 8, border: 0, background: 'var(--text)', color: 'var(--bg)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5" /><path d="m5 12 7-7 7 7" /></svg>
         </button>
       </div>
