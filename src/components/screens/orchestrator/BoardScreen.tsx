@@ -5,11 +5,13 @@ import { api } from '../../../lib/api';
 import { supabase } from '../../../lib/supabase';
 import { band, overallOf } from '../../../data/aiScores';
 import { STREAMS, PHASES, cleanLabels } from '../../../data/board';
-import type { Board, BoardStream, BoardWorker, Label, Phase, WorkerState } from '../../../data/board';
+import type { Board, BoardStream, BoardWorker, Label, Phase, QueueEntry, QueueItem, WorkerState } from '../../../data/board';
+import IsoOffice from '../../office3d/IsoOffice';
+import ClassroomLine from '../../office3d/ClassroomLine';
+import ScorePills, { useNeedsConfirm } from '../../mm/ScorePills';
+import { decideApproval } from '../../../data/useEngine';
 
 // Placeholder art: one emoji per kind of worker until real characters land.
-const AVATAR: Record<string, string> = { ecom: '🧑‍💼', content: '🎬', marketing: '📞', all: '🧭' };
-const ROOM: Record<string, string> = { all: 'HQ', ecom: 'E-commerce', marketing: 'Made by', content: 'Content' };
 const STATE_TEXT: Record<WorkerState, string> = { running: 'At the desk, working', waiting: 'Waiting on you', error: 'Stuck: last run failed', idle: 'Idle' };
 const BAND_COLOR = { green: 'var(--success)', yellow: 'var(--warning)', red: 'var(--danger)' } as const;
 
@@ -51,6 +53,7 @@ export default function BoardScreen() {
   const [board, setBoard] = useState<Board | null>(null);
   const [err, setErr] = useState('');
   const [open, setOpen] = useState<BoardWorker | null>(null);
+  const [line, setLine] = useState<QueueEntry | null>(null);
   const load = useCallback(async () => {
     const r = await api<Board>('/api/orchestrator/board', { method: 'GET' });
     if (r.error) setErr(r.error); else { setErr(''); setBoard(r); }
@@ -58,54 +61,30 @@ export default function BoardScreen() {
   useEffect(() => { void load(); const t = setInterval(() => void load(), 20000); return () => clearInterval(t); }, [load]);
   useEffect(() => { try { localStorage.setItem('board_tab', tab); } catch { /* fine */ } }, [tab]);
 
-  const waitingTotal = board ? board.streams.reduce((s, x) => s + x.waiting.length, 0) : 0;
+  const waitingTotal = board ? (board.queue ?? []).reduce((s, x) => s + x.items.length, 0) : 0;
+  void phone;
   return (
     <Page title="Office & Classroom" sub="Who's working, and where everything stands." back="Orchestrator" backTo="orchestrator">
       <style>{CSS}</style>
       <Tabs value={tab} onChange={setTab} tabs={[{ id: 'office' as const, label: 'Office' }, { id: 'classroom' as const, label: 'Classroom', badge: waitingTotal || undefined }]} />
       {err && <span style={{ fontSize: 14, color: 'var(--danger)' }}>{err}</span>}
       {!board && !err && <span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Loading…</span>}
-      {board && tab === 'office' && <Office workers={board.workers} phone={phone} onOpen={setOpen} />}
-      {board && tab === 'classroom' && board.streams.map((s) => <Room key={s.key} s={s} onChanged={load} onWaiting={() => nav('today')} />)}
+      {board && tab === 'office' && <IsoOffice workers={board.workers} onOpen={setOpen} />}
+      {board && tab === 'classroom' && <ClassroomLine queue={board.queue ?? []} workers={board.workers} onOpen={setLine} />}
+      {board && tab === 'classroom' && board.streams.map((s) => <Room key={s.key} s={s} onChanged={load} onWaiting={() => setTab('classroom')} />)}
       {open && (
         <Sheet title={open.name} onClose={() => setOpen(null)}>
           <WorkerDetail w={open} onApprovals={() => { setOpen(null); nav('today'); }} />
         </Sheet>
       )}
-    </Page>
-  );
-}
-
-function Office({ workers, phone, onOpen }: { workers: BoardWorker[]; phone: boolean; onOpen: (w: BoardWorker) => void }) {
-  if (!workers.length) return <span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>No workers yet. Start the company from Settings → Workers.</span>;
-  const rooms = ['all', 'ecom', 'marketing', 'content'].filter((d) => workers.some((w) => w.domain === d));
-  const counts = { running: workers.filter((w) => w.state === 'running').length, waiting: workers.filter((w) => w.state === 'waiting').length };
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <Chip k={counts.running ? 'good' : 'neutral'}>{counts.running} working</Chip>
-        <Chip k={counts.waiting ? 'warn' : 'neutral'}>{counts.waiting} waiting on you</Chip>
-        <Chip>{workers.length - counts.running - counts.waiting} idle</Chip>
-      </div>
-      {rooms.map((d) => (
-        <section key={d} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <strong style={{ fontSize: 13, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{ROOM[d] ?? d}</strong>
-          <div style={{ display: 'grid', gridTemplateColumns: phone ? '1fr 1fr' : 'repeat(auto-fill,minmax(180px,1fr))', gap: 10 }}>
-            {workers.filter((w) => w.domain === d).map((w) => (
-              <div key={w.id} className="bd-desk" role="button" tabIndex={0} onClick={() => onOpen(w)} onKeyDown={(e) => { if (e.key === 'Enter') onOpen(w); }} aria-label={`${w.name}: ${STATE_TEXT[w.state]}`}>
-                <span className="bd-name"><span className="bd-dot" style={{ background: stateColor(w.state) }} />{w.name}</span>
-                <span className="bd-table" />
-                <span className="bd-guy" data-s={w.state}>
-                  {w.state === 'waiting' && <span className="bd-flag">🚩</span>}
-                  {w.state === 'error' && <span className="bd-flag" style={{ animation: 'none' }}>❓</span>}
-                  {AVATAR[w.domain] ?? '🧑'}
-                </span>
-              </div>
-            ))}
+      {line && (
+        <Sheet title={`${line.name} · ${line.items.length} waiting`} onClose={() => setLine(null)}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {line.items.map((i) => <LineItem key={i.id} i={i} onDone={() => void load()} onOpen={() => { setLine(null); nav(i.type.startsWith('product') || i.type.includes('purchase') || i.type.startsWith('supplier') ? 'ecom-approvals' : 'today'); }} />)}
           </div>
-        </section>
-      ))}
-    </div>
+        </Sheet>
+      )}
+    </Page>
   );
 }
 
@@ -180,6 +159,38 @@ function LabelEditor({ stream, onChanged }: { stream: 'mostfit' | 'side'; onChan
         {PHASES.map((p) => <option key={p} value={p}>{p} · {def.phases[p - 1]}</option>)}
       </select>
       <button className="mm-btn" style={{ height: 36 }} disabled={busy || !text.trim()} onClick={() => void save((xs) => [...xs.filter((x) => x.label.toLowerCase() !== text.trim().toLowerCase()), { id: `${Date.now()}`, label: text.trim(), phase }]).then(() => setText(''))}>Set</button>
+    </div>
+  );
+}
+
+// Cards that move money or need you to buy something open in Approvals instead.
+const OPEN_ONLY = new Set(['sample_purchase', 'domain_purchase', 'supplier_order', 'buy_domain', 'product_pitch']);
+function LineItem({ i, onDone, onOpen }: { i: QueueItem; onDone: () => void; onOpen: () => void }) {
+  const { red } = useNeedsConfirm('approval', i.id);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState<string | null>(null);
+  const go = async (status: 'approved' | 'sent_back') => {
+    if (status === 'approved' && red && !window.confirm('This card scores red. Approve anyway?')) return;
+    setBusy(true);
+    const r = await decideApproval(i.id, status, status === 'sent_back' ? 'Sent back from the Classroom.' : null);
+    setBusy(false);
+    if (r.error || r.ok === false) { setDone(r.error ?? 'Could not save.'); return; }
+    setDone(status === 'approved' ? 'Approved.' : 'Sent back.'); onDone();
+  };
+  return (
+    <div style={{ padding: '10px 0', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <span style={{ fontSize: 14.5, fontWeight: 500 }}>{i.title}</span>
+      <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{i.type.replace(/_/g, ' ')} · waiting {ago(i.created_at)}</span>
+      <ScorePills type="approval" id={i.id} compact />
+      {done ? <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{done}</span> : OPEN_ONLY.has(i.type) ? (
+        <button className="mm-btn mm-btn--primary" style={{ height: 34, alignSelf: 'flex-start' }} onClick={onOpen}>Open to decide</button>
+      ) : (
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="mm-btn mm-btn--primary" style={{ height: 34 }} disabled={busy} onClick={() => void go('approved')}>{busy ? 'Saving…' : 'Approve'}</button>
+          <button className="mm-btn" style={{ height: 34 }} disabled={busy} onClick={() => void go('sent_back')}>Send back</button>
+          <button className="mm-btn" style={{ height: 34 }} onClick={onOpen}>Open</button>
+        </div>
+      )}
     </div>
   );
 }

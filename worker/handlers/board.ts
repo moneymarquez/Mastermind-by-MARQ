@@ -6,7 +6,7 @@
 import { requireUser, isOwnerUser } from '../lib/auth';
 import { Sb, json } from '../lib/sb';
 import type { SbEnv } from '../lib/sb';
-import { STREAMS, outreachPhase, brandPhase, streamOfDomain, workerState, cleanLabels, columnsFor } from '../../src/data/board';
+import { STREAMS, outreachPhase, brandPhase, streamOfDomain, workerState, cleanLabels, columnsFor, queueFrom } from '../../src/data/board';
 import type { Board, BoardItem, BoardStream, BoardWorker, Phase, StreamKey } from '../../src/data/board';
 
 export type BoardEnv = SbEnv & { VITE_SUPABASE_ANON_KEY: string };
@@ -84,5 +84,5 @@ export async function buildBoard(sb: Sb, u: string): Promise<Board> {
       : s.key === 'ecom' ? columnsFor('ecom', ecom, { 1: productsN })
         : columnsFor(s.key, fromLabels(s.key)),
   }));
-  return { workers: outWorkers, streams, at: new Date().toISOString() };
+  return { workers: outWorkers, streams, queue: queueFrom(approvals, workers), at: new Date().toISOString() };
 }

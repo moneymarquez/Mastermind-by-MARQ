@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { outreachPhase, brandPhase, streamOfDomain, workerState, cleanLabels, columnsFor, STREAMS } from '../src/data/board';
+import { outreachPhase, brandPhase, streamOfDomain, workerState, cleanLabels, columnsFor, queueFrom, STREAMS } from '../src/data/board';
 import { buildBoard } from '../worker/handlers/board';
 
 describe('board phases', () => {
@@ -38,6 +38,21 @@ describe('board phases', () => {
   });
 });
 
+describe('Classroom line', () => {
+  it('one person per worker with something waiting; longest wait at the front; no-worker cards get a name', () => {
+    const W = [{ id: 'w1', key: 'scout', name: 'Product Scout', domain: 'ecom' }];
+    const q = queueFrom([
+      { id: 'a', worker_id: 'w1', domain: 'ecom', type: 'product_card', title: 'x', created_at: '2026-10-27' },
+      { id: 'b', worker_id: 'w1', domain: 'ecom', type: 'product_card', title: 'y', created_at: '2026-10-25' },
+      { id: 'c', worker_id: null, domain: 'ecommerce', type: 'sample_purchase', title: 'Buy the sample', created_at: '2026-10-26' },
+    ], W);
+    expect(q.map((e) => e.name)).toEqual(['Product Scout', 'Sourcing']);
+    expect(q[0].items).toHaveLength(2);
+    expect(q[0].since).toBe('2026-10-25');
+    expect(q[1].domain).toBe('ecom');
+  });
+});
+
 describe('GET /api/orchestrator/board', () => {
   it('builds workers and streams from real rows; MostFit is labels only', async () => {
     const now = new Date().toISOString();
@@ -70,5 +85,6 @@ describe('GET /api/orchestrator/board', () => {
     const mostfit = b.streams.find((s) => s.key === 'mostfit')!;
     expect(mostfit.waiting).toEqual([]);
     expect(mostfit.columns[2].items).toEqual([{ id: 'm1', title: 'Beta testers' }]);
+    expect(b.queue.map((q) => q.name)).toEqual(['Product Scout']);
   });
 });
