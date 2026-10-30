@@ -98,7 +98,7 @@ export default function SobrietyV2() {
   }
 
   const hero = (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 12 }}>
       <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Clean streak</span>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, color: 'var(--text)', fontSize: 46, fontWeight: 600, letterSpacing: '-0.04em', lineHeight: 1 }}>{st.cur}<span style={{ fontSize: 22, color: 'var(--text-tertiary)', letterSpacing: '-0.02em' }}>{st.cur === 1 ? 'day' : 'days'}</span></div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -134,7 +134,7 @@ export default function SobrietyV2() {
     </Card>
   );
   const checkin = (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
       <NovaMark title="Evening check-in" />
       <p style={{ margin: 0, fontSize: 15, lineHeight: 1.45, color: 'var(--text-secondary)' }}>{answered && answered !== 'Need help' ? 'Saved to your journal. Thanks for checking in.' : prompt}</p>
       <ChoiceRow options={['Good', 'Tough', 'Need help']} value={answered} onPick={(o) => void answer(o)} />

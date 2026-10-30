@@ -76,7 +76,7 @@ export default function LegalV2() {
             ))}
           </div>
         </Card>
-        <section style={{ background: 'color-mix(in srgb, var(--warning) 8%, var(--surface))', border: '1px solid color-mix(in srgb, var(--warning) 40%, var(--border))', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <section style={{ background: 'color-mix(in srgb, var(--warning) 8%, var(--surface))', border: '1px solid color-mix(in srgb, var(--warning) 40%, var(--border))', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <span style={{ color: 'var(--warning)', fontSize: 15, fontWeight: 600 }}>A note on this page itself</span>
           <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.55, color: 'var(--text-secondary)' }}>{NOTE}</p>
         </section>

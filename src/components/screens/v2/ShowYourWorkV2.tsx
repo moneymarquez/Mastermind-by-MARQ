@@ -80,7 +80,7 @@ export default function ShowYourWorkV2({ onNavigate }: { onNavigate: (id: string
     : <Card wide={!phone}><span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>No packages in flight. Everything's delivered.</span></Card>;
 
   const tile = (p: ScalingProject) => (
-    <button key={p.id} onClick={() => setOpenId(p.id)} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', padding: 0, textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+    <button key={p.id} onClick={() => setOpenId(p.id)} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', padding: 0, textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
       <div style={{ aspectRatio: '4/3', width: '100%', background: 'repeating-linear-gradient(135deg, var(--surface-3) 0 8px, var(--surface-2) 8px 16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', padding: 8, boxSizing: 'border-box', overflow: 'hidden' }}>
         {p.website_url ? host(p.website_url) : 'No preview link'}
       </div>

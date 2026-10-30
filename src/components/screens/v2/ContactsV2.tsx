@@ -104,10 +104,10 @@ export default function ContactsV2() {
   return (
     <Page title="Contacts" sub={`${C.contacts.length} ${C.contacts.length === 1 ? 'contact' : 'contacts'}`} fab={phone ? { t: 'Contact', onClick: () => setAdding(true) } : undefined}>
       {phone ? (
-        <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>{cur ? record : listPane}</section>
+        <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>{cur ? record : listPane}</section>
       ) : (
         <>
-          <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', height: device === 'desktop' ? 680 : 620, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', minWidth: 0 }}>
+          <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', height: device === 'desktop' ? 680 : 620, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', minWidth: 0 }}>
             {listPane}
             {record ?? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', fontSize: 14 }}>Pick a contact on the left.</div>}
           </section>

@@ -86,7 +86,7 @@ export default function ClientModulesV2({ focusClientId, onClearFocus, onChanged
 
   return (
     <Page title="Client Modules" sub={O.loading ? 'Loading…' : waiting ? `${waiting} ${waiting === 1 ? 'client' : 'clients'} waiting on you` : 'Nothing waiting on you'}>
-      {phone ? (cur ? detail : <>{strip}<section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>{listPane}</section></>) : (
+      {phone ? (cur ? detail : <>{strip}<section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>{listPane}</section></>) : (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 16 }}>
             <Stat label="Clients" value={String(O.rows.length)} pill={`${O.rows.filter((r) => r.hasLogin).length} with a login`} />
@@ -95,7 +95,7 @@ export default function ClientModulesV2({ focusClientId, onClearFocus, onChanged
             <Stat label="Handed off" value={String(O.rows.filter((r) => r.handoff).length)} pill="Handoff mode on" k={O.rows.some((r) => r.handoff) ? 'good' : 'neutral'} />
           </div>
           {strip}
-          <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', height: 'calc(100vh - 300px)', minHeight: 560, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', minWidth: 0 }}>
+          <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', height: 'calc(100vh - 300px)', minHeight: 560, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', minWidth: 0 }}>
             {listPane}{detail}
           </section>
         </>

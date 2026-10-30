@@ -57,7 +57,7 @@ export default function DecisionLogV2() {
 
   const first = due[0];
   const reviewHero = first && (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Ready to review{due.length > 1 ? ` · 1 of ${due.length}` : ''}</span><Chip k="warn">{first.review_date === today ? 'Due today' : `Due ${shortDate(first.review_date)}`}</Chip></div>
       <span style={{ color: 'var(--text)', fontSize: 18, fontWeight: 600, letterSpacing: '-0.025em' }}>{first.title}</span>
       <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '8px 12px', fontSize: 14, lineHeight: 1.4, color: 'var(--text)' }}>

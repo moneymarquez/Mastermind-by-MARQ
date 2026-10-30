@@ -281,7 +281,7 @@ export function NotificationsPanel({ device, items, isRead, onOpen, onMarkAll, o
   return (
     <>
       <div onClick={onClose} style={{ position: phone ? 'fixed' : 'absolute', inset: 0, zIndex: 70, background: phone ? 'var(--mm-scrim)' : 'transparent' }} />
-      <div role="dialog" aria-label="Notifications" className="mm-anim" style={{ ...panel, zIndex: 71, display: 'flex', flexDirection: 'column', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, boxShadow: 'var(--g-shadow-3)', animation: 'mmPanelIn .15s ease', overflow: 'hidden' }}>
+      <div role="dialog" aria-label="Notifications" className="mm-anim" style={{ ...panel, zIndex: 71, display: 'flex', flexDirection: 'column', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', boxShadow: 'var(--g-shadow-3)', animation: 'mmPanelIn .15s ease', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', padding: '14px 14px 10px' }}>
           <span style={{ flex: 1, color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>Notifications</span>
           {items.some((i) => !isRead(i.id)) && <button onClick={onMarkAll} style={{ border: 0, background: 'transparent', color: 'var(--accent)', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Mark all read</button>}
@@ -329,7 +329,7 @@ export function SearchPalette({ groups, onOpen, onClose }: { groups: ShellGroup[
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'var(--mm-scrim)' }} />
-      <div role="dialog" aria-label="Search" className="mm-anim" style={{ position: 'fixed', zIndex: 81, left: '50%', top: 'max(12vh, calc(env(safe-area-inset-top) + 16px))', transform: 'translateX(-50%)', width: 'min(560px, calc(100vw - 32px))', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--g-shadow-3)', animation: 'mmPanelIn .15s ease' }}>
+      <div role="dialog" aria-label="Search" className="mm-anim" style={{ position: 'fixed', zIndex: 81, left: '50%', top: 'max(12vh, calc(env(safe-area-inset-top) + 16px))', transform: 'translateX(-50%)', width: 'min(560px, calc(100vw - 32px))', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', boxShadow: 'var(--g-shadow-3)', animation: 'mmPanelIn .15s ease' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', borderBottom: '1px solid var(--border)' }}>
           <GSearch size={17} color="var(--text-tertiary)" />
           <input ref={ref} value={q} onChange={(e) => { setQ(e.target.value); setSel(0); }} placeholder="Search modules"

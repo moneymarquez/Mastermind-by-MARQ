@@ -106,7 +106,7 @@ export function KillSwitch({ controls, onChanged }: { controls: Controls; onChan
   };
   const all = controls.paused_all;
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16, padding: '14px 16px', borderRadius: 14, border: `1px solid ${all ? 'color-mix(in srgb, var(--danger) 45%, var(--border))' : 'var(--border)'}`, background: all ? 'color-mix(in srgb, var(--danger) 9%, var(--surface))' : 'var(--surface)' }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16, padding: '14px 16px', borderRadius: 'var(--g-r-lg)', border: `1px solid ${all ? 'color-mix(in srgb, var(--danger) 45%, var(--border))' : 'var(--border)'}`, background: all ? 'color-mix(in srgb, var(--danger) 9%, var(--surface))' : 'var(--surface)' }}>
       <div style={{ flex: '1 1 220px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         <span style={{ fontSize: 15, fontWeight: 600, color: all ? 'var(--danger)' : 'var(--text)' }}>{all ? 'Everything is paused' : 'Kill switch'}</span>
         <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{all ? 'No runs, posts, texts or spend. Queued work resumes when you switch it back on.' : 'Stops every worker, post, text and spend at once. Nothing is lost.'}</span>

@@ -92,7 +92,7 @@ export default function BillingGateScreen({ onSubscribed, onSignOut, theme }: Pr
     <div style={{ height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 'calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))' } as CSSProperties}>
       <div style={{ width: '100%', maxWidth: 780, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div style={{ lineHeight: 1.1 }}>
-          <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em' }}>Masterminds</div>
+          <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' }}>Masterminds</div>
           <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, color: 'var(--text)', letterSpacing: '0.04em', marginTop: 2 }}>by MARQ</div>
         </div>
         <button type="button" onClick={onSignOut} style={{ minHeight: 44, padding: '0 8px', background: 'none', border: 'none', fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer', font: 'inherit' }}>Sign out</button>

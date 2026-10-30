@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
  *  empty state: a gridded panel, one sentence, one primary CTA. */
 export function Empty({ text, cta, onCta, children }: { text: ReactNode; cta?: string; onCta?: () => void; children?: ReactNode }) {
   return (
-    <div style={{ position: 'relative', borderRadius: 16, border: '1px dashed var(--border)', padding: '28px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, textAlign: 'center', backgroundImage: 'linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px)', backgroundSize: '22px 22px', backgroundPosition: 'center' }}>
+    <div style={{ position: 'relative', borderRadius: 'var(--g-r-lg)', border: '1px dashed var(--border)', padding: '28px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, textAlign: 'center', backgroundImage: 'linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px)', backgroundSize: '22px 22px', backgroundPosition: 'center' }}>
       <span style={{ maxWidth: 360, color: 'var(--text-secondary)', fontSize: 15, lineHeight: 1.5, background: 'var(--bg)', padding: '2px 6px', borderRadius: 6 }}>{text}</span>
       {cta && onCta && <button onClick={onCta} className="mm-btn mm-btn--primary" style={{ height: 44 }}>{cta}</button>}
       {children}

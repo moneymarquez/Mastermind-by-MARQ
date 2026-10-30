@@ -120,7 +120,7 @@ function WorkerDetail({ w, onApprovals }: { w: BoardWorker; onApprovals: () => v
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 14.5 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-        <span style={{ fontSize: 34, fontWeight: 800, color: b ? BAND_COLOR[b] : 'var(--text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>{w.trust ?? '—'}</span>
+        <span style={{ fontSize: 34, fontWeight: 700, color: b ? BAND_COLOR[b] : 'var(--text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>{w.trust ?? '—'}</span>
         <span style={{ color: 'var(--text-tertiary)' }}>Trust Score, last output{w.trust7 != null ? ` · ${w.trust7} avg this week` : ''}</span>
       </div>
       <div><span style={{ color: stateColor(w.state), fontWeight: 600 }}>{STATE_TEXT[w.state]}</span></div>

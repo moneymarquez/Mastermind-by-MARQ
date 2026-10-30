@@ -33,7 +33,7 @@ export default function ProgressSpine({ stations, onOverride }: Props) {
         return (
           <div key={s.key} style={{ display: 'flex', gap: 14, minHeight: 56 }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 22, flexShrink: 0 }}>
-              <div style={{ width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0, boxSizing: 'border-box', ...dot }}>
+              <div style={{ width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0, boxSizing: 'border-box', ...dot }}>
                 {s.state === 'done' ? '✓' : ''}
               </div>
               {!last && <div style={{ width: 2, flex: 1, minHeight: 18, background: s.state === 'done' ? 'var(--success)' : 'var(--border)', margin: '4px 0' }} />}

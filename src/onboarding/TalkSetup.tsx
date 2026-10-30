@@ -27,7 +27,7 @@ export default function TalkSetup({ onDone, onManual }: { onDone: (d: ImportData
     setImportId((imp as { id: string } | null)?.id ?? null);
     setData(r.data);
   };
-  const box = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column' as const, gap: 12 };
+  const box = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', flexDirection: 'column' as const, gap: 12 };
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', padding: 'calc(56px + env(safe-area-inset-top)) 16px 40px', display: 'flex', justifyContent: 'center' }}>
       <div style={{ width: '100%', maxWidth: 640, display: 'flex', flexDirection: 'column', gap: 16 }}>

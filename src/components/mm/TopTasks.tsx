@@ -43,7 +43,7 @@ export function TopTaskRow({ t, onDone, onNav, expanded }: { t: TopTask; onDone:
   const btn = { height: 32, fontSize: 13 } as const;
   return (
     <div style={{ display: 'flex', gap: 10, padding: '10px 0', borderTop: '1px solid var(--border)', alignItems: 'flex-start' }}>
-      <span style={{ width: 26, height: 26, borderRadius: 13, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13, background: t.rank === 1 ? '#ff5a36' : 'color-mix(in srgb, var(--warning) 30%, transparent)', color: t.rank === 1 ? '#fff' : 'var(--text)' }}>{t.rank}</span>
+      <span style={{ width: 26, height: 26, borderRadius: 13, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, background: t.rank === 1 ? '#ff5a36' : 'color-mix(in srgb, var(--warning) 30%, transparent)', color: t.rank === 1 ? '#fff' : 'var(--text)' }}>{t.rank}</span>
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 5 }}>
         <span style={{ fontSize: 14.5, fontWeight: 600, lineHeight: 1.3 }}>{t.title}</span>
         <span style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', fontSize: 12.5, color: 'var(--text-tertiary)' }}><Chip>{t.area}</Chip>{t.reason}</span>

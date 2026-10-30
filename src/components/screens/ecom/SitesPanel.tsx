@@ -48,7 +48,7 @@ function SiteCard({ site, brand, orders, days, onChange }: { site: SiteRow; bran
   };
   const btn = { height: 32, fontSize: 13 } as const;
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 14, borderRadius: 14, border: `1px solid ${funnel.flag === 'kill' ? 'color-mix(in srgb, var(--danger) 45%, var(--border))' : 'var(--border)'}`, background: 'var(--surface)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 14, borderRadius: 'var(--g-r-lg)', border: `1px solid ${funnel.flag === 'kill' ? 'color-mix(in srgb, var(--danger) 45%, var(--border))' : 'var(--border)'}`, background: 'var(--surface)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ fontSize: 16, fontWeight: 600, flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{brand?.name ?? site.slug}</span>
         <Badge color={site.status === 'live' ? E.green : site.status === 'failed' ? E.red : E.amber}>{site.status}</Badge>

@@ -75,9 +75,9 @@ export default function CommsScreen() {
     <Page title="Comms" sub="Every text and email with anyone, sent from here and kept forever." fab={tab === 'templates' ? { t: 'Template', onClick: () => setEditTpl({ channel: 'email' }) } : tab === 'sequences' ? { t: 'Sequence', onClick: () => setEditSeq({ steps: [{ delay_days: 0, channel: 'email', subject: '', body: '' }], active: true }) } : undefined}>
       <Tabs tabs={[{ id: 'threads', label: 'Threads' }, { id: 'templates', label: 'Templates' }, { id: 'sequences', label: 'Sequences' }]} value={tab} onChange={setTab} />
       {tab === 'threads' && (phone ? (
-        <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>{cur ? <div style={{ padding: 14 }}><button className="mm-btn" style={{ height: 32, marginBottom: 10 }} onClick={() => setSel(null)}>‹ Everyone</button><CommsThread key={cur.key} who={cur.who} /></div> : listPane}</section>
+        <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>{cur ? <div style={{ padding: 14 }}><button className="mm-btn" style={{ height: 32, marginBottom: 10 }} onClick={() => setSel(null)}>‹ Everyone</button><CommsThread key={cur.key} who={cur.who} /></div> : listPane}</section>
       ) : (
-        <section style={{ display: 'grid', gridTemplateColumns: '320px minmax(0,1fr)', height: 'calc(100vh - 260px)', minHeight: 560, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+        <section style={{ display: 'grid', gridTemplateColumns: '320px minmax(0,1fr)', height: 'calc(100vh - 260px)', minHeight: 560, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>
           {listPane}
           <div className="mm-scroll-y" style={{ padding: 18, minWidth: 0 }}>{cur ? <><div style={{ fontWeight: 700, fontSize: 18, marginBottom: 8 }}>{cur.who.name}</div><CommsThread key={cur.key} who={cur.who} /></> : <div style={{ color: 'var(--text-tertiary)' }}>Pick someone on the left.</div>}</div>
         </section>

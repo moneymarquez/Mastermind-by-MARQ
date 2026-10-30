@@ -30,7 +30,7 @@ export default function ScorePills({ type, id, compact }: { type: string; id: st
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-        <span title="Trust Score: the lowest of the three" style={{ fontSize: compact ? 15 : 20, fontWeight: 800, letterSpacing: '-0.02em', color: ob ? COLOR[ob] : 'var(--text-tertiary)', fontVariantNumeric: 'tabular-nums', marginRight: 2 }}>
+        <span title="Trust Score: the lowest of the three" style={{ fontSize: compact ? 15 : 20, fontWeight: 700, letterSpacing: '-0.02em', color: ob ? COLOR[ob] : 'var(--text-tertiary)', fontVariantNumeric: 'tabular-nums', marginRight: 2 }}>
           {s.overall ?? '—'}<span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)' }}>/100</span>
         </span>
         {pill('logic')}{pill('trust')}{pill('on_target')}

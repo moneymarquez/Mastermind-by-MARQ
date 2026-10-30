@@ -125,11 +125,11 @@ function InboxView({ device, focus, onFocusConsumed, onOpenClient, ui }: Props &
 
   if (phone) {
     if (open) return <MsgDetail m={open} phone onBack={() => setOpenId(null)} ui={ui} onOpenClient={onOpenClient} />;
-    return <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{chips}<div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>{rows}</div></div>;
+    return <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{chips}<div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>{rows}</div></div>;
   }
   const listW = device === 'desktop' ? 400 : 340;
   return (
-    <div style={{ display: 'flex', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', height: device === 'desktop' ? 720 : 640, maxHeight: 'calc(100vh - 200px)', minHeight: 440 }}>
+    <div style={{ display: 'flex', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', height: device === 'desktop' ? 720 : 640, maxHeight: 'calc(100vh - 200px)', minHeight: 440 }}>
       <div style={{ width: listW, flex: 'none', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <div style={{ padding: 12, borderBottom: '1px solid var(--grid)' }}>{chips}</div>
         <div className="mm-scroll-y" style={{ flex: 1, minHeight: 0 }}>{rows}</div>
@@ -203,7 +203,7 @@ function MsgDetail({ m, phone, onBack, ui, onOpenClient }: { m: UMsg; phone?: bo
       {sentAt || m.replied ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 14, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface-2)' }}><Chip k="good">Sent</Chip><span style={{ fontSize: 13.5, color: 'var(--text-secondary)' }}>{sentAt ? 'Sent just now.' : 'You replied to this.'}</span></div>
       ) : m.draft ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 14, borderRadius: 16, border: '1px solid var(--border)', background: 'var(--surface-2)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 14, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', background: 'var(--surface-2)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><GNova size={13} fill color="var(--accent)" /><span style={{ flex: 1, color: 'var(--text)', fontSize: 14, fontWeight: 600 }}>Nova drafted a reply</span>{m.toAddr && <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>From {m.toAddr}</span>}</div>
           {editing
             ? <textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={8} style={{ width: '100%', boxSizing: 'border-box', padding: 12, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 15, lineHeight: 1.5, fontFamily: 'inherit', resize: 'vertical' }} />
@@ -308,7 +308,7 @@ function LeadsView({ device, feed, onOpenLeadFlow, onNavigate, onOpenClient }: P
       {stats}
       {filterBar}
       {phone ? (
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '4px 14px' }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: '4px 14px' }}>
           {shown.map((l, i) => <LeadCard key={l.id} l={l} now={now} first={i === 0} {...actions} />)}
           {shown.length === 0 && <div style={{ padding: 20, color: 'var(--text-tertiary)', fontSize: 14, textAlign: 'center' }}>Nothing here.</div>}
         </div>
@@ -362,7 +362,7 @@ function LeadsTable({ leads, now, ...acts }: LeadActs & { leads: FeedLead[]; now
   const th: CSSProperties = { textAlign: 'left', fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', padding: '10px 14px', background: 'var(--surface-2)', borderBottom: '1px solid var(--border)' };
   const td: CSSProperties = { padding: '12px 14px', borderBottom: '1px solid var(--grid)', verticalAlign: 'middle' };
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead><tr><th style={th}>Lead</th><th style={th}>Source</th><th style={th}>Temperature</th><th style={{ ...th, textAlign: 'right' }}>Quick actions</th></tr></thead>
         <tbody>

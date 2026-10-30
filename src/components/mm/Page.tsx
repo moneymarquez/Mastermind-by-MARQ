@@ -193,8 +193,8 @@ export function Sheet({ title, onClose, children, full, width = 440 }: { title: 
   const box: CSSProperties = phone
     ? { left: 0, right: 0, bottom: 0, top: full ? 'calc(24px + env(safe-area-inset-top))' : undefined, maxHeight: full ? undefined : '86vh', borderRadius: '16px 16px 0 0', paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' }
     : full
-      ? { left: '50%', top: 40, bottom: 40, transform: 'translateX(-50%)', width: 'min(1100px, calc(100vw - 80px))', borderRadius: 16 }
-      : { left: '50%', top: '14vh', transform: 'translateX(-50%)', width, maxHeight: '76vh', borderRadius: 16 };
+      ? { left: '50%', top: 40, bottom: 40, transform: 'translateX(-50%)', width: 'min(1100px, calc(100vw - 80px))', borderRadius: 'var(--g-r-lg)' }
+      : { left: '50%', top: '14vh', transform: 'translateX(-50%)', width, maxHeight: '76vh', borderRadius: 'var(--g-r-lg)' };
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'var(--mm-scrim, rgba(0,0,0,.5))' }} />
@@ -231,7 +231,7 @@ export function NotConnected() {
 export function AiOffCard({ text }: { text: string }) {
   const { nav, isOwner } = useModule();
   return (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}><span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>Nova</span><NotConnected /></div>
       <p style={{ margin: 0, fontSize: 15, lineHeight: 1.45, color: 'var(--text-secondary)' }}>{text}</p>
       {isOwner && <button className="mm-btn" style={{ alignSelf: 'flex-start' }} onClick={() => nav('setup')}>Connect AI</button>}
@@ -246,7 +246,7 @@ export function NovaCard({ title = 'Nova', paras, aiOff, actions }: { title?: st
   if (ai === false) return <AiOffCard text={aiOff} />;
   if (!paras.length) return null;
   return (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
       <NovaMark title={title} />
       {paras.map((p, i) => <p key={i} style={{ margin: 0, fontSize: 15, lineHeight: 1.45, color: 'var(--text-secondary)' }}>{p}</p>)}
       {actions}
