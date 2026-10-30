@@ -51,6 +51,14 @@ export function badge(bg: string, fg: string, border: string): CSSProperties {
 export function Badge({ color, children, title }: { color: string; children: ReactNode; title?: string }) {
   return <span title={title} style={badge(tint(color, 14), color, tint(color, 40))}>{children}</span>;
 }
+/** The card's one verdict: a solid-tinted tag with a status dot, a step louder than a Badge. */
+export function VerdictBadge({ color, children, title }: { color: string; children: ReactNode; title?: string }) {
+  return (
+    <span title={title} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 22, padding: '0 8px 0 7px', borderRadius: 'var(--g-r-sm)', background: tint(color, 16), boxShadow: `inset 0 0 0 1px ${tint(color, 38)}`, color, fontSize: 12, fontWeight: 600, letterSpacing: '-0.003em', whiteSpace: 'nowrap' }}>
+      <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor', flex: 'none' }} />{children}
+    </span>
+  );
+}
 /** §2.4 — you should never mistake a guess for a fact. */
 export function ConfidenceBadge({ c }: { c: Confidence }) {
   return <Badge color={CONFIDENCE_COLOR[c]} title={c === 'hard' ? 'From an API or store' : c === 'estimate' ? 'A paid tool\'s model' : 'A worker\'s judgment'}>{CONFIDENCE_LABEL[c]}</Badge>;
