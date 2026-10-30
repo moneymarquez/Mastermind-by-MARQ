@@ -34,6 +34,8 @@ import { outreachRoute, bookRoute, runOutreachTick } from './handlers/outreach';
 import { callKitRoute } from './handlers/callKit';
 import type { CallKitEnv } from './handlers/callKit';
 import { runCallKitTick } from './lib/callKit';
+import { systemHealthRoute } from './handlers/systemHealth';
+import type { HealthEnv } from './handlers/systemHealth';
 import { isDryRun } from './lib/dryRun';
 import type { OutreachRouteEnv } from './handlers/outreach';
 import { saveBrokerKeys, brokerKeysStatus } from './handlers/broker-keys';
@@ -176,6 +178,8 @@ export default {
 
     if (url.pathname === '/api/leadflow/leads') return leadflowLeads(request, env);
     if (url.pathname === '/api/leadflow/call-kit') return callKitRoute(request, env as unknown as CallKitEnv);
+    // System Health: DRY_RUN, which keys are set (presence only), last night's run, failures, approvals, timers.
+    if (url.pathname === '/api/system/health') return systemHealthRoute(request, env as unknown as HealthEnv, Object.keys(tickJobs(env)));
     // Before the /leads/:id match below, which would otherwise take "bulk"
     // for a lead id and PATCH a row that doesn't exist.
     if (url.pathname === '/api/leadflow/find') return leadflowFind(request, env);

@@ -29,6 +29,7 @@ import { supplierSystem, supplierUser, parseSuppliers, brandSystem, brandUser, p
 import type { BrandCtx, SupplierPayload, BrandOption } from './ecomWorkers';
 import { ruleSource, trackerSystem, trackerUser, mergeTrackerTags } from './inbound';
 import type { InboundLite, SourceTag, Source } from './inbound';
+import { runClass, applyClassProposal } from './classroom';
 import type { AccountLite, MeasuredPost, InspirationDraft, PostDraft, AuditPayload, GradeOut, SlotOut, PlanItemLite, EditPlan } from './contentWorkers';
 
 export const ENGINE_DOMAINS = ['ecom', 'content', 'marketing', 'digest'] as const;
@@ -669,6 +670,11 @@ export function runBrandAnalytics(apiKey: string | undefined, sb: Sb, userId: st
  *  plan — keyed by worker. */
 export interface AnyRunInput { channel?: Channel; count?: number; productId?: string; venture?: Venture; scriptChannel?: ScriptChannel; all?: boolean; accountId?: string; clipId?: string; brandId?: string; instructions?: string | null; trigger?: Trigger }
 export const RUNNERS: Record<string, (apiKey: string | undefined, sb: Sb, userId: string, i: AnyRunInput) => Promise<RunOutcome>> = {
+  // Bots go to class (worker/lib/classroom.ts): one nightly class per bot.
+  class_scaler: (k, sb, u, i) => runClass(k, sb, u, 'scaler', { instructions: i.instructions, trigger: i.trigger }),
+  class_ecom: (k, sb, u, i) => runClass(k, sb, u, 'ecom', { instructions: i.instructions, trigger: i.trigger }),
+  class_content: (k, sb, u, i) => runClass(k, sb, u, 'content', { instructions: i.instructions, trigger: i.trigger }),
+  class_leadflow: (k, sb, u, i) => runClass(k, sb, u, 'leadflow', { instructions: i.instructions, trigger: i.trigger }),
   scout: (k, sb, u, i) => runScout(k, sb, u, { channel: i.channel ?? 'tiktok', count: i.count, instructions: i.instructions, trigger: i.trigger }),
   analyst: (k, sb, u, i) => (i.productId ? runAnalyst(k, sb, u, { productId: i.productId, instructions: i.instructions, trigger: i.trigger }) : Promise.resolve({ ok: false, error: 'Pick a product for the Analyst.' })),
   teardown: (k, sb, u, i) => (i.productId ? runTeardown(k, sb, u, { productId: i.productId, instructions: i.instructions, trigger: i.trigger }) : Promise.resolve({ ok: false, error: 'Pick a product for the Teardown.' })),
@@ -721,6 +727,8 @@ export const APPLIERS: Record<string, Applier> = {
   /** "Approve to ship": the supplier order over the threshold may be placed. */
   supplier_order: async (sb, u, raw) => { await sb.patch('ecom_orders', `user_id=eq.${u}&brand_id=eq.${raw.brand_id}&external_id=eq.${raw.order_external_id}`, { supplier_status: 'to_place', problem: null, updated_at: now() }); return { ok: true }; },
   content_kit: async (sb, u, raw) => applyContentKit(sb, u, raw),
+  /** A class proposal (worker/lib/classroom.ts): approved → a rule in that bot's "Class: …" playbook. Nothing changes before Marq approves. */
+  class_proposal: async (sb, u, raw) => applyClassProposal(sb, u, raw),
   playbook_rule: async (sb, u, raw) => addPlaybookRule(sb, u, String(raw.playbook), String(raw.domain ?? 'all'), String(raw.rule), 'Approved: the same correction twice'),
 
   /** "Approve to test" on a Scout find: it joins the sheet, then runs the same pipeline as an approved pitch. Blocked or number-less finds can't be approved. */

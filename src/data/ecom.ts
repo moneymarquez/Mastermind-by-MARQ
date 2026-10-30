@@ -258,6 +258,11 @@ export const WORKERS: WorkerDef[] = [
   { key: 'post_planner', name: 'Post Planner', role: 'Best time per account from your data, caption, hashtags, cross-post plan.', model: P, domain: 'content', tools: [], phase: 5 },
   { key: 'publisher', name: 'Publisher', role: 'Posts approved posts to Instagram and TikTok at their time; writes the post link back.', model: 'no AI (API only)', domain: 'content', tools: ['Instagram', 'TikTok'], phase: 6 },
   { key: 'content_analytics', name: 'Analytics', role: 'Daily metric pull, grades out of 4, flags breakouts and flops.', model: P, domain: 'content', tools: ['Instagram', 'TikTok'], phase: 5 },
+  // Bots go to class (src/data/classroom.ts): nightly research into what's new, dated lessons with sources, proposals Marq approves.
+  { key: 'class_scaler', name: 'Business Scaler class', role: "Nightly: what's new in local-business growth; lessons with sources; proposes lever-library changes from scorecard movement.", model: P, domain: 'marketing', tools: ['web search'], phase: 8 },
+  { key: 'class_ecom', name: 'E-commerce class', role: "Nightly: what's new in e-commerce and ads; lessons with sources; proposes margin-threshold and product-rule changes from kill/scale results.", model: P, domain: 'ecom', tools: ['web search'], phase: 8 },
+  { key: 'class_content', name: 'Content class', role: "Nightly: algorithm and format changes; lessons with sources; proposes hook changes from post grades.", model: P, domain: 'content', tools: ['web search'], phase: 8 },
+  { key: 'class_leadflow', name: 'LeadFlow class', role: "Nightly: what's new in cold calling and Google local; lessons with sources; proposes call-kit PROFILES tuning from call outcomes.", model: P, domain: 'marketing', tools: ['web search'], phase: 8 },
 ];
 /** Workers a screen shows: its own domain plus the shared orchestrator. */
 export function workersFor(domain: Domain): WorkerDef[] {
@@ -266,7 +271,7 @@ export function workersFor(domain: Domain): WorkerDef[] {
 
 /** Workers whose runtime exists in this build. Everyone else shows the
  *  phase they arrive in (and a lights-off room in View Office). */
-export const LIVE_WORKERS = ['scout', 'analyst', 'teardown', 'lead_filter', 'script_copy', 'campaign_planner', 'campaign_scorer', 'trend_researcher', 'idea_script', 'account_auditor', 'content_analytics', 'post_planner', 'clip_editor', 'inbound_tracker', 'supplier', 'brandlab', 'builder', 'content', 'analytics', 'publisher', 'launcher', 'hq', 'content_orchestrator', 'marketing_orchestrator'];
+export const LIVE_WORKERS = ['scout', 'analyst', 'teardown', 'lead_filter', 'script_copy', 'campaign_planner', 'campaign_scorer', 'trend_researcher', 'idea_script', 'account_auditor', 'content_analytics', 'post_planner', 'clip_editor', 'inbound_tracker', 'supplier', 'brandlab', 'builder', 'content', 'analytics', 'publisher', 'launcher', 'hq', 'content_orchestrator', 'marketing_orchestrator', 'class_scaler', 'class_ecom', 'class_content', 'class_leadflow'];
 
 /** Longest a single playbook may be. Enforced in the editor, on save, and
  *  when the orchestrator applies an edit. */
