@@ -98,7 +98,7 @@ export function PhoneTabBar({ screen, novaOpen, badges, portal, portals, canOpen
   const off = novaOpen;
   const all: PhoneTab[] = [
     { key: 'today', label: 'Today', icon: <GSun size={22} />, active: !off && screen === 'today', tap: () => onNav('today') },
-    { key: 'madeby', label: 'Made by', icon: <GBriefcase size={22} />, active: !off && portal === 'madeby' && screen !== 'today' && screen !== 'leadflow', tap: () => onPortal('madeby'), badge: badges.leads, needs: 'madeby' },
+    { key: 'madeby', label: 'Made by Mark', icon: <GBriefcase size={22} />, active: !off && portal === 'madeby' && screen !== 'today' && screen !== 'leadflow', tap: () => onPortal('madeby'), badge: badges.leads, needs: 'madeby' },
     canOpen('leadflow')
       ? { key: 'leadflow', label: 'LeadFlow', icon: <GPhone size={22} />, active: !off && screen === 'leadflow', tap: () => onNav('leadflow') }
       : { key: 'dial', label: 'Dial', icon: <GPhone size={22} />, active: !off && (screen === 'dialing' || screen === 'contacts'), tap: () => onNav('dialing') },

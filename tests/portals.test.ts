@@ -77,5 +77,5 @@ test('portals: access is derived from canAccess only', async () => {
   assert.deepEqual([...ids('Growth')].sort(), ['marketing', 'waitlist']);
 
   // Breadcrumb starts with the portal outside Masterminds.
-  assert.deepEqual(crumbFor('leadflow', shellGroups(all, true, {}, { portal: 'madeby' }), 'madeby'), { group: 'Made by', label: 'LeadFlow' });
+  assert.deepEqual(crumbFor('leadflow', shellGroups(all, true, {}, { portal: 'madeby' }), 'madeby'), { group: 'Made by Mark', label: 'LeadFlow' });
 });
