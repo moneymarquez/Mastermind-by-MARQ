@@ -34,19 +34,34 @@ test('portals: access is derived from canAccess only', async () => {
   assert.equal(portalOfRoute('account-settings'), null);
   assert.equal(portalOfRoute('client-crm'), 'madeby');
 
-  // Owner nav per portal holds only that portal's modules.
+  // Owner nav per portal holds only that portal's modules (plus Made by's
+  // journey shortcuts: Contracts, Marketing, Growth plans — alsoIn).
   const madeby = shellGroups(all, true, {}, { portal: 'madeby' }).flatMap((g) => g.items.map((i) => i.id));
-  assert.ok(madeby.includes('client-crm') && !madeby.includes('budgeting') && !madeby.includes('content'));
+  assert.ok(madeby.includes('client-crm') && !madeby.includes('budgeting') && !madeby.includes('swipe-file'));
   const mm = shellGroups(all, true, {}, { portal: 'masterminds' }).flatMap((g) => g.items.map((i) => i.id));
   assert.ok(mm.includes('budgeting') && !mm.includes('client-crm') && !mm.includes('ecommerce'));
 
-  // Made by: Clients (winning and keeping clients), then Scaling (delivery, from Start).
+  // Made by: Clients, the five numbered steps, then LeadFlow + Invoicing pinned.
   const mbGroups = shellGroups(all, true, {}, { portal: 'madeby' });
-  const clients = mbGroups.find((g) => g.title === 'Clients')!.items.map((i) => i.id);
-  assert.deepEqual([...clients].sort(), ['client-crm', 'client-modules', 'comms', 'lead-engines', 'leadflow']);
-  const scaling = mbGroups.find((g) => g.title === 'Scaling')!.items.map((i) => i.id);
-  for (const k of ['scaling-start', 'brand-lab', 'delivery', 'invoicing']) assert.ok(scaling.includes(k), k);
-  assert.ok(!madeby.includes('hq') && !madeby.includes('ledger') && !madeby.includes('marketing'));
+  assert.deepEqual(mbGroups.map((g) => g.title), ['Clients', '1 · Win', '2 · Sign & Onboard', '3 · Strategy & Build', '4 · Launch', '5 · Grow & Report', 'Pinned']);
+  const mb = (t: string) => mbGroups.find((g) => g.title === t)!.items.map((i) => i.id);
+  assert.deepEqual(mb('Clients'), ['madeby-board', 'client-crm']);
+  assert.deepEqual(mb('1 · Win'), ['audits', 'support-inbox']);
+  assert.deepEqual(mb('2 · Sign & Onboard'), ['contracts']);
+  assert.deepEqual(mb('3 · Strategy & Build'), ['idea-maker', 'brand-lab', 'scaling-planner']);
+  assert.deepEqual(mb('4 · Launch'), ['delivery']);
+  assert.deepEqual(mb('5 · Grow & Report'), ['marketing', 'content']);
+  assert.deepEqual(mb('Pinned'), ['leadflow', 'invoicing']);
+  assert.ok(mbGroups.find((g) => g.title === 'Pinned')!.pinned);
+  // Folded in or behind a button: no rows of their own any more.
+  for (const k of ['lead-engines', 'client-modules', 'scaling-start', 'website', 'comms']) assert.ok(!madeby.includes(k), k);
+  assert.ok(!madeby.includes('hq') && !madeby.includes('ledger'));
+  // Shortcuts keep their home portal (deep links), but open in place inside Made by.
+  const { routeAlsoIn, portalLanding } = await import('../src/portals.config');
+  assert.equal(portalOfRoute('contracts'), 'orchestrator');
+  assert.ok(routeAlsoIn('contracts', 'madeby') && routeAlsoIn('marketing', 'madeby') && !routeAlsoIn('ledger', 'madeby'));
+  assert.equal(portalLanding('madeby'), 'madeby-board');
+  assert.equal(portalOfRoute('madeby-board'), 'madeby');
   // Orchestrator: one group holding Marq's own-business tools.
   const orch = shellGroups(all, true, {}, { portal: 'orchestrator' });
   const ids = (t: string) => orch.find((g) => g.title === t)!.items.map((i) => i.id);

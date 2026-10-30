@@ -152,3 +152,15 @@ function Detail({ r, onBack, onChanged }: { r: ClientOverviewRow; onBack?: () =>
     </div>
   );
 }
+
+/** One client's portal from your side (progress spine, login, tickets,
+ *  change log, guides, handoff, preview) — the Portal tab on the client
+ *  record (Made by journey, Oct 2026). Same Detail the Client Modules
+ *  screen showed; the old `client-modules` route opens this tab. */
+export function ClientPortalPanel({ clientId, onChanged }: { clientId: string; onChanged?: () => void }) {
+  const O = useClientModulesOverview();
+  const r = O.rows.find((x) => x.client.id === clientId);
+  if (O.loading && !r) return <Empty text="Loading the portal…" />;
+  if (!r) return <Empty text="No portal for this client yet." />;
+  return <Detail r={r} onChanged={() => { O.reload(); onChanged?.(); }} />;
+}

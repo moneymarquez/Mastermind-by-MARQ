@@ -163,8 +163,22 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
     return { Personal: true };
   });
   // The group holding the current module always opens.
-  useEffect(() => { if (currentGroup && !open[currentGroup]) setOpen((o) => ({ ...o, [currentGroup]: true })); }, [currentGroup]); // eslint-disable-line react-hooks/exhaustive-deps
-  const toggle = (t: string) => setOpen((o) => { const n = { ...o, [t]: !o[t] }; try { localStorage.setItem('mm-sidebar-open', JSON.stringify(n)); } catch { /* private mode */ } return n; });
+  useEffect(() => { const g = groups.find((x) => x.title === currentGroup); if (g && !(open[g.title] ?? !!g.defaultOpen)) setOpen((o) => ({ ...o, [g.title]: true })); }, [currentGroup]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Pinned groups (Made by: LeadFlow, Invoicing) sit at the bottom, always open.
+  const listed = groups.filter((g) => !g.pinned);
+  const pinned = groups.filter((g) => g.pinned).flatMap((g) => g.items);
+  const moduleRow = (m: ShellGroup['items'][number]) => {
+    const active = screen === m.id;
+    return (
+      <button key={m.id} className="mm-nav-row" data-active={active || undefined} aria-current={active ? 'page' : undefined} style={{ height: rowH }} onClick={() => onNav(m.id)}>
+        <span style={{ width: 20, height: 20, flex: 'none', borderRadius: 6, background: active ? 'var(--accent)' : 'var(--surface-3)', color: active ? 'var(--bg)' : 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8.5, fontWeight: 700, letterSpacing: '-0.02em' }}>{m.glyph}</span>
+        <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.label}</span>
+        {!!badges.screens?.[m.id] && <Badge n={badges.screens[m.id]} urgent={false} />}
+      </button>
+    );
+  };
+  const isOpen = (g: ShellGroup) => open[g.title] ?? !!g.defaultOpen;
+  const toggle = (g: ShellGroup) => setOpen((o) => { const n = { ...o, [g.title]: !(o[g.title] ?? !!g.defaultOpen) }; try { localStorage.setItem('mm-sidebar-open', JSON.stringify(n)); } catch { /* private mode */ } return n; });
   const top = [
     { id: 'today', l: 'Today', icon: <GSun size={17} />, active: screen === 'today' },
     ...(isOwner ? [{ id: 'hq', l: 'HQ', icon: <GSliders size={17} />, active: screen === 'hq' }] : []),
@@ -205,28 +219,20 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
           ))}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {groups.map((g) => (
+          {listed.map((g) => (
             <div key={g.title} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <button className="mm-group-head" onClick={() => toggle(g.title)} aria-expanded={!!open[g.title]}>
-                <GChevron size={12} style={{ transform: open[g.title] ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }} />
+              <button className="mm-group-head" onClick={() => toggle(g)} aria-expanded={isOpen(g)}>
+                <GChevron size={12} style={{ transform: isOpen(g) ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }} />
                 <span style={{ flex: 1, textAlign: 'left' }}>{g.title}</span>
                 <span style={{ fontSize: 11.5 }}>{g.items.length}{g.owner ? ' · owner' : ''}</span>
               </button>
-              {open[g.title] && g.items.map((m) => {
-                const active = screen === m.id;
-                return (
-                  <button key={m.id} className="mm-nav-row" data-active={active || undefined} aria-current={active ? 'page' : undefined} style={{ height: rowH }} onClick={() => onNav(m.id)}>
-                    <span style={{ width: 20, height: 20, flex: 'none', borderRadius: 6, background: active ? 'var(--accent)' : 'var(--surface-3)', color: active ? 'var(--bg)' : 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8.5, fontWeight: 700, letterSpacing: '-0.02em' }}>{m.glyph}</span>
-                    <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.label}</span>
-                    {!!badges.screens?.[m.id] && <Badge n={badges.screens[m.id]} urgent={false} />}
-                  </button>
-                );
-              })}
+              {isOpen(g) && g.items.map(moduleRow)}
             </div>
           ))}
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingTop: 10, borderTop: '1px solid var(--grid)' }}>
+        {pinned.length > 0 && <div aria-label="Pinned" style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingBottom: 6, marginBottom: 4, borderBottom: '1px solid var(--grid)' }}>{pinned.map(moduleRow)}</div>}
         {drawer && <button className="mm-nav-row" style={{ height: rowH }} onClick={drawer.onToggleTheme}>{drawer.dark ? <GSun size={17} /> : <GMoon size={17} />}{drawer.dark ? 'Light mode' : 'Dark mode'}</button>}
         <button className="mm-nav-row" data-active={screen === 'account-settings' || undefined} style={{ height: rowH }} onClick={() => onNav('account-settings')}><GSliders size={17} />Settings</button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, height: 44, padding: '0 10px' }}>

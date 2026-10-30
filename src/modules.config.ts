@@ -35,6 +35,15 @@ export interface ModuleDef {
   /** Needs an entitlement on top of being enabled: 'teams' modules are for
    *  accounts Marq flags as Teams in Grant Access (user_entitlements). */
   entitlement?: 'teams';
+  /** Still a real module (access, grants, deep links) but no row of its own
+   *  in the nav: its screen moved inside another one (Made by journey, Oct
+   *  2026: Lead Engines → LeadFlow, Client Modules → the client record) or
+   *  is opened from a button (Start → "New client" on the Clients board). */
+  navHidden?: boolean;
+  /** Also listed in these portals' navs (a shortcut; the module's home portal
+   *  is still `portal`). Made by's journey steps list Contracts, Marketing and
+   *  Growth plans without moving them out of Orchestrator / Content. */
+  alsoIn?: PortalKey[];
 }
 
 // Every selectable section in the app, used by both the onboarding module
@@ -65,8 +74,8 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { key: 'dialing', label: 'Dialing/Contacts', category: 'Cold Calling', description: 'Cold-calling queue, outcome tracking, and your Dialing/Scaling contacts.', icon: 'ph-phone-call', routes: ['dialing', 'contacts'], requiresAI: false, portal: 'masterminds' },
   { key: 'call-recordings', label: 'Call Recordings', category: 'Cold Calling', description: 'Upload and organize call recordings, linked to contacts.', icon: 'ph-microphone', routes: ['call-recordings'], requiresAI: false, portal: 'masterminds', entitlement: 'teams' },
   { key: 'leadflow', label: 'LeadFlow', category: 'Cold Calling', description: 'Your LeadFlow CRM — Dashboard, War Room, Lead Pool, Lead Finder, and more.', icon: 'ph-users-three', routes: ['leadflow'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
-  { key: 'lead-engines', label: 'Lead Engines', category: 'Cold Calling', description: 'Client Finder and Complaint Scanner with on/off and daily budgets, cold-email outreach, call list, booking page and the old scraper import.', icon: 'ph-magnifying-glass', routes: ['lead-engines'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
-  { key: 'client-modules', label: 'Client Modules', category: 'Clients', description: "Every client's portal from your side — progress spine, tickets, change log, guides, handoff, and a preview of exactly what they see.", icon: 'ph-users-three', routes: ['client-modules'], requiresAI: false, ownerOnly: true, portal: 'madeby' },
+  { key: 'lead-engines', label: 'Lead Engines', category: 'Cold Calling', description: 'Client Finder and Complaint Scanner with on/off and daily budgets, cold-email outreach, call list, booking page and the old scraper import.', icon: 'ph-magnifying-glass', routes: ['lead-engines'], requiresAI: true, ownerOnly: true, portal: 'madeby', navHidden: true },
+  { key: 'client-modules', label: 'Client Modules', category: 'Clients', description: "Every client's portal from your side — progress spine, tickets, change log, guides, handoff, and a preview of exactly what they see.", icon: 'ph-users-three', routes: ['client-modules'], requiresAI: false, ownerOnly: true, portal: 'madeby', navHidden: true },
   { key: 'orch-overview', label: 'Overview', category: 'Scaling', description: 'Every business at a glance: Made by, E-commerce, Content (and Government Contracts next), money in vs AI spend, problems and what is waiting on you.', icon: 'ph-squares-four', routes: ['orchestrator'], requiresAI: false, ownerOnly: true, portal: 'orchestrator' },
   { key: 'govcon', label: 'GovCon', category: 'Scaling', description: 'Government contracts, learned daily: three fresh public contracts at a tap, plain-English breakdowns of who they hit and how, a quiz, a prediction journal checked at 30 and 90 days, a glossary of flagged words, watch lists, and winners sent to LeadFlow.', icon: 'ph-scales', routes: ['govcon'], requiresAI: true, ownerOnly: true, portal: 'orchestrator' },
   { key: 'classroom', label: 'Classroom', category: 'Scaling', description: 'Every client as an avatar in their delivery phase room, plus APHS and own brands. Drag to move; see what is waiting on you.', icon: 'ph-chalkboard', routes: ['classroom'], requiresAI: false, ownerOnly: true, portal: 'orchestrator' },
@@ -74,22 +83,22 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   // The entire Scaling category is owner-only, not just Marketing —
   // ownerOnly: true on every entry below is deliberate, per the explicit
   // "entire Scaling section is owner-only" requirement, not an oversight.
-  { key: 'scaling-start', label: 'Start', category: 'Scaling', description: 'Guided entry point for a new client project — chains Idea Maker, Brand Lab, Website Builder, and Scaling Planner together.', icon: 'ph-lightning', routes: ['scaling-start'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
+  { key: 'scaling-start', label: 'Start', category: 'Scaling', description: 'Guided entry point for a new client project — chains Idea Maker, Brand Lab, Website Builder, and Scaling Planner together.', icon: 'ph-lightning', routes: ['scaling-start'], requiresAI: true, ownerOnly: true, portal: 'madeby', navHidden: true },
   { key: 'delivery', label: 'Show Your Work', category: 'Scaling', description: 'The client delivery pipeline — assemble a package, send it to the client, and keep a running portfolio.', icon: 'ph-video-camera', routes: ['delivery'], requiresAI: false, ownerOnly: true, portal: 'madeby' },
   { key: 'support-inbox', label: 'Support Inbox', category: 'Scaling', description: 'Mail sent to any address on a connected domain (mastermindsbymarq.com, madebymarquez.com), AI-categorized with a drafted reply for review.', icon: 'ph-address-book', routes: ['support-inbox'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
-  { key: 'website', label: 'Website/App Builder', category: 'Scaling', description: "Website/App Builder roadmap — what's coming.", icon: 'ph-code', routes: ['website'], requiresAI: false, ownerOnly: true, portal: 'madeby' },
+  { key: 'website', label: 'Website/App Builder', category: 'Scaling', description: "Website/App Builder roadmap — what's coming.", icon: 'ph-code', routes: ['website'], requiresAI: false, ownerOnly: true, portal: 'madeby', navHidden: true },
   { key: 'scaling-planner', label: 'Scaling Planner', category: 'Scaling', description: 'Guided questionnaire, real AI-generated business scaling plan.', icon: 'ph-rocket-launch', routes: ['scaling-planner'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
   { key: 'audits', label: 'Business Audits', category: 'Scaling', description: 'AI-scored business audit grounded in the Scaling 101 curriculum.', icon: 'ph-clipboard-text', routes: ['audits'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
-  { key: 'client-crm', label: 'Client CRM', category: 'Scaling', description: 'Discovery → analysis → pricing → Stripe invoice → active client, in one pipeline.', icon: 'ph-users', routes: ['client-crm'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
+  { key: 'client-crm', label: 'Client CRM', category: 'Scaling', description: 'The Clients board (every client on their numbered step, 1 Win → 5 Grow & Report) and each client\'s full record: discovery → analysis → pricing → Stripe invoice → delivery, portal and comms.', icon: 'ph-users', routes: ['madeby-board', 'client-crm'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
   { key: 'brand-lab', label: 'Brand Lab', category: 'Scaling', description: 'AI-generated visual brand design directions.', icon: 'ph-flask', routes: ['brand-lab'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
   { key: 'idea-maker', label: 'Idea Maker', category: 'Scaling', description: 'Real back-and-forth AI conversation to pressure-test a business idea.', icon: 'ph-lightbulb', routes: ['idea-maker'], requiresAI: true, ownerOnly: true, portal: 'madeby' },
   { key: 'invoicing', label: 'Invoicing', category: 'Scaling', description: 'The Made by Marq 9-document client invoicing system.', icon: 'ph-receipt', routes: ['invoicing'], requiresAI: false, ownerOnly: true, portal: 'madeby' },
   { key: 'ledger', label: 'Ledger', category: 'Scaling', description: 'Business income and expenses, monthly P&L, a tax set-aside estimate, CSV, recurring rows and invoices to anyone.', icon: 'ph-bank', routes: ['ledger'], requiresAI: false, ownerOnly: true, portal: 'orchestrator' },
   { key: 'waitlist', label: 'Waitlist', category: 'Scaling', description: 'Everyone on the Masterminds waitlist: signups, founding spots, per code, CSV, and the launch switch.', icon: 'ph-list-checks', routes: ['waitlist'], requiresAI: false, ownerOnly: true, portal: 'orchestrator' },
   { key: 'coupons', label: 'Coupons', category: 'Scaling', description: 'Make discount codes: Stripe coupon plus promotion code, a shareable link, signups, redemptions and revenue per code.', icon: 'ph-ticket', routes: ['coupons'], requiresAI: false, ownerOnly: true, portal: 'orchestrator' },
-  { key: 'contracts', label: 'Contracts', category: 'Scaling', description: 'A contracts playbook, fill-in variables, signing links by email and a signed record.', icon: 'ph-signature', routes: ['contracts'], requiresAI: false, ownerOnly: true, portal: 'orchestrator' },
-  { key: 'comms', label: 'Comms', category: 'Scaling', description: 'Every text and email with anyone, sent from Masterminds and kept forever, with templates and sequences.', icon: 'ph-chats', routes: ['comms'], requiresAI: false, ownerOnly: true, portal: 'madeby' },
-  { key: 'marketing', label: 'Marketing', category: 'Scaling', description: 'Asset storage, campaign tracking, and content pipeline.', icon: 'ph-megaphone', routes: ['marketing'], requiresAI: true, ownerOnly: true, portal: 'orchestrator' },
+  { key: 'contracts', label: 'Contracts', category: 'Scaling', description: 'A contracts playbook, fill-in variables, signing links by email and a signed record.', icon: 'ph-signature', routes: ['contracts'], requiresAI: false, ownerOnly: true, portal: 'orchestrator', alsoIn: ['madeby'] },
+  { key: 'comms', label: 'Comms', category: 'Scaling', description: 'Every text and email with anyone, sent from Masterminds and kept forever, with templates and sequences.', icon: 'ph-chats', routes: ['comms'], requiresAI: false, ownerOnly: true, portal: 'madeby', navHidden: true },
+  { key: 'marketing', label: 'Marketing', category: 'Scaling', description: 'Asset storage, campaign tracking, and content pipeline.', icon: 'ph-megaphone', routes: ['marketing'], requiresAI: true, ownerOnly: true, portal: 'orchestrator', alsoIn: ['madeby'] },
   // Recategorized from Side Hustles (a subscriber-facing, unbuilt
   // placeholder) — the Marketing rebuild's social-profile-build tooling
   // lives here, client-scoped like everything else in Scaling, with
@@ -107,7 +116,7 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   // tab, not buried in the module," same shape as Dialing/Contacts
   // above: a separate nav row and screen, gated by one module choice,
   // not a second onboarding toggle of its own.
-  { key: 'content', label: 'Growth plans', category: 'Scaling', description: 'Per-client social profile build and launch kits, congruent with the Marketing campaign driving them.', icon: 'ph-video-camera', routes: ['content', 'swipe-file'], requiresAI: true, ownerOnly: true, portal: 'content' },
+  { key: 'content', label: 'Growth plans', category: 'Scaling', description: 'Per-client social profile build and launch kits, congruent with the Marketing campaign driving them.', icon: 'ph-video-camera', routes: ['content', 'swipe-file'], requiresAI: true, ownerOnly: true, portal: 'content', alsoIn: ['madeby'] },
   { key: 'stocks', label: 'Stocks', category: 'Side Hustles', description: 'Paper-trading bot on Alpaca with AI daily commentary.', icon: 'ph-chart-line-up', routes: ['stocks'], requiresAI: true, portal: 'masterminds' },
   { key: 'streaming', label: 'Streaming', category: 'Side Hustles', description: 'Streaming idea bank and calendar.', icon: 'ph-video-camera', routes: ['streaming'], requiresAI: false, portal: 'masterminds' },
   { key: 'ecommerce', label: 'Overview', category: 'Side Hustles', description: 'Dropshipping brands built by AI workers you steer: product sheets, a 10-step brand pipeline, approvals, and performance.', icon: 'ph-rocket-launch', routes: ['ecommerce'], requiresAI: true, ownerOnly: true, portal: 'ecommerce' },

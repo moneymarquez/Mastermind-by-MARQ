@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MODULE_REGISTRY, moduleKeyForRoute } from '../modules.config';
-import { accessiblePortals, isPortalKey, portalLanding, portalOfRoute } from '../portals.config';
+import { accessiblePortals, isPortalKey, portalLanding, portalOfRoute, routeAlsoIn } from '../portals.config';
 import type { PortalKey } from '../portals.config';
 
 // The current portal, stored like theme (localStorage `mm-portal`). It is a
@@ -37,13 +37,15 @@ export function usePortal(canAccess: (moduleKey: string) => boolean, screen: str
     const rp = portalOfRoute(screen);
     // Deep link: a route in another portal switches to it, then renders. An
     // inaccessible route doesn't switch; Stage's block handles it.
-    if (rp && rp !== portal) {
+    // A shortcut listed in the current portal (alsoIn) stays put.
+    const here = rp === portal || routeAlsoIn(screen, portal);
+    if (rp && !here) {
       const k = moduleKeyForRoute(screen);
       if (k && canAccess(k)) choose(rp);
       return;
     }
     // Remember the last screen per portal for this session.
-    if (rp === portal || (rp === null && portal === 'masterminds' && screen !== 'modules')) {
+    if (here || (rp === null && portal === 'masterminds' && screen !== 'modules')) {
       const last = readLast();
       last[portal] = screen;
       try { sessionStorage.setItem(LAST, JSON.stringify(last)); } catch { /* private mode */ }

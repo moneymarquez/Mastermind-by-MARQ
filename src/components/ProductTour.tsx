@@ -12,7 +12,8 @@ export interface TourStep {
   target: 'content' | 'nova';
 }
 
-// The 10 stops called out in the product-tour spec. Steps gated by module
+// The stops called out in the product-tour spec (Website Builder dropped
+// and Start replaced by the Clients board, Made by journey Oct 2026). Steps gated by module
 // access (canAccess) are filtered out per-account in Stage.tsx before this
 // list is used, so a non-owner account (or one that never selected e.g.
 // Fitness) simply skips those steps rather than showing a spotlight around
@@ -23,9 +24,8 @@ export const TOUR_STEPS: TourStep[] = [
   { id: 'macros', title: 'Macros & Meals', body: 'Log meals by photo or barcode, track macros against real targets, and get flagged the moment a pattern shows up.', screen: 'macros', target: 'content' },
   { id: 'fitness', title: 'Fitness', body: 'A full workout library plus a custom plan generated from a short questionnaire, with live workout mode built in.', screen: 'fitness', target: 'content' },
   { id: 'budgeting', title: 'Budgeting', body: 'Real categories, subscriptions tracked automatically, and cash-flow forecasting instead of a static spreadsheet.', screen: 'budgeting', target: 'content' },
-  { id: 'scaling-start', title: 'Scaling — Start', body: 'The guided entry point for a new client project — Idea Maker, Brand Lab, Website Builder, and Scaling Planner, chained together with a persistent trail.', screen: 'scaling-start', target: 'content' },
+  { id: 'madeby-board', title: 'Made by — Clients', body: 'Every client on a numbered step, 1 Win → 5 Grow & Report, with what is waiting on you. Tap New client to add one; each step lists its tools.', screen: 'madeby-board', target: 'content' },
   { id: 'brand-lab', title: 'Brand Lab', body: 'Call transcript in, two ready-to-paste prompts out. Niche research, a functional spec you approve first, then the Claude Design and Claude Fable prompts with copy buttons.', screen: 'brand-lab', target: 'content' },
-  { id: 'website', title: 'Website & App Builder', body: "Where a project's live build happens. Currently in active development — its roadmap is shown here.", screen: 'website', target: 'content' },
   { id: 'invoicing', title: 'Invoicing', body: 'A real nine-document client system — agreements, invoices, briefs, and more — generated and tracked in one place.', screen: 'invoicing', target: 'content' },
   { id: 'nova', title: 'Nova', body: "This is Nova — full read/write access across every module, and the thing that actually ties this whole system together.", target: 'nova' },
 ];
