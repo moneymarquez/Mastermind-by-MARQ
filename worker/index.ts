@@ -15,6 +15,7 @@
 // been removed from the repo — nothing in this app depends on Netlify
 // anymore. The Netlify site itself (DNS, the hosted deploy) is an
 // account-level cleanup outside this repo's scope.
+import { serveStatic } from './lib/staticAssets';
 import { serveMedia } from './lib/socialMedia';
 import { runSocialSyncTick } from './lib/socialSync';
 import { leadEnginesRoute, runEnginesTick } from './handlers/leadEngines';
@@ -292,7 +293,7 @@ export default {
         { status: 404, headers: { 'content-type': 'application/json' } },
       );
     }
-    return env.ASSETS.fetch(request);
+    return serveStatic(request, env.ASSETS);
   },
 
   // Typed loosely (not against @cloudflare/workers-types, which isn't a
