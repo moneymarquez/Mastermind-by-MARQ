@@ -52,12 +52,14 @@ export function integrationState(i: Integration, h: Pick<HealthInput, 'secrets' 
 export type AreaMode = 'live' | 'test' | 'off';
 export interface AreaStatus { id: string; name: string; mode: AreaMode; detail: string; todo: string[] }
 
-const DRY_RUN_OFF = 'Delete the "DRY_RUN": "1" line in wrangler.jsonc and push. This takes every DRY_RUN area live at once: client email, cold email, store launches, paid generation, coupons, domains, waitlist sync and posting. Go live only once every area below is ready.';
+/** The one switch for every DRY_RUN area (wrangler.jsonc vars). */
+export const DRY_RUN_HOW = 'Delete the "DRY_RUN": "1" line in wrangler.jsonc and push. That takes every DRY_RUN area live at once (client email, cold email, store launches, paid generation, coupons, domains, waitlist sync and posting), so do it once, after each of those areas is ready.';
+const DRY_RUN_OFF = 'Then turn DRY_RUN off (the one switch at the top of this page).';
 
 /** The go-live checklist, area by area. Pure. */
 export function areas(h: HealthInput): AreaStatus[] {
   const s = (k: string) => !!h.secrets[k];
-  const need = (keys: string[]) => keys.filter((k) => !s(k)).map((k) => `Set the ${k} secret (Setup → Platform keys, or Cloudflare → Workers → mastermind-by-marq → Settings → Variables and Secrets).`);
+  const need = (keys: string[]) => { const miss = keys.filter((k) => !s(k)); return miss.length ? [`Set ${miss.join(', ')} (Setup → Platform keys).`] : []; };
   const mode = (ready: boolean): AreaMode => (!ready ? 'off' : h.dryRun ? 'test' : 'live');
   const dryTodo = h.dryRun ? [DRY_RUN_OFF] : [];
   const out: AreaStatus[] = [];

@@ -5,7 +5,7 @@ import Card from '../../mm/Card';
 import Stat from '../../mm/Stat';
 import Chip from '../../mm/Chip';
 import type { ChipKind } from '../../mm/Chip';
-import { INTEGRATIONS, areas, integrationState } from '../../../data/health';
+import { INTEGRATIONS, areas, integrationState, DRY_RUN_HOW } from '../../../data/health';
 import type { AreaMode, HealthInput } from '../../../data/health';
 
 // System Health (Oct 2026): DRY_RUN / live per area, which keys are set
@@ -52,15 +52,16 @@ export default function SystemHealthScreen() {
       {s && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: phone ? '1fr 1fr' : 'repeat(4,minmax(0,1fr))', gap: phone ? 10 : 16 }}>
-            <Stat label="Mode" value={s.dryRun ? 'Test (DRY_RUN)' : 'Live'} pill={s.dryRun ? 'Nothing goes out' : 'Sends are real'} k={s.dryRun ? 'warn' : 'good'} />
+            <Stat label="Mode" value={s.dryRun ? 'Test' : 'Live'} pill={s.dryRun ? 'DRY_RUN on: nothing goes out' : 'Sends are real'} k={s.dryRun ? 'warn' : 'good'} />
             <Stat label="Areas live" value={`${live} of ${list.length}`} />
             <Stat label="Failed (24h–7d)" value={String(failedCount)} k={failedCount ? 'bad' : 'good'} />
             <Stat label="Waiting on you" value={String(s.approvals?.total ?? 0)} pill={s.approvals?.money ? `${s.approvals.money} with money` : undefined} onClick={() => nav('ecom-approvals')} />
           </div>
           <Card title="Go live, area by area" meta={s.dryRun ? 'DRY_RUN is on' : 'DRY_RUN is off'}>
             <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              {s.dryRun ? 'Test mode is on for the whole app (DRY_RUN in wrangler.jsonc). Outbound email, store launches, paid generation, coupons, domains and waitlist sync are logged instead of done. Two areas have their own switch: texting (TWILIO_LIVE) and posting (per account). Get each area to "ready" first, then turn DRY_RUN off once.' : 'DRY_RUN is off: every area that is set up acts for real.'}
+              {s.dryRun ? 'Test mode is on for the whole app (DRY_RUN in wrangler.jsonc). Outbound email, store launches, paid generation, coupons, domains and waitlist sync are logged instead of done. Two areas have their own switch: texting (TWILIO_LIVE) and posting (per account). Get each area ready first.' : 'DRY_RUN is off: every area that is set up acts for real.'}
             </div>
+            {s.dryRun && <div style={{ fontSize: 14, color: 'var(--text)', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-2)' }}><b style={{ fontWeight: 600 }}>The DRY_RUN switch:</b> {DRY_RUN_HOW}</div>}
             {list.map((a) => (
               <div key={a.id} style={{ borderTop: '1px solid var(--border)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
