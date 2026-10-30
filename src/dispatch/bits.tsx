@@ -55,7 +55,7 @@ export function PriorityPill({ p, reason, overdue, onTap }: { p: number; reason?
         onClick={() => { if (long.current) { long.current = false; return; } onTap?.(); }}>
         {label.replace(' !', '')}{overdue && <span className="dp-overdue" aria-hidden="true">!</span>}
       </button>
-      {show && reason && <span role="tooltip" style={{ position: 'absolute', top: 28, left: 0, zIndex: 5, width: 200, padding: '8px 10px', borderRadius: 10, background: 'var(--mm-ink)', color: 'var(--mm-bg)', fontSize: 12.5, lineHeight: 1.35 }}>{reason}</span>}
+      {show && reason && <span role="tooltip" style={{ position: 'absolute', top: 28, left: 0, zIndex: 5, width: 200, padding: '8px 10px', borderRadius: 'var(--g-r-md)', background: 'var(--mm-ink)', color: 'var(--mm-bg)', fontSize: 12.5, lineHeight: 1.35 }}>{reason}</span>}
     </span>
   );
 }

@@ -133,8 +133,8 @@ function PublishPanel({ item, onDone }: { item: ContentItem; onDone: () => void 
 function SlotCard({ i, a, onOpen }: { i: ContentItem; a: SocialAccount | null; onOpen: () => void }) {
   const st = STATUS[i.status];
   return (
-    <div onClick={onOpen} style={{ border: '1px solid var(--border)', borderLeft: `3px solid ${st.color}`, borderRadius: 8, padding: '6px 8px', cursor: 'pointer', background: E.surface, display: 'flex', gap: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
-      {i.thumbnail_url ? <img src={i.thumbnail_url} alt="" style={{ width: 34, height: 44, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} /> : <div style={{ width: 34, height: 44, borderRadius: 4, background: E.border, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{FORMAT_ICON[i.format]}</div>}
+    <div onClick={onOpen} style={{ border: '1px solid var(--border)', borderLeft: `3px solid ${st.color}`, borderRadius: 'var(--g-r-md)', padding: '6px 8px', cursor: 'pointer', background: E.surface, display: 'flex', gap: 8, boxShadow: 'var(--g-shadow-1)' }}>
+      {i.thumbnail_url ? <img src={i.thumbnail_url} alt="" style={{ width: 34, height: 44, objectFit: 'cover', borderRadius: 'var(--g-r-xs)', flexShrink: 0 }} /> : <div style={{ width: 34, height: 44, borderRadius: 'var(--g-r-xs)', background: E.border, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{FORMAT_ICON[i.format]}</div>}
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: E.text, lineHeight: 1.25, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{i.concept}</div>
         {i.hooks[0] && <div style={{ fontSize: 11, color: E.muted, lineHeight: 1.25, marginTop: 2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>“{i.hooks[0]}”</div>}

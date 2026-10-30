@@ -6,6 +6,8 @@ import type { Breakdown } from './ecomFees';
 import { fitsBudget, testCost, MIN_PROFIT_USD, MIN_MARGIN_PCT, TEST_BUDGET_USD } from './ecomProducts';
 import type { Product } from './ecomProducts';
 import { prohibitedReason } from '../../worker/lib/sites';
+import { profitFromProduct, fmtRoas } from './ecomProfit';
+import type { ProfitMath } from './ecomProfit';
 
 export interface SellerInfo { name: string; shop_url: string | null; price: number | null; est_monthly_orders: number | null; est_monthly_revenue: number | null; months_selling: number | null; look: string; screenshot_url: string | null; source_url: string | null }
 export interface SupplierOption { name: string; url: string | null; unit_cost: number | null; ship_cost: number | null; ship_days_min: number | null; ship_days_max: number | null; warehouse: string | null; rating: string | null; sample_cost: number | null }
@@ -82,6 +84,8 @@ export type CardProduct = Pick<Product, 'name' | 'category' | 'images' | 'sell_p
 export interface CardView {
   blocked: string | null;
   bd: Breakdown | null;
+  /** Contribution margin after ads, break-even ROAS/CPA and the Scale/Test/Kill verdict. */
+  pm: ProfitMath | null;
   breakEven: number | null;
   shipMin: number | null; shipMax: number | null;
   testCostUsd: number | null;
@@ -116,6 +120,7 @@ export function cardView(p: CardProduct): CardView {
   const sup = p.supplier_cost != null && p.supplier_cost > 0 ? Number(p.supplier_cost) : null;
   const ship = p.detail?.ship_cost != null ? Number(p.detail.ship_cost) : card.suppliers[0]?.ship_cost ?? null;
   const bd = sell != null && sup != null ? breakdown(sell, sup, ship ?? 0) : null;
+  const pm = sell != null && sup != null ? profitFromProduct(sell, sup, ship ?? 0, p.detail as Record<string, unknown> | null) : null;
   const pick = card.suppliers.find((s) => s.ship_days_max != null) ?? card.suppliers[0];
   const shipMin = pick?.ship_days_min ?? null, shipMax = pick?.ship_days_max ?? null;
   const missing: CardView['missing'] = [];
@@ -141,6 +146,7 @@ export function cardView(p: CardProduct): CardView {
   if (blocked) { verdict = 'BLOCKED'; verdictWhy = blocked; }
   else if (bd == null) { verdict = 'MAYBE'; verdictWhy = 'Numbers missing.'; }
   else if (!floorOk) { verdict = 'SKIP'; verdictWhy = bd.profit < MIN_PROFIT_USD ? `${money(bd.profit)} profit per order is under $${MIN_PROFIT_USD}.` : `${bd.marginPct.toFixed(0)}% margin is under ${MIN_MARGIN_PCT}%.`; }
+  else if (pm && pm.verdict === 'Kill') { verdict = 'SKIP'; verdictWhy = `Kill: ${pm.verdictWhy}`; }
   else if (anyRed || p.velocity === 'fading' || (p.score != null && p.score < 5)) { verdict = 'SKIP'; verdictWhy = anyRed ? 'A risk check failed.' : p.velocity === 'fading' ? 'Fading.' : 'Low score.'; }
   else if (fits && (p.score ?? 0) >= 7 && p.velocity !== 'flat' && !risks.some((r) => r.state === 'warn' && r.key !== 'ship')) { verdict = 'GO'; verdictWhy = `${money(bd.profit)} profit per order, ${bd.marginPct.toFixed(0)}% margin, fits the $${TEST_BUDGET_USD} budget.`; }
   else { verdict = 'MAYBE'; verdictWhy = !fits ? `A sample + domain is about $${testCost(sup ?? 0, ship ?? 0).toFixed(0)}, over the $${TEST_BUDGET_USD} budget.` : 'Clears the floor; something is unproven.'; }
@@ -152,6 +158,11 @@ export function cardView(p: CardProduct): CardView {
     { label: 'Landed cost', value: bd ? money(bd.landed) : 'Not found: needs sell price and supplier cost' },
     { label: 'Profit per order', value: bd ? money(bd.profit) : 'Not found: needs sell price and supplier cost' },
     { label: 'Margin', value: bd ? `${bd.marginPct.toFixed(0)}%` : 'Not found: needs sell price and supplier cost' },
+    { label: `Ad cost / purchase${pm?.estimated.adCost ? ' (est.)' : ''}`, value: pm ? money(pm.adCost) : 'Not found: needs sell price and supplier cost' },
+    { label: 'Margin after ads', value: pm ? `${money(pm.cm)} (${pm.cmPct.toFixed(0)}%)` : 'Not found: needs sell price and supplier cost' },
+    { label: 'Break-even ROAS', value: pm ? fmtRoas(pm.breakEvenRoas) : 'Not found: needs sell price and supplier cost' },
+    { label: 'Break-even CPA', value: pm ? money(pm.breakEvenCpa) : 'Not found: needs sell price and supplier cost' },
+    { label: 'Profit verdict', value: pm ? pm.verdict : 'Not found: needs sell price and supplier cost' },
     { label: 'Break-even orders', value: bd && bd.profit > 0 ? `${Math.ceil(TEST_BUDGET_USD / bd.profit)} orders to cover $${TEST_BUDGET_USD}` : 'Not found: needs a positive profit' },
     { label: 'Days trending', value: p.days_trending != null ? `${p.days_trending}` : 'Not found: no trend history yet' },
     { label: 'Velocity', value: p.velocity ?? 'Not found: no rank history yet' },
@@ -163,7 +174,20 @@ export function cardView(p: CardProduct): CardView {
   ];
   const d = p.detail ?? {};
   const why = (d.problem && d.angle ? `${d.problem} ${d.angle}` : d.problem || d.why_practical || d.angle || d.why_emotional || '').toString().trim().split(/(?<=\.)\s/)[0] || 'Not found: no reason to sell in the research yet.';
-  return { blocked, bd, breakEven: bd && bd.profit > 0 ? Math.ceil(TEST_BUDGET_USD / bd.profit) : null, shipMin, shipMax, testCostUsd: sup != null ? testCost(sup, ship ?? 0) : null, fits, floorOk, verdict, verdictWhy, risks, anyRed, missing, canApprove: !blocked && sell != null && sup != null, card, stats, why };
+  return { blocked, bd, pm, breakEven: bd && bd.profit > 0 ? Math.ceil(TEST_BUDGET_USD / bd.profit) : null, shipMin, shipMax, testCostUsd: sup != null ? testCost(sup, ship ?? 0) : null, fits, floorOk, verdict, verdictWhy, risks, anyRed, missing, canApprove: !blocked && sell != null && sup != null, card, stats, why };
+}
+
+/** The one verdict a product card shows (Oct 2026). Contribution margin
+ *  after ads decides it (Scale / Test / Kill, src/data/ecomProfit.ts); a
+ *  blocked product is Blocked and missing numbers read "Needs numbers". The
+ *  older GO / MAYBE / SKIP checks (floor, risks, score, budget) become a
+ *  secondary line, worded so they don't read as a second verdict. Pure. */
+export type OneVerdictLabel = 'Scale' | 'Test' | 'Kill' | 'Blocked' | 'Needs numbers';
+export function oneVerdict(v: Pick<CardView, 'blocked' | 'pm' | 'verdict' | 'verdictWhy'>): { label: OneVerdictLabel; tone: 'good' | 'warn' | 'bad'; why: string; checks: string; checksWhy: string } {
+  const checks = v.verdict === 'GO' ? 'Checks pass' : v.verdict === 'MAYBE' ? 'Checks: something unproven' : v.verdict === 'SKIP' ? 'Checks: failed' : 'Checks: blocked';
+  if (v.blocked) return { label: 'Blocked', tone: 'bad', why: v.blocked, checks, checksWhy: v.verdictWhy };
+  if (!v.pm) return { label: 'Needs numbers', tone: 'warn', why: 'Needs a sell price and supplier cost for the margin after ads.', checks, checksWhy: v.verdictWhy };
+  return { label: v.pm.verdict, tone: v.pm.verdict === 'Scale' ? 'good' : v.pm.verdict === 'Test' ? 'warn' : 'bad', why: v.pm.verdictWhy, checks, checksWhy: v.verdictWhy };
 }
 
 /** Plain-words psychology, so the card says "Demo-able: before/after", not a code. */

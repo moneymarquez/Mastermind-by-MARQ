@@ -14,7 +14,7 @@ export default function FocusLine() {
   }, []);
   if (!line) return null;
   return (
-    <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '12px 16px', borderRadius: 14, border: '1px solid var(--border)', background: 'var(--surface)' }}>
+    <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '12px 16px', borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', background: 'var(--surface)' }}>
       <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>This week</span>
       <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{line}</span>
     </div>

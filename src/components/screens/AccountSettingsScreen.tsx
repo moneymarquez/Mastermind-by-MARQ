@@ -137,7 +137,7 @@ export default function AccountSettingsScreen({ onSignOut, onStartTour, theme, o
   const group = (title: string, rows: R[]) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', paddingLeft: 2 }}>{title}</span>
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>
         {rows.filter((r) => !r.hide).map((r, i) => (
           <button key={r.l} onClick={r.on} className="mm-dash-tr" style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', minHeight: 50, padding: '0 14px', border: 0, borderTop: i ? '1px solid var(--grid)' : 'none', background: 'transparent', fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left' }}>
             <span style={{ flex: 1, color: r.danger ? 'var(--danger)' : 'var(--text)', fontSize: 15, fontWeight: 500, letterSpacing: '-0.01em' }}>{r.l}</span>
@@ -149,8 +149,8 @@ export default function AccountSettingsScreen({ onSignOut, onStartTour, theme, o
     </div>
   );
   const seg = (
-    <div role="radiogroup" aria-label="Theme" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
-      {(['dark', 'light', 'system'] as Theme[]).map((t) => <button key={t} role="radio" aria-checked={theme === t} onClick={() => onThemeChange(t)} style={{ padding: '8px 0', borderRadius: 999, border: 0, fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', textTransform: 'capitalize', background: theme === t ? 'var(--text)' : 'transparent', color: theme === t ? 'var(--bg)' : 'var(--text-secondary)' }}>{t}</button>)}
+    <div role="radiogroup" aria-label="Theme" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 2, padding: 3, borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+      {(['dark', 'light', 'system'] as Theme[]).map((t) => <button key={t} role="radio" aria-checked={theme === t} onClick={() => onThemeChange(t)} style={{ padding: '8px 0', borderRadius: 'var(--g-r-sm)', border: 0, fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', textTransform: 'capitalize', background: theme === t ? 'var(--text)' : 'transparent', color: theme === t ? 'var(--bg)' : 'var(--text-secondary)' }}>{t}</button>)}
     </div>
   );
   const appearance = (

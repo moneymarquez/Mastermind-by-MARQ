@@ -47,13 +47,13 @@ export default function ClientVideos({ client }: { client: CrmClient }) {
         {!recording && <button className="mm-btn" style={{ height: 32 }} onClick={() => { setRecording(true); setMsg(''); }}>Record a video</button>}
       </div>
       {recording && (
-        <div style={{ padding: 12, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface-2)' }}>
+        <div style={{ padding: 12, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', background: 'var(--surface-2)' }}>
           <VideoRecorder clientId={client.id} defaultTitle={`A quick video for ${client.business_name}`} onCancel={() => setRecording(false)}
             onSaved={(r) => { setRecording(false); startDraft(r); void load(); }} />
         </div>
       )}
       {draft && (
-        <div style={{ padding: 12, borderRadius: 12, border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ padding: 12, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
           <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Email draft with the link. Read it, then send.</span>
           <input style={field} placeholder="To" value={draft.to} onChange={(e) => setDraft({ ...draft, to: e.target.value })} />
           <input style={field} placeholder="Subject" value={draft.subject} onChange={(e) => setDraft({ ...draft, subject: e.target.value })} />

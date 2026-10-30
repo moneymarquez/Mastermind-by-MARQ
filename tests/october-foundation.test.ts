@@ -210,7 +210,10 @@ describe('Parallel', () => {
 describe('orchestrator chain of command', () => {
   it('every night ends with three domain summaries and then HQ', () => {
     for (let d = 0; d < 7; d++) {
-      const p = planFor(d);
+      const all = planFor(d);
+      // The four class steps come after HQ's report, so the report is never later than before.
+      expect(all.slice(-4).map((s) => s.key)).toEqual(['class:scaler', 'class:ecom', 'class:content', 'class:leadflow']);
+      const p = all.slice(0, -4);
       expect(p.slice(-4).map((s) => s.key)).toEqual(['summary:ecom', 'summary:content', 'summary:marketing', 'hq']);
       expect(p.find((s) => s.key === 'lead_filter')?.domain).toBe('marketing');
       expect(p.find((s) => s.key === 'content_analytics')?.domain).toBe('content');

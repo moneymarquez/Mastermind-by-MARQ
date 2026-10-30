@@ -82,8 +82,8 @@ export default function ScheduleV2() {
   const free = (() => { let c = 0, t = 8 * 60; for (const e of todayEvents) { const s = toMin(e.start_time); if (s - t >= 60) c++; t = Math.max(t, toMin(e.end_time)); } if (22 * 60 - t >= 60) c++; return c; })();
 
   const seg = (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)', maxWidth: phone ? undefined : 420 }}>
-      {(['month', 'day', 'shifts'] as Tab[]).map((t) => <button key={t} aria-pressed={tab === t} onClick={() => setTab(t)} style={{ padding: '8px 0', borderRadius: 999, border: 0, fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', background: tab === t ? 'var(--text)' : 'transparent', color: tab === t ? 'var(--bg)' : 'var(--text-secondary)' }}>{t[0].toUpperCase() + t.slice(1)}</button>)}
+    <div className="g-seg g-seg--fill" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', maxWidth: phone ? undefined : 420 }}>
+      {(['month', 'day', 'shifts'] as Tab[]).map((t) => <button key={t} aria-pressed={tab === t} onClick={() => setTab(t)} className="g-pill">{t[0].toUpperCase() + t.slice(1)}</button>)}
     </div>
   );
   const monthName = anchor.toLocaleDateString('en-US', { month: 'long', year: anchor.getFullYear() === now.getFullYear() ? undefined : 'numeric' });
@@ -117,7 +117,7 @@ export default function ScheduleV2() {
         {week.map((d) => { const h = shiftHrs(d); return (
           <div key={d} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-tertiary)' }}>{WD3[parseYmd(d).getDay()][0]}</span>
-            <div style={{ width: '100%', height: 64, borderRadius: 8, background: h ? 'var(--accent-soft)' : 'var(--surface-3)', border: d === today ? '1.5px solid var(--accent)' : 'none', boxSizing: 'border-box', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 6, fontSize: 10, fontWeight: 600, color: 'var(--text)', textAlign: 'center' }}>{span(d)}</div>
+            <div style={{ width: '100%', height: 64, borderRadius: 'var(--g-r-md)', background: h ? 'var(--accent-soft)' : 'var(--surface-3)', border: d === today ? '1.5px solid var(--accent)' : 'none', boxSizing: 'border-box', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 6, fontSize: 10, fontWeight: 600, color: 'var(--text)', textAlign: 'center' }}>{span(d)}</div>
           </div>
         ); })}
       </div>
@@ -127,7 +127,7 @@ export default function ScheduleV2() {
     <Card title="Shift hours" meta="Last 6 weeks" wide={!phone}><Bars vals={weekly.map((v) => Math.round(v * 10) / 10)} labels={sixWeeks.map((w) => `${parseYmd(w).getMonth() + 1}/${parseYmd(w).getDate()}`)} pre="" suf="h" /></Card>
   );
   const calendar = (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 12 : 16, minWidth: 0 }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 12 : 16, minWidth: 0 }}>
       <CalendarView ref={cal} events={E.events} defaultType="holiday" searchContacts={searchContacts} upsertContact={upsertContact} addEvent={E.addEvent} addHolidayEvents={E.addHolidayEvents} updateEvent={E.updateEvent} deleteEvent={E.deleteEvent} />
     </div>
   );
@@ -164,7 +164,7 @@ function HeatGrid({ cells, lead, first, sel, today, onPick }: { cells: HeatCell[
         const d = addDays(first, i - lead), lvl = typeof c.v === 'number' ? c.v : 0;
         return (
           <button key={i} title={c.t} onClick={() => onPick(d)} aria-pressed={d === sel} aria-label={c.t}
-            style={{ aspectRatio: '1', maxHeight: 44, borderRadius: 6, border: d === sel ? '2px solid var(--text)' : d === today ? '1.5px solid var(--accent)' : 'none', background: bgs[lvl], boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: lvl >= 2 ? 'var(--bg)' : 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>{c.n}</button>
+            style={{ aspectRatio: '1', maxHeight: 44, borderRadius: 'var(--g-r-sm)', border: d === sel ? '2px solid var(--text)' : d === today ? '1.5px solid var(--accent)' : 'none', background: bgs[lvl], boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: lvl >= 2 ? 'var(--bg)' : 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>{c.n}</button>
         );
       })}
     </div>

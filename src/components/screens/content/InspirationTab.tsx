@@ -37,7 +37,7 @@ export default function InspirationTab({ api, accounts, items, onOpenPlan }: { a
           <option value="">All accounts</option>
           {accounts.accounts.map((a) => <option key={a.id} value={a.id}>{PLATFORM[a.platform].short} @{a.handle}</option>)}
         </select>
-        <button style={btn('primary')} disabled={busy} onClick={research}>{busy ? 'Researching… (30–90s)' : '🔎 Find what’s working'}</button>
+        <button style={btn('primary')} disabled={busy} onClick={research}>{busy ? 'Researching… (30–90s)' : 'Find what’s working'}</button>
         <button style={btn('ghost')} onClick={() => setAdding((v) => !v)}>＋ Link</button>
       </div>
       {msg && <div style={{ marginTop: 10, padding: 10, borderRadius: 'var(--radius-sm)', fontSize: 'var(--text-body)', color: E.text, background: tint(msg.ok ? E.green : E.red, 10), border: `1px solid ${tint(msg.ok ? E.green : E.red, 35)}` }}>
@@ -66,7 +66,7 @@ export default function InspirationTab({ api, accounts, items, onOpenPlan }: { a
               {r.hook && <div style={{ fontSize: 'var(--text-body)', color: E.text }}>“{r.hook}”</div>}
               {r.why_it_worked && <div style={{ fontSize: 'var(--text-caption)', color: E.muted, lineHeight: 1.45 }}><span style={label}>Why it worked</span> {r.why_it_worked}</div>}
               {r.principle && <div style={{ fontSize: 'var(--text-caption)', color: E.muted }}><span style={label}>Principle</span> {r.principle}</div>}
-              {r.our_version && <div style={{ fontSize: 'var(--text-caption)', color: E.text, padding: 8, borderRadius: 6, background: tint(E.accent, 8), lineHeight: 1.45 }}><span style={label}>Our version</span> {r.our_version}</div>}
+              {r.our_version && <div style={{ fontSize: 'var(--text-caption)', color: E.text, padding: 8, borderRadius: 'var(--g-r-sm)', background: tint(E.accent, 8), lineHeight: 1.45 }}><span style={label}>Our version</span> {r.our_version}</div>}
               <div style={{ display: 'flex', gap: 8, marginTop: 'auto', paddingTop: 4 }}>
                 <button style={{ ...btn(made.has(r.id) ? 'ghost' : 'primary'), padding: '6px 12px', fontSize: 13 }} disabled={made.has(r.id)} onClick={() => makeOurs(r)}>{made.has(r.id) ? '✓ On the Plan' : 'Make our version'}</button>
                 <button aria-label="Remove" style={{ ...btn('ghost'), padding: '6px 10px', fontSize: 13, marginLeft: 'auto' }} onClick={async () => { if (await askConfirm('Remove this from Inspiration?')) await api.remove(r.id); }}>Remove</button>

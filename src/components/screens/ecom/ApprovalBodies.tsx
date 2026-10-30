@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { MetaDraftView } from '../../mm/MetaAdsBuilder';
 import type { ReactNode } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { money } from '../../../data/ecom';
@@ -20,6 +21,7 @@ const pct = (v: unknown) => (typeof v === 'number' ? `${Math.round(v * 100)}%` :
 
 export const APPROVE_LABEL: Record<string, (p: P) => string> = {
   analysis: () => 'Approve · fill the product',
+  meta_ads_draft: () => 'Approve draft · nothing goes to Meta',
   teardown: (p) => `Approve · save ${plural(arr(p.competitors).length, 'dossier')} + ${plural(arr(p.angles).length, 'angle')}`,
   lead_tags: (p) => `Approve · tag ${arr(p.rows).length} leads`,
   scripts: (p) => `Approve · save ${arr(p.scripts).length} scripts`,
@@ -50,6 +52,7 @@ const gradeColor = (g: number) => (g >= 4 ? E.green : g === 3 ? E.blue : g === 2
 
 export function ApprovalBody({ type, payload: p, choice = 0, onChoice, approvalId }: { type: string; payload: P; choice?: number; onChoice?: (i: number) => void; approvalId?: string }) {
   if (type === 'product_pitch') return <RichPitch p={p} />;
+  if (type === 'meta_ads_draft') return <div style={{ marginTop: 10 }}><MetaDraftView d={p as never} /><div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 6 }}>Approving keeps it a draft. Nothing is sent to Meta; Push to Meta stays off until a Meta ads key is set and DRY_RUN is off.</div></div>;
   if (type === 'invoice_reminder') return (
     <div style={{ marginTop: 10 }}>
       <Box>
@@ -198,7 +201,7 @@ export function ApprovalBody({ type, payload: p, choice = 0, onChoice, approvalI
               <a href={String(x.url)} target="_blank" rel="noopener noreferrer" style={{ fontSize: 'var(--text-caption)', color: E.blue }}>open ↗</a>
             </div>
             <Line k="Hook" v={x.hook} /><Line k="Why it worked" v={x.why_it_worked} /><Line k="Principle" v={x.principle} />
-            <div style={{ fontSize: 'var(--text-caption)', color: E.text, marginTop: 4, padding: 6, borderRadius: 6, background: tint(E.accent, 8) }}><span style={label}>Our version</span> {String(x.our_version)}</div>
+            <div style={{ fontSize: 'var(--text-caption)', color: E.text, marginTop: 4, padding: 6, borderRadius: 'var(--g-r-sm)', background: tint(E.accent, 8) }}><span style={label}>Our version</span> {String(x.our_version)}</div>
           </Box>
         ))}
         {arr<string>(p.dropped).length > 0 && <div style={{ fontSize: 'var(--text-caption)', color: E.amber }}>Dropped: {arr<string>(p.dropped).join('; ')}</div>}
@@ -253,7 +256,7 @@ export function ApprovalBody({ type, payload: p, choice = 0, onChoice, approvalI
           <Box key={g.post_id}>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
               <Badge color={gradeColor(g.grade)}>{g.grade}/4</Badge>
-              {g.flag && <Badge color={g.flag === 'breakout' ? E.green : E.red}>{g.flag === 'breakout' ? '🚀 breakout' : '📉 flop'}</Badge>}
+              {g.flag && <Badge color={g.flag === 'breakout' ? E.green : E.red}>{g.flag === 'breakout' ? 'breakout' : 'flop'}</Badge>}
               <span style={{ color: E.text, fontWeight: 600, minWidth: 0, overflowWrap: 'anywhere' }}>{g.hook || 'Post'}</span>
             </div>
             <div style={{ fontSize: 'var(--text-caption)', color: E.muted, fontFamily: 'var(--font-mono)', marginTop: 2 }}>{g.views.toLocaleString()} views vs {g.avg.toLocaleString()} avg · {g.reason}</div>
@@ -384,10 +387,10 @@ export function ApprovalBody({ type, payload: p, choice = 0, onChoice, approvalI
           <label key={i} style={{ display: 'block', padding: 10, borderRadius: 'var(--radius-sm)', background: i === choice ? tint(E.accent, 10) : E.sunk, border: `1px solid ${i === choice ? E.accent : E.border}`, cursor: 'pointer', minWidth: 0 }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               <input type="radio" name="brand" checked={i === choice} onChange={() => onChoice?.(i)} />
-              <span style={{ fontWeight: 800, color: E.text, fontSize: 'var(--text-subhead)' }}>{o.name}</span>
+              <span style={{ fontWeight: 700, color: E.text, fontSize: 'var(--text-subhead)' }}>{o.name}</span>
               <Badge color={o.domain_status === 'available' ? E.green : o.domain_status === 'taken' ? E.red : E.faint}>{o.domain} · {o.domain_status ?? 'unchecked'}</Badge>
             </div>
-            <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>{o.palette.map((c) => <span key={c.hex} title={`${c.name} — ${c.why}`} style={{ width: 28, height: 28, borderRadius: 6, background: c.hex, border: `1px solid ${E.border}` }} />)}</div>
+            <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>{o.palette.map((c) => <span key={c.hex} title={`${c.name} — ${c.why}`} style={{ width: 28, height: 28, borderRadius: 'var(--g-r-sm)', background: c.hex, border: `1px solid ${E.border}` }} />)}</div>
             <Line k="Positioning" v={o.positioning} /><Line k="Voice" v={o.voice} /><Line k="Type" v={o.type.heading ? `${o.type.heading} / ${o.type.body} — ${o.type.why}` : ''} />
             <Line k="Logo" v={o.logo_direction} /><Line k="Why this buyer" v={o.why_this_buyer} /><Line k="Principle" v={o.principle} /><Line k="Handles" v={`${o.handles} (check by hand)`} />
             {approvalId && <DirectionVisuals approvalId={approvalId} direction={i} />}

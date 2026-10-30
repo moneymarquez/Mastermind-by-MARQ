@@ -71,15 +71,15 @@ const inputStyle: CSSProperties = {
   color: 'var(--text)', fontSize: 'var(--text-body-lg)', outline: 'none', width: '100%', boxSizing: 'border-box',
 };
 const primaryBtn: CSSProperties = {
-  alignSelf: 'flex-start', padding: '10px 18px', borderRadius: 8, background: 'var(--text)',
+  alignSelf: 'flex-start', padding: '10px 18px', borderRadius: 'var(--g-r-md)', background: 'var(--text)',
   color: 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer', border: 'none',
 };
 const ghostBtn: CSSProperties = {
-  padding: '8px 15px', borderRadius: 8, border: '1px solid var(--border-2)', background: 'transparent',
+  padding: '8px 15px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border-2)', background: 'transparent',
   color: 'var(--text-quaternary)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer',
 };
 const chipStyle = (active: boolean): CSSProperties => ({
-  padding: '8px 14px', borderRadius: 8, fontSize: 'var(--text-body-sm)', cursor: 'pointer',
+  padding: '8px 14px', borderRadius: 'var(--g-r-md)', fontSize: 'var(--text-body-sm)', cursor: 'pointer',
   border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? 'var(--tint-active)' : 'var(--surface)',
   color: active ? 'var(--text)' : 'var(--text-secondary)',
 });
@@ -117,7 +117,7 @@ function ConceptMock({ concept }: { concept: BrandConcept }) {
           <div style={{ ...headStyle, fontSize: 'var(--text-head)', fontWeight: 700, color: text }}>{concept.name}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, flex: 1 }}>
             {[0, 1, 2].map((i) => (
-              <div key={i} style={{ background: surface, borderRadius: 6, border: `1px solid ${primary}33` }} />
+              <div key={i} style={{ background: surface, borderRadius: 'var(--g-r-sm)', border: `1px solid ${primary}33` }} />
             ))}
           </div>
         </div>
@@ -539,7 +539,7 @@ export default function BrandLabScreen({ homeHeadStyle, homeSubStyle }: Props) {
               <StepCard index={1} title="Palette & typography">
                 <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
                   {Object.entries(pinnedConcept.palette).map(([k, v]) => (
-                    <div key={k} title={`${k}: ${v}`} style={{ width: 28, height: 28, borderRadius: 6, background: v, border: '1px solid var(--border-2)' }} />
+                    <div key={k} title={`${k}: ${v}`} style={{ width: 28, height: 28, borderRadius: 'var(--g-r-sm)', background: v, border: '1px solid var(--border-2)' }} />
                   ))}
                 </div>
                 <div style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', marginBottom: 10 }}>Heading: {pinnedConcept.headingFont} · Body: Inter</div>

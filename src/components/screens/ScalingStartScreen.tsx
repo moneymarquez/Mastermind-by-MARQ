@@ -88,7 +88,7 @@ export default function ScalingStartScreen({ onNavigate }: Props) {
     }
   };
 
-  if (loading) return <Page title="Start" sub="Guided new-client flow"><span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Loading…</span></Page>;
+  if (loading) return <Page title="Start" sub="Guided new-client flow" back="Clients" backTo="madeby-board"><span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Loading…</span></Page>;
 
   const newCard = (
     <Card title="New project" meta="A client or business name" wide={!phone}>
@@ -101,12 +101,12 @@ export default function ScalingStartScreen({ onNavigate }: Props) {
 
   if (!selected) {
     return (
-      <Page title="Start" sub="Idea → brand → site → plan → invoice">
+      <Page title="Start" sub="Idea → brand → site → plan → invoice" back="Clients" backTo="madeby-board">
         {newCard}
         {projects.length === 0 ? <Empty text="No projects yet. Name one above and walk it from idea to a starter invoice." /> : (
           <div style={{ display: 'grid', gridTemplateColumns: phone ? 'minmax(0,1fr)' : 'repeat(auto-fill,minmax(280px,1fr))', gap: phone ? 12 : 16 }}>
             {projects.map((p) => { const n = trailCount(p); return (
-              <section key={p.id} role="button" tabIndex={0} onClick={() => open(p.id)} onKeyDown={(e) => { if (e.key === 'Enter') open(p.id); }} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column', gap: 12, cursor: 'pointer' }}>
+              <section key={p.id} role="button" tabIndex={0} onClick={() => open(p.id)} onKeyDown={(e) => { if (e.key === 'Enter') open(p.id); }} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 12, cursor: 'pointer' }}>
                 <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>{p.name}</span>
                 <div style={{ height: 8, borderRadius: 999, background: 'var(--surface-3)', overflow: 'hidden' }}><div style={{ width: `${(n / 4) * 100}%`, height: '100%', background: 'var(--accent)', borderRadius: 999 }} /></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}><Chip k={p.invoice_document_id ? 'good' : n ? 'accent' : 'neutral'}>{p.invoice_document_id ? 'Invoice drafted' : `${n} of 4 linked`}</Chip><span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{(p.status ?? 'in progress').replace(/_/g, ' ')}</span></div>
@@ -126,7 +126,7 @@ export default function ScalingStartScreen({ onNavigate }: Props) {
       control: <select value={selected.idea_session_id ?? ''} onChange={(e) => void patch(selected.id, { idea_session_id: e.target.value || null })} style={field}><option value="">Link an Idea Maker thread</option>{ideaSessions.map((x) => <option key={x.id} value={x.id}>{x.idea_text.slice(0, 70)}</option>)}</select> },
     { n: 'Brand', done: !!brandLinked, detail: brandLinked?.direction ?? null, open: 'brand-lab',
       control: <select value={selected.brand_lab_brief_id ?? ''} onChange={(e) => void patch(selected.id, { brand_lab_brief_id: e.target.value || null })} style={field}><option value="">Link a Brand Lab direction</option>{briefs.map((b) => <option key={b.id} value={b.id}>{b.direction.slice(0, 70)}</option>)}</select> },
-    { n: 'Website', done: !!selected.website_url, detail: selected.website_url, open: 'website', note: 'The builder is still in planning. Paste the live site once it exists.',
+    { n: 'Website', done: !!selected.website_url, detail: selected.website_url, open: '', note: 'Paste the live site once it exists.',
       control: <input value={websiteDraft} onChange={(e) => setWebsiteDraft(e.target.value)} onBlur={() => { if (websiteDraft !== (selected.website_url ?? '')) void patch(selected.id, { website_url: websiteDraft.trim() || null }); }} placeholder="https://" style={field} /> },
     { n: 'Scaling plan', done: !!planLinked, detail: planLinked?.plan_text ? `${planLinked.plan_text.slice(0, 160)}…` : null, open: 'scaling-planner', note: 'Anytime, in parallel.',
       control: <select value={selected.scaling_plan_id ?? ''} onChange={(e) => void patch(selected.id, { scaling_plan_id: e.target.value || null })} style={field}><option value="">Link a finished plan</option>{plans.filter((x) => x.plan_text).map((x) => <option key={x.id} value={x.id}>{(x.plan_text ?? '').slice(0, 70)}</option>)}</select> },
@@ -146,7 +146,7 @@ export default function ScalingStartScreen({ onNavigate }: Props) {
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}><span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>{st.n}</span>{i === cur && <Chip k="accent">Now</Chip>}</div>
               {st.detail && <span style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--text-secondary)', overflowWrap: 'anywhere' }}>{st.detail}</span>}
               {st.note && <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>{st.note}</span>}
-              <div style={{ display: 'flex', gap: 8 }}><div style={{ flex: 1, minWidth: 0 }}>{st.control}</div><button className="mm-btn" style={{ height: 44 }} onClick={() => onNavigate(st.open)}>Open</button></div>
+              <div style={{ display: 'flex', gap: 8 }}><div style={{ flex: 1, minWidth: 0 }}>{st.control}</div>{st.open && <button className="mm-btn" style={{ height: 44 }} onClick={() => onNavigate(st.open)}>Open</button>}</div>
             </div>
           </div>
         ))}

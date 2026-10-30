@@ -6,10 +6,17 @@ import { PLATFORM_SETUP, ACCOUNT_SETUP } from '../data/setupCatalog';
 import { buildSeed, demoLeads, DEMO_DIGEST_TEXT } from './seed';
 import { demoRows } from './client';
 import { localExtract } from '../dispatch/localExtract';
+import { buildCallList, clientMatch } from '../data/callKit';
+import { buildMetaDraft } from '../data/metaAds';
+import type { AdSource } from '../data/metaAds';
+import type { CallKitGap, CallKitLead } from '../data/callKit';
 
 type Json = Record<string, unknown> | unknown[];
 const ok = (body: Json, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 const NOT_IN_DEMO = { error: 'That runs in the real app — this is the demo.' };
+
+/** What the sample-data decide says back. Exported for the test. */
+export const demoDecideMessage = (verb: string) => `${verb} (sample data: only this screen changed; nothing was saved or sent).`;
 
 function answer(url: URL, method: string, body: unknown = null): Response {
   const p = url.pathname;
@@ -24,6 +31,16 @@ function answer(url: URL, method: string, body: unknown = null): Response {
     if (q.get('pooled') === 'true') list = list.filter((l) => l.pooled);
     if (q.get('dialing_queued') === 'true') list = list.filter((l) => l.dialing_queued);
     return ok(list);
+  }
+  if (p === '/api/leadflow/call-kit') {
+    // The cold-call kit over the demo leads, plus the blueprint's fictional test client.
+    const hollis = { id: 'leaddemo-0000-4000-8000-hollis000001', business_name: 'Hollis Smokehouse', phone: '(816) 555-0142', category: 'Barbecue restaurant', search_category: 'restaurant', city: 'Raytown', rating: 4.6, review_count: 1142, days_since_last_review: 214, fizzle_score: 82, tier: 'A', website: 'https://hollissmokehouse.com', status: null, call_notes: 'Main line rings the host stand. Ask for Kayla.' };
+    const leads = [hollis, ...demoLeads()] as unknown as CallKitLead[];
+    const gaps = new Map<string, CallKitGap[]>([[hollis.id, [{ kind: 'stale_site', text: 'Their website still says © 2022.' }]]]);
+    for (const l of demoLeads()) if (l.website_status === 'outdated') gaps.set(l.id as string, [{ kind: 'no_mobile', text: 'Their website has no phone layout.' }, { kind: 'stale_site', text: 'Their website looks out of date.' }]);
+    const clusters = [{ industry: 'restaurant owners (delivery apps, online ordering, fees)', title: 'Delivery apps take 30% and own the customer' }];
+    const now = new Date();
+    return ok({ date: now.toISOString().slice(0, 10), generated_at: new Date(now.setHours(7, 50, 0, 0)).toISOString(), test_mode: true, source: 'snapshot', items: buildCallList(leads, gaps, clusters, { today: new Date().toISOString().slice(0, 10), clients: clientMatch(demoRows('crm_clients') as { business_name?: string | null; contact_phone?: string | null }[]) }) });
   }
   if (p.startsWith('/api/leadflow/')) {
     if (p.endsWith('/history')) return ok([{ id: 'h1', action: 'enriched', industry: 'Food truck', created_at: new Date().toISOString(), business_name: 'Juniper Tacos' }]);
@@ -44,6 +61,58 @@ function answer(url: URL, method: string, body: unknown = null): Response {
   if (p === '/api/engine/status') {
     const s = buildSeed();
     return ok({ workers: s.ai_workers, spend: ['ecom', 'content', 'marketing', 'digest'].map((d) => ({ domain: d, spent: d === 'ecom' ? 0.62 : 0.08, cap: 3 })), anthropic: true, date: new Date().toISOString().slice(0, 10) });
+  }
+  if (p === '/api/system/health') {
+    // Sample: test mode on, most keys set, Twilio waiting on 10DLC, no Shopify yet.
+    const set = ['ANTHROPIC_API_KEY', 'XAI_API_KEY', 'STRIPE_SECRET_KEY', 'STRIPE_PRICE_ID', 'STRIPE_WEBHOOK_SECRET', 'RESEND_API_KEY', 'RESEND_FROM_EMAIL', 'TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_FROM_NUMBER', 'GOOGLE_PLACES_API_KEY', 'INSTAGRAM_APP_ID', 'INSTAGRAM_APP_SECRET', 'TIKTOK_CLIENT_KEY', 'TIKTOK_CLIENT_SECRET', 'CJ_API_KEY', 'CF_API_TOKEN', 'CF_ACCOUNT_ID', 'VITE_VAPID_PUBLIC_KEY', 'VAPID_PRIVATE_KEY', 'SUPABASE_SERVICE_ROLE_KEY'];
+    const today = new Date().toISOString().slice(0, 10);
+    const at = (h: number) => new Date(Date.now() - h * 3600000).toISOString();
+    const plan: [string, string, string][] = [['scout:tiktok', 'Scout tiktok', 'ecom'], ['scout:amazon', 'Scout amazon', 'ecom'], ['analyst', 'Analyse the top new products', 'ecom'], ['pitch', "Pick tonight's #1 product and pitch it", 'ecom'], ['lead_filter', 'Tag new leads', 'marketing'], ['content_analytics', "Grade yesterday's posts", 'content'], ['handoffs', 'Pass work between the bots (client wins, content leads, client products)', 'master'], ['summary:ecom', 'E-commerce orchestrator: sum up the night', 'ecom'], ['hq', 'HQ: write the morning report', 'master'], ['class:scaler', "Business Scaler goes to class: what's new, lessons, proposals", 'marketing'], ['class:ecom', "E-commerce goes to class: what's new, lessons, proposals", 'ecom'], ['class:content', "Content goes to class: what's new, lessons, proposals", 'content'], ['class:leadflow', "LeadFlow goes to class: what's new, lessons, proposals", 'marketing']];
+    const notes: Record<string, [string, string]> = { 'scout:tiktok': ['done', 'Scout tiktok: 10 products → Approvals'], 'scout:amazon': ['failed', 'Scout amazon failed: Daily cap reached for ecom: $3.00 of $3.00.'], analyst: ['done', 'Analyst: 2/2 analyses → Approvals'], pitch: ['done', "Pick tonight's #1 product: Pocket Fabric Shaver → Approvals"], lead_filter: ['done', 'Lead Filter: 40 tagged'], content_analytics: ['done', '6 posts graded'], handoffs: ['done', 'Handoffs: 0 client wins → Content, 1 content lead → LeadFlow, 1 product verdict → Scaler.'], 'summary:ecom': ['done', 'E-commerce summary written.'], hq: ['done', 'Morning report written.'], 'class:scaler': ['done', 'Business Scaler class: 2 lessons, 1 proposal → Class notes'], 'class:ecom': ['done', 'E-commerce class: 1 lesson, 1 proposal → Class notes'], 'class:content': ['done', 'Content class: 1 lesson, 1 proposal → Class notes'], 'class:leadflow': ['done', 'LeadFlow class: 1 lesson, 1 proposal → Class notes'] };
+    return ok({
+      now: new Date().toISOString(), date: today, tz: 'America/Denver', dryRun: true,
+      secrets: Object.fromEntries(set.map((k) => [k, true])), accounts: ['instagram', 'tiktok', 'github'], socialAccounts: 2, livePostingAccounts: 0, orchestratorEnabled: true,
+      window: { start: 210, end: 420 },
+      lastRun: { date: today, plan: plan.map(([key, label, domain]) => ({ key, label, domain })), tasks: plan.map(([key], i) => ({ key, status: notes[key][0], note: notes[key][1], at: at(4 - i * 0.25) })) },
+      failed: { tasks: [{ id: 't1', what: 'Scout amazon', note: 'Daily cap reached for ecom: $3.00 of $3.00.', at: at(3.7) }], runs: [] },
+      approvals: { total: 9, money: 0, byKey: { 'ecom:product_card': 2, 'ecom:analysis': 1, 'ecom:brand_options': 1, 'marketing:class_proposal': 2, 'ecom:class_proposal': 1, 'content:class_proposal': 1, 'marketing:invoice_reminder': 1 } },
+      crons: [{ cron: '*/5 * * * *', label: 'Every 5 minutes', jobs: 'Each job in its own invocation: the overnight orchestrator (3:30–7:00 AM Denver, one step per tick), product checks, inbound wait check, publisher, flags, follow-ups, scout queue, social sync, lead engines, outreach, solo, comms, output scoring, invoice reminders, call kit (7:50 AM).', names: ['shift', 'orchestrator', 'enrich1', 'enrich2', 'enrich3', 'inbound', 'publisher', 'flags', 'followups', 'scout', 'social', 'engines', 'outreach', 'solo', 'comms', 'score', 'invoices', 'callkit'] }, { cron: '*/15 * * * *', label: 'Every 15 minutes', jobs: 'Stocks bot, daily plan, reminders, the morning digest and the daily ledger.' }],
+    });
+  }
+  // Approve / Reject / Send back on sample data: local only. The card moves
+  // in this tab's sample rows (gone on reload); no applier runs, nothing is
+  // written or sent. The answer says so, and DemoNotice shows it.
+  if (p === '/api/engine/decide') {
+    const b = (body ?? {}) as { approval_id?: string; status?: string; note?: string | null };
+    const row = demoRows('ai_approvals').find((r) => r.id === b.approval_id);
+    if (!row) return ok({ ok: false, error: 'Sample card not found.' });
+    if (row.status !== 'pending') return ok({ ok: false, error: `Already ${String(row.status).replace('_', ' ')}.` });
+    const status = b.status === 'approved' || b.status === 'killed' || b.status === 'sent_back' ? b.status : 'approved';
+    const at = new Date().toISOString();
+    Object.assign(row, { status, my_note: b.note ?? null, decided_at: at, updated_at: at });
+    const verb = status === 'approved' ? 'Approved' : status === 'killed' ? 'Rejected' : 'Sent back';
+    const message = demoDecideMessage(verb);
+    return ok({ ok: true, demo: true, type: row.type, message, applied: { note: message } });
+  }
+  // Meta ads on sample data: the draft is built from the sample product and
+  // kept in this tab only. Push stays off (no key, DRY_RUN on).
+  if (p === '/api/meta-ads/status') return ok({ hasKey: false, dryRun: true });
+  if (p === '/api/meta-ads/push') return ok({ ok: false, error: 'Push to Meta is off in the sample data (no Meta ads key, DRY_RUN on). Nothing was sent.' }, 409);
+  if (p === '/api/meta-ads/draft') {
+    const b = (body ?? {}) as { product_id?: string; client?: { client_id: string; client_name: string; product: string; price: number; unit_cost: number; ship: number } };
+    let src: AdSource | null = null;
+    if (b.product_id) {
+      const pr = demoRows('ecom_products').find((r) => r.id === b.product_id) as { id: string; name: string; sell_price: number | null; supplier_cost: number | null; detail?: Record<string, unknown> } | undefined;
+      if (!pr || pr.sell_price == null || pr.supplier_cost == null) return ok({ error: 'Save a sell price and supplier cost on the product first.' }, 400);
+      src = { kind: 'product', id: pr.id, name: pr.name, sell: Number(pr.sell_price), supplier: Number(pr.supplier_cost), ship: Number(pr.detail?.ship_cost ?? 0), angle: typeof pr.detail?.angle === 'string' ? pr.detail.angle : null, buyer: typeof pr.detail?.buyer === 'string' ? pr.detail.buyer : null };
+    } else if (b.client) src = { kind: 'client', id: b.client.client_id, name: b.client.product, business: b.client.client_name, sell: b.client.price, supplier: b.client.unit_cost, ship: b.client.ship };
+    if (!src) return ok({ error: 'Send product_id or client.' }, 400);
+    const draft = buildMetaDraft(src);
+    const at = new Date().toISOString();
+    const row = { id: `demo-meta-${Date.now().toString(36)}`, user_id: 'demo', domain: src.kind === 'product' ? 'ecom' : 'marketing', type: 'meta_ads_draft', entity_type: src.kind === 'product' ? 'ecom_product' : 'crm_client', entity_id: src.id, title: `Meta ads draft: ${draft.campaign.name}`, payload: draft, confidence: 'estimate', is_money: true, amount_usd: draft.campaign.total_budget_usd, status: 'pending', my_note: null, created_at: at, updated_at: at };
+    demoRows('ai_approvals').push(row);
+    window.dispatchEvent(new CustomEvent('mm-demo-notice', { detail: 'Draft built (sample data: kept on this screen only; nothing went to Meta).' }));
+    return ok({ ok: true, approval_id: row.id, draft });
   }
   if (p === '/api/engine/daily') {
     const s = buildSeed();

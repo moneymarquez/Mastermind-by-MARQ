@@ -71,7 +71,7 @@ export default function OfficeSection({ onRan }: { onRan: () => void }) {
       </div>
       <div>
         <div style={{ fontSize: 13, color: E.faint, marginBottom: 8 }}>Workers</div>
-        <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: 14 }}><WorkersTab onRan={refresh} /></div>
+        <div style={{ background: E.bg, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', color: E.text, padding: 14 }}><WorkersTab onRan={refresh} /></div>
       </div>
       {pick && <NodeDrawer node={pick} worker={workers.find((w) => w.id === pick.id) ?? null} runs={runs.filter((r) => r.worker_id === pick.id)} onClose={() => setPick(null)} onChanged={refresh} />}
       {floor && <OfficeView domain="ecom" onClose={() => { setFloor(false); refresh(); }} />}
@@ -139,8 +139,8 @@ function OrchestratorChat({ onDone }: { onDone: () => void }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {log.map((m, i) => (
           <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ alignSelf: 'flex-end', maxWidth: '85%', padding: '8px 12px', borderRadius: 12, background: 'var(--surface-2)', fontSize: 14 }}>{m.me}</div>
-            <div style={{ maxWidth: '90%', padding: '8px 12px', borderRadius: 12, border: '1px solid var(--border)', fontSize: 14, lineHeight: 1.5 }}>{m.reply}</div>
+            <div style={{ alignSelf: 'flex-end', maxWidth: '85%', padding: '8px 12px', borderRadius: 'var(--g-r-lg)', background: 'var(--surface-2)', fontSize: 14 }}>{m.me}</div>
+            <div style={{ maxWidth: '90%', padding: '8px 12px', borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', fontSize: 14, lineHeight: 1.5 }}>{m.reply}</div>
             {m.taskId && <Thumbs entityType="task" entityId={m.taskId} domain="ecom" compact />}
           </div>
         ))}

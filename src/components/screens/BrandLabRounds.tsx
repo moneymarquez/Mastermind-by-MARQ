@@ -26,11 +26,11 @@ const textarea: CSSProperties = {
   padding: '10px 12px', color: 'var(--text)', fontSize: 16, lineHeight: 1.5, outline: 'none', resize: 'vertical', fontFamily: 'inherit',
 };
 const primaryBtn: CSSProperties = {
-  padding: '11px 18px', borderRadius: 8, background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)',
+  padding: '11px 18px', borderRadius: 'var(--g-r-md)', background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)',
   fontWeight: 600, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center',
 };
 const ghostBtn: CSSProperties = {
-  padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border-2)', background: 'transparent',
+  padding: '8px 14px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border-2)', background: 'transparent',
   color: 'var(--text-secondary)', fontSize: 'var(--text-small)', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center',
 };
 const h: CSSProperties = { fontSize: 'var(--text-caption)', letterSpacing: 0.4, textTransform: 'uppercase', color: 'var(--text-tertiary)', fontWeight: 700, margin: '12px 0 6px' };
@@ -284,7 +284,7 @@ export default function BrandLabRounds({ brief, spec, niche, rounds, onAdd, onUp
           <input ref={fileInput} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => pickShot(e.target.files?.[0])} />
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 10, flexWrap: 'wrap' }}>
             <span style={ghostBtn} onClick={() => fileInput.current?.click()}>{shot ? 'Replace screenshot' : 'Add screenshot'}</span>
-            {shot && <img src={shot} alt="Screenshot to score" style={{ height: 44, borderRadius: 6, border: '1px solid var(--border)' }} />}
+            {shot && <img src={shot} alt="Screenshot to score" style={{ height: 44, borderRadius: 'var(--g-r-sm)', border: '1px solid var(--border)' }} />}
             {shot && <span style={{ fontSize: 'var(--text-tiny)', color: 'var(--text-tertiary)', cursor: 'pointer' }} onClick={() => setShot(null)}>remove</span>}
           </div>
           <input

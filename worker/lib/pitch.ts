@@ -10,17 +10,23 @@
 import { extractJson } from './scout';
 import { prohibitedReason } from './sites';
 import { landedCost, marginPct, testCost, fitsBudget, TEST_BUDGET_USD } from '../../src/data/ecomProducts';
+import { profitFromProduct } from '../../src/data/ecomProfit';
+import type { ProfitVerdict } from '../../src/data/ecomProfit';
 export { testCost, fitsBudget };
 
 export interface PitchRules { minProfitUsd: number; minMarginPct: number; priceMin: number; priceMax: number; testBudgetUsd: number }
 export const PITCH_RULES: PitchRules = { minProfitUsd: 10, minMarginPct: 35, priceMin: 20, priceMax: 80, testBudgetUsd: TEST_BUDGET_USD };
 
-export interface UnitMath { sell: number; supplier: number; ship: number; landed: number; profit: number; marginPct: number; breakEvenOrders: number }
+export interface UnitMath { sell: number; supplier: number; ship: number; landed: number; profit: number; marginPct: number; breakEvenOrders: number;
+  /** Contribution margin after an (estimated unless measured) ad cost per purchase. */
+  adCost: number; adCostEstimated: boolean; cmAfterAds: number; cmAfterAdsPct: number; breakEvenRoas: number | null; breakEvenCpa: number; verdict: ProfitVerdict }
 /** Landed cost uses the same formula as Product Sheets (supplier + ship + 3% fees + 7.5% returns). */
-export function unitMath(sell: number, supplier: number, ship: number, testBudget = PITCH_RULES.testBudgetUsd): UnitMath {
+export function unitMath(sell: number, supplier: number, ship: number, testBudget = PITCH_RULES.testBudgetUsd, detail?: Record<string, unknown> | null): UnitMath {
   const landed = landedCost(supplier, ship, sell);
   const profit = sell - landed;
-  return { sell, supplier, ship, landed: round(landed), profit: round(profit), marginPct: round(marginPct(sell, landed)), breakEvenOrders: profit > 0 ? Math.ceil(testBudget / profit) : Infinity };
+  const pm = profitFromProduct(sell, supplier, ship, detail);
+  return { sell, supplier, ship, landed: round(landed), profit: round(profit), marginPct: round(marginPct(sell, landed)), breakEvenOrders: profit > 0 ? Math.ceil(testBudget / profit) : Infinity,
+    adCost: pm.adCost, adCostEstimated: pm.estimated.adCost, cmAfterAds: pm.cm, cmAfterAdsPct: pm.cmPct, breakEvenRoas: Number.isFinite(pm.breakEvenRoas) ? pm.breakEvenRoas : null, breakEvenCpa: pm.breakEvenCpa, verdict: pm.verdict };
 }
 const round = (n: number) => Math.round(n * 100) / 100;
 
@@ -29,11 +35,12 @@ export interface PitchCandidate { id: string; name: string; sell_price: number |
 export function passesHardFilter(p: PitchCandidate, r: PitchRules = PITCH_RULES): { pass: boolean; reasons: string[]; math: UnitMath | null } {
   const reasons: string[] = [];
   if (p.sell_price == null || p.supplier_cost == null) return { pass: false, reasons: ['no sell price or supplier cost yet'], math: null };
-  const math = unitMath(Number(p.sell_price), Number(p.supplier_cost), Number(p.detail?.ship_cost ?? 0));
+  const math = unitMath(Number(p.sell_price), Number(p.supplier_cost), Number(p.detail?.ship_cost ?? 0), PITCH_RULES.testBudgetUsd, p.detail);
   if (math.sell < r.priceMin || math.sell > r.priceMax) reasons.push(`sells at $${math.sell.toFixed(2)}, outside $${r.priceMin}–$${r.priceMax}`);
   if (math.profit < r.minProfitUsd) reasons.push(`$${math.profit.toFixed(2)} profit per order, under $${r.minProfitUsd}`);
   if (math.marginPct < r.minMarginPct) reasons.push(`${math.marginPct.toFixed(0)}% margin, under ${r.minMarginPct}%`);
   if (!fitsBudget(p.supplier_cost, p.detail?.ship_cost)) reasons.push(`a sample + domain is $${testCost(Number(p.supplier_cost), Number(p.detail?.ship_cost ?? 0)).toFixed(2)}, over the $${r.testBudgetUsd} test budget`);
+  if (math.verdict === 'Kill') reasons.push(`Kill: ${math.cmAfterAdsPct.toFixed(0)}% margin after ads, under 10%`);
   if (p.detail?.fragile) reasons.push('fragile');
   const banned = prohibitedReason(`${p.name} ${p.category ?? ''}`);
   if (banned) reasons.push(`not allowed in the shared store: ${banned}`);
@@ -50,7 +57,9 @@ export function pickTop(products: PitchCandidate[], alreadyPitched: Set<string>,
     const f = passesHardFilter(p, r);
     if (f.pass) ok.push(p); else skipped.push({ name: p.name, why: f.reasons.join(', ') });
   }
-  ok.sort((a, b) => (Number(b.score ?? 0) - Number(a.score ?? 0)) || (Number(b.detail?.sellers ?? 0) - Number(a.detail?.sellers ?? 0)));
+  // Score first, then contribution margin after ads ($ per sale), then seller count.
+  const cm = (p: PitchCandidate) => unitMath(Number(p.sell_price), Number(p.supplier_cost), Number(p.detail?.ship_cost ?? 0), PITCH_RULES.testBudgetUsd, p.detail).cmAfterAds;
+  ok.sort((a, b) => (Number(b.score ?? 0) - Number(a.score ?? 0)) || (cm(b) - cm(a)) || (Number(b.detail?.sellers ?? 0) - Number(a.detail?.sellers ?? 0)));
   return { pick: ok[0] ?? null, considered: products.length, skipped: skipped.slice(0, 10) };
 }
 

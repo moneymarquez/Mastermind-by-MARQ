@@ -264,7 +264,7 @@ function AccountCard({ a, state, conn, onChanged }: { a: SetupEntry; state?: { c
             <div style={{ marginTop: 8, fontSize: 'var(--text-caption)', color: E.faint }}>Allow does nothing? <button type="button" disabled={!!busy} onClick={() => void connectOauth(true)} style={{ background: 'none', border: 0, padding: 0, color: E.blue, textDecoration: 'underline', cursor: 'pointer', font: 'inherit' }}>Run the redirect check</button> (first add <code>{typeof window !== 'undefined' ? window.location.origin : ''}/api/connect/oauth/echo</code> as a second redirect address in the {a.name.split(' ')[0]} app).</div>
           )}
           {a.id === 'instagram' && (
-            <div style={{ marginTop: 12, padding: 10, borderRadius: 10, border: `1px dashed ${E.border}`, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ marginTop: 12, padding: 10, borderRadius: 'var(--g-r-md)', border: `1px dashed ${E.border}`, display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div style={{ fontSize: 'var(--text-caption)', color: E.muted }}>If Allow does nothing: in the Meta app, Instagram → API setup with Instagram login → <strong>Generate token</strong> next to the account, then paste it here. Do one account at a time.</div>
               <input style={field} type="password" autoComplete="off" placeholder="Instagram access token" value={igTok} onChange={(e) => setIgTok(e.target.value)} />
               <div><button style={btn('ghost')} disabled={!!busy || igTok.trim().length < 20} onClick={connectIgToken}>{busy === 'igtoken' ? 'Checking…' : 'Connect with this token'}</button></div>

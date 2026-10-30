@@ -34,6 +34,9 @@ import ProfilesTab from './content/ProfilesTab';
 import LatestAudits from './content/LatestAudits';
 import IdeasTab from './content/IdeasTab';
 import KitsTab from './content/KitsTab';
+import TodaysPlays from './content/TodaysPlays';
+import { useSetCrumbLabel } from '../../lib/crumbLabel';
+import HandoffInbox from '../mm/HandoffInbox';
 
 type EngineTab = 'accounts' | 'profiles' | 'ideas' | 'plan' | 'studio' | 'history' | 'inspiration' | 'kits' | 'workers' | 'growth';
 const ENGINE_TABS: { id: EngineTab; label: string }[] = [
@@ -69,7 +72,7 @@ const inputStyle: CSSProperties = {
   color: 'var(--text)', fontSize: 'var(--text-body-lg)', outline: 'none',
 };
 const primaryBtn: CSSProperties = {
-  padding: '9px 18px', borderRadius: 8, background: 'var(--text)', color: 'var(--bg)',
+  padding: '9px 18px', borderRadius: 'var(--g-r-md)', background: 'var(--text)', color: 'var(--bg)',
   fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer', display: 'inline-block',
 };
 
@@ -192,8 +195,11 @@ export default function ContentCreationScreen({ section, selectedClientId, onSel
   // Content Engine (spec 07 §2): Accounts is home; Plan is the week; Studio,
   // Inspiration and the workers arrive in C3–C4. The per-client growth
   // plans that already existed keep their own tab.
-  const [tabState, setTabState] = useState<EngineTab>('accounts');
+  // The bare 'content' screen is the sidebar's "Growth plans" item (the Content portal uses content-* sections), so it opens on that tab.
+  const [tabState, setTabState] = useState<EngineTab>('growth');
   const engineTab: EngineTab = section ?? tabState;
+  // The 'content' screen keeps its own tab bar: the crumb names the tab.
+  useSetCrumbLabel('content', section ? null : ENGINE_TABS.find((x) => x.id === engineTab)?.label ?? null);
   // With a sidebar section, "open the plan" goes to the Plan screen instead of switching a tab.
   const setEngineTab = (t: EngineTab) => { if (section) nav(`content-${t}` === 'content-growth' ? 'content' : `content-${t}`); else setTabState(t); };
   const [newOpen, setNewOpen] = useState(false);
@@ -233,6 +239,8 @@ export default function ContentCreationScreen({ section, selectedClientId, onSel
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
         <EngineBar domain="content" onDecided={() => { void inspiration.reload(); void clips.reload(); void latestAudits.reload(); void contentItems.reload(); void social.reload(); }} />
       </div>
+      {engineTab === 'accounts' && <HandoffInbox kinds={['ecom_winner_to_content', 'complaints_to_content', 'scaler_win_to_content']} title="For Content, from the other bots" />}
+      {engineTab === 'accounts' && <TodaysPlays inspiration={inspiration} accounts={social} items={contentItems} />}
       {engineTab === 'accounts' && <ContentOverview accounts={social.accounts} items={contentItems.items} posts={social.posts} onOpenPlan={() => setEngineTab('plan')} />}
       <div>
       {officeOpen && <OfficeView domain="content" onClose={() => setOfficeOpen(false)} />}

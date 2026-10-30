@@ -275,7 +275,7 @@ function Review({ loading, draft, setDraft, questions, notes, members, canAssign
                     {t.assignee_member_id === null && isLead ? 'You' : t.assignee_name}{t.confidence === 'low' ? '?' : ''}
                   </button>
                   <button type="button" className="dp-datechip" aria-label={`Due ${dueLabel(t.due_date)} — tap to change`} onClick={() => setPicker({ kind: 'when', key: t.key })}>
-                    <span aria-hidden="true">📅</span>{dueLabel(t.due_date)}
+                    {dueLabel(t.due_date)}
                   </button>
                 </div>
                 {t.source_quote && <div className="dp-quote">“{t.source_quote}”</div>}
@@ -293,7 +293,7 @@ function Review({ loading, draft, setDraft, questions, notes, members, canAssign
                 const opts = (q.options.length ? q.options : [...members.slice(0, 3).map((m) => m.name), 'me']).filter((o, i, a) => a.indexOf(o) === i);
                 return (
                   <div key={t.key} style={{ marginBottom: 12 }}>
-                    <div className="q"><span aria-hidden="true">❓ </span>{q.text}</div>
+                    <div className="q">{q.text}</div>
                     <div className="dp-opts opts">
                       {opts.map((o) => { const m = nameFor(o); if (m === undefined) return null; return <button key={o} type="button" className="dp-btn" onClick={() => assign(t.key, m)}>{m ? m.name : 'Me'}</button>; })}
                       <button type="button" className="dp-btn" onClick={() => setPicker({ kind: 'who', key: t.key })}>Someone else…</button>
@@ -306,7 +306,7 @@ function Review({ loading, draft, setDraft, questions, notes, members, canAssign
 
           {!loading && notes.length > 0 && (
             <div className="dp-notes">
-              <button type="button" className="dp-more" aria-expanded={showNotes} onClick={() => setShowNotes((x) => !x)}><span aria-hidden="true">📝</span> {notes.length} note{notes.length === 1 ? '' : 's'} saved {showNotes ? '▾' : '▸'}</button>
+              <button type="button" className="dp-more" aria-expanded={showNotes} onClick={() => setShowNotes((x) => !x)}>{notes.length} note{notes.length === 1 ? '' : 's'} saved {showNotes ? '▾' : '▸'}</button>
               {showNotes && <ul style={{ margin: '4px 0 0', paddingLeft: 20 }}>{notes.map((n, i) => <li key={i} style={{ marginTop: 4 }}>{n}</li>)}</ul>}
             </div>
           )}

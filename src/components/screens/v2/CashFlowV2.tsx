@@ -73,12 +73,12 @@ export default function CashFlowV2() {
   const upcoming = f.days.slice(0, 31).flatMap((d) => d.events);
 
   const seg = (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)', maxWidth: phone ? undefined : 360 }}>
-      {([30, 60, 90] as Horizon[]).map((x) => <button key={x} aria-pressed={h === x} onClick={() => setH(x)} style={{ padding: '8px 0', borderRadius: 999, border: 0, fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', background: h === x ? 'var(--text)' : 'transparent', color: h === x ? 'var(--bg)' : 'var(--text-secondary)' }}>{x} days</button>)}
+    <div className="g-seg g-seg--fill" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', maxWidth: phone ? undefined : 360 }}>
+      {([30, 60, 90] as Horizon[]).map((x) => <button key={x} aria-pressed={h === x} onClick={() => setH(x)} className="g-pill">{x} days</button>)}
     </div>
   );
   const hero = (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
       <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Projected balance on {shortDate(end.date)}</span>
       <div style={{ display: 'flex', alignItems: 'baseline', color: end.balance < 0 ? 'var(--danger)' : 'var(--text)', fontSize: phone ? 40 : 46, fontWeight: 600, letterSpacing: '-0.04em', lineHeight: 1 }}>{whole(end.balance)}<span style={{ fontSize: 22, color: 'var(--text-tertiary)' }}>{cents(end.balance)}</span></div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -94,7 +94,7 @@ export default function CashFlowV2() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {scenarios.map((s) => {
           const on = sc === s.id;
-          return <button key={s.id} aria-pressed={on} onClick={() => setSc(on ? null : s.id)} style={{ padding: '10px 12px', borderRadius: 8, textAlign: 'left', background: on ? 'var(--text)' : 'transparent', color: on ? 'var(--bg)' : 'var(--text)', border: on ? '1px solid var(--text)' : '1px solid var(--border)', fontSize: 14, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>{s.q}</button>;
+          return <button key={s.id} aria-pressed={on} onClick={() => setSc(on ? null : s.id)} style={{ padding: '10px 12px', borderRadius: 'var(--g-r-md)', textAlign: 'left', background: on ? 'var(--text)' : 'transparent', color: on ? 'var(--bg)' : 'var(--text)', border: on ? '1px solid var(--text)' : '1px solid var(--border)', fontSize: 14, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>{s.q}</button>;
         })}
       </div>
       {sc === 'income' && <Field l="Extra income a month"><input inputMode="decimal" value={extra} onChange={(e) => setExtra(e.target.value)} style={field} /></Field>}
@@ -125,7 +125,7 @@ export default function CashFlowV2() {
     </Card>
   );
   const shortfall = f.firstShortfall && f.firstShortfall.date <= end.date && (
-    <section style={{ background: 'color-mix(in srgb, var(--danger) 8%, var(--surface))', border: '1px solid color-mix(in srgb, var(--danger) 40%, var(--border))', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <section style={{ background: 'color-mix(in srgb, var(--danger) 8%, var(--surface))', border: '1px solid color-mix(in srgb, var(--danger) 40%, var(--border))', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
       <span style={{ alignSelf: 'flex-start' }}><Chip k="bad">Below $0 on {shortDate(f.firstShortfall.date)}</Chip></span>
       <span style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--text-secondary)' }}>Biggest bills before then: {f.days.filter((d) => d.date <= f.firstShortfall!.date).flatMap((d) => d.events).filter((e) => e.amount < 0).sort((a, b) => a.amount - b.amount).slice(0, 3).map((e) => `${cleanLabel(e.label)} ${usd(-e.amount)} on ${shortDate(e.date)}`).join(', ') || 'everyday spending'}.</span>
     </section>

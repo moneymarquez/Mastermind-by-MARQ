@@ -18,7 +18,7 @@ const SAMPLES: { label: string; text: string }[] = [
 ];
 const STATUS_K: Record<OutreachRow['status'], 'good' | 'warn' | 'neutral' | 'accent' | 'bad'> = { drafted: 'neutral', approved: 'accent', sent: 'good', replied: 'good', call_list: 'warn', booked: 'good', closed: 'neutral', dnc: 'bad' };
 const btn = { height: 32, fontSize: 13 } as const;
-const inp: React.CSSProperties = { padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 15, width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' };
+const inp: React.CSSProperties = { padding: '8px 10px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 15, width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' };
 
 function EmailRow({ o, reload, setMsg }: { o: OutreachRow; reload: () => void; setMsg: (m: string) => void }) {
   const [open, setOpen] = useState(false);
@@ -74,7 +74,7 @@ function ReplyCard({ r, biz, reload, setMsg }: { r: ReplyRow; biz: string; reloa
         </div>
       )}
       <label style={{ fontSize: 12.5, color: 'var(--text-tertiary)', display: 'flex', gap: 8, alignItems: 'center' }}>Wrong read?
-        <select value={cls} onChange={(e) => void call('reply-correct', { id: r.id, to: e.target.value }, 'Thanks. That correction teaches the classifier.')} style={{ height: 30, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)' }}>
+        <select value={cls} onChange={(e) => void call('reply-correct', { id: r.id, to: e.target.value }, 'Thanks. That correction teaches the classifier.')} style={{ height: 30, borderRadius: 'var(--g-r-sm)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)' }}>
           {Object.entries(CLASS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
       </label>

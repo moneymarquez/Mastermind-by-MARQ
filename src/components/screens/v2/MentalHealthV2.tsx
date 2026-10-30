@@ -68,7 +68,7 @@ export default function MentalHealthV2() {
           const on = mood === s.m;
           return (
             <button key={s.m} role="radio" aria-checked={on} onClick={() => { setMood(s.m); setSaved(false); }}
-              style={{ height: 58, borderRadius: 10, background: on ? 'color-mix(in srgb, var(--accent) 14%, var(--surface))' : 'var(--surface-3)', border: on ? '1.5px solid var(--accent)' : '1.5px solid transparent', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, cursor: 'pointer', fontFamily: 'inherit' }}>
+              style={{ height: 58, borderRadius: 'var(--g-r-md)', background: on ? 'color-mix(in srgb, var(--accent) 14%, var(--surface))' : 'var(--surface-3)', border: on ? '1.5px solid var(--accent)' : '1.5px solid transparent', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, cursor: 'pointer', fontFamily: 'inherit' }}>
               <span style={{ color: 'var(--text)', fontSize: 17, fontWeight: 600 }}>{i + 1}</span>
               <span style={{ fontSize: 10.5, fontWeight: 500, color: 'var(--text-tertiary)' }}>{s.l}</span>
             </button>
@@ -78,7 +78,7 @@ export default function MentalHealthV2() {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {TAGS.map((t) => {
           const on = tags.includes(t);
-          return <button key={t} aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== t) : [...tags, t])} style={{ padding: '6px 11px', borderRadius: 999, background: on ? 'var(--text)' : 'transparent', color: on ? 'var(--bg)' : 'var(--text)', border: on ? '1px solid var(--text)' : '1px solid var(--border)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>{t}</button>;
+          return <button key={t} aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== t) : [...tags, t])} className="g-pill">{t}</button>;
         })}
       </div>
       {mood && (
@@ -118,7 +118,7 @@ export default function MentalHealthV2() {
   const reflection = ai === false
     ? <AiOffCard text="AI reflections are off. Check-ins and your mood chart still work." />
     : latestInsight && (
-      <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 18 : 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
         <NovaMark title="Reflection" />
         <p style={{ margin: 0, fontSize: 15, lineHeight: 1.45, color: 'var(--text)' }}>{latestInsight.ai_insight}</p>
         <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)' }}>On your {LABEL[latestInsight.mood].toLowerCase()} check-in, {shortDate(ymd(new Date(latestInsight.created_at)))}</span>

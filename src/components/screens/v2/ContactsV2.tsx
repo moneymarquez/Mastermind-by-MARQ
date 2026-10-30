@@ -73,12 +73,12 @@ export default function ContactsV2() {
     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, borderRight: phone ? 'none' : '1px solid var(--grid)' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', flex: 'none' }}>
         <div style={{ display: 'flex', gap: 8 }}>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, business, phone" aria-label="Search contacts" style={{ flex: 1, minWidth: 0, height: 36, padding: '0 10px', borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit' }} />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, business, phone" aria-label="Search contacts" style={{ flex: 1, minWidth: 0, height: 36, padding: '0 10px', borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit' }} />
           {!phone && <button className="mm-btn mm-btn--primary" style={{ height: 36, fontSize: 13 }} onClick={() => setAdding(true)}>Contact</button>}
         </div>
         <ListFilter api={people} value={listId} onChange={setListId} />
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {(['all', 'dialing', 'scalez', 'manual'] as const).map((s) => <button key={s} aria-pressed={src === s} onClick={() => setSrc(s)} style={{ padding: '4px 10px', borderRadius: 999, border: src === s ? '1px solid var(--text)' : '1px solid var(--border)', background: src === s ? 'var(--text)' : 'transparent', color: src === s ? 'var(--bg)' : 'var(--text-secondary)', fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>{s === 'all' ? `All ${C.contacts.length}` : SOURCE[s]}</button>)}
+        <div className="g-seg" role="group" aria-label="Source">
+          {(['all', 'dialing', 'scalez', 'manual'] as const).map((s) => <button key={s} aria-pressed={src === s} onClick={() => setSrc(s)} className="g-pill">{s === 'all' ? `All ${C.contacts.length}` : SOURCE[s]}</button>)}
         </div>
       </div>
       <div className="mm-scroll-y" style={{ flex: 1, minHeight: 0 }}>
@@ -104,10 +104,10 @@ export default function ContactsV2() {
   return (
     <Page title="Contacts" sub={`${C.contacts.length} ${C.contacts.length === 1 ? 'contact' : 'contacts'}`} fab={phone ? { t: 'Contact', onClick: () => setAdding(true) } : undefined}>
       {phone ? (
-        <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>{cur ? record : listPane}</section>
+        <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>{cur ? record : listPane}</section>
       ) : (
         <>
-          <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', height: device === 'desktop' ? 680 : 620, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', minWidth: 0 }}>
+          <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', height: device === 'desktop' ? 680 : 620, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', minWidth: 0 }}>
             {listPane}
             {record ?? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', fontSize: 14 }}>Pick a contact on the left.</div>}
           </section>
@@ -147,7 +147,7 @@ function Record({ c, chip, onBack, update, remove, log, people }: { c: Contact; 
         {act('Call', tel ? `tel:${tel}` : null, true)}{act('Text', tel ? `sms:${tel}` : null)}{act('Email', c.email ? `mailto:${c.email}` : null)}
         <button className="mm-btn" style={{ height: 38, fontSize: 13.5, color: 'var(--danger)' }} onClick={remove}>Delete</button>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: onBack ? 'minmax(0,1fr)' : 'repeat(2,minmax(0,1fr))', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: onBack ? 'minmax(0,1fr)' : 'repeat(2,minmax(0,1fr))', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>
         {fields.map((f, i) => <EditCell key={f.k} f={f} value={val(f)} onSave={(v) => save(f, v)} first={onBack ? i === 0 : i < 2} odd={!onBack && i % 2 === 1} />)}
       </div>
       {people && <ContactPeople api={people} contact={c as never} />}
@@ -182,5 +182,5 @@ function EditCell({ f, value, onSave, first, odd }: { f: F; value: string; onSav
 function NoteBox({ value, onSave }: { value: string; onSave: (v: string) => void }) {
   const [v, setV] = useState(value);
   useEffect(() => setV(value), [value]);
-  return <textarea value={v} onChange={(e) => setV(e.target.value)} onBlur={() => v !== value && onSave(v)} placeholder="Anything worth remembering before the next call" style={{ minHeight: 80, padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 15, lineHeight: 1.45, fontFamily: 'inherit', resize: 'vertical' }} />;
+  return <textarea value={v} onChange={(e) => setV(e.target.value)} onBlur={() => v !== value && onSave(v)} placeholder="Anything worth remembering before the next call" style={{ minHeight: 80, padding: '10px 12px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 15, lineHeight: 1.45, fontFamily: 'inherit', resize: 'vertical' }} />;
 }

@@ -34,26 +34,45 @@ test('portals: access is derived from canAccess only', async () => {
   assert.equal(portalOfRoute('account-settings'), null);
   assert.equal(portalOfRoute('client-crm'), 'madeby');
 
-  // Owner nav per portal holds only that portal's modules.
+  // Owner nav per portal holds only that portal's modules (plus Made by's
+  // journey shortcuts: Contracts, Marketing, Growth plans — alsoIn).
   const madeby = shellGroups(all, true, {}, { portal: 'madeby' }).flatMap((g) => g.items.map((i) => i.id));
-  assert.ok(madeby.includes('client-crm') && !madeby.includes('budgeting') && !madeby.includes('content'));
+  assert.ok(madeby.includes('client-crm') && !madeby.includes('budgeting') && !madeby.includes('swipe-file'));
   const mm = shellGroups(all, true, {}, { portal: 'masterminds' }).flatMap((g) => g.items.map((i) => i.id));
   assert.ok(mm.includes('budgeting') && !mm.includes('client-crm') && !mm.includes('ecommerce'));
 
-  // Made by: Clients (winning and keeping clients), then Scaling (delivery, from Start).
+  // Made by: Clients, the eight blueprint steps, with LeadFlow in Clients, then Invoicing pinned.
   const mbGroups = shellGroups(all, true, {}, { portal: 'madeby' });
-  const clients = mbGroups.find((g) => g.title === 'Clients')!.items.map((i) => i.id);
-  assert.deepEqual([...clients].sort(), ['client-crm', 'client-modules', 'comms', 'lead-engines', 'leadflow']);
-  const scaling = mbGroups.find((g) => g.title === 'Scaling')!.items.map((i) => i.id);
-  for (const k of ['scaling-start', 'brand-lab', 'delivery', 'invoicing']) assert.ok(scaling.includes(k), k);
-  assert.ok(!madeby.includes('hq') && !madeby.includes('ledger') && !madeby.includes('marketing'));
+  assert.deepEqual(mbGroups.map((g) => g.title), ['Clients', '1 · Diagnose', '2 · Win', '3 · Baseline', '4 · Stop the Leaks', '5 · Capture Demand', '6 · Keep & Raise', '7 · Protect the Business', '8 · Prove & Renew', 'Pinned']);
+  const mb = (t: string) => mbGroups.find((g) => g.title === t)!.items.map((i) => i.id);
+  assert.deepEqual(mb('Clients'), ['madeby-board', 'leadflow', 'client-crm']);
+  assert.deepEqual(mb('1 · Diagnose'), ['audits']);
+  assert.deepEqual(mb('2 · Win'), ['support-inbox']);
+  assert.deepEqual(mb('3 · Baseline'), ['contracts']);
+  assert.deepEqual(mb('4 · Stop the Leaks'), ['scaling-planner', 'idea-maker']);
+  assert.deepEqual(mb('5 · Capture Demand'), ['brand-lab', 'content']);
+  assert.deepEqual(mb('6 · Keep & Raise'), ['marketing']);
+  assert.deepEqual(mb('7 · Protect the Business'), []);
+  assert.equal(mbGroups.find((g) => g.title === '7 · Protect the Business')!.link?.id, 'madeby-board');
+  assert.deepEqual(mb('8 · Prove & Renew'), ['delivery']);
+  assert.deepEqual(mb('Pinned'), ['invoicing']);
+  assert.ok(mbGroups.find((g) => g.title === 'Pinned')!.pinned);
+  // Folded in or behind a button: no rows of their own any more.
+  for (const k of ['lead-engines', 'call-list', 'client-modules', 'scaling-start', 'website', 'comms']) assert.ok(!madeby.includes(k), k);
+  assert.ok(!madeby.includes('hq') && !madeby.includes('ledger'));
+  // Shortcuts keep their home portal (deep links), but open in place inside Made by.
+  const { routeAlsoIn, portalLanding } = await import('../src/portals.config');
+  assert.equal(portalOfRoute('contracts'), 'orchestrator');
+  assert.ok(routeAlsoIn('contracts', 'madeby') && routeAlsoIn('marketing', 'madeby') && !routeAlsoIn('ledger', 'madeby'));
+  assert.equal(portalLanding('madeby'), 'madeby-board');
+  assert.equal(portalOfRoute('madeby-board'), 'madeby');
   // Orchestrator: one group holding Marq's own-business tools.
   const orch = shellGroups(all, true, {}, { portal: 'orchestrator' });
   const ids = (t: string) => orch.find((g) => g.title === t)!.items.map((i) => i.id);
   assert.deepEqual(orch.map((g) => g.title), ['Overview', 'Command', 'Financial', 'Growth', 'GovCon']);
   assert.deepEqual(ids('GovCon'), ['govcon']);
   assert.deepEqual(ids('Overview'), ['orchestrator']);
-  assert.deepEqual(ids('Command'), ['hq', 'classroom', 'ecom-office']);
+  assert.deepEqual(ids('Command'), ['hq', 'system-health', 'class-notes', 'classroom', 'ecom-office']);
   assert.deepEqual([...ids('Financial')].sort(), ['contracts', 'coupons', 'ledger']);
   assert.deepEqual([...ids('Growth')].sort(), ['marketing', 'waitlist']);
 

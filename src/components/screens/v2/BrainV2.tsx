@@ -91,7 +91,7 @@ export default function BrainV2() {
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)' }}>
         {(['Runs hot', 'Runs steady', 'Underused'] as const).map((l) => <span key={l} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: TONE[l] }} />{l}</span>)}
       </div>
-      <div key={region} className="mm-rise" style={{ padding: 14, borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', borderLeft: `3px solid ${TONE[rr.label]}`, display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div key={region} className="mm-rise" style={{ padding: 14, borderRadius: 'var(--g-r-lg)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderLeft: `3px solid ${TONE[rr.label]}`, display: 'flex', flexDirection: 'column', gap: 6 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
           <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>{reg.name}</span>
           <span style={{ fontSize: 12, fontWeight: 600, color: TONE[rr.label] }}>{rr.label} · {rr.level} of 5</span>
@@ -105,9 +105,9 @@ export default function BrainV2() {
   const checkin = (
     <Card title="Calling hour check-in" meta="Today" wide={!phone}>
       <span style={{ fontSize: 15, color: 'var(--text-secondary)' }}>Did you make your calling hour?</span>
-      <div role="radiogroup" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+      <div role="radiogroup" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 2, padding: 3, borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
         {['Yes', 'Partly', 'No'].map((o) => (
-          <button key={o} role="radio" aria-checked={answer === o} onClick={() => void b.saveCheckin({ date: today, score: o === 'Yes' ? 5 : o === 'Partly' ? 3 : 1, note: todayC?.note ?? null, hour_happened: o !== 'No', dials: callsToday })} style={{ padding: '8px 0', borderRadius: 999, fontSize: 13, fontWeight: 500, border: 0, cursor: 'pointer', fontFamily: 'inherit', background: answer === o ? 'var(--text)' : 'transparent', color: answer === o ? 'var(--bg)' : 'var(--text-secondary)' }}>{o}</button>
+          <button key={o} role="radio" aria-checked={answer === o} onClick={() => void b.saveCheckin({ date: today, score: o === 'Yes' ? 5 : o === 'Partly' ? 3 : 1, note: todayC?.note ?? null, hour_happened: o !== 'No', dials: callsToday })} style={{ padding: '8px 0', borderRadius: 'var(--g-r-sm)', fontSize: 13, fontWeight: 500, border: 0, cursor: 'pointer', fontFamily: 'inherit', background: answer === o ? 'var(--text)' : 'transparent', color: answer === o ? 'var(--bg)' : 'var(--text-secondary)' }}>{o}</button>
         ))}
       </div>
       <div><Chip k={made14 >= 10 ? 'good' : 'neutral'}>{made14} of the last 14 days</Chip></div>

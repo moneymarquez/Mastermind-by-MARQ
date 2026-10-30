@@ -83,7 +83,7 @@ export default function DialingV2() {
   ];
 
   const hero = (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
       <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Calls today</span>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, color: 'var(--text)', fontSize: 46, fontWeight: 600, letterSpacing: '-0.04em', lineHeight: 1 }}>{calls}<span style={{ fontSize: 20, color: 'var(--text-tertiary)', letterSpacing: '-0.02em' }}>of {goal} goal</span></div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -177,7 +177,7 @@ function CallSheet({ c, chip, onClose, onLog, left, pitch }: { c: Contact; chip:
       </div>
       {c.phone && <a className="mm-btn mm-btn--primary" href={`tel:${c.phone.replace(/[^\d+]/g, '')}`} style={{ height: 52, fontSize: 16, textDecoration: 'none' }}>Call {c.phone}</a>}
       {(c.notes || appt) && <Card title="Notes for this call" meta="From Contacts">{appt && <span style={{ fontSize: 14, color: 'var(--text)' }}>Appointment: {new Date(appt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>}{c.notes && <p style={{ margin: 0, fontSize: 14, lineHeight: 1.45, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>{c.notes}</p>}</Card>}
-      {pitch.trim() && <details style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px' }}><summary style={{ cursor: 'pointer', fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>Your pitch</summary><p style={{ margin: '10px 0 0', fontSize: 14, lineHeight: 1.5, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>{pitch}</p></details>}
+      {pitch.trim() && <details style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: '12px 14px' }}><summary style={{ cursor: 'pointer', fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>Your pitch</summary><p style={{ margin: '10px 0 0', fontSize: 14, lineHeight: 1.5, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>{pitch}</p></details>}
       <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Log outcome</span>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         {OUTCOME_BTNS.map((b) => <button key={b.o} className={b.primary ? 'mm-btn mm-btn--primary' : 'mm-btn'} style={{ height: 52, fontSize: 15, fontWeight: b.primary ? 600 : 500 }} onClick={() => onLog(b.o)}>{b.t}</button>)}

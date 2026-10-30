@@ -91,7 +91,7 @@ export default function StudioTab({ api, accounts, items }: { api: ReturnType<ty
           </select>
         </div>
         <input ref={fileRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void upload(f); }} />
-        <button style={{ ...btn('primary'), marginTop: 10, minHeight: 44 }} disabled={!!busy} onClick={() => fileRef.current?.click()}>{busy || '🎬 Upload a clip'}</button>
+        <button style={{ ...btn('primary'), marginTop: 10, minHeight: 44 }} disabled={!!busy} onClick={() => fileRef.current?.click()}>{busy || 'Upload a clip'}</button>
         <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 6, lineHeight: 1.45 }}>Goes to your private folder (only you can open it). The audio is pulled out on this device and transcribed; the video never leaves storage. Up to 500 MB; the first {MAX_TRANSCRIBE_S / 60} minutes are transcribed.</div>
         {err && <div style={{ fontSize: 'var(--text-caption)', color: E.amber, marginTop: 6 }}>{err}</div>}
       </div>
@@ -175,8 +175,8 @@ function ClipCard({ clip: c, open, onToggle, api, accounts, items }: { clip: Cli
           {!c.storage_path ? <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>No video file on this clip — the edit below is all that's saved.</div> : plan ? <SideBySide src={src} plan={plan} /> : src && <video src={src} controls playsInline preload="metadata" style={{ width: '100%', maxHeight: 420, borderRadius: 'var(--radius-sm)', background: '#000' }} />}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
             {!hasTranscript && <button style={btn('primary')} disabled={!!busy} onClick={retranscribe}>{busy || 'Transcribe'}</button>}
-            {hasTranscript && !pending && <button style={btn(plan ? 'ghost' : 'primary')} disabled={!!busy || c.status === 'editing'} onClick={cut}>{busy || (plan ? 'Re-cut' : '✂️ Cut it')}</button>}
-            {c.status === 'approved' && c.edit_plan && c.storage_path && <button style={btn(c.rendered_path ? 'ghost' : 'primary')} disabled={!!busy || c.render_status === 'rendering'} onClick={render}>{c.render_status === 'rendering' ? 'Rendering…' : c.rendered_path ? 'Render again' : '🎬 Render the edit'}</button>}
+            {hasTranscript && !pending && <button style={btn(plan ? 'ghost' : 'primary')} disabled={!!busy || c.status === 'editing'} onClick={cut}>{busy || (plan ? 'Re-cut' : 'Cut it')}</button>}
+            {c.status === 'approved' && c.edit_plan && c.storage_path && <button style={btn(c.rendered_path ? 'ghost' : 'primary')} disabled={!!busy || c.render_status === 'rendering'} onClick={render}>{c.render_status === 'rendering' ? 'Rendering…' : c.rendered_path ? 'Render again' : 'Render the edit'}</button>}
             {c.rendered_path && <Badge color={E.green}>Rendered: the Publisher posts this cut</Badge>}
             {c.render_status === 'failed' && c.render_error && <span style={{ fontSize: 'var(--text-caption)', color: E.red }}>{c.render_error}</span>}
             <button style={{ ...btn('ghost'), marginLeft: 'auto' }} onClick={async () => { if (await askConfirm('Delete this clip and its video?')) await api.remove(c); }}>Delete</button>
@@ -269,8 +269,8 @@ function EditedPlayer({ src, plan }: { src: string; plan: ClipPlan }) {
   return (
     <div style={frame}>
       <video ref={ref} src={src} playsInline preload="metadata" onTimeUpdate={onTime} onPause={() => setPlaying(false)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-      {plan.on_screen_text && playing && idx.current === 0 && <div style={{ position: 'absolute', top: '9%', left: '6%', right: '6%', textAlign: 'center', color: '#fff', fontWeight: 800, fontSize: 'clamp(14px, 4.5vw, 20px)', textShadow: '0 2px 6px rgba(0,0,0,.8)' }}>{plan.on_screen_text}</div>}
-      {caption && playing && <div style={{ position: 'absolute', bottom: '18%', left: '8%', right: '8%', textAlign: 'center' }}><span style={{ background: 'rgba(0,0,0,.72)', color: '#fff', fontWeight: 700, padding: '4px 8px', borderRadius: 6, fontSize: 'clamp(13px, 4vw, 18px)', lineHeight: 1.6, boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone' }}>{caption}</span></div>}
+      {plan.on_screen_text && playing && idx.current === 0 && <div style={{ position: 'absolute', top: '9%', left: '6%', right: '6%', textAlign: 'center', color: '#fff', fontWeight: 700, fontSize: 'clamp(14px, 4.5vw, 20px)', textShadow: '0 2px 6px rgba(0,0,0,.8)' }}>{plan.on_screen_text}</div>}
+      {caption && playing && <div style={{ position: 'absolute', bottom: '18%', left: '8%', right: '8%', textAlign: 'center' }}><span style={{ background: 'rgba(0,0,0,.72)', color: '#fff', fontWeight: 700, padding: '4px 8px', borderRadius: 'var(--g-r-sm)', fontSize: 'clamp(13px, 4vw, 18px)', lineHeight: 1.6, boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone' }}>{caption}</span></div>}
       {!playing && <button onClick={play} aria-label="Play the edit" style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.35)', border: 0, color: '#fff', fontSize: 40, cursor: 'pointer' }}>▶</button>}
     </div>
   );

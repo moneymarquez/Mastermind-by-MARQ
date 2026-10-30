@@ -31,6 +31,14 @@ import type { ArchiveEnv } from './handlers/archive';
 import type { GovconEnv } from './handlers/govcon';
 import type { EnginesEnv } from './handlers/leadEngines';
 import { outreachRoute, bookRoute, runOutreachTick } from './handlers/outreach';
+import { callKitRoute } from './handlers/callKit';
+import type { CallKitEnv } from './handlers/callKit';
+import { runCallKitTick } from './lib/callKit';
+import { systemHealthRoute } from './handlers/systemHealth';
+import type { HealthEnv } from './handlers/systemHealth';
+import { metaAdsRoute } from './handlers/metaAds';
+import type { MetaAdsEnv } from './handlers/metaAds';
+import { isDryRun } from './lib/dryRun';
 import type { OutreachRouteEnv } from './handlers/outreach';
 import { saveBrokerKeys, brokerKeysStatus } from './handlers/broker-keys';
 import { stocksAccount } from './handlers/stocks-account';
@@ -100,7 +108,7 @@ import { dispatchExtract, dispatchTranscribe, dispatchNotify, dispatchNudge, dis
 import { accountRoute } from './handlers/account';
 import type { SetupEnv } from './handlers/setup';
 
-interface Env extends StocksEnv, LeadflowEnv, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv, DispatchEnv, ContentEnv, InboxEnv, HqEnv, SmsEnv, EcomEnv, ContentOctEnv, SoloEnv, MadebyRouteEnv {
+interface Env extends StocksEnv, Omit<LeadflowEnv, 'SUPABASE_SERVICE_ROLE_KEY'>, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv, DispatchEnv, ContentEnv, InboxEnv, HqEnv, SmsEnv, EcomEnv, ContentOctEnv, SoloEnv, MadebyRouteEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
   /** Service binding to this same Worker (wrangler.jsonc "services"): each timer job runs as its own invocation. */
   SELF?: { fetch: (request: Request) => Promise<Response> };
@@ -136,6 +144,8 @@ function tickJobs(env: Env): Record<string, () => Promise<unknown>> {
     // Scores for new AI outputs (Logic / Trust / On-target), 2 per run in its own invocation.
     score: () => runScoreTick(env.ANTHROPIC_API_KEY, new SbClient(env), 2).catch(log('score tick')),
     invoices: () => runInvoiceTick(new SbClient(env)).catch(log('invoice tick')),
+    // Cold-call kit: today's ranked call list, built once from 7:50 AM Denver. Reads only; sends nothing.
+    callkit: () => runCallKitTick(new SbClient(env), { testMode: isDryRun(env as never) }).catch(log('call kit tick')),
   });
   return jobs;
 }
@@ -169,6 +179,11 @@ export default {
     if (url.pathname === '/api/daily-plan/today') return dailyPlanToday(request, env);
 
     if (url.pathname === '/api/leadflow/leads') return leadflowLeads(request, env);
+    if (url.pathname === '/api/leadflow/call-kit') return callKitRoute(request, env as unknown as CallKitEnv);
+    // System Health: DRY_RUN, which keys are set (presence only), last night's run, failures, approvals, timers.
+    // Meta ads: drafts only; push is gated and not built (never calls Meta).
+    if (url.pathname.startsWith('/api/meta-ads/')) return metaAdsRoute(request, env as unknown as MetaAdsEnv, url.pathname);
+    if (url.pathname === '/api/system/health') return systemHealthRoute(request, env as unknown as HealthEnv, Object.keys(tickJobs(env)));
     // Before the /leads/:id match below, which would otherwise take "bulk"
     // for a lead id and PATCH a row that doesn't exist.
     if (url.pathname === '/api/leadflow/find') return leadflowFind(request, env);

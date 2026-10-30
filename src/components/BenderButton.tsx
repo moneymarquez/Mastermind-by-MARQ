@@ -36,8 +36,8 @@ export default function BenderButton({ activeBender, onStart, onEnd }: Props) {
   const pillStyle: CSSProperties = {
     display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 'var(--radius-pill)',
     fontSize: 'var(--text-caption)', fontWeight: 600, cursor: 'pointer',
-    background: activeBender ? '#3a2412' : 'var(--surface)',
-    border: `1px solid ${activeBender ? '#B7690C' : 'var(--border)'}`,
+    background: activeBender ? 'var(--g-warning-soft)' : 'var(--surface)',
+    border: `1px solid ${activeBender ? 'var(--g-warning)' : 'var(--border)'}`,
     color: activeBender ? 'var(--warning)' : 'var(--text-secondary)',
   };
 
@@ -93,7 +93,7 @@ export default function BenderButton({ activeBender, onStart, onEnd }: Props) {
                     style={{ background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)', padding: '9px 12px', color: 'var(--text)', fontSize: 'var(--text-body)', outline: 'none', resize: 'none', fontFamily: 'inherit' }}
                   />
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--text-body)', color: 'var(--text-quaternary)', cursor: 'pointer' }} onClick={() => setTraveling((v) => !v)}>
-                    <div style={{ width: 18, height: 18, borderRadius: 5, border: `1px solid ${traveling ? 'var(--text)' : 'var(--border-2)'}`, background: traveling ? 'var(--text)' : 'transparent' }} />
+                    <div style={{ width: 18, height: 18, borderRadius: 'var(--g-r-xs)', border: `1px solid ${traveling ? 'var(--text)' : 'var(--border-2)'}`, background: traveling ? 'var(--text)' : 'transparent' }} />
                     Traveling
                   </div>
                 </div>

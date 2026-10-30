@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { Brand, Health } from '../../../data/ecom';
 import { STEPS, doneSteps, nextStep, nextAction, deriveHealth, money, ago } from '../../../data/ecom';
 import type { ClientListItem } from '../../../data/useClients';
-import { E, HealthBadge, Badge, ProgressRing, Pill, TeachingEmpty, Drawer, btn, field, label, tint } from './ecomShared';
+import { E, HealthBadge, Badge, ProgressRing, Pill, Seg, TeachingEmpty, Drawer, btn, field, label, tint } from './ecomShared';
 import BrandDetail from './BrandDetail';
 import type { useEcomBrands } from '../../../data/useEcom';
 
@@ -45,7 +45,7 @@ export default function BrandsTab({ api, clients, search, openBrandId, onOpenBra
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {(['all', 'mine', 'client'] as Filter[]).map((f) => <Pill key={f} active={filter === f} onClick={() => setFilter(f)}>{f === 'all' ? 'All' : f === 'mine' ? 'Mine' : 'Client'}</Pill>)}
+          <Seg label="Owner filter">{(['all', 'mine', 'client'] as Filter[]).map((f) => <Pill key={f} active={filter === f} onClick={() => setFilter(f)}>{f === 'all' ? 'All' : f === 'mine' ? 'Mine' : 'Client'}</Pill>)}</Seg>
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           <span style={label}>Sort</span>
@@ -89,8 +89,8 @@ function BrandCard({ b, health, orders, products, clientName, onOpen }: { b: Bra
     <div onClick={onOpen} style={{ ...E.card, padding: 16, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
         {b.logo_url
-          ? <img src={b.logo_url} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover', border: `1px solid ${E.border}`, flexShrink: 0 }} />
-          : <div style={{ width: 44, height: 44, borderRadius: 10, background: tint(E.accent, 16), color: E.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, flexShrink: 0 }}>{b.name.slice(0, 2).toUpperCase()}</div>}
+          ? <img src={b.logo_url} alt="" style={{ width: 44, height: 44, borderRadius: 'var(--g-r-md)', objectFit: 'cover', border: `1px solid ${E.border}`, flexShrink: 0 }} />
+          : <div style={{ width: 44, height: 44, borderRadius: 'var(--g-r-md)', background: tint(E.accent, 16), color: E.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, flexShrink: 0 }}>{b.name.slice(0, 2).toUpperCase()}</div>}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ fontWeight: 700, fontSize: 'var(--text-subhead)', color: E.text }}>{b.name}</span>
@@ -113,7 +113,7 @@ function BrandCard({ b, health, orders, products, clientName, onOpen }: { b: Bra
           <span><span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: E.text }}>{orders?.count ?? 0}</span> <span style={{ color: E.faint }}>orders</span></span>
         </div>
       ) : (
-        <div style={{ fontSize: 'var(--text-caption)', color: E.amber, background: tint(E.amber, 10), border: `1px solid ${tint(E.amber, 35)}`, borderRadius: 6, padding: '4px 8px', display: 'inline-block' }}>Connect Shopify for revenue, orders, conversion</div>
+        <div style={{ fontSize: 'var(--text-caption)', color: E.amber, background: tint(E.amber, 10), border: `1px solid ${tint(E.amber, 35)}`, borderRadius: 'var(--g-r-sm)', padding: '4px 8px', display: 'inline-block' }}>Connect Shopify for revenue, orders, conversion</div>
       )}
 
       <div style={{ fontSize: 'var(--text-caption)', color: E.faint, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -144,8 +144,8 @@ function NewBrandDrawer({ open, clients, onClose, onCreate }: { open: boolean; c
         <div>
           <div style={{ ...label, marginBottom: 6 }}>Owner</div>
           <div style={{ display: 'flex', gap: 6 }}>
-            <Pill active={owner === 'mine'} onClick={() => setOwner('mine')}>Mine</Pill>
-            <Pill active={owner === 'client'} onClick={() => setOwner('client')}>Client</Pill>
+            <Seg label="Owner"><Pill active={owner === 'mine'} onClick={() => setOwner('mine')}>Mine</Pill>
+            <Pill active={owner === 'client'} onClick={() => setOwner('client')}>Client</Pill></Seg>
           </div>
         </div>
         {owner === 'client' && (

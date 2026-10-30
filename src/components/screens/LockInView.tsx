@@ -26,9 +26,9 @@ function RouteCard({ route, recommended, onChoose, choosing }: { route: FitnessR
       <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-quaternary)', marginTop: 10, lineHeight: 1.6 }}>{route.summary}</div>
 
       <div style={{ display: 'flex', gap: 12, marginTop: 14, fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
-        <span>💧 {route.water_target_oz}oz/day</span>
-        <span>🛏️ {route.sleep_target_hours}h sleep</span>
-        <span>🏋️ {route.workout_time} daily</span>
+        <span>{route.water_target_oz}oz/day</span>
+        <span>{route.sleep_target_hours}h sleep</span>
+        <span>{route.workout_time} daily</span>
       </div>
 
       <details style={{ marginTop: 14 }}>

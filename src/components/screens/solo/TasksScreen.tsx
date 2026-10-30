@@ -129,7 +129,7 @@ function Row({ t, first, today, goal, onToggle, onOpen }: { t: Task; first: bool
         <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap', fontSize: 12.5, color: 'var(--text-tertiary)' }}>
           {t.due && <span style={{ color: late ? 'var(--danger)' : undefined }}>{t.due === today ? 'Today' : new Date(`${t.due}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>}
           {t.project && <span>· {t.project}</span>}
-          {goal && <span>· 🎯 {goal}</span>}
+          {goal && <span>· Goal: {goal}</span>}
           {SOURCE_LABEL[t.source] && <span>· from {SOURCE_LABEL[t.source]}</span>}
         </span>
       </button>

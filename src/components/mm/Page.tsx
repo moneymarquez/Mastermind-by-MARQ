@@ -57,7 +57,7 @@ function Menu({ items, onClose }: { items: PageAction[]; onClose: () => void }) 
     return () => { document.removeEventListener('mousedown', h); document.removeEventListener('keydown', k); };
   }, [onClose]);
   return (
-    <div ref={ref} role="menu" className="mm-anim" style={{ position: 'absolute', right: 0, top: 46, zIndex: 40, minWidth: 200, padding: 6, borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 12px 40px rgba(0,0,0,.35)', animation: 'mmPanelIn .14s ease' }}>
+    <div ref={ref} role="menu" className="mm-anim" style={{ position: 'absolute', right: 0, top: 46, zIndex: 40, minWidth: 200, padding: 6, borderRadius: 'var(--g-r-lg)', background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--g-shadow-3)', animation: 'mmPanelIn .14s ease' }}>
       {items.map((it) => (
         <button key={it.t} role="menuitem" className="mm-search-row" style={{ height: 40, color: it.danger ? 'var(--danger)' : 'var(--text)' }} onClick={() => { onClose(); it.onClick(); }}>{it.t}</button>
       ))}
@@ -128,7 +128,7 @@ export function Page({ title, sub, back = 'All modules', backTo = 'modules', onB
       )}
       {children}
       {phone && fab && (
-        <button className="mm-btn mm-btn--primary" onClick={fab.onClick} style={{ position: 'fixed', right: 16, bottom: 'calc(84px + 16px + max(env(safe-area-inset-bottom), 0px))', zIndex: 50, height: 48, padding: '0 18px', fontSize: 15, boxShadow: '0 0 40px rgba(0,0,0,.25)', ...accentBtn }}>
+        <button className="mm-btn mm-btn--primary" onClick={fab.onClick} style={{ position: 'fixed', right: 16, bottom: 'calc(84px + 16px + max(env(safe-area-inset-bottom), 0px))', zIndex: 50, height: 48, padding: '0 18px', fontSize: 15, boxShadow: 'var(--g-shadow-2)', ...accentBtn }}>
           <GPlus size={16} />{fab.t}
         </button>
       )}
@@ -160,14 +160,14 @@ export function Page({ title, sub, back = 'All modules', backTo = 'modules', onB
           {sub && <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-tertiary)' }}>{sub}</span>}
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flex: 'none' }}>
-          {right && <button className="mm-btn" onClick={right.onClick} style={{ height: 34, borderRadius: 999, padding: '0 12px', fontSize: 13, fontWeight: 500 }}>{right.t}</button>}
+          {right && <button className="mm-btn" onClick={right.onClick} style={{ height: 34, borderRadius: 'var(--g-r-md)', padding: '0 12px', fontSize: 13, fontWeight: 500 }}>{right.t}</button>}
           {!phone && fab && <button className="mm-btn mm-btn--primary" onClick={fab.onClick} style={accentBtn}><GPlus size={14} />{fab.t}</button>}
           {!phone && dots}
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: phone ? 20 : 16, minWidth: 0 }}>{children}</div>
       {phone && fab && (
-        <button className="mm-btn mm-btn--primary" onClick={fab.onClick} style={{ position: 'fixed', right: 16, bottom: 'calc(84px + 16px + max(env(safe-area-inset-bottom), 0px))', zIndex: 50, height: 48, padding: '0 18px', fontSize: 15, boxShadow: '0 0 40px rgba(0,0,0,.25)', ...accentBtn }}>
+        <button className="mm-btn mm-btn--primary" onClick={fab.onClick} style={{ position: 'fixed', right: 16, bottom: 'calc(84px + 16px + max(env(safe-area-inset-bottom), 0px))', zIndex: 50, height: 48, padding: '0 18px', fontSize: 15, boxShadow: 'var(--g-shadow-2)', ...accentBtn }}>
           <GPlus size={16} />{fab.t}
         </button>
       )}
@@ -193,8 +193,8 @@ export function Sheet({ title, onClose, children, full, width = 440 }: { title: 
   const box: CSSProperties = phone
     ? { left: 0, right: 0, bottom: 0, top: full ? 'calc(24px + env(safe-area-inset-top))' : undefined, maxHeight: full ? undefined : '86vh', borderRadius: '16px 16px 0 0', paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' }
     : full
-      ? { left: '50%', top: 40, bottom: 40, transform: 'translateX(-50%)', width: 'min(1100px, calc(100vw - 80px))', borderRadius: 16 }
-      : { left: '50%', top: '14vh', transform: 'translateX(-50%)', width, maxHeight: '76vh', borderRadius: 16 };
+      ? { left: '50%', top: 40, bottom: 40, transform: 'translateX(-50%)', width: 'min(1100px, calc(100vw - 80px))', borderRadius: 'var(--g-r-lg)' }
+      : { left: '50%', top: '14vh', transform: 'translateX(-50%)', width, maxHeight: '76vh', borderRadius: 'var(--g-r-lg)' };
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'var(--mm-scrim, rgba(0,0,0,.5))' }} />
@@ -209,7 +209,7 @@ export function Sheet({ title, onClose, children, full, width = 440 }: { title: 
   );
 }
 
-export const field: CSSProperties = { height: 44, padding: '0 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 16, fontFamily: 'inherit', width: '100%', boxSizing: 'border-box', minWidth: 0 };
+export const field: CSSProperties = { height: 44, padding: '0 12px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 16, fontFamily: 'inherit', width: '100%', boxSizing: 'border-box', minWidth: 0 };
 export const area: CSSProperties = { ...field, height: 96, padding: '10px 12px', resize: 'vertical', lineHeight: 1.45 };
 export const label: CSSProperties = { fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' };
 
@@ -231,7 +231,7 @@ export function NotConnected() {
 export function AiOffCard({ text }: { text: string }) {
   const { nav, isOwner } = useModule();
   return (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}><span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>Nova</span><NotConnected /></div>
       <p style={{ margin: 0, fontSize: 15, lineHeight: 1.45, color: 'var(--text-secondary)' }}>{text}</p>
       {isOwner && <button className="mm-btn" style={{ alignSelf: 'flex-start' }} onClick={() => nav('setup')}>Connect AI</button>}
@@ -246,7 +246,7 @@ export function NovaCard({ title = 'Nova', paras, aiOff, actions }: { title?: st
   if (ai === false) return <AiOffCard text={aiOff} />;
   if (!paras.length) return null;
   return (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
       <NovaMark title={title} />
       {paras.map((p, i) => <p key={i} style={{ margin: 0, fontSize: 15, lineHeight: 1.45, color: 'var(--text-secondary)' }}>{p}</p>)}
       {actions}
@@ -270,15 +270,16 @@ export const btnRow: CSSProperties = { display: 'flex', gap: 8, flexWrap: 'wrap'
 /** Section switcher for workspaces with several views. Scrolls sideways
  *  on phone instead of wrapping; the active view is the filled pill. */
 export function Tabs<T extends string>({ tabs, value, onChange }: { tabs: { id: T; label: string; badge?: number }[]; value: T; onChange: (id: T) => void }) {
+  // Segmented control (Graphite): inset track, the selected tab raised.
+  // Styles live in theme-graphite.css (.g-seg).
   return (
-    <div role="tablist" className="mm-scroll-x" style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', margin: '0 -2px', padding: '0 2px' }}>
+    <div role="tablist" className="g-seg mm-scroll-x">
       {tabs.map((t) => {
         const on = t.id === value;
         return (
-          <button key={t.id} role="tab" aria-selected={on} onClick={() => onChange(t.id)}
-            style={{ flex: 'none', height: 34, padding: '0 14px', borderRadius: 999, border: `1px solid ${on ? 'var(--text)' : 'var(--border)'}`, background: on ? 'var(--text)' : 'var(--surface)', color: on ? 'var(--bg)' : 'var(--text)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <button key={t.id} role="tab" aria-selected={on} onClick={() => onChange(t.id)}>
             {t.label}
-            {!!t.badge && <span style={{ minWidth: 18, height: 18, borderRadius: 999, padding: '0 5px', background: on ? 'var(--bg)' : 'var(--accent)', color: on ? 'var(--text)' : '#fff', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{t.badge}</span>}
+            {!!t.badge && <span className="g-seg-n">{t.badge}</span>}
           </button>
         );
       })}

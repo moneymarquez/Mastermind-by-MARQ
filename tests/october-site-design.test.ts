@@ -18,7 +18,9 @@ describe('website alignment (Phase 7)', () => {
 describe('nav is derived from the registry', () => {
   it('every module\'s first route appears exactly once', () => {
     const ids = NAV_DATA.flatMap((g) => g.items.map((i) => i.id));
-    for (const m of MODULE_REGISTRY) expect(ids.filter((x) => x === m.routes[0])).toHaveLength(1);
+    // navHidden modules (Made by journey: Lead Engines, Client Modules, Start,
+    // Website Builder, Comms) have no row of their own; everything else has one.
+    for (const m of MODULE_REGISTRY) expect(ids.filter((x) => x === m.routes[0])).toHaveLength(m.navHidden ? 0 : 1);
     expect(NAV_DATA.flatMap((g) => g.items).find((i) => i.id === 'weekly-review')?.label).toBe('Weekly Check-in');
   });
   it('is idempotent', () => {

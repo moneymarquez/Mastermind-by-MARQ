@@ -140,8 +140,8 @@ export default function BudgetOverview({ device, b, monthKey, setMonthKey, onAdd
     </Card>
   );
   const filterPills = (
-    <div style={{ display: 'flex', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)', alignSelf: 'flex-start' }}>
-      {(['All', 'Unpaid', 'Paid'] as const).map((f) => <button key={f} onClick={() => setBillFilter(f)} style={{ padding: '6px 12px', borderRadius: 999, border: 0, fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', background: billFilter === f ? 'var(--text)' : 'transparent', color: billFilter === f ? 'var(--bg)' : 'var(--text-secondary)' }}>{f}</button>)}
+    <div className="g-seg g-seg--fill" style={{ display: 'flex', alignSelf: 'flex-start' }}>
+      {(['All', 'Unpaid', 'Paid'] as const).map((f) => <button key={f} onClick={() => setBillFilter(f)} className="g-pill" aria-pressed={billFilter === f}>{f}</button>)}
     </div>
   );
   const billsCard = phone ? (
@@ -152,7 +152,7 @@ export default function BudgetOverview({ device, b, monthKey, setMonthKey, onAdd
       <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderTop: '1px solid var(--grid)', fontSize: 13, fontWeight: 500 }}><span>Still to pay this month</span><span style={{ color: 'var(--text)' }}>{money(stillToPay)}</span></div>
     </Card>
   ) : (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px' }}>
         <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>Bills</span>{filterPills}
         <span style={{ marginLeft: 'auto', fontSize: 13, color: 'var(--text-secondary)' }}>Still to pay <span style={{ color: 'var(--text)', fontWeight: 600 }}>{money(stillToPay)}</span></span>
@@ -185,7 +185,7 @@ export default function BudgetOverview({ device, b, monthKey, setMonthKey, onAdd
           {billsCard}
         </>
       )}
-      {phone && <button className="mm-btn mm-btn--primary" onClick={() => (onAdd ? onAdd() : setAdding(true))} style={{ position: 'fixed', right: 16, bottom: 'calc(80px + max(env(safe-area-inset-bottom), 20px))', zIndex: 40, height: 48, padding: '0 18px', fontSize: 15, boxShadow: '0 0 40px rgba(0,0,0,.25)' }}><GPlus size={16} />Add expense</button>}
+      {phone && <button className="mm-btn mm-btn--primary" onClick={() => (onAdd ? onAdd() : setAdding(true))} style={{ position: 'fixed', right: 16, bottom: 'calc(80px + max(env(safe-area-inset-bottom), 20px))', zIndex: 40, height: 48, padding: '0 18px', fontSize: 15, boxShadow: 'var(--g-shadow-2)' }}><GPlus size={16} />Add expense</button>}
       {adding && <AddSheet phone={phone} b={b} onClose={() => setAdding(false)} />}
     </div>
   );
@@ -194,7 +194,7 @@ export default function BudgetOverview({ device, b, monthKey, setMonthKey, onAdd
 const navBtn: CSSProperties = { width: 28, height: 28, borderRadius: 999, border: 0, background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' };
 const th: CSSProperties = { fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', padding: '10px 20px', background: 'var(--surface-2)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' };
 const td: CSSProperties = { padding: '14px 20px', borderBottom: '1px solid var(--grid)', fontSize: 14, color: 'var(--text-secondary)' };
-const field: CSSProperties = { width: '100%', boxSizing: 'border-box', height: 46, padding: '0 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 16, fontFamily: 'inherit', outline: 'none' };
+const field: CSSProperties = { width: '100%', boxSizing: 'border-box', height: 46, padding: '0 12px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 16, fontFamily: 'inherit', outline: 'none' };
 
 /** Add expense: amount, what, category, date. */
 function AddSheet({ phone, b, onClose }: { phone: boolean; b: ReturnType<typeof useBudgeting>; onClose: () => void }) {
@@ -208,7 +208,7 @@ function AddSheet({ phone, b, onClose }: { phone: boolean; b: ReturnType<typeof 
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'var(--mm-scrim)' }} />
-      <div role="dialog" aria-label="Add expense" style={{ position: 'fixed', zIndex: 91, ...(phone ? { left: 0, right: 0, bottom: 0, borderRadius: '16px 16px 0 0', paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' } : { left: '50%', top: '18vh', transform: 'translateX(-50%)', width: 420, borderRadius: 16 }), background: 'var(--surface)', border: '1px solid var(--border)', padding: 18, display: 'flex', flexDirection: 'column', gap: 12, boxSizing: 'border-box' }}>
+      <div role="dialog" aria-label="Add expense" style={{ position: 'fixed', zIndex: 91, ...(phone ? { left: 0, right: 0, bottom: 0, borderRadius: '16px 16px 0 0', paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' } : { left: '50%', top: '18vh', transform: 'translateX(-50%)', width: 420, borderRadius: 'var(--g-r-lg)' }), background: 'var(--surface)', border: '1px solid var(--border)', padding: 18, display: 'flex', flexDirection: 'column', gap: 12, boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}><span style={{ flex: 1, color: 'var(--text)', fontSize: 17, fontWeight: 600 }}>Add expense</span><button aria-label="Close" onClick={onClose} style={{ ...navBtn, width: 34, height: 34 }}><GClose size={16} /></button></div>
         <input autoFocus inputMode="decimal" placeholder="$0.00" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ ...field, height: 56, fontSize: 26, fontWeight: 600 }} />
         <input placeholder="What was it?" value={what} onChange={(e) => setWhat(e.target.value)} style={field} />

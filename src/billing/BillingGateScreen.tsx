@@ -92,7 +92,7 @@ export default function BillingGateScreen({ onSubscribed, onSignOut, theme }: Pr
     <div style={{ height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 'calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))' } as CSSProperties}>
       <div style={{ width: '100%', maxWidth: 780, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div style={{ lineHeight: 1.1 }}>
-          <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em' }}>Masterminds</div>
+          <div style={{ fontSize: 'var(--text-subhead)', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' }}>Masterminds</div>
           <div style={{ fontSize: 'var(--text-tiny)', fontWeight: 700, color: 'var(--text)', letterSpacing: '0.04em', marginTop: 2 }}>by MARQ</div>
         </div>
         <button type="button" onClick={onSignOut} style={{ minHeight: 44, padding: '0 8px', background: 'none', border: 'none', fontSize: 'var(--text-small)', color: 'var(--text-tertiary)', cursor: 'pointer', font: 'inherit' }}>Sign out</button>
@@ -144,7 +144,7 @@ export default function BillingGateScreen({ onSubscribed, onSignOut, theme }: Pr
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Have a code?" aria-label="Discount code" autoComplete="off" style={{ flex: 1, minWidth: 0, height: 44, padding: '0 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-2, transparent)', color: 'var(--text)', fontSize: 16 }} />
-          <button type="button" onClick={() => void start(code.trim())} disabled={loading || !code.trim()} style={{ height: 44, padding: '0 16px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text)', cursor: 'pointer', font: 'inherit' }}>Apply</button>
+          <button type="button" onClick={() => void start(code.trim())} disabled={loading || !code.trim()} style={{ height: 44, padding: '0 16px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text)', cursor: 'pointer', font: 'inherit' }}>Apply</button>
         </div>
         {applied && !loading && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--success)', marginBottom: 12 }}>Code {applied} applied. The discount shows on your first invoice.</div>}
         {loading && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>Loading…</div>}
@@ -162,8 +162,8 @@ export default function BillingGateScreen({ onSubscribed, onSignOut, theme }: Pr
             options={{
               clientSecret,
               appearance: resolveTheme(theme) === 'light'
-                ? { theme: 'stripe', variables: { colorBackground: '#e9ecf7', colorText: '#292b31', colorPrimary: '#5d5294', borderRadius: '8px' } }
-                : { theme: 'night', variables: { colorBackground: '#202230', colorText: '#e9e9ed', colorPrimary: '#9184d9', borderRadius: '8px' } },
+                ? { theme: 'stripe', variables: { colorBackground: '#FDFCF9', colorText: '#1C1B19', colorPrimary: '#2E6A85', borderRadius: '8px' } }
+                : { theme: 'night', variables: { colorBackground: '#15161A', colorText: '#ECECEE', colorPrimary: '#8DB3C7', borderRadius: '8px' } },
             }}
           >
             <PaymentForm onSubscribed={onSubscribed} />

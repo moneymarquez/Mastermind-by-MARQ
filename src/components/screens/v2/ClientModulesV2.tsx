@@ -56,7 +56,7 @@ export default function ClientModulesV2({ focusClientId, onClearFocus, onChanged
   const strip = (
     <div style={{ display: 'grid', gridTemplateColumns: `repeat(${phone ? 3 : pipeline.length},minmax(0,1fr))`, gap: 8 }}>
       {pipeline.map((s) => (
-        <div key={s.key} style={{ padding: '10px 12px', borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+        <div key={s.key} style={{ padding: '10px 12px', borderRadius: 'var(--g-r-lg)', background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
           <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.label}</span>
           <span style={{ color: s.n ? 'var(--text)' : 'var(--text-tertiary)', fontSize: 20, fontWeight: 600, letterSpacing: '-0.03em' }}>{s.n}</span>
         </div>
@@ -66,12 +66,12 @@ export default function ClientModulesV2({ focusClientId, onClearFocus, onChanged
   const listPane = (
     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, borderRight: phone ? 'none' : '1px solid var(--grid)' }}>
       <div style={{ padding: '12px 14px', flex: 'none' }}>
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search clients" aria-label="Search clients" style={{ width: '100%', boxSizing: 'border-box', height: 36, padding: '0 10px', borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit' }} />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search clients" aria-label="Search clients" style={{ width: '100%', boxSizing: 'border-box', height: 36, padding: '0 10px', borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit' }} />
       </div>
       <div className="mm-scroll-y" style={{ flex: 1, minHeight: 0 }}>
         {list.map((r) => { const ch = chipFor(r); const st = currentStation(r.spine); return (
           <button key={r.client.id} onClick={() => pick(r.client.id)} className="mm-dash-tr" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', width: '100%', textAlign: 'left', border: 0, borderTop: '1px solid var(--grid)', background: cur?.client.id === r.client.id && !phone ? 'var(--surface-3)' : 'transparent', cursor: 'pointer', fontFamily: 'inherit', minHeight: 60 }}>
-            <div style={{ width: 34, height: 34, flex: 'none', borderRadius: 10, background: 'color-mix(in srgb, var(--client-accent) 18%, var(--surface-3))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)', fontSize: 11.5, fontWeight: 600 }}>{initials(r.client.business_name)}</div>
+            <div style={{ width: 34, height: 34, flex: 'none', borderRadius: 'var(--g-r-md)', background: 'color-mix(in srgb, var(--client-accent) 18%, var(--surface-3))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)', fontSize: 11.5, fontWeight: 600 }}>{initials(r.client.business_name)}</div>
             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><span style={{ color: 'var(--text)', fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.client.business_name}</span><span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{ago(r.lastActivity)}</span></div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}><Chip k={ch.k}>{ch.c}</Chip><span style={{ fontSize: 12.5, color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{st && st.label !== ch.c ? st.label : stageLabel(r.client.stage)}</span></div>
@@ -86,7 +86,7 @@ export default function ClientModulesV2({ focusClientId, onClearFocus, onChanged
 
   return (
     <Page title="Client Modules" sub={O.loading ? 'Loading…' : waiting ? `${waiting} ${waiting === 1 ? 'client' : 'clients'} waiting on you` : 'Nothing waiting on you'}>
-      {phone ? (cur ? detail : <>{strip}<section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>{listPane}</section></>) : (
+      {phone ? (cur ? detail : <>{strip}<section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>{listPane}</section></>) : (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 16 }}>
             <Stat label="Clients" value={String(O.rows.length)} pill={`${O.rows.filter((r) => r.hasLogin).length} with a login`} />
@@ -95,7 +95,7 @@ export default function ClientModulesV2({ focusClientId, onClearFocus, onChanged
             <Stat label="Handed off" value={String(O.rows.filter((r) => r.handoff).length)} pill="Handoff mode on" k={O.rows.some((r) => r.handoff) ? 'good' : 'neutral'} />
           </div>
           {strip}
-          <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', height: 'calc(100vh - 300px)', minHeight: 560, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', minWidth: 0 }}>
+          <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', height: 'calc(100vh - 300px)', minHeight: 560, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', minWidth: 0 }}>
             {listPane}{detail}
           </section>
         </>
@@ -119,7 +119,7 @@ function Detail({ r, onBack, onChanged }: { r: ClientOverviewRow; onBack?: () =>
           </div>
           <span style={{ color: 'var(--text)', fontSize: 22, fontWeight: 600, letterSpacing: '-0.03em', whiteSpace: 'nowrap' }}>{r.spine.length ? `Step ${Math.min(r.spine.length, cur >= 0 ? cur + 1 : doneN)} of ${r.spine.length}` : ''}</span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: onBack ? 'repeat(2,minmax(0,1fr))' : 'repeat(3,minmax(0,1fr))', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: onBack ? 'repeat(2,minmax(0,1fr))' : 'repeat(3,minmax(0,1fr))', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>
           {fields.map(([l, v], i) => <div key={l} style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '10px 14px', borderTop: i >= (onBack ? 2 : 3) ? '1px solid var(--grid)' : 'none', borderLeft: i % (onBack ? 2 : 3) ? '1px solid var(--grid)' : 'none' }}><span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)' }}>{l}</span><span style={{ color: 'var(--text)', fontSize: 14, fontWeight: 500 }}>{v}</span></div>)}
         </div>
         {r.spine.length > 0 && (
@@ -151,4 +151,16 @@ function Detail({ r, onBack, onChanged }: { r: ClientOverviewRow; onBack?: () =>
       </div>
     </div>
   );
+}
+
+/** One client's portal from your side (progress spine, login, tickets,
+ *  change log, guides, handoff, preview) — the Portal tab on the client
+ *  record (Made by journey, Oct 2026). Same Detail the Client Modules
+ *  screen showed; the old `client-modules` route opens this tab. */
+export function ClientPortalPanel({ clientId, onChanged }: { clientId: string; onChanged?: () => void }) {
+  const O = useClientModulesOverview();
+  const r = O.rows.find((x) => x.client.id === clientId);
+  if (O.loading && !r) return <Empty text="Loading the portal…" />;
+  if (!r) return <Empty text="No portal for this client yet." />;
+  return <Detail r={r} onChanged={() => { O.reload(); onChanged?.(); }} />;
 }

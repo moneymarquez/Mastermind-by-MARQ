@@ -54,7 +54,7 @@ export default function ShowYourWorkV2({ onNavigate }: { onNavigate: (id: string
   if (!P.loading && P.projects.length === 0) {
     return (
       <Page title="Show Your Work" sub="Delivery packages and portfolio">
-        <Empty text="Nothing to show yet. Finished client work collects here as packages and portfolio pieces. Projects start in Scaling → Start." cta="Go to Start" onCta={() => onNavigate('scaling-start')} />
+        <Empty text="Nothing to show yet. Finished client work collects here as packages and portfolio pieces. Clients start on the Clients board → New client." cta="Open the Clients board" onCta={() => onNavigate('madeby-board')} />
       </Page>
     );
   }
@@ -80,7 +80,7 @@ export default function ShowYourWorkV2({ onNavigate }: { onNavigate: (id: string
     : <Card wide={!phone}><span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>No packages in flight. Everything's delivered.</span></Card>;
 
   const tile = (p: ScalingProject) => (
-    <button key={p.id} onClick={() => setOpenId(p.id)} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', padding: 0, textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+    <button key={p.id} onClick={() => setOpenId(p.id)} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', padding: 0, textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
       <div style={{ aspectRatio: '4/3', width: '100%', background: 'repeating-linear-gradient(135deg, var(--surface-3) 0 8px, var(--surface-2) 8px 16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', padding: 8, boxSizing: 'border-box', overflow: 'hidden' }}>
         {p.website_url ? host(p.website_url) : 'No preview link'}
       </div>
@@ -96,9 +96,9 @@ export default function ShowYourWorkV2({ onNavigate }: { onNavigate: (id: string
     : <Card wide={!phone}><span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Nothing delivered yet. Sent packages land here as portfolio pieces.</span></Card>;
 
   const seg = (
-    <div role="tablist" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+    <div role="tablist" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, padding: 3, borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
       {(['packages', 'portfolio'] as const).map((t) => (
-        <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} style={{ height: 38, border: 0, borderRadius: 999, background: tab === t ? 'var(--text)' : 'transparent', color: tab === t ? 'var(--bg)' : 'var(--text)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>
+        <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} style={{ height: 38, border: 0, borderRadius: 'var(--g-r-sm)', background: tab === t ? 'var(--text)' : 'transparent', color: tab === t ? 'var(--bg)' : 'var(--text)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>
           {t === 'packages' ? `Packages (${packages.length})` : `Portfolio (${portfolio.length})`}
         </button>
       ))}
@@ -203,7 +203,7 @@ function ProjectSheet({ p, invoice, api, onNavigate, onClose }: { p: ScalingProj
       </>)}
       {sec('Walkthrough video', <>
         <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>You record and upload it. Nothing is generated here.</span>
-        {videoUrl && <video src={videoUrl} controls style={{ width: '100%', borderRadius: 10, background: 'var(--video-bg)' }} />}
+        {videoUrl && <video src={videoUrl} controls style={{ width: '100%', borderRadius: 'var(--g-r-md)', background: 'var(--video-bg)' }} />}
         <input ref={fileInput} type="file" accept="video/*" style={{ display: 'none' }} onChange={onUpload} />
         {!delivered && <div style={{ display: 'flex', gap: 8 }}>
           <button className="mm-btn" disabled={uploading} onClick={() => fileInput.current?.click()}>{uploading ? 'Uploading…' : p.video_path ? 'Replace video' : 'Upload video'}</button>

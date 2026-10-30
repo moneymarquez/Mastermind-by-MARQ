@@ -47,7 +47,7 @@ export default function PlaybooksV2() {
       {phone ? (
         open ? <Editor key={open.id} p={open} api={pb} /> : <Card flush style={{ padding: 0 }}>{list}</Card>
       ) : (
-        <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '320px minmax(0,1fr)' : '280px minmax(0,1fr)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', minHeight: 560 }}>
+        <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '320px minmax(0,1fr)' : '280px minmax(0,1fr)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', minHeight: 560 }}>
           <div className="mm-scroll-y" style={{ borderRight: '1px solid var(--grid)' }}>{list}</div>
           <div style={{ padding: '20px 24px', minWidth: 0 }}>{open ? <Editor key={open.id} p={open} api={pb} /> : <span style={{ color: 'var(--text-tertiary)' }}>Pick a playbook.</span>}</div>
         </section>
@@ -95,7 +95,7 @@ function Editor({ p, api }: { p: Playbook; api: ReturnType<typeof usePlaybooks> 
         <Chip k="neutral">v{p.version}</Chip>
       </div>
       {p.change_reason && <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Last change: {p.change_reason}</span>}
-      {!p.body.trim() && hint && <div style={{ padding: 12, borderRadius: 10, background: 'var(--surface-2)', border: '1px dashed var(--border)', fontSize: 14, lineHeight: 1.5, color: 'var(--text-secondary)' }}>Not written yet. {hint} Paste your notes, rough is fine.</div>}
+      {!p.body.trim() && hint && <div style={{ padding: 12, borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px dashed var(--border)', fontSize: 14, lineHeight: 1.5, color: 'var(--text-secondary)' }}>Not written yet. {hint} Paste your notes, rough is fine.</div>}
       <textarea aria-label={`${p.name} playbook`} maxLength={PLAYBOOK_MAX_CHARS} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Markdown. One rule per line works best: what to do, when, and why."
         style={{ ...field, height: 340, padding: 14, resize: 'vertical', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 13, lineHeight: 1.6 }} />
       <span style={{ fontSize: 12.5, color: near ? 'var(--warning)' : 'var(--text-tertiary)' }}>{body.length.toLocaleString()} / {PLAYBOOK_MAX_CHARS.toLocaleString()} characters · each run loads up to {PLAYBOOK_LOAD_BUDGET.toLocaleString()} across a worker's playbooks.</span>
@@ -143,7 +143,7 @@ function Editor({ p, api }: { p: Playbook; api: ReturnType<typeof usePlaybooks> 
             <button className="mm-btn" style={{ height: 30, fontSize: 12.5, padding: '0 10px' }} onClick={() => setViewing(viewing === v.id ? null : v.id)}>{viewing === v.id ? 'Hide' : 'View'}</button>
             {v.version !== p.version && <button className="mm-btn" style={{ height: 30, fontSize: 12.5, padding: '0 10px' }} disabled={busy} onClick={async () => { if (await askConfirm(`Restore v${v.version}? It's saved as a new version.`)) save(v.body, `Reverted to v${v.version}`); }}>Revert</button>}
             {v.version !== p.version && <button className="mm-btn" style={{ height: 30, fontSize: 12.5, padding: '0 10px', color: 'var(--danger)' }} disabled={busy} onClick={async () => { if (await askConfirm(`Delete v${v.version} from history for good?`)) { await api.deleteVersion(v); api.versions(p.id).then(setHistory); } }}>Delete</button>}
-            {viewing === v.id && <pre style={{ width: '100%', margin: 0, whiteSpace: 'pre-wrap', fontFamily: 'ui-monospace, monospace', fontSize: 12.5, lineHeight: 1.55, background: 'var(--surface-2)', border: '1px solid var(--border)', padding: 12, borderRadius: 10, color: 'var(--text)' }}>{v.body || '(empty)'}</pre>}
+            {viewing === v.id && <pre style={{ width: '100%', margin: 0, whiteSpace: 'pre-wrap', fontFamily: 'ui-monospace, monospace', fontSize: 12.5, lineHeight: 1.55, background: 'var(--surface-2)', border: '1px solid var(--border)', padding: 12, borderRadius: 'var(--g-r-md)', color: 'var(--text)' }}>{v.body || '(empty)'}</pre>}
           </div>
         ))}
       </div>
@@ -160,7 +160,7 @@ function ScalingPlays() {
   useEffect(() => { void supabase.from('plays').select('id,title,business_kind,phase,steps,uses').order('uses', { ascending: false }).then(({ data, error }) => { if (!error) setRows((data ?? []) as typeof rows); }); }, []);
   const remove = async (id: string) => { if (!window.confirm('Delete this play?')) return; await supabase.from('plays').delete().eq('id', id); setRows((r) => r.filter((x) => x.id !== id)); };
   return (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ fontWeight: 600, fontSize: 16 }}>Scaling plays</div>
       <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Saved from a finished client phase. A new client of the same type entering that phase is offered the play.</div>
       {rows.length === 0 && <div style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>No plays yet. Open a client → Delivery → "Save as play".</div>}

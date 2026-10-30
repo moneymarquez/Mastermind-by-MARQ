@@ -31,7 +31,7 @@ export default function NovaVoiceV2() {
             {TONES.map((t) => {
               const on = tone === t.value;
               return (
-                <button key={t.value} role="radio" aria-checked={on} disabled={loading} onClick={() => save(t.value)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', border: `1.5px solid ${on ? 'var(--accent)' : 'var(--border)'}`, background: on ? 'color-mix(in srgb, var(--accent) 10%, var(--surface))' : 'transparent' }}>
+                <button key={t.value} role="radio" aria-checked={on} disabled={loading} onClick={() => save(t.value)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 'var(--g-r-lg)', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', border: `1.5px solid ${on ? 'var(--accent)' : 'var(--border)'}`, background: on ? 'color-mix(in srgb, var(--accent) 10%, var(--surface))' : 'transparent' }}>
                   <span style={{ width: 18, height: 18, borderRadius: '50%', flex: 'none', boxSizing: 'border-box', border: `1.5px solid ${on ? 'var(--accent)' : 'var(--text-tertiary)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{on && <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)' }} />}</span>
                   <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>{t.label}</span>

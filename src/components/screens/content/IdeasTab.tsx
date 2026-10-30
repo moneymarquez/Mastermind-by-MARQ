@@ -90,17 +90,17 @@ export default function IdeasTab({ accounts, items, onOpenPlan }: { accounts: Re
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 12 }}>
         <div style={{ ...E.card, padding: 14 }}>
-          <div style={{ fontWeight: 700, color: E.text, marginBottom: 6 }}>🚀 Do more like this</div>
+          <div style={{ fontWeight: 700, color: E.text, marginBottom: 6 }}>Do more like this</div>
           {briefs.length === 0 ? <div style={{ fontSize: 'var(--text-caption)', color: E.muted }}>When a post breaks out (3× the account's average) or you 👍 one, what worked lands here and feeds the next ideas.</div> : briefs.slice(0, 8).map((b) => (
             <div key={b.id} style={{ borderTop: `1px solid ${E.border}`, padding: '8px 0', fontSize: 'var(--text-caption)' }}>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}><Badge color={b.kind === 'liked' ? E.violet : E.green}>{b.kind === 'liked' ? '👍 liked' : 'breakout'}</Badge><span style={{ color: E.faint }}>@{handle(b.account_id)}</span></div>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}><Badge color={b.kind === 'liked' ? E.violet : E.green}>{b.kind === 'liked' ? 'liked' : 'breakout'}</Badge><span style={{ color: E.faint }}>@{handle(b.account_id)}</span></div>
               <div style={{ color: E.text, marginTop: 4 }}>{b.brief.what_worked}</div>
               {b.brief.do_next && <div style={{ color: E.muted }}>Next: {b.brief.do_next}</div>}
             </div>
           ))}
         </div>
         <div style={{ ...E.card, padding: 14 }}>
-          <div style={{ fontWeight: 700, color: E.text, marginBottom: 6 }}>📉 Flops</div>
+          <div style={{ fontWeight: 700, color: E.text, marginBottom: 6 }}>Flops</div>
           {flops.length === 0 ? <div style={{ fontSize: 'var(--text-caption)', color: E.muted }}>No live flops. A post graded 1/4 shows here with why it probably missed.</div> : flops.map((p) => {
             const a = accounts.accounts.find((x) => x.id === p.account_id);
             const m = latestMetrics(accounts.metrics[p.id] ?? []);

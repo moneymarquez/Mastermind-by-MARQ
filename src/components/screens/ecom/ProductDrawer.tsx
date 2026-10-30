@@ -6,6 +6,8 @@ import { CHANNELS, money, ago } from '../../../data/ecom';
 import { Drawer, E, Metric, Badge, ConfidenceBadge, Section, btn, field, label } from './ecomShared';
 import { askConfirm } from '../../../lib/confirm';
 import ProductWorkers from './ProductWorkers';
+import MetaAdsBuilder from '../../mm/MetaAdsBuilder';
+import { profitFromProduct, fmtRoas, VERDICT_RULES } from '../../../data/ecomProfit';
 
 interface Props {
   product: Product | null;
@@ -52,6 +54,7 @@ export default function ProductDrawer({ product: p, snapshots, onClose, onSave, 
   const landed = sell && nums.supplier !== '' ? landedCost(sup, ship, sell) : null;
   const margin = landed != null ? marginPct(sell, landed) : null;
   const breakEven = landed != null && sell > landed ? Math.ceil(100 / (sell - landed)) : null;
+  const pm = sell && nums.supplier !== '' ? profitFromProduct(sell, sup, ship, detail as Record<string, unknown>) : null;
   const dirty = JSON.stringify(detail) !== JSON.stringify(p.detail) || nums.sell !== (p.sell_price?.toString() ?? '') || nums.supplier !== (p.supplier_cost?.toString() ?? '') || nums.ship !== (p.detail.ship_cost?.toString() ?? '');
 
   const save = async () => {
@@ -73,8 +76,8 @@ export default function ProductDrawer({ product: p, snapshots, onClose, onSave, 
     >
       {/* Snapshot */}
       <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
-        {p.images.length === 0 ? <div style={{ width: 160, height: 120, borderRadius: 10, background: E.border, display: 'flex', alignItems: 'center', justifyContent: 'center', color: E.faint, fontSize: 12, flexShrink: 0 }}>No photo — add image_url</div>
-          : p.images.map((u) => <a key={u} href={u} target="_blank" rel="noopener noreferrer" style={{ flex: '0 0 auto' }}><img src={u} alt="" loading="lazy" style={{ height: 140, borderRadius: 10, border: `1px solid ${E.border}`, display: 'block' }} /></a>)}
+        {p.images.length === 0 ? <div style={{ width: 160, height: 120, borderRadius: 'var(--g-r-md)', background: E.border, display: 'flex', alignItems: 'center', justifyContent: 'center', color: E.faint, fontSize: 12, flexShrink: 0 }}>No photo — add image_url</div>
+          : p.images.map((u) => <a key={u} href={u} target="_blank" rel="noopener noreferrer" style={{ flex: '0 0 auto' }}><img src={u} alt="" loading="lazy" style={{ height: 140, borderRadius: 'var(--g-r-md)', border: `1px solid ${E.border}`, display: 'block' }} /></a>)}
       </div>
       <div style={{ ...E.card, padding: 14, marginTop: 12, display: 'flex', gap: 18, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div>
@@ -109,8 +112,21 @@ export default function ProductDrawer({ product: p, snapshots, onClose, onSave, 
             <Metric label="Margin" value={margin != null ? `${margin.toFixed(0)}%` : '—'} unit={landed != null ? `· ${(sell / landed).toFixed(1)}×` : undefined} confidence="estimate" />
             <Metric label="Break-even units" value={breakEven != null ? String(breakEven) : '—'} unit="per $100 spent" confidence="estimate" />
           </div>
+          {pm && (
+            <>
+              <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginTop: 12, alignItems: 'flex-end' }}>
+                <Metric label={pm.estimated.adCost ? 'Ad cost / sale (est. 30%)' : 'Ad cost / sale (CPA)'} value={money(pm.adCost)} confidence={pm.estimated.adCost ? 'estimate' : undefined} />
+                <Metric label="Margin after ads" value={money(pm.cm)} unit={`· ${pm.cmPct.toFixed(0)}%`} confidence="estimate" />
+                <Metric label="Break-even ROAS" value={fmtRoas(pm.breakEvenRoas)} confidence="estimate" />
+                <Metric label="Break-even CPA" value={money(pm.breakEvenCpa)} confidence="estimate" />
+                <Badge color={pm.verdict === 'Scale' ? E.green : pm.verdict === 'Test' ? E.amber : E.red} title={pm.verdictWhy}>{pm.verdict}</Badge>
+              </div>
+              <div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 6 }}>{pm.verdictWhy} Margin after ads ≥ {VERDICT_RULES.scaleMinPct}% Scale, {VERDICT_RULES.testMinPct}–{VERDICT_RULES.scaleMinPct}% Test, under {VERDICT_RULES.testMinPct}% Kill. Ad cost is an estimate until a real CPA is saved on the product.</div>
+            </>
+          )}
         </div>
       </Section>
+      {pm && p.sell_price != null && p.supplier_cost != null && <Section title="Meta ads"><MetaAdsBuilder source={{ product_id: p.id }} entityId={p.id} /></Section>}
 
       {SECTIONS.map((s) => (
         <Section key={s.key} title={s.title}>

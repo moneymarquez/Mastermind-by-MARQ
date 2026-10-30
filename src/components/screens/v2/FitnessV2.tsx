@@ -79,7 +79,7 @@ export default function FitnessV2() {
       {week.map((d) => {
         const isToday = d === today, did = byDay.has(d);
         return (
-          <div key={d} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '10px 0', borderRadius: 10, background: isToday ? 'color-mix(in srgb, var(--accent) 12%, var(--surface))' : 'var(--surface)', border: isToday ? '1.5px solid var(--accent)' : '1px solid var(--border)', boxSizing: 'border-box' }}>
+          <div key={d} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '10px 0', borderRadius: 'var(--g-r-md)', background: isToday ? 'color-mix(in srgb, var(--accent) 12%, var(--surface))' : 'var(--surface)', border: isToday ? '1.5px solid var(--accent)' : '1px solid var(--border)', boxSizing: 'border-box' }}>
             <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-tertiary)' }}>{WD3[parseYmd(d).getDay()][0]}</span>
             <span style={{ color: d > today ? 'var(--text-tertiary)' : 'var(--text)', fontSize: 15, fontWeight: 600 }}>{parseYmd(d).getDate()}</span>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: did ? 'var(--accent)' : 'transparent' }} />
@@ -89,14 +89,14 @@ export default function FitnessV2() {
     </div>
   );
   const todayCard = doneToday.length ? (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Today</span><span style={{ fontSize: 12, fontWeight: 500, color: 'var(--success)' }}>Done ✓</span></div>
       <span style={{ color: 'var(--text)', fontSize: 24, fontWeight: 700, letterSpacing: '-0.035em' }}>{doneToday.map((w) => w.workout_type).join(' + ')}</span>
       <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{doneToday.reduce((s, w) => s + (w.duration_min ?? 0), 0)} min logged. Rest up.</span>
       {pick && <button className="mm-btn" style={{ height: 44 }} onClick={() => setLive(pick)}>Start another: {pick.name}</button>}
     </section>
   ) : pick ? (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Today</span><span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)' }}>{pick.exercises.length} exercises · {CAT_LONG[pick.category]}</span></div>
       <span style={{ color: 'var(--text)', fontSize: 24, fontWeight: 700, letterSpacing: '-0.035em' }}>{pick.name}</span>
       <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{lastDone.get(pick.name) ? `Last done ${shortDate(lastDone.get(pick.name)!)}, your longest gap.` : 'Not done yet.'}</span>
@@ -164,11 +164,11 @@ function LiveWorkout({ w, onExit, onFinish }: { w: WorkoutLibraryItem; onExit: (
   return (
     <Sheet title={cur ? cur.name : w.name} onClose={onExit} full>
       <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-tertiary)', marginTop: -4 }}>{w.name} · exercise {ex + 1} of {w.exercises.length}</span>
-      <section style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+      <section style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
         <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Elapsed</span>
         <span style={{ color: 'var(--text)', fontSize: 46, fontWeight: 600, letterSpacing: '-0.04em', lineHeight: 1 }}>{mmss((now - start) / 1000)}</span>
       </section>
-      <section style={{ display: 'flex', alignItems: 'center', gap: 18, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 18 }}>
+      <section style={{ display: 'flex', alignItems: 'center', gap: 18, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 18 }}>
         <Ring pcts={[rest ? rest / REST : 0]} center={rest ? mmss(rest) : 'Go'} sub={rest ? 'rest left' : 'ready'} size={104} sw={9} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Up next</span>

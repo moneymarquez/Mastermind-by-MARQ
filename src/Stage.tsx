@@ -14,12 +14,14 @@ import { moduleKeyForRoute } from './modules.config';
 import type { AppState, MastermindActions } from './state';
 import type { Theme } from './data/useTheme';
 import Celebration from './components/fx/Celebration';
+import DemoNotice from './components/mm/DemoNotice';
 import { useDemo, stopDemo } from './demo/state';
 import { DispatchProvider } from './dispatch/DispatchContext';
 import { ModuleProvider, BackRow } from './components/mm/Page';
 import type { ModuleCtxValue } from './components/mm/Page';
 import { PhoneHeader, PhoneTabBar, AppSidebar, AppTopBar, NotificationsPanel, SearchPalette, ModulesGrid, deviceFor, sidebarW, PHONE_HEADER_H, PHONE_TAB_H, TOP_BAR_H, NOVA_DOCK_W } from './components/shell/Shell';
 import { shellGroups, crumbFor } from './components/shell/nav';
+import { useCrumbLabel } from './lib/crumbLabel';
 import { useLeadFeed } from './data/useLeadFeed';
 import { useNotifications } from './data/useNotifications';
 import { useFlags, PORTAL_FLAG_DOMAINS } from './data/useFlags';
@@ -29,13 +31,13 @@ import PortalCards from './components/screens/home/PortalCards';
 import { useTravelMode } from './data/useTravelMode';
 import { travelHides } from './config/travelMode';
 import { portalName } from './portals.config';
+import { aliasFor } from './data/madebyJourney';
 
 // Screens load on demand; Overview ships in the main bundle.
 const DemoTour = lazyScreen(() => import('./demo/DemoTour'));
 const ChangelogV2 = lazyScreen(() => import('./components/screens/v2/ChangelogV2'));
 const DispatchV2 = lazyScreen(() => import('./components/screens/v2/DispatchV2'));
 const DispatchLayer = lazyScreen(() => import('./dispatch/DispatchLayer'));
-const ClientModulesV2 = lazyScreen(() => import('./components/screens/v2/ClientModulesV2'));
 const DialingV2 = lazyScreen(() => import('./components/screens/v2/DialingV2'));
 const StickySpotV2 = lazyScreen(() => import('./components/screens/v2/StickySpotV2'));
 const TodayScreen = lazyScreen(() => import('./components/screens/today/TodayScreen'));
@@ -68,11 +70,9 @@ const PlaybooksV2 = lazyScreen(() => import('./components/screens/v2/PlaybooksV2
 const StreamingV2 = lazyScreen(() => import('./components/screens/v2/StreamingV2'));
 const StocksScreen = lazyScreen(() => import('./components/screens/StocksScreen'));
 const LeadFlowScreen = lazyScreen(() => import('./components/screens/LeadFlowScreen'));
-import type { LeadFlowTab } from './components/screens/LeadFlowScreen';
 const AccountSettingsScreen = lazyScreen(() => import('./components/screens/AccountSettingsScreen'));
 const NovaVoiceV2 = lazyScreen(() => import('./components/screens/v2/NovaVoiceV2'));
 const CallRecordingsV2 = lazyScreen(() => import('./components/screens/v2/CallRecordingsV2'));
-const WebsiteBuilderRoadmapScreen = lazyScreen(() => import('./components/screens/WebsiteBuilderRoadmapScreen'));
 const InvoicingV2 = lazyScreen(() => import('./components/screens/v2/InvoicingV2'));
 const DailyPlanV2 = lazyScreen(() => import('./components/screens/v2/DailyPlanV2'));
 const MacrosV2 = lazyScreen(() => import('./components/screens/v2/MacrosV2'));
@@ -89,6 +89,8 @@ const ManageModulesScreen = lazyScreen(() => import('./components/screens/Manage
 const GrantAccessV2 = lazyScreen(() => import('./components/screens/v2/GrantAccessV2'));
 const InboxScreen = lazyScreen(() => import('./components/screens/inbox/InboxScreen'));
 const HqScreen = lazyScreen(() => import('./components/screens/hq/HqScreen'));
+const ClassNotesScreen = lazyScreen(() => import('./components/screens/system/ClassNotesScreen'));
+const SystemHealthScreen = lazyScreen(() => import('./components/screens/system/SystemHealthScreen'));
 const BrainDumpScreen = lazyScreen(() => import('./components/screens/solo/BrainDumpScreen'));
 const TasksScreen = lazyScreen(() => import('./components/screens/solo/TasksScreen'));
 const MoneyMoveScreen = lazyScreen(() => import('./components/screens/solo/MoneyMoveScreen'));
@@ -100,7 +102,7 @@ const ContractsScreen = lazyScreen(() => import('./components/screens/madeby/Con
 const CommsScreen = lazyScreen(() => import('./components/screens/madeby/CommsScreen'));
 const WaitlistScreen = lazyScreen(() => import('./components/screens/madeby/WaitlistScreen'));
 const CouponsScreen = lazyScreen(() => import('./components/screens/madeby/CouponsScreen'));
-const LeadEnginesScreen = lazyScreen(() => import('./components/screens/madeby/LeadEnginesScreen'));
+const MadeByBoard = lazyScreen(() => import('./components/screens/madeby/MadeByBoard'));
 const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 
 // Screens still on their pre-redesign layout: on phone they get the shared
@@ -109,8 +111,8 @@ const HomeV2 = lazyScreen(() => import('./components/screens/home/HomeV2'));
 const LEGACY_SCREENS = new Set<string>([]);
 
 const BUILT_SCREENS = [
-  'today', 'orchestrator',
-  'home', 'ecom-marketing', 'coupons', 'lead-engines', 'waitlist', 'comms', 'contracts', 'ledger', 'classroom', 'feed', 'peptides', 'money-move', 'tasks', 'brain-dump', 'ecom-clients', 'ecom-inbox', 'ecom-approvals', 'ecom-office', 'ecom-orders', 'ecom-stores', 'ecom-products', 'hq', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
+  'today', 'orchestrator', 'madeby-board',
+  'home', 'ecom-marketing', 'coupons', 'lead-engines', 'call-list', 'waitlist', 'comms', 'contracts', 'ledger', 'classroom', 'feed', 'peptides', 'money-move', 'tasks', 'brain-dump', 'ecom-clients', 'ecom-inbox', 'ecom-approvals', 'ecom-office', 'ecom-orders', 'ecom-stores', 'ecom-products', 'hq', 'class-notes', 'system-health', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'leadflow', 'account-settings', 'prompt-voice-settings',
   'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'content-accounts', 'content-profiles', 'content-ideas', 'content-plan', 'content-studio', 'content-history', 'content-inspiration', 'content-kits', 'content-workers', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access', 'changelog', 'dispatch', 'inbox', 'modules',
@@ -175,6 +177,11 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // clears it). Lives here, not in a per-screen hook, since surviving an
   // unmount/remount as the user switches modules is the entire point.
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  // One-shot companions to clientFocus / navigation (Made by journey): the
+  // client-record section to open (Portal, Comms…) and the LeadFlow tab.
+  const [clientSection, setClientSection] = useState<string | null>(null);
+  const [leadflowTab, setLeadflowTab] = useState<string | null>(null);
+  const openClient = (id: string, section: string | null = null) => { setClientFocus(id); setClientSection(section); actions.navigateTo('client-crm'); };
   // Entry point 2 of the brief (schema_069) — Client CRM's "Push to
   // Marketing" button. One-shot like clientFocus: MarketingScreen creates
   // the brief and clears this the moment it reads it.
@@ -214,7 +221,9 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // Search reaches every accessible portal; opening a result in another
   // portal switches to it like any deep link.
   const searchGroups = useMemo(() => portals.flatMap((p) => shellGroups(navAccess, isOwner, navPrefs.order, { portal: p }).map((g) => ({ ...g, title: p === 'masterminds' ? g.title : portalName(p) }))), [navAccess, isOwner, navPrefs.order, portals]);
-  const crumb = crumbFor(state.screen, groups, portal);
+  const tabCrumb = useCrumbLabel(state.screen);
+  const baseCrumb = crumbFor(state.screen, groups, portal);
+  const crumb = tabCrumb ? { ...baseCrumb, label: tabCrumb } : baseCrumb;
   const ecomPending = usePendingApprovals(isOwner);
   const badges = { inbox: ownerInbox.items.filter((i) => i.unread).length, leads: leadFeed.waiting, urgent: leadFeed.urgent > 0, screens: { 'ecom-products': ecomPending, 'ecom-approvals': ecomPending } };
   const toggleTheme = () => onThemeChange(resolvedTheme === 'dark' ? 'light' : 'dark');
@@ -224,11 +233,10 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   const novaDock = device === 'desktop' && state.novaOpen ? NOVA_DOCK_W : 0;
   // Dialing lives inside LeadFlow for accounts that have LeadFlow: any jump
   // to 'dialing' opens LeadFlow on its Dialing tab.
-  const [lfTab, setLfTab] = useState<LeadFlowTab>('dashboard');
   const shellNav = (id: string) => {
     setNotifOpen(false); if (state.novaOpen && device !== 'desktop') actions.closeNova();
-    if (id === 'dialing' && travelAccess('leadflow')) { setLfTab('dialing'); id = 'leadflow'; }
-    else if (id === 'leadflow') setLfTab('dashboard');
+    if (id === 'dialing' && travelAccess('leadflow')) { setLeadflowTab('dialing'); id = 'leadflow'; }
+    else if (id === 'leadflow') setLeadflowTab('dashboard');
     actions.navigateTo(id);
   };
   const moduleCtx: ModuleCtxValue = { device, novaOpen: state.novaOpen, isOwner, nav: shellNav, askNova: (p?: string) => { if (p) askNovaWithPrompt(p); else if (!state.novaOpen) actions.openNova(); } };
@@ -256,6 +264,15 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   useEffect(() => {
     if (travel && routeModuleKey && travelHides(routeModuleKey, true)) { setTravelBanner(true); actions.navigateTo('today'); }
   }, [travel, routeModuleKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Old Made by routes (Lead Engines, Client Modules, Website Builder) live
+  // somewhere else now; links, bookmarks and notifications still land there.
+  useEffect(() => {
+    const a = aliasFor(state.screen);
+    if (!a) return;
+    if (a.leadflowTab) setLeadflowTab(a.leadflowTab);
+    if (a.clientSection) setClientSection(a.clientSection);
+    actions.navigateTo(a.to);
+  }, [state.screen]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!travelBanner) return; const t = setTimeout(() => setTravelBanner(false), 6000); return () => clearTimeout(t); }, [travelBanner]);
 
   // Product tour — on-demand only (help icon or Settings), never
@@ -329,7 +346,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <Suspense fallback={<ScreenLoading />}>
           <ModuleProvider value={moduleCtx}>
           <div data-demo-content="">
-        {travelBanner && state.screen === 'today' && <div role="status" style={{ margin: '0 0 12px', padding: '10px 14px', borderRadius: 12, background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))', fontSize: 14, color: 'var(--text-secondary)' }}>Hidden in travel mode. Switch it off in Settings → Workspace to see everything again.</div>}
+        {travelBanner && state.screen === 'today' && <div role="status" style={{ margin: '0 0 12px', padding: '10px 14px', borderRadius: 'var(--g-r-lg)', background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))', fontSize: 14, color: 'var(--text-secondary)' }}>Hidden in travel mode. Switch it off in Settings → Workspace to see everything again.</div>}
         {LEGACY_SCREENS.has(state.screen) && <BackRow />}
         {state.screen === 'home' && (
           <HomeV2 device={device} isOwner={isOwner} novaOpen={state.novaOpen} leads={leadFeed.leads} leadsNow={leadFeed.now} inboxItems={ownerInbox.items}
@@ -369,7 +386,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         {state.screen === 'delivery' && <ShowYourWorkV2 onNavigate={actions.navigateTo} />}
 
         {state.screen === 'support-inbox' && (
-          <SupportInboxV2 onOpenClient={(clientId) => { setClientFocus(clientId); actions.navigateTo('client-modules'); }} />
+          <SupportInboxV2 onOpenClient={(clientId) => openClient(clientId, 'portal')} />
         )}
 
         {state.screen === 'leads' && (
@@ -384,11 +401,11 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'client-crm' && (
-          <ClientCRMV2 focusClientId={clientFocus} onClearFocus={() => setClientFocus(null)} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} onPushToMarketing={pushToMarketing} onOpenCampaign={openCampaign} onStartCampaign={startCampaignFor} />
+          <ClientCRMV2 focusClientId={clientFocus} focusSection={clientSection} onClearFocus={() => { setClientFocus(null); setClientSection(null); }} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} onPushToMarketing={pushToMarketing} onOpenCampaign={openCampaign} onStartCampaign={startCampaignFor} />
         )}
 
-        {state.screen === 'client-modules' && (
-          <ClientModulesV2 focusClientId={clientFocus} onClearFocus={() => setClientFocus(null)} onChanged={ownerInbox.reload} selectedClientId={selectedClientId} onSelectClient={setSelectedClientId} />
+        {state.screen === 'madeby-board' && (
+          <MadeByBoard onOpenClient={(id, section) => openClient(id, section ?? null)} canOpen={(route) => { const k = moduleKeyForRoute(route); return !k || navAccess(k); }} />
         )}
 
         {state.screen === 'audits' && (
@@ -426,7 +443,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'leadflow' && (
-          <LeadFlowScreen key={lfTab} initialTab={lfTab} />
+          <LeadFlowScreen initialTab={leadflowTab} onTabConsumed={() => setLeadflowTab(null)} engines={canAccess('lead-engines')} />
         )}
 
         {state.screen === 'ecommerce' && (
@@ -441,9 +458,6 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         {state.screen === 'call-recordings' && <CallRecordingsV2 />}
 
-        {state.screen === 'website' && (
-          <WebsiteBuilderRoadmapScreen homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />
-        )}
 
         {state.screen === 'invoicing' && <InvoicingV2 />}
 
@@ -519,6 +533,8 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         
         {state.screen === 'hq' && <HqScreen />}
+        {state.screen === 'class-notes' && <ClassNotesScreen />}
+        {state.screen === 'system-health' && <SystemHealthScreen />}
         {state.screen === 'ecom-products' && <EcomScreen section="products" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
         {state.screen === 'ecom-approvals' && <EcomScreen section="approvals" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
         {state.screen === 'ecom-stores' && <EcomScreen section="stores" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
@@ -537,12 +553,11 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         {state.screen === 'comms' && <CommsScreen />}
         {state.screen === 'waitlist' && <WaitlistScreen />}
         {state.screen === 'coupons' && <CouponsScreen />}
-        {state.screen === 'lead-engines' && <LeadEnginesScreen />}
         {state.screen === 'ecom-marketing' && <EcomScreen section="marketing" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
         {state.screen === 'modules' && <ModulesGrid groups={moduleTiles} onOpen={shellNav} />}
         {state.screen === 'inbox' && (
           <InboxScreen device={device} isOwner={isOwner} inbox={ownerInbox} feed={leadFeed} focus={inboxFocus} onFocusConsumed={() => setInboxFocus(null)}
-            onOpenClient={(id: string) => { setClientFocus(id); actions.navigateTo('client-modules'); }} onOpenLeadFlow={() => actions.navigateTo('leadflow')} onNavigate={shellNav} />
+            onOpenClient={(id: string) => openClient(id, 'portal')} onOpenLeadFlow={() => actions.navigateTo('leadflow')} onNavigate={shellNav} />
         )}
 
         {state.screen === 'grant-access' && isOwner && <GrantAccessV2 />}
@@ -589,6 +604,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           Sample data · Exit
         </button>
       )}
+      {demo.active && <DemoNotice />}
 
       <ProductTour
         active={tourActive}

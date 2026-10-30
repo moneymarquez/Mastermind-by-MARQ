@@ -21,7 +21,7 @@ function cmp(r: Row, col: string, op: string, v: unknown): boolean {
     // JSON path filters (detail->analysis): look one level down.
     const [base, key] = col.split('->');
     const inner = (r[base] as Row | null | undefined)?.[key.replace(/>/g, '')];
-    return op === 'is' ? (v === null ? inner == null : inner === v) : true;
+    return op === 'is' ? (v === null ? inner == null : inner === v) : op === 'eq' ? String(inner) === String(v) : true;
   }
   const x = r[col];
   switch (op) {
@@ -39,6 +39,21 @@ function cmp(r: Row, col: string, op: string, v: unknown): boolean {
   }
 }
 
+/** Column defaults the real tables have that the screens rely on. */
+const INSERT_DEFAULTS: Record<string, (now: string) => Row> = {
+  crm_clients: (now) => ({ stage: 'new_lead', last_activity_at: now }),
+};
+/** Splits a PostgREST or() string into [column, op, value] (simple ops; quoted values may hold commas). */
+export function orParts(expr: string): [string, string, unknown][] {
+  const out: [string, string, unknown][] = [];
+  let cur = '', q = false, bad = false;
+  const push = () => { const m = cur.trim().match(/^([\w>-]+)\.(eq|neq|gt|gte|lt|lte|is|ilike|like)\.(.*)$/s); if (m) { let v: unknown = m[3]; if (m[3].startsWith('"')) { try { v = JSON.parse(m[3]); } catch { v = m[3].slice(1, -1); } } else if (m[3] === 'null') v = null; else if (m[2] === 'is' && (m[3] === 'true' || m[3] === 'false')) v = m[3] === 'true'; out.push([m[1], m[2], v]); } else bad = true; cur = ''; };
+  for (let i = 0; i < expr.length; i++) { const ch = expr[i]; if (ch === '"' && expr[i - 1] !== '\\') q = !q; if (ch === ',' && !q) push(); else cur += ch; }
+  if (cur) push();
+  // Anything we can't read (and(), not., cs.) → no filter, as before.
+  return bad ? [] : out;
+}
+
 function builder(table: string) {
   const f: Filter[] = [];
   let op: 'select' | 'insert' | 'upsert' | 'update' | 'delete' = 'select';
@@ -54,7 +69,9 @@ function builder(table: string) {
   chain('not', ((c: string, o: string, v: unknown) => f.push((r) => !cmp(r, c, o, v))) as never);
   chain('match', ((m: Row) => Object.entries(m).forEach(([k, v]) => f.push((r) => String(r[k]) === String(v)))) as never);
   chain('filter', ((c: string, o: string, v: unknown) => f.push((r) => cmp(r, c, o, v))) as never);
-  for (const o of ['or', 'containedBy', 'overlaps', 'textSearch', 'returns', 'abortSignal', 'throwOnError', 'csv', 'explain', 'maybeSingleOr']) chain(o);
+  // PostgREST or(): "a.eq.x,b.eq.\"y, z\"" → any of them matches.
+  chain('or', ((expr: string) => { const parts = orParts(expr); if (parts.length) f.push((r) => parts.some(([c, o, v]) => cmp(r, c, o, v))); }) as never);
+  for (const o of ['containedBy', 'overlaps', 'textSearch', 'returns', 'abortSignal', 'throwOnError', 'csv', 'explain', 'maybeSingleOr']) chain(o);
   chain('order', ((c: string, o?: { ascending?: boolean }) => ord.push([c, o?.ascending !== false])) as never);
   chain('limit', ((l: number) => { lim = l; }) as never);
   chain('range', ((a: number, z: number) => { off = a; lim = z - a + 1; }) as never);
@@ -70,7 +87,7 @@ function builder(table: string) {
     const now = new Date().toISOString();
     let out: Row[];
     if (op === 'insert' || op === 'upsert') {
-      const list: Row[] = (Array.isArray(payload) ? payload : [payload ?? {}]).map((p) => ({ id: id(), user_id: DEMO_USER.id, created_at: now, updated_at: now, ...p }));
+      const list: Row[] = (Array.isArray(payload) ? payload : [payload ?? {}]).map((p) => ({ id: id(), user_id: DEMO_USER.id, created_at: now, updated_at: now, ...(INSERT_DEFAULTS[table]?.(now) ?? {}), ...p }));
       for (const p of list) {
         const hit = conflict ? rows.find((r) => conflict!.every((c) => r[c] === p[c])) : null;
         if (hit && op === 'upsert') Object.assign(hit, p); else rows.push(p);

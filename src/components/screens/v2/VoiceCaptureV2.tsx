@@ -67,7 +67,7 @@ export default function VoiceCaptureV2() {
       </div>
     </Card>
   ) : (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '26px 18px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, minWidth: 0 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: '26px 18px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, minWidth: 0 }}>
       <Wave live={V.listening} />
       <span style={{ fontSize: 17, lineHeight: 1.45, color: V.transcript ? 'var(--text)' : 'var(--text-tertiary)', textAlign: 'center', letterSpacing: '-0.015em', minHeight: 25 }}>
         {V.transcript ? `"${V.transcript}"` : supported ? 'Say a task, an expense, a contact, or a decision.' : 'Voice input isn’t supported in this browser. Type it below.'}
@@ -90,7 +90,7 @@ export default function VoiceCaptureV2() {
   const refile = latest && !latest.undone && V.filed?.id === latest.id && (
     <Card title="Wrong place?" meta={`Filed as ${CAPTURE_TYPE_LABEL[latest.type].toLowerCase()}`} wide={!phone}>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-        {TYPES.filter((t) => t !== latest.type).map((t) => <button key={t} className="mm-btn" style={{ height: 34, fontSize: 13, borderRadius: 999 }} disabled={V.processing} onClick={() => void V.refileAs(t)}>{CAPTURE_TYPE_LABEL[t]}</button>)}
+        {TYPES.filter((t) => t !== latest.type).map((t) => <button key={t} className="mm-btn" style={{ height: 34, fontSize: 13, borderRadius: 'var(--g-r-md)' }} disabled={V.processing} onClick={() => void V.refileAs(t)}>{CAPTURE_TYPE_LABEL[t]}</button>)}
       </div>
     </Card>
   );

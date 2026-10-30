@@ -4,7 +4,7 @@ import { PLATFORM, compact } from '../../../data/contentEngine';
 import type { useSocialAccounts } from '../../../data/useContentEngine';
 import { buildHistory, filterHistory, historyCsv } from '../../../data/postHistory';
 import type { HistoryKind, PublishAttempt } from '../../../data/postHistory';
-import { E, Badge, Pill, btn, field } from '../ecom/ecomShared';
+import { E, Badge, Pill, Seg, btn, field } from '../ecom/ecomShared';
 
 const KIND: Record<HistoryKind, { label: string; color: string }> = { posted: { label: 'Posted', color: E.green }, test: { label: 'Test (not posted)', color: E.faint }, failed: { label: 'Failed', color: E.red } };
 
@@ -29,8 +29,8 @@ export default function HistoryTab({ accounts }: { accounts: ReturnType<typeof u
           <option value="all">All accounts</option>
           {accounts.accounts.map((a) => <option key={a.id} value={a.id}>{PLATFORM[a.platform].short} @{a.handle}</option>)}
         </select>
-        <Pill active={f.kind === 'all'} onClick={() => setF({ ...f, kind: 'all' })}>All {all.length}</Pill>
-        {(['posted', 'test', 'failed'] as const).map((k) => <Pill key={k} active={f.kind === k} onClick={() => setF({ ...f, kind: k })}>{KIND[k].label} {count(k)}</Pill>)}
+        <Seg label="Kind"><Pill active={f.kind === 'all'} onClick={() => setF({ ...f, kind: 'all' })}>All <span className="g-seg-n">{all.length}</span></Pill>
+        {(['posted', 'test', 'failed'] as const).map((k) => <Pill key={k} active={f.kind === k} onClick={() => setF({ ...f, kind: k })}>{KIND[k].label} <span className="g-seg-n">{count(k)}</span></Pill>)}</Seg>
         <input aria-label="Search" style={{ ...field, flex: '1 1 160px', minWidth: 0 }} placeholder="Search captions" value={f.q} onChange={(e) => setF({ ...f, q: e.target.value })} />
         <button style={btn('ghost')} onClick={exportCsv} disabled={!rows.length}>Export CSV</button>
       </div>
@@ -38,7 +38,7 @@ export default function HistoryTab({ accounts }: { accounts: ReturnType<typeof u
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 14 }}>
         {rows.slice(0, limit).map((r) => (
           <div key={r.id} style={{ ...E.card, padding: 12, display: 'grid', gridTemplateColumns: '64px minmax(0,1fr)', gap: 12, borderColor: r.kind === 'failed' ? E.red : undefined }}>
-            {r.thumb ? <img src={r.thumb} alt="" loading="lazy" style={{ width: 64, height: 80, objectFit: 'cover', borderRadius: 8, border: `1px solid ${E.border}` }} /> : <div style={{ width: 64, height: 80, borderRadius: 8, background: 'var(--surface-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: E.faint }}>{PLATFORM[r.platform as 'instagram']?.short ?? ''}</div>}
+            {r.thumb ? <img src={r.thumb} alt="" loading="lazy" style={{ width: 64, height: 80, objectFit: 'cover', borderRadius: 'var(--g-r-md)', border: `1px solid ${E.border}` }} /> : <div style={{ width: 64, height: 80, borderRadius: 'var(--g-r-md)', background: 'var(--surface-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: E.faint }}>{PLATFORM[r.platform as 'instagram']?.short ?? ''}</div>}
             <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                 <strong style={{ color: E.text }}>@{r.handle}</strong>
@@ -49,7 +49,7 @@ export default function HistoryTab({ accounts }: { accounts: ReturnType<typeof u
               {r.caption && <div style={{ fontSize: 14, color: E.text, marginTop: 4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflowWrap: 'anywhere' }}>{r.caption}</div>}
               {r.error && <div style={{ fontSize: 13, color: E.red, marginTop: 4, overflowWrap: 'anywhere' }}>{r.error}</div>}
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 12, color: E.muted }}>
-                {r.kind !== 'failed' && <><span title="views">👁 {compact(r.views)}</span><span title="likes">♥ {compact(r.likes)}</span><span title="comments">💬 {compact(r.comments)}</span><span title="saves">🔖 {compact(r.saves)}</span></>}
+                {r.kind !== 'failed' && <><span title="views">{compact(r.views)} views</span><span title="likes">♥ {compact(r.likes)}</span><span title="comments">{compact(r.comments)} comments</span><span title="saves">{compact(r.saves)}</span></>}
                 {r.url && <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ color: E.blue }}>Open ↗</a>}
               </div>
             </div>

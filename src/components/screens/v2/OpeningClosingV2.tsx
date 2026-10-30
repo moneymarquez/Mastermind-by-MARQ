@@ -93,12 +93,12 @@ export default function OpeningClosingV2() {
   const curIdx = tasks.findIndex((t) => !done.has(t.id));
 
   const seg = (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)', maxWidth: phone ? undefined : 320 }}>
-      {(['opening', 'closing'] as Phase[]).map((p) => <button key={p} aria-pressed={phase === p} onClick={() => setPhase(p)} style={{ padding: '8px 0', borderRadius: 999, border: 0, fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', background: phase === p ? 'var(--text)' : 'transparent', color: phase === p ? 'var(--bg)' : 'var(--text-secondary)' }}>{p === 'opening' ? 'Opening' : 'Closing'}</button>)}
+    <div className="g-seg g-seg--fill" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', maxWidth: phone ? undefined : 320 }}>
+      {(['opening', 'closing'] as Phase[]).map((p) => <button key={p} aria-pressed={phase === p} onClick={() => setPhase(p)} className="g-pill">{p === 'opening' ? 'Opening' : 'Closing'}</button>)}
     </div>
   );
   const ring = (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 18, minWidth: 0 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 18, minWidth: 0 }}>
       <Ring pcts={[tasks.length ? doneN / tasks.length : 0]} center={`${doneN}/${tasks.length}`} sub="done" size={120} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
         <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>{phase === 'opening' ? 'Opening' : 'Closing'} · {hours}</span>
@@ -148,7 +148,7 @@ export default function OpeningClosingV2() {
     </Card>
   );
   const prompt = homePrompt && (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface-2)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', background: 'var(--surface-2)' }}>
       <span style={{ flex: 1, fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.45 }}>Add this app to your home screen to get step reminders even when it's closed.</span>
       <button className="mm-btn" style={{ height: 34 }} onClick={() => { try { localStorage.setItem(HOME_KEY, '1'); } catch { /* fine */ } setHomePrompt(false); }}>Got it</button>
     </div>

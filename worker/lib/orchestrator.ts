@@ -12,6 +12,10 @@ import { spentToday } from './ai';
 import { loadControls, isPaused, controlDomainOf } from './controls';
 import { runProductPitch, refreshPitchActuals } from './ecomOctober';
 import { runIdeas, buildContentKit } from './contentOctober';
+import { runClass } from './classroom';
+import { runHandoffs } from './handoffs';
+import { CLASS_BOTS, classStepKey } from '../../src/data/classroom';
+import type { ClassBot } from '../../src/data/classroom';
 
 /** An account with fewer open ideas than this gets topped up overnight. */
 export const IDEAS_FLOOR = 5;
@@ -32,6 +36,9 @@ export interface Step { key: string; worker: string | null; label: string; domai
 export const DOMAIN_ORCHESTRATOR: Record<StepDomain, string> = { ecom: 'orchestrator', content: 'content_orchestrator', marketing: 'marketing_orchestrator', master: 'hq' };
 const MARKETING_KEYS = new Set(['lead_filter', 'inbound_tracker', 'campaign_scorer', 'campaign_planner']);
 const domainOfStep = (key: string): StepDomain => (MARKETING_KEYS.has(key) ? 'marketing' : CONTENT_STEP_KEYS.has(key) ? 'content' : 'ecom');
+/** Class steps run after HQ's report (so the 5:30 digest is never later than
+ *  before), one per bot, still inside the 3:30–7:00 window. */
+export const CLASS_STEPS: Step[] = CLASS_BOTS.map((b) => ({ key: classStepKey(b.bot), worker: b.worker, label: `${b.name} goes to class: what's new, lessons, proposals`, domain: b.domain }));
 const CONTENT_STEP_KEYS = new Set(['content_analytics', 'trend_researcher', 'clip_editor', 'account_auditor', 'idea_script', 'post_planner', 'ideas', 'kit']);
 /** Tonight's steps, in order. Sunday adds the marketing week: grade the
  *  week that ended, then plan the next one. */
@@ -56,12 +63,15 @@ export function planFor(dow: number): Step[] {
     steps.push({ key: 'campaign_planner', worker: 'campaign_planner', label: 'Plan next week\'s campaign' });
   }
   const out: Step[] = steps.map((x) => ({ ...x, domain: domainOfStep(x.key) }));
+  // The loop between the bots (ai_handoffs): no AI, no sends; before the summaries so HQ sees it.
+  out.push({ key: 'handoffs', worker: null, label: 'Pass work between the bots (client wins, content leads, client products)', domain: 'master' });
   // Each domain orchestrator sums up its own night, then HQ reads all three
   // and writes the one report Marq gets (brief §2a).
   out.push({ key: 'summary:ecom', worker: 'orchestrator', label: 'E-commerce orchestrator: sum up the night', domain: 'ecom' });
   out.push({ key: 'summary:content', worker: 'content_orchestrator', label: 'Content orchestrator: sum up the night', domain: 'content' });
   out.push({ key: 'summary:marketing', worker: 'marketing_orchestrator', label: 'Marketing orchestrator: sum up the night', domain: 'marketing' });
   out.push({ key: 'hq', worker: 'hq', label: 'HQ: write the morning report', domain: 'master' });
+  out.push(...CLASS_STEPS);
   return out;
 }
 
@@ -135,6 +145,8 @@ async function runStep(apiKey: string | undefined, sb: Sb, userId: string, step:
     const ok = res.filter((r) => r.ok);
     return { status: ok.length ? 'done' : 'failed', note: `Ideas: ${ok.length}/${res.length} accounts topped up${ok.length < res.length ? ` (${res.find((r) => !r.ok)?.error})` : ''}`, runId: ok[0]?.runId ?? res[0]?.runId ?? null };
   }
+  if (step.key === 'handoffs') return runHandoffs(sb, userId);
+  if (step.key.startsWith('class:')) return one(await runClass(apiKey, sb, userId, step.key.slice(6) as ClassBot, { trigger: 'cron' }), step.label);
   if (step.key === 'kit') return one(await buildContentKit(apiKey, sb, userId, { trigger: 'cron' }), step.label);
   if (step.key.startsWith('summary:')) return writeDomainSummary(apiKey, sb, userId, step.domain as Exclude<StepDomain, 'master'>, date);
   if (step.key === 'hq') return writeMasterReport(apiKey, sb, userId, date);

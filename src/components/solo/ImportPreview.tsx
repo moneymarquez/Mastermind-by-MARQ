@@ -20,7 +20,7 @@ export default function ImportPreview({ data, importId, source, onApplied, onCan
         <button className="mm-btn" style={{ height: 32, fontSize: 13 }} onClick={() => setOn(new Set(items.map((i) => i.id)))}>All</button>
         <button className="mm-btn" style={{ height: 32, fontSize: 13 }} onClick={() => setOn(new Set())}>None</button>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', maxHeight: 420, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 12 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', maxHeight: 420, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)' }}>
         {items.map((i, k) => (
           <label key={i.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 12px', borderTop: k ? '1px solid var(--grid)' : 'none', cursor: 'pointer' }}>
             <input type="checkbox" checked={on.has(i.id)} onChange={() => setOn((s) => { const n = new Set(s); if (n.has(i.id)) n.delete(i.id); else n.add(i.id); return n; })} style={{ marginTop: 3 }} />

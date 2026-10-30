@@ -48,7 +48,7 @@ function SiteCard({ site, brand, orders, days, onChange }: { site: SiteRow; bran
   };
   const btn = { height: 32, fontSize: 13 } as const;
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 14, borderRadius: 14, border: `1px solid ${funnel.flag === 'kill' ? 'color-mix(in srgb, var(--danger) 45%, var(--border))' : 'var(--border)'}`, background: 'var(--surface)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 14, borderRadius: 'var(--g-r-lg)', border: `1px solid ${funnel.flag === 'kill' ? 'color-mix(in srgb, var(--danger) 45%, var(--border))' : 'var(--border)'}`, background: 'var(--surface)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ fontSize: 16, fontWeight: 600, flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{brand?.name ?? site.slug}</span>
         <Badge color={site.status === 'live' ? E.green : site.status === 'failed' ? E.red : E.amber}>{site.status}</Badge>
@@ -64,7 +64,7 @@ function SiteCard({ site, brand, orders, days, onChange }: { site: SiteRow; bran
       {site.last_error && <div style={{ fontSize: 12.5, color: 'var(--danger)' }}>{site.last_error}</div>}
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {(site.domain_status === 'none' || site.domain_status === 'failed') && <>
-          <input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="brandname.com" aria-label="Domain" style={{ flex: '1 1 140px', minWidth: 0, height: 32, padding: '0 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 14 }} />
+          <input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="brandname.com" aria-label="Domain" style={{ flex: '1 1 140px', minWidth: 0, height: 32, padding: '0 10px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 14 }} />
           <button className="mm-btn" style={btn} disabled={busy || !domain.trim()} onClick={() => void act('request')}>Buy domain (~$10–15/yr)</button>
         </>}
         {site.domain_status === 'awaiting_purchase' && <>

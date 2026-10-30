@@ -10,7 +10,7 @@ import { E, Badge, label, tint } from './ecomShared';
 type P = Record<string, unknown>;
 const arr = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
 interface Seller { name: string; shop_url: string | null; price: number | null; est_monthly_orders: number | null; est_monthly_revenue: number | null; confidence: string; source_url: string | null; shop_look: string; screenshot_url: string | null }
-interface Math { sell: number; supplier: number; ship: number; landed: number; profit: number; marginPct: number; breakEvenOrders: number | null }
+interface Math { sell: number; supplier: number; ship: number; landed: number; profit: number; marginPct: number; breakEvenOrders: number | null; adCost?: number; adCostEstimated?: boolean; cmAfterAds?: number; cmAfterAdsPct?: number; breakEvenRoas?: number | null; breakEvenCpa?: number; verdict?: string }
 
 export function confidenceColor(pct: number): string { return pct >= 65 ? E.green : pct >= 45 ? E.amber : E.red; }
 
@@ -21,11 +21,11 @@ export function PitchBody({ p }: { p: P }) {
   const conf = Number(p.confidence_pct ?? 50);
   const sup = (p.supplier ?? {}) as { name?: string; url?: string | null; ship_days?: number | null; us_warehouse?: boolean | null; unit_cost?: number | null };
   const where = (p.where ?? {}) as { tiktok_shop_fit?: boolean; note?: string };
-  const box = { background: tint(E.border, 18), borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column' as const, gap: 6 };
+  const box = { background: tint(E.border, 18), borderRadius: 'var(--g-r-lg)', padding: 12, display: 'flex', flexDirection: 'column' as const, gap: 6 };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr)', gap: 14, alignItems: 'center' }}>
-        {typeof p.image === 'string' && p.image ? <img src={p.image} alt="" style={{ width: 84, height: 84, objectFit: 'cover', borderRadius: 12, border: `1px solid ${E.border}` }} /> : <div style={{ width: 84, height: 84, borderRadius: 12, background: tint(E.border, 30) }} />}
+        {typeof p.image === 'string' && p.image ? <img src={p.image} alt="" style={{ width: 84, height: 84, objectFit: 'cover', borderRadius: 'var(--g-r-lg)', border: `1px solid ${E.border}` }} /> : <div style={{ width: 84, height: 84, borderRadius: 'var(--g-r-lg)', background: tint(E.border, 30) }} />}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 34, fontWeight: 700, letterSpacing: '-0.03em', color: confidenceColor(conf), fontVariantNumeric: 'tabular-nums' }}>{conf}%</span>
@@ -58,7 +58,7 @@ export function PitchBody({ p }: { p: P }) {
         {sellers.length === 0 && <div style={{ fontSize: 13, color: E.muted }}>No sellers found with sources.</div>}
         {sellers.map((s, i) => (
           <div key={i} style={{ display: 'grid', gridTemplateColumns: s.screenshot_url ? '64px minmax(0,1fr)' : 'minmax(0,1fr)', gap: 10, paddingTop: i ? 8 : 0, borderTop: i ? `1px solid ${E.border}` : 'none' }}>
-            {s.screenshot_url && <img src={s.screenshot_url} alt={`${s.name} shop`} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8 }} />}
+            {s.screenshot_url && <img src={s.screenshot_url} alt={`${s.name} shop`} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 'var(--g-r-md)' }} />}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span style={{ fontWeight: 600, color: E.text }}>{s.name}</span>
@@ -77,7 +77,7 @@ export function PitchBody({ p }: { p: P }) {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 8 }}>
-        {[['Sell price', money(m.sell)], ['Supplier + ship', `${money(m.supplier)} + ${money(m.ship)}`], ['Landed (incl. fees, returns)', money(m.landed)], ['Profit per order', money(m.profit)], ['Margin', `${Math.round(m.marginPct ?? 0)}%`], ['Break-even on $100 test', m.breakEvenOrders != null && Number.isFinite(m.breakEvenOrders) ? `${m.breakEvenOrders} orders` : '—']].map(([k, v]) => (
+        {[['Sell price', money(m.sell)], ['Supplier + ship', `${money(m.supplier)} + ${money(m.ship)}`], ['Landed (incl. fees, returns)', money(m.landed)], ['Profit per order', money(m.profit)], ['Margin', `${Math.round(m.marginPct ?? 0)}%`], ['Break-even on $100 test', m.breakEvenOrders != null && Number.isFinite(m.breakEvenOrders) ? `${m.breakEvenOrders} orders` : '—'], ...(m.cmAfterAds != null ? [[`Ad cost / purchase${m.adCostEstimated ? ' (est.)' : ''}`, money(m.adCost ?? 0)], ['Margin after ads', `${money(m.cmAfterAds)} (${Math.round(m.cmAfterAdsPct ?? 0)}%)`], ['Break-even ROAS · CPA', `${m.breakEvenRoas != null ? `${m.breakEvenRoas.toFixed(2)}×` : '—'} · ${money(m.breakEvenCpa ?? 0)}`], ['Profit verdict', m.verdict ?? '—']] : [])].map(([k, v]) => (
           <div key={k} style={{ ...box, gap: 2 }}><span style={{ fontSize: 11.5, color: E.faint }}>{k}</span><span style={{ fontSize: 17, fontWeight: 600, color: E.text, fontVariantNumeric: 'tabular-nums' }}>{v}</span></div>
         ))}
       </div>
@@ -115,7 +115,7 @@ export function DirectionVisuals({ approvalId, direction }: { approvalId: string
     <div style={{ marginTop: 8 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(88px,1fr))', gap: 6 }}>
         {mine.map((r) => (
-          <div key={r.id} title={r.prompt} style={{ aspectRatio: r.kind === 'logo' ? '1' : '3 / 4', borderRadius: 8, overflow: 'hidden', background: tint(E.border, 25), display: 'flex', alignItems: 'flex-end' }}>
+          <div key={r.id} title={r.prompt} style={{ aspectRatio: r.kind === 'logo' ? '1' : '3 / 4', borderRadius: 'var(--g-r-md)', overflow: 'hidden', background: tint(E.border, 25), display: 'flex', alignItems: 'flex-end' }}>
             {r.url ? <img src={r.url} alt={`${r.kind} image`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 10.5, color: E.faint, padding: 6 }}>{r.kind} · {r.status}</span>}
           </div>
         ))}

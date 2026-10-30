@@ -56,9 +56,9 @@ export default function InboxScreen(p: Props) {
         <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4 }}>{tab === 'leads' ? 'Every lead that came to you, from every door' : 'Every connected address + the client portal'}</div>
       </div>
       {phone && (
-        <div role="tablist" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+        <div role="tablist" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, padding: 3, borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
           {(['inbox', 'leads'] as const).map((t) => (
-            <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} style={{ height: 40, borderRadius: 999, border: 0, fontFamily: 'inherit', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: tab === t ? 'var(--text)' : 'transparent', color: tab === t ? 'var(--bg)' : 'var(--text-secondary)' }}>
+            <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} style={{ height: 40, borderRadius: 'var(--g-r-sm)', border: 0, fontFamily: 'inherit', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: tab === t ? 'var(--text)' : 'transparent', color: tab === t ? 'var(--bg)' : 'var(--text-secondary)' }}>
               {t === 'inbox' ? 'Inbox' : 'Leads'}
               {(t === 'inbox' ? unread : waiting) > 0 && <span style={{ minWidth: 18, height: 18, padding: '0 5px', borderRadius: 999, fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: t === 'leads' && p.feed.urgent ? 'var(--danger)' : 'var(--accent)', color: 'var(--bg)' }}>{t === 'inbox' ? unread : waiting}</span>}
             </button>
@@ -107,12 +107,12 @@ function InboxView({ device, focus, onFocusConsumed, onOpenClient, ui }: Props &
     return <Empty text="No mail yet. Messages sent to your connected addresses, plus client portal questions and tickets, land here." />;
   }
   const chips = (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+    <div className="g-seg" role="group" aria-label="Filter">
       {filters.map((x) => {
         const n = ui.msgs.filter(x.test).length;
         if (x.key !== 'all' && n === 0) return null;
         const on = x.key === f.key;
-        return <button key={x.key} onClick={() => setFilter(x.key)} style={{ height: 30, padding: '0 11px', borderRadius: 999, border: `1px solid ${on ? 'var(--text)' : 'var(--border)'}`, background: on ? 'var(--text)' : 'transparent', color: on ? 'var(--bg)' : 'var(--text-secondary)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 5 }}>{x.label}{x.key !== 'all' && <span style={{ opacity: 0.7 }}>{n}</span>}</button>;
+        return <button key={x.key} onClick={() => setFilter(x.key)} className="g-pill" aria-pressed={on}>{x.label}{x.key !== 'all' && <span className="g-seg-n">{n}</span>}</button>;
       })}
     </div>
   );
@@ -125,11 +125,11 @@ function InboxView({ device, focus, onFocusConsumed, onOpenClient, ui }: Props &
 
   if (phone) {
     if (open) return <MsgDetail m={open} phone onBack={() => setOpenId(null)} ui={ui} onOpenClient={onOpenClient} />;
-    return <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{chips}<div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>{rows}</div></div>;
+    return <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{chips}<div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>{rows}</div></div>;
   }
   const listW = device === 'desktop' ? 400 : 340;
   return (
-    <div style={{ display: 'flex', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', height: device === 'desktop' ? 720 : 640, maxHeight: 'calc(100vh - 200px)', minHeight: 440 }}>
+    <div style={{ display: 'flex', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', height: device === 'desktop' ? 720 : 640, maxHeight: 'calc(100vh - 200px)', minHeight: 440 }}>
       <div style={{ width: listW, flex: 'none', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <div style={{ padding: 12, borderBottom: '1px solid var(--grid)' }}>{chips}</div>
         <div className="mm-scroll-y" style={{ flex: 1, minHeight: 0 }}>{rows}</div>
@@ -142,7 +142,7 @@ function InboxView({ device, focus, onFocusConsumed, onOpenClient, ui }: Props &
 }
 
 function SourceTag({ m }: { m: UMsg }) {
-  return <span style={{ fontSize: 11.5, fontWeight: 500, padding: '1px 6px', borderRadius: 4, border: `1px solid ${m.portal ? 'var(--client-accent)' : 'var(--border)'}`, color: m.portal ? 'var(--client-accent)' : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{m.sourceLabel}</span>;
+  return <span style={{ fontSize: 11.5, fontWeight: 500, padding: '1px 6px', borderRadius: 'var(--g-r-xs)', border: `1px solid ${m.portal ? 'var(--client-accent)' : 'var(--border)'}`, color: m.portal ? 'var(--client-accent)' : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{m.sourceLabel}</span>;
 }
 function MsgRow({ m, now, active, onOpen }: { m: UMsg; now: number; active: boolean; onOpen: () => void }) {
   return (
@@ -201,13 +201,13 @@ function MsgDetail({ m, phone, onBack, ui, onOpenClient }: { m: UMsg; phone?: bo
       {m.clientId && <button className="mm-btn" style={{ alignSelf: 'flex-start' }} onClick={() => onOpenClient(m.clientId!)}>Open client</button>}
 
       {sentAt || m.replied ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 14, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface-2)' }}><Chip k="good">Sent</Chip><span style={{ fontSize: 13.5, color: 'var(--text-secondary)' }}>{sentAt ? 'Sent just now.' : 'You replied to this.'}</span></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 14, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', background: 'var(--surface-2)' }}><Chip k="good">Sent</Chip><span style={{ fontSize: 13.5, color: 'var(--text-secondary)' }}>{sentAt ? 'Sent just now.' : 'You replied to this.'}</span></div>
       ) : m.draft ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 14, borderRadius: 16, border: '1px solid var(--border)', background: 'var(--surface-2)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 14, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', background: 'var(--surface-2)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><GNova size={13} fill color="var(--accent)" /><span style={{ flex: 1, color: 'var(--text)', fontSize: 14, fontWeight: 600 }}>Nova drafted a reply</span>{m.toAddr && <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>From {m.toAddr}</span>}</div>
           {editing
-            ? <textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={8} style={{ width: '100%', boxSizing: 'border-box', padding: 12, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 15, lineHeight: 1.5, fontFamily: 'inherit', resize: 'vertical' }} />
-            : <div style={{ padding: 12, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 15, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{draft}</div>}
+            ? <textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={8} style={{ width: '100%', boxSizing: 'border-box', padding: 12, borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 15, lineHeight: 1.5, fontFamily: 'inherit', resize: 'vertical' }} />
+            : <div style={{ padding: 12, borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 15, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{draft}</div>}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button className="mm-btn mm-btn--primary" style={{ height: phone ? 46 : 38 }} disabled={busy} onClick={() => send(draft)}>{busy ? 'Sending…' : 'Send'}</button>
             <button className="mm-btn" style={{ height: phone ? 46 : 38 }} onClick={() => setEditing((v) => !v)}>{editing ? 'Done' : 'Edit'}</button>
@@ -219,7 +219,7 @@ function MsgDetail({ m, phone, onBack, ui, onOpenClient }: { m: UMsg; phone?: bo
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>No reply drafted.</span>
-          <textarea value={composer} onChange={(e) => setComposer(e.target.value)} rows={4} placeholder={m.portal ? 'Reply in their portal' : 'Write a reply'} style={{ width: '100%', boxSizing: 'border-box', padding: 12, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 15, lineHeight: 1.5, fontFamily: 'inherit', resize: 'vertical' }} />
+          <textarea value={composer} onChange={(e) => setComposer(e.target.value)} rows={4} placeholder={m.portal ? 'Reply in their portal' : 'Write a reply'} style={{ width: '100%', boxSizing: 'border-box', padding: 12, borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 15, lineHeight: 1.5, fontFamily: 'inherit', resize: 'vertical' }} />
           <button className="mm-btn mm-btn--primary" style={{ alignSelf: 'flex-start', height: phone ? 46 : 38 }} disabled={busy || !composer.trim()} onClick={() => send(composer)}>{busy ? 'Sending…' : 'Send'}</button>
           {err && <span style={{ fontSize: 13, color: 'var(--danger)' }}>{err}</span>}
         </div>
@@ -228,7 +228,7 @@ function MsgDetail({ m, phone, onBack, ui, onOpenClient }: { m: UMsg; phone?: bo
   );
 }
 function Field({ label, value }: { label: string; value: string | null }) {
-  return <div style={{ padding: 12, borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)' }}><div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', marginBottom: 4 }}>{label}</div><div style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.45 }}>{value || '—'}</div></div>;
+  return <div style={{ padding: 12, borderRadius: 'var(--g-r-lg)', background: 'var(--surface-2)', border: '1px solid var(--border)' }}><div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', marginBottom: 4 }}>{label}</div><div style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.45 }}>{value || '—'}</div></div>;
 }
 
 // ── Leads ─────────────────────────────────────────────────────────────
@@ -282,9 +282,9 @@ function LeadsView({ device, feed, onOpenLeadFlow, onNavigate, onOpenClient }: P
   }
   const filterBar = (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-      <div style={{ display: 'flex', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+      <div style={{ display: 'flex', gap: 2, padding: 3, borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
         {([['all', `All ${live.length}`], ['hot', `Hot ${live.filter((l) => temperature(l, now) === 'hot').length}`], ['waiting', `Waiting ${feed.waiting}`]] as const).map(([k, label]) => (
-          <button key={k} onClick={() => setFilter(k)} style={{ height: 32, padding: '0 12px', borderRadius: 999, border: 0, fontFamily: 'inherit', fontSize: 13, fontWeight: 500, cursor: 'pointer', background: filter === k ? 'var(--text)' : 'transparent', color: filter === k ? 'var(--bg)' : 'var(--text-secondary)' }}>{label}</button>
+          <button key={k} onClick={() => setFilter(k)} style={{ height: 32, padding: '0 12px', borderRadius: 'var(--g-r-sm)', border: 0, fontFamily: 'inherit', fontSize: 13, fontWeight: 500, cursor: 'pointer', background: filter === k ? 'var(--text)' : 'transparent', color: filter === k ? 'var(--bg)' : 'var(--text-secondary)' }}>{label}</button>
         ))}
       </div>
       <button className="mm-btn" style={{ height: 34 }} onClick={onOpenLeadFlow}>Open in LeadFlow ↗</button>
@@ -308,7 +308,7 @@ function LeadsView({ device, feed, onOpenLeadFlow, onNavigate, onOpenClient }: P
       {stats}
       {filterBar}
       {phone ? (
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '4px 14px' }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: '4px 14px' }}>
           {shown.map((l, i) => <LeadCard key={l.id} l={l} now={now} first={i === 0} {...actions} />)}
           {shown.length === 0 && <div style={{ padding: 20, color: 'var(--text-tertiary)', fontSize: 14, textAlign: 'center' }}>Nothing here.</div>}
         </div>
@@ -362,7 +362,7 @@ function LeadsTable({ leads, now, ...acts }: LeadActs & { leads: FeedLead[]; now
   const th: CSSProperties = { textAlign: 'left', fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', padding: '10px 14px', background: 'var(--surface-2)', borderBottom: '1px solid var(--border)' };
   const td: CSSProperties = { padding: '12px 14px', borderBottom: '1px solid var(--grid)', verticalAlign: 'middle' };
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead><tr><th style={th}>Lead</th><th style={th}>Source</th><th style={th}>Temperature</th><th style={{ ...th, textAlign: 'right' }}>Quick actions</th></tr></thead>
         <tbody>

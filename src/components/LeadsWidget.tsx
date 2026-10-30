@@ -53,7 +53,7 @@ export default function LeadsWidget({ leads, newCount, loading, onOpen, compact 
             fontSize: 9, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', flexShrink: 0,
             color: lead.stage === 'new_lead' ? green : 'var(--mm-dim)',
             border: `1px solid ${lead.stage === 'new_lead' ? `${green}66` : 'var(--mm-line)'}`,
-            borderRadius: 6, padding: '1px 4px',
+            borderRadius: 'var(--g-r-sm)', padding: '1px 4px',
           }}>
             {lead.stage === 'new_lead' ? 'New' : 'In CRM'}
           </span>

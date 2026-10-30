@@ -11,7 +11,7 @@ export const PORTALS: { key: PortalKey; name: string; landing: string }[] = [
   // Running Marq's own business (money, launches, orchestrators), as opposed
   // to Made by, which is purely client work.
   { key: 'orchestrator', name: 'Orchestrator', landing: 'orchestrator' },
-  { key: 'madeby', name: 'Made by', landing: 'client-modules' },
+  { key: 'madeby', name: 'Made by', landing: 'madeby-board' },
   { key: 'content', name: 'Content', landing: 'content-accounts' },
   { key: 'ecommerce', name: 'E-commerce', landing: 'ecommerce' },
 ];
@@ -29,6 +29,14 @@ export function portalOfModule(key: string): PortalKey {
 export function portalOfRoute(route: string): PortalKey | null {
   const k = moduleKeyForRoute(route);
   return k ? portalOfModule(k) : null;
+}
+
+/** True when a route is shown in this portal's nav as a shortcut (the
+ *  module's `alsoIn`), e.g. Contracts inside Made by's "3 · Baseline".
+ *  Opening it there keeps you in that portal instead of switching. */
+export function routeAlsoIn(route: string, portal: PortalKey): boolean {
+  const k = moduleKeyForRoute(route);
+  return !!k && !!MODULE_REGISTRY.find((m) => m.key === k)?.alsoIn?.includes(portal);
 }
 
 /** Masterminds always; any other portal only when canAccess is true for at

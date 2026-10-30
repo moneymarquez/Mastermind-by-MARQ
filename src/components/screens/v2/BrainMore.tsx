@@ -15,7 +15,7 @@ function Exercise({ e, showRegion }: { e: Ex; showRegion?: boolean }) {
   const [open, setOpen] = useState(false);
   const region = REGIONS.find((r) => r.id === e.region);
   return (
-    <button onClick={() => setOpen((v) => !v)} aria-expanded={open} style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '12px 14px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface-2)', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>
+    <button onClick={() => setOpen((v) => !v)} aria-expanded={open} style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '12px 14px', borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', background: 'var(--surface-2)', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>
       <span style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
         <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>{e.name}</span>
         <span style={{ fontSize: 12, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{e.minutes ? `${e.minutes} min` : 'no time'} · {'●'.repeat(e.difficulty)}{'○'.repeat(3 - e.difficulty)}</span>
@@ -45,8 +45,8 @@ export function BrainAssessment({ onDone }: { onDone: () => void }) {
         <Card key={next.id} title={`Question ${QUESTIONS.indexOf(next) + 1}`} meta="Go with your first answer" style={{ animation: 'mmRise .3s ease both' }}>
           <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5, color: 'var(--text)' }}>{next.scenario}</p>
           {(['a', 'b'] as const).map((c) => (
-            <button key={c} onClick={() => answer(next.id, c)} style={{ display: 'flex', gap: 12, padding: '14px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface-2)', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
-              <span style={{ width: 28, height: 28, flex: 'none', borderRadius: 8, background: 'var(--accent-wash)', color: 'var(--accent)', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{c.toUpperCase()}</span>
+            <button key={c} onClick={() => answer(next.id, c)} style={{ display: 'flex', gap: 12, padding: '14px', borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', background: 'var(--surface-2)', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <span style={{ width: 28, height: 28, flex: 'none', borderRadius: 'var(--g-r-md)', background: 'var(--accent-wash)', color: 'var(--accent)', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{c.toUpperCase()}</span>
               <span style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, lineHeight: 1.4 }}>{next[c].text}</span>
                 <span style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>{next[c].hint}</span>

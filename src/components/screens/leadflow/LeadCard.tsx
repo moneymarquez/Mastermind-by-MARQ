@@ -13,6 +13,8 @@ import {
 } from './leadLinks';
 import { fmtPhone, telHref, leadCategory, leadTags, cityState, fmtReviewAge, isDnc } from './format';
 import { Tag, TierMark, PhoneIcon, MoreMenu, Banner, Dot } from './ui';
+import { callKitFor } from '../../../data/callKit';
+import type { CallKitLead } from '../../../data/callKit';
 import './leadflow.css';
 
 /** One lead, rendered the same way wherever it appears.
@@ -48,10 +50,10 @@ function Photos({ paths }: { paths: string[] }) {
     <Section title="Photos">
       <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
         {urls === null
-          ? paths.slice(0, 4).map((p) => <div key={p} className="lf-skel" style={{ width: 96, height: 72, flex: 'none', borderRadius: 6 }} />)
+          ? paths.slice(0, 4).map((p) => <div key={p} className="lf-skel" style={{ width: 96, height: 72, flex: 'none', borderRadius: 'var(--g-r-sm)' }} />)
           : urls.map((u) => (
             <a key={u} href={u} target="_blank" rel="noopener noreferrer" style={{ flex: 'none' }}>
-              <img src={u} alt="" loading="lazy" style={{ height: 96, borderRadius: 6, border: '1px solid var(--lf-border)', display: 'block' }} />
+              <img src={u} alt="" loading="lazy" style={{ height: 96, borderRadius: 'var(--g-r-sm)', border: '1px solid var(--lf-border)', display: 'block' }} />
             </a>
           ))}
       </div>
@@ -239,6 +241,32 @@ function HandoffSection({ lead }: { lead: LeadflowLead }) {
   );
 }
 
+/** The cold-call kit for this lead (data/callKit.ts): estimated monthly
+ *  leak with its inputs, who to ask for and the one-line opener. Built from
+ *  the lead row alone here; LeadFlow → Call list adds the website-gap
+ *  findings and complaint clusters and ranks every lead. */
+function CallKitSection({ lead }: { lead: LeadflowLead }) {
+  const k = useMemo(() => callKitFor(lead as unknown as CallKitLead, lead.website_status === 'no_website' ? [{ kind: 'no_website', text: 'They have no website.' }] : []), [lead]);
+  const [why, setWhy] = useState(false);
+  const usd = (n: number) => `$${n.toLocaleString('en-US')}`;
+  return (
+    <Section title="Call kit">
+      {k.leak ? (
+        <div className="lf-field"><div>Leak (estimate)</div><div><button className="lf-btn lf-btn--ghost lf-btn--sm" style={{ padding: 0, height: 'auto' }} onClick={() => setWhy((v) => !v)} aria-expanded={why}>~{usd(k.leak.monthly)}/mo · {why ? 'hide inputs' : 'show inputs'}</button></div></div>
+      ) : <div className="lf-field"><div>Leak (estimate)</div><div style={{ color: 'var(--lf-text-tertiary)' }}>Not enough data</div></div>}
+      {why && k.leak && (
+        <ul style={{ margin: '0 0 8px', paddingLeft: 18, fontSize: 13, color: 'var(--lf-text-secondary)', lineHeight: 1.5 }}>
+          <li>Range {usd(k.leak.low)}–{usd(k.leak.high)} a month, from public data and assumptions, not their books.</li>
+          {k.leak.inputs.map((i) => <li key={i.label}>{i.label}: {i.value}</li>)}
+        </ul>
+      )}
+      <div className="lf-field"><div>Ask for</div><div>{k.person ? `${k.person.name}${k.person.role === 'owner' ? ' (owner)' : ''}` : <span style={{ color: 'var(--lf-text-tertiary)' }}>The owner or manager (no name on file)</span>}</div></div>
+      <div className="lf-field"><div>Best time</div><div>{k.bestTime}</div></div>
+      <div style={{ fontSize: 14, lineHeight: 1.55, color: 'var(--lf-text)', background: 'var(--lf-surface-2)', borderRadius: 'var(--g-r-md)', padding: '8px 10px', marginTop: 6 }}>{k.opener}</div>
+    </Section>
+  );
+}
+
 /** Everything known about a lead and every field you can fill in on it. */
 export function RecordBody({ lead, onPatch, onLogCall, ownerFirst }: { lead: LeadflowLead; onPatch: PatchLead; onLogCall: LogCall; ownerFirst?: boolean }) {
   // Memoised: Photos keys its signing off this array's identity.
@@ -259,6 +287,7 @@ export function RecordBody({ lead, onPatch, onLogCall, ownerFirst }: { lead: Lea
   return (
     <>
       {ownerFirst ? <>{owner}{contact}</> : contact}
+      <CallKitSection lead={lead} />
       <CallLogSection lead={lead} onLogCall={onLogCall} onPatch={onPatch} />
       {!ownerFirst && owner}
       <Section title="Details">

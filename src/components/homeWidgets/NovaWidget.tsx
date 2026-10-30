@@ -21,7 +21,7 @@ export default function NovaWidget({ isMobile, onNavigate, onOpenNova, assistant
       {nudges.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {nudges.slice(0, 3).map((n) => (
-            <div key={n.id} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, padding: '10px 12px', borderRadius: 12, background: 'var(--mm-ink-soft)', border: '1px solid var(--mm-ink-line)' }}>
+            <div key={n.id} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, padding: '10px 12px', borderRadius: 'var(--g-r-lg)', background: 'var(--mm-ink-soft)', border: '1px solid var(--mm-ink-line)' }}>
               <div
                 style={{ fontSize: 12.5, opacity: 0.8, lineHeight: 1.45, cursor: n.target_screen ? 'pointer' : 'default' }}
                 onClick={() => n.target_screen && onNavigate(n.target_screen)}
@@ -36,7 +36,7 @@ export default function NovaWidget({ isMobile, onNavigate, onOpenNova, assistant
 
       <div
         onClick={onOpenNova}
-        style={{ marginTop: isMobile ? 0 : 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px', borderRadius: 12, background: 'var(--mm-ink-text)', color: 'var(--mm-ink)', fontSize: 13.5, fontWeight: 600, cursor: 'pointer' }}
+        style={{ marginTop: isMobile ? 0 : 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px', borderRadius: 'var(--g-r-lg)', background: 'var(--mm-ink-text)', color: 'var(--mm-ink)', fontSize: 13.5, fontWeight: 600, cursor: 'pointer' }}
       >
         Open Nova<Icon name="arrow-right" size={16} />
       </div>

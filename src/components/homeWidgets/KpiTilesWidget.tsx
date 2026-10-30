@@ -13,7 +13,7 @@ import { streakClass } from '../../data/dialStreak';
 import RollingText from '../fx/RollingText';
 import type { HomeWidgetProps } from './types';
 
-const tile: CSSProperties = { padding: 17, borderRadius: 16, background: 'var(--mm-panel-solid)', border: '1px solid var(--mm-line)', display: 'flex', flexDirection: 'column', gap: 9, position: 'relative', minWidth: 0 };
+const tile: CSSProperties = { padding: 17, borderRadius: 'var(--g-r-lg)', background: 'var(--mm-panel-solid)', border: '1px solid var(--mm-line)', display: 'flex', flexDirection: 'column', gap: 9, position: 'relative', minWidth: 0 };
 
 // Roll-up cascade order: calls, sobriety, workouts, macros, then the rest.
 const STAT_DEFS = [
@@ -87,8 +87,8 @@ export default function KpiTilesWidget({ isMobile }: HomeWidgetProps) {
               {v.loading || d.caption === 'Next on schedule' ? shown : <RollingText text={v.value} delay={d.delay} duration={ROLL_MS} />}
             </div>
             {v.pct !== null && (
-              <div style={{ height: 4, borderRadius: 4, background: 'var(--mm-track)' }}>
-                <div style={{ width: `${Math.max(0, Math.min(100, v.pct))}%`, height: '100%', borderRadius: 4, background: 'var(--mm-text)' }} />
+              <div style={{ height: 4, borderRadius: 'var(--g-r-xs)', background: 'var(--mm-track)' }}>
+                <div style={{ width: `${Math.max(0, Math.min(100, v.pct))}%`, height: '100%', borderRadius: 'var(--g-r-xs)', background: 'var(--mm-text)' }} />
               </div>
             )}
           </div>
