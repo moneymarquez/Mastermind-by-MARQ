@@ -59,7 +59,7 @@ export default function CommsThread({ who, compact }: { who: Who; compact?: bool
         {msgs.map((m) => (
           <div key={m.id} style={{ alignSelf: m.direction === 'out' ? 'flex-end' : 'flex-start', maxWidth: '88%', padding: '8px 12px', borderRadius: 'var(--g-r-lg)', background: m.direction === 'out' ? 'var(--surface-2)' : 'transparent', border: m.direction === 'out' ? 'none' : '1px solid var(--border)' }}>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 11.5, color: 'var(--text-tertiary)', marginBottom: 2 }}>
-              <span>{m.channel === 'sms' ? '💬' : '✉️'} {new Date(m.sent_at ?? m.scheduled_for ?? m.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+              <span>{m.channel === 'sms' ? 'SMS ·' : 'Email ·'} {new Date(m.sent_at ?? m.scheduled_for ?? m.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
               {m.status !== 'sent' && m.status !== 'received' && <Chip k={m.status === 'failed' ? 'bad' : 'neutral'}>{m.status.replace('_', ' ')}</Chip>}
             </div>
             {m.subject && <div style={{ fontWeight: 600, fontSize: 14 }}>{m.subject}</div>}

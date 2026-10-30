@@ -87,7 +87,7 @@ export default function ClassroomScreen() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Card title="Waiting on you" meta={`${waiting.length} open · you're the only blocker on ${spof.size}`}>
-            {waiting.length === 0 && <div style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Nothing is waiting on you. 🎉</div>}
+            {waiting.length === 0 && <div style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Nothing is waiting on you.</div>}
             {waiting.slice(0, 12).map((w, i) => {
               const c = clients.find((x) => x.id === w.item.client_id);
               return (

@@ -217,7 +217,7 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
       </div>
       {portalMenu && portal && <PortalMenu portal={portal} sheet={!!drawer} onClose={() => setPortalMenu(false)} />}
       {travel && isOwner && (
-        <button type="button" onClick={() => onNav('account-settings')} title="Travel mode is on. Tap to change it in Settings." style={{ alignSelf: 'flex-start', marginLeft: 6, height: 24, padding: '0 10px', borderRadius: 999, border: 0, background: 'color-mix(in srgb, var(--accent) 18%, transparent)', color: 'var(--accent)', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>✈ Travel mode</button>
+        <button type="button" onClick={() => onNav('account-settings')} title="Travel mode is on. Tap to change it in Settings." style={{ alignSelf: 'flex-start', marginLeft: 6, height: 24, padding: '0 10px', borderRadius: 999, border: 0, background: 'color-mix(in srgb, var(--accent) 18%, transparent)', color: 'var(--accent)', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>Travel mode</button>
       )}
       <button onClick={() => { drawer?.onClose(); onSearch(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, height: rowH, padding: '0 10px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-tertiary)', fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit' }}>
         <GSearch size={15} /><span style={{ flex: 1, textAlign: 'left' }}>Search</span>

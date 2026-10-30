@@ -38,7 +38,7 @@ export default function OrdersSection({ brands }: { brands: Brand[] }) {
       </div>
       <Card title="Every order" meta="from your Shopify store, with the site that made each sale" flush action={<button className="mm-btn" style={{ height: 32, fontSize: 13 }} onClick={async () => { setMsg('Connecting…'); const r = await api<{ ok?: boolean; error?: string; warning?: string }>('/api/ecom/register-webhooks', { body: {} }); setMsg(r.error ? `Couldn't connect sale alerts: ${r.error}` : `Done. Shopify will send every new order here.${r.warning ? ` Note: ${r.warning}` : ''}`); }}>Connect sale alerts</button>}>
         {msg && <div style={{ fontSize: 13, color: 'var(--text-secondary)', padding: '0 0 8px' }}>{msg}</div>}
-        {o.rows.length === 0 ? <Empty text={o.loading ? 'Loading…' : 'No orders yet. When a site sells, Shopify sends the order here with the site that made it (and texts you 💸).'} /> : o.rows.map((r, i) => {
+        {o.rows.length === 0 ? <Empty text={o.loading ? 'Loading…' : 'No orders yet. When a site sells, Shopify sends the order here with the site that made it (and texts you).'} /> : o.rows.map((r, i) => {
           const s = SUPPLIER[r.supplier_status] ?? { l: r.supplier_status, k: 'neutral' as ChipKind };
           return (
             <div key={r.id} style={{ display: 'grid', gridTemplateColumns: phone ? 'minmax(0,1fr) auto' : 'minmax(0,2fr) minmax(0,1fr) 90px 90px 140px', gap: 10, alignItems: 'center', padding: '11px 0', borderTop: i ? '1px solid var(--grid)' : 'none', fontSize: 14 }}>

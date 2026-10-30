@@ -175,7 +175,7 @@ function ClipCard({ clip: c, open, onToggle, api, accounts, items }: { clip: Cli
           {!c.storage_path ? <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>No video file on this clip — the edit below is all that's saved.</div> : plan ? <SideBySide src={src} plan={plan} /> : src && <video src={src} controls playsInline preload="metadata" style={{ width: '100%', maxHeight: 420, borderRadius: 'var(--radius-sm)', background: '#000' }} />}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
             {!hasTranscript && <button style={btn('primary')} disabled={!!busy} onClick={retranscribe}>{busy || 'Transcribe'}</button>}
-            {hasTranscript && !pending && <button style={btn(plan ? 'ghost' : 'primary')} disabled={!!busy || c.status === 'editing'} onClick={cut}>{busy || (plan ? 'Re-cut' : '✂️ Cut it')}</button>}
+            {hasTranscript && !pending && <button style={btn(plan ? 'ghost' : 'primary')} disabled={!!busy || c.status === 'editing'} onClick={cut}>{busy || (plan ? 'Re-cut' : 'Cut it')}</button>}
             {c.status === 'approved' && c.edit_plan && c.storage_path && <button style={btn(c.rendered_path ? 'ghost' : 'primary')} disabled={!!busy || c.render_status === 'rendering'} onClick={render}>{c.render_status === 'rendering' ? 'Rendering…' : c.rendered_path ? 'Render again' : 'Render the edit'}</button>}
             {c.rendered_path && <Badge color={E.green}>Rendered: the Publisher posts this cut</Badge>}
             {c.render_status === 'failed' && c.render_error && <span style={{ fontSize: 'var(--text-caption)', color: E.red }}>{c.render_error}</span>}
