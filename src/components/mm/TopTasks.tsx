@@ -31,7 +31,7 @@ export function TopTaskRow({ t, onDone, onNav, expanded }: { t: TopTask; onDone:
   const { red } = useNeedsConfirm('approval', t.kind === 'approval' ? t.id : null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
-  const finish = async (fn: () => Promise<{ error?: string | null } | unknown>, done: string) => {
+  const finish = async (fn: () => Promise<unknown>, done: string) => {
     setBusy(true); const r = (await fn()) as { error?: { message?: string } | string | null }; setBusy(false);
     if (r && r.error) { setMsg(typeof r.error === 'string' ? r.error : r.error.message ?? 'Could not save.'); return; }
     setMsg(done); onDone();
@@ -54,7 +54,7 @@ export function TopTaskRow({ t, onDone, onNav, expanded }: { t: TopTask; onDone:
               <button className="mm-btn mm-btn--primary" style={btn} disabled={busy} onClick={() => approve('approved')}>Approve</button>
               <button className="mm-btn" style={btn} disabled={busy} onClick={() => approve('sent_back')}>Send back</button>
             </>}
-            {(t.kind === 'task' || t.kind === 'reminder') && <button className="mm-btn mm-btn--primary" style={btn} disabled={busy} onClick={() => void finish(() => t.kind === 'task' ? supabase.from('tasks').update({ done: true, done_at: new Date().toISOString() }).eq('id', t.id) : supabase.from('reminders').update({ done: true }).eq('id', t.id), 'Done.')}>Done</button>}
+            {(t.kind === 'task' || t.kind === 'reminder') && <button className="mm-btn mm-btn--primary" style={btn} disabled={busy} onClick={() => void finish(async () => (t.kind === 'task' ? await supabase.from('tasks').update({ done: true, done_at: new Date().toISOString() }).eq('id', t.id) : await supabase.from('reminders').update({ done: true }).eq('id', t.id)), 'Done.')}>Done</button>}
             {t.phone && <a className="mm-btn mm-btn--primary" style={{ ...btn, display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }} href={`tel:${t.phone}`}>Call</a>}
             <button className="mm-btn" style={btn} onClick={() => onNav(t.screen)}>{t.kind === 'approval' && (t.is_money || OPEN_ONLY.has(t.type ?? '')) ? 'Open to decide' : 'Open'}</button>
           </div>
