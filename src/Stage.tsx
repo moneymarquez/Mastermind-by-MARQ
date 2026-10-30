@@ -293,7 +293,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
                 drawer={{ onClose: () => setMenuOpen(false), dark: resolvedTheme === 'dark', onToggleTheme: toggleTheme }} />
             </>
           )}
-          <PhoneTabBar screen={state.screen} novaOpen={state.novaOpen} badges={badges} onNav={shellNav} onNova={toggleNova} />
+          <PhoneTabBar screen={state.screen} novaOpen={state.novaOpen} badges={badges} portal={portal} portals={portals} onNav={shellNav} onPortal={portalNav.onSwitch} />
         </>
       ) : (
         <>
