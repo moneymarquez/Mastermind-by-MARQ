@@ -11,7 +11,7 @@ const STORAGE_KEY = 'mastermind-theme';
 
 // The handoff's --bg for each theme. Literal because this runs at module
 // load, before any stylesheet is guaranteed applied.
-const STATUS_BAR_COLOR: Record<Resolved, string> = { dark: '#0b0b0d', light: '#f4f4f6' };
+const STATUS_BAR_COLOR: Record<Resolved, string> = { dark: '#0E0F11', light: '#F7F5F0' };
 
 let currentPref: Theme = 'dark';
 let currentTheme: Resolved = 'dark';

@@ -57,7 +57,7 @@ function Menu({ items, onClose }: { items: PageAction[]; onClose: () => void }) 
     return () => { document.removeEventListener('mousedown', h); document.removeEventListener('keydown', k); };
   }, [onClose]);
   return (
-    <div ref={ref} role="menu" className="mm-anim" style={{ position: 'absolute', right: 0, top: 46, zIndex: 40, minWidth: 200, padding: 6, borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 12px 40px rgba(0,0,0,.35)', animation: 'mmPanelIn .14s ease' }}>
+    <div ref={ref} role="menu" className="mm-anim" style={{ position: 'absolute', right: 0, top: 46, zIndex: 40, minWidth: 200, padding: 6, borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--g-shadow-3)', animation: 'mmPanelIn .14s ease' }}>
       {items.map((it) => (
         <button key={it.t} role="menuitem" className="mm-search-row" style={{ height: 40, color: it.danger ? 'var(--danger)' : 'var(--text)' }} onClick={() => { onClose(); it.onClick(); }}>{it.t}</button>
       ))}
@@ -128,7 +128,7 @@ export function Page({ title, sub, back = 'All modules', backTo = 'modules', onB
       )}
       {children}
       {phone && fab && (
-        <button className="mm-btn mm-btn--primary" onClick={fab.onClick} style={{ position: 'fixed', right: 16, bottom: 'calc(84px + 16px + max(env(safe-area-inset-bottom), 0px))', zIndex: 50, height: 48, padding: '0 18px', fontSize: 15, boxShadow: '0 0 40px rgba(0,0,0,.25)', ...accentBtn }}>
+        <button className="mm-btn mm-btn--primary" onClick={fab.onClick} style={{ position: 'fixed', right: 16, bottom: 'calc(84px + 16px + max(env(safe-area-inset-bottom), 0px))', zIndex: 50, height: 48, padding: '0 18px', fontSize: 15, boxShadow: 'var(--g-shadow-2)', ...accentBtn }}>
           <GPlus size={16} />{fab.t}
         </button>
       )}
@@ -167,7 +167,7 @@ export function Page({ title, sub, back = 'All modules', backTo = 'modules', onB
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: phone ? 20 : 16, minWidth: 0 }}>{children}</div>
       {phone && fab && (
-        <button className="mm-btn mm-btn--primary" onClick={fab.onClick} style={{ position: 'fixed', right: 16, bottom: 'calc(84px + 16px + max(env(safe-area-inset-bottom), 0px))', zIndex: 50, height: 48, padding: '0 18px', fontSize: 15, boxShadow: '0 0 40px rgba(0,0,0,.25)', ...accentBtn }}>
+        <button className="mm-btn mm-btn--primary" onClick={fab.onClick} style={{ position: 'fixed', right: 16, bottom: 'calc(84px + 16px + max(env(safe-area-inset-bottom), 0px))', zIndex: 50, height: 48, padding: '0 18px', fontSize: 15, boxShadow: 'var(--g-shadow-2)', ...accentBtn }}>
           <GPlus size={16} />{fab.t}
         </button>
       )}
@@ -270,15 +270,16 @@ export const btnRow: CSSProperties = { display: 'flex', gap: 8, flexWrap: 'wrap'
 /** Section switcher for workspaces with several views. Scrolls sideways
  *  on phone instead of wrapping; the active view is the filled pill. */
 export function Tabs<T extends string>({ tabs, value, onChange }: { tabs: { id: T; label: string; badge?: number }[]; value: T; onChange: (id: T) => void }) {
+  // Segmented control (Graphite): inset track, the selected tab raised.
+  // Styles live in theme-graphite.css (.g-seg).
   return (
-    <div role="tablist" className="mm-scroll-x" style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', margin: '0 -2px', padding: '0 2px' }}>
+    <div role="tablist" className="g-seg mm-scroll-x">
       {tabs.map((t) => {
         const on = t.id === value;
         return (
-          <button key={t.id} role="tab" aria-selected={on} onClick={() => onChange(t.id)}
-            style={{ flex: 'none', height: 34, padding: '0 14px', borderRadius: 999, border: `1px solid ${on ? 'var(--text)' : 'var(--border)'}`, background: on ? 'var(--text)' : 'var(--surface)', color: on ? 'var(--bg)' : 'var(--text)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <button key={t.id} role="tab" aria-selected={on} onClick={() => onChange(t.id)}>
             {t.label}
-            {!!t.badge && <span style={{ minWidth: 18, height: 18, borderRadius: 999, padding: '0 5px', background: on ? 'var(--bg)' : 'var(--accent)', color: on ? 'var(--text)' : '#fff', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{t.badge}</span>}
+            {!!t.badge && <span className="g-seg-n">{t.badge}</span>}
           </button>
         );
       })}

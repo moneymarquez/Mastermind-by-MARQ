@@ -162,8 +162,8 @@ export default function BillingGateScreen({ onSubscribed, onSignOut, theme }: Pr
             options={{
               clientSecret,
               appearance: resolveTheme(theme) === 'light'
-                ? { theme: 'stripe', variables: { colorBackground: '#e9ecf7', colorText: '#292b31', colorPrimary: '#5d5294', borderRadius: '8px' } }
-                : { theme: 'night', variables: { colorBackground: '#202230', colorText: '#e9e9ed', colorPrimary: '#9184d9', borderRadius: '8px' } },
+                ? { theme: 'stripe', variables: { colorBackground: '#FDFCF9', colorText: '#1C1B19', colorPrimary: '#2E6A85', borderRadius: '8px' } }
+                : { theme: 'night', variables: { colorBackground: '#15161A', colorText: '#ECECEE', colorPrimary: '#8DB3C7', borderRadius: '8px' } },
             }}
           >
             <PaymentForm onSubscribed={onSubscribed} />

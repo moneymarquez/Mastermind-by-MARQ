@@ -69,7 +69,7 @@ export default function NovaPanel({
         ...(anchor ? anchoredPanelStyle(anchor) : { left: SPACING, top: SPACING }),
         width: PANEL_W, height: PANEL_H,
         background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-2xl)', display: 'flex', flexDirection: 'column',
-        boxShadow: '0 20px 50px rgba(var(--shadow-ink),0.5)', animation: 'bubbleFade 0.18s ease', zIndex: 45, overflow: 'hidden',
+        boxShadow: 'var(--g-shadow-3)', animation: 'bubbleFade 0.18s ease', zIndex: 45, overflow: 'hidden',
       };
 
   if (layout) return <NovaShellPanel layout={layout} assistantName={assistantName} messages={messages} input={input} thinking={thinking} listening={listening} micSupported={micSupported} onClose={onClose} onInputChange={onInputChange} onKeyDown={onKeyDown} onSend={onSend} onMicClick={onMicClick} />;

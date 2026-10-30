@@ -4,6 +4,9 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import './theme-vertix.css'
+import '@fontsource-variable/geist'
+import '@fontsource-variable/geist-mono'
+import './theme-graphite.css'
 import ErrorBoundary, { recordError } from './components/ErrorBoundary'
 const PublicAuditScreen = lazyScreen(() => import('./PublicAuditScreen'))
 const PublicClientDashboard = lazyScreen(() => import('./PublicClientDashboard'))
