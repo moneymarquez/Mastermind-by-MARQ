@@ -21,6 +21,7 @@ import { ModuleProvider, BackRow } from './components/mm/Page';
 import type { ModuleCtxValue } from './components/mm/Page';
 import { PhoneHeader, PhoneTabBar, AppSidebar, AppTopBar, NotificationsPanel, SearchPalette, ModulesGrid, deviceFor, sidebarW, PHONE_HEADER_H, PHONE_TAB_H, TOP_BAR_H, NOVA_DOCK_W } from './components/shell/Shell';
 import { shellGroups, crumbFor } from './components/shell/nav';
+import { useCrumbLabel } from './lib/crumbLabel';
 import { useLeadFeed } from './data/useLeadFeed';
 import { useNotifications } from './data/useNotifications';
 import { useFlags, PORTAL_FLAG_DOMAINS } from './data/useFlags';
@@ -220,7 +221,9 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // Search reaches every accessible portal; opening a result in another
   // portal switches to it like any deep link.
   const searchGroups = useMemo(() => portals.flatMap((p) => shellGroups(navAccess, isOwner, navPrefs.order, { portal: p }).map((g) => ({ ...g, title: p === 'masterminds' ? g.title : portalName(p) }))), [navAccess, isOwner, navPrefs.order, portals]);
-  const crumb = crumbFor(state.screen, groups, portal);
+  const tabCrumb = useCrumbLabel(state.screen);
+  const baseCrumb = crumbFor(state.screen, groups, portal);
+  const crumb = tabCrumb ? { ...baseCrumb, label: tabCrumb } : baseCrumb;
   const ecomPending = usePendingApprovals(isOwner);
   const badges = { inbox: ownerInbox.items.filter((i) => i.unread).length, leads: leadFeed.waiting, urgent: leadFeed.urgent > 0, screens: { 'ecom-products': ecomPending, 'ecom-approvals': ecomPending } };
   const toggleTheme = () => onThemeChange(resolvedTheme === 'dark' ? 'light' : 'dark');

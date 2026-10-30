@@ -35,6 +35,7 @@ import LatestAudits from './content/LatestAudits';
 import IdeasTab from './content/IdeasTab';
 import KitsTab from './content/KitsTab';
 import TodaysPlays from './content/TodaysPlays';
+import { useSetCrumbLabel } from '../../lib/crumbLabel';
 import HandoffInbox from '../mm/HandoffInbox';
 
 type EngineTab = 'accounts' | 'profiles' | 'ideas' | 'plan' | 'studio' | 'history' | 'inspiration' | 'kits' | 'workers' | 'growth';
@@ -196,6 +197,8 @@ export default function ContentCreationScreen({ section, selectedClientId, onSel
   // plans that already existed keep their own tab.
   const [tabState, setTabState] = useState<EngineTab>('accounts');
   const engineTab: EngineTab = section ?? tabState;
+  // The 'content' screen keeps its own tab bar: the crumb names the tab.
+  useSetCrumbLabel('content', section ? null : ENGINE_TABS.find((x) => x.id === engineTab)?.label ?? null);
   // With a sidebar section, "open the plan" goes to the Plan screen instead of switching a tab.
   const setEngineTab = (t: EngineTab) => { if (section) nav(`content-${t}` === 'content-growth' ? 'content' : `content-${t}`); else setTabState(t); };
   const [newOpen, setNewOpen] = useState(false);

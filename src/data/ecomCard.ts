@@ -177,6 +177,19 @@ export function cardView(p: CardProduct): CardView {
   return { blocked, bd, pm, breakEven: bd && bd.profit > 0 ? Math.ceil(TEST_BUDGET_USD / bd.profit) : null, shipMin, shipMax, testCostUsd: sup != null ? testCost(sup, ship ?? 0) : null, fits, floorOk, verdict, verdictWhy, risks, anyRed, missing, canApprove: !blocked && sell != null && sup != null, card, stats, why };
 }
 
+/** The one verdict a product card shows (Oct 2026). Contribution margin
+ *  after ads decides it (Scale / Test / Kill, src/data/ecomProfit.ts); a
+ *  blocked product is Blocked and missing numbers read "Needs numbers". The
+ *  older GO / MAYBE / SKIP checks (floor, risks, score, budget) become a
+ *  secondary line, worded so they don't read as a second verdict. Pure. */
+export type OneVerdictLabel = 'Scale' | 'Test' | 'Kill' | 'Blocked' | 'Needs numbers';
+export function oneVerdict(v: Pick<CardView, 'blocked' | 'pm' | 'verdict' | 'verdictWhy'>): { label: OneVerdictLabel; tone: 'good' | 'warn' | 'bad'; why: string; checks: string; checksWhy: string } {
+  const checks = v.verdict === 'GO' ? 'Checks pass' : v.verdict === 'MAYBE' ? 'Checks: something unproven' : v.verdict === 'SKIP' ? 'Checks: failed' : 'Checks: blocked';
+  if (v.blocked) return { label: 'Blocked', tone: 'bad', why: v.blocked, checks, checksWhy: v.verdictWhy };
+  if (!v.pm) return { label: 'Needs numbers', tone: 'warn', why: 'Needs a sell price and supplier cost for the margin after ads.', checks, checksWhy: v.verdictWhy };
+  return { label: v.pm.verdict, tone: v.pm.verdict === 'Scale' ? 'good' : v.pm.verdict === 'Test' ? 'warn' : 'bad', why: v.pm.verdictWhy, checks, checksWhy: v.verdictWhy };
+}
+
 /** Plain-words psychology, so the card says "Demo-able: before/after", not a code. */
 export function principleWords(code: string | undefined): string {
   if (!code) return '';

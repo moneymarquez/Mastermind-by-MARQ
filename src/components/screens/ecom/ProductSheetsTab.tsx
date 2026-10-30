@@ -8,7 +8,7 @@ import { useEcomProducts, linkProductToBrand } from '../../../data/useEcom';
 import { E, Pill, Badge, ConfidenceBadge, TeachingEmpty, btn, field, label } from './ecomShared';
 import ProductDrawer from './ProductDrawer';
 import RichProductCard from './RichProductCard';
-import { cardView } from '../../../data/ecomCard';
+import { cardView, oneVerdict } from '../../../data/ecomCard';
 import CsvImportDrawer from './CsvImportDrawer';
 import { api as callApi } from '../../../lib/api';
 import { useScoutJob } from '../../../data/useEngine';
@@ -133,7 +133,7 @@ export default function ProductSheetsTab({ search, onBuildBrand, statusOf, onOpe
                   <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{p.rank ?? ''}</td>
                   <td style={{ padding: '8px 10px', color: E.text, fontWeight: 600 }}>{p.watched ? '★ ' : ''}{p.name}{statusOf?.(p.id) && <> <Badge color={statusOf(p.id)!.color}>{statusOf(p.id)!.label}</Badge></>}</td>
                   {(() => { const v = cardView(p); return (<>
-                    <td style={{ padding: '8px 10px' }}><Badge color={v.verdict === 'GO' ? E.green : v.verdict === 'MAYBE' ? E.amber : E.red} title={v.verdictWhy}>{v.verdict}</Badge></td>
+                    <td style={{ padding: '8px 10px' }}>{(() => { const o = oneVerdict(v); return <Badge color={o.tone === 'good' ? E.green : o.tone === 'warn' ? E.amber : E.red} title={`${o.why} ${o.checks}: ${o.checksWhy}`}>{o.label}</Badge>; })()}</td>
                     <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{p.sell_price != null ? money(p.sell_price) : 'Not found'}</td>
                     <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)', color: v.floorOk ? E.green : E.text }}>{v.bd ? money(v.bd.profit) : 'Not found'}</td>
                     <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)', color: v.floorOk ? E.green : E.text }}>{v.bd ? `${v.bd.marginPct.toFixed(0)}%` : 'Not found'}</td>

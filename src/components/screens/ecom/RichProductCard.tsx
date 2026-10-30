@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { cardView, principleWords, REJECT_REASONS } from '../../../data/ecomCard';
-import type { CardProduct, Verdict } from '../../../data/ecomCard';
+import { cardView, oneVerdict, principleWords, REJECT_REASONS } from '../../../data/ecomCard';
+import type { CardProduct } from '../../../data/ecomCard';
 import { FEES } from '../../../data/ecomFees';
 import { money } from '../../../data/ecom';
 import { E, Badge, ConfidenceBadge, btn, field, label, tint } from './ecomShared';
@@ -13,7 +13,7 @@ const PROFIT_COLOR: Record<ProfitVerdict, string> = { Scale: E.green, Test: E.am
 // Collapsed it's one decision-ready row; "More" opens sections A–K. It renders
 // from cardView(), so a missing number reads "Not found: reason", never "?".
 
-const VERDICT_COLOR: Record<Verdict, string> = { GO: E.green, MAYBE: E.amber, SKIP: E.red, BLOCKED: E.red };
+const ONE_COLOR = { good: E.green, warn: E.amber, bad: E.red } as const;
 const SELLER_FALLBACK = 'No sellers found with a source yet.';
 
 export interface RichCardProps {
@@ -45,6 +45,7 @@ export default function RichProductCard(props: RichCardProps) {
   const [rejecting, setRejecting] = useState(false);
   const [copied, setCopied] = useState(false);
   const v = cardView(p);
+  const one = oneVerdict(v);
   const d = p.detail ?? {};
   const c = v.card;
   const pickSup = c.suppliers.find((s) => s.ship_days_max != null && (s.ship_days_max ?? 99) <= 14) ?? c.suppliers[0];
@@ -67,8 +68,8 @@ export default function RichProductCard(props: RichCardProps) {
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
             {p.rank != null && <Badge color={E.text}>#{p.rank}</Badge>}
             <span style={{ fontWeight: 700, color: E.text, fontSize: 'var(--text-subhead)', minWidth: 0, overflowWrap: 'anywhere' }}>{p.name}</span>
-            <Badge color={VERDICT_COLOR[v.verdict]} title={v.verdictWhy}>{v.verdict}</Badge>
-            {v.pm && <Badge color={PROFIT_COLOR[v.pm.verdict]} title={v.pm.verdictWhy}>{v.pm.verdict}</Badge>}
+            <Badge color={ONE_COLOR[one.tone]} title={one.why}>{one.label}</Badge>
+            <span style={{ fontSize: 12, color: E.faint }} title={one.checksWhy}>{one.checks}</span>
             {p.score != null && <Badge color={p.score >= 7 ? E.green : p.score >= 5 ? E.amber : E.faint}>{p.score}/10</Badge>}
             {p.score == null && <Badge color={E.faint} title={v.missing.find((m) => m.field === 'score')?.text}>No score</Badge>}
             <Badge color={E.faint}>{conf}</Badge>
