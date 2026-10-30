@@ -268,7 +268,7 @@ export default function InvoiceDetailView({ invoice, clientBusinessName, crm, on
                   style={{ fontSize: 'var(--text-small)', color: generatingNarrative ? 'var(--text-tertiary)' : 'var(--text-secondary)', cursor: generatingNarrative ? 'default' : 'pointer' }}
                   onClick={() => !generatingNarrative && generateNarrative()}
                 >
-                  {generatingNarrative ? 'Writing…' : hasNarrative ? '✨ Regenerate personalized write-up' : '✨ Generate personalized write-up'}
+                  {generatingNarrative ? 'Writing…' : hasNarrative ? 'Regenerate personalized write-up' : 'Generate personalized write-up'}
                 </span>
                 <span style={{ fontSize: 'var(--text-small)', color: 'var(--text-secondary)', cursor: 'pointer' }} onClick={openWriteupEditor}>
                   Edit write-up

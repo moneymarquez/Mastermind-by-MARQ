@@ -40,7 +40,7 @@ export default function InboundTab() {
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14, alignItems: 'center' }}>
         <button style={btn('primary')} onClick={() => setAdding((v) => !v)}>＋ Lead</button>
-        <button style={btn('ghost')} disabled={busy} onClick={track}>{busy ? 'Tagging…' : '🏷️ Tag sources'}</button>
+        <button style={btn('ghost')} disabled={busy} onClick={track}>{busy ? 'Tagging…' : 'Tag sources'}</button>
         <div style={{ flex: 1 }} />
         <select aria-label="Show" style={{ ...field, width: 'auto' }} value={filter} onChange={(e) => setFilter(e.target.value as 'open' | 'all')}><option value="open">Open</option><option value="all">All</option></select>
       </div>

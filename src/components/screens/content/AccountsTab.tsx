@@ -276,7 +276,7 @@ function AccountDetail({ a, api, items, today, onClose, onOpenPlan }: { a: Socia
                 <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>{new Date(p.posted_at).toLocaleDateString()} · {FORMATS.find((f) => f.id === p.type)?.label}{p.url && <> · <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ color: E.blue }}>open</a></>}{m && <> · as of {new Date(m.captured_at).toLocaleDateString()}</>}</div>
               </div>
               <div style={{ display: 'flex', gap: 10, fontFamily: 'var(--font-mono)', fontSize: 12, color: E.muted }}>
-                <span title="views">👁 {compact(m?.views)}</span><span title="likes">♥ {compact(m?.likes)}</span><span title="saves">🔖 {compact(m?.saves)}</span><span title="shares">↗ {compact(m?.shares)}</span>
+                <span title="views">{compact(m?.views)} views</span><span title="likes">♥ {compact(m?.likes)}</span><span title="saves">{compact(m?.saves)} saves</span><span title="shares">↗ {compact(m?.shares)}</span>
               </div>
               {g ? <Badge color={GRADE_COLOR[g.grade]} title={g.reason}>{g.grade}/4</Badge> : <Badge color={E.faint} title="Needs views and a 30-day average">—/4</Badge>}
               <button style={{ ...btn('ghost'), padding: '4px 8px', fontSize: 12 }} onClick={() => setLogFor(p)}>Update</button>

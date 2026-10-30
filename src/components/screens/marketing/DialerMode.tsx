@@ -108,7 +108,7 @@ export default function DialerMode({ script, siblings, onClose, onLogged }: Prop
             <span style={{ fontWeight: 700 }}>{lead.business_name}</span>
             {lead.owner_name && <span style={{ color: E.muted }}>{lead.owner_name}</span>}
             {lead.city && <span style={{ color: E.faint }}>{lead.city}{lead.state ? `, ${lead.state}` : ''}</span>}
-            {phone && <a href={`tel:${phone}`} style={{ ...btn('primary'), textDecoration: 'none', padding: '6px 12px', fontSize: 13 }}>📞 {phone}</a>}
+            {phone && <a href={`tel:${phone}`} style={{ ...btn('primary'), textDecoration: 'none', padding: '6px 12px', fontSize: 13 }}>{phone}</a>}
           </div>
         )}
         <div style={{ fontSize: size, lineHeight: 1.5, whiteSpace: 'pre-wrap', color: E.text, maxWidth: 860 }}>{text}</div>

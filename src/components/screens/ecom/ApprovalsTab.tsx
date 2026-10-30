@@ -191,7 +191,7 @@ function GenericApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string)
         <Badge color={E.faint}>{a.domain}</Badge>
         <Badge color={E.blue}>{a.type.replace(/_/g, ' ')}</Badge>
         {channel && <Badge color={E.violet}>{channel}</Badge>}
-        {a.is_money && <Badge color={E.red}>💲 Money · {money(a.amount_usd)}</Badge>}
+        {a.is_money && <Badge color={E.red}>Money · {money(a.amount_usd)}</Badge>}
         {a.confidence && <ConfidenceBadge c={a.confidence} />}
         <span style={{ fontSize: 'var(--text-caption)', color: E.faint, marginLeft: 'auto' }}>{ago(a.created_at)}</span>
       </div>

@@ -78,7 +78,7 @@ export default function PostNow({ accounts }: { accounts: SocialAccount[] }) {
             {postable.map((a) => <option key={a.id} value={a.id}>{PLATFORM[a.platform].short} @{a.handle}{a.live_posting ? ' · LIVE' : ''}</option>)}
           </select>
           <input ref={ref} type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; void pick(f); }} />
-          <button style={{ ...btn('ghost'), minHeight: 44 }} disabled={!!busy} onClick={() => ref.current?.click()}>{file ? `✓ ${file.name} (${(file.size / 1048576).toFixed(1)} MB)` : '📷 Choose a photo or video'}</button>
+          <button style={{ ...btn('ghost'), minHeight: 44 }} disabled={!!busy} onClick={() => ref.current?.click()}>{file ? `✓ ${file.name} (${(file.size / 1048576).toFixed(1)} MB)` : 'Choose a photo or video'}</button>
           <textarea aria-label="Caption" style={{ ...field, minHeight: 84, fontFamily: 'inherit' }} placeholder="Caption and hashtags" value={caption} maxLength={2200} onChange={(e) => setCaption(e.target.value)} />
           <button style={{ ...btn('primary'), minHeight: 46 }} disabled={!!busy || !file} onClick={() => void post()}>{busy || (acct?.live_posting ? 'Post now' : 'Run a test post')}</button>
           <div style={{ fontSize: 'var(--text-caption)', color: E.faint, lineHeight: 1.45 }}>Photos are converted to JPEG for you. Videos go out as Reels. This skips the Plan: pressing the button is your approval.</div>

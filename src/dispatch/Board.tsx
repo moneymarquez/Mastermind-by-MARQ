@@ -120,7 +120,7 @@ export function TaskCard({ t, onOpen, compact }: { t: DispatchTask; onOpen: () =
       <div className="dp-meta">
         <span className={overdue ? 'dp-overdue' : undefined}>{t.due_date ? `Due ${dueLabel(t.due_date)}` : 'No due date'}</span>
         {!compact && <span>from {from} · {timeLabel(t.created_at)}</span>}
-        {comments > 0 && <button type="button" className="dp-more" style={{ minHeight: 24 }} onClick={onOpen} aria-label={`${comments} comments`}>💬 {comments}</button>}
+        {comments > 0 && <button type="button" className="dp-more" style={{ minHeight: 24 }} onClick={onOpen} aria-label={`${comments} comments`}>{comments} {comments === 1 ? 'comment' : 'comments'}</button>}
       </div>
       {compact && t.source_quote && <div className="dp-quote">“{t.source_quote}”</div>}
       {!compact && (

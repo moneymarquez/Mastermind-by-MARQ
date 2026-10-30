@@ -90,7 +90,7 @@ function StepCard({ brand, def, open, onToggle, onSave }: { brand: Brand; def: S
       <div onClick={onToggle} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', cursor: 'pointer' }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: status === 'done' ? E.green : E.faint, width: 22, flexShrink: 0 }}>{status === 'done' ? '✓' : def.n}</span>
         <span style={{ fontWeight: 600, color: E.text, fontSize: 'var(--text-body)', flex: 1, minWidth: 0 }}>{def.title}</span>
-        {def.hardStop && <Badge color={E.red}>🛑 Hard stop</Badge>}
+        {def.hardStop && <Badge color={E.red}>Hard stop</Badge>}
         <Badge color={STATUS_COLOR[status]}>{STATUS_LABEL[status]}</Badge>
         <span style={{ color: E.faint, fontSize: 12 }}>{open ? '▴' : '▾'}</span>
       </div>
@@ -202,7 +202,7 @@ function StepWorker({ brand, n }: { brand: Brand; n: number }) {
   return (
     <div style={{ marginTop: 12, padding: 10, borderRadius: 'var(--radius-sm)', border: `1px dashed ${E.border}` }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-        <button style={btn('primary')} disabled={busy} onClick={run}>{busy ? w.busy : `🤖 Run ${w.name}`}</button>
+        <button style={btn('primary')} disabled={busy} onClick={run}>{busy ? w.busy : `Run ${w.name}`}</button>
         <span style={{ fontSize: 'var(--text-caption)', color: E.faint }}>{n === 6 ? 'Its page waits in Approvals; approving it launches the store (Shopify + Cloudflare Pages).' : 'Its output waits in Approvals; approving fills this step.'}</span>
       </div>
       {msg && <div style={{ fontSize: 'var(--text-caption)', color: msg.ok ? E.muted : E.red, marginTop: 6 }}>{msg.text}</div>}

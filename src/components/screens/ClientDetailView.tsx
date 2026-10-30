@@ -642,7 +642,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
           <div style={{ ...cardStyle, marginBottom: 16, borderColor: suggestions.length ? 'var(--warning)' : 'var(--border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text)' }}>
-                ✨ Nova's suggested services{suggestions.length ? ` (${suggestions.length})` : ''}
+                Nova's suggested services{suggestions.length ? ` (${suggestions.length})` : ''}
               </div>
               <div
                 style={{ ...ghostBtn, pointerEvents: matching || !client.audit ? 'none' : 'auto', opacity: matching || !client.audit ? 0.5 : 1 }}

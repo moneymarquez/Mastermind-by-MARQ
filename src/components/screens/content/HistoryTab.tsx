@@ -49,7 +49,7 @@ export default function HistoryTab({ accounts }: { accounts: ReturnType<typeof u
               {r.caption && <div style={{ fontSize: 14, color: E.text, marginTop: 4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflowWrap: 'anywhere' }}>{r.caption}</div>}
               {r.error && <div style={{ fontSize: 13, color: E.red, marginTop: 4, overflowWrap: 'anywhere' }}>{r.error}</div>}
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 12, color: E.muted }}>
-                {r.kind !== 'failed' && <><span title="views">👁 {compact(r.views)}</span><span title="likes">♥ {compact(r.likes)}</span><span title="comments">💬 {compact(r.comments)}</span><span title="saves">🔖 {compact(r.saves)}</span></>}
+                {r.kind !== 'failed' && <><span title="views">{compact(r.views)} views</span><span title="likes">♥ {compact(r.likes)}</span><span title="comments">{compact(r.comments)} comments</span><span title="saves">{compact(r.saves)}</span></>}
                 {r.url && <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ color: E.blue }}>Open ↗</a>}
               </div>
             </div>

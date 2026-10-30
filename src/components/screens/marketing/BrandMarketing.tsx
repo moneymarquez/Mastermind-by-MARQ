@@ -188,7 +188,7 @@ export default function BrandMarketing({ types, empty, children }: { types: Bran
           {plan?.plan.focus && <div style={{ fontSize: 15, fontWeight: 600 }}>{plan.plan.focus}</div>}
           {(plan?.plan.posts ?? []).map((p, i) => <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '6px 0', borderTop: i ? '1px solid var(--grid)' : 'none', fontSize: 14 }}><Chip k="neutral">{p.day}</Chip><span style={{ flex: 1 }}><strong>{p.account}</strong> · {p.hook}<span style={{ display: 'block', fontSize: 12.5, color: 'var(--text-tertiary)' }}>{p.format} · {p.why}</span></span><Thumbs entityType="mkt_plan_post" entityId={`${plan?.id}-${i}`} domain="marketing" compact /></div>)}
           {plan?.plan.paid_test && <div style={{ fontSize: 14 }}>Paid test: ${plan.plan.paid_test.amount_usd} on {plan.plan.paid_test.channel} — {plan.plan.paid_test.why} <Thumbs entityType="mkt_plan_test" entityId={plan.id} domain="marketing" compact /></div>}
-          {plan?.plan.next_20 && <div style={{ fontSize: 14 }}>💡 {plan.plan.next_20}</div>}
+          {plan?.plan.next_20 && <div style={{ fontSize: 14 }}>{plan.plan.next_20}</div>}
         </Card>
 
         <Card title="Budget" meta={`$${spent.toFixed(2)} of $${cap} this month · ${BUDGET_BUCKET[brand.type] === 'ecommerce' ? 'shared by every product brand' : 'marketing bucket'}`}>

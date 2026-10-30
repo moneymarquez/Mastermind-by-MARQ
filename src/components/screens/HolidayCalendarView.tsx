@@ -131,7 +131,7 @@ export default function HolidayCalendarView() {
           style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 'var(--radius-pill)', background: parsing ? 'var(--border)' : 'var(--text)', color: parsing ? 'var(--text-secondary)' : 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: parsing ? 'default' : 'pointer' }}
           onClick={() => !parsing && photoInputRef.current?.click()}
         >
-          {parsing ? 'Reading schedule…' : '📷 Upload schedule photo'}
+          {parsing ? 'Reading schedule…' : 'Upload schedule photo'}
         </div>
       </div>
       {parseError && <div style={{ fontSize: 'var(--text-small)', color: 'var(--danger)', marginTop: 8 }}>{parseError}</div>}
