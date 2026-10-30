@@ -38,7 +38,8 @@ test('Made by journey: old routes redirect and every listed tool is a real route
   // Old deep links still parse (they redirect after load) and the board is linkable.
   for (const r of ['lead-engines', 'call-list', 'client-modules', 'website', 'scaling-start', 'comms', 'madeby-board']) assert.ok((DIRECT_SCREENS as string[]).includes(r), r);
   for (const s of JOURNEY_STEPS) for (const t of s.tools) assert.ok(moduleKeyForRoute(t), `${t} is a module route`);
-  assert.equal(madebyGroupOf('leadflow'), 'Pinned');
+  assert.equal(madebyGroupOf('leadflow'), 'Clients');
+  assert.equal(madebyGroupOf('invoicing'), 'Pinned');
   assert.equal(madebyGroupOf('madeby-board'), 'Clients');
   assert.equal(madebyGroupOf('brand-lab'), '5 · Capture Demand');
   assert.equal(madebyGroupOf('contracts'), '3 · Baseline');
@@ -55,7 +56,7 @@ test('travel mode keeps the whole Made by journey', () => {
   const groups = shellGroups(travel, true, {}, { portal: 'madeby' });
   assert.deepEqual(groups.map((g) => g.title), ['Clients', '1 · Diagnose', '2 · Win', '3 · Baseline', '4 · Stop the Leaks', '5 · Capture Demand', '6 · Keep & Raise', '7 · Protect the Business', '8 · Prove & Renew', 'Pinned']);
   const ids = groups.flatMap((g) => g.items.map((i) => i.id));
-  assert.deepEqual(ids, ['madeby-board', 'client-crm', 'audits', 'support-inbox', 'contracts', 'scaling-planner', 'idea-maker', 'brand-lab', 'marketing', 'delivery', 'leadflow', 'invoicing']);
+  assert.deepEqual(ids, ['madeby-board', 'leadflow', 'client-crm', 'audits', 'support-inbox', 'contracts', 'scaling-planner', 'idea-maker', 'brand-lab', 'marketing', 'delivery', 'invoicing']);
   assert.deepEqual(groups.find((g) => g.title.startsWith('7'))?.link?.id, 'madeby-board');
   assert.ok(groups.find((g) => g.title === 'Pinned')?.pinned);
 });

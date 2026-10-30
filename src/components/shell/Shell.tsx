@@ -170,7 +170,7 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
   });
   // The group holding the current module always opens.
   useEffect(() => { const g = groups.find((x) => x.title === currentGroup); if (g && !(open[g.title] ?? !!g.defaultOpen)) setOpen((o) => ({ ...o, [g.title]: true })); }, [currentGroup]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Pinned groups (Made by: LeadFlow, Invoicing) sit at the bottom, always open.
+  // Pinned groups (Made by: Invoicing) sit at the bottom, always open.
   const listed = groups.filter((g) => !g.pinned);
   const pinned = groups.filter((g) => g.pinned).flatMap((g) => g.items);
   const moduleRow = (m: ShellGroup['items'][number]) => {

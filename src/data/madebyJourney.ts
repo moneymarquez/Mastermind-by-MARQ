@@ -51,10 +51,12 @@ export const LAST_STEP: JourneyStepN = 8;
 export const stepTitle = (s: Pick<JourneyStep, 'n' | 'label'>) => `${s.n} · ${s.label}`;
 export const JOURNEY_GROUP_TITLES = JOURNEY_STEPS.map(stepTitle);
 
-/** Top of the Made by sidebar, above the steps. */
-export const MADEBY_TOP = ['madeby-board', 'client-crm'];
+/** Top of the Made by sidebar, above the steps: the Clients section. The
+ *  board is the landing, then LeadFlow (where clients come from: leads and
+ *  the Call list), then Client CRM (each client's record). Marq, Oct 30. */
+export const MADEBY_TOP = ['madeby-board', 'leadflow', 'client-crm'];
 /** Pinned to the bottom of the Made by sidebar (and last in the Modules grid). */
-export const MADEBY_PINNED = ['leadflow', 'invoicing'];
+export const MADEBY_PINNED = ['invoicing'];
 
 /** The Made by sidebar group a screen belongs to, or null if it isn't listed. */
 export function madebyGroupOf(route: string): string | null {

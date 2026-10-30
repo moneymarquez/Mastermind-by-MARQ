@@ -41,11 +41,11 @@ test('portals: access is derived from canAccess only', async () => {
   const mm = shellGroups(all, true, {}, { portal: 'masterminds' }).flatMap((g) => g.items.map((i) => i.id));
   assert.ok(mm.includes('budgeting') && !mm.includes('client-crm') && !mm.includes('ecommerce'));
 
-  // Made by: Clients, the eight blueprint steps, then LeadFlow + Invoicing pinned.
+  // Made by: Clients, the eight blueprint steps, with LeadFlow in Clients, then Invoicing pinned.
   const mbGroups = shellGroups(all, true, {}, { portal: 'madeby' });
   assert.deepEqual(mbGroups.map((g) => g.title), ['Clients', '1 · Diagnose', '2 · Win', '3 · Baseline', '4 · Stop the Leaks', '5 · Capture Demand', '6 · Keep & Raise', '7 · Protect the Business', '8 · Prove & Renew', 'Pinned']);
   const mb = (t: string) => mbGroups.find((g) => g.title === t)!.items.map((i) => i.id);
-  assert.deepEqual(mb('Clients'), ['madeby-board', 'client-crm']);
+  assert.deepEqual(mb('Clients'), ['madeby-board', 'leadflow', 'client-crm']);
   assert.deepEqual(mb('1 · Diagnose'), ['audits']);
   assert.deepEqual(mb('2 · Win'), ['support-inbox']);
   assert.deepEqual(mb('3 · Baseline'), ['contracts']);
@@ -55,7 +55,7 @@ test('portals: access is derived from canAccess only', async () => {
   assert.deepEqual(mb('7 · Protect the Business'), []);
   assert.equal(mbGroups.find((g) => g.title === '7 · Protect the Business')!.link?.id, 'madeby-board');
   assert.deepEqual(mb('8 · Prove & Renew'), ['delivery']);
-  assert.deepEqual(mb('Pinned'), ['leadflow', 'invoicing']);
+  assert.deepEqual(mb('Pinned'), ['invoicing']);
   assert.ok(mbGroups.find((g) => g.title === 'Pinned')!.pinned);
   // Folded in or behind a button: no rows of their own any more.
   for (const k of ['lead-engines', 'call-list', 'client-modules', 'scaling-start', 'website', 'comms']) assert.ok(!madeby.includes(k), k);

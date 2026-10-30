@@ -20,7 +20,8 @@ export interface ShellGroup { title: string; items: ShellItem[]; owner?: boolean
 
 export const SHELL_GROUPS = ['Overview', 'Command', 'Financial', 'Growth', 'GovCon', 'Personal', 'Cold Calling', 'Clients', 'Scaling', 'Side Hustles', 'Content', 'E-commerce'] as const;
 /** Made by's sidebar, top to bottom: Clients, the eight numbered steps, then
- *  LeadFlow and Invoicing pinned at the bottom (data/madebyJourney.ts). */
+ *  Invoicing pinned at the bottom (data/madebyJourney.ts). LeadFlow sits in
+ *  Clients, between the board and Client CRM. */
 const MADEBY_GROUPS = ['Clients', ...JOURNEY_GROUP_TITLES, 'Pinned'];
 const MADEBY_ORDER = [...MADEBY_TOP, ...JOURNEY_STEPS.flatMap((s) => s.tools), ...MADEBY_PINNED];
 const SKIP = new Set(['home', 'settings', 'codelab']);
