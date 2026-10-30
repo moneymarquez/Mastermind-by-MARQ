@@ -84,7 +84,7 @@ export default function CampaignsHome({ campaigns, assets, clients, loading, err
             <option value="">{INTERNAL_LABEL} (internal)</option>
             {clients.filter((c) => c.client_type !== 'self').map((c) => <option key={c.id} value={c.id}>{c.business_name}</option>)}
           </select>
-          <button style={{ ...primaryBtn, opacity: busy || !name.trim() || locked ? 0.6 : 1 }} disabled={busy || !name.trim() || locked} onClick={create}>{busy ? 'Creating…' : locked ? '🔒 Locked' : 'Start building'}</button>
+          <button style={{ ...primaryBtn, opacity: busy || !name.trim() || locked ? 0.6 : 1 }} disabled={busy || !name.trim() || locked} onClick={create}>{busy ? 'Creating…' : locked ? 'Locked' : 'Start building'}</button>
           <button style={ghostBtn} onClick={() => setCreating(false)}>Cancel</button>
           {locked && (
             <div style={{ flexBasis: '100%', fontSize: 'var(--text-body-sm)', color: 'var(--warning)', lineHeight: 1.5 }}>

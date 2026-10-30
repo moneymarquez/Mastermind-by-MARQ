@@ -140,7 +140,7 @@ export default function RichProductCard(props: RichCardProps) {
 
           {/* D. Why sell this */}
           <Sec t="Why sell this">
-            {c.demand.length > 0 ? c.demand.map((x, i) => <div key={i} style={{ fontSize: 14, color: E.text }}>📈 {x.text} <Link href={x.url}>source ↗</Link></div>) : <div style={{ fontSize: 14, color: E.amber }}>Demand evidence: Not found{c.tried.length ? ` (tried: ${c.tried.slice(0, 2).join('; ')})` : ''}</div>}
+            {c.demand.length > 0 ? c.demand.map((x, i) => <div key={i} style={{ fontSize: 14, color: E.text }}>{x.text} <Link href={x.url}>source ↗</Link></div>) : <div style={{ fontSize: 14, color: E.amber }}>Demand evidence: Not found{c.tried.length ? ` (tried: ${c.tried.slice(0, 2).join('; ')})` : ''}</div>}
             {d.evidence && <div style={{ fontSize: 14, color: E.text }}>{d.evidence}</div>}
             <Line k="Problem it solves" v={d.problem} />
             <Line k="Why now" v={d.trigger} />
@@ -200,7 +200,7 @@ export default function RichProductCard(props: RichCardProps) {
 
           {/* H. Content preview */}
           <Sec t="Content preview">
-            {c.hooks.length ? c.hooks.map((h, i) => <div key={i} style={{ fontSize: 14, color: E.text }}>🎣 {h}</div>) : <span style={{ fontSize: 14, color: E.amber }}>Hooks: Not found</span>}
+            {c.hooks.length ? c.hooks.map((h, i) => <div key={i} style={{ fontSize: 14, color: E.text }}>{h}</div>) : <span style={{ fontSize: 14, color: E.amber }}>Hooks: Not found</span>}
             <Line k="Film it" v={c.film || 'Not found: no filming idea yet'} />
             <Line k="First post" v={c.first_post || 'Not found: no first post yet'} />
           </Sec>

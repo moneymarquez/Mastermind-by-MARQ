@@ -155,7 +155,7 @@ export default function ContentGrowthPlanView({ plan, checkins, clientName, curr
             </div>
             {streak.streakWeeks > 0 && (
               <span style={{ fontSize: 'var(--text-small)', fontWeight: 600, color: 'var(--success)' }}>
-                🔥 {streak.streakWeeks}-week streak
+                {streak.streakWeeks}-week streak
               </span>
             )}
           </div>

@@ -121,7 +121,7 @@ function ProfileEditor({ a, api, onBack }: { a: SocialAccount; api: Api; onBack:
             <div style={{ fontWeight: 700, color: v.changed.name ? E.amber : E.text }}>{v.name || <span style={{ color: E.faint, fontWeight: 400 }}>No name</span>}</div>
             {(v.category || v.accountType) && <div style={{ fontSize: 13, color: E.faint }}>{v.category || ACCT_TYPE[v.accountType] || v.accountType}</div>}
             <div style={{ fontSize: 14, color: v.changed.bio ? E.amber : E.text, whiteSpace: 'pre-wrap', lineHeight: 1.45, overflowWrap: 'anywhere' }}>{v.bio || <span style={{ color: E.faint }}>No bio</span>}</div>
-            {v.website && <div style={{ fontSize: 14, color: E.blue, overflowWrap: 'anywhere' }}>🔗 {v.website.replace(/^https?:\/\//, '')}</div>}
+            {v.website && <div style={{ fontSize: 14, color: E.blue, overflowWrap: 'anywhere' }}>{v.website.replace(/^https?:\/\//, '')}</div>}
             {(v.email || v.phone || v.address) && <div style={{ fontSize: 13, color: E.muted, marginTop: 4 }}>{[v.email, v.phone, v.address].filter(Boolean).join(' · ')}</div>}
           </div>
           <div style={{ display: 'flex', gap: 6, margin: '12px 0' }}>

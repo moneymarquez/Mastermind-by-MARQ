@@ -323,14 +323,14 @@ export function GoalCard({
           style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 'var(--radius-pill)', background: busy ? 'var(--border)' : 'var(--text)', color: busy ? 'var(--text-secondary)' : 'var(--bg)', fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: busy ? 'default' : 'pointer' }}
           onClick={() => !busy && runCritique()}
         >
-          {busy === 'critique' ? 'Thinking…' : '✨ AI critique'}
+          {busy === 'critique' ? 'Thinking…' : 'AI critique'}
         </div>
         {locked && (
           <div
             style={{ display: 'flex', alignItems: 'center', padding: '8px 14px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border)', color: busy ? 'var(--text-tertiary)' : 'var(--text-secondary)', fontSize: 'var(--text-body-sm)', cursor: busy ? 'default' : 'pointer' }}
             onClick={() => !busy && runCheckin()}
           >
-            {busy === 'checkin' ? 'Checking in…' : '✨ Check in now'}
+            {busy === 'checkin' ? 'Checking in…' : 'Check in now'}
           </div>
         )}
         {locked && !revising && (
