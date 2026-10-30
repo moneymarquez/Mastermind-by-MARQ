@@ -92,8 +92,8 @@ function ProposalRow({ c, phone, onDone }: { c: ProposalCard; phone: boolean; on
         <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{when(c.created_at)}</span>
       </div>
       <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{c.payload.change}</div>
-      <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}><b style={{ fontWeight: 500, color: 'var(--text-tertiary)' }}>Why</b> {c.payload.why}</div>
-      {c.payload.evidence && <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}><b style={{ fontWeight: 500, color: 'var(--text-tertiary)' }}>How we'll know</b> {c.payload.evidence}</div>}
+      <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}><b style={{ fontWeight: 500, color: 'var(--text-tertiary)' }}>Why:</b> {c.payload.why}</div>
+      {c.payload.evidence && <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}><b style={{ fontWeight: 500, color: 'var(--text-tertiary)' }}>How we'll know:</b> {c.payload.evidence}</div>}
       {c.payload.source_url && <a href={c.payload.source_url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: 'var(--accent)', wordBreak: 'break-all' }}>{c.payload.source_url}</a>}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
         <button className="mm-btn mm-btn--primary" disabled={!!busy} onClick={() => void go('approved')} style={{ minWidth: phone ? 0 : 120, flex: phone ? 1 : 'none' }}>{busy === 'approved' ? 'Approving…' : 'Approve'}</button>

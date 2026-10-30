@@ -34,7 +34,7 @@ export const tone = (hex: string) => TONE[hex.toLowerCase()] ?? hex;
 /** The engine panel every module tab sits in. */
 export const panel: CSSProperties = { color: E.text };
 
-export const label: CSSProperties = { fontSize: 13, color: E.muted, fontWeight: 500 };
+export const label: CSSProperties = { fontSize: 12.5, color: E.faint, fontWeight: 500, letterSpacing: '-0.003em' };
 export const field: CSSProperties = { minHeight: 44, padding: '10px 12px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--g-inset)', color: E.text, fontSize: 15, fontFamily: 'inherit', boxSizing: 'border-box', width: '100%', outline: 'none' };
 export const btn = (kind: 'primary' | 'ghost' | 'danger' = 'ghost'): CSSProperties => ({
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 36, padding: '0 13px', borderRadius: 'var(--g-r-md)', cursor: 'pointer', fontSize: 13.5, fontWeight: kind === 'primary' ? 600 : 500, letterSpacing: '-0.005em', fontFamily: 'inherit', whiteSpace: 'nowrap',
