@@ -36,6 +36,7 @@ export default function LeadFlowCallList({ phone, children }: { phone: boolean; 
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const [hideDone, setHideDone] = useState(true);
+  const [note, setNote] = useState('');
   const load = useCallback(async (fresh = false) => {
     setBusy(true);
     const r = await api<Snapshot>(`/api/leadflow/call-kit${fresh ? '?fresh=1' : ''}`);
@@ -52,7 +53,8 @@ export default function LeadFlowCallList({ phone, children }: { phone: boolean; 
     const lead = { id: k.leadId, business_name: k.business, phone: k.phone, owner_name: k.person?.role === 'owner' ? k.person.name : null, fizzle_score: k.fizzle, tier: k.tier } as unknown as LeadflowLead;
     void recordLeadTouch(lead, status);
     // Interested → a Client CRM record on step 2 Win, same as the Pool.
-    if (status === 'interested') void ensureCrmClientForLead(lead).catch(() => {});
+    if (status === 'interested') void ensureCrmClientForLead(lead).then((id) => setNote(id ? `${k.business} is in Client CRM now (step 2 · Win): book the discovery call.` : `Logged Interested, but the Client CRM record didn't save. Add ${k.business} in Client CRM.`)).catch(() => setNote(`Logged Interested, but the Client CRM record didn't save. Add ${k.business} in Client CRM.`));
+    else setNote('');
   };
 
   const items = useMemo(() => snap?.items ?? [], [snap]);
@@ -74,6 +76,7 @@ export default function LeadFlowCallList({ phone, children }: { phone: boolean; 
         <button className="mm-btn" style={{ height: 34 }} disabled={busy} onClick={() => void load(true)}>{busy ? 'Ranking…' : 'Re-rank'}</button>
       </div>
       {err && <Empty text={err} />}
+      {note && <span role="status" style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{note}</span>}
       {snap && !items.length && <Empty text="No callable leads yet. Leads need a phone number and can't be done, dead or do-not-contact. Find more in Pool or Finder." />}
       <div style={{ display: 'grid', gridTemplateColumns: phone ? 'minmax(0, 1fr)' : 'repeat(auto-fill, minmax(360px, 1fr))', gap: 10, alignItems: 'start' }}>
         {shown.map((k) => {

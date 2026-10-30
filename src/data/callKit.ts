@@ -227,9 +227,20 @@ export function callKitFor(lead: CallKitLead, gaps: CallKitGap[] = [], clusters:
   };
 }
 
+/** Who is already a client (crm_clients), by business name and phone digits,
+ *  so the cold-call list never cold-calls a customer. Pure. */
+export interface ClientMatch { names: Set<string>; phones: Set<string> }
+const normName = (s: string | null | undefined) => (s ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const normPhone = (s: string | null | undefined) => { const d = (s ?? '').replace(/\D/g, ''); return d.length >= 10 ? d.slice(-10) : ''; };
+export function clientMatch(rows: { business_name?: string | null; contact_phone?: string | null }[]): ClientMatch {
+  return { names: new Set(rows.map((r) => normName(r.business_name)).filter(Boolean)), phones: new Set(rows.map((r) => normPhone(r.contact_phone)).filter(Boolean)) };
+}
+export const isClient = (l: Pick<CallKitLead, 'business_name' | 'phone'>, c: ClientMatch | undefined): boolean =>
+  !!c && (c.names.has(normName(l.business_name)) || (!!normPhone(l.phone) && c.phones.has(normPhone(l.phone))));
+
 /** The ranked call list: callable leads only (a phone, not done or DNC, not
- *  called in the last `restDays`), best first. Pure. */
-export function buildCallList(leads: CallKitLead[], gapsByLead: Map<string, CallKitGap[]>, clusters: CallKitCluster[], opts: { today: string; now?: number; limit?: number; restDays?: number; gapScoreByLead?: Map<string, number> }): CallKit[] {
+ *  already a client, not called in the last `restDays`), best first. Pure. */
+export function buildCallList(leads: CallKitLead[], gapsByLead: Map<string, CallKitGap[]>, clusters: CallKitCluster[], opts: { today: string; now?: number; limit?: number; restDays?: number; gapScoreByLead?: Map<string, number>; clients?: ClientMatch }): CallKit[] {
   const now = opts.now ?? Date.now(), rest = (opts.restDays ?? 2) * 86_400_000;
   const seen = new Set<string>();
   const out: CallKit[] = [];
@@ -237,6 +248,7 @@ export function buildCallList(leads: CallKitLead[], gapsByLead: Map<string, Call
     if (seen.has(l.id)) continue;
     seen.add(l.id);
     if (!l.phone || CALL_LIST_EXCLUDED.has(l.status ?? '')) continue;
+    if (isClient(l, opts.clients)) continue;
     if (l.last_called_at && now - Date.parse(l.last_called_at) < rest && l.status !== 'callback') continue;
     out.push(callKitFor(l, gapsByLead.get(l.id) ?? [], clusters, opts.today, opts.gapScoreByLead?.get(l.id) ?? null));
   }

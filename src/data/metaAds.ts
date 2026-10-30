@@ -44,7 +44,8 @@ export interface MetaDraft {
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 const floor2 = (n: number) => Math.floor(n * 100) / 100;
-const clean = (s: string | null | undefined, max = 140) => (s ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
+/** Collapses whitespace and cuts at a word boundary. */
+const clean = (s: string | null | undefined, max = 140) => { const t = (s ?? '').replace(/\s+/g, ' ').trim(); if (t.length <= max) return t; const cut = t.slice(0, max); const sp = cut.lastIndexOf(' '); return (sp > max * 0.6 ? cut.slice(0, sp) : cut).replace(/[,;:\s]+$/, '') + '…'; };
 const money = (n: number) => `$${n.toFixed(2)}`;
 
 export function buildMetaDraft(src: AdSource, opts: { dailyBudgetUsd?: number; days?: number } = {}): MetaDraft {
@@ -62,13 +63,13 @@ export function buildMetaDraft(src: AdSource, opts: { dailyBudgetUsd?: number; d
   if (ceiling < 5 && ceiling > 0) warnings.push(`Break-even CPA is only ${money(ceiling)}: Meta rarely delivers sales that cheap on cold traffic.`);
   if (ceiling * 2 > daily) warnings.push(`A daily budget of ${money(daily)} buys under 2 sales at the ceiling; learning will be slow.`);
   const blocked = m.verdict === 'Kill' || ceiling <= 0;
-  const setNames = ['Broad (Advantage+ audience)', clean(src.buyer, 80) ? `Interest: ${clean(src.buyer, 60)}` : 'Lookalike: past buyers / engagers'];
+  const setNames = ['Broad (Advantage+ audience)', clean(src.buyer, 80) ? `Interest: ${clean(src.buyer, 90)}` : 'Lookalike: past buyers / engagers'];
   const perSet = r2(daily / setNames.length);
   const ad_sets: MetaAdSet[] = setNames.map((a, i) => ({ name: `${name} · ${i === 0 ? 'Broad' : 'Interest'} · CC ${money(ceiling)}`, optimization_goal: 'OFFSITE_CONVERSIONS', billing_event: 'IMPRESSIONS', bid_strategy: 'COST_CAP', bid_amount_usd: ceiling, daily_budget_usd: perSet, targeting: { geo, age_min: 21, age_max: 60, audience: a }, placements: 'Advantage+ placements' }));
   const angle = clean(src.angle, 120);
   const hooks = [
     { k: 'Problem', text: angle || `The easiest fix you'll buy this month: ${name}.`, cr: 'Demo video, 9:16, first 2 seconds show the problem, then the product fixing it.' },
-    { k: 'Proof', text: `"I didn't think it'd work." Real customers on ${name}.`, cr: 'UGC-style review, handheld, captions on.' },
+    { k: 'Proof', text: `I didn't think it'd work. Real customers on ${name}.`, cr: 'UGC-style review, handheld, captions on.' },
     { k: 'Offer', text: `${name}, ${money(src.sell)}. Ships fast${src.kind === 'client' ? ` from ${who}` : ''}.`, cr: 'Product still on a clean background, price on screen.' },
   ];
   const ads: MetaAd[] = ad_sets.flatMap((s) => hooks.map((h) => ({ name: `${s.name.split(' · ')[1]} · ${h.k}`, ad_set: s.name, primary_text: h.text, headline: clean(`${name}${src.kind === 'client' ? ` · ${who}` : ''}`, 40), description: `${money(src.sell)}`, cta: src.kind === 'client' ? 'ORDER_NOW' as const : 'SHOP_NOW' as const, creative: h.cr, link: src.url ?? null })));
@@ -76,7 +77,7 @@ export function buildMetaDraft(src: AdSource, opts: { dailyBudgetUsd?: number; d
     version: 1, source: src,
     math: { sell: m.sell, landed: m.landed, cm_before_ads: m.cmBeforeAds, break_even_cpa: m.breakEvenCpa, break_even_roas: fmtRoas(m.breakEvenRoas), cm_pct: m.cmPct, verdict: m.verdict, why: m.verdictWhy, ad_cost_estimated: m.estimated.adCost },
     bid_ceiling_usd: ceiling,
-    campaign: { name: `${who} · Sales test · ${name}`.slice(0, 120), objective: 'OUTCOME_SALES', buying_type: 'AUCTION', status: 'PAUSED', special_ad_categories: [], daily_budget_usd: daily, days, total_budget_usd: r2(daily * days) },
+    campaign: { name: (src.business ? `${clean(src.business, 50)} · ${name} · Sales test` : `${name} · Sales test`).slice(0, 120), objective: 'OUTCOME_SALES', buying_type: 'AUCTION', status: 'PAUSED', special_ad_categories: [], daily_budget_usd: daily, days, total_budget_usd: r2(daily * days) },
     ad_sets, ads,
     kill_rule: `Pause an ad set when it has spent ${money(r2(ceiling * KILL_AFTER_CPAS))} (${KILL_AFTER_CPAS}× the ${money(ceiling)} break-even CPA) without a sale under ${money(ceiling)}.`,
     warnings, blocked,

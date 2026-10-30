@@ -103,7 +103,7 @@ test('call kit tick: builds once a day from 7:50 AM Denver, writes only the cach
   assert.equal(await runCallKitTick(on.sb, { testMode: true, at: new Date('2026-10-30T14:30:00Z'), userId: 'u' }), false);
   assert.equal(on.writes.length, 1);
   // Reads only from leads, findings, clusters and the cache.
-  for (const r of on.reads) assert.match(r, /^(leads|lead_findings|complaint_clusters|harvest_cache)\?/);
+  for (const r of on.reads) assert.match(r, /^(leads|lead_findings|complaint_clusters|harvest_cache|crm_clients)\?/);
   const snap = await generateCallKit(fakeSb().sb, 'u', { testMode: false, at: new Date('2026-10-30T15:00:00Z') });
   assert.equal(snap.date, '2026-10-30');
 });

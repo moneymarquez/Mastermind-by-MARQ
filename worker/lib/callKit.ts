@@ -12,7 +12,7 @@
 import type { Sb } from './sb';
 import { zonedNow } from './sb';
 import { OWNER_USER_ID } from './auth';
-import { buildCallList, CALL_KIT_COLUMNS, CALL_LIST_EXCLUDED } from '../../src/data/callKit';
+import { buildCallList, clientMatch, CALL_KIT_COLUMNS, CALL_LIST_EXCLUDED } from '../../src/data/callKit';
 import type { CallKit, CallKitCluster, CallKitGap, CallKitLead } from '../../src/data/callKit';
 
 export const CALL_KIT_TZ = 'America/Denver';
@@ -30,10 +30,11 @@ const callable = `${base}&and=(${statusOk})`;
 export async function generateCallKit(sb: Sb, userId: string, opts: { testMode: boolean; at?: Date } = { testMode: true }): Promise<CallKitSnapshot> {
   const at = opts.at ?? new Date();
   const today = zonedNow(CALL_KIT_TZ, at).date;
-  const [byFizzle, findings, clusters] = await Promise.all([
+  const [byFizzle, findings, clusters, clientRows] = await Promise.all([
     sb.get<CallKitLead>(`leads?select=${CALL_KIT_COLUMNS}&${callable}&order=fizzle_score.desc.nullslast&limit=250`),
     sb.get<{ lead_id: string | null; place_id: string | null; kind: string; summary: string; score: number }>(`lead_findings?user_id=eq.${userId}&archived_at=is.null&kind=neq.checked&order=score.desc&limit=300&select=lead_id,place_id,kind,summary,score`).catch(() => []),
     sb.get<CallKitCluster>(`complaint_clusters?user_id=eq.${userId}&archived_at=is.null&status=neq.dismissed&order=rank_score.desc&limit=30&select=industry,title`).catch(() => []),
+    sb.get<{ business_name: string | null; contact_phone: string | null }>(`crm_clients?user_id=eq.${userId}&select=business_name,contact_phone&limit=2000`).catch(() => []),
   ]);
   // Leads the gap checker ranked but the fizzle sort didn't reach, and anything queued or due back.
   const have = new Set(byFizzle.map((l) => l.id));
@@ -51,7 +52,7 @@ export async function generateCallKit(sb: Sb, userId: string, opts: { testMode: 
     gaps.set(id, [...(gaps.get(id) ?? []), { kind: f.kind, text: f.summary }]);
     gapScore.set(id, Math.max(gapScore.get(id) ?? 0, Number(f.score) || 0));
   }
-  const items = buildCallList(leads, gaps, clusters, { today, now: at.getTime(), gapScoreByLead: gapScore });
+  const items = buildCallList(leads, gaps, clusters, { today, now: at.getTime(), gapScoreByLead: gapScore, clients: clientMatch(clientRows) });
   return { date: today, generated_at: at.toISOString(), test_mode: opts.testMode, items };
 }
 

@@ -93,3 +93,24 @@ test('worker tsconfig is committed and wired to npm run typecheck:worker', () =>
   assert.equal(pkg.scripts['typecheck:worker'], 'tsc -p tsconfig.worker.json');
   assert.match(readFileSync('tsconfig.worker.json', 'utf8'), /"include": \["worker"\]/);
 });
+
+test('call list: a lead that is already a client (name or phone) is never on the cold-call list', async () => {
+  const { buildCallList, clientMatch } = await import('../src/data/callKit');
+  const lead = (id: string, business_name: string, phone: string) => ({ id, business_name, phone, status: null, fizzle_score: 80, tier: 'A' }) as never;
+  const leads = [lead('a', 'Hollis Smokehouse', '(816) 555-0142'), lead('b', 'Blue Door', '801-555-0000'), lead('c', 'Pine & Pour', '(555) 023-1130')];
+  const clients = clientMatch([{ business_name: 'hollis smokehouse', contact_phone: null }, { business_name: 'Blue Door Bakery LLC', contact_phone: '+1 801 555 0000' }]);
+  const list = buildCallList(leads, new Map(), [], { today: '2026-10-30', clients });
+  assert.deepEqual(list.map((k) => k.leadId), ['c']);
+  assert.equal(buildCallList(leads, new Map(), [], { today: '2026-10-30' }).length, 3);
+});
+
+test('sample data: or() filters match like PostgREST (so Interested adds a new CRM client instead of matching any row)', async () => {
+  const { orParts } = await import('../src/demo/client');
+  assert.deepEqual(orParts('business_name.eq."Pine & Pour, LLC",contact_phone.eq."(555) 023-1130"'), [['business_name', 'eq', 'Pine & Pour, LLC'], ['contact_phone', 'eq', '(555) 023-1130']]);
+  assert.deepEqual(orParts('status.is.null,status.eq.new'), [['status', 'is', null], ['status', 'eq', 'new']]);
+});
+test('sample data: an or() we cannot read is left unfiltered', async () => {
+  const { orParts } = await import('../src/demo/client');
+  assert.deepEqual(orParts('and(a.eq.1,b.eq.2),c.eq.3'), []);
+  assert.deepEqual(orParts('is_chain.is.null,is_chain.is.false'), [['is_chain', 'is', null], ['is_chain', 'is', false]]);
+});

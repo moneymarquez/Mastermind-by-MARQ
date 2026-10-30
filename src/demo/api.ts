@@ -6,7 +6,7 @@ import { PLATFORM_SETUP, ACCOUNT_SETUP } from '../data/setupCatalog';
 import { buildSeed, demoLeads, DEMO_DIGEST_TEXT } from './seed';
 import { demoRows } from './client';
 import { localExtract } from '../dispatch/localExtract';
-import { buildCallList } from '../data/callKit';
+import { buildCallList, clientMatch } from '../data/callKit';
 import { buildMetaDraft } from '../data/metaAds';
 import type { AdSource } from '../data/metaAds';
 import type { CallKitGap, CallKitLead } from '../data/callKit';
@@ -40,7 +40,7 @@ function answer(url: URL, method: string, body: unknown = null): Response {
     for (const l of demoLeads()) if (l.website_status === 'outdated') gaps.set(l.id as string, [{ kind: 'no_mobile', text: 'Their website has no phone layout.' }, { kind: 'stale_site', text: 'Their website looks out of date.' }]);
     const clusters = [{ industry: 'restaurant owners (delivery apps, online ordering, fees)', title: 'Delivery apps take 30% and own the customer' }];
     const now = new Date();
-    return ok({ date: now.toISOString().slice(0, 10), generated_at: new Date(now.setHours(7, 50, 0, 0)).toISOString(), test_mode: true, source: 'snapshot', items: buildCallList(leads, gaps, clusters, { today: new Date().toISOString().slice(0, 10) }) });
+    return ok({ date: now.toISOString().slice(0, 10), generated_at: new Date(now.setHours(7, 50, 0, 0)).toISOString(), test_mode: true, source: 'snapshot', items: buildCallList(leads, gaps, clusters, { today: new Date().toISOString().slice(0, 10), clients: clientMatch(demoRows('crm_clients') as { business_name?: string | null; contact_phone?: string | null }[]) }) });
   }
   if (p.startsWith('/api/leadflow/')) {
     if (p.endsWith('/history')) return ok([{ id: 'h1', action: 'enriched', industry: 'Food truck', created_at: new Date().toISOString(), business_name: 'Juniper Tacos' }]);
