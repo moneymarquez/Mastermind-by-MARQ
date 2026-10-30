@@ -9,6 +9,8 @@ import { MODULE_REGISTRY } from './modules.config';
 // not a separately-toggleable thing). Items with no entry here (home,
 // settings, codelab) are system-level and never gated.
 const NAV_ITEM_TO_MODULE: Record<string, string> = {};
+// Modules also listed in another portal's nav (see ModuleDef.alsoIn).
+const ALSO_IN: Record<string, PortalKey[]> = Object.fromEntries(MODULE_REGISTRY.filter((m) => m.alsoIn?.length).map((m) => [m.key, m.alsoIn!]));
 for (const m of MODULE_REGISTRY) {
   for (const route of m.routes) NAV_ITEM_TO_MODULE[route] = m.key;
 }
@@ -48,16 +50,15 @@ const NAV_BASE: NavGroup[] = [
   {
     group: 'Clients',
     items: [
-      { id: 'client-modules', label: 'Client Modules', icon: 'ph-users-three' },
+      // Made by's landing: every client on their numbered journey step.
+      { id: 'madeby-board', label: 'Clients board', icon: 'ph-kanban' },
     ],
   },
   {
     group: 'Scaling',
     items: [
-      { id: 'scaling-start', label: 'Start', icon: 'ph-lightning' },
       { id: 'delivery', label: 'Show Your Work', icon: 'ph-video-camera' },
       { id: 'support-inbox', label: 'Support Inbox', icon: 'ph-address-book' },
-      { id: 'website', label: 'Website/App Builder', icon: 'ph-code' },
       { id: 'client-crm', label: 'Client CRM', icon: 'ph-users' },
       { id: 'scaling-planner', label: 'Scaling Planner', icon: 'ph-rocket-launch' },
       { id: 'audits', label: 'Business Audits', icon: 'ph-clipboard-text' },
@@ -108,7 +109,7 @@ export function withRegistry(base: NavGroup[]): NavGroup[] {
   const ICON: Record<string, string> = { dispatch: 'dispatch' };
   MODULE_REGISTRY.forEach((m, idx) => {
     const id = m.routes[0];
-    if (!id) return;
+    if (!id || m.navHidden) return;
     if (has.has(id)) {
       if (m.routes.length === 1) for (const g of out) for (const it of g.items) if (it.id === id) it.label = m.label;
       return;
@@ -169,7 +170,7 @@ function applyOrder(items: NavGroup['items'], orderOverride: Record<string, numb
 // fully-disabled category doesn't leave a bare header.
 export function buildNavData(canAccess: (moduleKey: string) => boolean, isOwner: boolean, orderOverride: Record<string, number> = {}, portal?: PortalKey): NavGroup[] {
   // With a portal, only that portal's modules (system rows always pass).
-  const inPortal = (moduleKey: string) => !portal || portalOfModule(moduleKey) === portal;
+  const inPortal = (moduleKey: string) => !portal || portalOfModule(moduleKey) === portal || !!ALSO_IN[moduleKey]?.includes(portal);
   return NAV_DATA.map((g) => ({
     ...g,
     items: applyOrder(

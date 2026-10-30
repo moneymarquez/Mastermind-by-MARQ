@@ -5,7 +5,8 @@
 import { MODULE_REGISTRY } from '../modules.config';
 import type { PortalKey } from '../portals.config';
 
-/** Main-sidebar modules hidden in travel mode. Cold calling stays inside Made by (LeadFlow, Lead Engines). */
+/** Main-sidebar modules hidden in travel mode. Cold calling stays inside Made by (LeadFlow, with Lead Engines folded in);
+ *  the whole Made by journey (Clients board, steps 1–8, Invoicing) stays on — tests/madeby-journey.test.ts. */
 export const TRAVEL_HIDDEN_MODULES = new Set<string>([
   'dispatch', 'money-move', 'feed', 'opening-closing',
   'dialing', // Dialing / Contacts

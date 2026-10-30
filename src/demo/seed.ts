@@ -314,7 +314,16 @@ export function buildSeed(): Record<string, Row[]> {
   const clients = [crm('Blue Door Bakery', 'Nina Brooks', 'active'), crm('Summit Auto Spa', 'Dev Patel', 'active'), crm('Juniper Tacos', 'Rosa Diaz', 'proposal')];
   Object.assign(clients[0], { delivery_phase: 3, business_kind: 'restaurant', phase_started_at: hoursAgo(72), last_contact_at: hoursAgo(20) });
   Object.assign(clients[1], { delivery_phase: 2, business_kind: 'service', phase_started_at: hoursAgo(130), last_contact_at: hoursAgo(2.5) });
+  // The blueprint's fictional test client, on 3 Baseline with a scorecard (Growth Blueprint, Oct 30).
+  const hollis = crm('Hollis Smokehouse', 'Kayla Hollis', 'active');
+  Object.assign(hollis, { delivery_phase: 1, business_kind: 'restaurant', phase_started_at: hoursAgo(200), last_contact_at: hoursAgo(6) });
+  clients.push(hollis);
   T('crm_clients', clients);
+  const sc = (kind: 'baseline' | 'snapshot', ageH: number, revenue: number, leads: number, rating: number, rest: Record<string, number>, targets?: Record<string, number>) => ({ id: uid('met'), user_id: U, client_id: hollis.id, phase: 1, kind, followers: null, google_reviews: null, site_traffic: null, monthly_revenue: revenue, leads_month: leads, google_rating: rating, note: JSON.stringify({ scorecard: 1, values: rest, ...(targets ? { targets } : {}) }), captured_at: hoursAgo(ageH) });
+  T('client_metrics', [
+    sc('baseline', 24 * 21, 86700, 38, 4.6, { close_rate: 42, avg_ticket: 23.8, repeat_rate: 31, reviews_month: 0.4, response_min: 240 }, { revenue: 104000, leads: 50, close_rate: 50, avg_ticket: 25.3, repeat_rate: 36, reviews_month: 12, rating: 4.6, response_min: 15 }),
+    sc('snapshot', 24 * 2, 91200, 44, 4.6, { close_rate: 47, avg_ticket: 25.1, repeat_rate: 32, reviews_month: 6, response_min: 200 }),
+  ]);
   // Tasks (brief §4.3) across the projects, so Tasks and the Daily Plan pick-up have real rows.
   const tk = (title: string, project: string, due: number | null, priority: 'high' | 'med' | 'low', done = false, source = 'manual') => ({ id: uid('task'), user_id: U, title, project, due: due == null ? null : dayStr(due), priority, goal_id: null, source, notes: null, done, done_at: done ? hoursAgo(5) : null, created_at: hoursAgo(48), updated_at: hoursAgo(5) });
   T('tasks', [

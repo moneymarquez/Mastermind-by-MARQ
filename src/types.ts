@@ -1,10 +1,12 @@
 export type Screen =
   | 'home'
   | 'today'
+  | 'madeby-board'
   | 'orchestrator'
   | 'ecom-marketing'
   | 'coupons'
   | 'lead-engines'
+  | 'call-list'
   | 'waitlist'
   | 'comms'
   | 'contracts'

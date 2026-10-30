@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useClientCRM } from '../../../data/useClientCRM';
 import type { ClientStage } from '../../../data/types';
 import ClientDetailView from '../ClientDetailView';
@@ -16,6 +16,8 @@ import { initials, usd } from './util';
 type Props = {
   focusClientId?: string | null; onClearFocus?: () => void; selectedClientId?: string | null; onSelectClient?: (id: string | null) => void;
   onPushToMarketing?: (id: string) => void; onOpenCampaign?: (id: string) => void; onStartCampaign?: (id: string) => void;
+  /** One-shot: open the focused client on this record section ('portal', 'comms'…). */
+  focusSection?: string | null;
 };
 type Client = ReturnType<typeof useClientCRM>['clients'][number];
 
@@ -26,8 +28,10 @@ const owed = (c: Client) => c.invoices.filter((i) => i.status === 'sent' || i.st
 const head: CSSProperties = { color: 'var(--text)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.2 };
 const sub: CSSProperties = { fontSize: 13, fontWeight: 500, color: 'var(--text-tertiary)', marginTop: 4 };
 
-export default function ClientCRMV2({ focusClientId, onClearFocus, selectedClientId, onSelectClient, onPushToMarketing, onOpenCampaign, onStartCampaign }: Props) {
-  const { device } = useModule();
+export default function ClientCRMV2({ focusClientId, onClearFocus, selectedClientId, onSelectClient, onPushToMarketing, onOpenCampaign, onStartCampaign, focusSection }: Props) {
+  const { device, nav } = useModule();
+  // The section a focused client opens on; kept until the next pick.
+  const [section, setSection] = useState<string | null>(focusSection ?? null);
   const phone = device === 'phone';
   const crm = useClientCRM();
   const [sel, setSel] = useState<string | null>(null);
@@ -35,13 +39,14 @@ export default function ClientCRMV2({ focusClientId, onClearFocus, selectedClien
   const [stage, setStage] = useState<ClientStage | 'all'>('all');
   const [view, setView] = useState<'invoices' | 'questions' | 'template' | 'catalog' | null>(null);
   const [adding, setAdding] = useState(false);
-  const pick = (id: string | null) => { setSel(id); onSelectClient?.(id); };
+  const pick = (id: string | null, sec: string | null = null) => { setSel(id); setSection(sec); onSelectClient?.(id); };
   useEffect(() => {
-    if (focusClientId) { pick(focusClientId); onClearFocus?.(); return; }
+    if (focusClientId) { pick(focusClientId, focusSection ?? null); onClearFocus?.(); return; }
     if (selectedClientId && selectedClientId !== sel) setSel(selectedClientId);
   }, [focusClientId, selectedClientId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const menu = [
+    { t: 'Clients board', onClick: () => nav('madeby-board') },
     { t: 'All invoices', onClick: () => setView('invoices') },
     { t: 'Service catalog', onClick: () => setView('catalog') },
     { t: 'Default pricing template', onClick: () => setView('template') },
@@ -97,7 +102,7 @@ export default function ClientCRMV2({ focusClientId, onClearFocus, selectedClien
   const detail = cur ? (
     <div className="mm-scroll-y" style={{ minWidth: 0, minHeight: 0 }}>
       <div style={{ padding: phone ? 16 : '22px 26px' }}>
-        <ClientDetailView key={cur.id} client={cur} crm={crm} onBack={() => pick(null)} homeHeadStyle={head} homeSubStyle={sub} onPushToMarketing={onPushToMarketing} onOpenCampaign={onOpenCampaign} onStartCampaign={onStartCampaign} />
+        <ClientDetailView key={cur.id} initialSection={section} client={cur} crm={crm} onBack={() => pick(null)} homeHeadStyle={head} homeSubStyle={sub} onPushToMarketing={onPushToMarketing} onOpenCampaign={onOpenCampaign} onStartCampaign={onStartCampaign} />
       </div>
     </div>
   ) : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', fontSize: 14 }}>Pick a deal on the left.</div>;
@@ -124,17 +129,18 @@ export default function ClientCRMV2({ focusClientId, onClearFocus, selectedClien
   );
 }
 
-function NewDeal({ onClose, create, onMade }: { onClose: () => void; create: ReturnType<typeof useClientCRM>['createClient']; onMade: (id: string) => void }) {
+export function NewDeal({ onClose, create, onMade, title = 'New deal', extra }: { onClose: () => void; create: ReturnType<typeof useClientCRM>['createClient']; onMade: (id: string) => void; title?: string; extra?: ReactNode }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [tel, setTel] = useState('');
   const [busy, setBusy] = useState(false);
   return (
-    <Sheet title="New deal" onClose={onClose}>
+    <Sheet title={title} onClose={onClose}>
       <Field l="Business name"><input value={name} onChange={(e) => setName(e.target.value)} style={field} autoFocus /></Field>
       <Field l="Contact email (optional)"><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} style={field} /></Field>
       <Field l="Contact phone (optional)"><input type="tel" value={tel} onChange={(e) => setTel(e.target.value)} style={field} /></Field>
       <button className="mm-btn mm-btn--primary" style={{ height: 48, fontSize: 15 }} disabled={busy || !name.trim()} onClick={async () => { setBusy(true); const c = await create({ business_name: name.trim(), contact_email: email.trim() || null, contact_phone: tel.trim() || null }); onClose(); if (c) onMade(c.id); }}>{busy ? 'Creating…' : 'Create'}</button>
+      {extra}
     </Sheet>
   );
 }

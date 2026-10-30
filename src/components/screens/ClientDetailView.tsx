@@ -5,7 +5,6 @@ import type { ClientStage, PricingCadence, ClientInvoice } from '../../data/type
 import { AiError } from '../../lib/ai';
 import { STAGES, cardStyle, inputStyle, selectStyle, primaryBtn, ghostBtn, tabStyle } from './clientStyles';
 import ClientReportsTab from './ClientReportsTab';
-import ClientPortalAdmin from './ClientPortalAdmin';
 import ClientMediaGrid from './ClientMediaGrid';
 import InvoiceDetailView from './InvoiceDetailView';
 import LiveCaptureView from './LiveCaptureView';
@@ -14,6 +13,9 @@ import ClientCampaigns from './marketing/ClientCampaigns';
 import { Tabs } from '../mm/Page';
 import { ClientOverview, DeliveryTab, ClientComms, ClientContracts } from '../madeby/ClientSections';
 import ClientVideos from '../madeby/ClientVideos';
+import { ClientPortalPanel } from './v2/ClientModulesV2';
+import { useModule } from '../mm/Page';
+import ScorecardPanel from '../madeby/ScorecardPanel';
 
 interface Props {
   client: CrmClientWithChildren;
@@ -26,12 +28,17 @@ interface Props {
   onPushToMarketing?: (clientId: string) => void;
   onOpenCampaign?: (campaignId: string) => void;
   onStartCampaign?: (clientId: string) => void;
+  /** Open on this section (e.g. 'portal' from the old Client Modules route). */
+  initialSection?: string | null;
 }
 
 type Tab = 'audit' | 'analysis' | 'pricing' | 'invoices' | 'reports' | 'portal' | 'sent';
-type Section = 'overview' | 'sales' | 'delivery' | 'comms' | 'docs' | 'money';
-const SECTIONS: { id: Section; label: string }[] = [{ id: 'overview', label: 'Overview' }, { id: 'sales', label: 'Sales' }, { id: 'delivery', label: 'Delivery' }, { id: 'comms', label: 'Comms' }, { id: 'docs', label: 'Docs' }, { id: 'money', label: 'Money' }];
-const SECTION_TABS: Record<Section, Tab[]> = { overview: [], sales: ['audit', 'analysis', 'pricing'], delivery: [], comms: [], docs: ['portal', 'reports'], money: ['invoices', 'sent'] };
+// Portal (what used to be the Client Modules screen) and Comms are the
+// client record's own tabs (Made by journey, Oct 2026).
+type Section = 'overview' | 'sales' | 'delivery' | 'scorecard' | 'portal' | 'comms' | 'docs' | 'money';
+const SECTIONS: { id: Section; label: string }[] = [{ id: 'overview', label: 'Overview' }, { id: 'sales', label: 'Sales' }, { id: 'delivery', label: 'Delivery' }, { id: 'scorecard', label: 'Scorecard' }, { id: 'portal', label: 'Portal' }, { id: 'comms', label: 'Comms' }, { id: 'docs', label: 'Docs' }, { id: 'money', label: 'Money' }];
+const SECTION_TABS: Record<Section, Tab[]> = { overview: [], sales: ['audit', 'analysis', 'pricing'], delivery: [], scorecard: [], portal: [], comms: [], docs: ['reports'], money: ['invoices', 'sent'] };
+const isSection = (v: string | null | undefined): v is Section => !!v && SECTIONS.some((x) => x.id === v);
 
 const textareaStyle: CSSProperties = {
   width: '100%', minHeight: 70, background: 'var(--surface-4)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-sm)',
@@ -49,10 +56,11 @@ function amountLabel(amount: number | null): string {
   return amount === null ? 'TBD' : money(amount);
 }
 
-export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, homeSubStyle, onPushToMarketing, onOpenCampaign, onStartCampaign }: Props) {
+export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, homeSubStyle, onPushToMarketing, onOpenCampaign, onStartCampaign, initialSection }: Props) {
+  const { nav, device } = useModule();
   const [tab, setTab] = useState<Tab>(client.audit?.status === 'complete' ? 'analysis' : 'audit');
   // Brief §5.2: one client page in six tabs instead of one long screen.
-  const [section, setSection] = useState<Section>('overview');
+  const [section, setSection] = useState<Section>(isSection(initialSection) ? initialSection : 'overview');
   const showTab = (t: Tab) => SECTION_TABS[section].includes(t) && tab === t;
   const [nameDraft, setNameDraft] = useState(client.business_name);
   const [emailDraft, setEmailDraft] = useState(client.contact_email ?? '');
@@ -396,7 +404,14 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
       <div style={{ marginTop: 16 }}><Tabs tabs={SECTIONS} value={section} onChange={(s) => { setSection(s); const first = SECTION_TABS[s][0]; if (first) setTab(first); }} /></div>
       {section === 'overview' && <ClientOverview client={client} onOpen={(s) => setSection(s)} />}
       {section === 'delivery' && <DeliveryTab client={client} onChanged={() => crm.reload()} />}
-      {section === 'comms' && <><ClientVideos client={client} /><ClientComms client={client} /></>}
+      {section === 'scorecard' && <ScorecardPanel clientId={client.id} phone={device === 'phone'} />}
+      {section === 'portal' && <div style={{ marginTop: 16 }}><ClientPortalPanel clientId={client.id} onChanged={() => crm.reload()} /></div>}
+      {section === 'comms' && <>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+          <span style={ghostBtn} onClick={() => nav('comms')}>Templates, sequences and everyone else →</span>
+        </div>
+        <ClientVideos client={client} /><ClientComms client={client} />
+      </>}
       {section === 'sales' && (<>
       {onOpenCampaign && onStartCampaign && <ClientCampaigns clientId={client.id} onOpenCampaign={onOpenCampaign} onStartCampaign={onStartCampaign} />}
 
@@ -480,7 +495,6 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
       )}
 
       {showTab('reports') && <ClientReportsTab clientId={client.id} publicToken={client.public_token} />}
-      {showTab('portal') && <ClientPortalAdmin client={client} />}
 
       {showTab('audit') && (
         <div style={{ marginTop: 18, maxWidth: 640 }}>

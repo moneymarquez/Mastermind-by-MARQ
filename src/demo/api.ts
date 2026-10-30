@@ -6,6 +6,8 @@ import { PLATFORM_SETUP, ACCOUNT_SETUP } from '../data/setupCatalog';
 import { buildSeed, demoLeads, DEMO_DIGEST_TEXT } from './seed';
 import { demoRows } from './client';
 import { localExtract } from '../dispatch/localExtract';
+import { buildCallList } from '../data/callKit';
+import type { CallKitGap, CallKitLead } from '../data/callKit';
 
 type Json = Record<string, unknown> | unknown[];
 const ok = (body: Json, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -24,6 +26,16 @@ function answer(url: URL, method: string, body: unknown = null): Response {
     if (q.get('pooled') === 'true') list = list.filter((l) => l.pooled);
     if (q.get('dialing_queued') === 'true') list = list.filter((l) => l.dialing_queued);
     return ok(list);
+  }
+  if (p === '/api/leadflow/call-kit') {
+    // The cold-call kit over the demo leads, plus the blueprint's fictional test client.
+    const hollis = { id: 'leaddemo-0000-4000-8000-hollis000001', business_name: 'Hollis Smokehouse', phone: '(816) 555-0142', category: 'Barbecue restaurant', search_category: 'restaurant', city: 'Raytown', rating: 4.6, review_count: 1142, days_since_last_review: 214, fizzle_score: 82, tier: 'A', website: 'https://hollissmokehouse.com', status: null, call_notes: 'Main line rings the host stand. Ask for Kayla.' };
+    const leads = [hollis, ...demoLeads()] as unknown as CallKitLead[];
+    const gaps = new Map<string, CallKitGap[]>([[hollis.id, [{ kind: 'stale_site', text: 'Their website still says © 2022.' }]]]);
+    for (const l of demoLeads()) if (l.website_status === 'outdated') gaps.set(l.id as string, [{ kind: 'no_mobile', text: 'Their website has no phone layout.' }, { kind: 'stale_site', text: 'Their website looks out of date.' }]);
+    const clusters = [{ industry: 'restaurant owners (delivery apps, online ordering, fees)', title: 'Delivery apps take 30% and own the customer' }];
+    const now = new Date();
+    return ok({ date: now.toISOString().slice(0, 10), generated_at: new Date(now.setHours(7, 50, 0, 0)).toISOString(), test_mode: true, source: 'snapshot', items: buildCallList(leads, gaps, clusters, { today: new Date().toISOString().slice(0, 10) }) });
   }
   if (p.startsWith('/api/leadflow/')) {
     if (p.endsWith('/history')) return ok([{ id: 'h1', action: 'enriched', industry: 'Food truck', created_at: new Date().toISOString(), business_name: 'Juniper Tacos' }]);

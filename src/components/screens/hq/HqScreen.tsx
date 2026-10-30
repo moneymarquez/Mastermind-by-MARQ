@@ -50,7 +50,7 @@ export default function HqScreen() {
   const [tab, setTab] = useState<Tab>('today');
   const reds = s?.flags.filter((f) => f.severity === 'red').length ?? 0;
   return (
-    <Page title="HQ" sub="The master orchestrator: one report, one place to talk, one kill switch" back="Made by" backTo="client-modules">
+    <Page title="HQ" sub="The master orchestrator: one report, one place to talk, one kill switch" back="Made by" backTo="madeby-board">
       {err && <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid color-mix(in srgb, var(--warning) 40%, var(--border))', background: 'color-mix(in srgb, var(--warning) 8%, var(--surface))', fontSize: 14 }}>{err}</div>}
       {s && <KillSwitch controls={s.controls} onChanged={() => { void load(); void flagsApi.reload(); }} />}
       <Tabs<Tab> value={tab} onChange={setTab} tabs={[{ id: 'today', label: 'Today' }, { id: 'flags', label: 'Flags', badge: reds }, { id: 'spend', label: 'Spend & limits' }, { id: 'log', label: 'Task log' }, { id: 'texting', label: 'Texting line' }]} />

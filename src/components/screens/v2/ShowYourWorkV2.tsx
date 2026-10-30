@@ -54,7 +54,7 @@ export default function ShowYourWorkV2({ onNavigate }: { onNavigate: (id: string
   if (!P.loading && P.projects.length === 0) {
     return (
       <Page title="Show Your Work" sub="Delivery packages and portfolio">
-        <Empty text="Nothing to show yet. Finished client work collects here as packages and portfolio pieces. Projects start in Scaling → Start." cta="Go to Start" onCta={() => onNavigate('scaling-start')} />
+        <Empty text="Nothing to show yet. Finished client work collects here as packages and portfolio pieces. Clients start on the Clients board → New client." cta="Open the Clients board" onCta={() => onNavigate('madeby-board')} />
       </Page>
     );
   }
