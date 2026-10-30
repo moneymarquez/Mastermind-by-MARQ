@@ -10,7 +10,7 @@ import { E, Badge, label, tint } from './ecomShared';
 type P = Record<string, unknown>;
 const arr = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
 interface Seller { name: string; shop_url: string | null; price: number | null; est_monthly_orders: number | null; est_monthly_revenue: number | null; confidence: string; source_url: string | null; shop_look: string; screenshot_url: string | null }
-interface Math { sell: number; supplier: number; ship: number; landed: number; profit: number; marginPct: number; breakEvenOrders: number | null }
+interface Math { sell: number; supplier: number; ship: number; landed: number; profit: number; marginPct: number; breakEvenOrders: number | null; adCost?: number; adCostEstimated?: boolean; cmAfterAds?: number; cmAfterAdsPct?: number; breakEvenRoas?: number | null; breakEvenCpa?: number; verdict?: string }
 
 export function confidenceColor(pct: number): string { return pct >= 65 ? E.green : pct >= 45 ? E.amber : E.red; }
 
@@ -77,7 +77,7 @@ export function PitchBody({ p }: { p: P }) {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 8 }}>
-        {[['Sell price', money(m.sell)], ['Supplier + ship', `${money(m.supplier)} + ${money(m.ship)}`], ['Landed (incl. fees, returns)', money(m.landed)], ['Profit per order', money(m.profit)], ['Margin', `${Math.round(m.marginPct ?? 0)}%`], ['Break-even on $100 test', m.breakEvenOrders != null && Number.isFinite(m.breakEvenOrders) ? `${m.breakEvenOrders} orders` : '—']].map(([k, v]) => (
+        {[['Sell price', money(m.sell)], ['Supplier + ship', `${money(m.supplier)} + ${money(m.ship)}`], ['Landed (incl. fees, returns)', money(m.landed)], ['Profit per order', money(m.profit)], ['Margin', `${Math.round(m.marginPct ?? 0)}%`], ['Break-even on $100 test', m.breakEvenOrders != null && Number.isFinite(m.breakEvenOrders) ? `${m.breakEvenOrders} orders` : '—'], ...(m.cmAfterAds != null ? [[`Ad cost / purchase${m.adCostEstimated ? ' (est.)' : ''}`, money(m.adCost ?? 0)], ['Margin after ads', `${money(m.cmAfterAds)} (${Math.round(m.cmAfterAdsPct ?? 0)}%)`], ['Break-even ROAS · CPA', `${m.breakEvenRoas != null ? `${m.breakEvenRoas.toFixed(2)}×` : '—'} · ${money(m.breakEvenCpa ?? 0)}`], ['Profit verdict', m.verdict ?? '—']] : [])].map(([k, v]) => (
           <div key={k} style={{ ...box, gap: 2 }}><span style={{ fontSize: 11.5, color: E.faint }}>{k}</span><span style={{ fontSize: 17, fontWeight: 600, color: E.text, fontVariantNumeric: 'tabular-nums' }}>{v}</span></div>
         ))}
       </div>

@@ -5,6 +5,9 @@ import type { CardProduct, Verdict } from '../../../data/ecomCard';
 import { FEES } from '../../../data/ecomFees';
 import { money } from '../../../data/ecom';
 import { E, Badge, ConfidenceBadge, btn, field, label, tint } from './ecomShared';
+import { fmtRoas } from '../../../data/ecomProfit';
+import type { ProfitVerdict } from '../../../data/ecomProfit';
+const PROFIT_COLOR: Record<ProfitVerdict, string> = { Scale: E.green, Test: E.amber, Kill: E.red };
 
 // One product card for Approvals, Products and Tonight's pitch (Addendum 3).
 // Collapsed it's one decision-ready row; "More" opens sections A–K. It renders
@@ -49,7 +52,7 @@ export default function RichProductCard(props: RichCardProps) {
   const shipTxt = v.shipMax != null ? `${v.shipMin ?? v.shipMax}–${v.shipMax} days` : null;
   const q = encodeURIComponent(p.name);
   const profitLine = v.bd
-    ? [`Sell ${money(v.bd.customer)}`, `Profit ${money(v.bd.profit)}/order`, `Margin ${v.bd.marginPct.toFixed(0)}%`].join(' · ')
+    ? [`Sell ${money(v.bd.customer)}`, `Profit ${money(v.bd.profit)}/order`, `Margin ${v.bd.marginPct.toFixed(0)}%`, ...(v.pm ? [`After ads${v.pm.estimated.adCost ? ' (est.)' : ''} ${money(v.pm.cm)} (${v.pm.cmPct.toFixed(0)}%)`, `Break-even ROAS ${fmtRoas(v.pm.breakEvenRoas)}`] : [])].join(' · ')
     : 'Sell, profit and margin: ' + (v.missing[0]?.text ?? 'Not found');
   const trendTxt = p.velocity ? (p.velocity === 'rising' ? 'Trend rising' : p.velocity === 'fading' ? 'Trend fading' : 'Trend flat') : 'Trend: not found';
   const needsNumbers = !v.canApprove && !v.blocked;
@@ -65,6 +68,7 @@ export default function RichProductCard(props: RichCardProps) {
             {p.rank != null && <Badge color={E.text}>#{p.rank}</Badge>}
             <span style={{ fontWeight: 700, color: E.text, fontSize: 'var(--text-subhead)', minWidth: 0, overflowWrap: 'anywhere' }}>{p.name}</span>
             <Badge color={VERDICT_COLOR[v.verdict]} title={v.verdictWhy}>{v.verdict}</Badge>
+            {v.pm && <Badge color={PROFIT_COLOR[v.pm.verdict]} title={v.pm.verdictWhy}>{v.pm.verdict}</Badge>}
             {p.score != null && <Badge color={p.score >= 7 ? E.green : p.score >= 5 ? E.amber : E.faint}>{p.score}/10</Badge>}
             {p.score == null && <Badge color={E.faint} title={v.missing.find((m) => m.field === 'score')?.text}>No score</Badge>}
             <Badge color={E.faint}>{conf}</Badge>
@@ -120,9 +124,17 @@ export default function RichProductCard(props: RichCardProps) {
                 <span style={{ color: E.muted }}>− Refund/chargeback allowance ({FEES.refundPct}% of price)</span><span style={num}>−{money(v.bd.refund)}</span>
                 <strong style={{ borderTop: `1px solid ${E.border}`, paddingTop: 6 }}>= Profit per order</strong>
                 <strong style={{ ...num, borderTop: `1px solid ${E.border}`, paddingTop: 6, color: v.floorOk ? E.green : E.red }}>{money(v.bd.profit)} ({v.bd.marginPct.toFixed(0)}%)</strong>
+                {v.pm && (<>
+                  {v.pm.platformFee > 0 && <><span style={{ color: E.muted }}>− Platform fee{v.pm.estimated.platformFee ? ' (est.)' : ''}</span><span style={num}>−{money(v.pm.platformFee)}</span></>}
+                  <span style={{ color: E.muted }}>− Ad cost per purchase{v.pm.estimated.adCost ? ' (est. 30% of price)' : ' (measured CPA)'}</span><span style={num}>−{money(v.pm.adCost)}</span>
+                  <strong style={{ borderTop: `1px solid ${E.border}`, paddingTop: 6 }}>= Contribution margin after ads</strong>
+                  <strong style={{ ...num, borderTop: `1px solid ${E.border}`, paddingTop: 6, color: PROFIT_COLOR[v.pm.verdict] }}>{money(v.pm.cm)} ({v.pm.cmPct.toFixed(0)}%)</strong>
+                  <span style={{ color: E.muted }}>Break-even ROAS · CPA</span><span style={num}>{fmtRoas(v.pm.breakEvenRoas)} · {money(v.pm.breakEvenCpa)}</span>
+                  <span style={{ color: E.muted }}>Verdict</span><span style={{ ...num, color: PROFIT_COLOR[v.pm.verdict], fontWeight: 600 }} title={v.pm.verdictWhy}>{v.pm.verdict}</span>
+                </>)}
               </div>
             ) : <span style={{ fontSize: 14, color: E.amber }}>{v.missing.find((m) => m.field === 'supplier_cost')?.text ?? v.missing[0]?.text ?? 'Not found: needs a sell price and supplier cost'}</span>}
-            <span style={{ fontSize: 12, color: E.faint }}>Rates: src/data/ecomFees.ts (Shopify Basic online card rate by default). Floor: $10 profit and 35% margin.</span>
+            <span style={{ fontSize: 12, color: E.faint }}>Rates: src/data/ecomFees.ts (Shopify Basic online card rate by default). Floor: $10 profit and 35% margin. Verdict on margin after ads: ≥ 20% Scale, 10–20% Test, under 10% Kill. Ad cost is an estimate until real CPA is saved on the product.</span>
           </Sec>
 
           {/* D. Why sell this */}
