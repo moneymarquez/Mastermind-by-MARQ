@@ -53,7 +53,7 @@ export default function ClassNotesScreen() {
   const shown = tab === 'today' ? CLASS_BOTS : CLASS_BOTS.filter((b) => b.bot === tab);
   return (
     <Page title="Class notes" sub="Every night 3:30–7:00 AM Denver, each bot studies what's new in its field. Its proposals change nothing until you approve them." back="HQ" backTo="hq">
-      {err && <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid color-mix(in srgb, var(--warning) 40%, var(--border))', background: 'color-mix(in srgb, var(--warning) 8%, var(--surface))', fontSize: 14 }}>{err}</div>}
+      {err && <div style={{ padding: '12px 14px', borderRadius: 'var(--g-r-lg)', border: '1px solid color-mix(in srgb, var(--warning) 40%, var(--border))', background: 'color-mix(in srgb, var(--warning) 8%, var(--surface))', fontSize: 14 }}>{err}</div>}
       <Tabs<Tab> value={tab} onChange={setTab} tabs={[{ id: 'today', label: 'Today', badge: pending.length || undefined }, ...CLASS_BOTS.map((b) => ({ id: b.bot as Tab, label: b.name, badge: pending.filter((c) => c.payload.bot === b.bot).length || undefined }))]} />
       {loading && <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Loading class notes…</div>}
       {!loading && (
@@ -92,8 +92,8 @@ function ProposalRow({ c, phone, onDone }: { c: ProposalCard; phone: boolean; on
         <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{when(c.created_at)}</span>
       </div>
       <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{c.payload.change}</div>
-      <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}><b style={{ fontWeight: 500, color: 'var(--text)' }}>Why:</b> {c.payload.why}</div>
-      {c.payload.evidence && <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}><b style={{ fontWeight: 500, color: 'var(--text)' }}>How we'll know:</b> {c.payload.evidence}</div>}
+      <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}><b style={{ fontWeight: 500, color: 'var(--text-tertiary)' }}>Why:</b> {c.payload.why}</div>
+      {c.payload.evidence && <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}><b style={{ fontWeight: 500, color: 'var(--text-tertiary)' }}>How we'll know:</b> {c.payload.evidence}</div>}
       {c.payload.source_url && <a href={c.payload.source_url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: 'var(--accent)', wordBreak: 'break-all' }}>{c.payload.source_url}</a>}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
         <button className="mm-btn mm-btn--primary" disabled={!!busy} onClick={() => void go('approved')} style={{ minWidth: phone ? 0 : 120, flex: phone ? 1 : 'none' }}>{busy === 'approved' ? 'Approving…' : 'Approve'}</button>

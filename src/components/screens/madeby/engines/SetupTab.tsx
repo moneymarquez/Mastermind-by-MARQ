@@ -5,7 +5,7 @@ import { api } from '../../../../lib/api';
 import type { OutreachState } from './types';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const inp: React.CSSProperties = { height: 38, padding: '0 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 15, minWidth: 0, boxSizing: 'border-box' };
+const inp: React.CSSProperties = { height: 38, padding: '0 10px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 15, minWidth: 0, boxSizing: 'border-box' };
 const Check = ({ ok, label, detail }: { ok: boolean | null; label: string; detail?: string }) => (
   <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
     <span aria-hidden style={{ width: 20, height: 20, borderRadius: '50%', flex: 'none', marginTop: 1, display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 700, background: ok ? 'var(--success)' : 'transparent', color: '#fff', border: ok ? 'none' : '1.5px solid var(--text-tertiary)' }}>{ok ? '✓' : ''}</span>

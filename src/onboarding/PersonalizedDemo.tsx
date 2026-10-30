@@ -128,7 +128,7 @@ export default function PersonalizedDemo({ assistantName, selectedKeys, onContin
   return (
     <div style={{ height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--bg)', padding: '40px 24px 140px' } as CSSProperties}>
       <div style={{ maxWidth: 820, margin: '0 auto' }}>
-        <div style={{ fontSize: 'var(--text-stat)', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em' }}>Masterminds by MARQ</div>
+        <div style={{ fontSize: 'var(--text-stat)', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' }}>Masterminds by MARQ</div>
         <div style={{ fontSize: 'var(--text-body-lg)', color: 'var(--text-secondary)', marginTop: 8, lineHeight: 1.6, maxWidth: 560 }}>
           This is what your dashboard looks like, built out with {selectedModules.length} module{selectedModules.length === 1 ? '' : 's'} you picked.
           {' '}<strong style={{ color: 'var(--text)' }}>{assistantName}</strong> is already reading across all of it.

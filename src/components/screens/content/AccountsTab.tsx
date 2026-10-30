@@ -69,7 +69,7 @@ function Avatar({ a, size = 40 }: { a: SocialAccount; size?: number }) {
   const p = PLATFORM[a.platform];
   return a.avatar_url
     ? <img src={a.avatar_url} alt="" style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-    : <div style={{ width: size, height: size, borderRadius: '50%', background: p.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: size * 0.34, flexShrink: 0 }}>{p.short}</div>;
+    : <div style={{ width: size, height: size, borderRadius: '50%', background: p.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: size * 0.34, flexShrink: 0 }}>{p.short}</div>;
 }
 
 function AccountCard({ a, api, items, today, onOpen, onLog, onOpenPlan }: { a: SocialAccount; api: Api; items: ContentItem[]; today: string; onOpen: () => void; onLog: () => void; onOpenPlan: () => void }) {
@@ -95,7 +95,7 @@ function AccountCard({ a, api, items, today, onOpen, onLog, onOpenPlan }: { a: S
         <Badge color={HEALTH_COLOR[health]}>{HEALTH_LABEL[health]}</Badge>
       </div>
       {prof.sync_error && (
-        <div role="alert" style={{ padding: '8px 10px', borderRadius: 10, border: `1px solid ${E.red}`, fontSize: 'var(--text-caption)', color: E.red, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div role="alert" style={{ padding: '8px 10px', borderRadius: 'var(--g-r-md)', border: `1px solid ${E.red}`, fontSize: 'var(--text-caption)', color: E.red, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ flex: '1 1 180px' }}>{prof.sync_error}</span>
           {prof.sync_reconnect && <a href="/?screen=setup" style={{ ...btn('danger'), textDecoration: 'none', minHeight: 30, fontSize: 12.5 }}>Reconnect</a>}
         </div>
@@ -103,7 +103,7 @@ function AccountCard({ a, api, items, today, onOpen, onLog, onOpenPlan }: { a: S
       {recent.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
           {recent.map((p) => (
-            <a key={p.id} href={p.url ?? undefined} target="_blank" rel="noopener noreferrer" title={p.caption ?? ''} style={{ aspectRatio: '1 / 1', borderRadius: 8, overflow: 'hidden', background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, var(--surface)), color-mix(in srgb, var(--success) 18%, var(--surface)))', display: 'block', position: 'relative' }}>
+            <a key={p.id} href={p.url ?? undefined} target="_blank" rel="noopener noreferrer" title={p.caption ?? ''} style={{ aspectRatio: '1 / 1', borderRadius: 'var(--g-r-md)', overflow: 'hidden', background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, var(--surface)), color-mix(in srgb, var(--success) 18%, var(--surface)))', display: 'block', position: 'relative' }}>
               {p.thumbnail_url ? <img src={p.thumbnail_url} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ position: 'absolute', inset: 0, padding: 4, fontSize: 10, color: E.text, overflow: 'hidden' }}>{(p.hook || p.caption || '').slice(0, 40)}</span>}
             </a>
           ))}
@@ -214,13 +214,13 @@ function ProfilePreview({ a, api, posts, metrics, planned, followers, avg }: { a
         <Badge color={a.live_posting ? E.red : E.faint}>{a.live_posting ? 'LIVE: approved posts really go out' : 'Test mode: nothing posts'}</Badge>
         <button style={{ ...btn('ghost'), minHeight: 30, fontSize: 12.5, padding: '0 10px' }} onClick={async () => { const to = !a.live_posting; if (to && !(await askConfirm(`Post for real to @${a.handle}? Approved posts will publish publicly at their planned times.`))) return; await api.updateAccount(a.id, { live_posting: to } as Partial<SocialAccount>); }}>{a.live_posting ? 'Back to test mode' : 'Turn on live posting'}</button>
       </div>
-      <div style={{ display: 'flex', gap: 6, margin: '12px 0 10px' }}>
-        {(['posted', 'planned'] as const).map((t) => <button key={t} onClick={() => setTab(t)} style={{ ...btn(tab === t ? 'primary' : 'ghost'), minHeight: 32, padding: '0 14px', fontSize: 13, borderRadius: 999 }}>{t === 'posted' ? `Posted ${recent.length}` : `Planned ${upcoming.length}`}</button>)}
+      <div className="g-seg" role="group" aria-label="Posts" style={{ margin: '12px 0 10px' }}>
+        {(['posted', 'planned'] as const).map((t) => <button key={t} onClick={() => setTab(t)} className="g-pill" aria-pressed={tab === t}>{t === 'posted' ? `Posted ${recent.length}` : `Planned ${upcoming.length}`}</button>)}
       </div>
       {shown.length === 0 ? <div style={{ fontSize: 13, color: E.faint, padding: '10px 0' }}>{tab === 'posted' ? 'Nothing posted yet. Log or publish a post and it appears here.' : 'Nothing planned. Open the plan to schedule the week.'}</div> : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
           {shown.map((t, i) => (
-            <a key={t.key} href={t.href ?? undefined} target="_blank" rel="noopener noreferrer" style={{ position: 'relative', aspectRatio: '4 / 5', borderRadius: 12, overflow: 'hidden', display: 'block', textDecoration: 'none', border: t.kind === 'planned' ? `1px dashed ${E.border}` : `1px solid ${E.border}`, background: t.img ? 'var(--surface-4)' : `linear-gradient(${140 + i * 25}deg, color-mix(in srgb, var(--accent) 22%, var(--surface)), color-mix(in srgb, var(--success) 18%, var(--surface)))` }}>
+            <a key={t.key} href={t.href ?? undefined} target="_blank" rel="noopener noreferrer" style={{ position: 'relative', aspectRatio: '4 / 5', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', display: 'block', textDecoration: 'none', border: t.kind === 'planned' ? `1px dashed ${E.border}` : `1px solid ${E.border}`, background: t.img ? 'var(--surface-4)' : `linear-gradient(${140 + i * 25}deg, color-mix(in srgb, var(--accent) 22%, var(--surface)), color-mix(in srgb, var(--success) 18%, var(--surface)))` }}>
               {t.img && <img src={t.img} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
               {!t.img && <div style={{ position: 'absolute', inset: 0, padding: 8, fontSize: 12, lineHeight: 1.3, color: E.text, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', overflow: 'hidden' }}>{t.text.slice(0, 70) || FORMATS.find((f) => f.id === t.type)?.label}</div>}
               <span style={{ position: 'absolute', left: 6, bottom: 6, fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: 'color-mix(in srgb, var(--bg) 78%, transparent)', color: E.text }}>{t.kind === 'planned' ? (t.img ? 'Planned' : 'Planned · no image yet') : `▶ ${compact(t.views)} · ♥ ${compact(t.likes)}`}</span>
@@ -270,13 +270,13 @@ function AccountDetail({ a, api, items, today, onClose, onOpenPlan }: { a: Socia
           const g = gradePost(m?.views, avg);
           return (
             <div key={p.id} style={row}>
-              {p.thumbnail_url && <img src={p.thumbnail_url} alt="" style={{ width: 44, height: 56, objectFit: 'cover', borderRadius: 6 }} />}
+              {p.thumbnail_url && <img src={p.thumbnail_url} alt="" style={{ width: 44, height: 56, objectFit: 'cover', borderRadius: 'var(--g-r-sm)' }} />}
               <div style={{ flex: '1 1 160px', minWidth: 0 }}>
                 <div style={{ fontWeight: 600, color: E.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.hook || p.caption?.slice(0, 60) || FORMATS.find((f) => f.id === p.type)?.label}</div>
                 <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>{new Date(p.posted_at).toLocaleDateString()} · {FORMATS.find((f) => f.id === p.type)?.label}{p.url && <> · <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ color: E.blue }}>open</a></>}{m && <> · as of {new Date(m.captured_at).toLocaleDateString()}</>}</div>
               </div>
               <div style={{ display: 'flex', gap: 10, fontFamily: 'var(--font-mono)', fontSize: 12, color: E.muted }}>
-                <span title="views">👁 {compact(m?.views)}</span><span title="likes">♥ {compact(m?.likes)}</span><span title="saves">🔖 {compact(m?.saves)}</span><span title="shares">↗ {compact(m?.shares)}</span>
+                <span title="views">{compact(m?.views)} views</span><span title="likes">♥ {compact(m?.likes)}</span><span title="saves">{compact(m?.saves)} saves</span><span title="shares">↗ {compact(m?.shares)}</span>
               </div>
               {g ? <Badge color={GRADE_COLOR[g.grade]} title={g.reason}>{g.grade}/4</Badge> : <Badge color={E.faint} title="Needs views and a 30-day average">—/4</Badge>}
               <button style={{ ...btn('ghost'), padding: '4px 8px', fontSize: 12 }} onClick={() => setLogFor(p)}>Update</button>

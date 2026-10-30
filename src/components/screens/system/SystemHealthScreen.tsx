@@ -47,7 +47,7 @@ export default function SystemHealthScreen() {
   const failedCount = (s?.failed?.tasks.length ?? 0) + (s?.failed?.runs.length ?? 0);
   return (
     <Page title="System health" sub="What's live, what's in test mode, which keys are set, and what you have to do to go live" back="HQ" backTo="hq" right={{ t: 'Refresh', onClick: () => void load() }}>
-      {err && <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid color-mix(in srgb, var(--warning) 40%, var(--border))', background: 'color-mix(in srgb, var(--warning) 8%, var(--surface))', fontSize: 14 }}>{err}</div>}
+      {err && <div style={{ padding: '12px 14px', borderRadius: 'var(--g-r-lg)', border: '1px solid color-mix(in srgb, var(--warning) 40%, var(--border))', background: 'color-mix(in srgb, var(--warning) 8%, var(--surface))', fontSize: 14 }}>{err}</div>}
       {!s && !err && <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Checking…</div>}
       {s && (
         <>
@@ -61,7 +61,7 @@ export default function SystemHealthScreen() {
             <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               {s.dryRun ? 'Test mode is on for the whole app (DRY_RUN in wrangler.jsonc). Outbound email, store launches, paid generation, coupons, domains and waitlist sync are logged instead of done. Two areas have their own switch: texting (TWILIO_LIVE) and posting (per account). Get each area ready first.' : 'DRY_RUN is off: every area that is set up acts for real.'}
             </div>
-            {s.dryRun && <div style={{ fontSize: 14, color: 'var(--text)', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-2)' }}><b style={{ fontWeight: 600 }}>The DRY_RUN switch:</b> {DRY_RUN_HOW}</div>}
+            {s.dryRun && <div style={{ fontSize: 14, color: 'var(--text)', padding: '10px 12px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)' }}><b style={{ fontWeight: 600 }}>The DRY_RUN switch:</b> {DRY_RUN_HOW}</div>}
             {list.map((a) => (
               <div key={a.id} style={{ borderTop: '1px solid var(--border)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>

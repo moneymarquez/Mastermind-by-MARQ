@@ -20,18 +20,18 @@ export function MetaDraftView({ d }: { d: MetaDraft }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 'var(--text-caption)', color: E.muted }}>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
         <Badge color={d.math.verdict === 'Scale' ? E.green : d.math.verdict === 'Test' ? E.amber : E.red}>{d.math.verdict}</Badge>
-        <span style={{ color: E.text }}>Bid ceiling {money(d.bid_ceiling_usd)} (break-even CPA)</span>
+        <span style={{ color: E.text }}>Bid ceiling <span style={{ fontFamily: 'var(--g-mono)', fontWeight: 500 }}>{money(d.bid_ceiling_usd)}</span> (break-even CPA)</span>
         <span>· break-even ROAS {d.math.break_even_roas} · {d.math.cm_pct.toFixed(0)}% after ads{d.math.ad_cost_estimated ? ' (ads estimated)' : ''}</span>
       </div>
       <div><span style={label}>Campaign</span> {d.campaign.name} · Sales · Paused · {money(d.campaign.daily_budget_usd)}/day × {d.campaign.days} days = {money(d.campaign.total_budget_usd)}</div>
       {d.ad_sets.map((s) => (
-        <div key={s.name} style={{ paddingLeft: 10, borderLeft: `2px solid ${E.border}` }}>
+        <div key={s.name} style={{ padding: '6px 0 6px 10px', borderLeft: '2px solid var(--g-line-2)', display: 'flex', flexDirection: 'column', gap: 3 }}>
           <div><span style={label}>Ad set</span> {s.targeting.audience} · {s.targeting.geo}, {s.targeting.age_min}–{s.targeting.age_max} · cost cap {money(s.bid_amount_usd)} · {money(s.daily_budget_usd)}/day</div>
           {d.ads.filter((a) => a.ad_set === s.name).map((a) => <div key={a.name} style={{ paddingLeft: 10 }}>• <b style={{ color: E.text }}>{a.name.split(' · ')[1]}</b>: "{a.primary_text}" <span style={{ color: E.faint }}>({a.creative})</span></div>)}
         </div>
       ))}
       <div><span style={label}>Kill rule</span> {d.kill_rule}</div>
-      {d.warnings.map((w) => <div key={w} style={{ color: E.amber }}>⚠ {w}</div>)}
+      {d.warnings.map((w) => <div key={w} style={{ color: E.amber, display: 'flex', gap: 7, alignItems: 'baseline' }}><span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor', flex: 'none', transform: 'translateY(-1px)' }} />{w}</div>)}
     </div>
   );
 }
@@ -61,9 +61,9 @@ export default function MetaAdsBuilder({ source, entityId }: { source: Source; e
   const latest = cards[0];
   const gate = latest ? metaPushGate({ hasKey: !!status?.hasKey, dryRun: status?.dryRun ?? true, approvalStatus: latest.status, blocked: !!latest.payload.blocked }) : null;
   return (
-    <div data-testid="meta-ads" style={{ ...E.card, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div data-testid="meta-ads" style={{ ...E.card, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-        <span style={{ fontWeight: 700, color: E.text, flex: 1 }}>Meta ads <span style={{ color: E.faint, fontWeight: 400 }}>· drafts only</span></span>
+        <span style={{ fontWeight: 600, fontSize: 14.5, letterSpacing: '-0.01em', color: E.text, flex: 1 }}>Meta ads <span style={{ color: E.faint, fontWeight: 400 }}>· drafts only</span></span>
         <button style={btn('ghost')} disabled={busy} onClick={() => void draft()}>{busy ? 'Working…' : latest ? 'Draft again' : 'Draft Meta ads'}</button>
       </div>
       <div style={{ fontSize: 'var(--text-caption)', color: E.faint }}>Campaign, 2 ad sets and 6 ads from this product's margin math. The bid ceiling is the break-even CPA, so no sale costs more than it earns. Saved to Approvals; nothing is sent to Meta.</div>

@@ -20,7 +20,7 @@ export default function StoresSection({ api, clients, search, openBrandId, onOpe
   const builds = useBuilds();
   const flags = useFlags(true);
   const cards = useMemo(() => sortBySeverity(api.brands, (b: Brand) => flags.flagFor('brand', b.id)?.severity), [api.brands, flags]);
-  if (openBrandId || newBrandOpen) return <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: 16 }}><BrandsTab api={api} clients={clients} search={search} openBrandId={openBrandId} onOpenBrand={onOpenBrand} newBrandOpen={newBrandOpen} onCloseNewBrand={onCloseNewBrand} /></div>;
+  if (openBrandId || newBrandOpen) return <div style={{ background: E.bg, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', color: E.text, padding: 16 }}><BrandsTab api={api} clients={clients} search={search} openBrandId={openBrandId} onOpenBrand={onOpenBrand} newBrandOpen={newBrandOpen} onCloseNewBrand={onCloseNewBrand} /></div>;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <SitesPanel brands={api.brands} orders={orders.rows} />
@@ -33,7 +33,7 @@ export default function StoresSection({ api, clients, search, openBrandId, onOpe
           const flag = flags.flagFor('brand', b.id);
           const step = nextStep(b);
           return (
-            <button key={b.id} onClick={() => onOpenBrand(b.id)} style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 8, padding: 14, borderRadius: 14, border: `1px solid ${flag?.severity === 'red' ? 'color-mix(in srgb, var(--danger) 45%, var(--border))' : 'var(--border)'}`, background: 'var(--surface)', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text)' }}>
+            <button key={b.id} onClick={() => onOpenBrand(b.id)} style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 8, padding: 14, borderRadius: 'var(--g-r-lg)', border: `1px solid ${flag?.severity === 'red' ? 'color-mix(in srgb, var(--danger) 45%, var(--border))' : 'var(--border)'}`, background: 'var(--surface)', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <FlagDot flag={flag} />
                 <span style={{ fontSize: 16, fontWeight: 600, flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.name}</span>
@@ -50,7 +50,7 @@ export default function StoresSection({ api, clients, search, openBrandId, onOpe
           );
         })}
       </div>
-      <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: 16 }}>
+      <div style={{ background: E.bg, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', color: E.text, padding: 16 }}>
         <BrandsTab api={api} clients={clients} search={search} openBrandId={openBrandId} onOpenBrand={onOpenBrand} newBrandOpen={newBrandOpen} onCloseNewBrand={onCloseNewBrand} />
       </div>
     </div>

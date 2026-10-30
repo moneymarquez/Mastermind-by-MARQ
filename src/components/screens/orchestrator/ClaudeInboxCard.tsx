@@ -50,7 +50,7 @@ export default function ClaudeInboxCard() {
             <Chip k={KIND[r.status]}>{LABEL[r.status]}</Chip>
           </div>
           <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{new Date(r.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}{r.screen ? ` · from ${r.screen}` : ''}</span>
-          {r.reply && <div style={{ fontSize: 14, lineHeight: 1.5, padding: '8px 10px', borderRadius: 10, background: 'var(--surface-2)', whiteSpace: 'pre-wrap' }}><strong>Claude:</strong> {r.reply}</div>}
+          {r.reply && <div style={{ fontSize: 14, lineHeight: 1.5, padding: '8px 10px', borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', whiteSpace: 'pre-wrap' }}><strong>Claude:</strong> {r.reply}</div>}
           {r.answer && r.status !== 'question' && <div style={{ fontSize: 13.5, color: 'var(--text-secondary)' }}><strong>You:</strong> {r.answer}</div>}
           {r.status === 'question' && (
             <div style={{ display: 'flex', gap: 8 }}>

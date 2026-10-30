@@ -72,7 +72,7 @@ const inputStyle: CSSProperties = {
   color: 'var(--text)', fontSize: 'var(--text-body-lg)', outline: 'none',
 };
 const primaryBtn: CSSProperties = {
-  padding: '9px 18px', borderRadius: 8, background: 'var(--text)', color: 'var(--bg)',
+  padding: '9px 18px', borderRadius: 'var(--g-r-md)', background: 'var(--text)', color: 'var(--bg)',
   fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer', display: 'inline-block',
 };
 
@@ -195,7 +195,8 @@ export default function ContentCreationScreen({ section, selectedClientId, onSel
   // Content Engine (spec 07 §2): Accounts is home; Plan is the week; Studio,
   // Inspiration and the workers arrive in C3–C4. The per-client growth
   // plans that already existed keep their own tab.
-  const [tabState, setTabState] = useState<EngineTab>('accounts');
+  // The bare 'content' screen is the sidebar's "Growth plans" item (the Content portal uses content-* sections), so it opens on that tab.
+  const [tabState, setTabState] = useState<EngineTab>('growth');
   const engineTab: EngineTab = section ?? tabState;
   // The 'content' screen keeps its own tab bar: the crumb names the tab.
   useSetCrumbLabel('content', section ? null : ENGINE_TABS.find((x) => x.id === engineTab)?.label ?? null);

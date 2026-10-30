@@ -77,10 +77,10 @@ export default function ClientCRMV2({ focusClientId, onClearFocus, selectedClien
     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, borderRight: phone ? 'none' : '1px solid var(--grid)' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', flex: 'none' }}>
         <div style={{ display: 'flex', gap: 8 }}>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search deals" aria-label="Search deals" style={{ flex: 1, minWidth: 0, height: 36, padding: '0 10px', borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit' }} />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search deals" aria-label="Search deals" style={{ flex: 1, minWidth: 0, height: 36, padding: '0 10px', borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit' }} />
           {!phone && <button className="mm-btn mm-btn--primary" style={{ height: 36, fontSize: 13 }} onClick={() => setAdding(true)}>New deal</button>}
         </div>
-        <select value={stage} onChange={(e) => setStage(e.target.value as ClientStage | 'all')} aria-label="Stage" style={{ height: 34, padding: '0 8px', borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13, fontFamily: 'inherit' }}>
+        <select value={stage} onChange={(e) => setStage(e.target.value as ClientStage | 'all')} aria-label="Stage" style={{ height: 34, padding: '0 8px', borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13, fontFamily: 'inherit' }}>
           <option value="all">All stages ({crm.clients.length})</option>
           {STAGES.map((s) => <option key={s.key} value={s.key}>{s.label} ({crm.clients.filter((c) => c.stage === s.key).length})</option>)}
         </select>
@@ -110,10 +110,10 @@ export default function ClientCRMV2({ focusClientId, onClearFocus, selectedClien
   return (
     <Page title="Client CRM" sub="Discovery → pricing → invoice → active" menu={menu} fab={phone && !cur ? { t: 'New deal', onClick: () => setAdding(true) } : undefined}>
       {phone ? (
-        <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>{cur ? detail : listPane}</section>
+        <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>{cur ? detail : listPane}</section>
       ) : (
         <>
-          <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', height: 'calc(100vh - 330px)', minHeight: 560, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', minWidth: 0 }}>
+          <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', height: 'calc(100vh - 330px)', minHeight: 560, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', minWidth: 0 }}>
             {listPane}{detail}
           </section>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 16 }}>

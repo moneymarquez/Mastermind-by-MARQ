@@ -64,10 +64,10 @@ export default function ClassroomScreen() {
             const here = placed.filter((c) => roomOf(c) === r.key);
             return (
               <div key={r.key} onDragOver={(e) => { e.preventDefault(); setOver(r.key); }} onDragLeave={() => setOver(null)} onDrop={(e) => { e.preventDefault(); setOver(null); const id = drag ?? e.dataTransfer.getData('text/plain'); if (id) void moveTo(id, r.key); setDrag(null); }}
-                style={{ minHeight: 150, borderRadius: 16, border: `2px ${over === r.key ? 'solid var(--accent)' : 'solid var(--border)'}`, background: `color-mix(in srgb, ${r.phase ? 'var(--accent)' : 'var(--text-tertiary)'} ${r.phase ? 4 + r.phase * 2 : 5}%, var(--surface))`, padding: 10, display: 'flex', flexDirection: 'column', gap: 8, transition: 'border-color .15s', gridColumn: !phone && r.key === 'own' ? 'span 2' : undefined }}>
+                style={{ minHeight: 150, borderRadius: 'var(--g-r-lg)', border: `2px ${over === r.key ? 'solid var(--accent)' : 'solid var(--border)'}`, background: `color-mix(in srgb, ${r.phase ? 'var(--accent)' : 'var(--text-tertiary)'} ${r.phase ? 4 + r.phase * 2 : 5}%, var(--surface))`, padding: 10, display: 'flex', flexDirection: 'column', gap: 8, transition: 'border-color .15s', gridColumn: !phone && r.key === 'own' ? 'span 2' : undefined }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)', flex: 1 }}>{r.label}</span>
-                  <span style={{ fontSize: 11.5, padding: '2px 8px', borderRadius: 999, border: '1px solid var(--border)', color: 'var(--text-secondary)', background: 'var(--surface)' }}>🚪 {here.length}</span>
+                  <span style={{ fontSize: 11.5, padding: '2px 8px', borderRadius: 999, border: '1px solid var(--border)', color: 'var(--text-secondary)', background: 'var(--surface)' }}>{here.length} here</span>
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                   {here.map((c, i) => {
@@ -87,7 +87,7 @@ export default function ClassroomScreen() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Card title="Waiting on you" meta={`${waiting.length} open · you're the only blocker on ${spof.size}`}>
-            {waiting.length === 0 && <div style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Nothing is waiting on you. 🎉</div>}
+            {waiting.length === 0 && <div style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Nothing is waiting on you.</div>}
             {waiting.slice(0, 12).map((w, i) => {
               const c = clients.find((x) => x.id === w.item.client_id);
               return (
@@ -117,7 +117,7 @@ function MiniCard({ c, items, waitDays, onClose, onOpen, onMove, now }: { c: Cli
   const last = c.last_contact_at ?? c.last_activity_at;
   return (
     <div role="dialog" aria-label={c.business_name} onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 380, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 10, boxShadow: '0 20px 50px rgba(0,0,0,.2)' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 380, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 16, display: 'flex', flexDirection: 'column', gap: 10, boxShadow: 'var(--g-shadow-3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><strong style={{ flex: 1, fontSize: 16 }}>{c.business_name}</strong><button className="mm-btn" style={{ height: 30 }} onClick={onClose}>✕</button></div>
         <div style={{ fontSize: 14 }}>{phase ? `Phase ${phase.n} · ${phase.label} — ${prog?.pct ?? 0}% through` : c.room === 'aphs' ? 'APHS room' : c.room === 'own' ? 'Own brands' : 'No phase yet'}</div>
         {prog && <Progress pct={prog.pct} label="Phase progress" />}

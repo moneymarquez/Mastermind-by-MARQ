@@ -58,7 +58,7 @@ export default function TodaysPlays({ inspiration, accounts, items }: { inspirat
         {plays.map((p) => {
           const expanded = open === p.id;
           return (
-            <div key={p.id} style={{ border: `1px solid ${E.border}`, borderRadius: 12, padding: 12, opacity: p.state === 'open' || p.state === 'later' ? 1 : 0.6 }}>
+            <div key={p.id} style={{ border: `1px solid ${E.border}`, borderRadius: 'var(--g-r-lg)', padding: 12, opacity: p.state === 'open' || p.state === 'later' ? 1 : 0.6 }}>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                 <Badge color={E.text}>{PLAY_FORMATS[p.format]}</Badge>
                 <Badge color={E.faint}>{p.platformLabel}</Badge>
@@ -73,7 +73,7 @@ export default function TodaysPlays({ inspiration, accounts, items }: { inspirat
                 <div><div style={label}>Best time</div>{p.bestTime.text}</div>
               </div>
               {expanded && (
-                <div style={{ marginTop: 8, padding: 10, borderRadius: 10, background: tint(E.accent, 6), fontSize: 13.5, color: E.text }}>
+                <div style={{ marginTop: 8, padding: 10, borderRadius: 'var(--g-r-md)', background: tint(E.accent, 6), fontSize: 13.5, color: E.text }}>
                   <div style={label}>Shot list</div>
                   <ol style={{ margin: '4px 0 8px 18px', padding: 0 }}>{p.shots.map((s, i) => <li key={i}>{s}</li>)}</ol>
                   <div style={label}>Script</div>

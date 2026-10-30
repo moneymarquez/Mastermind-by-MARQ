@@ -121,11 +121,11 @@ function ProfileEditor({ a, api, onBack }: { a: SocialAccount; api: Api; onBack:
             <div style={{ fontWeight: 700, color: v.changed.name ? E.amber : E.text }}>{v.name || <span style={{ color: E.faint, fontWeight: 400 }}>No name</span>}</div>
             {(v.category || v.accountType) && <div style={{ fontSize: 13, color: E.faint }}>{v.category || ACCT_TYPE[v.accountType] || v.accountType}</div>}
             <div style={{ fontSize: 14, color: v.changed.bio ? E.amber : E.text, whiteSpace: 'pre-wrap', lineHeight: 1.45, overflowWrap: 'anywhere' }}>{v.bio || <span style={{ color: E.faint }}>No bio</span>}</div>
-            {v.website && <div style={{ fontSize: 14, color: E.blue, overflowWrap: 'anywhere' }}>🔗 {v.website.replace(/^https?:\/\//, '')}</div>}
+            {v.website && <div style={{ fontSize: 14, color: E.blue, overflowWrap: 'anywhere' }}>{v.website.replace(/^https?:\/\//, '')}</div>}
             {(v.email || v.phone || v.address) && <div style={{ fontSize: 13, color: E.muted, marginTop: 4 }}>{[v.email, v.phone, v.address].filter(Boolean).join(' · ')}</div>}
           </div>
           <div style={{ display: 'flex', gap: 6, margin: '12px 0' }}>
-            {['Follow', 'Message', ...(v.email || v.phone ? ['Contact'] : [])].map((t) => <div key={t} style={{ flex: 1, textAlign: 'center', padding: '7px 0', borderRadius: 8, background: t === 'Follow' ? E.blue : 'var(--surface-4)', color: t === 'Follow' ? 'var(--bg)' : E.text, fontSize: 13, fontWeight: 600, opacity: 0.85 }}>{t}</div>)}
+            {['Follow', 'Message', ...(v.email || v.phone ? ['Contact'] : [])].map((t) => <div key={t} style={{ flex: 1, textAlign: 'center', padding: '7px 0', borderRadius: 'var(--g-r-md)', background: t === 'Follow' ? E.blue : 'var(--surface-4)', color: t === 'Follow' ? 'var(--bg)' : E.text, fontSize: 13, fontWeight: 600, opacity: 0.85 }}>{t}</div>)}
           </div>
           {v.highlights.length > 0 && <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8 }}>{v.highlights.map((h) => <div key={h} style={{ textAlign: 'center', flex: 'none', width: 64 }}><div style={{ width: 56, height: 56, borderRadius: '50%', border: `2px solid ${E.border}`, margin: '0 auto', background: 'var(--surface-4)' }} /><div style={{ fontSize: 11.5, color: E.muted, marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h}</div></div>)}</div>}
           <div style={{ display: 'flex', borderTop: `1px solid ${E.border}` }}>
@@ -153,7 +153,7 @@ function ProfileEditor({ a, api, onBack }: { a: SocialAccount; api: Api; onBack:
               <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {sug.notes && <div style={{ fontSize: 13, color: E.muted }}>{sug.notes}</div>}
                 {([['bios', 'bio', 'bio'], ['names', 'name', 'name'], ['links', 'link', 'website']] as const).map(([k, l, field_]) => sug[k].map((t, i) => (
-                  <div key={`${k}${i}`} style={{ border: `1px solid ${E.border}`, borderRadius: 10, padding: 10 }}>
+                  <div key={`${k}${i}`} style={{ border: `1px solid ${E.border}`, borderRadius: 'var(--g-r-md)', padding: 10 }}>
                     <div style={{ fontSize: 12, color: E.faint }}>{l} option {i + 1}{k === 'bios' ? ` · ${t.length}/${BIO_LIMIT[a.platform] ?? 150}` : ''}</div>
                     <div style={{ fontSize: 14, color: E.text, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{t}</div>
                     <button style={{ ...btn('ghost'), minHeight: 30, fontSize: 12.5, marginTop: 6 }} onClick={() => set(field_ as keyof ProfileDraft, t)}>Use this in the draft</button>

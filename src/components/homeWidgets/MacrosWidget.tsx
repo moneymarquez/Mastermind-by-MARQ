@@ -45,7 +45,7 @@ export default function MacrosWidget({ onNavigate }: HomeWidgetProps) {
                   <span style={{ color: 'var(--mm-faint)' }}>{Math.round(b.have)} / {b.of}g</span>
                 </div>
                 <div style={{ height: 5, borderRadius: 5, background: 'var(--mm-track)' }}>
-                  <div style={{ width: `${Math.min(100, Math.round((b.have / b.of) * 100))}%`, height: '100%', borderRadius: 5, background: 'var(--mm-text)' }} />
+                  <div style={{ width: `${Math.min(100, Math.round((b.have / b.of) * 100))}%`, height: '100%', borderRadius: 'var(--g-r-xs)', background: 'var(--mm-text)' }} />
                 </div>
               </div>
             ))
@@ -54,13 +54,13 @@ export default function MacrosWidget({ onNavigate }: HomeWidgetProps) {
       </div>
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 7 }}>
         {todayMeals.slice(0, 2).map((m) => (
-          <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 12, background: 'var(--mm-tile)', fontSize: 12.5 }}>
+          <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 'var(--g-r-lg)', background: 'var(--mm-tile)', fontSize: 12.5 }}>
             <Icon name="fork-knife" size={15} color="var(--mm-faint)" />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.meal_type} — {m.restaurant_name || m.note || 'logged'}</span>
             <span style={{ marginLeft: 'auto', color: 'var(--mm-faint)', flexShrink: 0 }}>{m.calories ?? '—'}</span>
           </div>
         ))}
-        <div onClick={() => onNavigate('macros')} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 12, border: '1px dashed var(--mm-line2)', fontSize: 12.5, color: 'var(--mm-faint)', cursor: 'pointer' }}>
+        <div onClick={() => onNavigate('macros')} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 'var(--g-r-lg)', border: '1px dashed var(--mm-line2)', fontSize: 12.5, color: 'var(--mm-faint)', cursor: 'pointer' }}>
           <Icon name="plus" size={15} />Log a meal
         </div>
       </div>

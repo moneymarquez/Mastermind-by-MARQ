@@ -18,7 +18,7 @@ export default function Chip({ k = 'neutral', children, title }: { k?: ChipKind;
     : k === 'lock' ? I(<><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>, 2.4, 11)
     : <span style={{ width: 6, height: 6, borderRadius: '50%', background: k === 'neutral' ? 'transparent' : col, border: `1.5px solid ${k === 'neutral' ? 'var(--text-tertiary)' : col}`, boxSizing: 'border-box', margin: '0 1px' }} />;
   return (
-    <span title={title} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px 2px 6px', borderRadius: 999, fontSize: 12, fontWeight: 500, lineHeight: '18px', whiteSpace: 'nowrap', color: col ?? 'var(--text-secondary)', background: col ? `color-mix(in srgb, ${col} 14%, transparent)` : 'var(--surface-3)' }}>
+    <span title={title} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '1px 7px 1px 6px', borderRadius: 'var(--g-r-sm)', fontSize: 12, fontWeight: 500, lineHeight: '18px', whiteSpace: 'nowrap', color: col ?? 'var(--text-secondary)', background: col ? `color-mix(in srgb, ${col} 14%, transparent)` : 'var(--surface-3)' }}>
       {icon}{children}
     </span>
   );

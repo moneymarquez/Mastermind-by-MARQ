@@ -3,7 +3,7 @@ import { M0_ITEMS, M0_LABEL, m0Progress, m0LockMessage } from '../../../data/sta
 import type { M0Venture, M0Item } from '../../../data/stageZero';
 import { useStageZero } from '../../../data/useStageZero';
 import { api } from '../../../lib/api';
-import { E, Badge, Pill, ProgressRing, Metric, btn, field, label, panel, tint } from '../ecom/ecomShared';
+import { E, Badge, Pill, Seg, ProgressRing, Metric, btn, field, label, panel, tint } from '../ecom/ecomShared';
 
 interface Visits { hostname: string | null; days: { date: string; visits: number; pageviews: number }[]; visits: number; pageviews: number; as_of: string; error?: string; setup?: boolean }
 
@@ -19,7 +19,7 @@ export default function StageZeroTab({ api: m0 }: { api: ReturnType<typeof useSt
   return (
     <div style={{ ...panel, display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        {(['madebymarq', 'mastermind'] as M0Venture[]).map((v) => { const p = m0Progress(v, m0.rows); return <Pill key={v} active={venture === v} onClick={() => setVenture(v)}>{M0_LABEL[v]} <span style={{ fontFamily: 'var(--font-mono)', color: E.faint }}>{p.done}/{p.total}</span></Pill>; })}
+        <Seg label="Venture">{(['madebymarq', 'mastermind'] as M0Venture[]).map((v) => { const p = m0Progress(v, m0.rows); return <Pill key={v} active={venture === v} onClick={() => setVenture(v)}>{M0_LABEL[v]} <span className="g-seg-n">{p.done}/{p.total}</span></Pill>; })}</Seg>
       </div>
       <div style={{ ...E.card, padding: 14, display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
         <ProgressRing done={prog.done} total={prog.total} size={56} />
@@ -27,7 +27,7 @@ export default function StageZeroTab({ api: m0 }: { api: ReturnType<typeof useSt
           <div style={{ fontWeight: 700, color: E.text }}>{prog.complete ? `${M0_LABEL[venture]} foundation is done — campaigns are unlocked.` : `${M0_LABEL[venture]}: ${prog.total - prog.done} to go before any campaign.`}</div>
           <div style={{ fontSize: 'var(--text-caption)', color: E.muted, marginTop: 4, lineHeight: 1.5 }}>{prog.complete ? 'Next: the first $20 (below).' : 'Don\'t send people to nothing. Everything here is free; the paid budget only unlocks after it.'}</div>
         </div>
-        <Badge color={lock ? E.amber : E.green}>{lock ? '🔒 campaigns locked' : '🔓 campaigns unlocked'}</Badge>
+        <Badge color={lock ? E.amber : E.green}>{lock ? 'campaigns locked' : 'campaigns unlocked'}</Badge>
       </div>
       {m0.error && <div style={{ color: E.red }}>{m0.error}</div>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

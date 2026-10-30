@@ -70,10 +70,10 @@ export default function BrainDumpScreen() {
     <Page title="Brain Dump" sub="Drop a file or paste anything. It's filed, and anything actionable becomes tasks, goals and settings after you check it.">
       <Tabs tabs={[{ id: 'brain', label: 'Brain' }, { id: 'dump', label: 'Brain Dump' }]} value="dump" onChange={(t) => { if (t === 'brain') nav('brain'); }} />
       <Card title="Drop it here">
-        <div onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={onDrop} style={{ border: `2px dashed ${drag ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={onDrop} style={{ border: `2px dashed ${drag ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 'var(--g-r-lg)', padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <textarea style={{ ...field, height: 140, padding: 12, resize: 'vertical' }} value={text} placeholder="Paste notes, a chat, or the Masterminds Import block your AI gave you…" onChange={(e) => setText(e.target.value)} />
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <label className="mm-btn" style={{ height: 40, display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>📎 {file ? file.name : 'Choose a file (.md .txt .pdf .docx .json)'}<input type="file" accept={ACCEPT} style={{ display: 'none' }} onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
+            <label className="mm-btn" style={{ height: 40, display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>{file ? file.name : 'Choose a file (.md .txt .pdf .docx .json)'}<input type="file" accept={ACCEPT} style={{ display: 'none' }} onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
             <select style={{ ...field, width: 'auto', height: 40 }} value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Category">{cats.map((c) => <option key={c}>{c}</option>)}</select>
             <div style={{ flex: 1 }} />
             <button className="mm-btn mm-btn--primary" style={{ height: 40 }} disabled={busy || (!text.trim() && !file)} onClick={() => void submit()}>{busy ? 'Reading…' : 'Read it'}</button>
@@ -81,7 +81,7 @@ export default function BrainDumpScreen() {
         </div>
         {msg && <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{msg}</div>}
         <button className="mm-btn" style={{ alignSelf: 'flex-start', height: 32, fontSize: 13 }} onClick={() => setShowFormat((x) => !x)}>{showFormat ? 'Hide' : 'What is'} the Masterminds Import format?</button>
-        {showFormat && <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Any AI can write it. Paste this template into ChatGPT or Claude and ask it to fill it in from your conversation. Every part is optional; anything unknown is kept as a note.<pre style={{ whiteSpace: 'pre-wrap', fontSize: 11.5, background: 'var(--surface-2)', padding: 10, borderRadius: 8, overflowX: 'auto' }}>{IMPORT_TEMPLATE}</pre><button className="mm-btn" style={{ height: 32 }} onClick={() => void navigator.clipboard?.writeText(IMPORT_TEMPLATE)}>Copy template</button></div>}
+        {showFormat && <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Any AI can write it. Paste this template into ChatGPT or Claude and ask it to fill it in from your conversation. Every part is optional; anything unknown is kept as a note.<pre style={{ whiteSpace: 'pre-wrap', fontSize: 11.5, background: 'var(--surface-2)', padding: 10, borderRadius: 'var(--g-r-md)', overflowX: 'auto' }}>{IMPORT_TEMPLATE}</pre><button className="mm-btn" style={{ height: 32 }} onClick={() => void navigator.clipboard?.writeText(IMPORT_TEMPLATE)}>Copy template</button></div>}
       </Card>
       {preview && (
         <Card title="Check before it's applied" meta={preview.errors.join(' ')}>

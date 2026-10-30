@@ -28,7 +28,7 @@ export default function MemberApp({ teams, userId, onSignOut, banner }: { teams:
           <button type="button" className="dp-iconbtn" onClick={onSignOut}>Sign out</button>
         </header>
         <main style={{ maxWidth: 760, margin: '0 auto', padding: '0 16px calc(24px + env(safe-area-inset-bottom))' }}>
-          {showBanner && banner && <button type="button" className="dp-card" style={{ width: '100%', textAlign: 'left', marginBottom: 14, cursor: 'pointer', fontSize: 14.5 }} onClick={() => setShowBanner(false)}>🎉 {banner} <span className="dp-sub">· dismiss</span></button>}
+          {showBanner && banner && <button type="button" className="dp-card" style={{ width: '100%', textAlign: 'left', marginBottom: 14, cursor: 'pointer', fontSize: 14.5 }} onClick={() => setShowBanner(false)}>{banner} <span className="dp-sub">· dismiss</span></button>}
           <FromOwnerList />
           <DispatchScreen isMobile />
         </main>

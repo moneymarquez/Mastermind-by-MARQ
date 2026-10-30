@@ -33,7 +33,7 @@ const tabStyle = (active: boolean): CSSProperties => ({
   background: active ? 'var(--tint-active)' : 'transparent', whiteSpace: 'nowrap',
 });
 const pillButton = (variant: 'solid' | 'outline', danger?: boolean): CSSProperties => ({
-  display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 8, fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer',
+  display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 'var(--g-r-md)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer',
   background: variant === 'solid' ? (danger ? RED : 'var(--text)') : 'transparent',
   color: variant === 'solid' ? 'var(--bg)' : danger ? RED : 'var(--text)',
   border: variant === 'outline' ? `1px solid ${danger ? RED : 'var(--text)'}` : 'none',
@@ -123,7 +123,7 @@ function Walkthrough() {
           {WALKTHROUGH_STEPS.map((step, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer' }} onClick={() => toggle(i)}>
               <div style={{
-                width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1,
+                width: 18, height: 18, borderRadius: 'var(--g-r-xs)', flexShrink: 0, marginTop: 1,
                 border: `1px solid ${checked[i] ? GOLD : 'var(--border-2)'}`, background: checked[i] ? GOLD : 'transparent',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--text-tiny)', color: 'var(--bg)', fontWeight: 700,
               }}>
@@ -170,7 +170,7 @@ function TodayPanel({ signals, account, accountLoading, dailySummaries }: Return
   const latestNote = [...dailySummaries].sort((x, y) => y.summary_date.localeCompare(x.summary_date)).find((d) => d.nova_commentary);
   const dollars = Math.floor(Math.abs(account.equity));
   const hero = (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
       <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Paper portfolio</span>
       <div style={{ display: 'flex', alignItems: 'baseline', color: 'var(--text)', fontSize: phone ? 40 : 46, fontWeight: 600, letterSpacing: '-0.04em', lineHeight: 1 }}>{accountLoading ? '—' : `$${dollars.toLocaleString('en-US')}`}{!accountLoading && <span style={{ fontSize: 22, color: 'var(--text-tertiary)' }}>.{String(Math.round(Math.abs(account.equity) * 100) % 100).padStart(2, '0')}</span>}</div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -195,7 +195,7 @@ function TodayPanel({ signals, account, accountLoading, dailySummaries }: Return
   );
   const note = latestNote && <Card title="Commentary" meta={latestNote.summary_date} wide={!phone}><NovaMark /><p style={{ margin: 0, fontSize: 15, lineHeight: 1.5, color: 'var(--text-secondary)' }}>{latestNote.nova_commentary}</p><span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>Practice only. Not financial advice.</span></Card>;
   const positions = (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', minWidth: 0 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', minWidth: 0 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 20px' }}><span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>Positions</span><span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-tertiary)' }}>Paper trading · no real money</span></div>
       {[...account.positions.map((p) => ({ k: p.symbol, cells: [p.symbol, String(p.qty), money(p.current_price), pct(p.unrealized_plpc), money(p.qty * p.current_price)], up: p.unrealized_plpc >= 0 })), { k: 'cash', cells: ['Cash', '—', '—', 'Available', money(account.cash)], up: null }].map((r, i) => (
         <div key={r.k} style={{ display: 'grid', gridTemplateColumns: phone ? '70px 1fr 90px' : '90px 70px 100px 110px minmax(0,1fr)', gap: 12, alignItems: 'center', minHeight: 48, padding: '0 20px', borderTop: '1px solid var(--grid)', background: i === 0 ? undefined : undefined, fontSize: 14 }}>
@@ -428,9 +428,9 @@ export default function StocksScreen({ homeHeadStyle, homeSubStyle }: Props) {
         {halted && <Chip k="bad">{`Halted: ${config.halted_reason}`}</Chip>}
         <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Last run {timeAgo(config.last_run_at)}</span>
       </div>
-      <div style={{ display: 'flex', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)', overflowX: 'auto', maxWidth: '100%', alignSelf: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: 2, padding: 3, borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)', overflowX: 'auto', maxWidth: '100%', alignSelf: 'flex-start' }}>
         {([['today', 'Today'], ['performance', 'Performance'], ['log', 'Trade log'], ['settings', 'Watchlist & settings'], ['news', 'News']] as [Tab, string][]).map(([k, l]) => (
-          <button key={k} aria-pressed={tab === k} onClick={() => setTab(k)} style={{ padding: '7px 14px', borderRadius: 999, border: 0, fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', whiteSpace: 'nowrap', background: tab === k ? 'var(--text)' : 'transparent', color: tab === k ? 'var(--bg)' : 'var(--text-secondary)' }}>{l}</button>
+          <button key={k} aria-pressed={tab === k} onClick={() => setTab(k)} style={{ padding: '7px 14px', borderRadius: 'var(--g-r-sm)', border: 0, fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', whiteSpace: 'nowrap', background: tab === k ? 'var(--text)' : 'transparent', color: tab === k ? 'var(--bg)' : 'var(--text-secondary)' }}>{l}</button>
         ))}
       </div>
       {tab === 'today' && <TodayPanel {...bot} />}

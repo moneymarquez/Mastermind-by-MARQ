@@ -19,11 +19,11 @@ const input: CSSProperties = {
   fontSize: 16, outline: 'none', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit',
 };
 const primaryBtn: CSSProperties = {
-  padding: '11px 18px', borderRadius: 8, background: 'var(--text)', color: 'var(--bg)',
+  padding: '11px 18px', borderRadius: 'var(--g-r-md)', background: 'var(--text)', color: 'var(--bg)',
   fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center',
 };
 const ghostBtn: CSSProperties = {
-  padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border-2)', background: 'transparent',
+  padding: '8px 14px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border-2)', background: 'transparent',
   color: 'var(--text-secondary)', fontSize: 'var(--text-small)', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center',
 };
 const h: CSSProperties = { fontSize: 'var(--text-caption)', letterSpacing: 0.4, textTransform: 'uppercase', color: 'var(--text-tertiary)', fontWeight: 700, margin: '14px 0 8px' };
@@ -35,7 +35,7 @@ function Check({ on, onToggle, disabled }: { on: boolean; onToggle: () => void; 
     <div
       onClick={disabled ? undefined : onToggle}
       style={{
-        width: 22, height: 22, borderRadius: 6, flexShrink: 0, cursor: disabled ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        width: 22, height: 22, borderRadius: 'var(--g-r-sm)', flexShrink: 0, cursor: disabled ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
         border: `1px solid ${on ? 'var(--text)' : 'var(--border-2)'}`, background: on ? 'var(--text)' : 'transparent', color: 'var(--bg)', fontSize: 13, fontWeight: 700,
       }}
     >

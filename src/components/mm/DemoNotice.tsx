@@ -12,7 +12,7 @@ export default function DemoNotice() {
   }, []);
   if (!msg) return null;
   return (
-    <div role="status" data-testid="demo-notice" onClick={() => setMsg(null)} style={{ position: 'fixed', top: 'calc(30px + env(safe-area-inset-top))', left: '50%', transform: 'translateX(-50%)', zIndex: 121, maxWidth: 'min(92vw, 520px)', padding: '8px 14px', borderRadius: 12, border: '1px solid var(--mm-line)', background: 'var(--mm-panel-solid)', color: 'var(--mm-ink)', fontSize: 13, boxShadow: 'var(--mm-shadow-lift, 0 12px 40px rgba(0,0,0,.35))', cursor: 'pointer' }}>
+    <div role="status" data-testid="demo-notice" onClick={() => setMsg(null)} style={{ position: 'fixed', top: 'calc(30px + env(safe-area-inset-top))', left: '50%', transform: 'translateX(-50%)', zIndex: 121, maxWidth: 'min(92vw, 520px)', padding: '8px 14px', borderRadius: 'var(--g-r-lg)', border: '1px solid var(--g-line-2)', background: 'var(--g-s2)', color: 'var(--g-text)', fontSize: 13, boxShadow: 'var(--g-shadow-3)', cursor: 'pointer' }}>
       {msg}
     </div>
   );

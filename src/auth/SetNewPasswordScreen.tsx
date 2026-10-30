@@ -61,7 +61,7 @@ export default function SetNewPasswordScreen({ onComplete, onCancel }: Props) {
     >
       <div style={{ width: '100%', maxWidth: 380, display: 'flex', flexDirection: 'column', gap: 22 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center' }}>
-          <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--mm-panel)', border: '1px solid var(--mm-line2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 44, height: 44, borderRadius: 'var(--g-r-lg)', background: 'var(--mm-panel)', border: '1px solid var(--mm-line2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="lock-simple" size={22} color="var(--mm-text)" />
           </div>
           <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em' }}>Set a new password</div>
@@ -83,7 +83,7 @@ export default function SetNewPasswordScreen({ onComplete, onCancel }: Props) {
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--mm-faint)' }}>At least 8 characters.</div>
           {error && <div role="alert" style={{ fontSize: 13, color: 'var(--danger)' }}>{error}</div>}
-          <button type="submit" disabled={submitting} style={{ height: 48, marginTop: 4, width: '100%', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 15, borderRadius: 999, background: 'var(--mm-ink)', color: 'var(--mm-ink-text)' }}>
+          <button type="submit" disabled={submitting} style={{ height: 48, marginTop: 4, width: '100%', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 15, borderRadius: 'var(--g-r-md)', background: 'var(--mm-ink)', color: 'var(--mm-ink-text)' }}>
             {submitting ? 'Saving…' : 'Save password'}
           </button>
         </form>

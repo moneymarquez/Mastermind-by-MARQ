@@ -34,7 +34,7 @@ export const SCALING_101_CURRICULUM: CurriculumPhase[] = [
     title: 'The Foundation',
     sub: 'Know the Game Before You Play It',
     duration: 'Day 1–2',
-    color: '#F5A623',
+    color: '#C9A06A',
     icon: '◆',
     desc: "You cannot scale what you don't understand. This phase builds the mental model every elite scaler operates from.",
     topics: [
@@ -103,7 +103,7 @@ export const SCALING_101_CURRICULUM: CurriculumPhase[] = [
     title: 'Funnel Mastery',
     sub: 'Build the Machine That Prints Customers',
     duration: 'Day 3–4',
-    color: '#00D4AA',
+    color: '#7FB6A8',
     icon: '▼',
     desc: 'The funnel is your entire business in diagram form. Mastering it means knowing exactly where money leaks and how to stop it.',
     topics: [
@@ -175,7 +175,7 @@ export const SCALING_101_CURRICULUM: CurriculumPhase[] = [
     title: 'Traffic & Acquisition',
     sub: 'Build Floodgates, Not Trickles',
     duration: 'Day 5–6',
-    color: '#7B61FF',
+    color: '#9C9EB4',
     icon: '▲',
     desc: 'Traffic is oxygen. Without it, nothing else matters. Master acquisition and you control the entire game.',
     topics: [
@@ -248,7 +248,7 @@ export const SCALING_101_CURRICULUM: CurriculumPhase[] = [
     title: 'Retention & LTV',
     sub: 'The Money Is in Keeping Them',
     duration: 'Day 7–8',
-    color: '#FF6B6B',
+    color: '#D98A80',
     icon: '●',
     desc: 'Acquisition gets customers. Retention makes you rich. A 5% increase in retention increases profits by 25-95%.',
     topics: [
@@ -302,7 +302,7 @@ export const SCALING_101_CURRICULUM: CurriculumPhase[] = [
     title: 'Data & Analytics',
     sub: "See What Others Can't See",
     duration: 'Day 9–10',
-    color: '#00B4D8',
+    color: '#8DB3C7',
     icon: '◉',
     desc: 'Data is the unfair advantage. While everyone else guesses, you know. This is where good scalers become elite scalers.',
     topics: [
@@ -357,7 +357,7 @@ export const SCALING_101_CURRICULUM: CurriculumPhase[] = [
     title: 'Systems & Operations',
     sub: 'Build the Machine That Runs Without You',
     duration: 'Day 11–12',
-    color: '#F5A623',
+    color: '#C9A06A',
     icon: '⬡',
     desc: "If you're the bottleneck, you're not scaling — you're just working harder. Systems replace you. This is freedom.",
     topics: [
@@ -427,7 +427,7 @@ export const SCALING_101_CURRICULUM: CurriculumPhase[] = [
     title: 'Advanced Scaling',
     sub: 'From $10k to $50k and Beyond',
     duration: 'Day 13–14',
-    color: '#00D4AA',
+    color: '#7FB6A8',
     icon: '★',
     desc: 'This is where the elite operators live. Everything before was preparation. Now you put it all together and go vertical.',
     topics: [
@@ -498,7 +498,7 @@ export const SCALING_101_CURRICULUM: CurriculumPhase[] = [
     title: 'Elite Level',
     sub: 'Think Like a Billionaire Operator',
     duration: 'Ongoing',
-    color: '#7B61FF',
+    color: '#9C9EB4',
     icon: '⬟',
     desc: 'The mental models, frameworks, and perspectives that separate world-class operators from everyone else.',
     topics: [

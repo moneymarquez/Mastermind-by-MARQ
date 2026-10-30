@@ -115,7 +115,7 @@ export default function ContractsScreen() {
               {vars.map((v) => <Field key={v} l={v.replace(/_/g, ' ')}><input style={field} value={draft.vars[v] ?? ''} onChange={(e) => setDraft({ ...draft, vars: { ...draft.vars, [v]: e.target.value } })} /></Field>)}
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><strong style={{ flex: 1 }}>Preview</strong><button className="mm-btn" style={{ height: 32 }} onClick={() => void tailor()}>Ask the Writer to tailor it</button></div>
-            <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 16, maxHeight: 360, overflowY: 'auto', fontSize: 14 }}><MiniMarkdown text={preview} /></div>
+            <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 16, maxHeight: 360, overflowY: 'auto', fontSize: 14 }}><MiniMarkdown text={preview} /></div>
             {missingNow.length > 0 && <div style={{ fontSize: 13, color: 'var(--warning)' }}>Still blank: {missingNow.join(', ')}</div>}
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="mm-btn" style={{ flex: 1, height: 44 }} disabled={!draft.to_name.trim()} onClick={() => void save(false)}>Save draft</button>

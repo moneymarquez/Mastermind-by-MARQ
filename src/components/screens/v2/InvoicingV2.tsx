@@ -66,10 +66,10 @@ export default function InvoicingV2() {
     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, borderRight: phone ? 'none' : '1px solid var(--grid)' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', flex: 'none' }}>
         <div style={{ display: 'flex', gap: 8 }}>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search documents" aria-label="Search documents" style={{ flex: 1, minWidth: 0, height: 36, padding: '0 10px', borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit' }} />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search documents" aria-label="Search documents" style={{ flex: 1, minWidth: 0, height: 36, padding: '0 10px', borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit' }} />
           {!phone && <button className="mm-btn mm-btn--primary" style={{ height: 36, fontSize: 13 }} onClick={() => setView('new')}>Invoice</button>}
         </div>
-        <select value={type} onChange={(e) => setType(e.target.value as DocType | 'all')} aria-label="Document type" style={{ height: 34, padding: '0 8px', borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13, fontFamily: 'inherit' }}>
+        <select value={type} onChange={(e) => setType(e.target.value as DocType | 'all')} aria-label="Document type" style={{ height: 34, padding: '0 8px', borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13, fontFamily: 'inherit' }}>
           <option value="all">All documents ({D.documents.length})</option>
           {TYPES.map((t) => <option key={t} value={t}>{DOC_TYPE_LABELS[t]} ({D.documents.filter((d) => d.doc_type === t).length})</option>)}
         </select>
@@ -98,9 +98,9 @@ export default function InvoicingV2() {
 
   return (
     <Page title="Invoicing" sub="Invoices and client documents" menu={menu} fab={phone && !cur ? { t: 'Invoice', onClick: () => setView('new') } : undefined}>
-      {phone ? <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>{cur ? detail : listPane}</section> : (
+      {phone ? <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>{cur ? detail : listPane}</section> : (
         <>
-          <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', height: 'calc(100vh - 330px)', minHeight: 560, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', minWidth: 0 }}>
+          <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', height: 'calc(100vh - 330px)', minHeight: 560, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', minWidth: 0 }}>
             {listPane}{detail}
           </section>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 16 }}>

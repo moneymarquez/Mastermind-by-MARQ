@@ -27,14 +27,14 @@ const TAB_BAR = 64;
 const page: CSSProperties = { position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)', color: 'var(--text)', overflow: 'hidden' };
 const scroll: CSSProperties = { flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: `16px 16px calc(${TAB_BAR + 28}px + env(safe-area-inset-bottom))` };
 const container: CSSProperties = { maxWidth: 640, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 };
-const cardS: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 };
+const cardS: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 };
 const muted: CSSProperties = { fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 };
 const body: CSSProperties = { fontSize: 15, color: 'var(--text)', lineHeight: 1.55, whiteSpace: 'pre-wrap', margin: 0 };
 const small: CSSProperties = { fontSize: 12.5, fontWeight: 500, color: 'var(--text-tertiary)' };
 const label: CSSProperties = { fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' };
-const teal: CSSProperties = { height: 46, padding: '0 18px', borderRadius: 8, border: 0, background: 'var(--client-accent)', color: 'var(--bg)', fontSize: 15, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' };
-const ghost: CSSProperties = { height: 46, padding: '0 16px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 15, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' };
-const input: CSSProperties = { width: '100%', boxSizing: 'border-box', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px', color: 'var(--text)', fontSize: 16, outline: 'none', fontFamily: 'inherit', lineHeight: 1.45 };
+const teal: CSSProperties = { height: 46, padding: '0 18px', borderRadius: 'var(--g-r-md)', border: 0, background: 'var(--client-accent)', color: 'var(--bg)', fontSize: 15, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' };
+const ghost: CSSProperties = { height: 46, padding: '0 16px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 15, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' };
+const input: CSSProperties = { width: '100%', boxSizing: 'border-box', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-md)', padding: '12px 14px', color: 'var(--text)', fontSize: 16, outline: 'none', fontFamily: 'inherit', lineHeight: 1.45 };
 const off = (o: boolean): CSSProperties => (o ? { opacity: 0.5, pointerEvents: 'none' } : {});
 
 function ticketKindFor(kind: DeliverableKind): ClientTicketKind {
@@ -178,7 +178,7 @@ function TicketForm({ deliverables, presetDeliverable, readOnly, onSubmit, onCan
       <Back onClick={onCancel}>Help</Back>
       <H1 sub="We'll reply here and by email">New ticket</H1>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-        {TICKET_KINDS.map((k) => <button key={k.key} onClick={() => setKind(k.key)} style={{ height: 34, padding: '0 14px', borderRadius: 999, border: `1px solid ${kind === k.key ? 'var(--client-accent)' : 'var(--border)'}`, background: kind === k.key ? 'color-mix(in srgb, var(--client-accent) 14%, var(--surface))' : 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>{k.label}</button>)}
+        {TICKET_KINDS.map((k) => <button key={k.key} onClick={() => setKind(k.key)} style={{ height: 34, padding: '0 14px', borderRadius: 'var(--g-r-md)', border: `1px solid ${kind === k.key ? 'var(--client-accent)' : 'var(--border)'}`, background: kind === k.key ? 'color-mix(in srgb, var(--client-accent) 14%, var(--surface))' : 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>{k.label}</button>)}
       </div>
       {deliverables.length > 0 && fieldBox('About (optional)', <select style={input} value={deliverableId} onChange={(e) => setDeliverableId(e.target.value)}><option value="">Nothing specific</option>{deliverables.map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}</select>)}
       {fieldBox("What's going on?", <input style={input} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="The Book now button doesn't show on my phone" />)}
@@ -464,8 +464,8 @@ export default function ClientPortal({ onSignOut, previewClientId = null }: Prop
       <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderBottom: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
           {settings?.logo_url
-            ? <img src={settings.logo_url} alt="" style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border)' }} />
-            : <div style={{ width: 32, height: 32, borderRadius: 8, background: 'color-mix(in srgb, var(--client-accent) 20%, var(--surface-3))', color: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600 }}>{initials}</div>}
+            ? <img src={settings.logo_url} alt="" style={{ width: 32, height: 32, borderRadius: 'var(--g-r-md)', objectFit: 'cover', border: '1px solid var(--border)' }} />
+            : <div style={{ width: 32, height: 32, borderRadius: 'var(--g-r-md)', background: 'color-mix(in srgb, var(--client-accent) 20%, var(--surface-3))', color: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600 }}>{initials}</div>}
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15, minWidth: 0 }}>
             <span style={{ color: 'var(--text)', fontSize: 14, fontWeight: 600, letterSpacing: '-0.015em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{client.business_name}</span>
             <span style={{ color: 'var(--text-tertiary)', fontSize: 11.5, fontWeight: 500 }}>Client portal · by MARQ</span>

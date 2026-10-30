@@ -85,7 +85,7 @@ export default function FeedScreen() {
           <Card key={p.id} title={p.title} meta={`${p.author_name ?? 'A Masterminds member'} · ${new Date(p.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}`}>
             {p.hidden && <Chip k="warn">hidden</Chip>}
             {p.line && <div style={{ fontSize: 15 }}>{p.line}</div>}
-            {p.photo_path && <img src={photoUrl(p.photo_path)} alt="" loading="lazy" style={{ width: '100%', maxHeight: 420, objectFit: 'cover', borderRadius: 12 }} />}
+            {p.photo_path && <img src={photoUrl(p.photo_path)} alt="" loading="lazy" style={{ width: '100%', maxHeight: 420, objectFit: 'cover', borderRadius: 'var(--g-r-lg)' }} />}
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               {counts.map((c) => <button key={c.e} className={`mm-btn ${c.mine ? 'mm-btn--primary' : ''}`} style={{ height: 34, padding: '0 12px' }} onClick={() => void react(p, c.e)} aria-label={`React ${c.e}`}>{c.e}{c.n ? ` ${c.n}` : ''}</button>)}
               <div style={{ flex: 1 }} />

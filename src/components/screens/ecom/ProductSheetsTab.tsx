@@ -5,7 +5,7 @@ import { CHANNELS, money, ago } from '../../../data/ecom';
 import type { Product, SheetFilters } from '../../../data/ecomProducts';
 import { DEFAULT_FILTERS, filterProducts, rankSort, brandStepsFromProduct } from '../../../data/ecomProducts';
 import { useEcomProducts, linkProductToBrand } from '../../../data/useEcom';
-import { E, Pill, Badge, ConfidenceBadge, TeachingEmpty, btn, field, label } from './ecomShared';
+import { E, Pill, Seg, Badge, VerdictBadge, ConfidenceBadge, TeachingEmpty, btn, field, label } from './ecomShared';
 import ProductDrawer from './ProductDrawer';
 import RichProductCard from './RichProductCard';
 import { cardView, oneVerdict } from '../../../data/ecomCard';
@@ -75,11 +75,11 @@ export default function ProductSheetsTab({ search, onBuildBrand, statusOf, onOpe
     <div>
       <HandoffInbox kinds={['content_trend_to_ecom']} title="For E-commerce, from the other bots" />
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-        {CHANNELS.map((c) => <Pill key={c.id} active={channel === c.id} onClick={() => { setChannel(c.id); setLimit(20); }}>{c.label}{counts[c.id] ? <span style={{ opacity: 0.7, fontFamily: 'var(--font-mono)', fontSize: 11 }}>{counts[c.id]}</span> : null}</Pill>)}
+        <Seg label="Channel">{CHANNELS.map((c) => <Pill key={c.id} active={channel === c.id} onClick={() => { setChannel(c.id); setLimit(20); }}>{c.label}{counts[c.id] ? <span className="g-seg-n">{counts[c.id]}</span> : null}</Pill>)}</Seg>
         <div style={{ flex: 1 }} />
         <button style={btn('ghost')} onClick={() => setView(view === 'cards' ? 'table' : 'cards')}>{view === 'cards' ? '☰ Table' : '▦ Cards'}</button>
         <button style={btn('primary')} disabled={scout.searching} onClick={() => { void scout.start(channel, 10); }}>{scout.searching ? 'Scout is searching…' : 'Run Product Scout'}</button>
-        <button style={btn('ghost')} onClick={() => setImportOpen(true)}>📥 Import CSV</button>
+        <button style={btn('ghost')} onClick={() => setImportOpen(true)}>Import CSV</button>
       </div>
       {inChannel.length > 0 && (scout.searching || scoutMsg) && <div style={{ marginTop: 8, fontSize: 'var(--text-caption)', color: scout.searching ? E.faint : scout.error ? E.red : E.green }}>{scout.searching ? 'Scout is searching (1–3 min). It keeps going if you leave; new finds land in Approvals.' : scoutMsg}{!scout.searching && !scout.error && onOpenApprovals && <> <button type="button" onClick={onOpenApprovals} style={{ background: 'none', border: 0, padding: 0, color: E.blue, textDecoration: 'underline', cursor: 'pointer', font: 'inherit' }}>Open Approvals →</button></>}</div>}
 
@@ -133,7 +133,7 @@ export default function ProductSheetsTab({ search, onBuildBrand, statusOf, onOpe
                   <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{p.rank ?? ''}</td>
                   <td style={{ padding: '8px 10px', color: E.text, fontWeight: 600 }}>{p.watched ? '★ ' : ''}{p.name}{statusOf?.(p.id) && <> <Badge color={statusOf(p.id)!.color}>{statusOf(p.id)!.label}</Badge></>}</td>
                   {(() => { const v = cardView(p); return (<>
-                    <td style={{ padding: '8px 10px' }}>{(() => { const o = oneVerdict(v); return <Badge color={o.tone === 'good' ? E.green : o.tone === 'warn' ? E.amber : E.red} title={`${o.why} ${o.checks}: ${o.checksWhy}`}>{o.label}</Badge>; })()}</td>
+                    <td style={{ padding: '8px 10px' }}>{(() => { const o = oneVerdict(v); return <VerdictBadge color={o.tone === 'good' ? E.green : o.tone === 'warn' ? E.amber : E.red} title={`${o.why} ${o.checks}: ${o.checksWhy}`}>{o.label}</VerdictBadge>; })()}</td>
                     <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)' }}>{p.sell_price != null ? money(p.sell_price) : 'Not found'}</td>
                     <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)', color: v.floorOk ? E.green : E.text }}>{v.bd ? money(v.bd.profit) : 'Not found'}</td>
                     <td style={{ padding: '8px 10px', fontFamily: 'var(--font-mono)', color: v.floorOk ? E.green : E.text }}>{v.bd ? `${v.bd.marginPct.toFixed(0)}%` : 'Not found'}</td>

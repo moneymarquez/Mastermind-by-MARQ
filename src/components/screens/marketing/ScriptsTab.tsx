@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import type { Audience, Script, ScriptChannel, Tone, Venture } from '../../../data/mktEngine';
 import { AUDIENCES, PACKAGES, SCRIPT_CHANNELS, TONES, VENTURES, funnelStats, diagnoseCalls, OUTCOME_LABEL } from '../../../data/mktEngine';
 import { useScripts, useTouches } from '../../../data/useMktEngine';
-import { E, Badge, Drawer, Metric, Pill, TeachingEmpty, btn, field, label , panel } from '../ecom/ecomShared';
+import { E, Badge, Drawer, Metric, Pill, Seg, TeachingEmpty, btn, field, label , panel } from '../ecom/ecomShared';
 import DialerMode from './DialerMode';
 import { askConfirm } from '../../../lib/confirm';
 
@@ -59,19 +59,19 @@ export default function ScriptsTab() {
       </div>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        {VENTURES.map((v) => <Pill key={v.id} active={venture === v.id} onClick={() => setVenture(v.id)}>{v.label}</Pill>)}
+        <Seg label="Venture">{VENTURES.map((v) => <Pill key={v.id} active={venture === v.id} onClick={() => setVenture(v.id)}>{v.label}</Pill>)}</Seg>
         <div style={{ flex: 1 }} />
         <button style={btn('primary')} onClick={() => setEditing('new')}>＋ New script</button>
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         <span style={label}>Audience</span>
-        {AUDIENCES.map((a) => <Pill key={a.id} active={audience === a.id} onClick={() => setAudience(a.id)}>{a.label}</Pill>)}
+        <Seg label="Audience">{AUDIENCES.map((a) => <Pill key={a.id} active={audience === a.id} onClick={() => setAudience(a.id)}>{a.label}</Pill>)}</Seg>
         {pkg && <span style={{ fontSize: 'var(--text-caption)', color: E.faint }}>Package: {pkg.build} build · {pkg.retainer}</span>}
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         <span style={label}>Tone</span>
-        <Pill active={tone === 'all'} onClick={() => setTone('all')}>All</Pill>
-        {TONES.map((t) => <Pill key={t.id} active={tone === t.id} onClick={() => setTone(t.id)}>{t.label}</Pill>)}
+        <Seg label="Tone"><Pill active={tone === 'all'} onClick={() => setTone('all')}>All</Pill>
+        {TONES.map((t) => <Pill key={t.id} active={tone === t.id} onClick={() => setTone(t.id)}>{t.label}</Pill>)}</Seg>
         <span style={{ ...label, marginLeft: 8 }}>Channel</span>
         <select style={{ ...field, width: 'auto' }} value={channel} onChange={(e) => setChannel(e.target.value as ScriptChannel | 'all')}>
           <option value="all">All channels</option>
@@ -115,7 +115,7 @@ export default function ScriptsTab() {
                 {st.meetings + st.closes > 0 && <Metric label="Meetings+" value={String(st.meetings + st.closes)} />}
               </div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {(s.channel === 'call' || s.channel === 'voicemail') && <button style={btn('primary')} onClick={() => setDialer(s)}>🎧 Dialer mode</button>}
+                {(s.channel === 'call' || s.channel === 'voicemail') && <button style={btn('primary')} onClick={() => setDialer(s)}>Dialer mode</button>}
                 <button style={btn('ghost')} onClick={() => setEditing(s)}>Edit</button>
                 {(s.channel === 'email' || s.channel === 'dm' || s.channel === 'landing') && <button style={btn('ghost')} onClick={() => navigator.clipboard?.writeText(s.body)}>Copy</button>}
               </div>

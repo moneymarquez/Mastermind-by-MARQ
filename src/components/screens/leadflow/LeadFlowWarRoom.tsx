@@ -53,7 +53,7 @@ function StatePicker({ value, onChange }: { value: string[]; onChange: (v: strin
     <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
       <div onClick={() => inputRef.current?.focus()} style={{ minHeight: 36, border: '1px solid var(--lf-border-strong)', borderRadius: 'var(--lf-r-ctl)', display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px', flexWrap: 'wrap', background: 'var(--lf-surface)', cursor: 'text' }}>
         {value.map((s) => (
-          <span key={s} style={{ display: 'inline-flex', gap: 6, alignItems: 'center', height: 24, padding: '0 4px 0 8px', borderRadius: 4, background: 'var(--lf-surface-2)', fontSize: 12, fontWeight: 500 }}>
+          <span key={s} style={{ display: 'inline-flex', gap: 6, alignItems: 'center', height: 24, padding: '0 4px 0 8px', borderRadius: 'var(--g-r-xs)', background: 'var(--lf-surface-2)', fontSize: 12, fontWeight: 500 }}>
             {s}<button type="button" aria-label={`Remove ${s}`} onClick={(e) => { e.stopPropagation(); onChange(value.filter((x) => x !== s)); }} style={{ all: 'unset', cursor: 'pointer', padding: '0 4px', color: 'var(--lf-text-tertiary)' }}>×</button>
           </span>
         ))}

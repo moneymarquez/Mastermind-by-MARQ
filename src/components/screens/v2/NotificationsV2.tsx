@@ -42,7 +42,7 @@ export default function NotificationsV2() {
   const enable = async () => { const r = await requestNotificationPermission(); setPerm(r); if (r === 'granted') subscribeToPush(); };
 
   const status = (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
       <div style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 4 }}>
         <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>Alerts on this device</span>
         <span style={{ fontSize: 13.5, color: 'var(--text-secondary)' }}>{perm === 'granted' ? 'On. Reminders fire even with the app closed.' : perm === 'denied' ? 'Blocked in your browser settings. Allow notifications for this site, then come back.' : 'Turn on alerts to get anything below.'}</span>

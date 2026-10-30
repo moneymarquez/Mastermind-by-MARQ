@@ -15,9 +15,9 @@ const fieldStyle: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 11, height: 48, padding: '0 15px',
   borderRadius: 'var(--radius-md)', border: '1px solid var(--mm-line)', background: 'var(--mm-field, var(--mm-panel))',
 };
-/** The sign-in uses the public site's look: warm paper, ink, one cobalt action, Instrument Sans. */
-const SITE = { paper: '#fbf9f4', ink: '#1b1a17', mute: '#6b665c', line: '#ddd8cc', card: '#ffffff', cobalt: '#5266eb', sans: "'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif", mono: "'IBM Plex Mono', ui-monospace, Menlo, monospace" };
-const siteField: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 11, height: 50, padding: '0 14px', borderRadius: 10, border: `1px solid ${SITE.line}`, background: '#fff' };
+/** The sign-in wears the app's Graphite tokens in their warm-paper (light) form: Geist, ink, hairlines, one ink action. */
+const SITE = { paper: 'var(--g-bg)', ink: 'var(--g-text)', mute: 'var(--g-text-3)', line: 'var(--g-line-2)', card: 'var(--g-s1)', cobalt: 'var(--g-accent)', sans: 'var(--g-font)', mono: 'var(--g-mono)' };
+const siteField: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 11, height: 48, padding: '0 14px', borderRadius: 'var(--g-r-md)', border: `1px solid ${SITE.line}`, background: 'var(--g-bg)' };
 const siteInput: React.CSSProperties = { flex: 1, border: 'none', outline: 'none', background: 'transparent', color: SITE.ink, fontSize: 16, fontFamily: 'inherit', minWidth: 0 };
 const inputStyle: React.CSSProperties = {
   flex: 1, border: 'none', outline: 'none', background: 'transparent', color: 'var(--mm-text)', fontSize: 14,
@@ -187,7 +187,7 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
       >
         <div style={{ width: '100%', maxWidth: 380, display: 'flex', flexDirection: 'column', gap: 22 }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center' }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--client-accent-soft)', border: '1px solid color-mix(in srgb, var(--client-accent) 45%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 44, height: 44, borderRadius: 'var(--g-r-lg)', background: 'var(--client-accent-soft)', border: '1px solid color-mix(in srgb, var(--client-accent) 45%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="users" size={22} color="var(--client-accent)" />
             </div>
             <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em' }}>Client login</div>
@@ -226,102 +226,108 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
   }
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: SITE.paper, color: SITE.ink, fontFamily: SITE.sans, display: 'flex', flexDirection: 'column' } as React.CSSProperties}>
+    <div className="g-ground" style={{ position: 'relative', height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: SITE.paper, color: SITE.ink, fontFamily: SITE.sans, display: 'flex', flexDirection: 'column' } as React.CSSProperties}>
       <style>{`
-        .mm-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; text-decoration: none; font-weight: 600; border-radius: 999px; border: 1px solid transparent; }
-        .mm-btn-ink { background: #5266eb; color: #fff; font-family: inherit; font-size: 16px; font-weight: 500; }
-        .mm-btn-ink:hover { background: #4356d9; }
-        .mm-btn-ink:disabled { opacity: .6; cursor: default; }
-        .wl-auth input::placeholder { color: #8f8a7f; opacity: 1; }
-        .wl-auth :focus-visible { outline: 2px solid #5266eb; outline-offset: 2px; }
+        .g-auth-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; border: 1px solid transparent; border-radius: var(--g-r-md); background: var(--g-text); color: var(--g-bg); font: 500 15px/1 var(--g-font); letter-spacing: -0.005em; box-shadow: var(--g-shadow-1); transition: opacity var(--g-d2) var(--g-ease), transform var(--g-d1) var(--g-ease), box-shadow var(--g-d2) var(--g-ease); }
+        .g-auth-primary:hover { opacity: .9; }
+        .g-auth-primary:active { transform: scale(.985); }
+        .g-auth-primary:disabled { opacity: .55; cursor: default; }
+        .wl-auth input::placeholder { color: var(--g-text-4); opacity: 1; }
+        .wl-auth .g-auth-field { transition: border-color var(--g-d2) var(--g-ease), box-shadow var(--g-d2) var(--g-ease); }
+        .wl-auth .g-auth-field:focus-within { border-color: var(--g-accent-line); box-shadow: 0 0 0 3px var(--g-accent-soft); }
+        .wl-auth :focus-visible { outline: none; box-shadow: var(--g-ring); }
+        html:root .wl-auth .g-auth-field input, html:root .wl-auth .g-auth-field input:focus, html:root .wl-auth .g-auth-field input:focus-visible { border: 0 !important; box-shadow: none !important; background: transparent !important; outline: none !important; }
+        .g-auth-ghost { transition: background-color var(--g-d2) var(--g-ease), border-color var(--g-d2) var(--g-ease), color var(--g-d2) var(--g-ease); }
+        .g-auth-ghost:hover { background: var(--g-s1); border-color: var(--g-line-3) !important; color: var(--g-text) !important; }
       `}</style>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '16px 20px', paddingTop: 'max(16px, env(safe-area-inset-top))' }}>
-        <a href="/home" style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#1b1a17', textDecoration: 'none' }}>
-          <span aria-hidden="true" style={{ width: 32, height: 32, borderRadius: 8, background: '#1b1a17', color: 'var(--mm-canvas)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 10, lineHeight: '10px' }}><span>MA</span><span>RQ</span></span>
-          <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}><span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.01em' }}>Masterminds</span><span style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '.22em', opacity: 0.72 }}>BY MARQ</span></span>
+        <a href="/home" style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--g-text)', textDecoration: 'none' }}>
+          <span aria-hidden="true" style={{ width: 32, height: 32, borderRadius: 'var(--g-r-md)', background: 'var(--g-text)', color: 'var(--g-bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 10, lineHeight: '10px' }}><span>MA</span><span>RQ</span></span>
+          <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}><span style={{ fontSize: 15.5, fontWeight: 600, letterSpacing: '-0.015em' }}>Masterminds</span><span style={{ fontSize: 8.5, fontWeight: 500, fontFamily: 'var(--g-mono)', letterSpacing: '.2em', color: 'var(--g-text-3)', marginTop: 2 }}>BY MARQ</span></span>
         </a>
         <button
           type="button"
           onClick={openClientLogin}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 40, padding: '8px 14px', borderRadius: 999, background: 'none', border: '1px solid color-mix(in srgb, var(--client-accent) 40%, transparent)', fontSize: 13, color: 'var(--client-accent)', cursor: 'pointer', whiteSpace: 'nowrap', font: 'inherit' }}
+          className="g-auth-ghost"
+          style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 36, padding: '0 12px', borderRadius: 'var(--g-r-md)', background: 'transparent', border: '1px solid var(--g-line-2)', font: '500 13px/1 var(--g-font)', color: 'var(--g-text-2)', cursor: 'pointer', whiteSpace: 'nowrap' }}
         >
           <Icon name="users" size={15} />Client login
         </button>
       </div>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 20px 48px' }}>
         <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div id="login-card" className="wl-auth" style={{ padding: 28, borderRadius: 12, border: '1px solid #e2ddd2', background: SITE.card, display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <div id="login-card" className="wl-auth" style={{ padding: 28, borderRadius: 'var(--g-r-xl)', border: '1px solid var(--g-line)', background: SITE.card, boxShadow: 'var(--g-shadow-2)', display: 'flex', flexDirection: 'column', gap: 20 }}>
               {hasPendingJoin() && (
-                <div role="status" style={{ padding: '12px 14px', borderRadius: 12, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', fontSize: 14, lineHeight: 1.45 }}>
+                <div role="status" style={{ padding: '12px 14px', borderRadius: 'var(--g-r-lg)', background: 'color-mix(in srgb, var(--accent) 12%, transparent)', fontSize: 14, lineHeight: 1.45 }}>
                   You've been invited to a team. Log in — or create a free login — and your tasks will be waiting. No subscription needed.
                 </div>
               )}
               <div>
-                <div style={{ fontFamily: SITE.mono, fontSize: 11, fontWeight: 500, letterSpacing: '.14em', color: SITE.mute, marginBottom: 8 }}>{mode === 'login' ? 'LOG IN' : mode === 'signup' ? 'JOIN' : 'RESET'}</div>
-                <div style={{ fontSize: 28, lineHeight: 1.15, fontWeight: 480, letterSpacing: '-0.02em' }}>
+                <div style={{ fontFamily: SITE.mono, fontSize: 11, fontWeight: 500, letterSpacing: '.14em', color: SITE.mute, marginBottom: 8 }}>{mode === 'login' ? 'WELCOME BACK' : mode === 'signup' ? 'JOIN' : 'RESET'}</div>
+                <div style={{ fontSize: 26, lineHeight: 1.15, fontWeight: 600, letterSpacing: '-0.025em' }}>
                   {mode === 'login' ? 'Log in' : mode === 'signup' ? 'Create your account' : 'Reset your password'}
                 </div>
-                <div style={{ fontSize: 15, color: SITE.mute, marginTop: 6, lineHeight: 1.5 }}>
+                <div style={{ fontSize: 14.5, color: 'var(--g-text-2)', marginTop: 6, lineHeight: 1.5 }}>
                   {mode === 'login' ? 'Nova has your morning ready.' : mode === 'signup' ? 'Takes about a minute.' : "We'll email you a link to set a new one."}
                 </div>
               </div>
 
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={siteField}>
+                <div className="g-auth-field" style={siteField}>
                   <Icon name="envelope-simple" size={17} color={SITE.mute} />
                   <input style={siteInput} type="email" name="email" autoComplete={mode === 'signup' ? 'email' : 'username'} inputMode="email" aria-label="Email" autoFocus autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
                 {mode !== 'reset' && (
-                  <div style={siteField}>
+                  <div className="g-auth-field" style={siteField}>
                     <Icon name="lock-simple" size={17} color={SITE.mute} />
                     <input style={siteInput} type="password" name="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} aria-label="Password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
                   </div>
                 )}
                 {mode === 'signup' && (
-                  <div style={siteField}>
+                  <div className="g-auth-field" style={siteField}>
                     <Icon name="lock-simple" size={17} color={SITE.mute} />
                     <input style={siteInput} type="password" name="confirm-password" autoComplete="new-password" aria-label="Confirm password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                   </div>
                 )}
                 {mode === 'login' && (
                   <div style={{ textAlign: 'right', marginTop: -2 }}>
-                    <span style={{ fontSize: 12.5, color: '#6b665c', cursor: 'pointer' }} onClick={() => switchMode('reset')}>Forgot password?</span>
+                    <span style={{ fontSize: 12.5, color: 'var(--g-text-3)', cursor: 'pointer' }} onClick={() => switchMode('reset')}>Forgot password?</span>
                   </div>
                 )}
 
                 {error && <div style={{ fontSize: 13, color: 'var(--danger)' }}>{error}</div>}
                 {notice && <div style={{ fontSize: 13, color: 'var(--success)' }}>{notice}</div>}
 
-                <button type="submit" disabled={submitting} className="mm-btn mm-btn-ink" style={{ height: 48, marginTop: 4, width: '100%' }}>
+                <button type="submit" disabled={submitting} className="g-auth-primary" style={{ height: 46, marginTop: 4, width: '100%' }}>
                   {submitting
                     ? (mode === 'login' ? 'Signing in…' : mode === 'signup' ? 'Creating account…' : 'Sending…')
                     : (mode === 'login' ? 'Continue' : mode === 'signup' ? 'Sign up' : 'Send reset link')}
                 </button>
               </form>
 
-              <div style={{ fontSize: 13, color: '#6b665c', textAlign: 'center' }}>
+              <div style={{ fontSize: 13, color: 'var(--g-text-3)', textAlign: 'center' }}>
                 {mode === 'login' && (
                   <>No account?{' '}
-                    <button type="button" style={{ color: '#1b1a17', cursor: 'pointer', background: 'none', border: 'none', textDecoration: 'underline', textUnderlineOffset: 3, padding: '8px 2px', font: 'inherit' }} onClick={() => switchMode('signup')}>Create an account</button>
+                    <button type="button" style={{ color: 'var(--g-text)', cursor: 'pointer', background: 'none', border: 'none', textDecoration: 'underline', textUnderlineOffset: 3, padding: '8px 2px', font: 'inherit' }} onClick={() => switchMode('signup')}>Create an account</button>
                   </>
                 )}
                 {mode === 'signup' && (
                   <>Already have an account?{' '}
-                    <span style={{ color: '#1b1a17', borderBottom: '1px solid #c9c3b5', cursor: 'pointer' }} onClick={() => switchMode('login')}>Log in</span>
+                    <span style={{ color: 'var(--g-text)', borderBottom: '1px solid var(--g-line-3)', cursor: 'pointer' }} onClick={() => switchMode('login')}>Log in</span>
                   </>
                 )}
                 {mode === 'reset' && (
-                  <span style={{ color: '#1b1a17', borderBottom: '1px solid #c9c3b5', cursor: 'pointer' }} onClick={() => switchMode('login')}>← Back to log in</span>
+                  <span style={{ color: 'var(--g-text)', borderBottom: '1px solid var(--g-line-3)', cursor: 'pointer' }} onClick={() => switchMode('login')}>← Back to log in</span>
                 )}
                 <div style={{ marginTop: 6, display: 'flex', justifyContent: 'center', gap: 14, flexWrap: 'wrap' }}>
-                  <a href="/privacy" style={{ color: '#6b665c', textDecoration: 'underline', textUnderlineOffset: 3, padding: '10px 2px' }}>Privacy Policy</a>
-                  <a href="/terms" style={{ color: '#6b665c', textDecoration: 'underline', textUnderlineOffset: 3, padding: '10px 2px' }}>Terms &amp; Conditions</a>
+                  <a href="/privacy" style={{ color: 'var(--g-text-3)', textDecoration: 'underline', textUnderlineOffset: 3, padding: '10px 2px' }}>Privacy Policy</a>
+                  <a href="/terms" style={{ color: 'var(--g-text-3)', textDecoration: 'underline', textUnderlineOffset: 3, padding: '10px 2px' }}>Terms &amp; Conditions</a>
                 </div>
               </div>
             </div>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 18, flexWrap: 'wrap', fontSize: 13 }}>
-            <a href="/home" style={{ color: '#6b665c', textDecoration: 'underline', textUnderlineOffset: 3, padding: '8px 2px' }}>Back to Masterminds</a>
-            <button type="button" onClick={() => startDemo()} style={{ color: '#6b665c', textDecoration: 'underline', textUnderlineOffset: 3, padding: '8px 2px', background: 'none', border: 'none', font: 'inherit', cursor: 'pointer' }}>See a 2-minute demo</button>
+            <a href="/home" style={{ color: 'var(--g-text-3)', textDecoration: 'underline', textUnderlineOffset: 3, padding: '8px 2px' }}>Back to Masterminds</a>
+            <button type="button" onClick={() => startDemo()} style={{ color: 'var(--g-text-3)', textDecoration: 'underline', textUnderlineOffset: 3, padding: '8px 2px', background: 'none', border: 'none', font: 'inherit', cursor: 'pointer' }}>See a 2-minute demo</button>
           </div>
         </div>
       </div>

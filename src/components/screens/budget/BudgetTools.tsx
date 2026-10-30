@@ -72,7 +72,7 @@ export default function BudgetTools({ b, monthKey }: { b: ReturnType<typeof useB
           <Stat label="Renewing soon" value={String(subs.upcomingRenewals.length)} pill="Next 30 days" k={subs.upcomingRenewals.length ? 'warn' : 'neutral'} />
         </div>
         {subs.staleSubscriptions.length > 0 && (
-          <div style={{ padding: 14, borderRadius: 12, background: 'color-mix(in srgb, var(--danger) 7%, var(--surface))', border: '1px solid color-mix(in srgb, var(--danger) 30%, var(--border))', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ padding: 14, borderRadius: 'var(--g-r-lg)', background: 'color-mix(in srgb, var(--danger) 7%, var(--surface))', border: '1px solid color-mix(in srgb, var(--danger) 30%, var(--border))', display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ color: 'var(--danger)', fontSize: 14, fontWeight: 600 }}>Up for review: not used in 45+ days</span>
             {subs.staleSubscriptions.map((s, i) => <Line key={s.id} first={i === 0} name={s.name} meta={`${money(monthlyCost(s))} a month`} action={<><button className="mm-btn" style={{ height: 32, fontSize: 13 }} onClick={() => subs.markUsed(s.id)}>Still using</button><button className="mm-btn" style={{ height: 32, fontSize: 13, color: 'var(--danger)' }} onClick={() => subs.removeSubscription(s.id)}>Remove</button></>} />)}
           </div>
@@ -81,7 +81,7 @@ export default function BudgetTools({ b, monthKey }: { b: ReturnType<typeof useB
           {subs.subscriptions.map((s, i) => <Line key={s.id} first={i === 0} name={<>{s.name}{s.category && <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}> · {s.category}</span>}</>} meta={`${CYCLE[s.billing_cycle]} · renews ${day(s.renewal_date)}`} amt={money(s.cost)} action={<>{!isStale(s) && <button className="mm-btn" style={{ height: 32, fontSize: 12.5, padding: '0 10px' }} onClick={() => subs.markUsed(s.id)}>Used</button>}{x(() => subs.removeSubscription(s.id), 'Remove subscription')}</>} />)}
           {!subs.subscriptions.length && <div style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>No subscriptions tracked yet.</div>}
         </div>
-        <div style={{ padding: 14, borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ padding: 14, borderRadius: 'var(--g-r-lg)', background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
           <span style={{ color: 'var(--text)', fontSize: 14.5, fontWeight: 600 }}>What Mastermind replaces</span>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}><span style={{ color: 'var(--text-secondary)' }}>Your tracked subscriptions</span><span style={{ color: 'var(--text)', fontWeight: 600 }}>{money(subs.totalMonthly)}/mo</span></div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 14 }}><span style={{ color: 'var(--text-secondary)' }}>Mastermind</span><input aria-label="Mastermind monthly cost" type="number" value={costDraft || String(subs.mastermindMonthlyCost)} onChange={(e) => setCostDraft(e.target.value)} onBlur={() => { if (costDraft) { subs.setMastermindCost(Number(costDraft)); setCostDraft(''); } }} style={{ ...field, width: 100, minHeight: 36, height: 36, textAlign: 'right' }} /></div>

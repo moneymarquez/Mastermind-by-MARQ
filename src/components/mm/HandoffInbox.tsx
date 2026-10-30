@@ -24,8 +24,8 @@ export default function HandoffInbox({ kinds, title = 'From the other bots' }: {
   };
   if (!rows.length && !msg) return null;
   return (
-    <div data-testid="handoff-inbox" style={{ ...E.card, padding: 12, display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
-      <div style={{ fontWeight: 700, color: E.text }}>{title} <span style={{ color: E.faint, fontWeight: 400 }}>· {rows.length} open</span></div>
+    <div data-testid="handoff-inbox" style={{ ...E.card, padding: 14, display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+      <div style={{ fontWeight: 600, fontSize: 14.5, letterSpacing: '-0.01em', color: E.text }}>{title} <span style={{ color: E.faint, fontWeight: 400, fontFamily: 'var(--g-mono)', fontSize: 12.5 }}>· {rows.length} open</span></div>
       {rows.map((h) => {
         const url = typeof h.payload.url === 'string' ? h.payload.url : null;
         return (
@@ -33,8 +33,8 @@ export default function HandoffInbox({ kinds, title = 'From the other bots' }: {
             <Badge color={E.blue}>{HANDOFF_LABEL[h.kind] ?? h.kind}</Badge>
             <span style={{ flex: '1 1 220px', color: E.text, fontSize: 'var(--text-body)' }}>{h.note ?? 'Open handoff.'}{url && <> <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: E.accent }}>source ↗</a></>}</span>
             <span style={{ display: 'flex', gap: 6 }}>
-              <button style={btn('primary')} onClick={() => void close(h, 'done')}>Done</button>
-              <button style={btn('ghost')} onClick={() => void close(h, 'dismissed')}>Dismiss</button>
+              <button style={{ ...btn('primary'), minHeight: 30, height: 30, fontSize: 12.5 }} onClick={() => void close(h, 'done')}>Done</button>
+              <button style={{ ...btn('ghost'), minHeight: 30, height: 30, fontSize: 12.5 }} onClick={() => void close(h, 'dismissed')}>Dismiss</button>
             </span>
           </div>
         );

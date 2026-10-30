@@ -50,10 +50,10 @@ function Photos({ paths }: { paths: string[] }) {
     <Section title="Photos">
       <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
         {urls === null
-          ? paths.slice(0, 4).map((p) => <div key={p} className="lf-skel" style={{ width: 96, height: 72, flex: 'none', borderRadius: 6 }} />)
+          ? paths.slice(0, 4).map((p) => <div key={p} className="lf-skel" style={{ width: 96, height: 72, flex: 'none', borderRadius: 'var(--g-r-sm)' }} />)
           : urls.map((u) => (
             <a key={u} href={u} target="_blank" rel="noopener noreferrer" style={{ flex: 'none' }}>
-              <img src={u} alt="" loading="lazy" style={{ height: 96, borderRadius: 6, border: '1px solid var(--lf-border)', display: 'block' }} />
+              <img src={u} alt="" loading="lazy" style={{ height: 96, borderRadius: 'var(--g-r-sm)', border: '1px solid var(--lf-border)', display: 'block' }} />
             </a>
           ))}
       </div>
@@ -262,7 +262,7 @@ function CallKitSection({ lead }: { lead: LeadflowLead }) {
       )}
       <div className="lf-field"><div>Ask for</div><div>{k.person ? `${k.person.name}${k.person.role === 'owner' ? ' (owner)' : ''}` : <span style={{ color: 'var(--lf-text-tertiary)' }}>The owner or manager (no name on file)</span>}</div></div>
       <div className="lf-field"><div>Best time</div><div>{k.bestTime}</div></div>
-      <div style={{ fontSize: 14, lineHeight: 1.55, color: 'var(--lf-text)', background: 'var(--lf-surface-2)', borderRadius: 8, padding: '8px 10px', marginTop: 6 }}>{k.opener}</div>
+      <div style={{ fontSize: 14, lineHeight: 1.55, color: 'var(--lf-text)', background: 'var(--lf-surface-2)', borderRadius: 'var(--g-r-md)', padding: '8px 10px', marginTop: 6 }}>{k.opener}</div>
     </Section>
   );
 }

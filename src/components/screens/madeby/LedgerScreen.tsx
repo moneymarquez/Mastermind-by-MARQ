@@ -170,7 +170,7 @@ export default function LedgerScreen() {
             <button key={r.id} onClick={() => setEntry(r)} style={{ all: 'unset', cursor: 'pointer', display: 'flex', gap: 8, alignItems: 'center', padding: '8px 0', borderTop: i ? '1px solid var(--grid)' : 'none', fontSize: 14 }}>
               <span style={{ width: 86, color: 'var(--text-tertiary)' }}>{r.date}</span>
               <span style={{ flex: 1, minWidth: 0 }}>{r.party ?? '—'} <span style={{ color: 'var(--text-tertiary)' }}>· {r.category}</span></span>
-              {r.auto && <Chip k="neutral">auto</Chip>}{r.receipt_path && <span title="receipt">🧾</span>}
+              {r.auto && <Chip k="neutral">auto</Chip>}{r.receipt_path && <Chip k="neutral">receipt</Chip>}
               <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{usd(Number(r.amount_usd))}</strong>
             </button>
           ))}

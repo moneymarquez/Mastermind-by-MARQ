@@ -110,7 +110,7 @@ export default function ProductTour({ active, steps, stepIndex, onNext, onBack, 
         style={{
           position: 'fixed', top: 'calc(88px + env(safe-area-inset-top))', left: '50%', transform: 'translateX(-50%)',
           width: 340, maxWidth: 'calc(100vw - 32px)', background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-xl)', padding: '18px 20px', zIndex: 92, boxShadow: '0 20px 50px rgba(var(--shadow-ink),0.6)',
+          borderRadius: 'var(--radius-xl)', padding: '18px 20px', zIndex: 92, boxShadow: 'var(--g-shadow-3)',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>

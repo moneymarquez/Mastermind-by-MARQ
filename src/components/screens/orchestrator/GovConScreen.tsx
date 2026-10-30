@@ -135,7 +135,7 @@ function TapText({ text, flagged, onFlag, style }: { text: string; flagged: Set<
         const on = flagged.has(cleanWord(p).toLowerCase());
         return (
           <span key={i} role="button" tabIndex={0} onClick={() => onFlag(p, text)} onKeyDown={(e) => { if (e.key === 'Enter') onFlag(p, text); }}
-            style={{ cursor: 'pointer', borderRadius: 4, padding: '0 1px', background: on ? 'color-mix(in srgb, var(--warning, #f5a524) 30%, transparent)' : undefined, textDecoration: on ? 'underline dotted' : undefined }}>
+            style={{ cursor: 'pointer', borderRadius: 'var(--g-r-xs)', padding: '0 1px', background: on ? 'color-mix(in srgb, var(--warning, #f5a524) 30%, transparent)' : undefined, textDecoration: on ? 'underline dotted' : undefined }}>
             {p}
           </span>
         );
@@ -210,7 +210,7 @@ function ContractCard({ n, c, phone, flagged, onFlag, onSave, onSaveTerm, onLead
                       const right = oi === q.answer, mine = oi === picked;
                       return (
                         <button key={oi} type="button" disabled={shown} onClick={() => void answer(qi, oi)}
-                          style={{ textAlign: 'left', padding: '10px 12px', borderRadius: 10, fontSize: 14, lineHeight: 1.4, cursor: shown ? 'default' : 'pointer', color: 'var(--text)',
+                          style={{ textAlign: 'left', padding: '10px 12px', borderRadius: 'var(--g-r-md)', fontSize: 14, lineHeight: 1.4, cursor: shown ? 'default' : 'pointer', color: 'var(--text)',
                             border: `1px solid ${shown && right ? 'var(--success)' : shown && mine ? 'var(--danger)' : 'var(--border)'}`,
                             background: shown && right ? 'color-mix(in srgb, var(--success) 14%, transparent)' : shown && mine ? 'color-mix(in srgb, var(--danger) 12%, transparent)' : 'var(--surface-2)' }}>
                           {o}

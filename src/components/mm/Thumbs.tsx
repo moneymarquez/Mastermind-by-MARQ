@@ -25,7 +25,7 @@ export default function Thumbs({ entityType, entityId, domain, workerId, initial
       </div>
       {asking && (
         <form onSubmit={(e) => { e.preventDefault(); void send(-1, reason.trim() || undefined); }} style={{ display: 'flex', gap: 6 }}>
-          <input autoFocus value={reason} onChange={(e) => setReason(e.target.value)} placeholder="One line: what was wrong?" maxLength={300} style={{ flex: 1, minWidth: 0, height: 34, padding: '0 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit' }} />
+          <input autoFocus value={reason} onChange={(e) => setReason(e.target.value)} placeholder="One line: what was wrong?" maxLength={300} style={{ flex: 1, minWidth: 0, height: 34, padding: '0 10px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit' }} />
           <button className="mm-btn mm-btn--primary" style={{ height: 34, padding: '0 12px', fontSize: 13 }}>Send</button>
         </form>
       )}

@@ -70,7 +70,7 @@ function DayCard({ phone, calls, goal, done, total, streak, onOpen }: { phone: b
   const shown = [cv, dv, sv];
   const pct = Math.round((rows.reduce((a, r) => a + (r.of ? Math.min(1, r.v / r.of) : 0), 0) / 3) * 100);
   return (
-    <section style={{ position: 'relative', overflow: 'hidden', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: 'var(--card-shadow)' }}>
+    <section style={{ position: 'relative', overflow: 'hidden', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 18 : 20, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: 'var(--card-shadow)' }}>
       <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
         <div style={{ position: 'absolute', width: '70%', height: '140%', left: '-20%', top: '-60%', borderRadius: '50%', background: 'radial-gradient(closest-side, color-mix(in srgb, var(--accent) 22%, transparent), transparent)', animation: 'mmAurora 14s ease-in-out infinite' }} />
         <div style={{ position: 'absolute', width: '60%', height: '120%', right: '-18%', bottom: '-70%', borderRadius: '50%', background: 'radial-gradient(closest-side, color-mix(in srgb, var(--cat-3) 16%, transparent), transparent)', animation: 'mmAurora 18s ease-in-out infinite reverse' }} />
@@ -274,7 +274,7 @@ export default function HomeV2(p: HomeV2Props) {
       <div style={{ display: 'grid', gridTemplateColumns: phone ? '1fr 1fr' : 'repeat(4, minmax(0, 1fr))', gap: phone ? 10 : 16 }}>
         {pins.map((id, i) => (
           <button key={id} className="mm-tile" onClick={() => p.onNavigate(id)} style={phone ? undefined : { flexDirection: 'row', alignItems: 'center', minHeight: 64, gap: 12, padding: '12px 14px' }}>
-            <span style={{ width: 34, height: 34, borderRadius: 10, background: `color-mix(in srgb, ${PIN_TINT[i % 4]} 16%, var(--surface))`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: PIN_TINT[i % 4], fontSize: 11, fontWeight: 700, flex: 'none' }}>{glyphFor(p.labelFor(id))}</span>
+            <span style={{ width: 34, height: 34, borderRadius: 'var(--g-r-md)', background: `color-mix(in srgb, ${PIN_TINT[i % 4]} 16%, var(--surface))`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: PIN_TINT[i % 4], fontSize: 11, fontWeight: 700, flex: 'none' }}>{glyphFor(p.labelFor(id))}</span>
             <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
               <span style={{ color: 'var(--text)', fontSize: 14, fontWeight: 600 }}>{p.labelFor(id)}</span>
               <span style={{ fontSize: 12, color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pinSub(id)}</span>

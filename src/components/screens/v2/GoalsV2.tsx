@@ -58,12 +58,12 @@ export default function GoalsV2() {
     const t = terms(g), step = nextStep(g);
     return (
       <section key={g.id} onClick={() => setOpenId(g.id)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') setOpenId(g.id); }}
-        style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 14, cursor: 'pointer', minWidth: 0 }}>
+        style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 14, cursor: 'pointer', minWidth: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
           <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, letterSpacing: '-0.015em', minWidth: 0 }}>{g.title}</span>
           <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{g.deadline ? `By ${shortDate(g.deadline)}` : 'No deadline'}</span>
         </div>
-        {t && <div style={{ padding: 12, borderRadius: 10, background: 'var(--surface-3)', color: 'var(--text)', fontSize: 14, lineHeight: 1.45 }}>{t}</div>}
+        {t && <div style={{ padding: 12, borderRadius: 'var(--g-r-md)', background: 'var(--surface-3)', color: 'var(--text)', fontSize: 14, lineHeight: 1.45 }}>{t}</div>}
         {p ? <Pace val={p.val} max={p.max} fill={p.fill} mark={p.mark} chip={p.chip} k={p.k} note={p.note} />
           : <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>No target yet. Open it to set one or lock in a path.</span>}
         {step && (

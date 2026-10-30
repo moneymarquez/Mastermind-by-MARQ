@@ -27,15 +27,15 @@ const inputStyle: CSSProperties = {
   color: 'var(--text)', fontSize: 'var(--text-body-lg)', outline: 'none',
 };
 const primaryBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 8,
+  display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 'var(--g-r-md)',
   background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer',
 };
 const ghostBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 8,
+  display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 'var(--g-r-md)',
   border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 'var(--text-body)', cursor: 'pointer',
 };
 const chip = (active: boolean): CSSProperties => ({
-  minHeight: 40, font: 'inherit', padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 'var(--text-body-sm)', fontWeight: 600, whiteSpace: 'nowrap',
+  minHeight: 40, font: 'inherit', padding: '7px 14px', borderRadius: 'var(--g-r-md)', cursor: 'pointer', fontSize: 'var(--text-body-sm)', fontWeight: 600, whiteSpace: 'nowrap',
   border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, color: active ? 'var(--text)' : 'var(--text-tertiary)',
   background: active ? 'var(--tint-active)' : 'transparent',
 });

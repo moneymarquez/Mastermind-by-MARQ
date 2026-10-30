@@ -127,13 +127,13 @@ export default function FitnessScreen({ homeHeadStyle, homeSubStyle }: Props) {
               style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 'var(--radius-pill)', background: generating ? 'var(--border)' : 'var(--text)', color: generating ? 'var(--text-secondary)' : 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: generating ? 'default' : 'pointer' }}
               onClick={() => !generating && generate('workout')}
             >
-              {generating === 'workout' ? 'Generating…' : '✨ AI workout plan'}
+              {generating === 'workout' ? 'Generating…' : 'AI workout plan'}
             </div>
             <div
               style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--text)', color: generating ? 'var(--text-tertiary)' : 'var(--text)', fontSize: 'var(--text-body)', fontWeight: 500, cursor: generating ? 'default' : 'pointer' }}
               onClick={() => !generating && generate('diet')}
             >
-              {generating === 'diet' ? 'Generating…' : '✨ AI diet plan'}
+              {generating === 'diet' ? 'Generating…' : 'AI diet plan'}
             </div>
           </div>
           {aiError && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--danger)', marginTop: 8 }}>{aiError}</div>}

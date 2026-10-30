@@ -40,7 +40,7 @@ export default function InboundTab() {
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14, alignItems: 'center' }}>
         <button style={btn('primary')} onClick={() => setAdding((v) => !v)}>＋ Lead</button>
-        <button style={btn('ghost')} disabled={busy} onClick={track}>{busy ? 'Tagging…' : '🏷️ Tag sources'}</button>
+        <button style={btn('ghost')} disabled={busy} onClick={track}>{busy ? 'Tagging…' : 'Tag sources'}</button>
         <div style={{ flex: 1 }} />
         <select aria-label="Show" style={{ ...field, width: 'auto' }} value={filter} onChange={(e) => setFilter(e.target.value as 'open' | 'all')}><option value="open">Open</option><option value="all">All</option></select>
       </div>
@@ -139,7 +139,7 @@ function FormSetup({ k, onMake }: { k: string | null; onMake: () => void }) {
         </>
       ) : (
         <>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: E.text, padding: 8, borderRadius: 6, background: E.sunk, overflowWrap: 'anywhere' }}>{url}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: E.text, padding: 8, borderRadius: 'var(--g-r-sm)', background: E.sunk, overflowWrap: 'anywhere' }}>{url}</div>
           <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
             <button style={btn('ghost')} onClick={() => copy('url', url)}>{copied === 'url' ? '✓ Copied' : 'Copy address'}</button>
             <button style={btn('ghost')} onClick={() => copy('html', snippet)}>{copied === 'html' ? '✓ Copied' : 'Copy HTML form'}</button>
@@ -149,7 +149,7 @@ function FormSetup({ k, onMake }: { k: string | null; onMake: () => void }) {
             <div style={{ fontSize: 'var(--text-caption)', color: E.muted, lineHeight: 1.5, marginTop: 4 }}>
               Paste the HTML form on your contact page, or point an existing form's action (Webflow, Framer, WordPress) at the address. It reads name, email, phone and message, plus UTM tags if your page passes them. The hidden <code>website_url</code> field catches bots. Keep the address private — anyone with it can post leads.
             </div>
-            <pre style={{ fontSize: 11, color: E.text, background: tint(E.accent, 6), borderRadius: 6, padding: 8, overflow: 'auto', marginTop: 6 }}>{snippet}</pre>
+            <pre style={{ fontSize: 11, color: E.text, background: tint(E.accent, 6), borderRadius: 'var(--g-r-sm)', padding: 8, overflow: 'auto', marginTop: 6 }}>{snippet}</pre>
           </details>
         </>
       )}

@@ -32,7 +32,7 @@ export interface Team { member_id: string; owner_id: string; owner_name: string;
 
 export const PRIORITY_LABEL: Record<number, string> = { 1: 'P1', 2: 'P2', 3: 'P3', 4: 'P4', 5: 'P5' };
 export const PRIORITY_WORD: Record<number, string> = { 1: 'Urgent', 2: 'High', 3: 'Normal', 4: 'Low', 5: 'Someday' };
-const PALETTE = ['#4f7cff', '#e0703a', '#2fa37a', '#b05ce0', '#d64b6a', '#2f9fbf', '#c9a227'];
+const PALETTE = ['#7F9CC7', '#C98E6A', '#6FAF92', '#A98FC0', '#C97D8E', '#79AFC2', '#C2A66A'];
 export function memberColor(m: Pick<DispatchMember, 'color' | 'id'> | null): string {
   if (!m) return 'var(--mm-ink)';
   if (m.color) return m.color;

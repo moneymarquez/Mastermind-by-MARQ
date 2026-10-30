@@ -52,7 +52,7 @@ function PortalMenu({ portal, sheet, onClose }: { portal: PortalNav; sheet: bool
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
-      <div role="menu" aria-label="Portals" className="mm-anim" style={{ position: 'absolute', top: 52, left: 10, right: 10, zIndex: 41, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 4, display: 'flex', flexDirection: 'column', gap: 2, boxShadow: '0 18px 50px -14px rgba(0,0,0,.5)', animation: 'mmPanelIn .15s ease' }}>
+      <div role="menu" aria-label="Portals" className="mm-anim" style={{ position: 'absolute', top: 52, left: 10, right: 10, zIndex: 41, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 4, display: 'flex', flexDirection: 'column', gap: 2, boxShadow: 'var(--g-shadow-3)', animation: 'mmPanelIn .15s ease' }}>
         {rows}
       </div>
     </>
@@ -142,13 +142,13 @@ export function ModulesGrid({ groups, onOpen }: { groups: ShellGroup[]; onOpen: 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
             {g.link && !g.items.length && (
               <button className="mm-tile" onClick={() => onOpen(g.link!.id)}>
-                <span style={{ width: 30, height: 30, borderRadius: 10, background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600 }}>CB</span>
+                <span style={{ width: 30, height: 30, borderRadius: 'var(--g-r-md)', background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600 }}>CB</span>
                 <span style={{ color: 'var(--text)', fontSize: 12.5, fontWeight: 500, lineHeight: 1.25 }}>{g.link.label}</span>
               </button>
             )}
             {g.items.map((m) => (
               <button key={m.id} className="mm-tile" onClick={() => !m.locked && onOpen(m.id)} aria-disabled={m.locked || undefined} style={m.locked ? { cursor: 'default', opacity: 0.7 } : undefined}>
-                <span style={{ width: 30, height: 30, borderRadius: 10, background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600 }}>{m.locked ? <GLock size={14} /> : m.glyph}</span>
+                <span style={{ width: 30, height: 30, borderRadius: 'var(--g-r-md)', background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600 }}>{m.locked ? <GLock size={14} /> : m.glyph}</span>
                 <span style={{ color: 'var(--text)', fontSize: 12.5, fontWeight: 500, lineHeight: 1.25 }}>{m.label}</span>
                 {m.locked && <Chip k="lock">Owner only</Chip>}
               </button>
@@ -185,7 +185,7 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
     const active = screen === m.id;
     return (
       <button key={m.id} className="mm-nav-row" data-active={active || undefined} aria-current={active ? 'page' : undefined} style={{ height: rowH }} onClick={() => onNav(m.id)}>
-        <span style={{ width: 20, height: 20, flex: 'none', borderRadius: 6, background: active ? 'var(--accent)' : 'var(--surface-3)', color: active ? 'var(--bg)' : 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8.5, fontWeight: 700, letterSpacing: '-0.02em' }}>{m.glyph}</span>
+        <span style={{ width: 20, height: 20, flex: 'none', borderRadius: 'var(--g-r-sm)', background: active ? 'var(--accent)' : 'var(--surface-3)', color: active ? 'var(--bg)' : 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8.5, fontWeight: 700, letterSpacing: '-0.02em' }}>{m.glyph}</span>
         <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.label}</span>
         {!!badges.screens?.[m.id] && <Badge n={badges.screens[m.id]} urgent={false} />}
       </button>
@@ -217,9 +217,9 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
       </div>
       {portalMenu && portal && <PortalMenu portal={portal} sheet={!!drawer} onClose={() => setPortalMenu(false)} />}
       {travel && isOwner && (
-        <button type="button" onClick={() => onNav('account-settings')} title="Travel mode is on. Tap to change it in Settings." style={{ alignSelf: 'flex-start', marginLeft: 6, height: 24, padding: '0 10px', borderRadius: 999, border: 0, background: 'color-mix(in srgb, var(--accent) 18%, transparent)', color: 'var(--accent)', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>✈ Travel mode</button>
+        <button type="button" onClick={() => onNav('account-settings')} title="Travel mode is on. Tap to change it in Settings." style={{ alignSelf: 'flex-start', marginLeft: 6, height: 24, padding: '0 10px', borderRadius: 999, border: 0, background: 'color-mix(in srgb, var(--accent) 18%, transparent)', color: 'var(--accent)', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>Travel mode</button>
       )}
-      <button onClick={() => { drawer?.onClose(); onSearch(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, height: rowH, padding: '0 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-tertiary)', fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit' }}>
+      <button onClick={() => { drawer?.onClose(); onSearch(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, height: rowH, padding: '0 10px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-tertiary)', fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit' }}>
         <GSearch size={15} /><span style={{ flex: 1, textAlign: 'left' }}>Search</span>
         {device === 'desktop' && <Kbd>⌘K</Kbd>}
       </button>
@@ -278,7 +278,7 @@ export function AppTopBar({ device, left, right, crumb, dark, novaOpen, bellDot,
         <span style={{ color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{crumb.label}</span>
       </nav>
       {device === 'desktop' && (
-        <button onClick={onSearch} style={{ display: 'flex', alignItems: 'center', gap: 8, width: 220, height: 36, padding: '0 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text-tertiary)', fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit' }}>
+        <button onClick={onSearch} style={{ display: 'flex', alignItems: 'center', gap: 8, width: 220, height: 36, padding: '0 10px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text-tertiary)', fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit' }}>
           <GSearch size={15} /><span style={{ flex: 1, textAlign: 'left' }}>Search everything</span><Kbd>⌘K</Kbd>
         </button>
       )}
@@ -301,7 +301,7 @@ export function NotificationsPanel({ device, items, isRead, onOpen, onMarkAll, o
   return (
     <>
       <div onClick={onClose} style={{ position: phone ? 'fixed' : 'absolute', inset: 0, zIndex: 70, background: phone ? 'var(--mm-scrim)' : 'transparent' }} />
-      <div role="dialog" aria-label="Notifications" className="mm-anim" style={{ ...panel, zIndex: 71, display: 'flex', flexDirection: 'column', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, boxShadow: '0 24px 60px -18px rgba(0,0,0,.55)', animation: 'mmPanelIn .15s ease', overflow: 'hidden' }}>
+      <div role="dialog" aria-label="Notifications" className="mm-anim" style={{ ...panel, zIndex: 71, display: 'flex', flexDirection: 'column', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', boxShadow: 'var(--g-shadow-3)', animation: 'mmPanelIn .15s ease', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', padding: '14px 14px 10px' }}>
           <span style={{ flex: 1, color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>Notifications</span>
           {items.some((i) => !isRead(i.id)) && <button onClick={onMarkAll} style={{ border: 0, background: 'transparent', color: 'var(--accent)', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Mark all read</button>}
@@ -349,7 +349,7 @@ export function SearchPalette({ groups, onOpen, onClose }: { groups: ShellGroup[
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'var(--mm-scrim)' }} />
-      <div role="dialog" aria-label="Search" className="mm-anim" style={{ position: 'fixed', zIndex: 81, left: '50%', top: 'max(12vh, calc(env(safe-area-inset-top) + 16px))', transform: 'translateX(-50%)', width: 'min(560px, calc(100vw - 32px))', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 24px 60px -18px rgba(0,0,0,.6)', animation: 'mmPanelIn .15s ease' }}>
+      <div role="dialog" aria-label="Search" className="mm-anim" style={{ position: 'fixed', zIndex: 81, left: '50%', top: 'max(12vh, calc(env(safe-area-inset-top) + 16px))', transform: 'translateX(-50%)', width: 'min(560px, calc(100vw - 32px))', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', boxShadow: 'var(--g-shadow-3)', animation: 'mmPanelIn .15s ease' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', borderBottom: '1px solid var(--border)' }}>
           <GSearch size={17} color="var(--text-tertiary)" />
           <input ref={ref} value={q} onChange={(e) => { setQ(e.target.value); setSel(0); }} placeholder="Search modules"
@@ -372,9 +372,9 @@ export function SearchPalette({ groups, onOpen, onClose }: { groups: ShellGroup[
 
 // ── Bits ──────────────────────────────────────────────────────────────
 export function Logo({ size = 30 }: { size?: number }) {
-  return <span aria-hidden="true" className="mm-logo" style={{ width: size, height: size, flex: 'none', borderRadius: 8, background: 'var(--surface-3)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)', fontSize: size * 0.42, fontWeight: 700, boxSizing: 'border-box' }}>M</span>;
+  return <span aria-hidden="true" className="mm-logo" style={{ width: size, height: size, flex: 'none', borderRadius: 'var(--g-r-md)', background: 'var(--surface-3)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)', fontSize: size * 0.42, fontWeight: 700, boxSizing: 'border-box' }}>M</span>;
 }
-function Kbd({ children }: { children: string }) { return <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 6px', borderRadius: 4, border: '1px solid var(--border)', color: 'var(--text-tertiary)' }}>{children}</span>; }
+function Kbd({ children }: { children: string }) { return <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 6px', borderRadius: 'var(--g-r-xs)', border: '1px solid var(--border)', color: 'var(--text-tertiary)' }}>{children}</span>; }
 function Dot({ top, right }: { top: number; right: number }) { return <span style={{ position: 'absolute', top, right, width: 7, height: 7, borderRadius: '50%', background: 'var(--danger)', border: '1.5px solid var(--bg)' }} />; }
 export function Badge({ n, urgent }: { n: number; urgent: boolean }) {
   return <span style={{ minWidth: 18, height: 18, padding: '0 5px', boxSizing: 'border-box', borderRadius: 999, background: urgent ? 'var(--danger)' : 'var(--accent)', color: 'var(--bg)', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{n > 99 ? '99+' : n}</span>;
