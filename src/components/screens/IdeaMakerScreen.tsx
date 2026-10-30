@@ -48,16 +48,16 @@ export default function IdeaMakerScreen(_: Props) {
     </Card>
   );
   const thread = cur && (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 18 : 20, display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
         <span style={{ color: 'var(--text)', fontSize: 17, fontWeight: 600, letterSpacing: '-0.02em' }}>{cur.idea_text}</span>
         <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>Thread · {day(cur.created_at)}</span>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {I.messages.map((m) => m.from_role === 'user'
-          ? <div key={m.id} style={{ alignSelf: 'flex-end', maxWidth: '85%', padding: '10px 14px', borderRadius: 14, background: 'var(--text)', color: 'var(--bg)', fontSize: 15, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{m.text}</div>
-          : <div key={m.id} style={{ alignSelf: 'flex-start', maxWidth: '92%', padding: '12px 14px', borderRadius: 14, background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}><NovaMark title={assistantName} /><span style={{ fontSize: 15, lineHeight: 1.55, color: 'var(--text)', whiteSpace: 'pre-wrap' }}>{m.text}</span></div>)}
-        {I.thinking && <div style={{ alignSelf: 'flex-start', padding: '10px 14px', borderRadius: 14, background: 'var(--surface-2)', border: '1px solid var(--border)', fontSize: 14, color: 'var(--text-tertiary)' }}>{assistantName} is thinking…</div>}
+          ? <div key={m.id} style={{ alignSelf: 'flex-end', maxWidth: '85%', padding: '10px 14px', borderRadius: 'var(--g-r-lg)', background: 'var(--text)', color: 'var(--bg)', fontSize: 15, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{m.text}</div>
+          : <div key={m.id} style={{ alignSelf: 'flex-start', maxWidth: '92%', padding: '12px 14px', borderRadius: 'var(--g-r-lg)', background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}><NovaMark title={assistantName} /><span style={{ fontSize: 15, lineHeight: 1.55, color: 'var(--text)', whiteSpace: 'pre-wrap' }}>{m.text}</span></div>)}
+        {I.thinking && <div style={{ alignSelf: 'flex-start', padding: '10px 14px', borderRadius: 'var(--g-r-lg)', background: 'var(--surface-2)', border: '1px solid var(--border)', fontSize: 14, color: 'var(--text-tertiary)' }}>{assistantName} is thinking…</div>}
         <div ref={end} />
       </div>
       {ai === false ? <AiOffCard text="Idea Maker talks with Nova, so it's paused until AI is connected. Your saved threads are all here." /> : (

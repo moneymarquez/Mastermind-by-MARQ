@@ -70,7 +70,7 @@ export default function BrainDumpScreen() {
     <Page title="Brain Dump" sub="Drop a file or paste anything. It's filed, and anything actionable becomes tasks, goals and settings after you check it.">
       <Tabs tabs={[{ id: 'brain', label: 'Brain' }, { id: 'dump', label: 'Brain Dump' }]} value="dump" onChange={(t) => { if (t === 'brain') nav('brain'); }} />
       <Card title="Drop it here">
-        <div onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={onDrop} style={{ border: `2px dashed ${drag ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={onDrop} style={{ border: `2px dashed ${drag ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 'var(--g-r-lg)', padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <textarea style={{ ...field, height: 140, padding: 12, resize: 'vertical' }} value={text} placeholder="Paste notes, a chat, or the Masterminds Import block your AI gave you…" onChange={(e) => setText(e.target.value)} />
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <label className="mm-btn" style={{ height: 40, display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>{file ? file.name : 'Choose a file (.md .txt .pdf .docx .json)'}<input type="file" accept={ACCEPT} style={{ display: 'none' }} onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>

@@ -39,8 +39,8 @@ export default function EngineBar({ domain, onDecided }: { domain: 'content' | '
   return (
     <>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-        <button style={{ ...btn('ghost'), padding: '6px 10px' }} onClick={() => { void ap.reload(); setOpen('alerts'); }} title="Alerts">🔔{dot(unread, E.red)}</button>
-        <button style={{ ...btn('ghost'), padding: '6px 10px' }} onClick={() => setOpen('cost')} title="Cost"><span>💲</span><span style={{ fontFamily: 'var(--font-mono)' }}>{money(spend.today)}</span></button>
+        <button style={{ ...btn('ghost'), padding: '6px 10px' }} onClick={() => { void ap.reload(); setOpen('alerts'); }} title="Alerts">Alerts{dot(unread, E.red)}</button>
+        <button style={{ ...btn('ghost'), padding: '6px 10px' }} onClick={() => setOpen('cost')} title="Cost"><span>Spend</span><span style={{ fontFamily: 'var(--font-mono)' }}>{money(spend.today)}</span></button>
         <button style={{ ...btn('ghost'), padding: '6px 10px' }} onClick={() => { void ap.reload(); setOpen('approvals'); }}>Approvals{dot(pending, E.amber)}</button>
         <button style={{ ...btn('primary'), padding: '6px 12px' }} onClick={() => setOpen('command')}>＋ Command</button>
       </div>

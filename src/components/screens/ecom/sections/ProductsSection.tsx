@@ -49,7 +49,7 @@ export default function ProductsSection({ approvals, brands, clients, search, on
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <div style={{ ...label, marginBottom: 8 }}>Your products</div>
-        <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: 14, minWidth: 0 }}>
+        <div style={{ background: E.bg, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', color: E.text, padding: 14, minWidth: 0 }}>
           <BrandsTab api={brands} clients={clients} search={search} openBrandId={openBrandId} onOpenBrand={setOpenBrandId} newBrandOpen={false} onCloseNewBrand={() => {}} />
         </div>
       </div>
@@ -61,7 +61,7 @@ export default function ProductsSection({ approvals, brands, clients, search, on
             {showApprovals ? 'Hide approvals' : `Approvals${waiting ? ` · ${waiting} waiting` : ''}`}
           </button>
         </div>
-        <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: 14, minWidth: 0 }}>
+        <div style={{ background: E.bg, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', color: E.text, padding: 14, minWidth: 0 }}>
           <ProductSheetsTab search={search} onBuildBrand={onBuildBrand} statusOf={statusOf} onOpenApprovals={openApprovals} />
         </div>
       </div>
@@ -69,7 +69,7 @@ export default function ProductsSection({ approvals, brands, clients, search, on
       {showApprovals && (
         <div id="ecom-approvals" style={{ scrollMarginTop: 80 }}>
           <div style={{ ...label, marginBottom: 8 }}>Approvals{waiting ? ` · ${waiting} waiting on you` : ''}</div>
-          <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: 14, minWidth: 0 }}>
+          <div style={{ background: E.bg, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', color: E.text, padding: 14, minWidth: 0 }}>
             <ApprovalsTab api={ecomApprovals} onDecided={onDecided} />
           </div>
         </div>

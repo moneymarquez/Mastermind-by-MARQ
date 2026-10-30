@@ -69,7 +69,7 @@ function Avatar({ a, size = 40 }: { a: SocialAccount; size?: number }) {
   const p = PLATFORM[a.platform];
   return a.avatar_url
     ? <img src={a.avatar_url} alt="" style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-    : <div style={{ width: size, height: size, borderRadius: '50%', background: p.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: size * 0.34, flexShrink: 0 }}>{p.short}</div>;
+    : <div style={{ width: size, height: size, borderRadius: '50%', background: p.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: size * 0.34, flexShrink: 0 }}>{p.short}</div>;
 }
 
 function AccountCard({ a, api, items, today, onOpen, onLog, onOpenPlan }: { a: SocialAccount; api: Api; items: ContentItem[]; today: string; onOpen: () => void; onLog: () => void; onOpenPlan: () => void }) {

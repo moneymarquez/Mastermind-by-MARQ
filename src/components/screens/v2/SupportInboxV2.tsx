@@ -65,9 +65,9 @@ export default function SupportInboxV2({ onOpenClient }: { onOpenClient: (id: st
 
   return (
     <Page title="Support Inbox" sub="Mail, portal tickets and questions">
-      {phone ? <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>{cur ? detail : listPane}</section> : (
+      {phone ? <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>{cur ? detail : listPane}</section> : (
         <>
-          <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', height: 'calc(100vh - 330px)', minHeight: 560, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', minWidth: 0 }}>{listPane}{detail}</section>
+          <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', height: 'calc(100vh - 330px)', minHeight: 560, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', minWidth: 0 }}>{listPane}{detail}</section>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 16 }}>
             <Stat label="Open" value={String(open.length)} pill={`${open.filter((m) => m.unread).length} unread`} k={open.some((m) => m.unread) ? 'warn' : 'neutral'} />
             <Stat label="Drafts ready" value={String(counts.drafts)} pill="Waiting on Send" />

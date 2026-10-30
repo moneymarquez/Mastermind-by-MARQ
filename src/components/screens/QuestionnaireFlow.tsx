@@ -74,7 +74,7 @@ export default function QuestionnaireFlow<T extends Row>({
                 const done = row.status === 'complete';
                 return (
                   <section key={row.id} role="button" tabIndex={0} onClick={() => setActiveId(row.id)} onKeyDown={(e) => { if (e.key === 'Enter') setActiveId(row.id); }}
-                    style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column', gap: 12, cursor: 'pointer' }}>
+                    style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 12, cursor: 'pointer' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
                       <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, minWidth: 0 }}>{itemLabel(row)}</span>
                       <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
@@ -128,7 +128,7 @@ export default function QuestionnaireFlow<T extends Row>({
     <Page title={itemLabel(active)} sub={`${title} · step ${step + 1} of ${questions.length}`}>
       <button className="mm-btn" style={{ alignSelf: 'flex-start' }} onClick={() => setActiveId(null)}>‹ All</button>
       <div style={{ height: 8, borderRadius: 999, background: 'var(--surface-3)', overflow: 'hidden', maxWidth: 720 }}><div style={{ width: `${((step + 1) / questions.length) * 100}%`, height: '100%', background: 'var(--accent)', borderRadius: 999 }} /></div>
-      <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 24, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 720 }}>
+      <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 18 : 24, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 720 }}>
         {q.phase && <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)' }}>{q.phase}</span>{q.priority && <Chip k={/crit/i.test(q.priority) ? 'warn' : 'neutral'}>{q.priority[0].toUpperCase() + q.priority.slice(1).toLowerCase()}</Chip>}</div>}
         <span style={{ color: 'var(--text)', fontSize: phone ? 19 : 22, fontWeight: 600, letterSpacing: '-0.025em', lineHeight: 1.3 }}>{q.prompt}</span>
         <textarea value={draft} onChange={(e) => setDraft(e.target.value)} autoFocus style={{ ...area, height: 140, fontSize: 16 }} />

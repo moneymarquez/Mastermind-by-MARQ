@@ -90,7 +90,7 @@ function BrandCard({ b, health, orders, products, clientName, onOpen }: { b: Bra
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
         {b.logo_url
           ? <img src={b.logo_url} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover', border: `1px solid ${E.border}`, flexShrink: 0 }} />
-          : <div style={{ width: 44, height: 44, borderRadius: 10, background: tint(E.accent, 16), color: E.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, flexShrink: 0 }}>{b.name.slice(0, 2).toUpperCase()}</div>}
+          : <div style={{ width: 44, height: 44, borderRadius: 10, background: tint(E.accent, 16), color: E.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, flexShrink: 0 }}>{b.name.slice(0, 2).toUpperCase()}</div>}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ fontWeight: 700, fontSize: 'var(--text-subhead)', color: E.text }}>{b.name}</span>

@@ -152,7 +152,7 @@ export default function BudgetOverview({ device, b, monthKey, setMonthKey, onAdd
       <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderTop: '1px solid var(--grid)', fontSize: 13, fontWeight: 500 }}><span>Still to pay this month</span><span style={{ color: 'var(--text)' }}>{money(stillToPay)}</span></div>
     </Card>
   ) : (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px' }}>
         <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>Bills</span>{filterPills}
         <span style={{ marginLeft: 'auto', fontSize: 13, color: 'var(--text-secondary)' }}>Still to pay <span style={{ color: 'var(--text)', fontWeight: 600 }}>{money(stillToPay)}</span></span>
@@ -208,7 +208,7 @@ function AddSheet({ phone, b, onClose }: { phone: boolean; b: ReturnType<typeof 
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'var(--mm-scrim)' }} />
-      <div role="dialog" aria-label="Add expense" style={{ position: 'fixed', zIndex: 91, ...(phone ? { left: 0, right: 0, bottom: 0, borderRadius: '16px 16px 0 0', paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' } : { left: '50%', top: '18vh', transform: 'translateX(-50%)', width: 420, borderRadius: 16 }), background: 'var(--surface)', border: '1px solid var(--border)', padding: 18, display: 'flex', flexDirection: 'column', gap: 12, boxSizing: 'border-box' }}>
+      <div role="dialog" aria-label="Add expense" style={{ position: 'fixed', zIndex: 91, ...(phone ? { left: 0, right: 0, bottom: 0, borderRadius: '16px 16px 0 0', paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' } : { left: '50%', top: '18vh', transform: 'translateX(-50%)', width: 420, borderRadius: 'var(--g-r-lg)' }), background: 'var(--surface)', border: '1px solid var(--border)', padding: 18, display: 'flex', flexDirection: 'column', gap: 12, boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}><span style={{ flex: 1, color: 'var(--text)', fontSize: 17, fontWeight: 600 }}>Add expense</span><button aria-label="Close" onClick={onClose} style={{ ...navBtn, width: 34, height: 34 }}><GClose size={16} /></button></div>
         <input autoFocus inputMode="decimal" placeholder="$0.00" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ ...field, height: 56, fontSize: 26, fontWeight: 600 }} />
         <input placeholder="What was it?" value={what} onChange={(e) => setWhat(e.target.value)} style={field} />

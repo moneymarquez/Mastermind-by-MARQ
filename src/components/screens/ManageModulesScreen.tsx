@@ -106,7 +106,7 @@ function Group({ title, meta, children }: { title: string; meta: string; childre
         <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{title}</span>
         <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)' }}>{meta}</span>
       </div>
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>{children}</div>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>{children}</div>
     </div>
   );
 }

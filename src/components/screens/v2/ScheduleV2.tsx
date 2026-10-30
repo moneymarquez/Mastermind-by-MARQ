@@ -127,7 +127,7 @@ export default function ScheduleV2() {
     <Card title="Shift hours" meta="Last 6 weeks" wide={!phone}><Bars vals={weekly.map((v) => Math.round(v * 10) / 10)} labels={sixWeeks.map((w) => `${parseYmd(w).getMonth() + 1}/${parseYmd(w).getDate()}`)} pre="" suf="h" /></Card>
   );
   const calendar = (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 12 : 16, minWidth: 0 }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 12 : 16, minWidth: 0 }}>
       <CalendarView ref={cal} events={E.events} defaultType="holiday" searchContacts={searchContacts} upsertContact={upsertContact} addEvent={E.addEvent} addHolidayEvents={E.addHolidayEvents} updateEvent={E.updateEvent} deleteEvent={E.deleteEvent} />
     </div>
   );

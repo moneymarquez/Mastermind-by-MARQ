@@ -70,7 +70,7 @@ function DayCard({ phone, calls, goal, done, total, streak, onOpen }: { phone: b
   const shown = [cv, dv, sv];
   const pct = Math.round((rows.reduce((a, r) => a + (r.of ? Math.min(1, r.v / r.of) : 0), 0) / 3) * 100);
   return (
-    <section style={{ position: 'relative', overflow: 'hidden', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: 'var(--card-shadow)' }}>
+    <section style={{ position: 'relative', overflow: 'hidden', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 18 : 20, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: 'var(--card-shadow)' }}>
       <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
         <div style={{ position: 'absolute', width: '70%', height: '140%', left: '-20%', top: '-60%', borderRadius: '50%', background: 'radial-gradient(closest-side, color-mix(in srgb, var(--accent) 22%, transparent), transparent)', animation: 'mmAurora 14s ease-in-out infinite' }} />
         <div style={{ position: 'absolute', width: '60%', height: '120%', right: '-18%', bottom: '-70%', borderRadius: '50%', background: 'radial-gradient(closest-side, color-mix(in srgb, var(--cat-3) 16%, transparent), transparent)', animation: 'mmAurora 18s ease-in-out infinite reverse' }} />

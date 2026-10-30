@@ -170,7 +170,7 @@ export default function EcomScreen({ section = 'overview' }: Props) {
               const c = counts(x.id);
               const extra = x.id === 'products' ? counters.pendingApprovals : 0;
               return (
-                <button key={x.id} className="mm-btn" onClick={() => nav(x.screen)} style={{ height: 'auto', padding: 14, borderRadius: 14, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, textAlign: 'left' }}>
+                <button key={x.id} className="mm-btn" onClick={() => nav(x.screen)} style={{ height: 'auto', padding: 14, borderRadius: 'var(--g-r-lg)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, textAlign: 'left' }}>
                   <span style={{ display: 'flex', gap: 6, alignItems: 'center', width: '100%' }}>
                     <span style={{ fontWeight: 600, fontSize: 15, flex: 1 }}>{x.label}</span>
                     {c.red > 0 && <Badge color={E.red}>{c.red}</Badge>}
@@ -185,10 +185,10 @@ export default function EcomScreen({ section = 'overview' }: Props) {
           <EcomOverview brands={brands.brands} orders30d={brands.orders30d} approvals={approvals.approvals} onOpenBrand={(id) => openInStores(id)} onOpenApprovals={() => { try { sessionStorage.setItem('ecom-open-approvals', '1'); } catch { /* fine */ } nav('ecom-products'); }} />
         </>
       )}
-      {section === 'approvals' && <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: phone ? 14 : 16 }}><ApprovalsTab api={approvals} onDecided={refreshAll} /></div>}
+      {section === 'approvals' && <div style={{ background: E.bg, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', color: E.text, padding: phone ? 14 : 16 }}><ApprovalsTab api={approvals} onDecided={refreshAll} /></div>}
       {section === 'products' && <ProductsSection approvals={approvals} brands={brands} clients={clients.clients} search={search} onBuildBrand={buildBrand} onDecided={refreshAll} />}
       {section === 'stores' && (
-        <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: phone ? 14 : 20, minWidth: 0 }}>
+        <div style={{ background: E.bg, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', color: E.text, padding: phone ? 14 : 20, minWidth: 0 }}>
           <StoresSection api={brands} clients={clients.clients} search={search} openBrandId={openBrandId} onOpenBrand={setOpenBrandId} newBrandOpen={newBrandOpen} onCloseNewBrand={() => setNewBrandOpen(false)} />
         </div>
       )}

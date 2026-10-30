@@ -137,7 +137,7 @@ export default function AccountSettingsScreen({ onSignOut, onStartTour, theme, o
   const group = (title: string, rows: R[]) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', paddingLeft: 2 }}>{title}</span>
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>
         {rows.filter((r) => !r.hide).map((r, i) => (
           <button key={r.l} onClick={r.on} className="mm-dash-tr" style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', minHeight: 50, padding: '0 14px', border: 0, borderTop: i ? '1px solid var(--grid)' : 'none', background: 'transparent', fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left' }}>
             <span style={{ flex: 1, color: r.danger ? 'var(--danger)' : 'var(--text)', fontSize: 15, fontWeight: 500, letterSpacing: '-0.01em' }}>{r.l}</span>
