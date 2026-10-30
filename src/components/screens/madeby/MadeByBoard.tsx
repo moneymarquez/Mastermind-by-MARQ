@@ -108,10 +108,10 @@ export default function MadeByBoard({ onOpenClient, canOpen }: Props) {
     const nx = nextJourneyStep(n);
     return (
       <div key={c.id} draggable={!phone} onDragStart={(e) => { setDrag(c.id); e.dataTransfer.setData('text/plain', c.id); }} onDragEnd={() => { setDrag(null); setOver(null); }}
-        style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 12px', borderRadius: 'var(--g-r-lg)', background: 'var(--surface)', border: `1px solid ${ring === 'red' ? 'var(--danger)' : ring === 'amber' ? 'var(--warning)' : 'var(--border)'}`, opacity: drag === c.id ? 0.5 : 1, cursor: phone ? 'default' : 'grab', minWidth: 0 }}>
+        style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 11px', borderRadius: 'var(--g-r-md)', background: 'var(--g-s1)', border: `1px solid ${ring === 'red' ? 'color-mix(in srgb, var(--danger) 42%, var(--border))' : ring === 'amber' ? 'color-mix(in srgb, var(--warning) 42%, var(--border))' : 'var(--border)'}`, boxShadow: ring ? `var(--g-shadow-1), inset 2px 0 0 ${ring === 'red' ? 'var(--danger)' : 'var(--warning)'}` : 'var(--g-shadow-1)', opacity: drag === c.id ? 0.5 : 1, cursor: phone ? 'default' : 'grab', minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, minWidth: 0 }}>
-          <button onClick={() => onOpenClient(c.id)} style={{ all: 'unset', cursor: 'pointer', flex: 1, minWidth: 0, color: 'var(--text)', fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.business_name}</button>
-          {nx && <button className="mm-btn" style={{ height: 24, padding: '0 7px', fontSize: 11.5, flex: 'none' }} title={`Move to step ${nx}`} aria-label={`Move ${c.business_name} to step ${nx}`} onClick={() => void moveTo(c.id, nx)}>→ {nx}</button>}
+          <button onClick={() => onOpenClient(c.id)} style={{ all: 'unset', cursor: 'pointer', flex: 1, minWidth: 0, color: 'var(--text)', fontSize: 13.5, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{c.business_name}</button>
+          {nx && <button className="mm-btn" style={{ height: 22, padding: '0 6px', fontSize: 11, flex: 'none', borderRadius: 'var(--g-r-sm)', boxShadow: 'none', fontFamily: 'var(--g-mono)', color: 'var(--text-secondary)' }} title={`Move to step ${nx}`} aria-label={`Move ${c.business_name} to step ${nx}`} onClick={() => void moveTo(c.id, nx)}>→ {nx}</button>}
         </div>
         <button onClick={() => onOpenClient(c.id)} style={{ all: 'unset', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
           <span style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -125,15 +125,15 @@ export default function MadeByBoard({ onOpenClient, canOpen }: Props) {
           const mine = metrics.filter((x) => x.client_id === c.id);
           const sc = scorecard(mine.find((x) => x.kind === 'baseline'), [...mine].reverse().find((x) => x.kind === 'snapshot'));
           return (
-            <button onClick={() => onOpenClient(c.id, 'scorecard')} style={{ all: 'unset', cursor: 'pointer', display: 'flex', gap: 6, flexWrap: 'wrap' }} aria-label={`Scorecard for ${c.business_name}`}>
+            <button onClick={() => onOpenClient(c.id, 'scorecard')} style={{ all: 'unset', cursor: 'pointer', display: 'flex', gap: 6, flexWrap: 'wrap', minWidth: 0, maxWidth: '100%', overflow: 'hidden' }} aria-label={`Scorecard for ${c.business_name}`}>
               {sc.weakest ? <Chip k="warn">Weakest: {sc.weakest.m.label}</Chip> : <Chip k={sc.hasBaseline ? 'good' : 'neutral'}>{sc.hasBaseline ? 'On target' : 'No baseline yet'}</Chip>}
             </button>
           );
         })()}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {SCORECARD_STEPS.has(n) && <button className="mm-btn" style={{ height: 28, padding: '0 10px', fontSize: 12 }} onClick={() => onOpenClient(c.id, 'scorecard')}>Scorecard</button>}
-          <button className="mm-btn" style={{ height: 28, padding: '0 10px', fontSize: 12 }} onClick={() => onOpenClient(c.id, 'portal')}>Portal</button>
-          <button className="mm-btn" style={{ height: 28, padding: '0 10px', fontSize: 12 }} onClick={() => onOpenClient(c.id, 'comms')}>Comms</button>
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', paddingTop: 6, marginTop: 2, borderTop: '1px solid var(--g-line)' }}>
+          {SCORECARD_STEPS.has(n) && <button className="mm-btn" style={cardBtn} onClick={() => onOpenClient(c.id, 'scorecard')}>Scorecard</button>}
+          <button className="mm-btn" style={cardBtn} onClick={() => onOpenClient(c.id, 'portal')}>Portal</button>
+          <button className="mm-btn" style={cardBtn} onClick={() => onOpenClient(c.id, 'comms')}>Comms</button>
         </div>
       </div>
     );
@@ -142,9 +142,9 @@ export default function MadeByBoard({ onOpenClient, canOpen }: Props) {
   const head = (s: (typeof JOURNEY_STEPS)[number], count: number) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ width: 22, height: 22, flex: 'none', borderRadius: 'var(--g-r-sm)', background: 'var(--text)', color: 'var(--bg)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.n}</span>
-        <span style={{ flex: 1, minWidth: 0, color: 'var(--text)', fontSize: 14, fontWeight: 600, lineHeight: 1.25 }}>{s.label}</span>
-        <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)' }}>{count}</span>
+        <span style={{ width: 20, height: 20, flex: 'none', borderRadius: 'var(--g-r-sm)', background: 'var(--g-s3)', boxShadow: 'inset 0 0 0 1px var(--g-line-2)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 500, fontFamily: 'var(--g-mono)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.n}</span>
+        <span style={{ flex: 1, minWidth: 0, color: 'var(--text)', fontSize: 13.5, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.25 }}>{s.label}</span>
+        <span style={{ fontSize: 12, fontWeight: 500, fontFamily: 'var(--g-mono)', color: 'var(--text-tertiary)' }}>{count}</span>
       </div>
       <span style={{ fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.35 }}>{s.goal}</span>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -177,14 +177,14 @@ export default function MadeByBoard({ onOpenClient, canOpen }: Props) {
         </div>
       ) : (
         // iPad / desktop: one column per step; drag a card to move it (steps with a delivery phase).
-        <div className="mm-scroll-x" style={{ display: 'grid', gridTemplateColumns: `repeat(${JOURNEY_STEPS.length}, minmax(164px, 1fr))`, gap: 10, overflowX: 'auto', alignItems: 'start', paddingBottom: 4 }}>
+        <div className="mm-scroll-x" style={{ display: 'grid', gridTemplateColumns: `repeat(${JOURNEY_STEPS.length}, minmax(196px, 1fr))`, gap: 10, overflowX: 'auto', alignItems: 'start', paddingBottom: 4 }}>
           {JOURNEY_STEPS.map((s) => { const here = byStep(s.n); const droppable = phaseForStep(s.n) != null; return (
             <section key={s.n} aria-label={`Step ${s.n}: ${s.label}`}
               onDragOver={droppable ? (e) => { e.preventDefault(); setOver(s.n); } : undefined} onDragLeave={() => setOver(null)}
               onDrop={droppable ? (e) => { e.preventDefault(); setOver(null); const id = drag ?? e.dataTransfer.getData('text/plain'); if (id) void moveTo(id, s.n); setDrag(null); } : undefined}
-              style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 10, borderRadius: 14, minHeight: 320, minWidth: 0, background: 'var(--surface-2)', border: `1px solid ${over === s.n ? 'var(--accent)' : 'var(--border)'}`, transition: 'border-color .15s' }}>
+              style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 10, borderRadius: 'var(--g-r-lg)', minHeight: 320, minWidth: 0, background: over === s.n ? 'var(--g-accent-soft)' : 'var(--g-bg-raised)', border: `1px solid ${over === s.n ? 'var(--g-accent-line)' : 'var(--g-line)'}`, transition: 'border-color var(--g-d2) var(--g-ease), background-color var(--g-d2) var(--g-ease)' }}>
               {head(s, here.length)}
-              <div style={{ height: 1, background: 'var(--grid)', margin: '2px 0' }} />
+              <div style={{ height: 1, background: 'var(--g-line)', margin: '2px 0' }} />
               {here.map(card)}
               {!here.length && !loading && <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)', padding: '6px 2px' }}>{droppable ? 'Drop a client here.' : emptyText(s)}</span>}
             </section>
@@ -204,4 +204,5 @@ export default function MadeByBoard({ onOpenClient, canOpen }: Props) {
 const emptyText = (s: (typeof JOURNEY_STEPS)[number]) => (s.checks ? 'A review for every client in steps 4–8, not a place clients sit.' : s.n === 1 ? 'New leads: work them from the Call list.' : s.phases.length ? 'No clients on this step.' : 'Deals in discovery, analysis or proposal.');
 /** Steps whose cards show the client scorecard (Baseline, Prove & Renew). */
 const SCORECARD_STEPS = new Set<number>([3, 8]);
-const toolBtn: CSSProperties = { height: 26, padding: '0 9px', fontSize: 12, borderRadius: 999 };
+const toolBtn: CSSProperties = { height: 24, padding: '0 8px', fontSize: 11.5, borderRadius: 'var(--g-r-sm)', boxShadow: 'none', color: 'var(--text-secondary)' };
+const cardBtn: CSSProperties = { height: 26, padding: '0 9px', fontSize: 12, borderRadius: 'var(--g-r-sm)', boxShadow: 'none', background: 'transparent', color: 'var(--text-secondary)' };
