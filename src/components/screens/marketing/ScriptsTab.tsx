@@ -115,7 +115,7 @@ export default function ScriptsTab() {
                 {st.meetings + st.closes > 0 && <Metric label="Meetings+" value={String(st.meetings + st.closes)} />}
               </div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {(s.channel === 'call' || s.channel === 'voicemail') && <button style={btn('primary')} onClick={() => setDialer(s)}>🎧 Dialer mode</button>}
+                {(s.channel === 'call' || s.channel === 'voicemail') && <button style={btn('primary')} onClick={() => setDialer(s)}>Dialer mode</button>}
                 <button style={btn('ghost')} onClick={() => setEditing(s)}>Edit</button>
                 {(s.channel === 'email' || s.channel === 'dm' || s.channel === 'landing') && <button style={btn('ghost')} onClick={() => navigator.clipboard?.writeText(s.body)}>Copy</button>}
               </div>

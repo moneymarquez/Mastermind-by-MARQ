@@ -64,7 +64,7 @@ export default function CommsThread({ who, compact }: { who: Who; compact?: bool
             </div>
             {m.subject && <div style={{ fontWeight: 600, fontSize: 14 }}>{m.subject}</div>}
             <div style={{ fontSize: 14, whiteSpace: 'pre-wrap' }}>{m.body}</div>
-            {m.attachments?.length > 0 && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>📎 {m.attachments.map((a) => a.name).join(', ')}</div>}
+            {m.attachments?.length > 0 && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Attached: {m.attachments.map((a) => a.name).join(', ')}</div>}
             {m.error && <div style={{ fontSize: 12, color: 'var(--danger)' }}>{m.error}</div>}
           </div>
         ))}
@@ -78,7 +78,7 @@ export default function CommsThread({ who, compact }: { who: Who; compact?: bool
         </div>
         {channel === 'email' && <input style={field} placeholder="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} />}
         <textarea style={{ ...field, height: 90, padding: 10 }} placeholder={channel === 'email' ? `Email to ${who.email ?? '—'}` : `Text to ${who.phone ?? '—'}`} value={body} onChange={(e) => setBody(e.target.value)} />
-        {attach.length > 0 && <div style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>📎 {attach.map((id) => docs.find((d) => d.id === id)?.title).join(', ')} <button className="mm-btn" style={{ height: 24, fontSize: 11 }} onClick={() => setAttach([])}>clear</button></div>}
+        {attach.length > 0 && <div style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>Attaching: {attach.map((id) => docs.find((d) => d.id === id)?.title).join(', ')} <button className="mm-btn" style={{ height: 24, fontSize: 11 }} onClick={() => setAttach([])}>clear</button></div>}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <label style={{ fontSize: 13, color: 'var(--text-secondary)', display: 'flex', gap: 6, alignItems: 'center' }}>Send later <input type="datetime-local" style={{ ...field, height: 32, width: 'auto' }} value={when} onChange={(e) => setWhen(e.target.value)} /></label>
           <div style={{ flex: 1 }} />

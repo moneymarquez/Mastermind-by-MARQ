@@ -27,7 +27,7 @@ export default function StageZeroTab({ api: m0 }: { api: ReturnType<typeof useSt
           <div style={{ fontWeight: 700, color: E.text }}>{prog.complete ? `${M0_LABEL[venture]} foundation is done — campaigns are unlocked.` : `${M0_LABEL[venture]}: ${prog.total - prog.done} to go before any campaign.`}</div>
           <div style={{ fontSize: 'var(--text-caption)', color: E.muted, marginTop: 4, lineHeight: 1.5 }}>{prog.complete ? 'Next: the first $20 (below).' : 'Don\'t send people to nothing. Everything here is free; the paid budget only unlocks after it.'}</div>
         </div>
-        <Badge color={lock ? E.amber : E.green}>{lock ? '🔒 campaigns locked' : '🔓 campaigns unlocked'}</Badge>
+        <Badge color={lock ? E.amber : E.green}>{lock ? 'campaigns locked' : 'campaigns unlocked'}</Badge>
       </div>
       {m0.error && <div style={{ color: E.red }}>{m0.error}</div>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

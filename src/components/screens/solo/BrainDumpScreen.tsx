@@ -73,7 +73,7 @@ export default function BrainDumpScreen() {
         <div onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={onDrop} style={{ border: `2px dashed ${drag ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <textarea style={{ ...field, height: 140, padding: 12, resize: 'vertical' }} value={text} placeholder="Paste notes, a chat, or the Masterminds Import block your AI gave you…" onChange={(e) => setText(e.target.value)} />
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <label className="mm-btn" style={{ height: 40, display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>📎 {file ? file.name : 'Choose a file (.md .txt .pdf .docx .json)'}<input type="file" accept={ACCEPT} style={{ display: 'none' }} onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
+            <label className="mm-btn" style={{ height: 40, display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>{file ? file.name : 'Choose a file (.md .txt .pdf .docx .json)'}<input type="file" accept={ACCEPT} style={{ display: 'none' }} onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
             <select style={{ ...field, width: 'auto', height: 40 }} value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Category">{cats.map((c) => <option key={c}>{c}</option>)}</select>
             <div style={{ flex: 1 }} />
             <button className="mm-btn mm-btn--primary" style={{ height: 40 }} disabled={busy || (!text.trim() && !file)} onClick={() => void submit()}>{busy ? 'Reading…' : 'Read it'}</button>

@@ -43,7 +43,7 @@ export function FromOwnerList({ limit }: { limit?: number }) {
             <div className="dp-actions">
               <button type="button" className="dp-btn ok" onClick={() => { haptic(15); setLeaving((s) => new Set(s).add(t.id)); setTimeout(() => void d.setDone(t, true), 200); }}>✓ Done</button>
               <button type="button" className="dp-btn" onClick={() => { if (!t.needs_help) void d.setHelp(t, true); setThread(t.id); }}>{t.needs_help ? 'Help asked' : 'Need help'}</button>
-              <button type="button" className="dp-btn" aria-label={`Comments on ${t.title}`} onClick={() => setThread(t.id)}>💬 {d.comments.filter((c) => c.task_id === t.id).length || ''}</button>
+              <button type="button" className="dp-btn" aria-label={`Comments on ${t.title}`} onClick={() => setThread(t.id)}>Comments {d.comments.filter((c) => c.task_id === t.id).length || ''}</button>
             </div>
           </article>
         ))}

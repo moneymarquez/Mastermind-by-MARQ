@@ -37,7 +37,7 @@ export default function InspirationTab({ api, accounts, items, onOpenPlan }: { a
           <option value="">All accounts</option>
           {accounts.accounts.map((a) => <option key={a.id} value={a.id}>{PLATFORM[a.platform].short} @{a.handle}</option>)}
         </select>
-        <button style={btn('primary')} disabled={busy} onClick={research}>{busy ? 'Researching… (30–90s)' : '🔎 Find what’s working'}</button>
+        <button style={btn('primary')} disabled={busy} onClick={research}>{busy ? 'Researching… (30–90s)' : 'Find what’s working'}</button>
         <button style={btn('ghost')} onClick={() => setAdding((v) => !v)}>＋ Link</button>
       </div>
       {msg && <div style={{ marginTop: 10, padding: 10, borderRadius: 'var(--radius-sm)', fontSize: 'var(--text-body)', color: E.text, background: tint(msg.ok ? E.green : E.red, 10), border: `1px solid ${tint(msg.ok ? E.green : E.red, 35)}` }}>

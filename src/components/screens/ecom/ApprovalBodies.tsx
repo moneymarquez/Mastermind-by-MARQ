@@ -253,7 +253,7 @@ export function ApprovalBody({ type, payload: p, choice = 0, onChoice, approvalI
           <Box key={g.post_id}>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
               <Badge color={gradeColor(g.grade)}>{g.grade}/4</Badge>
-              {g.flag && <Badge color={g.flag === 'breakout' ? E.green : E.red}>{g.flag === 'breakout' ? '🚀 breakout' : '📉 flop'}</Badge>}
+              {g.flag && <Badge color={g.flag === 'breakout' ? E.green : E.red}>{g.flag === 'breakout' ? 'breakout' : 'flop'}</Badge>}
               <span style={{ color: E.text, fontWeight: 600, minWidth: 0, overflowWrap: 'anywhere' }}>{g.hook || 'Post'}</span>
             </div>
             <div style={{ fontSize: 'var(--text-caption)', color: E.muted, fontFamily: 'var(--font-mono)', marginTop: 2 }}>{g.views.toLocaleString()} views vs {g.avg.toLocaleString()} avg · {g.reason}</div>

@@ -7,5 +7,5 @@ export default function Progress({ pct, tone, label }: { pct: number; tone?: 'go
 /** 🔥 N-day streak chip for modules with a daily action. */
 export function Streak({ days, what }: { days: number; what: string }) {
   if (days < 2) return null;
-  return <span className="mm-streak" title={`${days} days in a row with ${what}`}>🔥 {days}-day streak</span>;
+  return <span className="mm-streak" title={`${days} days in a row with ${what}`}>{days}-day streak</span>;
 }
