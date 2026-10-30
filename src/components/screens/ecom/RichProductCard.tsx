@@ -60,7 +60,7 @@ export default function RichProductCard(props: RichCardProps) {
   const conf = p.confidence === 'ai' ? 'AI read' : p.confidence === 'estimate' ? 'Estimate' : 'Verified';
 
   return (
-    <div style={{ ...E.card, padding: 0, overflow: 'hidden', borderColor: v.verdict === 'BLOCKED' ? tint(E.red, 45) : undefined }}>
+    <div style={{ ...E.card, padding: 0, overflow: 'hidden', ...(v.verdict === 'BLOCKED' ? { borderColor: tint(E.red, 45) } : {}) }}>
       {/* Collapsed row */}
       <div style={{ display: 'grid', gridTemplateColumns: '72px minmax(0,1fr)', gap: 12, padding: 14 }}>
         {photos[0] ? <img src={photos[0]} alt="" loading="lazy" style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 'var(--g-r-md)', border: `1px solid ${E.border}` }} /> : <div style={{ width: 72, height: 72, borderRadius: 'var(--g-r-md)', background: tint(E.accent, 10), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: E.faint, textAlign: 'center' }}>No photo yet</div>}
@@ -69,7 +69,7 @@ export default function RichProductCard(props: RichCardProps) {
             {p.rank != null && <Badge color={E.text}>#{p.rank}</Badge>}
             <span style={{ fontWeight: 700, color: E.text, fontSize: 'var(--text-subhead)', minWidth: 0, overflowWrap: 'anywhere' }}>{p.name}</span>
             <VerdictBadge color={ONE_COLOR[one.tone]} title={one.why}>{one.label}</VerdictBadge>
-            <span style={{ fontSize: 12, color: E.faint, paddingLeft: 8, borderLeft: '1px solid var(--g-line-2)', lineHeight: '14px' }} title={one.checksWhy}>{one.checks}</span>
+            <span style={{ fontSize: 12, color: E.faint }} title={one.checksWhy}>{one.checks}</span>
             {p.score != null && <Badge color={p.score >= 7 ? E.green : p.score >= 5 ? E.amber : E.faint}>{p.score}/10</Badge>}
             {p.score == null && <Badge color={E.faint} title={v.missing.find((m) => m.field === 'score')?.text}>No score</Badge>}
             <Badge color={E.faint}>{conf}</Badge>
