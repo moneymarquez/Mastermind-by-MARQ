@@ -16,6 +16,10 @@ export type ModuleCtxValue = {
   nav: (screen: string) => void;
   askNova: (prompt?: string) => void;
 };
+/** Set by a host screen (LeadFlow's Dialing tab) that already draws the
+ *  header: the Page inside drops its back row and title, keeps its ⋯ menu
+ *  and primary action. */
+export const PageEmbedded = createContext(false);
 const Ctx = createContext<ModuleCtxValue>({ device: 'phone', novaOpen: false, isOwner: false, nav: () => {}, askNova: () => {} });
 export const ModuleProvider = Ctx.Provider;
 export const useModule = () => useContext(Ctx);
@@ -108,6 +112,30 @@ export function Page({ title, sub, back = 'All modules', backTo = 'modules', onB
     </div>
   );
   const accentBtn = client ? { background: 'var(--client-accent)', borderColor: 'var(--client-accent)' } : {};
+  const embedded = useContext(PageEmbedded);
+  if (embedded) return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: phone ? 20 : 16, minWidth: 0 }}>
+      {onBack && (
+        <button onClick={onBack} style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 2, height: 32, marginLeft: -6, padding: 0, border: 0, background: 'transparent', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>
+          <GChevronLeft size={18} />{back}
+        </button>
+      )}
+      {(dots || (!phone && fab)) && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, alignItems: 'center' }}>
+          {!phone && fab && <button className="mm-btn mm-btn--primary" onClick={fab.onClick} style={accentBtn}><GPlus size={14} />{fab.t}</button>}
+          {dots}
+        </div>
+      )}
+      {children}
+      {phone && fab && (
+        <button className="mm-btn mm-btn--primary" onClick={fab.onClick} style={{ position: 'fixed', right: 16, bottom: 'calc(84px + 16px + max(env(safe-area-inset-bottom), 0px))', zIndex: 50, height: 48, padding: '0 18px', fontSize: 15, boxShadow: '0 0 40px rgba(0,0,0,.25)', ...accentBtn }}>
+          <GPlus size={16} />{fab.t}
+        </button>
+      )}
+      {phone && fab && <div style={{ height: 64 }} />}
+      {moreOpen && more && <Sheet title={more.label} onClose={() => setMoreOpen(false)} full>{more.render()}</Sheet>}
+    </div>
+  );
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: phone ? 0 : 20, minWidth: 0 }}>
       {phone && (

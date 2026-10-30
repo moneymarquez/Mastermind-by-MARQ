@@ -68,6 +68,7 @@ const PlaybooksV2 = lazyScreen(() => import('./components/screens/v2/PlaybooksV2
 const StreamingV2 = lazyScreen(() => import('./components/screens/v2/StreamingV2'));
 const StocksScreen = lazyScreen(() => import('./components/screens/StocksScreen'));
 const LeadFlowScreen = lazyScreen(() => import('./components/screens/LeadFlowScreen'));
+import type { LeadFlowTab } from './components/screens/LeadFlowScreen';
 const AccountSettingsScreen = lazyScreen(() => import('./components/screens/AccountSettingsScreen'));
 const NovaVoiceV2 = lazyScreen(() => import('./components/screens/v2/NovaVoiceV2'));
 const CallRecordingsV2 = lazyScreen(() => import('./components/screens/v2/CallRecordingsV2'));
@@ -221,7 +222,15 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
   // Desktop: Nova is a 360px column that pushes content. iPad: it slides
   // over. Phone: a full screen above the tab bar.
   const novaDock = device === 'desktop' && state.novaOpen ? NOVA_DOCK_W : 0;
-  const shellNav = (id: string) => { setNotifOpen(false); if (state.novaOpen && device !== 'desktop') actions.closeNova(); actions.navigateTo(id); };
+  // Dialing lives inside LeadFlow for accounts that have LeadFlow: any jump
+  // to 'dialing' opens LeadFlow on its Dialing tab.
+  const [lfTab, setLfTab] = useState<LeadFlowTab>('dashboard');
+  const shellNav = (id: string) => {
+    setNotifOpen(false); if (state.novaOpen && device !== 'desktop') actions.closeNova();
+    if (id === 'dialing' && travelAccess('leadflow')) { setLfTab('dialing'); id = 'leadflow'; }
+    else if (id === 'leadflow') setLfTab('dashboard');
+    actions.navigateTo(id);
+  };
   const moduleCtx: ModuleCtxValue = { device, novaOpen: state.novaOpen, isOwner, nav: shellNav, askNova: (p?: string) => { if (p) askNovaWithPrompt(p); else if (!state.novaOpen) actions.openNova(); } };
 
   // A real set name always wins, regardless of owner status — per-account
@@ -293,7 +302,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
                 drawer={{ onClose: () => setMenuOpen(false), dark: resolvedTheme === 'dark', onToggleTheme: toggleTheme }} />
             </>
           )}
-          <PhoneTabBar screen={state.screen} novaOpen={state.novaOpen} badges={badges} onNav={shellNav} onNova={toggleNova} />
+          <PhoneTabBar screen={state.screen} novaOpen={state.novaOpen} badges={badges} portal={portal} portals={portals} canOpen={travelAccess} onNav={shellNav} onPortal={portalNav.onSwitch} />
         </>
       ) : (
         <>
@@ -417,7 +426,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
         )}
 
         {state.screen === 'leadflow' && (
-          <LeadFlowScreen />
+          <LeadFlowScreen key={lfTab} initialTab={lfTab} />
         )}
 
         {state.screen === 'ecommerce' && (

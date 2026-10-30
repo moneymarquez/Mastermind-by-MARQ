@@ -28,3 +28,8 @@ export const GLock = (p: P) => svg(<><rect x="5" y="11" width="14" height="9" rx
 export const GCheck = (p: P) => svg(<path d="m5 12.5 4.5 4.5L19 7.5" />, p, { stroke: 2.2 });
 export const GMic = (p: P) => svg(<><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" /></>, p);
 export const GMenu = (p: P) => svg(<><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h10" /></>, p);
+// Phone tab bar: Made by, Dial, E-com, Macros.
+export const GBriefcase = (p: P) => svg(<><rect x="3.5" y="7.5" width="17" height="12" rx="2" /><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5" /><path d="M3.5 12.5h17" /></>, p);
+export const GPhone = (p: P) => svg(<path d="M5 4h3.5l1.7 4.3-2.2 1.4a11 11 0 0 0 6.3 6.3l1.4-2.2L20 15.5V19a1.5 1.5 0 0 1-1.6 1.5A16 16 0 0 1 3.5 5.6 1.5 1.5 0 0 1 5 4z" />, p);
+export const GBag = (p: P) => svg(<><path d="M5 8h14l-1 12H6z" /><path d="M9 10V7a3 3 0 0 1 6 0v3" /></>, p);
+export const GFork = (p: P) => svg(<><path d="M7 3v7a2 2 0 0 0 4 0V3M9 12v9" /><path d="M17 21V3c-2 1-3 3.5-3 7h3" /></>, p);

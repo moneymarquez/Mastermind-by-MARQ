@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import './shell.css';
-import { GHome, GInbox, GNova, GGrid, GSun, GMoon, GSearch, GBell, GBolt, GChevron, GUpDown, GSliders, GLock, GMenu, GClose } from './glyphs';
+import { GHome, GInbox, GNova, GGrid, GSun, GMoon, GSearch, GBell, GBolt, GChevron, GUpDown, GSliders, GLock, GMenu, GClose, GBriefcase, GPhone, GBag, GFork } from './glyphs';
 import type { ShellGroup } from './nav';
 import { portalName } from '../../portals.config';
 import type { PortalKey } from '../../portals.config';
@@ -89,16 +89,24 @@ export function PhoneHeader({ onMenu, onHome, onSearch, onBell, bellDot, bellOpe
   );
 }
 
-export function PhoneTabBar({ screen, novaOpen, badges, onNav, onNova }: { screen: string; novaOpen: boolean; badges: Badges; onNav: (s: string) => void; onNova: () => void }) {
-  const inboxCount = badges.inbox + badges.leads;
-  const onModules = screen === 'modules' || (!['today', 'home', 'inbox', 'leads'].includes(screen) && !novaOpen);
-  const tabs = [
-    { key: 'today', label: 'Today', icon: <GSun size={22} />, active: screen === 'today' && !novaOpen, tap: () => onNav('today') },
-    { key: 'home', label: 'Home', icon: <GHome size={22} />, active: screen === 'home' && !novaOpen, tap: () => onNav('home') },
-    { key: 'inbox', label: 'Inbox', icon: <GInbox size={22} />, active: (screen === 'inbox' || screen === 'leads') && !novaOpen, tap: () => onNav('inbox'), badge: inboxCount },
-    { key: 'nova', label: 'Nova', icon: <GNova size={22} />, active: novaOpen, tap: onNova },
-    { key: 'modules', label: 'Modules', icon: <GGrid size={22} />, active: onModules && screen !== 'home' && screen !== 'today', tap: () => onNav('modules') },
+type PhoneTab = { key: string; label: string; icon: ReactNode; active: boolean; tap: () => void; badge?: number; needs?: PortalKey };
+
+export function PhoneTabBar({ screen, novaOpen, badges, portal, portals, canOpen, onNav, onPortal }: { screen: string; novaOpen: boolean; badges: Badges; portal: PortalKey; portals: PortalKey[]; canOpen: (moduleKey: string) => boolean; onNav: (s: string) => void; onPortal: (k: PortalKey) => void }) {
+  // Phone tabs: Today · Made by · LeadFlow · E-com · Macros. Dialing lives
+  // inside LeadFlow; accounts without LeadFlow get Dial in that slot. Home sits behind the
+  // header logo; Inbox, Nova and every module live in the menu drawer.
+  const off = novaOpen;
+  const all: PhoneTab[] = [
+    { key: 'today', label: 'Today', icon: <GSun size={22} />, active: !off && screen === 'today', tap: () => onNav('today') },
+    { key: 'madeby', label: 'Made by', icon: <GBriefcase size={22} />, active: !off && portal === 'madeby' && screen !== 'today' && screen !== 'leadflow', tap: () => onPortal('madeby'), badge: badges.leads, needs: 'madeby' },
+    canOpen('leadflow')
+      ? { key: 'leadflow', label: 'LeadFlow', icon: <GPhone size={22} />, active: !off && screen === 'leadflow', tap: () => onNav('leadflow') }
+      : { key: 'dial', label: 'Dial', icon: <GPhone size={22} />, active: !off && (screen === 'dialing' || screen === 'contacts'), tap: () => onNav('dialing') },
+    { key: 'ecom', label: 'E-com', icon: <GBag size={22} />, active: !off && portal === 'ecommerce' && screen !== 'today', tap: () => onPortal('ecommerce'), needs: 'ecommerce' },
+    { key: 'macros', label: 'Macros', icon: <GFork size={22} />, active: !off && screen === 'macros', tap: () => onNav('macros') },
   ];
+  // Accounts without a portal don't get a dead tab for it.
+  const tabs = all.filter((t) => !t.needs || portals.includes(t.needs));
   return (
     <nav aria-label="Main" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 61, height: `calc(${PHONE_TAB_H - 20}px + ${SAFE_BOTTOM})`, background: 'color-mix(in srgb, var(--bg) 88%, transparent)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderTop: '1px solid var(--border)', display: 'flex', padding: '8px 8px 0', boxSizing: 'border-box' }}>
       {tabs.map((t) => (
