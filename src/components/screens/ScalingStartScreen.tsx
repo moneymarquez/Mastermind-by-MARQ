@@ -88,7 +88,6 @@ export default function ScalingStartScreen({ onNavigate }: Props) {
     }
   };
 
-  if (loading) return <Page title="Start" sub="Guided new-client flow" back="Clients" backTo="madeby-board"><span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Loading…</span></Page>;
 
   const newCard = (
     <Card title="New project" meta="A client or business name" wide={!phone}>
@@ -103,7 +102,9 @@ export default function ScalingStartScreen({ onNavigate }: Props) {
     return (
       <Page title="Start" sub="Idea → brand → site → plan → invoice" back="Clients" backTo="madeby-board">
         {newCard}
-        {projects.length === 0 ? <Empty text="No projects yet. Name one above and walk it from idea to a starter invoice." /> : (
+        {/* Still loading: keep the page and New project card up and say so
+            in the list, instead of a separate Loading page that swaps out. */}
+        {loading ? <span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Loading projects…</span> : projects.length === 0 ? <Empty text="No projects yet. Name one above and walk it from idea to a starter invoice." /> : (
           <div style={{ display: 'grid', gridTemplateColumns: phone ? 'minmax(0,1fr)' : 'repeat(auto-fill,minmax(280px,1fr))', gap: phone ? 12 : 16 }}>
             {projects.map((p) => { const n = trailCount(p); return (
               <section key={p.id} role="button" tabIndex={0} onClick={() => open(p.id)} onKeyDown={(e) => { if (e.key === 'Enter') open(p.id); }} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 12, cursor: 'pointer' }}>

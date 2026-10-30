@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { startTransition, useEffect, useRef, useState } from 'react';
 import { NAV_DATA, INITIAL_STICKY_IDEAS, PLACEHOLDER_NOTES } from './data';
 import { isDemo } from './demo/state';
 import { DIRECT_SCREENS, LAST_SCREEN_KEY, deepLinkScreen, pickInitialScreen, pathScreen } from './screenRestore';
@@ -268,7 +268,13 @@ export function useMastermindState(userDisplayName: string | null) {
       return;
     }
     if ((DIRECT_SCREENS as string[]).includes(id)) {
-      patch({ screen: id as Screen, navDrawerOpen: false });
+      // Screens are lazy chunks. A plain update would make the screen
+      // Suspense boundary hide the current screen behind its skeleton while
+      // the next one downloads (the Clients board "flashing" when you tapped
+      // Guided start). As a transition React keeps the current screen up
+      // until the next one is ready, then swaps once.
+      patch({ navDrawerOpen: false });
+      startTransition(() => patch({ screen: id as Screen }));
       return;
     }
     let label = id;
