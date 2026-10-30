@@ -83,7 +83,7 @@ export default function SetNewPasswordScreen({ onComplete, onCancel }: Props) {
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--mm-faint)' }}>At least 8 characters.</div>
           {error && <div role="alert" style={{ fontSize: 13, color: 'var(--danger)' }}>{error}</div>}
-          <button type="submit" disabled={submitting} style={{ height: 48, marginTop: 4, width: '100%', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 15, borderRadius: 999, background: 'var(--mm-ink)', color: 'var(--mm-ink-text)' }}>
+          <button type="submit" disabled={submitting} style={{ height: 48, marginTop: 4, width: '100%', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 15, borderRadius: 'var(--g-r-md)', background: 'var(--mm-ink)', color: 'var(--mm-ink-text)' }}>
             {submitting ? 'Saving…' : 'Save password'}
           </button>
         </form>

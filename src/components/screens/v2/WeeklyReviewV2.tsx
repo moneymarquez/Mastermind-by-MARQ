@@ -147,9 +147,9 @@ export default function WeeklyReviewV2() {
       </Card>
     );
   const weekPick = (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)', maxWidth: phone ? undefined : 320 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, padding: 3, borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)', maxWidth: phone ? undefined : 320 }}>
       {[[addDays(thisWeek, -7), 'Last week'], [thisWeek, 'This week']].map(([w, l]) => (
-        <button key={w} aria-pressed={week === w} onClick={() => setWeek(w)} style={{ padding: '8px 0', borderRadius: 999, border: 0, fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', background: week === w ? 'var(--text)' : 'transparent', color: week === w ? 'var(--bg)' : 'var(--text-secondary)' }}>{l}</button>
+        <button key={w} aria-pressed={week === w} onClick={() => setWeek(w)} style={{ padding: '8px 0', borderRadius: 'var(--g-r-sm)', border: 0, fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', background: week === w ? 'var(--text)' : 'transparent', color: week === w ? 'var(--bg)' : 'var(--text-secondary)' }}>{l}</button>
       ))}
     </div>
   );

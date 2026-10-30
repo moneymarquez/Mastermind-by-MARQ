@@ -160,7 +160,7 @@ export function Page({ title, sub, back = 'All modules', backTo = 'modules', onB
           {sub && <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-tertiary)' }}>{sub}</span>}
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flex: 'none' }}>
-          {right && <button className="mm-btn" onClick={right.onClick} style={{ height: 34, borderRadius: 999, padding: '0 12px', fontSize: 13, fontWeight: 500 }}>{right.t}</button>}
+          {right && <button className="mm-btn" onClick={right.onClick} style={{ height: 34, borderRadius: 'var(--g-r-md)', padding: '0 12px', fontSize: 13, fontWeight: 500 }}>{right.t}</button>}
           {!phone && fab && <button className="mm-btn mm-btn--primary" onClick={fab.onClick} style={accentBtn}><GPlus size={14} />{fab.t}</button>}
           {!phone && dots}
         </div>

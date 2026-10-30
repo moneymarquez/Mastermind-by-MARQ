@@ -149,8 +149,8 @@ export default function AccountSettingsScreen({ onSignOut, onStartTour, theme, o
     </div>
   );
   const seg = (
-    <div role="radiogroup" aria-label="Theme" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
-      {(['dark', 'light', 'system'] as Theme[]).map((t) => <button key={t} role="radio" aria-checked={theme === t} onClick={() => onThemeChange(t)} style={{ padding: '8px 0', borderRadius: 999, border: 0, fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', textTransform: 'capitalize', background: theme === t ? 'var(--text)' : 'transparent', color: theme === t ? 'var(--bg)' : 'var(--text-secondary)' }}>{t}</button>)}
+    <div role="radiogroup" aria-label="Theme" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 2, padding: 3, borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+      {(['dark', 'light', 'system'] as Theme[]).map((t) => <button key={t} role="radio" aria-checked={theme === t} onClick={() => onThemeChange(t)} style={{ padding: '8px 0', borderRadius: 'var(--g-r-sm)', border: 0, fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', textTransform: 'capitalize', background: theme === t ? 'var(--text)' : 'transparent', color: theme === t ? 'var(--bg)' : 'var(--text-secondary)' }}>{t}</button>)}
     </div>
   );
   const appearance = (

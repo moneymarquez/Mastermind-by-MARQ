@@ -136,7 +136,7 @@ export default function EcomScreen({ section = 'overview' }: Props) {
   const breakdown = useCostBreakdown(costOpen);
   const refreshAll = () => { counters.reload(); approvals.reload(); since.reload(); };
 
-  const iconBtn: CSSProperties = { height: 34, padding: '0 12px', borderRadius: 999, fontSize: 13, fontWeight: 500, position: 'relative' };
+  const iconBtn: CSSProperties = { height: 34, padding: '0 12px', borderRadius: 'var(--g-r-md)', fontSize: 13, fontWeight: 500, position: 'relative' };
   const dot = (n: number, color: string) => n > 0 ? <span style={{ position: 'absolute', top: -6, right: -6, minWidth: 18, height: 18, borderRadius: 9, background: color, color: E.onAccent, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>{n}</span> : null;
   const monthCap = DAILY_CAP_USD * 31;
   const sinceText = since.data && Object.keys(since.data.added).length

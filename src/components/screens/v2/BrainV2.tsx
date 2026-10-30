@@ -105,9 +105,9 @@ export default function BrainV2() {
   const checkin = (
     <Card title="Calling hour check-in" meta="Today" wide={!phone}>
       <span style={{ fontSize: 15, color: 'var(--text-secondary)' }}>Did you make your calling hour?</span>
-      <div role="radiogroup" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+      <div role="radiogroup" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 2, padding: 3, borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
         {['Yes', 'Partly', 'No'].map((o) => (
-          <button key={o} role="radio" aria-checked={answer === o} onClick={() => void b.saveCheckin({ date: today, score: o === 'Yes' ? 5 : o === 'Partly' ? 3 : 1, note: todayC?.note ?? null, hour_happened: o !== 'No', dials: callsToday })} style={{ padding: '8px 0', borderRadius: 999, fontSize: 13, fontWeight: 500, border: 0, cursor: 'pointer', fontFamily: 'inherit', background: answer === o ? 'var(--text)' : 'transparent', color: answer === o ? 'var(--bg)' : 'var(--text-secondary)' }}>{o}</button>
+          <button key={o} role="radio" aria-checked={answer === o} onClick={() => void b.saveCheckin({ date: today, score: o === 'Yes' ? 5 : o === 'Partly' ? 3 : 1, note: todayC?.note ?? null, hour_happened: o !== 'No', dials: callsToday })} style={{ padding: '8px 0', borderRadius: 'var(--g-r-sm)', fontSize: 13, fontWeight: 500, border: 0, cursor: 'pointer', fontFamily: 'inherit', background: answer === o ? 'var(--text)' : 'transparent', color: answer === o ? 'var(--bg)' : 'var(--text-secondary)' }}>{o}</button>
         ))}
       </div>
       <div><Chip k={made14 >= 10 ? 'good' : 'neutral'}>{made14} of the last 14 days</Chip></div>

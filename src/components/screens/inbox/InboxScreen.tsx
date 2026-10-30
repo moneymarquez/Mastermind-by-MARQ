@@ -56,9 +56,9 @@ export default function InboxScreen(p: Props) {
         <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4 }}>{tab === 'leads' ? 'Every lead that came to you, from every door' : 'Every connected address + the client portal'}</div>
       </div>
       {phone && (
-        <div role="tablist" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+        <div role="tablist" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, padding: 3, borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
           {(['inbox', 'leads'] as const).map((t) => (
-            <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} style={{ height: 40, borderRadius: 999, border: 0, fontFamily: 'inherit', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: tab === t ? 'var(--text)' : 'transparent', color: tab === t ? 'var(--bg)' : 'var(--text-secondary)' }}>
+            <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} style={{ height: 40, borderRadius: 'var(--g-r-sm)', border: 0, fontFamily: 'inherit', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: tab === t ? 'var(--text)' : 'transparent', color: tab === t ? 'var(--bg)' : 'var(--text-secondary)' }}>
               {t === 'inbox' ? 'Inbox' : 'Leads'}
               {(t === 'inbox' ? unread : waiting) > 0 && <span style={{ minWidth: 18, height: 18, padding: '0 5px', borderRadius: 999, fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: t === 'leads' && p.feed.urgent ? 'var(--danger)' : 'var(--accent)', color: 'var(--bg)' }}>{t === 'inbox' ? unread : waiting}</span>}
             </button>
@@ -282,9 +282,9 @@ function LeadsView({ device, feed, onOpenLeadFlow, onNavigate, onOpenClient }: P
   }
   const filterBar = (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-      <div style={{ display: 'flex', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+      <div style={{ display: 'flex', gap: 2, padding: 3, borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
         {([['all', `All ${live.length}`], ['hot', `Hot ${live.filter((l) => temperature(l, now) === 'hot').length}`], ['waiting', `Waiting ${feed.waiting}`]] as const).map(([k, label]) => (
-          <button key={k} onClick={() => setFilter(k)} style={{ height: 32, padding: '0 12px', borderRadius: 999, border: 0, fontFamily: 'inherit', fontSize: 13, fontWeight: 500, cursor: 'pointer', background: filter === k ? 'var(--text)' : 'transparent', color: filter === k ? 'var(--bg)' : 'var(--text-secondary)' }}>{label}</button>
+          <button key={k} onClick={() => setFilter(k)} style={{ height: 32, padding: '0 12px', borderRadius: 'var(--g-r-sm)', border: 0, fontFamily: 'inherit', fontSize: 13, fontWeight: 500, cursor: 'pointer', background: filter === k ? 'var(--text)' : 'transparent', color: filter === k ? 'var(--bg)' : 'var(--text-secondary)' }}>{label}</button>
         ))}
       </div>
       <button className="mm-btn" style={{ height: 34 }} onClick={onOpenLeadFlow}>Open in LeadFlow ↗</button>

@@ -106,7 +106,7 @@ export default function MacrosV2() {
     <Card title="Symptoms" meta="Today" wide={!phone}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {symptoms.map((s) => <span key={s.id} style={{ padding: '7px 12px', borderRadius: 999, background: 'var(--surface-3)', color: 'var(--text)', fontSize: 13, fontWeight: 500 }}>{s.symptom}{s.note ? ` · ${s.note}` : ''}</span>)}
-        <button onClick={() => setSymOpen(true)} style={{ padding: '7px 12px', borderRadius: 999, border: '1px dashed var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>+ Add</button>
+        <button onClick={() => setSymOpen(true)} style={{ padding: '7px 12px', borderRadius: 'var(--g-r-md)', border: '1px dashed var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>+ Add</button>
       </div>
       {ai !== false && note && <p style={{ margin: 0, fontSize: 14, lineHeight: 1.45, color: 'var(--text-secondary)' }}><span style={{ color: 'var(--text)' }}>Nova:</span> {note}</p>}
     </Card>
@@ -192,7 +192,7 @@ function SymptomSheet({ onClose, onAdd }: { onClose: () => void; onAdd: (s: { sy
   const quick = ['Low energy', 'Bloated', 'Headache', 'Cravings', 'Nausea'];
   return (
     <Sheet title="Add a symptom" onClose={onClose}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{quick.map((q) => <button key={q} className="mm-btn" onClick={() => setS(q)} style={{ height: 34, borderRadius: 999, fontSize: 13, ...(s === q ? { background: 'var(--surface-3)' } : {}) }}>{q}</button>)}</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{quick.map((q) => <button key={q} className="mm-btn" onClick={() => setS(q)} style={{ height: 34, borderRadius: 'var(--g-r-md)', fontSize: 13, ...(s === q ? { background: 'var(--surface-3)' } : {}) }}>{q}</button>)}</div>
       <Field l="Symptom"><input value={s} onChange={(e) => setS(e.target.value)} style={field} /></Field>
       <Field l="When / note"><input value={note} onChange={(e) => setNote(e.target.value)} style={field} placeholder="3 PM, after lunch" /></Field>
       <button className="mm-btn mm-btn--primary" style={{ height: 48 }} disabled={busy || !s.trim()} onClick={async () => { setBusy(true); await onAdd({ symptom: s.trim(), severity: null, note: note.trim() || null }); setBusy(false); onClose(); }}>Add</button>

@@ -96,9 +96,9 @@ export default function ShowYourWorkV2({ onNavigate }: { onNavigate: (id: string
     : <Card wide={!phone}><span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Nothing delivered yet. Sent packages land here as portfolio pieces.</span></Card>;
 
   const seg = (
-    <div role="tablist" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+    <div role="tablist" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, padding: 3, borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
       {(['packages', 'portfolio'] as const).map((t) => (
-        <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} style={{ height: 38, border: 0, borderRadius: 999, background: tab === t ? 'var(--text)' : 'transparent', color: tab === t ? 'var(--bg)' : 'var(--text)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>
+        <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} style={{ height: 38, border: 0, borderRadius: 'var(--g-r-sm)', background: tab === t ? 'var(--text)' : 'transparent', color: tab === t ? 'var(--bg)' : 'var(--text)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>
           {t === 'packages' ? `Packages (${packages.length})` : `Portfolio (${portfolio.length})`}
         </button>
       ))}

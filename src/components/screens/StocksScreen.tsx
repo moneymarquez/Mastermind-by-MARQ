@@ -428,9 +428,9 @@ export default function StocksScreen({ homeHeadStyle, homeSubStyle }: Props) {
         {halted && <Chip k="bad">{`Halted: ${config.halted_reason}`}</Chip>}
         <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Last run {timeAgo(config.last_run_at)}</span>
       </div>
-      <div style={{ display: 'flex', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)', overflowX: 'auto', maxWidth: '100%', alignSelf: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: 2, padding: 3, borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)', overflowX: 'auto', maxWidth: '100%', alignSelf: 'flex-start' }}>
         {([['today', 'Today'], ['performance', 'Performance'], ['log', 'Trade log'], ['settings', 'Watchlist & settings'], ['news', 'News']] as [Tab, string][]).map(([k, l]) => (
-          <button key={k} aria-pressed={tab === k} onClick={() => setTab(k)} style={{ padding: '7px 14px', borderRadius: 999, border: 0, fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', whiteSpace: 'nowrap', background: tab === k ? 'var(--text)' : 'transparent', color: tab === k ? 'var(--bg)' : 'var(--text-secondary)' }}>{l}</button>
+          <button key={k} aria-pressed={tab === k} onClick={() => setTab(k)} style={{ padding: '7px 14px', borderRadius: 'var(--g-r-sm)', border: 0, fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', whiteSpace: 'nowrap', background: tab === k ? 'var(--text)' : 'transparent', color: tab === k ? 'var(--bg)' : 'var(--text-secondary)' }}>{l}</button>
         ))}
       </div>
       {tab === 'today' && <TodayPanel {...bot} />}

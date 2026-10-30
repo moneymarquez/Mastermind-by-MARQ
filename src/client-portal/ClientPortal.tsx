@@ -178,7 +178,7 @@ function TicketForm({ deliverables, presetDeliverable, readOnly, onSubmit, onCan
       <Back onClick={onCancel}>Help</Back>
       <H1 sub="We'll reply here and by email">New ticket</H1>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-        {TICKET_KINDS.map((k) => <button key={k.key} onClick={() => setKind(k.key)} style={{ height: 34, padding: '0 14px', borderRadius: 999, border: `1px solid ${kind === k.key ? 'var(--client-accent)' : 'var(--border)'}`, background: kind === k.key ? 'color-mix(in srgb, var(--client-accent) 14%, var(--surface))' : 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>{k.label}</button>)}
+        {TICKET_KINDS.map((k) => <button key={k.key} onClick={() => setKind(k.key)} style={{ height: 34, padding: '0 14px', borderRadius: 'var(--g-r-md)', border: `1px solid ${kind === k.key ? 'var(--client-accent)' : 'var(--border)'}`, background: kind === k.key ? 'color-mix(in srgb, var(--client-accent) 14%, var(--surface))' : 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>{k.label}</button>)}
       </div>
       {deliverables.length > 0 && fieldBox('About (optional)', <select style={input} value={deliverableId} onChange={(e) => setDeliverableId(e.target.value)}><option value="">Nothing specific</option>{deliverables.map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}</select>)}
       {fieldBox("What's going on?", <input style={input} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="The Book now button doesn't show on my phone" />)}

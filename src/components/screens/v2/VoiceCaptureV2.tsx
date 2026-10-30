@@ -90,7 +90,7 @@ export default function VoiceCaptureV2() {
   const refile = latest && !latest.undone && V.filed?.id === latest.id && (
     <Card title="Wrong place?" meta={`Filed as ${CAPTURE_TYPE_LABEL[latest.type].toLowerCase()}`} wide={!phone}>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-        {TYPES.filter((t) => t !== latest.type).map((t) => <button key={t} className="mm-btn" style={{ height: 34, fontSize: 13, borderRadius: 999 }} disabled={V.processing} onClick={() => void V.refileAs(t)}>{CAPTURE_TYPE_LABEL[t]}</button>)}
+        {TYPES.filter((t) => t !== latest.type).map((t) => <button key={t} className="mm-btn" style={{ height: 34, fontSize: 13, borderRadius: 'var(--g-r-md)' }} disabled={V.processing} onClick={() => void V.refileAs(t)}>{CAPTURE_TYPE_LABEL[t]}</button>)}
       </div>
     </Card>
   );
