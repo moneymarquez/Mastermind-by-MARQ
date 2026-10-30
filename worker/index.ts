@@ -15,6 +15,7 @@
 // been removed from the repo — nothing in this app depends on Netlify
 // anymore. The Netlify site itself (DNS, the hosted deploy) is an
 // account-level cleanup outside this repo's scope.
+import { withSecurityHeaders } from './lib/securityHeaders';
 import { serveMedia } from './lib/socialMedia';
 import { runSocialSyncTick } from './lib/socialSync';
 import { leadEnginesRoute, runEnginesTick } from './handlers/leadEngines';
@@ -157,6 +158,7 @@ async function tickKey(env: Env): Promise<string> {
 
 export default {
   async fetch(request: Request, env: Env, ctx?: { waitUntil: (promise: Promise<unknown>) => void }): Promise<Response> {
+    const response = await (async (): Promise<Response> => {
     setResearchEnv(env); setNotifyEnv(env); setVisualEnv(env);
     const url = new URL(request.url);
 
@@ -293,6 +295,8 @@ export default {
       );
     }
     return env.ASSETS.fetch(request);
+    })();
+    return withSecurityHeaders(request, response);
   },
 
   // Typed loosely (not against @cloudflare/workers-types, which isn't a
