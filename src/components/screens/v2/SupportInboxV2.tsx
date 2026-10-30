@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Linkified from '../../mm/Linkified';
 import { supabase } from '../../../lib/supabase';
 import { useUnifiedInbox } from '../../../data/useUnifiedInbox';
 import type { UMsg } from '../../../data/useUnifiedInbox';
@@ -112,7 +113,7 @@ function Detail({ m, U, onBack, onOpenClient }: { m: UMsg; U: ReturnType<typeof 
             <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)', overflowWrap: 'anywhere' }}>{m.fromAddr ? `${m.fromAddr} → ${m.toAddr}` : 'Client portal'} · {new Date(m.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
           </div>
         </div>
-        {m.body && m.body !== m.subject && <p style={{ margin: 0, color: 'var(--text)', fontSize: 15, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{m.body}</p>}
+        {m.body && m.body !== m.subject && <p style={{ margin: 0, color: 'var(--text)', fontSize: 15, lineHeight: 1.55, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}><Linkified text={m.body} /></p>}
         {m.kind === 'ticket' && (
           <div style={{ display: 'grid', gridTemplateColumns: onBack ? 'minmax(0,1fr)' : 'repeat(2,minmax(0,1fr))', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>
             {[['What to avoid', m.avoid], ["What they'd prefer", m.prefer]].map(([l, v], i) => <div key={l} style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '10px 14px', borderLeft: !onBack && i ? '1px solid var(--grid)' : 'none', borderTop: onBack && i ? '1px solid var(--grid)' : 'none' }}><span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)' }}>{l}</span><span style={{ color: 'var(--text)', fontSize: 14, lineHeight: 1.45 }}>{v || '—'}</span></div>)}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import Linkified from '../../mm/Linkified';
 import type { CSSProperties } from 'react';
 import '../../shell/shell.css';
 import type { Device } from '../../shell/Shell';
@@ -191,7 +192,7 @@ function MsgDetail({ m, phone, onBack, ui, onOpenClient }: { m: UMsg; phone?: bo
         </div>
         <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)', flex: 'none' }}>{new Date(m.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
       </div>
-      <div style={{ color: 'var(--text)', fontSize: 15, lineHeight: 1.55, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{m.body}</div>
+      <div style={{ color: 'var(--text)', fontSize: 15, lineHeight: 1.55, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}><Linkified text={m.body} /></div>
       {m.kind === 'ticket' && (
         <div style={{ display: 'grid', gridTemplateColumns: phone ? '1fr' : '1fr 1fr', gap: 10 }}>
           <Field label="What to avoid" value={m.avoid} />
