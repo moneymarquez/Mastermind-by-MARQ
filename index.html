@@ -66,6 +66,27 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // A stale tab after deploy asks for /assets/<old-hash>.js. The Worker
+      // now 404s that path; this reloads once so the fresh index.html (and
+      // its new hashes) load. Same key as src/lib/chunkReload.ts. A second
+      // failure is left alone so a real outage does not reload forever.
+      (function () {
+        var KEY = 'mm:chunk-reload';
+        function once() {
+          try {
+            if (sessionStorage.getItem(KEY) === '1') return;
+            sessionStorage.setItem(KEY, '1');
+          } catch (e) { return; }
+          location.reload();
+        }
+        window.addEventListener('error', function (e) {
+          var t = e.target;
+          if (!t || t.tagName !== 'SCRIPT') return;
+          if ((t.src || '').indexOf('/assets/') !== -1) once();
+        }, true);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

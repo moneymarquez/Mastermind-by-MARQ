@@ -1,5 +1,6 @@
 import { StrictMode, Suspense } from 'react'
 import { lazyScreen } from './lib/lazyScreen'
+import { CHUNK_RELOAD_KEY, chunkReloadPlan } from './lib/chunkReload'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
@@ -26,6 +27,18 @@ const SignContract = lazyScreen(() => import('./site/SignContract'));
 const BookingPage = lazyScreen(() => import('./site/BookingPage'));
 const VideoShare = lazyScreen(() => import('./site/VideoShare'));
 initDemo();
+
+// Vite preload of a chunk that 404s after a deploy. lazyScreen covers
+// React.lazy; this covers the preloads Vite fires before that. Same
+// one-reload key as the inline script in index.html.
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault();
+  try {
+    if (chunkReloadPlan(sessionStorage.getItem(CHUNK_RELOAD_KEY)) === 'surface') return;
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, '1');
+  } catch { /* storage blocked */ return; }
+  window.location.reload();
+});
 
 // The two genuinely public routes in the app — /audit (Part 1b: a prospect
 // filling out the lead-gen questionnaire) and /client/<token> (Part 7: a
