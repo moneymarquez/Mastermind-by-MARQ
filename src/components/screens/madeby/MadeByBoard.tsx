@@ -12,6 +12,8 @@ import type { CheckItem } from '../../../data/madeby';
 import { JOURNEY_STEPS, journeyStepOf, nextJourneyStep, phaseForStep } from '../../../data/madebyJourney';
 import type { JourneyStepN } from '../../../data/madebyJourney';
 import type { CrmClient } from '../../../data/types';
+import { scorecard } from '../../../data/scorecard';
+import type { MetricsRow } from '../../../data/scorecard';
 
 interface Client { id: string; business_name: string; contact_name: string | null; stage: string; delivery_phase: number | null; room: string | null; client_type: string | null; last_activity_at: string }
 const stageLabel = (s: string) => STAGES.find((x) => x.key === s)?.label ?? s;
@@ -36,6 +38,7 @@ export default function MadeByBoard({ onOpenClient, canOpen }: Props) {
   const phone = device === 'phone';
   const [clients, setClients] = useState<Client[]>([]);
   const [items, setItems] = useState<CheckItem[]>([]);
+  const [metrics, setMetrics] = useState<(MetricsRow & { client_id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [missing, setMissing] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -44,10 +47,12 @@ export default function MadeByBoard({ onOpenClient, canOpen }: Props) {
   const [over, setOver] = useState<JourneyStepN | null>(null);
   const [showAll, setShowAll] = useState(false);
   const load = useCallback(async () => {
-    const [c, i] = await Promise.all([
+    const [c, i, m] = await Promise.all([
       supabase.from('crm_clients').select('id,business_name,contact_name,stage,delivery_phase,room,client_type,last_activity_at').order('last_activity_at', { ascending: false }),
       supabase.from('client_checklist').select('*'),
+      supabase.from('client_metrics').select('client_id,kind,monthly_revenue,leads_month,google_rating,note,captured_at').order('captured_at'),
     ]);
+    setMetrics(((m.data ?? []) as (MetricsRow & { client_id: string })[]));
     setMissing(!!c.error);
     setClients((c.data ?? []) as Client[]);
     setItems((i.data ?? []) as CheckItem[]);
@@ -115,7 +120,18 @@ export default function MadeByBoard({ onOpenClient, canOpen }: Props) {
           </span>
           <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{step ? `Next: ${step.title}` : c.contact_name ?? (phase ? 'Phase checklist done' : 'In sales')}</span>
         </button>
+        {SCORECARD_STEPS.has(n) && (() => {
+          // Baseline and Prove & Renew show the scorecard: its weakest metric, one tap to the tab.
+          const mine = metrics.filter((x) => x.client_id === c.id);
+          const sc = scorecard(mine.find((x) => x.kind === 'baseline'), [...mine].reverse().find((x) => x.kind === 'snapshot'));
+          return (
+            <button onClick={() => onOpenClient(c.id, 'scorecard')} style={{ all: 'unset', cursor: 'pointer', display: 'flex', gap: 6, flexWrap: 'wrap' }} aria-label={`Scorecard for ${c.business_name}`}>
+              {sc.weakest ? <Chip k="warn">Weakest: {sc.weakest.m.label}</Chip> : <Chip k={sc.hasBaseline ? 'good' : 'neutral'}>{sc.hasBaseline ? 'On target' : 'No baseline yet'}</Chip>}
+            </button>
+          );
+        })()}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {SCORECARD_STEPS.has(n) && <button className="mm-btn" style={{ height: 28, padding: '0 10px', fontSize: 12 }} onClick={() => onOpenClient(c.id, 'scorecard')}>Scorecard</button>}
           <button className="mm-btn" style={{ height: 28, padding: '0 10px', fontSize: 12 }} onClick={() => onOpenClient(c.id, 'portal')}>Portal</button>
           <button className="mm-btn" style={{ height: 28, padding: '0 10px', fontSize: 12 }} onClick={() => onOpenClient(c.id, 'comms')}>Comms</button>
         </div>
@@ -186,4 +202,6 @@ export default function MadeByBoard({ onOpenClient, canOpen }: Props) {
 
 /** What an empty column says: sales steps fill from LeadFlow, Protect is a review. */
 const emptyText = (s: (typeof JOURNEY_STEPS)[number]) => (s.checks ? 'A review for every client in steps 4–8, not a place clients sit.' : s.n === 1 ? 'New leads: work them from the Call list.' : s.phases.length ? 'No clients on this step.' : 'Deals in discovery, analysis or proposal.');
+/** Steps whose cards show the client scorecard (Baseline, Prove & Renew). */
+const SCORECARD_STEPS = new Set<number>([3, 8]);
 const toolBtn: CSSProperties = { height: 26, padding: '0 9px', fontSize: 12, borderRadius: 999 };

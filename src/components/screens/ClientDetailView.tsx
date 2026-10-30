@@ -15,6 +15,7 @@ import { ClientOverview, DeliveryTab, ClientComms, ClientContracts } from '../ma
 import ClientVideos from '../madeby/ClientVideos';
 import { ClientPortalPanel } from './v2/ClientModulesV2';
 import { useModule } from '../mm/Page';
+import ScorecardPanel from '../madeby/ScorecardPanel';
 
 interface Props {
   client: CrmClientWithChildren;
@@ -34,9 +35,9 @@ interface Props {
 type Tab = 'audit' | 'analysis' | 'pricing' | 'invoices' | 'reports' | 'portal' | 'sent';
 // Portal (what used to be the Client Modules screen) and Comms are the
 // client record's own tabs (Made by journey, Oct 2026).
-type Section = 'overview' | 'sales' | 'delivery' | 'portal' | 'comms' | 'docs' | 'money';
-const SECTIONS: { id: Section; label: string }[] = [{ id: 'overview', label: 'Overview' }, { id: 'sales', label: 'Sales' }, { id: 'delivery', label: 'Delivery' }, { id: 'portal', label: 'Portal' }, { id: 'comms', label: 'Comms' }, { id: 'docs', label: 'Docs' }, { id: 'money', label: 'Money' }];
-const SECTION_TABS: Record<Section, Tab[]> = { overview: [], sales: ['audit', 'analysis', 'pricing'], delivery: [], portal: [], comms: [], docs: ['reports'], money: ['invoices', 'sent'] };
+type Section = 'overview' | 'sales' | 'delivery' | 'scorecard' | 'portal' | 'comms' | 'docs' | 'money';
+const SECTIONS: { id: Section; label: string }[] = [{ id: 'overview', label: 'Overview' }, { id: 'sales', label: 'Sales' }, { id: 'delivery', label: 'Delivery' }, { id: 'scorecard', label: 'Scorecard' }, { id: 'portal', label: 'Portal' }, { id: 'comms', label: 'Comms' }, { id: 'docs', label: 'Docs' }, { id: 'money', label: 'Money' }];
+const SECTION_TABS: Record<Section, Tab[]> = { overview: [], sales: ['audit', 'analysis', 'pricing'], delivery: [], scorecard: [], portal: [], comms: [], docs: ['reports'], money: ['invoices', 'sent'] };
 const isSection = (v: string | null | undefined): v is Section => !!v && SECTIONS.some((x) => x.id === v);
 
 const textareaStyle: CSSProperties = {
@@ -56,7 +57,7 @@ function amountLabel(amount: number | null): string {
 }
 
 export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, homeSubStyle, onPushToMarketing, onOpenCampaign, onStartCampaign, initialSection }: Props) {
-  const { nav } = useModule();
+  const { nav, device } = useModule();
   const [tab, setTab] = useState<Tab>(client.audit?.status === 'complete' ? 'analysis' : 'audit');
   // Brief §5.2: one client page in six tabs instead of one long screen.
   const [section, setSection] = useState<Section>(isSection(initialSection) ? initialSection : 'overview');
@@ -403,6 +404,7 @@ export default function ClientDetailView({ client, crm, onBack, homeHeadStyle, h
       <div style={{ marginTop: 16 }}><Tabs tabs={SECTIONS} value={section} onChange={(s) => { setSection(s); const first = SECTION_TABS[s][0]; if (first) setTab(first); }} /></div>
       {section === 'overview' && <ClientOverview client={client} onOpen={(s) => setSection(s)} />}
       {section === 'delivery' && <DeliveryTab client={client} onChanged={() => crm.reload()} />}
+      {section === 'scorecard' && <ScorecardPanel clientId={client.id} phone={device === 'phone'} />}
       {section === 'portal' && <div style={{ marginTop: 16 }}><ClientPortalPanel clientId={client.id} onChanged={() => crm.reload()} /></div>}
       {section === 'comms' && <>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
