@@ -36,8 +36,8 @@ export default function BenderButton({ activeBender, onStart, onEnd }: Props) {
   const pillStyle: CSSProperties = {
     display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 'var(--radius-pill)',
     fontSize: 'var(--text-caption)', fontWeight: 600, cursor: 'pointer',
-    background: activeBender ? '#3a2412' : 'var(--surface)',
-    border: `1px solid ${activeBender ? '#B7690C' : 'var(--border)'}`,
+    background: activeBender ? 'var(--g-warning-soft)' : 'var(--surface)',
+    border: `1px solid ${activeBender ? 'var(--g-warning)' : 'var(--border)'}`,
     color: activeBender ? 'var(--warning)' : 'var(--text-secondary)',
   };
 

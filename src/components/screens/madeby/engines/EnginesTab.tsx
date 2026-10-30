@@ -16,7 +16,7 @@ function Toggle({ on, disabled, onChange, label }: { on: boolean; disabled?: boo
   return (
     <button role="switch" aria-checked={on} aria-label={label} disabled={disabled} onClick={() => onChange(!on)}
       style={{ width: 52, height: 30, borderRadius: 999, border: '1px solid var(--border)', background: on ? 'var(--success)' : 'var(--surface-2)', position: 'relative', cursor: disabled ? 'default' : 'pointer', flex: 'none', padding: 0 }}>
-      <span style={{ position: 'absolute', top: 3, left: on ? 25 : 3, width: 22, height: 22, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.3)', transition: 'left .15s' }} />
+      <span style={{ position: 'absolute', top: 3, left: on ? 25 : 3, width: 22, height: 22, borderRadius: '50%', background: '#fff', boxShadow: 'var(--g-shadow-1)', transition: 'left .15s' }} />
     </button>
   );
 }

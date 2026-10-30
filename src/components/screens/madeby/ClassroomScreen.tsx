@@ -117,7 +117,7 @@ function MiniCard({ c, items, waitDays, onClose, onOpen, onMove, now }: { c: Cli
   const last = c.last_contact_at ?? c.last_activity_at;
   return (
     <div role="dialog" aria-label={c.business_name} onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 380, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 10, boxShadow: '0 20px 50px rgba(0,0,0,.2)' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 380, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 10, boxShadow: 'var(--g-shadow-3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><strong style={{ flex: 1, fontSize: 16 }}>{c.business_name}</strong><button className="mm-btn" style={{ height: 30 }} onClick={onClose}>✕</button></div>
         <div style={{ fontSize: 14 }}>{phase ? `Phase ${phase.n} · ${phase.label} — ${prog?.pct ?? 0}% through` : c.room === 'aphs' ? 'APHS room' : c.room === 'own' ? 'Own brands' : 'No phase yet'}</div>
         {prog && <Progress pct={prog.pct} label="Phase progress" />}

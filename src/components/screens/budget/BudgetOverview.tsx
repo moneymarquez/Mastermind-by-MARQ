@@ -185,7 +185,7 @@ export default function BudgetOverview({ device, b, monthKey, setMonthKey, onAdd
           {billsCard}
         </>
       )}
-      {phone && <button className="mm-btn mm-btn--primary" onClick={() => (onAdd ? onAdd() : setAdding(true))} style={{ position: 'fixed', right: 16, bottom: 'calc(80px + max(env(safe-area-inset-bottom), 20px))', zIndex: 40, height: 48, padding: '0 18px', fontSize: 15, boxShadow: '0 0 40px rgba(0,0,0,.25)' }}><GPlus size={16} />Add expense</button>}
+      {phone && <button className="mm-btn mm-btn--primary" onClick={() => (onAdd ? onAdd() : setAdding(true))} style={{ position: 'fixed', right: 16, bottom: 'calc(80px + max(env(safe-area-inset-bottom), 20px))', zIndex: 40, height: 48, padding: '0 18px', fontSize: 15, boxShadow: 'var(--g-shadow-2)' }}><GPlus size={16} />Add expense</button>}
       {adding && <AddSheet phone={phone} b={b} onClose={() => setAdding(false)} />}
     </div>
   );

@@ -52,7 +52,7 @@ function PortalMenu({ portal, sheet, onClose }: { portal: PortalNav; sheet: bool
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
-      <div role="menu" aria-label="Portals" className="mm-anim" style={{ position: 'absolute', top: 52, left: 10, right: 10, zIndex: 41, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 4, display: 'flex', flexDirection: 'column', gap: 2, boxShadow: '0 18px 50px -14px rgba(0,0,0,.5)', animation: 'mmPanelIn .15s ease' }}>
+      <div role="menu" aria-label="Portals" className="mm-anim" style={{ position: 'absolute', top: 52, left: 10, right: 10, zIndex: 41, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 4, display: 'flex', flexDirection: 'column', gap: 2, boxShadow: 'var(--g-shadow-3)', animation: 'mmPanelIn .15s ease' }}>
         {rows}
       </div>
     </>
@@ -301,7 +301,7 @@ export function NotificationsPanel({ device, items, isRead, onOpen, onMarkAll, o
   return (
     <>
       <div onClick={onClose} style={{ position: phone ? 'fixed' : 'absolute', inset: 0, zIndex: 70, background: phone ? 'var(--mm-scrim)' : 'transparent' }} />
-      <div role="dialog" aria-label="Notifications" className="mm-anim" style={{ ...panel, zIndex: 71, display: 'flex', flexDirection: 'column', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, boxShadow: '0 24px 60px -18px rgba(0,0,0,.55)', animation: 'mmPanelIn .15s ease', overflow: 'hidden' }}>
+      <div role="dialog" aria-label="Notifications" className="mm-anim" style={{ ...panel, zIndex: 71, display: 'flex', flexDirection: 'column', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, boxShadow: 'var(--g-shadow-3)', animation: 'mmPanelIn .15s ease', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', padding: '14px 14px 10px' }}>
           <span style={{ flex: 1, color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>Notifications</span>
           {items.some((i) => !isRead(i.id)) && <button onClick={onMarkAll} style={{ border: 0, background: 'transparent', color: 'var(--accent)', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Mark all read</button>}
@@ -349,7 +349,7 @@ export function SearchPalette({ groups, onOpen, onClose }: { groups: ShellGroup[
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'var(--mm-scrim)' }} />
-      <div role="dialog" aria-label="Search" className="mm-anim" style={{ position: 'fixed', zIndex: 81, left: '50%', top: 'max(12vh, calc(env(safe-area-inset-top) + 16px))', transform: 'translateX(-50%)', width: 'min(560px, calc(100vw - 32px))', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 24px 60px -18px rgba(0,0,0,.6)', animation: 'mmPanelIn .15s ease' }}>
+      <div role="dialog" aria-label="Search" className="mm-anim" style={{ position: 'fixed', zIndex: 81, left: '50%', top: 'max(12vh, calc(env(safe-area-inset-top) + 16px))', transform: 'translateX(-50%)', width: 'min(560px, calc(100vw - 32px))', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--g-shadow-3)', animation: 'mmPanelIn .15s ease' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', borderBottom: '1px solid var(--border)' }}>
           <GSearch size={17} color="var(--text-tertiary)" />
           <input ref={ref} value={q} onChange={(e) => { setQ(e.target.value); setSel(0); }} placeholder="Search modules"
