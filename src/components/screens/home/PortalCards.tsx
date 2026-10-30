@@ -81,7 +81,7 @@ function PortalCard({ portal, onOpen }: { portal: Exclude<PortalKey, 'mastermind
         <GChevron size={14} color="var(--text-tertiary)" />
       </span>
       {failed ? <span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Couldn't load</span>
-        : !f ? <span style={{ height: 52, borderRadius: 8, background: 'var(--surface-3)', opacity: 0.6 }} aria-label="Loading" />
+        : !f ? <span style={{ height: 52, borderRadius: 'var(--g-r-md)', background: 'var(--surface-3)', opacity: 0.6 }} aria-label="Loading" />
         : allZero ? <span style={{ fontSize: 14, color: 'var(--text-tertiary)', lineHeight: 1.4 }}>{f.empty}</span>
         : (
           <>

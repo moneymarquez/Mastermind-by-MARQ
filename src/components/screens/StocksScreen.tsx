@@ -33,7 +33,7 @@ const tabStyle = (active: boolean): CSSProperties => ({
   background: active ? 'var(--tint-active)' : 'transparent', whiteSpace: 'nowrap',
 });
 const pillButton = (variant: 'solid' | 'outline', danger?: boolean): CSSProperties => ({
-  display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 8, fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer',
+  display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 'var(--g-r-md)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer',
   background: variant === 'solid' ? (danger ? RED : 'var(--text)') : 'transparent',
   color: variant === 'solid' ? 'var(--bg)' : danger ? RED : 'var(--text)',
   border: variant === 'outline' ? `1px solid ${danger ? RED : 'var(--text)'}` : 'none',
@@ -123,7 +123,7 @@ function Walkthrough() {
           {WALKTHROUGH_STEPS.map((step, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer' }} onClick={() => toggle(i)}>
               <div style={{
-                width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1,
+                width: 18, height: 18, borderRadius: 'var(--g-r-xs)', flexShrink: 0, marginTop: 1,
                 border: `1px solid ${checked[i] ? GOLD : 'var(--border-2)'}`, background: checked[i] ? GOLD : 'transparent',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--text-tiny)', color: 'var(--bg)', fontWeight: 700,
               }}>

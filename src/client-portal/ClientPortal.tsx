@@ -32,9 +32,9 @@ const muted: CSSProperties = { fontSize: 14, color: 'var(--text-secondary)', lin
 const body: CSSProperties = { fontSize: 15, color: 'var(--text)', lineHeight: 1.55, whiteSpace: 'pre-wrap', margin: 0 };
 const small: CSSProperties = { fontSize: 12.5, fontWeight: 500, color: 'var(--text-tertiary)' };
 const label: CSSProperties = { fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' };
-const teal: CSSProperties = { height: 46, padding: '0 18px', borderRadius: 8, border: 0, background: 'var(--client-accent)', color: 'var(--bg)', fontSize: 15, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' };
-const ghost: CSSProperties = { height: 46, padding: '0 16px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 15, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' };
-const input: CSSProperties = { width: '100%', boxSizing: 'border-box', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px', color: 'var(--text)', fontSize: 16, outline: 'none', fontFamily: 'inherit', lineHeight: 1.45 };
+const teal: CSSProperties = { height: 46, padding: '0 18px', borderRadius: 'var(--g-r-md)', border: 0, background: 'var(--client-accent)', color: 'var(--bg)', fontSize: 15, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' };
+const ghost: CSSProperties = { height: 46, padding: '0 16px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 15, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' };
+const input: CSSProperties = { width: '100%', boxSizing: 'border-box', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-md)', padding: '12px 14px', color: 'var(--text)', fontSize: 16, outline: 'none', fontFamily: 'inherit', lineHeight: 1.45 };
 const off = (o: boolean): CSSProperties => (o ? { opacity: 0.5, pointerEvents: 'none' } : {});
 
 function ticketKindFor(kind: DeliverableKind): ClientTicketKind {
@@ -464,8 +464,8 @@ export default function ClientPortal({ onSignOut, previewClientId = null }: Prop
       <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderBottom: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
           {settings?.logo_url
-            ? <img src={settings.logo_url} alt="" style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border)' }} />
-            : <div style={{ width: 32, height: 32, borderRadius: 8, background: 'color-mix(in srgb, var(--client-accent) 20%, var(--surface-3))', color: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600 }}>{initials}</div>}
+            ? <img src={settings.logo_url} alt="" style={{ width: 32, height: 32, borderRadius: 'var(--g-r-md)', objectFit: 'cover', border: '1px solid var(--border)' }} />
+            : <div style={{ width: 32, height: 32, borderRadius: 'var(--g-r-md)', background: 'color-mix(in srgb, var(--client-accent) 20%, var(--surface-3))', color: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600 }}>{initials}</div>}
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15, minWidth: 0 }}>
             <span style={{ color: 'var(--text)', fontSize: 14, fontWeight: 600, letterSpacing: '-0.015em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{client.business_name}</span>
             <span style={{ color: 'var(--text-tertiary)', fontSize: 11.5, fontWeight: 500 }}>Client portal · by MARQ</span>

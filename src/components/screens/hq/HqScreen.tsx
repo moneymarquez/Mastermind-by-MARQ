@@ -51,7 +51,7 @@ export default function HqScreen() {
   const reds = s?.flags.filter((f) => f.severity === 'red').length ?? 0;
   return (
     <Page title="HQ" sub="The master orchestrator: one report, one place to talk, one kill switch" back="Made by" backTo="madeby-board">
-      {err && <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid color-mix(in srgb, var(--warning) 40%, var(--border))', background: 'color-mix(in srgb, var(--warning) 8%, var(--surface))', fontSize: 14 }}>{err}</div>}
+      {err && <div style={{ padding: '12px 14px', borderRadius: 'var(--g-r-lg)', border: '1px solid color-mix(in srgb, var(--warning) 40%, var(--border))', background: 'color-mix(in srgb, var(--warning) 8%, var(--surface))', fontSize: 14 }}>{err}</div>}
       {s && <KillSwitch controls={s.controls} onChanged={() => { void load(); void flagsApi.reload(); }} />}
       <Tabs<Tab> value={tab} onChange={setTab} tabs={[{ id: 'today', label: 'Today' }, { id: 'flags', label: 'Flags', badge: reds }, { id: 'spend', label: 'Spend & limits' }, { id: 'log', label: 'Task log' }, { id: 'texting', label: 'Texting line' }]} />
       {!s && !err && <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Loading HQ…</div>}
@@ -136,8 +136,8 @@ function HqChat({ onRouted }: { onRouted: () => void }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {log.map((m, i) => (
           <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ alignSelf: 'flex-end', maxWidth: '85%', padding: '8px 12px', borderRadius: 12, background: 'var(--surface-2)', fontSize: 14 }}>{m.me}</div>
-            <div style={{ maxWidth: '90%', padding: '8px 12px', borderRadius: 12, border: '1px solid var(--border)', fontSize: 14, lineHeight: 1.5 }}>{m.domain && <Chip k="accent">{DOMAIN[m.domain]}</Chip>} {m.reply}</div>
+            <div style={{ alignSelf: 'flex-end', maxWidth: '85%', padding: '8px 12px', borderRadius: 'var(--g-r-lg)', background: 'var(--surface-2)', fontSize: 14 }}>{m.me}</div>
+            <div style={{ maxWidth: '90%', padding: '8px 12px', borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', fontSize: 14, lineHeight: 1.5 }}>{m.domain && <Chip k="accent">{DOMAIN[m.domain]}</Chip>} {m.reply}</div>
             <Thumbs entityType="hq_message" entityId={`${Date.now()}-${i}`} domain="master" compact />
           </div>
         ))}

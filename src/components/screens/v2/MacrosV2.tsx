@@ -68,7 +68,7 @@ export default function MacrosV2() {
     <Card title="Water" meta={`${glasses} of ${GLASSES} glasses`} wide={!phone}>
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${GLASSES},1fr)`, gap: 5 }}>
         {Array.from({ length: GLASSES }, (_, i) => (
-          <button key={i} aria-label={i < glasses ? `Glass ${i + 1} logged` : 'Log a glass'} onClick={() => { if (i >= glasses) void mx.addWaterLog(GLASS_OZ * (i + 1 - glasses)); }} style={{ height: 28, borderRadius: 6, border: 0, padding: 0, cursor: i >= glasses ? 'pointer' : 'default', background: i < glasses ? 'var(--accent)' : 'var(--surface-3)' }} />
+          <button key={i} aria-label={i < glasses ? `Glass ${i + 1} logged` : 'Log a glass'} onClick={() => { if (i >= glasses) void mx.addWaterLog(GLASS_OZ * (i + 1 - glasses)); }} style={{ height: 28, borderRadius: 'var(--g-r-sm)', border: 0, padding: 0, cursor: i >= glasses ? 'pointer' : 'default', background: i < glasses ? 'var(--accent)' : 'var(--surface-3)' }} />
         ))}
       </div>
     </Card>
@@ -78,7 +78,7 @@ export default function MacrosV2() {
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {mx.todayMeals.map((m, i) => (
           <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: i ? '1px solid var(--grid)' : 'none' }}>
-            <div style={{ width: 48, height: 48, flex: 'none', borderRadius: 10, background: 'repeating-linear-gradient(135deg, var(--surface-3) 0 6px, var(--surface-2) 6px 12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8.5, color: 'var(--text-tertiary)' }}>{m.log_method === 'photo' ? 'photo' : m.log_method}</div>
+            <div style={{ width: 48, height: 48, flex: 'none', borderRadius: 'var(--g-r-md)', background: 'repeating-linear-gradient(135deg, var(--surface-3) 0 6px, var(--surface-2) 6px 12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8.5, color: 'var(--text-tertiary)' }}>{m.log_method === 'photo' ? 'photo' : m.log_method}</div>
             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
               <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{mealName(m)}</span>
               <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)' }}>{cap(m.meal_type)} · {clock(new Date(m.created_at))} · P {Math.round(m.protein_g ?? 0)} C {Math.round(m.carbs_g ?? 0)} F {Math.round(m.fat_g ?? 0)}</span>
@@ -88,7 +88,7 @@ export default function MacrosV2() {
         ))}
         {missing.map((ty, i) => (
           <button key={ty} onClick={() => setLogOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: mx.todayMeals.length || i ? '1px solid var(--grid)' : 'none', background: 'transparent', border: 0, borderTopStyle: 'solid', borderTopWidth: mx.todayMeals.length || i ? 1 : 0, borderTopColor: 'var(--grid)', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
-            <div style={{ width: 48, height: 48, flex: 'none', borderRadius: 10, background: 'repeating-linear-gradient(135deg, var(--surface-3) 0 6px, var(--surface-2) 6px 12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: 'var(--text-tertiary)' }}>+</div>
+            <div style={{ width: 48, height: 48, flex: 'none', borderRadius: 'var(--g-r-md)', background: 'repeating-linear-gradient(135deg, var(--surface-3) 0 6px, var(--surface-2) 6px 12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: 'var(--text-tertiary)' }}>+</div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}><span style={{ color: 'var(--text-tertiary)', fontSize: 15, fontWeight: 500 }}>{cap(ty)}</span><span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)' }}>Not logged yet</span></div>
             <span style={{ color: 'var(--text-tertiary)', fontSize: 15, fontWeight: 600 }}>—</span>
           </button>

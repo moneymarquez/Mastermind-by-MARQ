@@ -76,8 +76,8 @@ export default function ProductDrawer({ product: p, snapshots, onClose, onSave, 
     >
       {/* Snapshot */}
       <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
-        {p.images.length === 0 ? <div style={{ width: 160, height: 120, borderRadius: 10, background: E.border, display: 'flex', alignItems: 'center', justifyContent: 'center', color: E.faint, fontSize: 12, flexShrink: 0 }}>No photo — add image_url</div>
-          : p.images.map((u) => <a key={u} href={u} target="_blank" rel="noopener noreferrer" style={{ flex: '0 0 auto' }}><img src={u} alt="" loading="lazy" style={{ height: 140, borderRadius: 10, border: `1px solid ${E.border}`, display: 'block' }} /></a>)}
+        {p.images.length === 0 ? <div style={{ width: 160, height: 120, borderRadius: 'var(--g-r-md)', background: E.border, display: 'flex', alignItems: 'center', justifyContent: 'center', color: E.faint, fontSize: 12, flexShrink: 0 }}>No photo — add image_url</div>
+          : p.images.map((u) => <a key={u} href={u} target="_blank" rel="noopener noreferrer" style={{ flex: '0 0 auto' }}><img src={u} alt="" loading="lazy" style={{ height: 140, borderRadius: 'var(--g-r-md)', border: `1px solid ${E.border}`, display: 'block' }} /></a>)}
       </div>
       <div style={{ ...E.card, padding: 14, marginTop: 12, display: 'flex', gap: 18, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div>

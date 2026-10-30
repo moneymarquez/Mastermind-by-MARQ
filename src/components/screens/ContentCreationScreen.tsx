@@ -72,7 +72,7 @@ const inputStyle: CSSProperties = {
   color: 'var(--text)', fontSize: 'var(--text-body-lg)', outline: 'none',
 };
 const primaryBtn: CSSProperties = {
-  padding: '9px 18px', borderRadius: 8, background: 'var(--text)', color: 'var(--bg)',
+  padding: '9px 18px', borderRadius: 'var(--g-r-md)', background: 'var(--text)', color: 'var(--bg)',
   fontSize: 'var(--text-body-sm)', fontWeight: 600, cursor: 'pointer', display: 'inline-block',
 };
 

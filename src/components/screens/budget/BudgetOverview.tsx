@@ -140,8 +140,8 @@ export default function BudgetOverview({ device, b, monthKey, setMonthKey, onAdd
     </Card>
   );
   const filterPills = (
-    <div style={{ display: 'flex', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)', alignSelf: 'flex-start' }}>
-      {(['All', 'Unpaid', 'Paid'] as const).map((f) => <button key={f} onClick={() => setBillFilter(f)} style={{ padding: '6px 12px', borderRadius: 999, border: 0, fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', background: billFilter === f ? 'var(--text)' : 'transparent', color: billFilter === f ? 'var(--bg)' : 'var(--text-secondary)' }}>{f}</button>)}
+    <div className="g-seg g-seg--fill" style={{ display: 'flex', alignSelf: 'flex-start' }}>
+      {(['All', 'Unpaid', 'Paid'] as const).map((f) => <button key={f} onClick={() => setBillFilter(f)} className="g-pill" aria-pressed={billFilter === f}>{f}</button>)}
     </div>
   );
   const billsCard = phone ? (
@@ -194,7 +194,7 @@ export default function BudgetOverview({ device, b, monthKey, setMonthKey, onAdd
 const navBtn: CSSProperties = { width: 28, height: 28, borderRadius: 999, border: 0, background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' };
 const th: CSSProperties = { fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', padding: '10px 20px', background: 'var(--surface-2)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' };
 const td: CSSProperties = { padding: '14px 20px', borderBottom: '1px solid var(--grid)', fontSize: 14, color: 'var(--text-secondary)' };
-const field: CSSProperties = { width: '100%', boxSizing: 'border-box', height: 46, padding: '0 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 16, fontFamily: 'inherit', outline: 'none' };
+const field: CSSProperties = { width: '100%', boxSizing: 'border-box', height: 46, padding: '0 12px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 16, fontFamily: 'inherit', outline: 'none' };
 
 /** Add expense: amount, what, category, date. */
 function AddSheet({ phone, b, onClose }: { phone: boolean; b: ReturnType<typeof useBudgeting>; onClose: () => void }) {

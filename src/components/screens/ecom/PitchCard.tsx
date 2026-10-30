@@ -21,11 +21,11 @@ export function PitchBody({ p }: { p: P }) {
   const conf = Number(p.confidence_pct ?? 50);
   const sup = (p.supplier ?? {}) as { name?: string; url?: string | null; ship_days?: number | null; us_warehouse?: boolean | null; unit_cost?: number | null };
   const where = (p.where ?? {}) as { tiktok_shop_fit?: boolean; note?: string };
-  const box = { background: tint(E.border, 18), borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column' as const, gap: 6 };
+  const box = { background: tint(E.border, 18), borderRadius: 'var(--g-r-lg)', padding: 12, display: 'flex', flexDirection: 'column' as const, gap: 6 };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr)', gap: 14, alignItems: 'center' }}>
-        {typeof p.image === 'string' && p.image ? <img src={p.image} alt="" style={{ width: 84, height: 84, objectFit: 'cover', borderRadius: 12, border: `1px solid ${E.border}` }} /> : <div style={{ width: 84, height: 84, borderRadius: 12, background: tint(E.border, 30) }} />}
+        {typeof p.image === 'string' && p.image ? <img src={p.image} alt="" style={{ width: 84, height: 84, objectFit: 'cover', borderRadius: 'var(--g-r-lg)', border: `1px solid ${E.border}` }} /> : <div style={{ width: 84, height: 84, borderRadius: 'var(--g-r-lg)', background: tint(E.border, 30) }} />}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 34, fontWeight: 700, letterSpacing: '-0.03em', color: confidenceColor(conf), fontVariantNumeric: 'tabular-nums' }}>{conf}%</span>
@@ -58,7 +58,7 @@ export function PitchBody({ p }: { p: P }) {
         {sellers.length === 0 && <div style={{ fontSize: 13, color: E.muted }}>No sellers found with sources.</div>}
         {sellers.map((s, i) => (
           <div key={i} style={{ display: 'grid', gridTemplateColumns: s.screenshot_url ? '64px minmax(0,1fr)' : 'minmax(0,1fr)', gap: 10, paddingTop: i ? 8 : 0, borderTop: i ? `1px solid ${E.border}` : 'none' }}>
-            {s.screenshot_url && <img src={s.screenshot_url} alt={`${s.name} shop`} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8 }} />}
+            {s.screenshot_url && <img src={s.screenshot_url} alt={`${s.name} shop`} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 'var(--g-r-md)' }} />}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span style={{ fontWeight: 600, color: E.text }}>{s.name}</span>
@@ -115,7 +115,7 @@ export function DirectionVisuals({ approvalId, direction }: { approvalId: string
     <div style={{ marginTop: 8 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(88px,1fr))', gap: 6 }}>
         {mine.map((r) => (
-          <div key={r.id} title={r.prompt} style={{ aspectRatio: r.kind === 'logo' ? '1' : '3 / 4', borderRadius: 8, overflow: 'hidden', background: tint(E.border, 25), display: 'flex', alignItems: 'flex-end' }}>
+          <div key={r.id} title={r.prompt} style={{ aspectRatio: r.kind === 'logo' ? '1' : '3 / 4', borderRadius: 'var(--g-r-md)', overflow: 'hidden', background: tint(E.border, 25), display: 'flex', alignItems: 'flex-end' }}>
             {r.url ? <img src={r.url} alt={`${r.kind} image`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 10.5, color: E.faint, padding: 6 }}>{r.kind} · {r.status}</span>}
           </div>
         ))}

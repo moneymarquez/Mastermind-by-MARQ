@@ -63,7 +63,7 @@ export default function GoalsV2() {
           <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, letterSpacing: '-0.015em', minWidth: 0 }}>{g.title}</span>
           <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{g.deadline ? `By ${shortDate(g.deadline)}` : 'No deadline'}</span>
         </div>
-        {t && <div style={{ padding: 12, borderRadius: 10, background: 'var(--surface-3)', color: 'var(--text)', fontSize: 14, lineHeight: 1.45 }}>{t}</div>}
+        {t && <div style={{ padding: 12, borderRadius: 'var(--g-r-md)', background: 'var(--surface-3)', color: 'var(--text)', fontSize: 14, lineHeight: 1.45 }}>{t}</div>}
         {p ? <Pace val={p.val} max={p.max} fill={p.fill} mark={p.mark} chip={p.chip} k={p.k} note={p.note} />
           : <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>No target yet. Open it to set one or lock in a path.</span>}
         {step && (

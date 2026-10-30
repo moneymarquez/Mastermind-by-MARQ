@@ -25,11 +25,11 @@ const inputStyle: CSSProperties = {
 const labelStyle: CSSProperties = { fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', marginBottom: 5, display: 'block' };
 const fieldWrap: CSSProperties = { marginBottom: 12 };
 const primaryBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '10px 20px', borderRadius: 8,
+  display: 'inline-flex', alignItems: 'center', padding: '10px 20px', borderRadius: 'var(--g-r-md)',
   background: 'var(--text)', color: 'var(--bg)', fontSize: 'var(--text-body)', fontWeight: 600, cursor: 'pointer',
 };
 const ghostBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 8,
+  display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 'var(--g-r-md)',
   border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 'var(--text-body)', cursor: 'pointer',
 };
 

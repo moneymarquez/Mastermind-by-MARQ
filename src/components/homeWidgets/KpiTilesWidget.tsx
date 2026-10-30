@@ -87,8 +87,8 @@ export default function KpiTilesWidget({ isMobile }: HomeWidgetProps) {
               {v.loading || d.caption === 'Next on schedule' ? shown : <RollingText text={v.value} delay={d.delay} duration={ROLL_MS} />}
             </div>
             {v.pct !== null && (
-              <div style={{ height: 4, borderRadius: 4, background: 'var(--mm-track)' }}>
-                <div style={{ width: `${Math.max(0, Math.min(100, v.pct))}%`, height: '100%', borderRadius: 4, background: 'var(--mm-text)' }} />
+              <div style={{ height: 4, borderRadius: 'var(--g-r-xs)', background: 'var(--mm-track)' }}>
+                <div style={{ width: `${Math.max(0, Math.min(100, v.pct))}%`, height: '100%', borderRadius: 'var(--g-r-xs)', background: 'var(--mm-text)' }} />
               </div>
             )}
           </div>

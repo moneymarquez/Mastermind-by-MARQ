@@ -5,7 +5,7 @@ import { CHANNELS, money, ago } from '../../../data/ecom';
 import type { Product, SheetFilters } from '../../../data/ecomProducts';
 import { DEFAULT_FILTERS, filterProducts, rankSort, brandStepsFromProduct } from '../../../data/ecomProducts';
 import { useEcomProducts, linkProductToBrand } from '../../../data/useEcom';
-import { E, Pill, Badge, ConfidenceBadge, TeachingEmpty, btn, field, label } from './ecomShared';
+import { E, Pill, Seg, Badge, ConfidenceBadge, TeachingEmpty, btn, field, label } from './ecomShared';
 import ProductDrawer from './ProductDrawer';
 import RichProductCard from './RichProductCard';
 import { cardView, oneVerdict } from '../../../data/ecomCard';
@@ -75,7 +75,7 @@ export default function ProductSheetsTab({ search, onBuildBrand, statusOf, onOpe
     <div>
       <HandoffInbox kinds={['content_trend_to_ecom']} title="For E-commerce, from the other bots" />
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-        {CHANNELS.map((c) => <Pill key={c.id} active={channel === c.id} onClick={() => { setChannel(c.id); setLimit(20); }}>{c.label}{counts[c.id] ? <span style={{ opacity: 0.7, fontFamily: 'var(--font-mono)', fontSize: 11 }}>{counts[c.id]}</span> : null}</Pill>)}
+        <Seg label="Channel">{CHANNELS.map((c) => <Pill key={c.id} active={channel === c.id} onClick={() => { setChannel(c.id); setLimit(20); }}>{c.label}{counts[c.id] ? <span className="g-seg-n">{counts[c.id]}</span> : null}</Pill>)}</Seg>
         <div style={{ flex: 1 }} />
         <button style={btn('ghost')} onClick={() => setView(view === 'cards' ? 'table' : 'cards')}>{view === 'cards' ? '☰ Table' : '▦ Cards'}</button>
         <button style={btn('primary')} disabled={scout.searching} onClick={() => { void scout.start(channel, 10); }}>{scout.searching ? 'Scout is searching…' : 'Run Product Scout'}</button>

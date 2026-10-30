@@ -47,7 +47,7 @@ export default function DispatchV2() {
     <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: '22px 18px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
       <MicButton size="lg" />
       <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>Hold to talk</span>
-      <div style={{ alignSelf: 'stretch', padding: 12, borderRadius: 10, background: 'var(--surface-3)', fontSize: 14, lineHeight: 1.45, color: 'var(--text-secondary)' }}>
+      <div style={{ alignSelf: 'stretch', padding: 12, borderRadius: 'var(--g-r-md)', background: 'var(--surface-3)', fontSize: 14, lineHeight: 1.45, color: 'var(--text-secondary)' }}>
         Say who does what by when: <span style={{ color: 'var(--text)' }}>"{d.members[0]?.name.split(' ')[0] ?? 'Jordan'}, send the invoice by Thursday."</span> You review every task before anything is assigned.
       </div>
       <button className="mm-btn" style={{ alignSelf: 'stretch', height: 42 }} onClick={() => openTyping()}>Type a task</button>
@@ -111,7 +111,7 @@ export default function DispatchV2() {
       {sel && (
         <Sheet title={sel.title} onClose={() => setSel(null)}>
           <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{nameOf(sel.assignee_member_id)} · {sel.due_date ? dueLabel(sel.due_date, today) : 'No due date'} · {PRIORITY_WORD[sel.priority]}</span>
-          {sel.source_quote && <div style={{ padding: 12, borderRadius: 10, background: 'var(--surface-3)', fontSize: 14, color: 'var(--text-secondary)' }}>"{sel.source_quote}"</div>}
+          {sel.source_quote && <div style={{ padding: 12, borderRadius: 'var(--g-r-md)', background: 'var(--surface-3)', fontSize: 14, color: 'var(--text-secondary)' }}>"{sel.source_quote}"</div>}
           <button className="mm-btn mm-btn--primary" style={{ height: 46 }} onClick={async () => { await d.setDone(sel, sel.status !== 'done'); setSel(null); }}>{sel.status === 'done' ? 'Reopen' : 'Mark done'}</button>
           {sel.assignee_member_id && sel.status === 'open' && <button className="mm-btn" style={{ height: 44 }} onClick={async () => { await d.nudge(sel); setSel(null); }}>{sel.nudged_at ? 'Nudge again' : 'Nudge'}</button>}
           <button className="mm-btn" style={{ height: 44, color: 'var(--danger)' }} onClick={async () => { await d.removeTask(sel); setSel(null); }}>Delete task</button>

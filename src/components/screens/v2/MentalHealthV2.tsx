@@ -68,7 +68,7 @@ export default function MentalHealthV2() {
           const on = mood === s.m;
           return (
             <button key={s.m} role="radio" aria-checked={on} onClick={() => { setMood(s.m); setSaved(false); }}
-              style={{ height: 58, borderRadius: 10, background: on ? 'color-mix(in srgb, var(--accent) 14%, var(--surface))' : 'var(--surface-3)', border: on ? '1.5px solid var(--accent)' : '1.5px solid transparent', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, cursor: 'pointer', fontFamily: 'inherit' }}>
+              style={{ height: 58, borderRadius: 'var(--g-r-md)', background: on ? 'color-mix(in srgb, var(--accent) 14%, var(--surface))' : 'var(--surface-3)', border: on ? '1.5px solid var(--accent)' : '1.5px solid transparent', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, cursor: 'pointer', fontFamily: 'inherit' }}>
               <span style={{ color: 'var(--text)', fontSize: 17, fontWeight: 600 }}>{i + 1}</span>
               <span style={{ fontSize: 10.5, fontWeight: 500, color: 'var(--text-tertiary)' }}>{s.l}</span>
             </button>
@@ -78,7 +78,7 @@ export default function MentalHealthV2() {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {TAGS.map((t) => {
           const on = tags.includes(t);
-          return <button key={t} aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== t) : [...tags, t])} style={{ padding: '6px 11px', borderRadius: 999, background: on ? 'var(--text)' : 'transparent', color: on ? 'var(--bg)' : 'var(--text)', border: on ? '1px solid var(--text)' : '1px solid var(--border)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>{t}</button>;
+          return <button key={t} aria-pressed={on} onClick={() => setTags(on ? tags.filter((x) => x !== t) : [...tags, t])} className="g-pill">{t}</button>;
         })}
       </div>
       {mood && (

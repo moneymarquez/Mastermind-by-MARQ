@@ -30,7 +30,7 @@ export default function StickySpotV2() {
   const perMonth = months.map((m) => sum(done.filter((r) => (r.done_at ?? '').slice(0, 7) === m)));
   const biggest = [...live].sort((a, b) => (b.amount ?? 0) - (a.amount ?? 0))[0];
 
-  const err = S.error && <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid color-mix(in srgb, var(--warning) 40%, var(--border))', background: 'color-mix(in srgb, var(--warning) 8%, var(--surface))', fontSize: 14, color: 'var(--text)' }}>{S.error}</div>;
+  const err = S.error && <div style={{ padding: '12px 14px', borderRadius: 'var(--g-r-lg)', border: '1px solid color-mix(in srgb, var(--warning) 40%, var(--border))', background: 'color-mix(in srgb, var(--warning) 8%, var(--surface))', fontSize: 14, color: 'var(--text)' }}>{S.error}</div>;
   const sheets = <>{adding && <IdeaSheet onClose={() => setAdding(false)} save={async (v) => S.add(v)} />}{edit && <IdeaSheet row={edit} onClose={() => setEdit(null)} save={async (v) => { await S.update(edit.id, v); return true; }} remove={async () => { await S.remove(edit.id); setEdit(null); }} />}</>;
 
   if (!S.loading && S.rows.length === 0) {
@@ -45,7 +45,7 @@ export default function StickySpotV2() {
             <span style={{ color: r.status === 'done' ? 'var(--text-secondary)' : 'var(--text)', fontSize: 15, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.text}</span>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', minWidth: 0 }}><Chip k={STATUS[r.status].k}>{STATUS[r.status].l}</Chip>{r.note && <span style={{ fontSize: 12, color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.note}</span>}</div>
           </button>
-          <select aria-label={`Status for ${r.text}`} value={r.status} onChange={(e) => void S.update(r.id, { status: e.target.value as StickyStatus })} style={{ height: 34, padding: '0 6px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 13, fontFamily: 'inherit' }}>
+          <select aria-label={`Status for ${r.text}`} value={r.status} onChange={(e) => void S.update(r.id, { status: e.target.value as StickyStatus })} style={{ height: 34, padding: '0 6px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 13, fontFamily: 'inherit' }}>
             {ORDER.map((s) => <option key={s} value={s}>{STATUS[s].l}</option>)}
           </select>
           <span style={{ width: 76, textAlign: 'right', color: r.status === 'done' ? 'var(--text-secondary)' : 'var(--text)', fontSize: 15, fontWeight: 600, letterSpacing: '-0.02em' }}>{r.amount != null ? usd(r.amount) : '—'}</span>

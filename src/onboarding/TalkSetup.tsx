@@ -37,7 +37,7 @@ export default function TalkSetup({ onDone, onManual }: { onDone: (d: ImportData
           <>
             <div style={box}>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><strong style={{ flex: 1 }}>1. Copy the prompt</strong><button className="mm-btn mm-btn--primary" style={{ height: 44 }} onClick={() => void copy()}>{copied ? 'Copied ✓' : 'Copy prompt'}</button></div>
-              <details><summary style={{ cursor: 'pointer', fontSize: 14, color: 'var(--text-secondary)' }}>See the prompt</summary><pre style={{ whiteSpace: 'pre-wrap', fontSize: 12, background: 'var(--surface-2)', padding: 12, borderRadius: 10, maxHeight: 260, overflowY: 'auto' }}>{ONBOARDING_PROMPT}</pre></details>
+              <details><summary style={{ cursor: 'pointer', fontSize: 14, color: 'var(--text-secondary)' }}>See the prompt</summary><pre style={{ whiteSpace: 'pre-wrap', fontSize: 12, background: 'var(--surface-2)', padding: 12, borderRadius: 'var(--g-r-md)', maxHeight: 260, overflowY: 'auto' }}>{ONBOARDING_PROMPT}</pre></details>
             </div>
             <div style={box}>
               <strong>2. Paste it into your AI and turn on voice</strong>
@@ -45,7 +45,7 @@ export default function TalkSetup({ onDone, onManual }: { onDone: (d: ImportData
             </div>
             <div style={box}>
               <strong>3. Paste what it gives you back</strong>
-              <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="===MASTERMINDS IMPORT v1=== …" style={{ minHeight: 160, padding: 12, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontFamily: 'ui-monospace, monospace', fontSize: 13 }} />
+              <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="===MASTERMINDS IMPORT v1=== …" style={{ minHeight: 160, padding: 12, borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontFamily: 'ui-monospace, monospace', fontSize: 13 }} />
               {err && <div style={{ color: 'var(--danger)', fontSize: 14 }}>{err}</div>}
               <button className="mm-btn mm-btn--primary" style={{ height: 48 }} disabled={busy || !text.trim()} onClick={() => void read()}>{busy ? 'Reading…' : 'Preview my setup'}</button>
             </div>

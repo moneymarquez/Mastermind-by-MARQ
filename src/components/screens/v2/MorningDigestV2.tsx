@@ -21,7 +21,6 @@ const KINDS: { id: BlockKind; label: string }[] = [
 const KIND_COLOR: Record<BlockKind, string> = { work: 'var(--text-tertiary)', dials: 'var(--success)', build: 'var(--accent)', content: 'var(--cat-2)', health: 'var(--cat-3)', other: 'var(--text-secondary)' };
 const DESK_LABEL: Record<string, string> = { mbm: 'Made by Marq', mm: 'Mastermind', ecom: 'E-Com', content: 'Content', marketing: 'Marketing' };
 const t12 = (t: string) => { const [h, m] = t.split(':').map(Number); return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
-const seg = (on: boolean) => ({ padding: '7px 12px', borderRadius: 999, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', border: `1px solid ${on ? 'var(--text)' : 'var(--border)'}`, background: on ? 'var(--text)' : 'transparent', color: on ? 'var(--bg)' : 'var(--text-secondary)' });
 const mono = { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' };
 
 /** Settings → Morning Digest: everything the morning text reads. */
@@ -69,7 +68,7 @@ export default function MorningDigestV2() {
             {test.polished && <Chip k="accent">Ranked by AI</Chip>}
             {test.delivery.map((x, i) => <Chip key={i} k={x.sent ? 'good' : 'bad'} title={x.error}>{x.channel}: {x.sent ? 'sent' : 'not sent'}</Chip>)}
           </div>
-          <pre style={{ ...mono, margin: 0, whiteSpace: 'pre-wrap', fontSize: 13, lineHeight: 1.55, color: 'var(--text)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 14 }}>{test.body}</pre>
+          <pre style={{ ...mono, margin: 0, whiteSpace: 'pre-wrap', fontSize: 13, lineHeight: 1.55, color: 'var(--text)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 14 }}>{test.body}</pre>
           {test.delivery.filter((x) => !x.sent && x.error).map((x, i) => <span key={i} style={{ fontSize: 13, color: 'var(--warning)' }}>{x.channel}: {x.error}</span>)}
           <details>
             <summary style={{ cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: 'var(--text-secondary)' }}>Desk reports (what replying with the desk code returns)</summary>
@@ -81,7 +80,7 @@ export default function MorningDigestV2() {
   );
   const week = (
     <Card title="Your standing week" meta="The digest's first lines">
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{DAYS.map((n, i) => <button key={n} onClick={() => setDay(i)} style={seg(day === i)}>{n} <span style={{ opacity: 0.6 }}>{d.blocks.filter((b) => b.day_of_week === i).length}</span></button>)}</div>
+      <div className="g-seg" role="group" aria-label="Day">{DAYS.map((n, i) => <button key={n} onClick={() => setDay(i)} className="g-pill" aria-pressed={day === i}>{n} <span className="g-seg-n">{d.blocks.filter((b) => b.day_of_week === i).length}</span></button>)}</div>
       {!d.loading && d.blocks.length === 0 && <Empty text="No schedule blocks yet. Add your work shift, dial hour and build block for each day." />}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{dayBlocks.map((b) => <BlockRow key={b.id} b={b} onSave={(p) => d.updateBlock(b.id, p)} onRemove={() => d.removeBlock(b.id)} />)}</div>
       <NewBlock day={day} onAdd={(b) => d.addBlock(b)} />
@@ -108,7 +107,7 @@ export default function MorningDigestV2() {
         <Field l="Channel"><select value={s.channel} onChange={(e) => d.saveSettings({ channel: e.target.value as 'sms' | 'push' | 'both' })} style={field}><option value="both">Text + push</option><option value="sms">Text (push if it fails)</option><option value="push">Push only</option></select></Field>
       </div>
       <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Desks in the digest</span>
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{Object.keys(DESK_LABEL).map((k) => { const on = s.desks?.[k] !== false; return <button key={k} onClick={() => d.saveSettings({ desks: { ...s.desks, [k]: !on } })} style={seg(on)}>{DESK_LABEL[k]}</button>; })}</div>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{Object.keys(DESK_LABEL).map((k) => { const on = s.desks?.[k] !== false; return <button key={k} onClick={() => d.saveSettings({ desks: { ...s.desks, [k]: !on } })} className="g-pill" aria-pressed={on}>{DESK_LABEL[k]}</button>; })}</div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}><span style={{ color: 'var(--text)', fontSize: 15 }}>Also text each desk's full report</span><Switch on={s.separate_texts} onChange={(v) => d.saveSettings({ separate_texts: v })} label="Separate desk texts" /></div>
       <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>Last sent: {s.last_sent_date ?? 'never'} · Daylight saving is handled automatically.</span>
     </Card>
@@ -141,7 +140,7 @@ export default function MorningDigestV2() {
 function BlockRow({ b, onSave, onRemove }: { b: ScheduleBlock; onSave: (p: Partial<ScheduleBlock>) => void; onRemove: () => void }) {
   const [text, setText] = useState(b.label);
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'auto auto minmax(0,1fr) auto', gap: 6, alignItems: 'center', padding: 10, borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', borderLeft: `3px solid ${KIND_COLOR[b.kind]}` }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'auto auto minmax(0,1fr) auto', gap: 6, alignItems: 'center', padding: 10, borderRadius: 'var(--g-r-lg)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderLeft: `3px solid ${KIND_COLOR[b.kind]}` }}>
       <input type="time" aria-label="Start" value={b.start_time.slice(0, 5)} onChange={(e) => e.target.value && onSave({ start_time: e.target.value })} style={{ ...field, width: 110, height: 38, fontSize: 14 }} />
       <input type="time" aria-label="End" value={b.end_time.slice(0, 5)} onChange={(e) => e.target.value && onSave({ end_time: e.target.value })} style={{ ...field, width: 110, height: 38, fontSize: 14 }} />
       <input aria-label="Label" value={text} onChange={(e) => setText(e.target.value)} onBlur={() => text.trim() && text !== b.label && onSave({ label: text.trim() })} style={{ ...field, height: 38, fontSize: 14 }} />
@@ -154,7 +153,7 @@ function BlockRow({ b, onSave, onRemove }: { b: ScheduleBlock; onSave: (p: Parti
 function NewBlock({ day, onAdd }: { day: number; onAdd: (b: Omit<ScheduleBlock, 'id' | 'active'>) => void }) {
   const [start, setStart] = useState('16:00'); const [end, setEnd] = useState('17:00'); const [text, setText] = useState(''); const [kind, setKind] = useState<BlockKind>('dials');
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 12, border: '1px dashed var(--border)', background: 'var(--accent-wash)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 'var(--g-r-lg)', border: '1px dashed var(--border)', background: 'var(--accent-wash)' }}>
       <div style={{ display: 'flex', gap: 6 }}>
         <input type="time" aria-label="New block start" value={start} onChange={(e) => setStart(e.target.value)} style={{ ...field, height: 38, fontSize: 14 }} />
         <input type="time" aria-label="New block end" value={end} onChange={(e) => setEnd(e.target.value)} style={{ ...field, height: 38, fontSize: 14 }} />

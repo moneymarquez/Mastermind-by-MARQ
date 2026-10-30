@@ -35,7 +35,7 @@ export const tone = (hex: string) => TONE[hex.toLowerCase()] ?? hex;
 export const panel: CSSProperties = { color: E.text };
 
 export const label: CSSProperties = { fontSize: 13, color: E.muted, fontWeight: 500 };
-export const field: CSSProperties = { minHeight: 44, padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--g-inset)', color: E.text, fontSize: 15, fontFamily: 'inherit', boxSizing: 'border-box', width: '100%', outline: 'none' };
+export const field: CSSProperties = { minHeight: 44, padding: '10px 12px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--g-inset)', color: E.text, fontSize: 15, fontFamily: 'inherit', boxSizing: 'border-box', width: '100%', outline: 'none' };
 export const btn = (kind: 'primary' | 'ghost' | 'danger' = 'ghost'): CSSProperties => ({
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 36, padding: '0 13px', borderRadius: 'var(--g-r-md)', cursor: 'pointer', fontSize: 13.5, fontWeight: kind === 'primary' ? 600 : 500, letterSpacing: '-0.005em', fontFamily: 'inherit', whiteSpace: 'nowrap',
   border: kind === 'primary' ? '1px solid transparent' : kind === 'danger' ? `1px solid ${tint(E.red, 40)}` : '1px solid var(--g-line-2)',
@@ -106,10 +106,15 @@ export function ProgressRing({ done, total, size = 44 }: { done: number; total: 
 
 export function Pill({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
   return (
-    <button onClick={onClick} aria-pressed={active} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 34, padding: '0 13px', borderRadius: 999, border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`, background: active ? 'var(--text)' : 'transparent', color: active ? 'var(--bg)' : E.muted, cursor: 'pointer', fontSize: 13.5, fontWeight: 500, whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+    <button type="button" className="g-pill" onClick={onClick} aria-pressed={active}>
       {children}
     </button>
   );
+}
+
+/** Segmented control frame for a group of <Pill>s (styles in theme-graphite.css). */
+export function Seg({ children, label: aria }: { children: ReactNode; label?: string }) {
+  return <div className="g-seg g-seg--pills" role="group" aria-label={aria}>{children}</div>;
 }
 
 export function useIsMobile(breakpoint = 768): boolean {

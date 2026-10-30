@@ -79,7 +79,7 @@ export default function FitnessV2() {
       {week.map((d) => {
         const isToday = d === today, did = byDay.has(d);
         return (
-          <div key={d} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '10px 0', borderRadius: 10, background: isToday ? 'color-mix(in srgb, var(--accent) 12%, var(--surface))' : 'var(--surface)', border: isToday ? '1.5px solid var(--accent)' : '1px solid var(--border)', boxSizing: 'border-box' }}>
+          <div key={d} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '10px 0', borderRadius: 'var(--g-r-md)', background: isToday ? 'color-mix(in srgb, var(--accent) 12%, var(--surface))' : 'var(--surface)', border: isToday ? '1.5px solid var(--accent)' : '1px solid var(--border)', boxSizing: 'border-box' }}>
             <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-tertiary)' }}>{WD3[parseYmd(d).getDay()][0]}</span>
             <span style={{ color: d > today ? 'var(--text-tertiary)' : 'var(--text)', fontSize: 15, fontWeight: 600 }}>{parseYmd(d).getDate()}</span>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: did ? 'var(--accent)' : 'transparent' }} />

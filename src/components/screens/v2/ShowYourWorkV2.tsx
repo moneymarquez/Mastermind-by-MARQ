@@ -203,7 +203,7 @@ function ProjectSheet({ p, invoice, api, onNavigate, onClose }: { p: ScalingProj
       </>)}
       {sec('Walkthrough video', <>
         <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>You record and upload it. Nothing is generated here.</span>
-        {videoUrl && <video src={videoUrl} controls style={{ width: '100%', borderRadius: 10, background: 'var(--video-bg)' }} />}
+        {videoUrl && <video src={videoUrl} controls style={{ width: '100%', borderRadius: 'var(--g-r-md)', background: 'var(--video-bg)' }} />}
         <input ref={fileInput} type="file" accept="video/*" style={{ display: 'none' }} onChange={onUpload} />
         {!delivered && <div style={{ display: 'flex', gap: 8 }}>
           <button className="mm-btn" disabled={uploading} onClick={() => fileInput.current?.click()}>{uploading ? 'Uploading…' : p.video_path ? 'Replace video' : 'Upload video'}</button>

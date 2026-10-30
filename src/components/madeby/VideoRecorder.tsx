@@ -116,7 +116,7 @@ export default function VideoRecorder({ clientId, defaultTitle, onSaved, onCance
       )}
       {state === 'recording' && (
         <>
-          <video ref={live} playsInline style={{ width: '100%', borderRadius: 10, background: '#000' }} />
+          <video ref={live} playsInline style={{ width: '100%', borderRadius: 'var(--g-r-md)', background: '#000' }} />
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <span style={{ color: 'var(--danger)', fontWeight: 700 }}>● {mmss}</span>
             <button className="mm-btn mm-btn--primary" style={{ height: 40, marginLeft: 'auto' }} onClick={() => rec.current?.stop()}>Stop</button>
@@ -125,8 +125,8 @@ export default function VideoRecorder({ clientId, defaultTitle, onSaved, onCance
       )}
       {(state === 'review' || state === 'saving') && blob && (
         <>
-          <video src={preview} controls playsInline style={{ width: '100%', borderRadius: 10, background: '#000' }} />
-          <input className="mm-input" style={{ height: 40, padding: '0 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 15 }} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title the client sees" />
+          <video src={preview} controls playsInline style={{ width: '100%', borderRadius: 'var(--g-r-md)', background: '#000' }} />
+          <input className="mm-input" style={{ height: 40, padding: '0 10px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 15 }} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title the client sees" />
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="mm-btn mm-btn--primary" style={{ height: 40 }} disabled={state === 'saving'} onClick={() => void save()}>{state === 'saving' ? 'Uploading…' : 'Save and get the link'}</button>
             <button className="mm-btn" style={{ height: 40 }} disabled={state === 'saving'} onClick={() => { setBlob(null); setState('idle'); }}>Redo</button>

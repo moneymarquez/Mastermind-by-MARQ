@@ -26,7 +26,7 @@ export default function CallListTab({ data, reload }: { data: OutreachState; rel
       {data.calls.length === 0 ? <Empty text="Nobody to call yet. When an email gets no reply for a business day, they show up here with a phone number and a script." /> : data.calls.map((c) => (
         <Card key={c.id} title={c.business_name} meta={c.phone ?? 'no phone'}>
           <div style={{ fontSize: 13.5, color: 'var(--text-secondary)' }}>{c.finding}</div>
-          <div style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.5, background: 'var(--surface-2)', borderRadius: 10, padding: 12 }}>{c.script}</div>
+          <div style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.5, background: 'var(--surface-2)', borderRadius: 'var(--g-r-md)', padding: 12 }}>{c.script}</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             {c.phone && <a className="mm-btn mm-btn--primary" style={{ height: 36, display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }} href={`tel:${c.phone}`}>Call</a>}
             <button className="mm-btn" style={{ height: 36 }} onClick={() => void act('call-done', c.id, { outcome: 'interested' })}>Talked: interested</button>

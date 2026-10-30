@@ -62,7 +62,7 @@ export default function ModulePicker({ selected, onToggle }: Props) {
                 return (
                   <div key={m.key} style={cardStyle(active)} onClick={() => onToggle(m.key)}>
                     <div style={{
-                      width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1,
+                      width: 18, height: 18, borderRadius: 'var(--g-r-xs)', flexShrink: 0, marginTop: 1,
                       border: `1px solid ${active ? 'var(--text)' : 'var(--border-muted)'}`, background: active ? 'var(--text)' : 'transparent',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--text-tiny)', color: 'var(--bg)', fontWeight: 700,
                     }}>

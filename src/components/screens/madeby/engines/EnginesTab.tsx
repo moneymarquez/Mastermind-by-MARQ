@@ -71,7 +71,7 @@ function EngineCardView({ c, killed, keys, onChange }: { c: EngineCard; killed: 
     </Card>
   );
 }
-const inp: React.CSSProperties = { height: 40, padding: '0 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 16, width: '100%', boxSizing: 'border-box' };
+const inp: React.CSSProperties = { height: 40, padding: '0 10px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 16, width: '100%', boxSizing: 'border-box' };
 
 const KIND_LABEL: Record<string, string> = { no_website: 'No website', site_down: 'Site down', no_https: 'Not secure', no_mobile: 'No phone layout', slow_mobile: 'Slow on phones', stale_site: 'Outdated', no_cta: 'No book/call button' };
 export function FindingsList({ items, onDraft, drafting }: { items: FindingGroup[]; onDraft: () => void; drafting: boolean }) {

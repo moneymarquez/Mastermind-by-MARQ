@@ -34,7 +34,7 @@ export function Bars({ vals, labels, cur, pre = '$', suf = '', h = 120, max, dec
         return (
           <div key={i} onClick={() => setSel(s ? null : i)} style={{ flex: 1, minWidth: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 22, cursor: 'pointer' }}>
             {on && !s && <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', marginBottom: 6, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>{top ?? fmt(v, pre, suf, dec)}</span>}
-            {s && <div style={{ position: 'absolute', bottom: 22 + bh + 6, whiteSpace: 'nowrap', padding: '6px 9px', borderRadius: 8, background: 'var(--surface-3)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12, fontWeight: 500, zIndex: 3 }}>{labels[i]} · {fmt(v, pre, suf, dec)}</div>}
+            {s && <div style={{ position: 'absolute', bottom: 22 + bh + 6, whiteSpace: 'nowrap', padding: '6px 9px', borderRadius: 'var(--g-r-md)', background: 'var(--surface-3)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12, fontWeight: 500, zIndex: 3 }}>{labels[i]} · {fmt(v, pre, suf, dec)}</div>}
             <div style={{ width: bw, maxWidth: '90%', height: bh, background: on || s ? col : soft, borderRadius: '4px 4px 0 0', position: 'relative', zIndex: 1 }} />
             <span style={{ position: 'absolute', bottom: 3, fontSize: 10.5, fontWeight: 500, whiteSpace: 'nowrap', color: on || s ? 'var(--text)' : 'var(--text-tertiary)' }}>{labels[i]}</span>
           </div>
@@ -78,7 +78,7 @@ export function Donut({ rows, pre = '$', suf = '', dec = 0, center = 'Total', to
       </div>
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
         {slices.map((s, i) => (
-          <div key={s.name} onClick={() => setSel(sel === i ? null : i)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 8px', borderRadius: 8, background: sel === i ? 'var(--surface-3)' : 'transparent', cursor: 'pointer' }}>
+          <div key={s.name} onClick={() => setSel(sel === i ? null : i)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 8px', borderRadius: 'var(--g-r-md)', background: sel === i ? 'var(--surface-3)' : 'transparent', cursor: 'pointer' }}>
             <span style={{ width: 8, height: 8, borderRadius: 2, background: s.c, flex: 'none' }} />
             <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.2 }}>
@@ -148,7 +148,7 @@ export function Line({ vals, alt, today = -1, labels = [], pts, pre = '', suf = 
         {sel != null && <><line x1={X(sel)} x2={X(sel)} y1="6" y2={bot} stroke="var(--text-tertiary)" /><circle cx={X(sel)} cy={Y(vals[sel])} r="4" fill={col} /></>}
         {ls.map((l, i) => <text key={i} x={ls.length === 1 ? left : left + (i / (ls.length - 1)) * (right - left)} y={h - 4} fontSize="10.5" fontWeight="500" fill="var(--text-tertiary)" textAnchor={i === 0 ? 'start' : i === ls.length - 1 ? 'end' : 'middle'}>{l}</text>)}
       </svg>
-      {sel != null && <div style={{ position: 'absolute', top: -6, left: Math.min(Math.max(X(sel) - 50, 0), W - 120), padding: '6px 9px', borderRadius: 8, background: 'var(--surface-3)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', pointerEvents: 'none' }}>{pts ? `${pts[sel]} · ` : ''}{f(vals[sel])}</div>}
+      {sel != null && <div style={{ position: 'absolute', top: -6, left: Math.min(Math.max(X(sel) - 50, 0), W - 120), padding: '6px 9px', borderRadius: 'var(--g-r-md)', background: 'var(--surface-3)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', pointerEvents: 'none' }}>{pts ? `${pts[sel]} · ` : ''}{f(vals[sel])}</div>}
     </div>
   );
 }
@@ -188,7 +188,7 @@ export function Heatmap({ cells, flow = 'column', lo = 'Less', hi = 'More', slip
         {cells.map((c, i) => {
           if (c.v === '_') return <div key={i} />;
           const lvl = c.v === 'x' ? 0 : c.v === '.' ? -1 : c.v;
-          return <div key={i} title={c.t} style={{ aspectRatio: '1', borderRadius: 4, background: lvl < 0 ? 'transparent' : bgs[lvl], border: c.v === 'x' ? '1.5px solid var(--danger)' : c.v === '.' ? '1px dashed var(--border)' : 'none', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 500, color: lvl >= 2 ? 'var(--bg)' : 'var(--text-tertiary)', maxHeight: row ? 44 : undefined }}>{c.n}</div>;
+          return <div key={i} title={c.t} style={{ aspectRatio: '1', borderRadius: 'var(--g-r-xs)', background: lvl < 0 ? 'transparent' : bgs[lvl], border: c.v === 'x' ? '1.5px solid var(--danger)' : c.v === '.' ? '1px dashed var(--border)' : 'none', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 500, color: lvl >= 2 ? 'var(--bg)' : 'var(--text-tertiary)', maxHeight: row ? 44 : undefined }}>{c.n}</div>;
         })}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: 11, fontWeight: 500, color: 'var(--text-tertiary)', flexWrap: 'wrap' }}>

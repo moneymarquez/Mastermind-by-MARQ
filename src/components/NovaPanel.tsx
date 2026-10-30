@@ -162,7 +162,7 @@ function NovaShellPanel({ layout, assistantName, messages, input, thinking, list
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: screen ? '6px 16px 12px' : '14px 14px 12px', borderBottom: '1px solid var(--border)' }}>
         {sparkle}
         <span style={{ flex: 1, color: 'var(--text)', fontSize: screen ? 24 : 15, fontWeight: screen ? 700 : 600, letterSpacing: screen ? '-0.035em' : '-0.015em' }}>{assistantName}</span>
-        <button onClick={onClose} aria-label="Close" style={{ width: 34, height: 34, borderRadius: 8, border: 0, background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <button onClick={onClose} aria-label="Close" style={{ width: 34, height: 34, borderRadius: 'var(--g-r-md)', border: 0, background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
         </button>
       </div>
@@ -177,13 +177,13 @@ function NovaShellPanel({ layout, assistantName, messages, input, thinking, list
       </div>
       <div style={{ display: 'flex', gap: 8, padding: 12, borderTop: '1px solid var(--border)' }}>
         <input value={input} onChange={onInputChange} onKeyDown={onKeyDown} placeholder={listening ? 'Listening…' : `Ask ${assistantName}`} aria-label={`Message ${assistantName}`}
-          style={{ flex: 1, minWidth: 0, height: screen ? 46 : 42, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', padding: '0 12px', fontSize: 15, outline: 'none', fontFamily: 'inherit' }} />
+          style={{ flex: 1, minWidth: 0, height: screen ? 46 : 42, borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', padding: '0 12px', fontSize: 15, outline: 'none', fontFamily: 'inherit' }} />
         {micSupported && (
-          <button onClick={onMicClick} aria-label={listening ? 'Stop listening' : 'Speak'} style={{ width: screen ? 46 : 42, height: screen ? 46 : 42, flex: 'none', borderRadius: 8, border: '1px solid var(--border)', background: listening ? 'var(--danger)' : 'transparent', color: listening ? 'var(--bg)' : 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button onClick={onMicClick} aria-label={listening ? 'Stop listening' : 'Speak'} style={{ width: screen ? 46 : 42, height: screen ? 46 : 42, flex: 'none', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: listening ? 'var(--danger)' : 'transparent', color: listening ? 'var(--bg)' : 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="microphone" size={17} />
           </button>
         )}
-        <button onClick={() => onSend()} aria-label="Send" style={{ width: screen ? 46 : 42, height: screen ? 46 : 42, flex: 'none', borderRadius: 8, border: 0, background: 'var(--text)', color: 'var(--bg)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <button onClick={() => onSend()} aria-label="Send" style={{ width: screen ? 46 : 42, height: screen ? 46 : 42, flex: 'none', borderRadius: 'var(--g-r-md)', border: 0, background: 'var(--text)', color: 'var(--bg)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5" /><path d="m5 12 7-7 7 7" /></svg>
         </button>
       </div>

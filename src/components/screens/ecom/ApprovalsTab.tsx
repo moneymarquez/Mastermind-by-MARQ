@@ -205,7 +205,7 @@ function GenericApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string)
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
           {rows.map((r, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: 8, borderRadius: 'var(--radius-sm)', background: E.sunk, border: `1px solid ${E.border}` }}>
-              {r.images[0] ? <img src={r.images[0]} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} /> : <div style={{ width: 48, height: 48, borderRadius: 6, background: tint(E.accent, 10), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', color: E.accent, flexShrink: 0 }}>#{r.rank ?? i + 1}</div>}
+              {r.images[0] ? <img src={r.images[0]} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 'var(--g-r-sm)', flexShrink: 0 }} /> : <div style={{ width: 48, height: 48, borderRadius: 'var(--g-r-sm)', background: tint(E.accent, 10), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', color: E.accent, flexShrink: 0 }}>#{r.rank ?? i + 1}</div>}
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                   <span style={{ fontWeight: 700, color: E.text }}>{r.name}</span>
@@ -224,7 +224,7 @@ function GenericApprovalCard({ a, onDone }: { a: Approval; onDone: (msg: string)
           {Array.isArray(a.payload.dropped) && (a.payload.dropped as string[]).length > 0 && <div style={{ fontSize: 'var(--text-caption)', color: E.amber }}>Dropped by the rules: {(a.payload.dropped as string[]).join('; ')}</div>}
         </div>
       ) : APPROVE_LABEL[a.type] ? <ApprovalBody type={a.type} payload={a.payload} choice={choice} onChoice={setChoice} approvalId={a.id} /> : Object.keys(a.payload).length > 0 && (
-        <pre style={{ fontSize: 12, color: E.text, background: E.sunk, border: `1px solid ${E.border}`, borderRadius: 6, padding: 10, marginTop: 8, whiteSpace: 'pre-wrap', maxHeight: 220, overflow: 'auto' }}>{JSON.stringify(a.payload, null, 2)}</pre>
+        <pre style={{ fontSize: 12, color: E.text, background: E.sunk, border: `1px solid ${E.border}`, borderRadius: 'var(--g-r-sm)', padding: 10, marginTop: 8, whiteSpace: 'pre-wrap', maxHeight: 220, overflow: 'auto' }}>{JSON.stringify(a.payload, null, 2)}</pre>
       )}
 
       <input ref={noteRef} style={{ ...field, marginTop: 10 }} placeholder='Note to the worker — e.g. "nothing under $15, and skip anything with bad reviews"' value={note} onChange={(e) => { setNote(e.target.value); setErr(''); }} />

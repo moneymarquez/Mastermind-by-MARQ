@@ -133,7 +133,7 @@ export default function QuestionnaireFlow<T extends Row>({
         <span style={{ color: 'var(--text)', fontSize: phone ? 19 : 22, fontWeight: 600, letterSpacing: '-0.025em', lineHeight: 1.3 }}>{q.prompt}</span>
         <textarea value={draft} onChange={(e) => setDraft(e.target.value)} autoFocus style={{ ...area, height: 140, fontSize: 16 }} />
         {q.insight && (
-          <div style={{ padding: 12, borderRadius: 10, background: 'var(--surface-3)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ padding: 12, borderRadius: 'var(--g-r-md)', background: 'var(--surface-3)', display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--text-secondary)' }}>{q.insight}</span>
             {q.study && <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Study: {q.study}</span>}
           </div>

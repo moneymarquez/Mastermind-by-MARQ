@@ -72,7 +72,7 @@ export default function DecisionLogV2() {
   const outcomes = reviewed.length > 0 && (
     <Card title="How they turned out" meta={`${reviewed.length} reviewed`} wide={!phone}>
       <Donut rows={donut} pre="" center="Reviewed" />
-      {lateNote && <div style={{ padding: 12, borderRadius: 10, background: 'var(--surface-3)', fontSize: 14, lineHeight: 1.45, color: 'var(--text)' }}>{lateNote}</div>}
+      {lateNote && <div style={{ padding: 12, borderRadius: 'var(--g-r-md)', background: 'var(--surface-3)', fontSize: 14, lineHeight: 1.45, color: 'var(--text)' }}>{lateNote}</div>}
     </Card>
   );
   const pattern = ai === false

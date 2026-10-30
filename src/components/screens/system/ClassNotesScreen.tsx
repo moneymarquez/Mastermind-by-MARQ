@@ -53,7 +53,7 @@ export default function ClassNotesScreen() {
   const shown = tab === 'today' ? CLASS_BOTS : CLASS_BOTS.filter((b) => b.bot === tab);
   return (
     <Page title="Class notes" sub="Every night 3:30–7:00 AM Denver, each bot studies what's new in its field. Its proposals change nothing until you approve them." back="HQ" backTo="hq">
-      {err && <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid color-mix(in srgb, var(--warning) 40%, var(--border))', background: 'color-mix(in srgb, var(--warning) 8%, var(--surface))', fontSize: 14 }}>{err}</div>}
+      {err && <div style={{ padding: '12px 14px', borderRadius: 'var(--g-r-lg)', border: '1px solid color-mix(in srgb, var(--warning) 40%, var(--border))', background: 'color-mix(in srgb, var(--warning) 8%, var(--surface))', fontSize: 14 }}>{err}</div>}
       <Tabs<Tab> value={tab} onChange={setTab} tabs={[{ id: 'today', label: 'Today', badge: pending.length || undefined }, ...CLASS_BOTS.map((b) => ({ id: b.bot as Tab, label: b.name, badge: pending.filter((c) => c.payload.bot === b.bot).length || undefined }))]} />
       {loading && <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Loading class notes…</div>}
       {!loading && (

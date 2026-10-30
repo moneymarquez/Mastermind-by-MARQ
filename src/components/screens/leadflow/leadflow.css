@@ -108,7 +108,7 @@ input.lf-input[type="date"], input.lf-input[type="time"], input.lf-input[type="n
 
 /* Segmented */
 .lf-seg { display: inline-flex; background: var(--lf-surface-2); border-radius: var(--lf-r-ctl); padding: 2px; flex: none; }
-.lf-seg button { border: 1px solid transparent; background: transparent; color: var(--lf-text-tertiary); padding: 0 10px; height: 30px; font-size: 13px; font-weight: 500; border-radius: 5px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.lf-seg button { border: 1px solid transparent; background: transparent; color: var(--lf-text-tertiary); padding: 0 10px; height: 30px; font-size: 13px; font-weight: 500; border-radius: var(--g-r-xs); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .lf-seg button[aria-checked="true"] { background: var(--lf-surface); border-color: var(--lf-border); color: var(--lf-text); }
 
 /* Tabs: underlined text */
@@ -143,7 +143,7 @@ input.lf-input[type="date"], input.lf-input[type="time"], input.lf-input[type="n
 .lf-callout { background: var(--lf-surface); border: 1px solid var(--lf-border); border-left: 3px solid var(--lf-accent); border-radius: var(--lf-r-panel); padding: 14px 16px; }
 
 /* Skeleton */
-.lf-skel { background: var(--lf-surface-2); border-radius: 4px; height: 12px; animation: lfPulse 1.2s ease-in-out infinite; }
+.lf-skel { background: var(--lf-surface-2); border-radius: var(--g-r-xs); height: 12px; animation: lfPulse 1.2s ease-in-out infinite; }
 @keyframes lfPulse { 50% { opacity: .55; } }
 
 /* Record panel */
@@ -160,7 +160,7 @@ input.lf-input[type="date"], input.lf-input[type="time"], input.lf-input[type="n
 
 /* Menu */
 .lf-menu { position: absolute; z-index: 20; min-width: 200px; background: var(--lf-surface); border: 1px solid var(--lf-border); border-radius: var(--lf-r-panel); box-shadow: var(--lf-shadow); padding: 4px; display: flex; flex-direction: column; }
-.lf-menu button, .lf-menu a { all: unset; box-sizing: border-box; padding: 8px 10px; border-radius: 4px; font-size: 14px; color: var(--lf-text); cursor: pointer; display: flex; gap: 8px; align-items: center; }
+.lf-menu button, .lf-menu a { all: unset; box-sizing: border-box; padding: 8px 10px; border-radius: var(--g-r-xs); font-size: 14px; color: var(--lf-text); cursor: pointer; display: flex; gap: 8px; align-items: center; }
 .lf-menu button:hover, .lf-menu a:hover { background: var(--lf-row-hover); }
 .lf-menu .lf-menu-danger { color: var(--lf-stop-text); }
 

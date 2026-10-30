@@ -274,7 +274,7 @@ export default function HomeV2(p: HomeV2Props) {
       <div style={{ display: 'grid', gridTemplateColumns: phone ? '1fr 1fr' : 'repeat(4, minmax(0, 1fr))', gap: phone ? 10 : 16 }}>
         {pins.map((id, i) => (
           <button key={id} className="mm-tile" onClick={() => p.onNavigate(id)} style={phone ? undefined : { flexDirection: 'row', alignItems: 'center', minHeight: 64, gap: 12, padding: '12px 14px' }}>
-            <span style={{ width: 34, height: 34, borderRadius: 10, background: `color-mix(in srgb, ${PIN_TINT[i % 4]} 16%, var(--surface))`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: PIN_TINT[i % 4], fontSize: 11, fontWeight: 700, flex: 'none' }}>{glyphFor(p.labelFor(id))}</span>
+            <span style={{ width: 34, height: 34, borderRadius: 'var(--g-r-md)', background: `color-mix(in srgb, ${PIN_TINT[i % 4]} 16%, var(--surface))`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: PIN_TINT[i % 4], fontSize: 11, fontWeight: 700, flex: 'none' }}>{glyphFor(p.labelFor(id))}</span>
             <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
               <span style={{ color: 'var(--text)', fontSize: 14, fontWeight: 600 }}>{p.labelFor(id)}</span>
               <span style={{ fontSize: 12, color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pinSub(id)}</span>

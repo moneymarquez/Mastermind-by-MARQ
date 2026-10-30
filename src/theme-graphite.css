@@ -388,3 +388,17 @@ html:root[data-theme="dark"] .leadflow {
   --lf-stop-dot: var(--g-danger); --lf-stop-text: var(--g-danger); --lf-stop-fill: var(--g-danger-soft);
   --lf-info-dot: var(--g-accent); --lf-info-text: var(--g-accent-hi); --lf-info-fill: var(--g-accent-soft);
 }
+
+/* ── 8. Pills → segmented ─────────────────────────────────────────────
+   ecom <Pill> is a toggle chip on its own and a segment inside <Seg>. */
+html:root .g-pill { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: var(--g-r-md); border: 1px solid var(--g-line-2); background: transparent; color: var(--g-text-2); font: 500 13px/1 var(--g-font); letter-spacing: -0.005em; white-space: nowrap; cursor: pointer; transition: background-color var(--g-d2) var(--g-ease), color var(--g-d2) var(--g-ease), border-color var(--g-d2) var(--g-ease), box-shadow var(--g-d2) var(--g-ease); }
+html:root .g-pill:hover { color: var(--g-text); border-color: var(--g-line-3); }
+html:root .g-pill[aria-pressed="true"] { background: var(--g-s2); color: var(--g-text); border-color: var(--g-line-3); box-shadow: var(--g-shadow-1); }
+html:root .g-pill .g-seg-n { min-width: 16px; height: 16px; padding: 0 4px; border-radius: 4px; font: 500 10.5px/16px var(--g-mono); color: var(--g-text-2); background: var(--g-s3); text-align: center; }
+html:root .g-seg > .g-pill { flex: none; height: 30px; border: 0; border-radius: 7px; color: var(--g-text-3); }
+html:root .g-seg > .g-pill:hover { color: var(--g-text); }
+html:root .g-seg > .g-pill[aria-pressed="true"] { background: var(--g-s2); color: var(--g-text); box-shadow: var(--g-shadow-1), inset 0 0 0 1px var(--g-line-2); }
+html:root .g-seg > .g-pill[aria-pressed="true"] .g-seg-n { background: var(--g-accent-soft); color: var(--g-accent); }
+@media (max-width: 767px) { html:root .g-seg > .g-pill { height: 34px; } }
+html:root .g-seg--fill { width: auto; }
+html:root .g-seg--fill > .g-pill { justify-content: center; padding: 0 8px; }

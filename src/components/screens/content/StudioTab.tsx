@@ -270,7 +270,7 @@ function EditedPlayer({ src, plan }: { src: string; plan: ClipPlan }) {
     <div style={frame}>
       <video ref={ref} src={src} playsInline preload="metadata" onTimeUpdate={onTime} onPause={() => setPlaying(false)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       {plan.on_screen_text && playing && idx.current === 0 && <div style={{ position: 'absolute', top: '9%', left: '6%', right: '6%', textAlign: 'center', color: '#fff', fontWeight: 700, fontSize: 'clamp(14px, 4.5vw, 20px)', textShadow: '0 2px 6px rgba(0,0,0,.8)' }}>{plan.on_screen_text}</div>}
-      {caption && playing && <div style={{ position: 'absolute', bottom: '18%', left: '8%', right: '8%', textAlign: 'center' }}><span style={{ background: 'rgba(0,0,0,.72)', color: '#fff', fontWeight: 700, padding: '4px 8px', borderRadius: 6, fontSize: 'clamp(13px, 4vw, 18px)', lineHeight: 1.6, boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone' }}>{caption}</span></div>}
+      {caption && playing && <div style={{ position: 'absolute', bottom: '18%', left: '8%', right: '8%', textAlign: 'center' }}><span style={{ background: 'rgba(0,0,0,.72)', color: '#fff', fontWeight: 700, padding: '4px 8px', borderRadius: 'var(--g-r-sm)', fontSize: 'clamp(13px, 4vw, 18px)', lineHeight: 1.6, boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone' }}>{caption}</span></div>}
       {!playing && <button onClick={play} aria-label="Play the edit" style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.35)', border: 0, color: '#fff', fontSize: 40, cursor: 'pointer' }}>▶</button>}
     </div>
   );

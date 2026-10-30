@@ -91,7 +91,7 @@ export default function BrainV2() {
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)' }}>
         {(['Runs hot', 'Runs steady', 'Underused'] as const).map((l) => <span key={l} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: TONE[l] }} />{l}</span>)}
       </div>
-      <div key={region} className="mm-rise" style={{ padding: 14, borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', borderLeft: `3px solid ${TONE[rr.label]}`, display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div key={region} className="mm-rise" style={{ padding: 14, borderRadius: 'var(--g-r-lg)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderLeft: `3px solid ${TONE[rr.label]}`, display: 'flex', flexDirection: 'column', gap: 6 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
           <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>{reg.name}</span>
           <span style={{ fontSize: 12, fontWeight: 600, color: TONE[rr.label] }}>{rr.label} · {rr.level} of 5</span>

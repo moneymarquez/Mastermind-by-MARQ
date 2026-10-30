@@ -346,7 +346,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           <Suspense fallback={<ScreenLoading />}>
           <ModuleProvider value={moduleCtx}>
           <div data-demo-content="">
-        {travelBanner && state.screen === 'today' && <div role="status" style={{ margin: '0 0 12px', padding: '10px 14px', borderRadius: 12, background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))', fontSize: 14, color: 'var(--text-secondary)' }}>Hidden in travel mode. Switch it off in Settings → Workspace to see everything again.</div>}
+        {travelBanner && state.screen === 'today' && <div role="status" style={{ margin: '0 0 12px', padding: '10px 14px', borderRadius: 'var(--g-r-lg)', background: 'color-mix(in srgb, var(--accent) 12%, var(--surface))', fontSize: 14, color: 'var(--text-secondary)' }}>Hidden in travel mode. Switch it off in Settings → Workspace to see everything again.</div>}
         {LEGACY_SCREENS.has(state.screen) && <BackRow />}
         {state.screen === 'home' && (
           <HomeV2 device={device} isOwner={isOwner} novaOpen={state.novaOpen} leads={leadFeed.leads} leadsNow={leadFeed.now} inboxItems={ownerInbox.items}

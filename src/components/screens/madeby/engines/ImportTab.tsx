@@ -4,7 +4,7 @@ import Chip from '../../../mm/Chip';
 import { api } from '../../../../lib/api';
 import { IMPORT_FIELDS, columnsOf, guessMapping, mapRows, missingRequired, parseAny, type ImportKey, type Mapping, type RawRow } from '../../../../data/leadImport';
 
-const sel: React.CSSProperties = { height: 38, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 15, minWidth: 0, width: '100%' };
+const sel: React.CSSProperties = { height: 38, borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 15, minWidth: 0, width: '100%' };
 
 /** One-time import of the terminal scraper's output: pick the file, check the column mapping, import in batches. Matched by place_id; existing leads are left as they are. */
 export default function ImportTab() {

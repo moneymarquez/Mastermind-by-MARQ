@@ -52,7 +52,7 @@ function PortalMenu({ portal, sheet, onClose }: { portal: PortalNav; sheet: bool
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
-      <div role="menu" aria-label="Portals" className="mm-anim" style={{ position: 'absolute', top: 52, left: 10, right: 10, zIndex: 41, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 4, display: 'flex', flexDirection: 'column', gap: 2, boxShadow: 'var(--g-shadow-3)', animation: 'mmPanelIn .15s ease' }}>
+      <div role="menu" aria-label="Portals" className="mm-anim" style={{ position: 'absolute', top: 52, left: 10, right: 10, zIndex: 41, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 4, display: 'flex', flexDirection: 'column', gap: 2, boxShadow: 'var(--g-shadow-3)', animation: 'mmPanelIn .15s ease' }}>
         {rows}
       </div>
     </>
@@ -142,13 +142,13 @@ export function ModulesGrid({ groups, onOpen }: { groups: ShellGroup[]; onOpen: 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
             {g.link && !g.items.length && (
               <button className="mm-tile" onClick={() => onOpen(g.link!.id)}>
-                <span style={{ width: 30, height: 30, borderRadius: 10, background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600 }}>CB</span>
+                <span style={{ width: 30, height: 30, borderRadius: 'var(--g-r-md)', background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600 }}>CB</span>
                 <span style={{ color: 'var(--text)', fontSize: 12.5, fontWeight: 500, lineHeight: 1.25 }}>{g.link.label}</span>
               </button>
             )}
             {g.items.map((m) => (
               <button key={m.id} className="mm-tile" onClick={() => !m.locked && onOpen(m.id)} aria-disabled={m.locked || undefined} style={m.locked ? { cursor: 'default', opacity: 0.7 } : undefined}>
-                <span style={{ width: 30, height: 30, borderRadius: 10, background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600 }}>{m.locked ? <GLock size={14} /> : m.glyph}</span>
+                <span style={{ width: 30, height: 30, borderRadius: 'var(--g-r-md)', background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600 }}>{m.locked ? <GLock size={14} /> : m.glyph}</span>
                 <span style={{ color: 'var(--text)', fontSize: 12.5, fontWeight: 500, lineHeight: 1.25 }}>{m.label}</span>
                 {m.locked && <Chip k="lock">Owner only</Chip>}
               </button>
@@ -185,7 +185,7 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
     const active = screen === m.id;
     return (
       <button key={m.id} className="mm-nav-row" data-active={active || undefined} aria-current={active ? 'page' : undefined} style={{ height: rowH }} onClick={() => onNav(m.id)}>
-        <span style={{ width: 20, height: 20, flex: 'none', borderRadius: 6, background: active ? 'var(--accent)' : 'var(--surface-3)', color: active ? 'var(--bg)' : 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8.5, fontWeight: 700, letterSpacing: '-0.02em' }}>{m.glyph}</span>
+        <span style={{ width: 20, height: 20, flex: 'none', borderRadius: 'var(--g-r-sm)', background: active ? 'var(--accent)' : 'var(--surface-3)', color: active ? 'var(--bg)' : 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8.5, fontWeight: 700, letterSpacing: '-0.02em' }}>{m.glyph}</span>
         <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.label}</span>
         {!!badges.screens?.[m.id] && <Badge n={badges.screens[m.id]} urgent={false} />}
       </button>
@@ -219,7 +219,7 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
       {travel && isOwner && (
         <button type="button" onClick={() => onNav('account-settings')} title="Travel mode is on. Tap to change it in Settings." style={{ alignSelf: 'flex-start', marginLeft: 6, height: 24, padding: '0 10px', borderRadius: 999, border: 0, background: 'color-mix(in srgb, var(--accent) 18%, transparent)', color: 'var(--accent)', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>✈ Travel mode</button>
       )}
-      <button onClick={() => { drawer?.onClose(); onSearch(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, height: rowH, padding: '0 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-tertiary)', fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit' }}>
+      <button onClick={() => { drawer?.onClose(); onSearch(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, height: rowH, padding: '0 10px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-tertiary)', fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit' }}>
         <GSearch size={15} /><span style={{ flex: 1, textAlign: 'left' }}>Search</span>
         {device === 'desktop' && <Kbd>⌘K</Kbd>}
       </button>
@@ -278,7 +278,7 @@ export function AppTopBar({ device, left, right, crumb, dark, novaOpen, bellDot,
         <span style={{ color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{crumb.label}</span>
       </nav>
       {device === 'desktop' && (
-        <button onClick={onSearch} style={{ display: 'flex', alignItems: 'center', gap: 8, width: 220, height: 36, padding: '0 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text-tertiary)', fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit' }}>
+        <button onClick={onSearch} style={{ display: 'flex', alignItems: 'center', gap: 8, width: 220, height: 36, padding: '0 10px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text-tertiary)', fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit' }}>
           <GSearch size={15} /><span style={{ flex: 1, textAlign: 'left' }}>Search everything</span><Kbd>⌘K</Kbd>
         </button>
       )}
@@ -372,9 +372,9 @@ export function SearchPalette({ groups, onOpen, onClose }: { groups: ShellGroup[
 
 // ── Bits ──────────────────────────────────────────────────────────────
 export function Logo({ size = 30 }: { size?: number }) {
-  return <span aria-hidden="true" className="mm-logo" style={{ width: size, height: size, flex: 'none', borderRadius: 8, background: 'var(--surface-3)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)', fontSize: size * 0.42, fontWeight: 700, boxSizing: 'border-box' }}>M</span>;
+  return <span aria-hidden="true" className="mm-logo" style={{ width: size, height: size, flex: 'none', borderRadius: 'var(--g-r-md)', background: 'var(--surface-3)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)', fontSize: size * 0.42, fontWeight: 700, boxSizing: 'border-box' }}>M</span>;
 }
-function Kbd({ children }: { children: string }) { return <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 6px', borderRadius: 4, border: '1px solid var(--border)', color: 'var(--text-tertiary)' }}>{children}</span>; }
+function Kbd({ children }: { children: string }) { return <span style={{ fontSize: 11, fontWeight: 500, padding: '1px 6px', borderRadius: 'var(--g-r-xs)', border: '1px solid var(--border)', color: 'var(--text-tertiary)' }}>{children}</span>; }
 function Dot({ top, right }: { top: number; right: number }) { return <span style={{ position: 'absolute', top, right, width: 7, height: 7, borderRadius: '50%', background: 'var(--danger)', border: '1.5px solid var(--bg)' }} />; }
 export function Badge({ n, urgent }: { n: number; urgent: boolean }) {
   return <span style={{ minWidth: 18, height: 18, padding: '0 5px', boxSizing: 'border-box', borderRadius: 999, background: urgent ? 'var(--danger)' : 'var(--accent)', color: 'var(--bg)', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{n > 99 ? '99+' : n}</span>;

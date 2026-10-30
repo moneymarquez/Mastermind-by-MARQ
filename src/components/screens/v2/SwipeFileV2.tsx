@@ -14,7 +14,6 @@ const HOOK_TYPES: { key: HookType; label: string }[] = [
 ];
 const HOOK_LABEL: Record<string, string> = Object.fromEntries(HOOK_TYPES.map((h) => [h.key, h.label]));
 const host = (u: string) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; } };
-const pill = (on: boolean) => ({ padding: '7px 12px', borderRadius: 999, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', border: `1px solid ${on ? 'var(--text)' : 'var(--border)'}`, background: on ? 'var(--text)' : 'transparent', color: on ? 'var(--bg)' : 'var(--text-secondary)' });
 
 /** Swipe File: formats you've watched work, broken down in your own words
  *  and tagged. The app never claims to have watched a link itself. */
@@ -52,7 +51,7 @@ export default function SwipeFileV2() {
       )}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search why it worked, platform, tags" aria-label="Search swipe file" style={{ ...field, flex: '1 1 240px', width: 'auto', maxWidth: phone ? undefined : 360 }} />
-        {tags.map((t) => <button key={t} onClick={() => setTag(tag === t ? null : t)} style={pill(tag === t)}>#{t}</button>)}
+        {tags.map((t) => <button key={t} onClick={() => setTag(tag === t ? null : t)} className="g-pill" aria-pressed={tag === t}>#{t}</button>)}
       </div>
       {shown.length === 0 && <span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>Nothing matches that search.</span>}
       <div style={{ display: 'grid', gridTemplateColumns: phone ? '1fr' : three ? 'repeat(3,minmax(0,1fr))' : 'repeat(2,minmax(0,1fr))', gap: phone ? 12 : 16, alignItems: 'start' }}>
@@ -67,7 +66,7 @@ function Entry({ e, onRemove }: { e: SwipeFileEntry; onRemove: () => void }) {
   return (
     <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-        <div style={{ width: 40, height: 40, flex: 'none', borderRadius: 10, background: 'repeating-linear-gradient(135deg, var(--surface-3) 0 6px, var(--surface-2) 6px 12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'var(--text-tertiary)' }}>{(e.platform ?? 'link').slice(0, 6)}</div>
+        <div style={{ width: 40, height: 40, flex: 'none', borderRadius: 'var(--g-r-md)', background: 'repeating-linear-gradient(135deg, var(--surface-3) 0 6px, var(--surface-2) 6px 12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'var(--text-tertiary)' }}>{(e.platform ?? 'link').slice(0, 6)}</div>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <a href={e.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{host(e.url)} ↗</a>
           <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>{[e.platform, e.format].filter(Boolean).join(' · ') || 'No platform noted'}</span>
@@ -94,7 +93,7 @@ function AddSheet({ onClose, onAdd }: { onClose: () => void; onAdd: (i: SwipeFil
         <Field l="Platform"><input value={platform} onChange={(e) => setPlatform(e.target.value)} placeholder="TikTok, Reels…" style={field} /></Field>
         <Field l="Format"><input value={format} onChange={(e) => setFormat(e.target.value)} placeholder="Talking head…" style={field} /></Field>
       </div>
-      <Field l="Hook type"><div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{HOOK_TYPES.map((h) => <button type="button" key={h.key} onClick={() => setHook(hook === h.key ? '' : h.key)} style={pill(hook === h.key)}>{h.label}</button>)}</div></Field>
+      <Field l="Hook type"><div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{HOOK_TYPES.map((h) => <button type="button" key={h.key} onClick={() => setHook(hook === h.key ? '' : h.key)} className="g-pill" aria-pressed={hook === h.key}>{h.label}</button>)}</div></Field>
       <Field l="Why it worked, in your words"><textarea value={why} onChange={(e) => setWhy(e.target.value)} style={area} placeholder="Pacing, what the hook did, why it landed" /></Field>
       <Field l="What you observed"><input value={perf} onChange={(e) => setPerf(e.target.value)} placeholder="Hit 400k" style={field} /></Field>
       <Field l="Tags, comma separated"><input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="food, build-in-public" style={field} /></Field>

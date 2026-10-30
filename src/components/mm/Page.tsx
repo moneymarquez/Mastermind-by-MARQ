@@ -57,7 +57,7 @@ function Menu({ items, onClose }: { items: PageAction[]; onClose: () => void }) 
     return () => { document.removeEventListener('mousedown', h); document.removeEventListener('keydown', k); };
   }, [onClose]);
   return (
-    <div ref={ref} role="menu" className="mm-anim" style={{ position: 'absolute', right: 0, top: 46, zIndex: 40, minWidth: 200, padding: 6, borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--g-shadow-3)', animation: 'mmPanelIn .14s ease' }}>
+    <div ref={ref} role="menu" className="mm-anim" style={{ position: 'absolute', right: 0, top: 46, zIndex: 40, minWidth: 200, padding: 6, borderRadius: 'var(--g-r-lg)', background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--g-shadow-3)', animation: 'mmPanelIn .14s ease' }}>
       {items.map((it) => (
         <button key={it.t} role="menuitem" className="mm-search-row" style={{ height: 40, color: it.danger ? 'var(--danger)' : 'var(--text)' }} onClick={() => { onClose(); it.onClick(); }}>{it.t}</button>
       ))}
@@ -209,7 +209,7 @@ export function Sheet({ title, onClose, children, full, width = 440 }: { title: 
   );
 }
 
-export const field: CSSProperties = { height: 44, padding: '0 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 16, fontFamily: 'inherit', width: '100%', boxSizing: 'border-box', minWidth: 0 };
+export const field: CSSProperties = { height: 44, padding: '0 12px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 16, fontFamily: 'inherit', width: '100%', boxSizing: 'border-box', minWidth: 0 };
 export const area: CSSProperties = { ...field, height: 96, padding: '10px 12px', resize: 'vertical', lineHeight: 1.45 };
 export const label: CSSProperties = { fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' };
 

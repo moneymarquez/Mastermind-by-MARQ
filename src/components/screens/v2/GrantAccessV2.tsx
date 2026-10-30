@@ -179,7 +179,7 @@ export default function GrantAccessV2() {
       {codeError && <span style={{ fontSize: 13.5, color: 'var(--danger)' }}>{codeError}</span>}
       {codes.length > 0 && <div>{codes.map((c, i) => (
         <div key={c.code} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 0', borderTop: i ? '1px solid var(--grid)' : 'none', flexWrap: 'wrap' }}>
-          <button onClick={() => copyCode(c.code)} title="Copy" style={{ fontFamily: 'ui-monospace, monospace', fontSize: 15, fontWeight: 600, letterSpacing: '0.04em', color: 'var(--text)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer' }}>{c.code}</button>
+          <button onClick={() => copyCode(c.code)} title="Copy" style={{ fontFamily: 'ui-monospace, monospace', fontSize: 15, fontWeight: 600, letterSpacing: '0.04em', color: 'var(--text)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-md)', padding: '6px 10px', cursor: 'pointer' }}>{c.code}</button>
           <span style={{ flex: 1, minWidth: 80, fontSize: 13, color: copiedCode === c.code ? 'var(--success)' : 'var(--text-tertiary)' }}>{copiedCode === c.code ? 'Copied' : c.note ?? ''}</span>
           {c.redeemed_by_email ? <Chip k="good">Redeemed by {c.redeemed_by_email}</Chip> : <button className="mm-btn" style={{ height: 32, fontSize: 13 }} disabled={codeBusy} onClick={() => cancelCode(c.code)}>Cancel</button>}
         </div>

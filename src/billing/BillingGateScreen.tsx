@@ -144,7 +144,7 @@ export default function BillingGateScreen({ onSubscribed, onSignOut, theme }: Pr
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Have a code?" aria-label="Discount code" autoComplete="off" style={{ flex: 1, minWidth: 0, height: 44, padding: '0 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-2, transparent)', color: 'var(--text)', fontSize: 16 }} />
-          <button type="button" onClick={() => void start(code.trim())} disabled={loading || !code.trim()} style={{ height: 44, padding: '0 16px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text)', cursor: 'pointer', font: 'inherit' }}>Apply</button>
+          <button type="button" onClick={() => void start(code.trim())} disabled={loading || !code.trim()} style={{ height: 44, padding: '0 16px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text)', cursor: 'pointer', font: 'inherit' }}>Apply</button>
         </div>
         {applied && !loading && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--success)', marginBottom: 12 }}>Code {applied} applied. The discount shows on your first invoice.</div>}
         {loading && <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--text-tertiary)' }}>Loading…</div>}

@@ -214,7 +214,7 @@ const CalendarView = forwardRef<CalendarViewHandle, Props>(function CalendarView
                 <div
                   style={{
                     position: 'absolute', left: 60, right: 6, top: (dragRange.start / 60) * HOUR_HEIGHT, height: Math.max(4, ((dragRange.end - dragRange.start) / 60) * HOUR_HEIGHT),
-                    background: 'var(--tint-today)', border: '1px solid var(--text)', borderRadius: 6, pointerEvents: 'none',
+                    background: 'var(--tint-today)', border: '1px solid var(--text)', borderRadius: 'var(--g-r-sm)', pointerEvents: 'none',
                   }}
                 />
               )}
@@ -231,7 +231,7 @@ const CalendarView = forwardRef<CalendarViewHandle, Props>(function CalendarView
                     onPointerDown={(e) => openExistingEvent(ev, e)}
                     style={{
                       position: 'absolute', left: 60, right: 6, top, height,
-                      background: `${EVENT_TYPE_COLOR[ev.type]}33`, borderLeft: `3px solid ${EVENT_TYPE_COLOR[ev.type]}`, borderRadius: 6,
+                      background: `${EVENT_TYPE_COLOR[ev.type]}33`, borderLeft: `3px solid ${EVENT_TYPE_COLOR[ev.type]}`, borderRadius: 'var(--g-r-sm)',
                       padding: '4px 8px', overflow: 'hidden', cursor: 'pointer',
                     }}
                   >

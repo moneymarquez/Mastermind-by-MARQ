@@ -81,7 +81,7 @@ export default function BrainDumpScreen() {
         </div>
         {msg && <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{msg}</div>}
         <button className="mm-btn" style={{ alignSelf: 'flex-start', height: 32, fontSize: 13 }} onClick={() => setShowFormat((x) => !x)}>{showFormat ? 'Hide' : 'What is'} the Masterminds Import format?</button>
-        {showFormat && <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Any AI can write it. Paste this template into ChatGPT or Claude and ask it to fill it in from your conversation. Every part is optional; anything unknown is kept as a note.<pre style={{ whiteSpace: 'pre-wrap', fontSize: 11.5, background: 'var(--surface-2)', padding: 10, borderRadius: 8, overflowX: 'auto' }}>{IMPORT_TEMPLATE}</pre><button className="mm-btn" style={{ height: 32 }} onClick={() => void navigator.clipboard?.writeText(IMPORT_TEMPLATE)}>Copy template</button></div>}
+        {showFormat && <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Any AI can write it. Paste this template into ChatGPT or Claude and ask it to fill it in from your conversation. Every part is optional; anything unknown is kept as a note.<pre style={{ whiteSpace: 'pre-wrap', fontSize: 11.5, background: 'var(--surface-2)', padding: 10, borderRadius: 'var(--g-r-md)', overflowX: 'auto' }}>{IMPORT_TEMPLATE}</pre><button className="mm-btn" style={{ height: 32 }} onClick={() => void navigator.clipboard?.writeText(IMPORT_TEMPLATE)}>Copy template</button></div>}
       </Card>
       {preview && (
         <Card title="Check before it's applied" meta={preview.errors.join(' ')}>

@@ -34,7 +34,7 @@ export interface RichCardProps {
 }
 
 const num: CSSProperties = { fontFamily: 'var(--font-mono)', fontWeight: 600, color: E.text };
-const box: CSSProperties = { background: tint(E.border, 18), borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 6 };
+const box: CSSProperties = { background: tint(E.border, 18), borderRadius: 'var(--g-r-lg)', padding: 12, display: 'flex', flexDirection: 'column', gap: 6 };
 const Sec = ({ t, children }: { t: string; children: ReactNode }) => <div style={box}><span style={label}>{t}</span>{children}</div>;
 const nf = (s: string) => s.startsWith('Not found');
 const Link = ({ href, children }: { href: string | null | undefined; children: ReactNode }) => (href ? <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: E.blue, fontSize: 13 }}>{children}</a> : null);
@@ -63,7 +63,7 @@ export default function RichProductCard(props: RichCardProps) {
     <div style={{ ...E.card, padding: 0, overflow: 'hidden', borderColor: v.verdict === 'BLOCKED' ? tint(E.red, 45) : undefined }}>
       {/* Collapsed row */}
       <div style={{ display: 'grid', gridTemplateColumns: '72px minmax(0,1fr)', gap: 12, padding: 14 }}>
-        {photos[0] ? <img src={photos[0]} alt="" loading="lazy" style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 10, border: `1px solid ${E.border}` }} /> : <div style={{ width: 72, height: 72, borderRadius: 10, background: tint(E.accent, 10), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: E.faint, textAlign: 'center' }}>No photo yet</div>}
+        {photos[0] ? <img src={photos[0]} alt="" loading="lazy" style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 'var(--g-r-md)', border: `1px solid ${E.border}` }} /> : <div style={{ width: 72, height: 72, borderRadius: 'var(--g-r-md)', background: tint(E.accent, 10), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: E.faint, textAlign: 'center' }}>No photo yet</div>}
         <div style={{ minWidth: 0 }}>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
             {p.rank != null && <Badge color={E.text}>#{p.rank}</Badge>}
@@ -101,7 +101,7 @@ export default function RichProductCard(props: RichCardProps) {
       {open && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '0 14px 14px' }}>
           {/* A. Photos */}
-          {photos.length > 0 && <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollSnapType: 'x mandatory' }}>{photos.map((u) => <img key={u} src={u} alt="" loading="lazy" style={{ height: 150, borderRadius: 10, border: `1px solid ${E.border}`, scrollSnapAlign: 'start', flex: 'none' }} />)}</div>}
+          {photos.length > 0 && <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollSnapType: 'x mandatory' }}>{photos.map((u) => <img key={u} src={u} alt="" loading="lazy" style={{ height: 150, borderRadius: 'var(--g-r-md)', border: `1px solid ${E.border}`, scrollSnapAlign: 'start', flex: 'none' }} />)}</div>}
 
           {/* B. Stats grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: 8 }}>
@@ -155,7 +155,7 @@ export default function RichProductCard(props: RichCardProps) {
             {c.sellers.length === 0 && <div style={{ fontSize: 14, color: E.amber }}>Not found: {SELLER_FALLBACK}</div>}
             {c.sellers.map((s, i) => (
               <div key={i} style={{ display: 'grid', gridTemplateColumns: s.screenshot_url ? '72px minmax(0,1fr)' : 'minmax(0,1fr)', gap: 10, paddingTop: i ? 8 : 0, borderTop: i ? `1px solid ${E.border}` : 'none' }}>
-                {s.screenshot_url && <img src={s.screenshot_url} alt="" loading="lazy" style={{ width: 72, borderRadius: 8, border: `1px solid ${E.border}` }} />}
+                {s.screenshot_url && <img src={s.screenshot_url} alt="" loading="lazy" style={{ width: 72, borderRadius: 'var(--g-r-md)', border: `1px solid ${E.border}` }} />}
                 <div style={{ fontSize: 14, color: E.text }}>
                   <strong>{s.name}</strong> {s.price != null && <>· {money(s.price)}</>} <Link href={s.shop_url}>shop ↗</Link>
                   <div style={{ fontSize: 13, color: E.muted }}>
@@ -175,7 +175,7 @@ export default function RichProductCard(props: RichCardProps) {
             {c.suppliers.map((s, i) => {
               const pick = s === pickSup;
               return (
-                <div key={i} style={{ padding: 8, borderRadius: 10, border: `1px solid ${pick ? E.green : E.border}`, background: pick ? tint(E.green, 8) : 'transparent', fontSize: 14, color: E.text }}>
+                <div key={i} style={{ padding: 8, borderRadius: 'var(--g-r-md)', border: `1px solid ${pick ? E.green : E.border}`, background: pick ? tint(E.green, 8) : 'transparent', fontSize: 14, color: E.text }}>
                   <strong>{s.name}</strong> {pick && <Badge color={E.green}>The pick</Badge>} <Link href={s.url}>listing ↗</Link>
                   <div style={{ fontSize: 13, color: E.muted }}>
                     Unit {s.unit_cost != null ? money(s.unit_cost) : 'not found'} · Ship {s.ship_cost != null ? money(s.ship_cost) : 'not found'} · {s.ship_days_max != null ? `${s.ship_days_min ?? s.ship_days_max}–${s.ship_days_max} days to US` : 'ship time not found'} · {s.warehouse ?? 'warehouse not found'} · rating {s.rating ?? 'not found'} · sample {s.sample_cost != null ? money(s.sample_cost) : 'not found'}

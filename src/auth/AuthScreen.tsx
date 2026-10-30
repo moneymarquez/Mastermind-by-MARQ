@@ -17,7 +17,7 @@ const fieldStyle: React.CSSProperties = {
 };
 /** The sign-in uses the public site's look: warm paper, ink, one cobalt action, Instrument Sans. */
 const SITE = { paper: '#fbf9f4', ink: '#1b1a17', mute: '#6b665c', line: '#ddd8cc', card: '#ffffff', cobalt: '#5266eb', sans: "'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif", mono: "'IBM Plex Mono', ui-monospace, Menlo, monospace" };
-const siteField: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 11, height: 50, padding: '0 14px', borderRadius: 10, border: `1px solid ${SITE.line}`, background: '#fff' };
+const siteField: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 11, height: 50, padding: '0 14px', borderRadius: 'var(--g-r-md)', border: `1px solid ${SITE.line}`, background: '#fff' };
 const siteInput: React.CSSProperties = { flex: 1, border: 'none', outline: 'none', background: 'transparent', color: SITE.ink, fontSize: 16, fontFamily: 'inherit', minWidth: 0 };
 const inputStyle: React.CSSProperties = {
   flex: 1, border: 'none', outline: 'none', background: 'transparent', color: 'var(--mm-text)', fontSize: 14,
@@ -187,7 +187,7 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
       >
         <div style={{ width: '100%', maxWidth: 380, display: 'flex', flexDirection: 'column', gap: 22 }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center' }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--client-accent-soft)', border: '1px solid color-mix(in srgb, var(--client-accent) 45%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 44, height: 44, borderRadius: 'var(--g-r-lg)', background: 'var(--client-accent-soft)', border: '1px solid color-mix(in srgb, var(--client-accent) 45%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="users" size={22} color="var(--client-accent)" />
             </div>
             <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: '-0.02em' }}>Client login</div>
@@ -237,7 +237,7 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
       `}</style>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '16px 20px', paddingTop: 'max(16px, env(safe-area-inset-top))' }}>
         <a href="/home" style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#1b1a17', textDecoration: 'none' }}>
-          <span aria-hidden="true" style={{ width: 32, height: 32, borderRadius: 8, background: '#1b1a17', color: 'var(--mm-canvas)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 10, lineHeight: '10px' }}><span>MA</span><span>RQ</span></span>
+          <span aria-hidden="true" style={{ width: 32, height: 32, borderRadius: 'var(--g-r-md)', background: '#1b1a17', color: 'var(--mm-canvas)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 10, lineHeight: '10px' }}><span>MA</span><span>RQ</span></span>
           <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}><span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.01em' }}>Masterminds</span><span style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '.22em', opacity: 0.72 }}>BY MARQ</span></span>
         </a>
         <button
@@ -250,9 +250,9 @@ export default function AuthScreen({ onSignIn, onSignUp, onResetPassword }: Prop
       </div>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 20px 48px' }}>
         <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div id="login-card" className="wl-auth" style={{ padding: 28, borderRadius: 12, border: '1px solid #e2ddd2', background: SITE.card, display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <div id="login-card" className="wl-auth" style={{ padding: 28, borderRadius: 'var(--g-r-lg)', border: '1px solid #e2ddd2', background: SITE.card, display: 'flex', flexDirection: 'column', gap: 18 }}>
               {hasPendingJoin() && (
-                <div role="status" style={{ padding: '12px 14px', borderRadius: 12, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', fontSize: 14, lineHeight: 1.45 }}>
+                <div role="status" style={{ padding: '12px 14px', borderRadius: 'var(--g-r-lg)', background: 'color-mix(in srgb, var(--accent) 12%, transparent)', fontSize: 14, lineHeight: 1.45 }}>
                   You've been invited to a team. Log in — or create a free login — and your tasks will be waiting. No subscription needed.
                 </div>
               )}

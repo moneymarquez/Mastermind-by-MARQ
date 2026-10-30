@@ -36,7 +36,7 @@ export default function ScorePills({ type, id, compact }: { type: string; id: st
         {pill('logic')}{pill('trust')}{pill('on_target')}
       </div>
       {open && (
-        <div style={{ padding: '8px 10px', borderRadius: 10, background: 'var(--surface-2)', fontSize: 12.5, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ padding: '8px 10px', borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', fontSize: 12.5, display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span style={{ color: 'var(--text-tertiary)' }}>{LABEL[open]}: {WHAT[open]}</span>
           {checks.length === 0 ? <span style={{ color: 'var(--text-tertiary)' }}>Not checked for this kind of card.</span> : checks.map((c, i) => (
             <span key={i} style={{ color: 'var(--text-secondary)' }}><span style={{ color: c.pass ? 'var(--success)' : 'var(--danger)', fontWeight: 700 }}>{c.pass ? '✓' : '✗'}</span> {c.name}{c.why ? <span style={{ color: 'var(--text-tertiary)' }}> · {c.why}</span> : null}</span>

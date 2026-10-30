@@ -35,7 +35,7 @@ export default function GoalsProgressWidget({ onNavigate }: HomeWidgetProps) {
                 <span style={{ color: 'var(--mm-faint)', flexShrink: 0, marginLeft: 8 }}>{pct}%</span>
               </div>
               <div style={{ height: 5, borderRadius: 5, background: 'var(--mm-track)', marginTop: 5 }}>
-                <div style={{ width: `${Math.max(0, Math.min(100, pct))}%`, height: '100%', borderRadius: 5, background: 'var(--mm-text)' }} />
+                <div style={{ width: `${Math.max(0, Math.min(100, pct))}%`, height: '100%', borderRadius: 'var(--g-r-xs)', background: 'var(--mm-text)' }} />
               </div>
             </div>
           );

@@ -41,9 +41,9 @@ export default function SupportInboxV2({ onOpenClient }: { onOpenClient: (id: st
   const listPane = (
     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, borderRight: phone ? 'none' : '1px solid var(--grid)' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', flex: 'none' }}>
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search support" aria-label="Search support" style={{ height: 36, padding: '0 10px', borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit' }} />
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {(['open', 'drafts', 'tickets', 'all'] as Filter[]).map((f) => <button key={f} aria-pressed={filter === f} onClick={() => setFilter(f)} style={{ padding: '4px 10px', borderRadius: 999, border: filter === f ? '1px solid var(--text)' : '1px solid var(--border)', background: filter === f ? 'var(--text)' : 'transparent', color: filter === f ? 'var(--bg)' : 'var(--text-secondary)', fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>{f[0].toUpperCase() + f.slice(1)} {counts[f]}</button>)}
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search support" aria-label="Search support" style={{ height: 36, padding: '0 10px', borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit' }} />
+        <div className="g-seg" role="group" aria-label="Filter">
+          {(['open', 'drafts', 'tickets', 'all'] as Filter[]).map((f) => <button key={f} aria-pressed={filter === f} onClick={() => setFilter(f)} className="g-pill">{f[0].toUpperCase() + f.slice(1)} {counts[f]}</button>)}
         </div>
       </div>
       <div className="mm-scroll-y" style={{ flex: 1, minHeight: 0 }}>
@@ -101,7 +101,7 @@ function Detail({ m, U, onBack, onOpenClient }: { m: UMsg; U: ReturnType<typeof 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <h2 style={{ margin: 0, color: 'var(--text)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.25 }}>{m.subject}</h2>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ padding: '1px 7px', borderRadius: 4, border: `1px solid ${m.portal ? 'var(--client-accent)' : 'var(--border)'}`, color: m.portal ? 'var(--client-accent)' : 'var(--text-secondary)', fontSize: 12, fontWeight: 500 }}>{m.sourceLabel}</span>
+            <span style={{ padding: '1px 7px', borderRadius: 'var(--g-r-xs)', border: `1px solid ${m.portal ? 'var(--client-accent)' : 'var(--border)'}`, color: m.portal ? 'var(--client-accent)' : 'var(--text-secondary)', fontSize: 12, fontWeight: 500 }}>{m.sourceLabel}</span>
             <Chip k={ch.k}>{ch.c}</Chip>
           </div>
         </div>
@@ -114,13 +114,13 @@ function Detail({ m, U, onBack, onOpenClient }: { m: UMsg; U: ReturnType<typeof 
         </div>
         {m.body && m.body !== m.subject && <p style={{ margin: 0, color: 'var(--text)', fontSize: 15, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{m.body}</p>}
         {m.kind === 'ticket' && (
-          <div style={{ display: 'grid', gridTemplateColumns: onBack ? 'minmax(0,1fr)' : 'repeat(2,minmax(0,1fr))', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: onBack ? 'minmax(0,1fr)' : 'repeat(2,minmax(0,1fr))', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>
             {[['What to avoid', m.avoid], ["What they'd prefer", m.prefer]].map(([l, v], i) => <div key={l} style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '10px 14px', borderLeft: !onBack && i ? '1px solid var(--grid)' : 'none', borderTop: onBack && i ? '1px solid var(--grid)' : 'none' }}><span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)' }}>{l}</span><span style={{ color: 'var(--text)', fontSize: 14, lineHeight: 1.45 }}>{v || '—'}</span></div>)}
           </div>
         )}
-        <section style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <section style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {m.draft ? <NovaMark title="Nova drafted a reply" /> : <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{m.kind === 'ticket' ? 'Reply in the portal' : 'Reply'}</span>}
-          {editing || !m.draft ? <textarea value={text} onChange={(e) => setText(e.target.value)} rows={6} placeholder="Write a reply…" style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 15, lineHeight: 1.5, fontFamily: 'inherit', resize: 'vertical' }} />
+          {editing || !m.draft ? <textarea value={text} onChange={(e) => setText(e.target.value)} rows={6} placeholder="Write a reply…" style={{ padding: '10px 12px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 15, lineHeight: 1.5, fontFamily: 'inherit', resize: 'vertical' }} />
             : <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5, color: 'var(--text)', whiteSpace: 'pre-wrap' }}>{text}</p>}
           {msg ? <span style={{ fontSize: 13, color: msg.bad ? 'var(--danger)' : 'var(--success)' }}>{msg.t}</span> : null}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>

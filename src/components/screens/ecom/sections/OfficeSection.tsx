@@ -139,8 +139,8 @@ function OrchestratorChat({ onDone }: { onDone: () => void }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {log.map((m, i) => (
           <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ alignSelf: 'flex-end', maxWidth: '85%', padding: '8px 12px', borderRadius: 12, background: 'var(--surface-2)', fontSize: 14 }}>{m.me}</div>
-            <div style={{ maxWidth: '90%', padding: '8px 12px', borderRadius: 12, border: '1px solid var(--border)', fontSize: 14, lineHeight: 1.5 }}>{m.reply}</div>
+            <div style={{ alignSelf: 'flex-end', maxWidth: '85%', padding: '8px 12px', borderRadius: 'var(--g-r-lg)', background: 'var(--surface-2)', fontSize: 14 }}>{m.me}</div>
+            <div style={{ maxWidth: '90%', padding: '8px 12px', borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', fontSize: 14, lineHeight: 1.5 }}>{m.reply}</div>
             {m.taskId && <Thumbs entityType="task" entityId={m.taskId} domain="ecom" compact />}
           </div>
         ))}

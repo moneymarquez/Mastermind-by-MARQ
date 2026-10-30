@@ -119,7 +119,7 @@ export default function WeeklyReviewV2() {
       <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Rate the week</span>
       <div role="radiogroup" aria-label="Rate the week" style={{ display: 'grid', gridTemplateColumns: 'repeat(10,1fr)', gap: 4 }}>
         {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-          <button key={n} role="radio" aria-checked={rating === n} onClick={() => setRating(n)} style={{ height: 40, borderRadius: 8, border: rating === n ? '1.5px solid var(--accent)' : '1.5px solid transparent', background: rating === n ? 'color-mix(in srgb, var(--accent) 14%, var(--surface))' : 'var(--surface-3)', color: 'var(--text)', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer', padding: 0 }}>{n}</button>
+          <button key={n} role="radio" aria-checked={rating === n} onClick={() => setRating(n)} style={{ height: 40, borderRadius: 'var(--g-r-md)', border: rating === n ? '1.5px solid var(--accent)' : '1.5px solid transparent', background: rating === n ? 'color-mix(in srgb, var(--accent) 14%, var(--surface))' : 'var(--surface-3)', color: 'var(--text)', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer', padding: 0 }}>{n}</button>
         ))}
       </div>
       <button className="mm-btn mm-btn--primary" style={{ height: 44, fontSize: 15 }} disabled={busy} onClick={() => void submit()}>{busy ? 'Saving…' : rev?.submitted_at ? 'Update review' : 'Submit review'}</button>

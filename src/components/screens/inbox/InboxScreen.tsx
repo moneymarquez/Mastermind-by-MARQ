@@ -107,12 +107,12 @@ function InboxView({ device, focus, onFocusConsumed, onOpenClient, ui }: Props &
     return <Empty text="No mail yet. Messages sent to your connected addresses, plus client portal questions and tickets, land here." />;
   }
   const chips = (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+    <div className="g-seg" role="group" aria-label="Filter">
       {filters.map((x) => {
         const n = ui.msgs.filter(x.test).length;
         if (x.key !== 'all' && n === 0) return null;
         const on = x.key === f.key;
-        return <button key={x.key} onClick={() => setFilter(x.key)} style={{ height: 30, padding: '0 11px', borderRadius: 999, border: `1px solid ${on ? 'var(--text)' : 'var(--border)'}`, background: on ? 'var(--text)' : 'transparent', color: on ? 'var(--bg)' : 'var(--text-secondary)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 5 }}>{x.label}{x.key !== 'all' && <span style={{ opacity: 0.7 }}>{n}</span>}</button>;
+        return <button key={x.key} onClick={() => setFilter(x.key)} className="g-pill" aria-pressed={on}>{x.label}{x.key !== 'all' && <span className="g-seg-n">{n}</span>}</button>;
       })}
     </div>
   );
@@ -142,7 +142,7 @@ function InboxView({ device, focus, onFocusConsumed, onOpenClient, ui }: Props &
 }
 
 function SourceTag({ m }: { m: UMsg }) {
-  return <span style={{ fontSize: 11.5, fontWeight: 500, padding: '1px 6px', borderRadius: 4, border: `1px solid ${m.portal ? 'var(--client-accent)' : 'var(--border)'}`, color: m.portal ? 'var(--client-accent)' : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{m.sourceLabel}</span>;
+  return <span style={{ fontSize: 11.5, fontWeight: 500, padding: '1px 6px', borderRadius: 'var(--g-r-xs)', border: `1px solid ${m.portal ? 'var(--client-accent)' : 'var(--border)'}`, color: m.portal ? 'var(--client-accent)' : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{m.sourceLabel}</span>;
 }
 function MsgRow({ m, now, active, onOpen }: { m: UMsg; now: number; active: boolean; onOpen: () => void }) {
   return (
@@ -201,13 +201,13 @@ function MsgDetail({ m, phone, onBack, ui, onOpenClient }: { m: UMsg; phone?: bo
       {m.clientId && <button className="mm-btn" style={{ alignSelf: 'flex-start' }} onClick={() => onOpenClient(m.clientId!)}>Open client</button>}
 
       {sentAt || m.replied ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 14, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface-2)' }}><Chip k="good">Sent</Chip><span style={{ fontSize: 13.5, color: 'var(--text-secondary)' }}>{sentAt ? 'Sent just now.' : 'You replied to this.'}</span></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 14, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', background: 'var(--surface-2)' }}><Chip k="good">Sent</Chip><span style={{ fontSize: 13.5, color: 'var(--text-secondary)' }}>{sentAt ? 'Sent just now.' : 'You replied to this.'}</span></div>
       ) : m.draft ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 14, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', background: 'var(--surface-2)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><GNova size={13} fill color="var(--accent)" /><span style={{ flex: 1, color: 'var(--text)', fontSize: 14, fontWeight: 600 }}>Nova drafted a reply</span>{m.toAddr && <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>From {m.toAddr}</span>}</div>
           {editing
-            ? <textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={8} style={{ width: '100%', boxSizing: 'border-box', padding: 12, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 15, lineHeight: 1.5, fontFamily: 'inherit', resize: 'vertical' }} />
-            : <div style={{ padding: 12, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 15, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{draft}</div>}
+            ? <textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={8} style={{ width: '100%', boxSizing: 'border-box', padding: 12, borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 15, lineHeight: 1.5, fontFamily: 'inherit', resize: 'vertical' }} />
+            : <div style={{ padding: 12, borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 15, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{draft}</div>}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button className="mm-btn mm-btn--primary" style={{ height: phone ? 46 : 38 }} disabled={busy} onClick={() => send(draft)}>{busy ? 'Sending…' : 'Send'}</button>
             <button className="mm-btn" style={{ height: phone ? 46 : 38 }} onClick={() => setEditing((v) => !v)}>{editing ? 'Done' : 'Edit'}</button>
@@ -219,7 +219,7 @@ function MsgDetail({ m, phone, onBack, ui, onOpenClient }: { m: UMsg; phone?: bo
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>No reply drafted.</span>
-          <textarea value={composer} onChange={(e) => setComposer(e.target.value)} rows={4} placeholder={m.portal ? 'Reply in their portal' : 'Write a reply'} style={{ width: '100%', boxSizing: 'border-box', padding: 12, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 15, lineHeight: 1.5, fontFamily: 'inherit', resize: 'vertical' }} />
+          <textarea value={composer} onChange={(e) => setComposer(e.target.value)} rows={4} placeholder={m.portal ? 'Reply in their portal' : 'Write a reply'} style={{ width: '100%', boxSizing: 'border-box', padding: 12, borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 15, lineHeight: 1.5, fontFamily: 'inherit', resize: 'vertical' }} />
           <button className="mm-btn mm-btn--primary" style={{ alignSelf: 'flex-start', height: phone ? 46 : 38 }} disabled={busy || !composer.trim()} onClick={() => send(composer)}>{busy ? 'Sending…' : 'Send'}</button>
           {err && <span style={{ fontSize: 13, color: 'var(--danger)' }}>{err}</span>}
         </div>
@@ -228,7 +228,7 @@ function MsgDetail({ m, phone, onBack, ui, onOpenClient }: { m: UMsg; phone?: bo
   );
 }
 function Field({ label, value }: { label: string; value: string | null }) {
-  return <div style={{ padding: 12, borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)' }}><div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', marginBottom: 4 }}>{label}</div><div style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.45 }}>{value || '—'}</div></div>;
+  return <div style={{ padding: 12, borderRadius: 'var(--g-r-lg)', background: 'var(--surface-2)', border: '1px solid var(--border)' }}><div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', marginBottom: 4 }}>{label}</div><div style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.45 }}>{value || '—'}</div></div>;
 }
 
 // ── Leads ─────────────────────────────────────────────────────────────

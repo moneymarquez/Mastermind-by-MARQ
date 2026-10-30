@@ -56,7 +56,7 @@ export default function ScorecardPanel({ clientId, phone }: { clientId: string; 
     <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
       {err && <div style={{ fontSize: 13.5, color: 'var(--danger)' }}>{err}</div>}
       {w && play && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: 14, borderRadius: 14, border: '1px solid var(--warning)', background: 'color-mix(in srgb, var(--warning) 8%, var(--surface))' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: 14, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--warning)', background: 'color-mix(in srgb, var(--warning) 8%, var(--surface))' }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <Chip k="warn">Weakest: {w.m.label}</Chip>
             <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{fmtMetric(w.m, w.now ?? w.base)} now · target {fmtMetric(w.m, w.target)} · {Math.round((w.progress ?? 0) * 100)}% of the way</span>
@@ -68,7 +68,7 @@ export default function ScorecardPanel({ clientId, phone }: { clientId: string; 
       )}
       {sc.hasBaseline && !w && <Chip k="good">Every metric is at or past its 90-day target</Chip>}
       {sc.hasBaseline && (
-        <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>
           <div style={{ ...rowGrid(phone), fontSize: 12, color: 'var(--text-tertiary)', background: 'var(--surface-2)' }}><span>Metric</span><span>Baseline</span><span>Now</span><span>90-day target</span></div>
           {sc.lines.map((l) => {
             const weak = w?.m.key === l.m.key;
@@ -95,7 +95,7 @@ export default function ScorecardPanel({ clientId, phone }: { clientId: string; 
         </div>
       )}
       {editing && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 14, borderRadius: 14, border: '1px solid var(--border)', background: 'var(--surface)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 14, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', background: 'var(--surface)' }}>
           <strong style={{ fontSize: 15, color: 'var(--text)' }}>{!base ? 'Capture the baseline (once)' : mode === 'targets' ? '90-day targets' : 'Current numbers'}</strong>
           {!base && <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>From their POS, books and Google before any work starts. It can't be changed later, so the lift is provable. Leave a field empty if unknown.</span>}
           <div style={{ display: 'grid', gridTemplateColumns: phone ? '1fr' : 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
@@ -140,7 +140,7 @@ function ClientLoop({ clientId, phone }: { clientId: string; phone?: boolean }) 
   };
   const ready = !!f.product?.trim() && num(f.price ?? '') != null && num(f.unit_cost ?? '') != null;
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 14, borderRadius: 14, border: '1px solid var(--border)', background: 'var(--surface)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 14, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', background: 'var(--surface)' }}>
       <strong style={{ fontSize: 15, color: 'var(--text)' }}>Loop with the other bots</strong>
       <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>A metric that beats its target becomes a case-study to-do for Content (after the client says yes). A product the client sells goes to E-commerce for the margin math.</span>
       {items.map((h) => <div key={h.id} style={{ fontSize: 13, color: 'var(--text-secondary)' }}>• {h.note ?? h.kind} <span style={{ color: 'var(--text-tertiary)' }}>({h.status})</span></div>)}
@@ -168,4 +168,4 @@ function ClientLoop({ clientId, phone }: { clientId: string; phone?: boolean }) 
 }
 
 const rowGrid = (phone?: boolean): CSSProperties => ({ display: 'grid', gridTemplateColumns: phone ? '1.5fr 1fr 1fr 1fr' : '2fr 1fr 1fr 1fr', gap: 8, padding: '9px 12px', alignItems: 'center' });
-const input: CSSProperties = { height: 36, padding: '0 10px', borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit' };
+const input: CSSProperties = { height: 36, padding: '0 10px', borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit' };

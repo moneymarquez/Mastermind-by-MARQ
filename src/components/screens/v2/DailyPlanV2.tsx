@@ -67,7 +67,7 @@ export default function DailyPlanV2() {
         {PILLARS.map((p) => {
           const done = isDone(p.key);
           return (
-            <div key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, background: 'var(--surface-2)' }}>
+            <div key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)' }}>
               <button onClick={() => void pl.set(p.key, { done: !pl.pillars[p.key].done })} aria-pressed={done} aria-label={`${p.label} ${done ? 'done' : 'not done'}`} style={{ flex: 'none', width: 24, height: 24, borderRadius: '50%', border: `1.5px solid ${done ? 'var(--success)' : 'var(--text-tertiary)'}`, background: done ? 'var(--success)' : 'transparent', color: '#fff', cursor: 'pointer', padding: 0, fontSize: 13, lineHeight: 1 }}>{done ? '✓' : ''}</button>
               <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)' }}>{p.label}{p.key === 'financial' && callGoal ? ` · ${callsToday}/${callGoal} calls` : ''}</span>

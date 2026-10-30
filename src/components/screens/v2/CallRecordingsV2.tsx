@@ -88,7 +88,7 @@ function Player({ r, contact, R, onDeleted, onBack }: { r: CallRecording; contac
         <button className="mm-btn" style={{ color: 'var(--danger)' }} onClick={async () => { if (window.confirm('Delete this recording?')) { await R.remove(r.id, r.file_path); onDeleted(); } }}>Delete</button>
       </div>
       {ai === false ? <AiOffCard text="Calls aren't summarized while AI is off. Playback and notes still work." /> : (
-        <div style={{ padding: '12px 14px', borderRadius: 10, background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ padding: '12px 14px', borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
           <NovaMark title="Summary" />
           <span style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>{r.ai_analysis ?? 'Not summarized yet.'}</span>
         </div>

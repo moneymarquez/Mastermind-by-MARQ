@@ -135,7 +135,7 @@ export function DeliveryTab({ client, onChanged }: { client: CrmClient; onChange
         {phase && phase.n < 5 && prog && prog.total > 0 && prog.done === prog.total && <button className="mm-btn mm-btn--primary" style={{ height: 34 }} onClick={() => void enter(phase.n + 1)}>Move to {phaseOf(phase.n + 1)?.label} →</button>}
       </div>
       {phase && (
-        <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>
           <div style={{ padding: '10px 12px', display: 'flex', gap: 8, alignItems: 'center', background: 'var(--surface-2)' }}>
             <strong style={{ flex: 1 }}>{phase.label} checklist</strong>
             <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{prog?.pct}%</span>
@@ -160,7 +160,7 @@ export function DeliveryTab({ client, onChanged }: { client: CrmClient; onChange
           {matchingPlays.slice(0, 4).map((p) => <div key={p.id} style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 14 }}><span style={{ flex: 1 }}>{p.title} <span style={{ color: 'var(--text-tertiary)' }}>· {p.steps.length} steps</span></span><button className="mm-btn" style={{ height: 30 }} onClick={() => void applyPlay(p.id)}>Use</button></div>)}
         </div>
       )}
-      <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
         <strong>{base ? 'Numbers now' : 'Baseline numbers'}</strong>
         <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{base ? 'Capture at each phase change. Before → after becomes the case study.' : 'Captured at Onboard & Audit, so the results later have something to compare to.'}</span>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 8 }}>

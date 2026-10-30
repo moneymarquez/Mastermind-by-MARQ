@@ -64,7 +64,7 @@ function SiteCard({ site, brand, orders, days, onChange }: { site: SiteRow; bran
       {site.last_error && <div style={{ fontSize: 12.5, color: 'var(--danger)' }}>{site.last_error}</div>}
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {(site.domain_status === 'none' || site.domain_status === 'failed') && <>
-          <input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="brandname.com" aria-label="Domain" style={{ flex: '1 1 140px', minWidth: 0, height: 32, padding: '0 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 14 }} />
+          <input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="brandname.com" aria-label="Domain" style={{ flex: '1 1 140px', minWidth: 0, height: 32, padding: '0 10px', borderRadius: 'var(--g-r-md)', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 14 }} />
           <button className="mm-btn" style={btn} disabled={busy || !domain.trim()} onClick={() => void act('request')}>Buy domain (~$10–15/yr)</button>
         </>}
         {site.domain_status === 'awaiting_purchase' && <>

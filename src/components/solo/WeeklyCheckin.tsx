@@ -80,15 +80,15 @@ export default function WeeklyCheckin({ week }: { week: string }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>3 adjustments for next week</div>
         {(row.adjustments ?? []).map((a, i) => (
-          <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: 10, border: '1px solid var(--border)', borderRadius: 12 }}>
+          <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: 10, border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)' }}>
             <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 14.5, fontWeight: 600 }}>{a.title}</div><div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{a.why}</div></div>
             {applied.has(i) ? <Chip k="good">Applied</Chip> : <button className="mm-btn mm-btn--primary" style={{ height: 36 }} onClick={() => void apply(a, i)}>Apply</button>}
           </div>
         ))}
       </div>
-      {row.focus && <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: 12, borderRadius: 12, background: 'var(--surface-2)' }}><span style={{ flex: 1, fontSize: 15 }}>Focus for next week: <strong>{row.focus}</strong></span><button className="mm-btn" style={{ height: 34 }} onClick={() => void pin()}>Pin on Home</button></div>}
+      {row.focus && <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: 12, borderRadius: 'var(--g-r-lg)', background: 'var(--surface-2)' }}><span style={{ flex: 1, fontSize: 15 }}>Focus for next week: <strong>{row.focus}</strong></span><button className="mm-btn" style={{ height: 34 }} onClick={() => void pin()}>Pin on Home</button></div>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {(row.chat ?? []).map((m, i) => <div key={i} style={{ alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%', padding: '8px 12px', borderRadius: 12, background: m.role === 'user' ? 'var(--surface-2)' : 'transparent', border: m.role === 'user' ? 'none' : '1px solid var(--border)', fontSize: 14 }}>{m.text}</div>)}
+        {(row.chat ?? []).map((m, i) => <div key={i} style={{ alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%', padding: '8px 12px', borderRadius: 'var(--g-r-lg)', background: m.role === 'user' ? 'var(--surface-2)' : 'transparent', border: m.role === 'user' ? 'none' : '1px solid var(--border)', fontSize: 14 }}>{m.text}</div>)}
         <div style={{ display: 'flex', gap: 8 }}>
           <input style={{ ...field, flex: 1 }} value={text} placeholder='Push back, e.g. "that week was an outlier"' onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void send(); }} />
           <button className="mm-btn mm-btn--primary" style={{ height: 44 }} disabled={!!busy || !text.trim()} onClick={() => void send()}>Send</button>

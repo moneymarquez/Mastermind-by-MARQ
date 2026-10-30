@@ -73,8 +73,8 @@ export default function CashFlowV2() {
   const upcoming = f.days.slice(0, 31).flatMap((d) => d.events);
 
   const seg = (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 2, padding: 3, borderRadius: 999, background: 'var(--surface-2)', border: '1px solid var(--border)', maxWidth: phone ? undefined : 360 }}>
-      {([30, 60, 90] as Horizon[]).map((x) => <button key={x} aria-pressed={h === x} onClick={() => setH(x)} style={{ padding: '8px 0', borderRadius: 999, border: 0, fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', background: h === x ? 'var(--text)' : 'transparent', color: h === x ? 'var(--bg)' : 'var(--text-secondary)' }}>{x} days</button>)}
+    <div className="g-seg g-seg--fill" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', maxWidth: phone ? undefined : 360 }}>
+      {([30, 60, 90] as Horizon[]).map((x) => <button key={x} aria-pressed={h === x} onClick={() => setH(x)} className="g-pill">{x} days</button>)}
     </div>
   );
   const hero = (
@@ -94,7 +94,7 @@ export default function CashFlowV2() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {scenarios.map((s) => {
           const on = sc === s.id;
-          return <button key={s.id} aria-pressed={on} onClick={() => setSc(on ? null : s.id)} style={{ padding: '10px 12px', borderRadius: 8, textAlign: 'left', background: on ? 'var(--text)' : 'transparent', color: on ? 'var(--bg)' : 'var(--text)', border: on ? '1px solid var(--text)' : '1px solid var(--border)', fontSize: 14, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>{s.q}</button>;
+          return <button key={s.id} aria-pressed={on} onClick={() => setSc(on ? null : s.id)} style={{ padding: '10px 12px', borderRadius: 'var(--g-r-md)', textAlign: 'left', background: on ? 'var(--text)' : 'transparent', color: on ? 'var(--bg)' : 'var(--text)', border: on ? '1px solid var(--text)' : '1px solid var(--border)', fontSize: 14, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}>{s.q}</button>;
         })}
       </div>
       {sc === 'income' && <Field l="Extra income a month"><input inputMode="decimal" value={extra} onChange={(e) => setExtra(e.target.value)} style={field} /></Field>}

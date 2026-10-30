@@ -179,7 +179,7 @@ function Detail({ r, onBack }: { r: SplitRow; onBack?: () => void }) {
       </div>
       <Actions list={r.actions} />
       {r.fields.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}>
           {r.fields.map(([l, v], i) => (
             <div key={l + i} style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '10px 14px', borderTop: i > 1 ? '1px solid var(--grid)' : 'none', borderLeft: i % 2 ? '1px solid var(--grid)' : 'none', minWidth: 0 }}>
               <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)' }}>{l}</span>
@@ -189,7 +189,7 @@ function Detail({ r, onBack }: { r: SplitRow; onBack?: () => void }) {
         </div>
       )}
       {(r.body ?? []).map((p, i) => <p key={i} style={{ margin: 0, color: 'var(--text)', fontSize: 15, lineHeight: 1.55 }}>{p}</p>)}
-      {r.note && <div style={{ padding: '12px 14px', borderRadius: 10, background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'flex', gap: 8, fontSize: 14, lineHeight: 1.45, color: 'var(--text-secondary)' }}><svg style={{ flex: 'none', marginTop: 3 }} width="13" height="13" viewBox="0 0 24 24" fill="var(--accent)" aria-hidden><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z" /></svg><span>{r.note}</span></div>}
+      {r.note && <div style={{ padding: '12px 14px', borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'flex', gap: 8, fontSize: 14, lineHeight: 1.45, color: 'var(--text-secondary)' }}><svg style={{ flex: 'none', marginTop: 3 }} width="13" height="13" viewBox="0 0 24 24" fill="var(--accent)" aria-hidden><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z" /></svg><span>{r.note}</span></div>}
       {!!r.log?.length && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>{r.logTitle ?? 'Activity'}</span>
@@ -211,7 +211,7 @@ function Split({ s, device }: { s: DashSplit; device: DashDevice }) {
     <section style={{ display: 'grid', gridTemplateColumns: phone ? 'minmax(0,1fr)' : device === 'desktop' ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', height: phone ? undefined : device === 'desktop' ? 640 : 600, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', minWidth: 0 }}>
       <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, borderRight: phone ? 'none' : '1px solid var(--grid)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', flex: 'none' }}>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={s.search} aria-label={s.search} style={{ flex: 1, minWidth: 0, height: 34, padding: '0 10px', borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13, fontFamily: 'inherit' }} />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={s.search} aria-label={s.search} style={{ flex: 1, minWidth: 0, height: 34, padding: '0 10px', borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13, fontFamily: 'inherit' }} />
           {s.add && <button className="mm-btn mm-btn--primary" onClick={s.add.onClick} style={{ height: 34, fontSize: 13, padding: '0 12px' }}>{s.add.t}</button>}
         </div>
         <div className="mm-scroll-y" style={{ flex: 1, minHeight: 0 }}>

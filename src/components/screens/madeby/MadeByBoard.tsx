@@ -108,7 +108,7 @@ export default function MadeByBoard({ onOpenClient, canOpen }: Props) {
     const nx = nextJourneyStep(n);
     return (
       <div key={c.id} draggable={!phone} onDragStart={(e) => { setDrag(c.id); e.dataTransfer.setData('text/plain', c.id); }} onDragEnd={() => { setDrag(null); setOver(null); }}
-        style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 12px', borderRadius: 12, background: 'var(--surface)', border: `1px solid ${ring === 'red' ? 'var(--danger)' : ring === 'amber' ? 'var(--warning)' : 'var(--border)'}`, opacity: drag === c.id ? 0.5 : 1, cursor: phone ? 'default' : 'grab', minWidth: 0 }}>
+        style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 12px', borderRadius: 'var(--g-r-lg)', background: 'var(--surface)', border: `1px solid ${ring === 'red' ? 'var(--danger)' : ring === 'amber' ? 'var(--warning)' : 'var(--border)'}`, opacity: drag === c.id ? 0.5 : 1, cursor: phone ? 'default' : 'grab', minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, minWidth: 0 }}>
           <button onClick={() => onOpenClient(c.id)} style={{ all: 'unset', cursor: 'pointer', flex: 1, minWidth: 0, color: 'var(--text)', fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.business_name}</button>
           {nx && <button className="mm-btn" style={{ height: 24, padding: '0 7px', fontSize: 11.5, flex: 'none' }} title={`Move to step ${nx}`} aria-label={`Move ${c.business_name} to step ${nx}`} onClick={() => void moveTo(c.id, nx)}>→ {nx}</button>}
@@ -142,7 +142,7 @@ export default function MadeByBoard({ onOpenClient, canOpen }: Props) {
   const head = (s: (typeof JOURNEY_STEPS)[number], count: number) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ width: 22, height: 22, flex: 'none', borderRadius: 7, background: 'var(--text)', color: 'var(--bg)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.n}</span>
+        <span style={{ width: 22, height: 22, flex: 'none', borderRadius: 'var(--g-r-sm)', background: 'var(--text)', color: 'var(--bg)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.n}</span>
         <span style={{ flex: 1, minWidth: 0, color: 'var(--text)', fontSize: 14, fontWeight: 600, lineHeight: 1.25 }}>{s.label}</span>
         <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)' }}>{count}</span>
       </div>
@@ -163,7 +163,7 @@ export default function MadeByBoard({ onOpenClient, canOpen }: Props) {
 
   return (
     <Page title="Clients" sub={sub} fab={{ t: 'New client', onClick: () => setAdding(true) }} menu={menu}>
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search clients" aria-label="Search clients" style={{ height: 36, padding: '0 10px', borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit', maxWidth: phone ? undefined : 320 }} />
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search clients" aria-label="Search clients" style={{ height: 36, padding: '0 10px', borderRadius: 'var(--g-r-md)', background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit', maxWidth: phone ? undefined : 320 }} />
       {phone ? (
         // Phone: the five steps stacked, each a section with its tools and clients.
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>

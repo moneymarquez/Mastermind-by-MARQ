@@ -36,7 +36,7 @@ export default function ScheduleWidget({ onNavigate }: HomeWidgetProps) {
             <div
               key={e.id}
               onClick={() => onNavigate('schedule')}
-              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 13px', borderRadius: 12, background: 'var(--mm-tile)', cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 13px', borderRadius: 'var(--g-r-lg)', background: 'var(--mm-tile)', cursor: 'pointer' }}
             >
               <span style={{ fontFamily: 'var(--font-mono)', width: 46, flexShrink: 0, color: 'var(--mm-faint)' }}>{formatTimeLabel(e.start_time)}</span>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.notes || e.type}</span>

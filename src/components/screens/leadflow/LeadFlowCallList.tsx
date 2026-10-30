@@ -86,7 +86,7 @@ export default function LeadFlowCallList({ phone, children }: { phone: boolean; 
           return (
             <article key={k.leadId} aria-label={`${rank}. ${k.business}`} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--border)', opacity: called ? 0.7 : 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, minWidth: 0 }}>
-                <span style={{ width: 24, height: 24, flex: 'none', borderRadius: 7, background: 'var(--surface-3)', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{rank}</span>
+                <span style={{ width: 24, height: 24, flex: 'none', borderRadius: 'var(--g-r-sm)', background: 'var(--surface-3)', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{rank}</span>
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <strong style={{ fontSize: 15, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{k.business}</strong>
                   <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{[k.city, k.phone].filter(Boolean).join(' · ')}</span>
@@ -103,7 +103,7 @@ export default function LeadFlowCallList({ phone, children }: { phone: boolean; 
                 <Chip k="neutral">Best: {k.bestTime}</Chip>
                 {k.status && OUTCOME_LABEL[k.status] && <Chip k={called ? 'good' : 'warn'}>{called ? 'Today' : 'Last'}: {OUTCOME_LABEL[k.status]}</Chip>}
               </div>
-              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, color: 'var(--text)', background: 'var(--surface-2)', borderRadius: 10, padding: '10px 12px' }}>{k.opener}</p>
+              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, color: 'var(--text)', background: 'var(--surface-2)', borderRadius: 'var(--g-r-md)', padding: '10px 12px' }}>{k.opener}</p>
               {k.backup && <span style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.4 }}>Backup: {k.backup}</span>}
               {why && k.leak && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12.5, color: 'var(--text-secondary)', borderTop: '1px solid var(--border)', paddingTop: 8 }}>

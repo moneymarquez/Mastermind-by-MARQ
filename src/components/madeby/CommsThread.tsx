@@ -57,7 +57,7 @@ export default function CommsThread({ who, compact }: { who: Who; compact?: bool
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: compact ? 360 : 520, overflowY: 'auto' }}>
         {msgs.length === 0 && <div style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>No messages yet.</div>}
         {msgs.map((m) => (
-          <div key={m.id} style={{ alignSelf: m.direction === 'out' ? 'flex-end' : 'flex-start', maxWidth: '88%', padding: '8px 12px', borderRadius: 12, background: m.direction === 'out' ? 'var(--surface-2)' : 'transparent', border: m.direction === 'out' ? 'none' : '1px solid var(--border)' }}>
+          <div key={m.id} style={{ alignSelf: m.direction === 'out' ? 'flex-end' : 'flex-start', maxWidth: '88%', padding: '8px 12px', borderRadius: 'var(--g-r-lg)', background: m.direction === 'out' ? 'var(--surface-2)' : 'transparent', border: m.direction === 'out' ? 'none' : '1px solid var(--border)' }}>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 11.5, color: 'var(--text-tertiary)', marginBottom: 2 }}>
               <span>{m.channel === 'sms' ? '💬' : '✉️'} {new Date(m.sent_at ?? m.scheduled_for ?? m.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
               {m.status !== 'sent' && m.status !== 'received' && <Chip k={m.status === 'failed' ? 'bad' : 'neutral'}>{m.status.replace('_', ' ')}</Chip>}
