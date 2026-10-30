@@ -15,6 +15,7 @@
 // been removed from the repo — nothing in this app depends on Netlify
 // anymore. The Netlify site itself (DNS, the hosted deploy) is an
 // account-level cleanup outside this repo's scope.
+import { withOptionalSentry } from './lib/sentry';
 import { serveMedia } from './lib/socialMedia';
 import { runSocialSyncTick } from './lib/socialSync';
 import { leadEnginesRoute, runEnginesTick } from './handlers/leadEngines';
@@ -110,6 +111,8 @@ import type { SetupEnv } from './handlers/setup';
 
 interface Env extends StocksEnv, Omit<LeadflowEnv, 'SUPABASE_SERVICE_ROLE_KEY'>, BillingEnv, NovaChatEnv, DeliverEmailEnv, SupportInboxEnv, ClientCrmEnv, ClaudeEnv, PushSubscriptionEnv, ShiftReminderEnv, DailyPlanEnv, ReminderEnv, DigestEnv, SetupEnv, DispatchEnv, ContentEnv, InboxEnv, HqEnv, SmsEnv, EcomEnv, ContentOctEnv, SoloEnv, MadebyRouteEnv {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
+  /** Optional Worker secret: turns on Sentry error reporting (worker/lib/sentry.ts). */
+  SENTRY_DSN?: string;
   /** Service binding to this same Worker (wrangler.jsonc "services"): each timer job runs as its own invocation. */
   SELF?: { fetch: (request: Request) => Promise<Response> };
 }
@@ -155,7 +158,9 @@ async function tickKey(env: Env): Promise<string> {
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-export default {
+// Sentry wraps the whole handler from the outside (a no-op without the
+// SENTRY_DSN secret); see worker/lib/sentry.ts.
+export default withOptionalSentry({
   async fetch(request: Request, env: Env, ctx?: { waitUntil: (promise: Promise<unknown>) => void }): Promise<Response> {
     setResearchEnv(env); setNotifyEnv(env); setVisualEnv(env);
     const url = new URL(request.url);
@@ -348,4 +353,4 @@ export default {
   async email(message: InboundEmailMessage, env: Env, ctx: { waitUntil: (promise: Promise<unknown>) => void }): Promise<void> {
     await handleInboundEmail(message, env, ctx);
   },
-};
+});

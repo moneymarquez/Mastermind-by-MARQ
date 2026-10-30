@@ -1,3 +1,4 @@
+import './instrument' // Sentry first (no-op without VITE_SENTRY_DSN)
 import { StrictMode, Suspense } from 'react'
 import { lazyScreen } from './lib/lazyScreen'
 import { createRoot } from 'react-dom/client'

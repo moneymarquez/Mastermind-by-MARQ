@@ -1,19 +1,20 @@
 import { Component, Suspense, lazy } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
+import { Sentry } from '../lib/sentry';
 
 /** Bug inventory B-05: a render error used to turn the whole app into an
  *  empty page. Two uses: around the whole app (full-screen recovery) and
  *  around the current screen in Stage (the nav keeps working, and the
  *  boundary resets when you move to another screen via `resetKey`).
  *  The error is logged to the console and kept in localStorage
- *  ('mm:last-error') so it can be read back when you report it; Sentry
- *  replaces that in Phase 2. */
+ *  ('mm:last-error') so it can be read back when you report it, and sent
+ *  to Sentry (a no-op when VITE_SENTRY_DSN isn't set). */
 const RunnerGame = lazy(() => import('./game/RunnerGame'));
 /** The game gets its own boundary: if it throws, the plain error screen is all you see. */
 class GameBoundary extends Component<{ children: ReactNode }, { bad: boolean }> {
   state = { bad: false };
   static getDerivedStateFromError() { return { bad: true }; }
-  componentDidCatch(e: Error) { recordError(e, 'runner-game'); }
+  componentDidCatch(e: Error, info: ErrorInfo) { recordError(e, 'runner-game'); Sentry.captureReactException(e, info); }
   render() { return this.state.bad ? null : this.props.children; }
 }
 export function Runner() { return <GameBoundary><Suspense fallback={null}><RunnerGame /></Suspense></GameBoundary>; }
@@ -33,7 +34,14 @@ export default class ErrorBoundary extends Component<Props, State> {
   static getDerivedStateFromProps(props: Props, state: State): Partial<State> | null {
     return props.resetKey !== state.key ? { error: null, key: props.resetKey } : null;
   }
-  componentDidCatch(error: Error, info: ErrorInfo) { recordError(error, `${this.props.scope}${this.props.label ? `:${this.props.label}` : ''} ${info.componentStack?.split('\n')[1]?.trim() ?? ''}`); }
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    recordError(error, `${this.props.scope}${this.props.label ? `:${this.props.label}` : ''} ${info.componentStack?.split('\n')[1]?.trim() ?? ''}`);
+    Sentry.withScope((scope) => {
+      scope.setTag('boundary', this.props.scope);
+      if (this.props.label) scope.setTag('screen', this.props.label);
+      Sentry.captureReactException(error, info);
+    });
+  }
 
   render() {
     if (!this.state.error) return this.props.children;
