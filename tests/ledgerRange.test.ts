@@ -11,7 +11,7 @@ const entries = toEntries({
     { date: '2026-04-02', kind: 'income', amount_usd: 100, category: 'Other', confirmed: true },
   ],
   aiCosts: [{ date: '2026-10-11', cost_usd: '5.07' }, { date: '2026-10-18', cost_usd: 1 }, { date: '2026-10-18', cost_usd: 0 }],
-  orders: [{ placed_at: '2026-10-18T19:00:00-06:00', total: '40', supplier_cost: 8, ship_cost: '4', product_title: 'Cable tray' }],
+  orders: [{ placed_at: new Date(2026, 9, 18, 19, 0).toISOString() /* 7 PM local on Oct 18, in whatever zone the tests run */, total: '40', supplier_cost: 8, ship_cost: '4', product_title: 'Cable tray' }],
 });
 
 test('every source counted once; unconfirmed rows left out', () => {
