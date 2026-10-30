@@ -118,7 +118,7 @@ export default function MentalHealthV2() {
   const reflection = ai === false
     ? <AiOffCard text="AI reflections are off. Check-ins and your mood chart still work." />
     : latestInsight && (
-      <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 18 : 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
         <NovaMark title="Reflection" />
         <p style={{ margin: 0, fontSize: 15, lineHeight: 1.45, color: 'var(--text)' }}>{latestInsight.ai_insight}</p>
         <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)' }}>On your {LABEL[latestInsight.mood].toLowerCase()} check-in, {shortDate(ymd(new Date(latestInsight.created_at)))}</span>

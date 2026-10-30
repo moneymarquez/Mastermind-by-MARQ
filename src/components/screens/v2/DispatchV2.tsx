@@ -44,7 +44,7 @@ export default function DispatchV2() {
   const nameOf = (id: string | null) => people.find((p) => p.id === id)?.name ?? 'Me';
 
   const talk = (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '22px 18px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: '22px 18px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
       <MicButton size="lg" />
       <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>Hold to talk</span>
       <div style={{ alignSelf: 'stretch', padding: 12, borderRadius: 10, background: 'var(--surface-3)', fontSize: 14, lineHeight: 1.45, color: 'var(--text-secondary)' }}>

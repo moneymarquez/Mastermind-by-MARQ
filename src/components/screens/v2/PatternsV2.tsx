@@ -53,7 +53,7 @@ function ScatterPlot({ pts, xl, yPre }: { pts: [number, number][]; xl: [string, 
 
 function NeedsData({ title, have, need, text }: { title: string; have: number; need: number; text: string }) {
   return (
-    <div style={{ border: '1px solid var(--border)', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column', gap: 10, backgroundColor: 'var(--surface-2)', backgroundImage: 'linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px)', backgroundSize: '22px 22px' }}>
+    <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 10, backgroundColor: 'var(--surface-2)', backgroundImage: 'linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px)', backgroundSize: '22px 22px' }}>
       <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>{title}</span>
       <span style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--text-secondary)' }}>{text}</span>
       <div style={{ height: 6, borderRadius: 999, background: 'var(--surface-3)' }}><div style={{ width: `${Math.min(100, (have / need) * 100)}%`, height: '100%', borderRadius: 999, background: 'var(--text-tertiary)' }} /></div>

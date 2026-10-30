@@ -73,7 +73,7 @@ function Player({ r, contact, R, onDeleted, onBack }: { r: CallRecording; contac
   useEffect(() => { void R.getPlaybackUrl(r.file_path).then(setUrl); }, [r.file_path]); // eslint-disable-line react-hooks/exhaustive-deps
   const skip = (s: number) => { if (audio.current) audio.current.currentTime = Math.max(0, audio.current.currentTime + s); };
   return (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 20, display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
       {onBack && <button className="mm-btn" onClick={onBack} style={{ alignSelf: 'flex-start', height: 34 }}>‹ All recordings</button>}
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
         <span style={{ color: 'var(--text)', fontSize: 17, fontWeight: 600, letterSpacing: '-0.02em' }}>{[contact, when(r.recorded_at), r.duration_seconds != null ? len(r.duration_seconds) : null].filter(Boolean).join(' · ')}</span>

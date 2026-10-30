@@ -74,7 +74,7 @@ function PortalCard({ portal, onOpen }: { portal: Exclude<PortalKey, 'mastermind
   const allZero = f && f.main === 0 && f.subs.every(([, n]) => n === 0);
   return (
     <button onClick={onOpen} className="mm-dash-tr" aria-label={`Open ${portalName(portal)}`}
-      style={{ textAlign: 'left', fontFamily: 'inherit', cursor: 'pointer', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0, color: 'inherit' }}>
+      style={{ textAlign: 'left', fontFamily: 'inherit', cursor: 'pointer', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0, color: 'inherit' }}>
       <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span className="mm-pdot" data-p={portal} />
         <span style={{ flex: 1, color: 'var(--text)', fontSize: 15, fontWeight: 600, letterSpacing: '-0.015em' }}>{portalName(portal)}</span>

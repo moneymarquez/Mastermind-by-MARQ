@@ -170,7 +170,7 @@ function NovaShellPanel({ layout, assistantName, messages, input, thinking, list
         {messages.length === 0 && <div style={{ color: 'var(--text-tertiary)', fontSize: 14, lineHeight: 1.5 }}>Ask about anything in your modules — today's plan, your budget, a client, what's waiting on you.</div>}
         {messages.map((m, i) => (
           <div key={i} style={m.from === 'user'
-            ? { alignSelf: 'flex-end', maxWidth: '85%', background: 'var(--surface-3)', color: 'var(--text)', padding: '10px 14px', borderRadius: 16, fontSize: 15, lineHeight: 1.45 }
+            ? { alignSelf: 'flex-end', maxWidth: '85%', background: 'var(--surface-3)', color: 'var(--text)', padding: '10px 14px', borderRadius: 'var(--g-r-lg)', fontSize: 15, lineHeight: 1.45 }
             : { alignSelf: 'flex-start', maxWidth: '92%', color: 'var(--text)', fontSize: 15, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{m.text}</div>
         ))}
         {thinking && <div style={{ color: 'var(--text-tertiary)', fontSize: 14 }}>Thinking…</div>}

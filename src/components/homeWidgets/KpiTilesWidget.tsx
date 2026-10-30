@@ -13,7 +13,7 @@ import { streakClass } from '../../data/dialStreak';
 import RollingText from '../fx/RollingText';
 import type { HomeWidgetProps } from './types';
 
-const tile: CSSProperties = { padding: 17, borderRadius: 16, background: 'var(--mm-panel-solid)', border: '1px solid var(--mm-line)', display: 'flex', flexDirection: 'column', gap: 9, position: 'relative', minWidth: 0 };
+const tile: CSSProperties = { padding: 17, borderRadius: 'var(--g-r-lg)', background: 'var(--mm-panel-solid)', border: '1px solid var(--mm-line)', display: 'flex', flexDirection: 'column', gap: 9, position: 'relative', minWidth: 0 };
 
 // Roll-up cascade order: calls, sobriety, workouts, macros, then the rest.
 const STAT_DEFS = [

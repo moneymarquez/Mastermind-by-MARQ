@@ -387,7 +387,7 @@ export function ApprovalBody({ type, payload: p, choice = 0, onChoice, approvalI
           <label key={i} style={{ display: 'block', padding: 10, borderRadius: 'var(--radius-sm)', background: i === choice ? tint(E.accent, 10) : E.sunk, border: `1px solid ${i === choice ? E.accent : E.border}`, cursor: 'pointer', minWidth: 0 }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               <input type="radio" name="brand" checked={i === choice} onChange={() => onChoice?.(i)} />
-              <span style={{ fontWeight: 800, color: E.text, fontSize: 'var(--text-subhead)' }}>{o.name}</span>
+              <span style={{ fontWeight: 700, color: E.text, fontSize: 'var(--text-subhead)' }}>{o.name}</span>
               <Badge color={o.domain_status === 'available' ? E.green : o.domain_status === 'taken' ? E.red : E.faint}>{o.domain} · {o.domain_status ?? 'unchecked'}</Badge>
             </div>
             <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>{o.palette.map((c) => <span key={c.hex} title={`${c.name} — ${c.why}`} style={{ width: 28, height: 28, borderRadius: 6, background: c.hex, border: `1px solid ${E.border}` }} />)}</div>

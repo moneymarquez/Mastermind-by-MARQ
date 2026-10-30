@@ -71,7 +71,7 @@ export default function OfficeSection({ onRan }: { onRan: () => void }) {
       </div>
       <div>
         <div style={{ fontSize: 13, color: E.faint, marginBottom: 8 }}>Workers</div>
-        <div style={{ background: E.bg, borderRadius: 16, border: '1px solid var(--border)', color: E.text, padding: 14 }}><WorkersTab onRan={refresh} /></div>
+        <div style={{ background: E.bg, borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', color: E.text, padding: 14 }}><WorkersTab onRan={refresh} /></div>
       </div>
       {pick && <NodeDrawer node={pick} worker={workers.find((w) => w.id === pick.id) ?? null} runs={runs.filter((r) => r.worker_id === pick.id)} onClose={() => setPick(null)} onChanged={refresh} />}
       {floor && <OfficeView domain="ecom" onClose={() => { setFloor(false); refresh(); }} />}

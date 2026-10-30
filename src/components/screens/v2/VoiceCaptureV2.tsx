@@ -67,7 +67,7 @@ export default function VoiceCaptureV2() {
       </div>
     </Card>
   ) : (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '26px 18px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, minWidth: 0 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: '26px 18px', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, minWidth: 0 }}>
       <Wave live={V.listening} />
       <span style={{ fontSize: 17, lineHeight: 1.45, color: V.transcript ? 'var(--text)' : 'var(--text-tertiary)', textAlign: 'center', letterSpacing: '-0.015em', minHeight: 25 }}>
         {V.transcript ? `"${V.transcript}"` : supported ? 'Say a task, an expense, a contact, or a decision.' : 'Voice input isn’t supported in this browser. Type it below.'}

@@ -79,7 +79,7 @@ export function Metric({ label: l, value, unit, trend, asOf, confidence, big }: 
 /** §2.5 — empty states teach: what fills this, which worker, which connection. */
 export function TeachingEmpty({ what, worker, connection, phase, action }: { what: string; worker?: string; connection?: string; phase?: number; action?: ReactNode }) {
   return (
-    <div style={{ borderRadius: 16, border: '1px dashed var(--border)', padding: '18px 18px', backgroundImage: 'linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px)', backgroundSize: '22px 22px' }}>
+    <div style={{ borderRadius: 'var(--g-r-lg)', border: '1px dashed var(--border)', padding: '18px 18px', backgroundImage: 'linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px)', backgroundSize: '22px 22px' }}>
       <div style={{ fontWeight: 600, color: E.text, fontSize: 15, lineHeight: 1.45 }}>{what}</div>
       <div style={{ fontSize: 14, color: E.muted, marginTop: 4, lineHeight: 1.5 }}>
         {worker && <>Filled by <strong style={{ color: E.text }}>{worker}</strong>. </>}
@@ -155,7 +155,7 @@ export function Drawer({ open, onClose, title, subtitle, actions, width = 560, c
 
 export function Section({ title, children, aside }: { title: string; children: ReactNode; aside?: ReactNode }) {
   return (
-    <section style={{ marginTop: 16, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
+    <section style={{ marginTop: 16, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
         <span style={{ color: E.text, fontSize: 15, fontWeight: 600, letterSpacing: '-0.015em' }}>{title}</span>{aside}
       </div>

@@ -98,7 +98,7 @@ export default function OpeningClosingV2() {
     </div>
   );
   const ring = (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 18, minWidth: 0 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 18, minWidth: 0 }}>
       <Ring pcts={[tasks.length ? doneN / tasks.length : 0]} center={`${doneN}/${tasks.length}`} sub="done" size={120} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
         <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>{phase === 'opening' ? 'Opening' : 'Closing'} · {hours}</span>

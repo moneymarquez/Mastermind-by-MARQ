@@ -47,7 +47,7 @@ export default function PlaybooksV2() {
       {phone ? (
         open ? <Editor key={open.id} p={open} api={pb} /> : <Card flush style={{ padding: 0 }}>{list}</Card>
       ) : (
-        <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '320px minmax(0,1fr)' : '280px minmax(0,1fr)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', minHeight: 560 }}>
+        <section style={{ display: 'grid', gridTemplateColumns: device === 'desktop' ? '320px minmax(0,1fr)' : '280px minmax(0,1fr)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', minHeight: 560 }}>
           <div className="mm-scroll-y" style={{ borderRight: '1px solid var(--grid)' }}>{list}</div>
           <div style={{ padding: '20px 24px', minWidth: 0 }}>{open ? <Editor key={open.id} p={open} api={pb} /> : <span style={{ color: 'var(--text-tertiary)' }}>Pick a playbook.</span>}</div>
         </section>
@@ -160,7 +160,7 @@ function ScalingPlays() {
   useEffect(() => { void supabase.from('plays').select('id,title,business_kind,phase,steps,uses').order('uses', { ascending: false }).then(({ data, error }) => { if (!error) setRows((data ?? []) as typeof rows); }); }, []);
   const remove = async (id: string) => { if (!window.confirm('Delete this play?')) return; await supabase.from('plays').delete().eq('id', id); setRows((r) => r.filter((x) => x.id !== id)); };
   return (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ fontWeight: 600, fontSize: 16 }}>Scaling plays</div>
       <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Saved from a finished client phase. A new client of the same type entering that phase is offered the play.</div>
       {rows.length === 0 && <div style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>No plays yet. Open a client → Delivery → "Save as play".</div>}

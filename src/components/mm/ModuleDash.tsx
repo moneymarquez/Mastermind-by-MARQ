@@ -141,7 +141,7 @@ function Table({ t, device }: { t: DashTable; device: DashDevice }) {
   const cols = device === 'phone' ? keep.map((_, i) => (i === 0 ? 'minmax(0,1.4fr)' : 'auto')).join(' ') : t.cols;
   const last = t.head.length - 1;
   return (
-    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', minWidth: 0 }}>
+    <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', minWidth: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '16px 20px' }}>
         <span style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, letterSpacing: '-0.015em' }}>{t.title}</span>
         {t.meta && <span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-tertiary)' }}>{t.meta}</span>}
@@ -206,9 +206,9 @@ function Split({ s, device }: { s: DashSplit; device: DashDevice }) {
   const rows = q ? s.rows.filter((r) => `${r.n} ${r.m ?? ''} ${r.c ?? ''}`.toLowerCase().includes(q.toLowerCase())) : s.rows;
   const cur = s.rows.find((r) => r.id === sel) ?? (device === 'phone' ? undefined : rows[0]);
   const phone = device === 'phone';
-  if (phone && cur) return <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}><Detail r={cur} onBack={() => setSel(null)} /></section>;
+  if (phone && cur) return <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden' }}><Detail r={cur} onBack={() => setSel(null)} /></section>;
   return (
-    <section style={{ display: 'grid', gridTemplateColumns: phone ? 'minmax(0,1fr)' : device === 'desktop' ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', height: phone ? undefined : device === 'desktop' ? 640 : 600, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', minWidth: 0 }}>
+    <section style={{ display: 'grid', gridTemplateColumns: phone ? 'minmax(0,1fr)' : device === 'desktop' ? '380px minmax(0,1fr)' : '320px minmax(0,1fr)', height: phone ? undefined : device === 'desktop' ? 640 : 600, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', overflow: 'hidden', minWidth: 0 }}>
       <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, borderRight: phone ? 'none' : '1px solid var(--grid)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', flex: 'none' }}>
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={s.search} aria-label={s.search} style={{ flex: 1, minWidth: 0, height: 34, padding: '0 10px', borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13, fontFamily: 'inherit' }} />
@@ -243,7 +243,7 @@ export default function ModuleDash({ spec, device, novaOpen }: { spec: DashSpec 
   const top = (h || stats.length > 0) && (
     <div style={{ display: 'grid', gridTemplateColumns: phone || !h ? 'minmax(0,1fr)' : desk ? 'minmax(0,1.35fr) minmax(0,1fr)' : 'minmax(0,1.2fr) minmax(0,1fr)', gap }}>
       {h && (
-        <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
+        <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', padding: phone ? 18 : 20, boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
           <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>{h.label}</span>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, color: 'var(--text)', fontSize: phone ? 40 : 46, fontWeight: 600, letterSpacing: '-0.04em', lineHeight: 1 }}>{h.value}{h.cents && <span style={{ fontSize: 22, color: 'var(--text-tertiary)', letterSpacing: '-0.02em' }}>{h.cents}</span>}</div>
           {(h.chip || h.note) && <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>{h.chip && <Chip k={h.k}>{h.chip}</Chip>}{h.note && <span style={{ fontSize: 13, color: 'var(--text-tertiary)', fontWeight: 500 }}>{h.note}</span>}</div>}

@@ -46,7 +46,7 @@ export default function OfficeGraph({ data, onPick, focusDomain, height = 420 }:
   const at = (id: string) => placed.find((p) => p.id === id);
   const [hover, setHover] = useState<string | null>(null);
   return (
-    <div style={{ position: 'relative', width: '100%', borderRadius: 16, border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 30%, color-mix(in srgb, var(--accent) 7%, var(--surface)) 0%, var(--surface) 70%)', overflow: 'hidden' }}>
+    <div style={{ position: 'relative', width: '100%', borderRadius: 'var(--g-r-lg)', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 30%, color-mix(in srgb, var(--accent) 7%, var(--surface)) 0%, var(--surface) 70%)', overflow: 'hidden' }}>
       <style>{`@keyframes ogPulse{0%{r:var(--r0);opacity:.55}100%{r:calc(var(--r0)*2.2);opacity:0}} @keyframes ogFlow{to{stroke-dashoffset:-24}} @media (prefers-reduced-motion: reduce){.og-pulse,.og-flow{animation:none!important}}`}</style>
       <svg viewBox={`0 0 ${W} ${height}`} width="100%" role="img" aria-label="Orchestrators and workers, live">
         {data.edges.map((e, i) => {

@@ -402,7 +402,7 @@ export default function ClientPortalAdmin({ client, onChanged }: Props) {
           {messages.map((m) => {
             const mine = m.sender === 'owner';
             return (
-              <div key={m.id} style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '85%', padding: '9px 13px', borderRadius: 14, background: mine ? 'var(--text)' : 'var(--surface-4)', color: mine ? 'var(--bg)' : 'var(--text)' }}>
+              <div key={m.id} style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '85%', padding: '9px 13px', borderRadius: 'var(--g-r-lg)', background: mine ? 'var(--text)' : 'var(--surface-4)', color: mine ? 'var(--bg)' : 'var(--text)' }}>
                 <div style={{ fontSize: 'var(--text-body-sm)', lineHeight: 1.5, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{m.body}</div>
                 <div style={{ fontSize: 'var(--text-tiny)', opacity: 0.6, marginTop: 3 }}>{mine ? 'You' : client.contact_name || client.business_name} · {new Date(m.created_at).toLocaleString()}</div>
               </div>
