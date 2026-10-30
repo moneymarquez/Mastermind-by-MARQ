@@ -14,7 +14,7 @@ export const E = {
   bg: 'var(--surface-2)',
   surface: 'var(--surface)',
   sunk: 'var(--surface-4)',
-  card: { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16 } as CSSProperties,
+  card: { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--g-r-lg)', boxShadow: 'var(--g-shadow-1)' } as CSSProperties,
   text: 'var(--text)',
   muted: 'var(--text-secondary)',
   faint: 'var(--text-tertiary)',
@@ -35,17 +35,18 @@ export const tone = (hex: string) => TONE[hex.toLowerCase()] ?? hex;
 export const panel: CSSProperties = { color: E.text };
 
 export const label: CSSProperties = { fontSize: 13, color: E.muted, fontWeight: 500 };
-export const field: CSSProperties = { minHeight: 44, padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: E.text, fontSize: 15, fontFamily: 'inherit', boxSizing: 'border-box', width: '100%', outline: 'none' };
+export const field: CSSProperties = { minHeight: 44, padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--g-inset)', color: E.text, fontSize: 15, fontFamily: 'inherit', boxSizing: 'border-box', width: '100%', outline: 'none' };
 export const btn = (kind: 'primary' | 'ghost' | 'danger' = 'ghost'): CSSProperties => ({
-  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 38, padding: '0 14px', borderRadius: 8, cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', whiteSpace: 'nowrap',
-  border: kind === 'primary' ? '1px solid var(--text)' : kind === 'danger' ? `1px solid ${tint(E.red, 45)}` : '1px solid var(--border)',
-  background: kind === 'primary' ? 'var(--text)' : 'transparent',
-  color: kind === 'primary' ? 'var(--bg)' : kind === 'danger' ? E.red : E.text,
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 36, padding: '0 13px', borderRadius: 'var(--g-r-md)', cursor: 'pointer', fontSize: 13.5, fontWeight: kind === 'primary' ? 600 : 500, letterSpacing: '-0.005em', fontFamily: 'inherit', whiteSpace: 'nowrap',
+  border: kind === 'primary' ? '1px solid transparent' : kind === 'danger' ? `1px solid ${tint(E.red, 40)}` : '1px solid var(--g-line-2)',
+  background: kind === 'primary' ? 'var(--g-ink)' : kind === 'danger' ? 'transparent' : 'var(--g-s1)',
+  boxShadow: kind === 'danger' ? 'none' : kind === 'primary' ? 'inset 0 1px 0 rgba(255,255,255,.22), 0 1px 2px rgba(0,0,0,.3)' : 'var(--g-shadow-1)',
+  color: kind === 'primary' ? 'var(--g-on-ink)' : kind === 'danger' ? E.red : E.text,
 });
 
 export function badge(bg: string, fg: string, border: string): CSSProperties {
   void border;
-  return { fontSize: 12, fontWeight: 500, lineHeight: '18px', color: fg, background: bg, borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap', display: 'inline-block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', verticalAlign: 'middle', boxSizing: 'border-box' };
+  return { fontSize: 12, fontWeight: 500, lineHeight: '18px', color: fg, background: bg, borderRadius: 'var(--g-r-sm)', padding: '1px 7px', whiteSpace: 'nowrap', display: 'inline-block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', verticalAlign: 'middle', boxSizing: 'border-box' };
 }
 export function Badge({ color, children, title }: { color: string; children: ReactNode; title?: string }) {
   return <span title={title} style={badge(tint(color, 14), color, tint(color, 40))}>{children}</span>;
@@ -134,7 +135,7 @@ export function Drawer({ open, onClose, title, subtitle, actions, width = 560, c
   if (!open) return null;
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 120, display: 'flex', justifyContent: 'flex-end' }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.45)' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'var(--mm-scrim)' }} />
       <div data-demo="drawer" style={{ position: 'relative', width: mobile ? '100%' : width, maxWidth: '100%', height: '100%', background: 'var(--bg)', color: E.text, borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', boxShadow: 'var(--mm-shadow)' }}>
         <div style={{ padding: mobile ? 'calc(14px + env(safe-area-inset-top)) 16px 12px' : '16px 20px 12px', background: E.surface, borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', gap: 12, flexShrink: 0 }}>
           <div style={{ flex: 1, minWidth: 0 }}>

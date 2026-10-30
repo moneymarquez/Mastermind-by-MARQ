@@ -1,0 +1,390 @@
+/* ── Graphite (Oct 30 2026 design refresh) ──────────────────────────────
+   Masterminds' token system. Loaded last (main.tsx), so it supersedes the
+   Aperture / handoff / Vertix layers in index.css and theme-vertix.css
+   without deleting them. Calm and dense: graphite ground, hairline
+   borders, soft layered surfaces, ONE restrained accent (steel), Geist
+   for words and Geist Mono for figures, and 120–200ms motion on the
+   things you press.
+
+   Layers:
+     1. --g-* tokens: colour, surface, line, radius, spacing, type,
+        shadow, motion. New code should read these.
+     2. Legacy aliases: every older token (--bg, --surface-*, --border,
+        --text-*, --accent*, --mm-*, --radius-*, --shadow-*) re-pointed at
+        a --g-* token, so the ~8,000 inline styles that read them follow.
+     3. Shell + primitive rules: sidebar rows, icon buttons, buttons, tabs,
+        cards, tiles, chips, inputs, tables, dialogs, scrollbars.
+     4. Ground: a faint dot grid + top vignette + grain on the stage.
+
+   Selectors use html:root so they out-rank the earlier `:root` and
+   `html:root` blocks they replace. */
+
+/* ── 1. Tokens ─────────────────────────────────────────────────────── */
+html:root {
+  color-scheme: dark;
+  --g-font: 'Geist Variable', 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --g-mono: 'Geist Mono Variable', 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Ground and surfaces, darkest to lightest. */
+  --g-inset: #0B0C0E;      /* fields, wells, segmented-control track */
+  --g-bg: #0E0F11;         /* app ground */
+  --g-bg-raised: #111215;  /* sidebar, drawers, sheets */
+  --g-s1: #15161A;         /* cards */
+  --g-s2: #1A1B20;         /* hover, selected row, raised control */
+  --g-s3: #212228;         /* pressed, avatar wells, tracks */
+  /* Hairlines are alpha, so they sit right on any surface. */
+  --g-line: rgba(255, 255, 255, .068);
+  --g-line-2: rgba(255, 255, 255, .105);
+  --g-line-3: rgba(255, 255, 255, .17);
+  --g-text: #ECECEE;
+  --g-text-2: #A3A4AB;
+  --g-text-3: #74757D;
+  --g-text-4: #4E4F57;
+  /* The one accent: steel. Marks where you are, focus, links, progress. */
+  --g-accent: #8DB3C7;
+  --g-accent-hi: #A9C8D8;
+  --g-accent-soft: rgba(141, 179, 199, .13);
+  --g-accent-line: rgba(141, 179, 199, .34);
+  --g-on-accent: #0E0F11;
+  /* Primary actions are "ink": the text colour as a fill. */
+  --g-ink: #ECECEE;
+  --g-on-ink: #0E0F11;
+  --g-success: #5DBB8E;
+  --g-warning: #D8A64F;
+  --g-danger: #E26D64;
+  --g-success-soft: rgba(93, 187, 142, .13);
+  --g-warning-soft: rgba(216, 166, 79, .13);
+  --g-danger-soft: rgba(226, 109, 100, .13);
+
+  --g-r-xs: 4px; --g-r-sm: 6px; --g-r-md: 8px; --g-r-lg: 12px; --g-r-xl: 16px;
+  --g-sp-1: 4px; --g-sp-2: 8px; --g-sp-3: 12px; --g-sp-4: 16px; --g-sp-5: 20px; --g-sp-6: 24px; --g-sp-8: 32px;
+  --g-t-2xs: 11px; --g-t-xs: 12px; --g-t-sm: 13px; --g-t-md: 14px; --g-t-lg: 15px; --g-t-xl: 17px; --g-t-2xl: 20px; --g-t-3xl: 26px; --g-t-4xl: 32px;
+
+  --g-shadow-1: inset 0 1px 0 rgba(255, 255, 255, .035), 0 1px 2px rgba(0, 0, 0, .35);
+  --g-shadow-2: inset 0 1px 0 rgba(255, 255, 255, .05), 0 1px 2px rgba(0, 0, 0, .4), 0 10px 28px -14px rgba(0, 0, 0, .65);
+  --g-shadow-3: inset 0 1px 0 rgba(255, 255, 255, .06), 0 0 0 1px rgba(255, 255, 255, .06), 0 24px 64px -20px rgba(0, 0, 0, .75);
+  --g-ring: 0 0 0 1px var(--g-bg), 0 0 0 3px var(--g-accent-line);
+
+  --g-ease: cubic-bezier(.2, .8, .2, 1);
+  --g-d1: 120ms; --g-d2: 160ms; --g-d3: 200ms;
+
+  --g-grain-opacity: .05;
+  --g-dot: rgba(255, 255, 255, .035);
+  --g-vignette: rgba(255, 255, 255, .03);
+}
+html:root[data-theme="light"] {
+  color-scheme: light;
+  --g-inset: #FBFAF6;
+  --g-bg: #F7F5F0;
+  --g-bg-raised: #F2EFE8;
+  --g-s1: #FDFCF9;
+  --g-s2: #F4F1EB;
+  --g-s3: #EBE7DF;
+  --g-line: rgba(40, 32, 16, .085);
+  --g-line-2: rgba(40, 32, 16, .13);
+  --g-line-3: rgba(40, 32, 16, .2);
+  --g-text: #1C1B19;
+  --g-text-2: #5C5953;
+  --g-text-3: #8A867E;
+  --g-text-4: #B3AEA5;
+  --g-accent: #2E6A85;
+  --g-accent-hi: #24576E;
+  --g-accent-soft: rgba(46, 106, 133, .10);
+  --g-accent-line: rgba(46, 106, 133, .32);
+  --g-on-accent: #FFFFFF;
+  --g-ink: #1C1B19;
+  --g-on-ink: #F7F5F0;
+  --g-success: #2F8A5F;
+  --g-warning: #A8741A;
+  --g-danger: #C2453C;
+  --g-success-soft: rgba(47, 138, 95, .10);
+  --g-warning-soft: rgba(168, 116, 26, .11);
+  --g-danger-soft: rgba(194, 69, 60, .10);
+  --g-shadow-1: inset 0 1px 0 rgba(255, 255, 255, .7), 0 1px 2px rgba(40, 32, 16, .06);
+  --g-shadow-2: inset 0 1px 0 rgba(255, 255, 255, .8), 0 1px 2px rgba(40, 32, 16, .06), 0 10px 28px -16px rgba(40, 32, 16, .16);
+  --g-shadow-3: 0 0 0 1px rgba(40, 32, 16, .08), 0 24px 64px -24px rgba(40, 32, 16, .28);
+  --g-grain-opacity: .035;
+  --g-dot: rgba(40, 32, 16, .045);
+  --g-vignette: rgba(255, 255, 255, .55);
+}
+
+/* ── 2. Legacy aliases ─────────────────────────────────────────────── */
+html:root, html:root[data-theme="light"] {
+  --bg: var(--g-bg);
+  --surface: var(--g-s1);
+  --surface-2: var(--g-bg-raised);
+  --surface-3: var(--g-s2);
+  --surface-4: var(--g-inset);
+  --border: var(--g-line);
+  --border-2: var(--g-line-2);
+  --grid: var(--g-line);
+  --text: var(--g-text);
+  --text-secondary: var(--g-text-2);
+  --text-tertiary: var(--g-text-3);
+  --text-quaternary: color-mix(in srgb, var(--g-text) 82%, var(--g-text-2));
+  --text-quaternary-2: color-mix(in srgb, var(--g-text-2) 70%, var(--g-text));
+  --shine: var(--g-s2);
+  --accent: var(--g-accent);
+  --accent-2: var(--g-accent-hi);
+  --accent-strong: var(--g-accent-hi);
+  --accent-soft: color-mix(in srgb, var(--g-accent) 16%, var(--g-s1));
+  --accent-wash: var(--g-accent-soft);
+  --success: var(--g-success);
+  --warning: var(--g-warning);
+  --danger: var(--g-danger);
+  --cat-other: var(--g-s3);
+  --card-shadow: var(--g-shadow-1);
+  --card-radius: var(--g-r-lg);
+  --card-elev: var(--g-shadow-1);
+  --card-elev-hover: var(--g-shadow-2);
+  --hero-grad: none;
+  --hero-glow: none;
+  --press: scale(.98);
+  --ease-out: var(--g-ease);
+
+  --mm-canvas: var(--g-bg);
+  --mm-bg: var(--g-bg);
+  --mm-bg-blur: color-mix(in srgb, var(--g-bg) 78%, transparent);
+  --mm-bg2: var(--g-bg-raised);
+  --mm-panel: var(--g-s1);
+  --mm-panel-solid: var(--g-s1);
+  --mm-tile: var(--g-s2);
+  --mm-field: var(--g-inset);
+  --mm-line: var(--g-line);
+  --mm-line2: var(--g-line-2);
+  --mm-line-strong: var(--g-line-3);
+  --mm-track: var(--g-s3);
+  --mm-grid: var(--g-line);
+  --mm-bloom: var(--g-accent-soft);
+  --mm-text: var(--g-text);
+  --mm-dim: var(--g-text-2);
+  --mm-faint: var(--g-text-3);
+  --mm-ink: var(--g-ink);
+  --mm-ink-text: var(--g-on-ink);
+  --mm-code-bg: var(--g-inset);
+  --mm-code-line: var(--g-line);
+  --mm-shadow: var(--g-shadow-1);
+  --mm-shadow-lift: var(--g-shadow-3);
+  --mm-shadow-btn: none;
+  --shadow-sm: 0 0 0 1px var(--g-line);
+  --shadow-md: 0 0 0 1px var(--g-line), var(--g-shadow-1);
+  --shadow-lg: var(--g-shadow-3);
+  --tint-active: var(--g-accent-soft);
+  --tint-today: color-mix(in srgb, var(--g-accent) 20%, transparent);
+
+  --font-sans: var(--g-font);
+  --font-mono: var(--g-mono);
+  --radius-xs: 4px; --radius-sm: 6px; --radius-md: 8px; --radius-lg: 10px; --radius-xl: 12px; --radius-2xl: 14px; --radius-3xl: 16px;
+}
+html:root {
+  --mm-scrim: rgba(5, 5, 7, .62);
+  --client-accent: #79B4A9;
+  --client-accent-soft: rgba(121, 180, 169, .14);
+  --cat-1: #8DB3C7; --cat-2: #C9A06A; --cat-3: #9C9EB4;
+}
+html:root[data-theme="light"] {
+  --mm-scrim: rgba(40, 32, 16, .28);
+  --client-accent: #2F7D74;
+  --client-accent-soft: rgba(47, 125, 116, .12);
+  --cat-1: #2E6A85; --cat-2: #A8741A; --cat-3: #6E6A8C;
+}
+/* One accent in every portal (the portal dot still says where you are).
+   LeadFlow follows too. */
+html:root[data-portal], html:root[data-theme="light"][data-portal],
+html:root [data-legacy="leadflow"], html:root .leadflow {
+  --accent: var(--g-accent); --accent-2: var(--g-accent-hi); --accent-strong: var(--g-accent-hi);
+  --accent-soft: color-mix(in srgb, var(--g-accent) 16%, var(--g-s1)); --accent-wash: var(--g-accent-soft);
+}
+html:root[data-portal="madeby"], html:root[data-theme="light"][data-portal="madeby"] { --cat-1: var(--g-accent); }
+html:root .mm-pdot { background: var(--g-text-3); box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 0%, transparent); }
+html:root .mm-pdot[data-p="orchestrator"] { background: #C9A06A; }
+html:root .mm-pdot[data-p="madeby"] { background: #8DB3C7; }
+html:root .mm-pdot[data-p="content"] { background: #C38FA9; }
+html:root .mm-pdot[data-p="ecommerce"] { background: #7FB6A8; }
+html:root[data-theme="light"] .mm-pdot[data-p="orchestrator"] { background: #A8741A; }
+html:root[data-theme="light"] .mm-pdot[data-p="madeby"] { background: #2E6A85; }
+html:root[data-theme="light"] .mm-pdot[data-p="content"] { background: #9A4E74; }
+html:root[data-theme="light"] .mm-pdot[data-p="ecommerce"] { background: #2F7D74; }
+html:root[data-portal] .mm-logo { background: var(--accent-soft) !important; color: var(--g-text) !important; border-color: var(--g-line-2) !important; }
+
+/* ── 3. Base ───────────────────────────────────────────────────────── */
+html:root body {
+  font-family: var(--g-font);
+  font-feature-settings: 'ss01' 1, 'cv11' 1;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background: var(--g-bg);
+  color: var(--g-text-2);
+}
+html:root ::selection { background: color-mix(in srgb, var(--g-accent) 32%, transparent); color: var(--g-text); }
+html:root h1, html:root h2, html:root h3 { letter-spacing: -0.022em; }
+html:root code, html:root kbd, html:root pre, html:root samp { font-family: var(--g-mono); }
+
+/* Scrollbars: thin hairline thumbs. */
+html:root * { scrollbar-width: thin; scrollbar-color: var(--g-line-3) transparent; }
+html:root ::-webkit-scrollbar { width: 10px; height: 10px; }
+html:root ::-webkit-scrollbar-thumb { background: var(--g-line-2); border-radius: 10px; border: 3px solid transparent; background-clip: padding-box; }
+html:root ::-webkit-scrollbar-thumb:hover { background-color: var(--g-line-3); }
+html:root ::-webkit-scrollbar-track { background: transparent; }
+
+/* Focus: one ring everywhere, only for keyboard focus. */
+html:root :focus-visible { outline: none; box-shadow: var(--g-ring); border-radius: var(--g-r-sm); }
+html:root input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+html:root textarea:focus, html:root select:focus {
+  outline: none;
+  border-color: var(--g-accent-line) !important;
+  box-shadow: 0 0 0 3px var(--g-accent-soft);
+}
+html:root input, html:root textarea, html:root select {
+  transition: border-color var(--g-d2) var(--g-ease), box-shadow var(--g-d2) var(--g-ease), background-color var(--g-d2) var(--g-ease);
+  caret-color: var(--g-accent);
+}
+html:root input::placeholder, html:root textarea::placeholder { color: var(--g-text-3); }
+html:root input[type="checkbox"], html:root input[type="radio"], html:root input[type="range"], html:root progress { accent-color: var(--g-accent); }
+
+/* Every clickable thing gets the same quiet press. Replaces the older
+   brightness(1.12) hover, which read as a flash on graphite. */
+html:root button { transition: background-color var(--g-d2) var(--g-ease), border-color var(--g-d2) var(--g-ease), color var(--g-d2) var(--g-ease), box-shadow var(--g-d2) var(--g-ease), transform var(--g-d1) var(--g-ease), opacity var(--g-d2) var(--g-ease); }
+html:root button:not(:disabled):active { transform: scale(.985); }
+[style*="cursor: pointer"]:not(.nav-row):not(select):not(input):not(textarea) { transition: filter var(--g-d2) var(--g-ease), transform var(--g-d1) var(--g-ease), background-color var(--g-d2) var(--g-ease), border-color var(--g-d2) var(--g-ease); }
+[style*="cursor: pointer"]:not(.nav-row):not(select):not(input):not(textarea):hover { filter: brightness(1.05); }
+[style*="cursor: pointer"]:not(.nav-row):not(select):not(input):not(textarea):active { filter: brightness(.97); transform: scale(.985); }
+html:root[data-theme="light"] [style*="cursor: pointer"]:not(.nav-row):not(select):not(input):not(textarea):hover { filter: brightness(.985); }
+
+/* ── 4. Ground: dot grid under a soft top vignette, plus grain. ────── */
+html:root .app-shine-bg {
+  background-color: var(--g-bg);
+  background-image:
+    radial-gradient(120% 70% at 50% -12%, var(--g-vignette), transparent 62%),
+    radial-gradient(var(--g-dot) 1px, transparent 1.3px);
+  background-size: 100% 100%, 22px 22px;
+  background-position: 0 0, 0 0;
+  isolation: isolate;
+}
+html:root .app-shine-bg::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: -1;
+  opacity: var(--g-grain-opacity); mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* ── 5. Shell ──────────────────────────────────────────────────────── */
+html:root .mm-nav-row { position: relative; border-radius: var(--g-r-md) !important; color: var(--g-text-2); font-size: 13.5px; letter-spacing: -0.005em; transition: background-color var(--g-d2) var(--g-ease), color var(--g-d2) var(--g-ease), box-shadow var(--g-d2) var(--g-ease); }
+html:root .mm-nav-row:hover { background: var(--g-s2); color: var(--g-text); }
+html:root .mm-nav-row[data-active="true"] { background: var(--g-s2) !important; color: var(--g-text) !important; box-shadow: inset 0 0 0 1px var(--g-line); }
+html:root .mm-nav-row[data-active="true"] * { color: inherit; }
+html:root .mm-nav-row[data-active="true"]::before { content: ''; position: absolute; left: 0; top: 50%; height: 16px; margin-top: -8px; width: 2px; border-radius: 0 2px 2px 0; background: var(--g-accent); }
+html:root .mm-nav-row svg { transition: color var(--g-d2) var(--g-ease); }
+html:root .mm-group-head { font-size: 11.5px; letter-spacing: .01em; color: var(--g-text-3); transition: color var(--g-d2) var(--g-ease); }
+html:root .mm-group-head:hover { color: var(--g-text); }
+
+html:root .mm-icon-btn { border-radius: var(--g-r-md) !important; border-color: var(--g-line); color: var(--g-text-2); background: transparent; transition: background-color var(--g-d2) var(--g-ease), border-color var(--g-d2) var(--g-ease), color var(--g-d2) var(--g-ease), transform var(--g-d1) var(--g-ease); }
+html:root .mm-icon-btn:hover { background: var(--g-s2); border-color: var(--g-line-2); color: var(--g-text); }
+html:root .mm-icon-btn:active { transform: scale(.96); }
+html:root .mm-icon-btn[data-on="true"] { background: var(--g-s2); border-color: var(--g-line-2); color: var(--g-text); }
+
+html:root .mm-search-row { border-radius: var(--g-r-md); font-size: 13.5px; }
+html:root .mm-search-row[data-sel="true"], html:root .mm-search-row:hover { background: var(--g-s2); box-shadow: inset 0 0 0 1px var(--g-line); }
+html:root .mm-notif-item:hover { background: var(--g-s2); }
+
+/* Phone tab bar: the active tab gets a 2px accent tick above its icon. */
+html:root .mm-tab { position: relative; transition: color var(--g-d2) var(--g-ease); }
+html:root .mm-tab[aria-current="page"]::before { content: ''; position: absolute; top: 0; left: 50%; width: 18px; height: 2px; margin-left: -9px; border-radius: 2px; background: var(--g-accent); }
+
+/* ── 6. Primitives ─────────────────────────────────────────────────── */
+html:root .mm-btn { height: 36px; border-radius: var(--g-r-md) !important; font-size: 13.5px; font-weight: 500; letter-spacing: -0.005em; border: 1px solid var(--g-line-2); background: var(--g-s1); color: var(--g-text); box-shadow: var(--g-shadow-1); transition: background-color var(--g-d2) var(--g-ease), border-color var(--g-d2) var(--g-ease), box-shadow var(--g-d2) var(--g-ease), transform var(--g-d1) var(--g-ease); }
+html:root .mm-btn:not(:disabled):hover { background: var(--g-s2); border-color: var(--g-line-3); }
+html:root .mm-btn:not(:disabled):active { transform: translateY(1px) scale(.985); box-shadow: none; }
+html:root .mm-btn--primary { background: var(--g-ink); color: var(--g-on-ink); border-color: transparent; font-weight: 600; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 1px 2px rgba(0, 0, 0, .3); }
+html:root .mm-btn--primary:not(:disabled):hover { background: color-mix(in srgb, var(--g-ink) 88%, var(--g-bg)); border-color: transparent; opacity: 1; }
+html:root .ap-btn { border-radius: var(--g-r-md) !important; font-size: 13.5px !important; font-weight: 500 !important; min-height: 36px; }
+html:root .ap-btn-primary { background: var(--g-ink) !important; color: var(--g-on-ink) !important; border-color: transparent !important; font-weight: 600 !important; }
+
+html:root .mm-card, html:root .mm-stat, html:root .mm-tile {
+  border-radius: var(--g-r-lg) !important;
+  border-color: var(--g-line) !important;
+  box-shadow: var(--g-shadow-1);
+  transition: box-shadow var(--g-d3) var(--g-ease), border-color var(--g-d2) var(--g-ease), transform var(--g-d3) var(--g-ease), background-color var(--g-d2) var(--g-ease);
+}
+html:root[data-theme="light"] .mm-card, html:root[data-theme="light"] .mm-stat, html:root[data-theme="light"] .mm-tile { border-color: var(--g-line) !important; }
+html:root .mm-card:hover, html:root .mm-tile:hover { box-shadow: var(--g-shadow-2); border-color: var(--g-line-2) !important; }
+html:root .mm-tile:hover { background: var(--g-s2); transform: translateY(-1px); }
+html:root .mm-stat > span:nth-child(2) { font-family: var(--g-mono); font-weight: 500 !important; letter-spacing: -0.035em !important; }
+
+/* The "hero" card: no orange glow any more. A steel hairline and a faint
+   lift from the top is enough to say "this one first". */
+html:root .mm-card--hero, html:root .mm-stat--hero {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--g-accent) 9%, var(--g-s1)), var(--g-s1) 70%) !important;
+  border-color: var(--g-accent-line) !important;
+  box-shadow: var(--g-shadow-2) !important;
+  color: inherit;
+  --text: var(--g-text); --text-secondary: var(--g-text-2); --text-tertiary: var(--g-text-3);
+  --surface-2: var(--g-s2); --surface-3: var(--g-s3); --border: var(--g-line);
+  --accent: var(--g-accent); --success: var(--g-success); --warning: var(--g-warning); --danger: var(--g-danger);
+}
+html:root .mm-card--hero::after, html:root .mm-stat--hero::after { display: none; }
+html:root .mm-card--hero .mm-btn--primary { background: var(--g-ink); color: var(--g-on-ink); border-color: transparent; }
+html:root .mm-card--hero .mm-btn:not(.mm-btn--primary) { border-color: var(--g-line-2); color: var(--g-text); }
+
+html:root .mm-chip { border-radius: var(--g-r-sm); font-size: 11.5px; height: 21px; }
+html:root .mm-progress { height: 4px; background: var(--g-s3); }
+html:root .mm-progress > span { background: var(--g-accent); }
+html:root .mm-progress--good > span { background: var(--g-success); }
+html:root .mm-progress--warn > span { background: var(--g-warning); }
+html:root .mm-page-title { font-size: clamp(22px, 3.2vw, 28px) !important; font-weight: 600 !important; letter-spacing: -0.03em !important; }
+html:root .mm-streak { border-radius: var(--g-r-sm); }
+
+/* Segmented tabs (mm/Page.tsx Tabs). */
+html:root .g-seg { display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: var(--g-inset); border: 1px solid var(--g-line); width: max-content; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+html:root .g-seg::-webkit-scrollbar { display: none; }
+html:root .g-seg > [role="tab"] { flex: none; height: 30px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border-radius: 7px; border: 0; background: transparent; color: var(--g-text-3); font: 500 13px/1 var(--g-font); letter-spacing: -0.005em; cursor: pointer; transition: background-color var(--g-d2) var(--g-ease), color var(--g-d2) var(--g-ease), box-shadow var(--g-d2) var(--g-ease); }
+html:root .g-seg > [role="tab"]:hover { color: var(--g-text); }
+html:root .g-seg > [role="tab"][aria-selected="true"] { background: var(--g-s2); color: var(--g-text); box-shadow: var(--g-shadow-1), inset 0 0 0 1px var(--g-line-2); }
+html:root .g-seg .g-seg-n { min-width: 16px; height: 16px; padding: 0 4px; border-radius: 4px; font: 500 10.5px/16px var(--g-mono); color: var(--g-text-2); background: var(--g-s3); text-align: center; }
+html:root .g-seg > [role="tab"][aria-selected="true"] .g-seg-n { background: var(--g-accent-soft); color: var(--g-accent); }
+@media (max-width: 767px) { html:root .g-seg > [role="tab"] { height: 34px; } }
+
+/* Tables: quiet headers, hairline rows, a hover you can feel. */
+html:root .ap-table th, html:root .app-shine-bg table th { font-weight: 500; font-size: 12px; color: var(--g-text-3); letter-spacing: 0; text-transform: none; }
+html:root .app-shine-bg table td { border-color: var(--g-line); }
+html:root .app-shine-bg table tbody tr { transition: background-color var(--g-d2) var(--g-ease); }
+html:root .app-shine-bg table tbody tr:hover { background: color-mix(in srgb, var(--g-s2) 70%, transparent); }
+html:root .mm-dash-tr:hover { background: var(--g-s2) !important; }
+
+/* Dialogs, popovers, sheets: lift off the page. */
+html:root [role="dialog"], html:root [role="menu"], html:root [role="listbox"] { box-shadow: var(--g-shadow-3); }
+html:root [role="dialog"][aria-modal="true"] { border-color: var(--g-line-2); }
+
+/* Motion. */
+@keyframes gIn { from { opacity: 0; transform: translateY(4px) scale(.995); } to { opacity: 1; transform: none; } }
+html:root .mm-anim { animation: gIn var(--g-d3) var(--g-ease) both; }
+html:root .mm-rise { animation-duration: .24s; }
+html:root .mm-stagger > * { animation-duration: .28s; }
+@media (prefers-reduced-motion: reduce) {
+  html:root .mm-anim, html:root .mm-rise, html:root .mm-stagger > * { animation: none !important; }
+  html:root button, html:root .mm-card, html:root .mm-tile, html:root .mm-btn, html:root .mm-nav-row { transition: none !important; }
+  html:root button:active, html:root .mm-tile:hover { transform: none !important; }
+}
+
+/* ── 7. LeadFlow on Graphite ───────────────────────────────────────────
+   LeadFlow had its own lime-on-teal look. It now reads the same tokens as
+   the rest of the app; layout, signal hues (go / wait / stop / info) and
+   Geist Mono figures are unchanged. Delete this block to restore it. */
+html:root[data-theme] .leadflow, html:root .leadflow {
+  --lf-bg: transparent; --lf-surface: var(--g-s1); --lf-surface-2: var(--g-bg-raised); --lf-row-hover: var(--g-s2); --lf-selected: var(--g-accent-soft);
+  --lf-border: var(--g-line); --lf-border-strong: var(--g-line-2);
+  --lf-text: var(--g-text); --lf-text-secondary: var(--g-text-2); --lf-text-tertiary: var(--g-text-3); --lf-placeholder: var(--g-text-3);
+  --lf-primary: var(--g-ink); --lf-primary-hover: color-mix(in srgb, var(--g-ink) 88%, var(--g-bg)); --lf-on-primary: var(--g-on-ink);
+  --lf-accent: var(--g-accent); --lf-accent-wash: var(--g-accent-soft); --lf-focus: var(--g-accent-soft);
+  --lf-shadow: var(--g-shadow-2);
+  --lf-neu-dot: var(--g-text-3); --lf-neu-text: var(--g-text-2); --lf-neu-fill: var(--g-s2);
+  --lf-font: var(--g-font); --lf-mono: var(--g-mono);
+  --lf-r-panel: var(--g-r-lg); --lf-r-ctl: var(--g-r-md); --lf-r-tag: var(--g-r-xs);
+}
+html:root[data-theme="dark"] .leadflow {
+  --lf-go-dot: var(--g-success); --lf-go-text: var(--g-success); --lf-go-fill: var(--g-success-soft);
+  --lf-wait-dot: var(--g-warning); --lf-wait-text: var(--g-warning); --lf-wait-fill: var(--g-warning-soft);
+  --lf-stop-dot: var(--g-danger); --lf-stop-text: var(--g-danger); --lf-stop-fill: var(--g-danger-soft);
+  --lf-info-dot: var(--g-accent); --lf-info-text: var(--g-accent-hi); --lf-info-fill: var(--g-accent-soft);
+}
