@@ -130,7 +130,14 @@ export function useInspiration() {
     return !err;
   };
   const remove = async (id: string) => { setRows((r) => r.filter((x) => x.id !== id)); await supabase.from('content_inspiration').delete().eq('id', id); };
-  return { rows, loading, error, reload: load, add, remove };
+  /** Today's plays: Done / Skip / Later live on the row's tags. */
+  const setTags = async (id: string, tags: string[]) => {
+    setRows((r) => r.map((x) => (x.id === id ? { ...x, tags } : x)));
+    const { error: err } = await supabase.from('content_inspiration').update({ tags, updated_at: new Date().toISOString() }).eq('id', id);
+    if (err) { setError(err.message); await load(); }
+    return !err;
+  };
+  return { rows, loading, error, reload: load, add, remove, setTags };
 }
 
 /** Studio's clips, newest first. */

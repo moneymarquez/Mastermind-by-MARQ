@@ -34,6 +34,7 @@ import ProfilesTab from './content/ProfilesTab';
 import LatestAudits from './content/LatestAudits';
 import IdeasTab from './content/IdeasTab';
 import KitsTab from './content/KitsTab';
+import TodaysPlays from './content/TodaysPlays';
 
 type EngineTab = 'accounts' | 'profiles' | 'ideas' | 'plan' | 'studio' | 'history' | 'inspiration' | 'kits' | 'workers' | 'growth';
 const ENGINE_TABS: { id: EngineTab; label: string }[] = [
@@ -233,6 +234,7 @@ export default function ContentCreationScreen({ section, selectedClientId, onSel
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
         <EngineBar domain="content" onDecided={() => { void inspiration.reload(); void clips.reload(); void latestAudits.reload(); void contentItems.reload(); void social.reload(); }} />
       </div>
+      {engineTab === 'accounts' && <TodaysPlays inspiration={inspiration} accounts={social} items={contentItems} />}
       {engineTab === 'accounts' && <ContentOverview accounts={social.accounts} items={contentItems.items} posts={social.posts} onOpenPlan={() => setEngineTab('plan')} />}
       <div>
       {officeOpen && <OfficeView domain="content" onClose={() => setOfficeOpen(false)} />}
