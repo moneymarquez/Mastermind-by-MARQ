@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import MetaAdsBuilder from '../mm/MetaAdsBuilder';
 import type { CSSProperties } from 'react';
 import { supabase } from '../../lib/supabase';
 import Chip from '../mm/Chip';
@@ -143,6 +144,12 @@ function ClientLoop({ clientId, phone }: { clientId: string; phone?: boolean }) 
       <strong style={{ fontSize: 15, color: 'var(--text)' }}>Loop with the other bots</strong>
       <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>A metric that beats its target becomes a case-study to-do for Content (after the client says yes). A product the client sells goes to E-commerce for the margin math.</span>
       {items.map((h) => <div key={h.id} style={{ fontSize: 13, color: 'var(--text-secondary)' }}>• {h.note ?? h.kind} <span style={{ color: 'var(--text-tertiary)' }}>({h.status})</span></div>)}
+      {(() => {
+        const prod = items.find((h) => h.kind === 'scaler_product_to_ecom' && num(String(h.payload.price ?? '')) != null && num(String(h.payload.unit_cost ?? '')) != null);
+        if (!prod) return null;
+        const pl = prod.payload;
+        return <MetaAdsBuilder entityId={clientId} source={{ client: { client_id: clientId, client_name: String(pl.client_name ?? 'Client'), product: String(pl.product ?? 'Product'), price: Number(pl.price), unit_cost: Number(pl.unit_cost), ship: Number(pl.ship ?? 0) } }} />;
+      })()}
       {!open && <div><button className="mm-btn" style={{ height: 36 }} onClick={() => setOpen(true)}>They sell a product: send it to E-commerce</button></div>}
       {open && (
         <div style={{ display: 'grid', gridTemplateColumns: phone ? '1fr' : 'repeat(4, minmax(0, 1fr))', gap: 10 }}>

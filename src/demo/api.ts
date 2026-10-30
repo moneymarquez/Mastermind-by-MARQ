@@ -7,11 +7,16 @@ import { buildSeed, demoLeads, DEMO_DIGEST_TEXT } from './seed';
 import { demoRows } from './client';
 import { localExtract } from '../dispatch/localExtract';
 import { buildCallList } from '../data/callKit';
+import { buildMetaDraft } from '../data/metaAds';
+import type { AdSource } from '../data/metaAds';
 import type { CallKitGap, CallKitLead } from '../data/callKit';
 
 type Json = Record<string, unknown> | unknown[];
 const ok = (body: Json, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 const NOT_IN_DEMO = { error: 'That runs in the real app — this is the demo.' };
+
+/** What the sample-data decide says back. Exported for the test. */
+export const demoDecideMessage = (verb: string) => `${verb} (sample data: only this screen changed; nothing was saved or sent).`;
 
 function answer(url: URL, method: string, body: unknown = null): Response {
   const p = url.pathname;
@@ -73,6 +78,41 @@ function answer(url: URL, method: string, body: unknown = null): Response {
       approvals: { total: 9, money: 0, byKey: { 'ecom:product_card': 2, 'ecom:analysis': 1, 'ecom:brand_options': 1, 'marketing:class_proposal': 2, 'ecom:class_proposal': 1, 'content:class_proposal': 1, 'marketing:invoice_reminder': 1 } },
       crons: [{ cron: '*/5 * * * *', label: 'Every 5 minutes', jobs: 'Each job in its own invocation: the overnight orchestrator (3:30–7:00 AM Denver, one step per tick), product checks, inbound wait check, publisher, flags, follow-ups, scout queue, social sync, lead engines, outreach, solo, comms, output scoring, invoice reminders, call kit (7:50 AM).', names: ['shift', 'orchestrator', 'enrich1', 'enrich2', 'enrich3', 'inbound', 'publisher', 'flags', 'followups', 'scout', 'social', 'engines', 'outreach', 'solo', 'comms', 'score', 'invoices', 'callkit'] }, { cron: '*/15 * * * *', label: 'Every 15 minutes', jobs: 'Stocks bot, daily plan, reminders, the morning digest and the daily ledger.' }],
     });
+  }
+  // Approve / Reject / Send back on sample data: local only. The card moves
+  // in this tab's sample rows (gone on reload); no applier runs, nothing is
+  // written or sent. The answer says so, and DemoNotice shows it.
+  if (p === '/api/engine/decide') {
+    const b = (body ?? {}) as { approval_id?: string; status?: string; note?: string | null };
+    const row = demoRows('ai_approvals').find((r) => r.id === b.approval_id);
+    if (!row) return ok({ ok: false, error: 'Sample card not found.' });
+    if (row.status !== 'pending') return ok({ ok: false, error: `Already ${String(row.status).replace('_', ' ')}.` });
+    const status = b.status === 'approved' || b.status === 'killed' || b.status === 'sent_back' ? b.status : 'approved';
+    const at = new Date().toISOString();
+    Object.assign(row, { status, my_note: b.note ?? null, decided_at: at, updated_at: at });
+    const verb = status === 'approved' ? 'Approved' : status === 'killed' ? 'Rejected' : 'Sent back';
+    const message = demoDecideMessage(verb);
+    return ok({ ok: true, demo: true, type: row.type, message, applied: { note: message } });
+  }
+  // Meta ads on sample data: the draft is built from the sample product and
+  // kept in this tab only. Push stays off (no key, DRY_RUN on).
+  if (p === '/api/meta-ads/status') return ok({ hasKey: false, dryRun: true });
+  if (p === '/api/meta-ads/push') return ok({ ok: false, error: 'Push to Meta is off in the sample data (no Meta ads key, DRY_RUN on). Nothing was sent.' }, 409);
+  if (p === '/api/meta-ads/draft') {
+    const b = (body ?? {}) as { product_id?: string; client?: { client_id: string; client_name: string; product: string; price: number; unit_cost: number; ship: number } };
+    let src: AdSource | null = null;
+    if (b.product_id) {
+      const pr = demoRows('ecom_products').find((r) => r.id === b.product_id) as { id: string; name: string; sell_price: number | null; supplier_cost: number | null; detail?: Record<string, unknown> } | undefined;
+      if (!pr || pr.sell_price == null || pr.supplier_cost == null) return ok({ error: 'Save a sell price and supplier cost on the product first.' }, 400);
+      src = { kind: 'product', id: pr.id, name: pr.name, sell: Number(pr.sell_price), supplier: Number(pr.supplier_cost), ship: Number(pr.detail?.ship_cost ?? 0), angle: typeof pr.detail?.angle === 'string' ? pr.detail.angle : null, buyer: typeof pr.detail?.buyer === 'string' ? pr.detail.buyer : null };
+    } else if (b.client) src = { kind: 'client', id: b.client.client_id, name: b.client.product, business: b.client.client_name, sell: b.client.price, supplier: b.client.unit_cost, ship: b.client.ship };
+    if (!src) return ok({ error: 'Send product_id or client.' }, 400);
+    const draft = buildMetaDraft(src);
+    const at = new Date().toISOString();
+    const row = { id: `demo-meta-${Date.now().toString(36)}`, user_id: 'demo', domain: src.kind === 'product' ? 'ecom' : 'marketing', type: 'meta_ads_draft', entity_type: src.kind === 'product' ? 'ecom_product' : 'crm_client', entity_id: src.id, title: `Meta ads draft: ${draft.campaign.name}`, payload: draft, confidence: 'estimate', is_money: true, amount_usd: draft.campaign.total_budget_usd, status: 'pending', my_note: null, created_at: at, updated_at: at };
+    demoRows('ai_approvals').push(row);
+    window.dispatchEvent(new CustomEvent('mm-demo-notice', { detail: 'Draft built (sample data: kept on this screen only; nothing went to Meta).' }));
+    return ok({ ok: true, approval_id: row.id, draft });
   }
   if (p === '/api/engine/daily') {
     const s = buildSeed();

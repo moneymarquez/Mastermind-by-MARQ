@@ -36,6 +36,8 @@ import type { CallKitEnv } from './handlers/callKit';
 import { runCallKitTick } from './lib/callKit';
 import { systemHealthRoute } from './handlers/systemHealth';
 import type { HealthEnv } from './handlers/systemHealth';
+import { metaAdsRoute } from './handlers/metaAds';
+import type { MetaAdsEnv } from './handlers/metaAds';
 import { isDryRun } from './lib/dryRun';
 import type { OutreachRouteEnv } from './handlers/outreach';
 import { saveBrokerKeys, brokerKeysStatus } from './handlers/broker-keys';
@@ -179,6 +181,8 @@ export default {
     if (url.pathname === '/api/leadflow/leads') return leadflowLeads(request, env);
     if (url.pathname === '/api/leadflow/call-kit') return callKitRoute(request, env as unknown as CallKitEnv);
     // System Health: DRY_RUN, which keys are set (presence only), last night's run, failures, approvals, timers.
+    // Meta ads: drafts only; push is gated and not built (never calls Meta).
+    if (url.pathname.startsWith('/api/meta-ads/')) return metaAdsRoute(request, env as unknown as MetaAdsEnv, url.pathname);
     if (url.pathname === '/api/system/health') return systemHealthRoute(request, env as unknown as HealthEnv, Object.keys(tickJobs(env)));
     // Before the /leads/:id match below, which would otherwise take "bulk"
     // for a lead id and PATCH a row that doesn't exist.

@@ -15,7 +15,8 @@ export const INTEGRATIONS: Integration[] = [
   { id: 'resend', name: 'Resend (client email)', secrets: ['RESEND_API_KEY', 'RESEND_FROM_EMAIL'], optional: ['RESEND_WEBHOOK_SECRET', 'MADEBYMARQUEZ_FROM_EMAIL'] },
   { id: 'twilio', name: 'Twilio (texts)', secrets: ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_FROM_NUMBER'], optional: ['DIGEST_TO_NUMBER'] },
   { id: 'google', name: 'Google (Places lead finder, Gmail outreach mailbox)', secrets: ['GOOGLE_PLACES_API_KEY', 'GMAIL_CLIENT_ID', 'GMAIL_CLIENT_SECRET', 'GMAIL_REFRESH_TOKEN'] },
-  { id: 'meta', name: 'Meta (Instagram + Facebook posting and metrics)', secrets: ['INSTAGRAM_APP_ID', 'INSTAGRAM_APP_SECRET'], optional: ['FACEBOOK_APP_ID', 'FACEBOOK_APP_SECRET'], account: ['instagram', 'facebook'], note: 'Meta ads (paid) are not built; organic only.' },
+  { id: 'meta', name: 'Meta (Instagram + Facebook posting and metrics)', secrets: ['INSTAGRAM_APP_ID', 'INSTAGRAM_APP_SECRET'], optional: ['FACEBOOK_APP_ID', 'FACEBOOK_APP_SECRET'], account: ['instagram', 'facebook'], note: 'Organic posting and metrics. Paid ads are separate (Meta ads, below).' },
+  { id: 'meta_ads', name: 'Meta ads (paid campaigns: drafts only)', secrets: ['META_ADS_ACCESS_TOKEN', 'META_AD_ACCOUNT_ID'], note: 'Drafts are built from the margin math and wait in Approvals. Pushing to Meta is not built yet.' },
   { id: 'tiktok', name: 'TikTok (posting and metrics)', secrets: ['TIKTOK_CLIENT_KEY', 'TIKTOK_CLIENT_SECRET'], account: ['tiktok'] },
   { id: 'shopify', name: 'Shopify (stores, orders, checkout)', secrets: [], optional: ['SHOPIFY_WEBHOOK_SECRET'], account: ['shopify'], note: 'Connected per store in Setup → Accounts.' },
   { id: 'cj', name: 'CJ Dropshipping (suppliers)', secrets: ['CJ_API_KEY'] },
@@ -84,6 +85,7 @@ export function areas(h: HealthInput): AreaStatus[] {
   out.push({ id: 'suppliers', name: 'Suppliers (CJ Dropshipping)', mode: s('CJ_API_KEY') ? 'live' : 'off', detail: 'Supplier lookups are reads; a supplier order over your threshold still needs your approval card.', todo: need(['CJ_API_KEY']) });
   out.push({ id: 'generation', name: 'Paid image and video generation (Higgsfield)', mode: mode(s('HIGGSFIELD_API_KEY')), detail: h.dryRun ? 'Test mode: no paid generation; mockups are placeholders.' : 'Live, inside the monthly visual cap (HQ → Spend & limits).', todo: [...need(['HIGGSFIELD_API_KEY']), 'Check the monthly visual cap in HQ → Spend & limits.', ...dryTodo] });
   out.push({ id: 'waitlist', name: 'Waitlist sync (MailerLite)', mode: mode(s('MAILERLITE_API_KEY')), detail: h.dryRun ? 'Test mode: signups wait in the app.' : 'Live.', todo: [...need(['MAILERLITE_API_KEY']), ...dryTodo] });
+  out.push({ id: 'meta_ads', name: 'Meta ads (paid)', mode: 'off', detail: 'Drafts only: campaign, ad sets and ads built from a product\'s margin math (break-even CPA is the bid ceiling), saved to Approvals. Nothing is sent to Meta; Push to Meta is not built in this release.', todo: [...need(['META_ADS_ACCESS_TOKEN', 'META_AD_ACCOUNT_ID']), 'Push to Meta needs a code PR (after the key is set and DRY_RUN is off); it will still need the approved draft and a passing spend check.'] });
   out.push({ id: 'push', name: 'App notifications (web push)', mode: s('VITE_VAPID_PUBLIC_KEY') && s('VAPID_PRIVATE_KEY') ? 'live' : 'off', detail: 'Pushes to your own devices only.', todo: need(['VITE_VAPID_PUBLIC_KEY', 'VAPID_PRIVATE_KEY']) });
   return out.map((a) => ({ ...a, todo: [...new Set(a.todo)] }));
 }

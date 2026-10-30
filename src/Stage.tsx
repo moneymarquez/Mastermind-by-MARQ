@@ -14,6 +14,7 @@ import { moduleKeyForRoute } from './modules.config';
 import type { AppState, MastermindActions } from './state';
 import type { Theme } from './data/useTheme';
 import Celebration from './components/fx/Celebration';
+import DemoNotice from './components/mm/DemoNotice';
 import { useDemo, stopDemo } from './demo/state';
 import { DispatchProvider } from './dispatch/DispatchContext';
 import { ModuleProvider, BackRow } from './components/mm/Page';
@@ -600,6 +601,7 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
           Sample data · Exit
         </button>
       )}
+      {demo.active && <DemoNotice />}
 
       <ProductTour
         active={tourActive}

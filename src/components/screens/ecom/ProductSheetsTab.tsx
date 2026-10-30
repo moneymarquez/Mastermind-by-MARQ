@@ -1,3 +1,4 @@
+import HandoffInbox from '../../mm/HandoffInbox';
 import { useMemo, useState } from 'react';
 import type { Channel } from '../../../data/ecom';
 import { CHANNELS, money, ago } from '../../../data/ecom';
@@ -72,6 +73,7 @@ export default function ProductSheetsTab({ search, onBuildBrand, statusOf, onOpe
 
   return (
     <div>
+      <HandoffInbox kinds={['content_trend_to_ecom']} title="For E-commerce, from the other bots" />
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
         {CHANNELS.map((c) => <Pill key={c.id} active={channel === c.id} onClick={() => { setChannel(c.id); setLimit(20); }}>{c.label}{counts[c.id] ? <span style={{ opacity: 0.7, fontFamily: 'var(--font-mono)', fontSize: 11 }}>{counts[c.id]}</span> : null}</Pill>)}
         <div style={{ flex: 1 }} />

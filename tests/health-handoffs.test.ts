@@ -36,7 +36,7 @@ test('health: go-live checklist, area by area', () => {
   // One account on live posting while DRY_RUN is on.
   assert.equal(areas({ ...base, secrets: all, accounts: ['instagram'], socialAccounts: 2, livePostingAccounts: 1 }).find((a) => a.id === 'posting')!.mode, 'live');
   const live = areas({ ...base, dryRun: false, secrets: all, accounts: ['shopify', 'instagram', 'cloudflare_pages', 'github'], orchestratorEnabled: true });
-  assert.ok(live.every((a) => a.mode === 'live'), JSON.stringify(live.filter((a) => a.mode !== 'live').map((a) => a.id)));
+  assert.ok(live.every((a) => a.mode === 'live' || a.id === 'meta_ads'), JSON.stringify(live.filter((a) => a.mode !== 'live').map((a) => a.id)));
   assert.equal(integrationState(INTEGRATIONS.find((i) => i.id === 'twilio')!, { secrets: { TWILIO_ACCOUNT_SID: true }, accounts: [] }).state, 'partial');
   assert.equal(integrationState(INTEGRATIONS.find((i) => i.id === 'shopify')!, { secrets: {}, accounts: ['shopify'] }).state, 'ready');
 });

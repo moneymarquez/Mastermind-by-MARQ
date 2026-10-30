@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { MetaDraftView } from '../../mm/MetaAdsBuilder';
 import type { ReactNode } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { money } from '../../../data/ecom';
@@ -20,6 +21,7 @@ const pct = (v: unknown) => (typeof v === 'number' ? `${Math.round(v * 100)}%` :
 
 export const APPROVE_LABEL: Record<string, (p: P) => string> = {
   analysis: () => 'Approve · fill the product',
+  meta_ads_draft: () => 'Approve draft · nothing goes to Meta',
   teardown: (p) => `Approve · save ${plural(arr(p.competitors).length, 'dossier')} + ${plural(arr(p.angles).length, 'angle')}`,
   lead_tags: (p) => `Approve · tag ${arr(p.rows).length} leads`,
   scripts: (p) => `Approve · save ${arr(p.scripts).length} scripts`,
@@ -50,6 +52,7 @@ const gradeColor = (g: number) => (g >= 4 ? E.green : g === 3 ? E.blue : g === 2
 
 export function ApprovalBody({ type, payload: p, choice = 0, onChoice, approvalId }: { type: string; payload: P; choice?: number; onChoice?: (i: number) => void; approvalId?: string }) {
   if (type === 'product_pitch') return <RichPitch p={p} />;
+  if (type === 'meta_ads_draft') return <div style={{ marginTop: 10 }}><MetaDraftView d={p as never} /><div style={{ fontSize: 'var(--text-caption)', color: E.faint, marginTop: 6 }}>Approving keeps it a draft. Nothing is sent to Meta; Push to Meta stays off until a Meta ads key is set and DRY_RUN is off.</div></div>;
   if (type === 'invoice_reminder') return (
     <div style={{ marginTop: 10 }}>
       <Box>

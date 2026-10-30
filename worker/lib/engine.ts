@@ -722,6 +722,8 @@ export const APPLIERS: Record<string, Applier> = {
   /** A correction Marq gave twice becomes a standing playbook rule. */
   /** Product Pitch approved: the brand is born; Brand Lab and Supplier Finder run next (handlers/engine.ts). */
   product_pitch: async (sb, u, raw) => approvePitch(sb, u, raw),
+  /** Meta ads draft approved: it stays a draft. Nothing goes to Meta; Push is gated (handlers/metaAds.ts). */
+  meta_ads_draft: async () => ({ note: 'Draft approved. Nothing went to Meta: Push to Meta stays off until a Meta ads key is set and DRY_RUN is off.' }),
   /** Buy a product site's domain: approved → a one-tap checklist step on the site (lib/siteDomains.ts). */
   buy_domain: async (sb, u, raw) => approveDomain(sb, u, raw),
   /** "Approve to ship": the supplier order over the threshold may be placed. */

@@ -6,6 +6,7 @@ import { CHANNELS, money, ago } from '../../../data/ecom';
 import { Drawer, E, Metric, Badge, ConfidenceBadge, Section, btn, field, label } from './ecomShared';
 import { askConfirm } from '../../../lib/confirm';
 import ProductWorkers from './ProductWorkers';
+import MetaAdsBuilder from '../../mm/MetaAdsBuilder';
 import { profitFromProduct, fmtRoas, VERDICT_RULES } from '../../../data/ecomProfit';
 
 interface Props {
@@ -125,6 +126,7 @@ export default function ProductDrawer({ product: p, snapshots, onClose, onSave, 
           )}
         </div>
       </Section>
+      {pm && p.sell_price != null && p.supplier_cost != null && <Section title="Meta ads"><MetaAdsBuilder source={{ product_id: p.id }} entityId={p.id} /></Section>}
 
       {SECTIONS.map((s) => (
         <Section key={s.key} title={s.title}>

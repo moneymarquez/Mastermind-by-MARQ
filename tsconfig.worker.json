@@ -1,0 +1,14 @@
+{
+  // The Cloudflare Worker (worker/**). Typecheck only: wrangler bundles it.
+  // `npm run typecheck:worker`. Same strictness as the app; no DOM-only
+  // vite types; the worker imports shared pure modules from src/data.
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": [],
+    "lib": ["ES2022", "DOM"],
+    "noUnusedLocals": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.worker.tsbuildinfo"
+  },
+  "include": ["worker"]
+}
