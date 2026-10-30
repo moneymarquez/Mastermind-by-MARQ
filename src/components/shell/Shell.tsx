@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import './shell.css';
-import { GHome, GInbox, GNova, GGrid, GSun, GMoon, GSearch, GBell, GBolt, GChevron, GUpDown, GSliders, GLock, GMenu, GClose, GBriefcase, GPhone, GBag, GFork } from './glyphs';
+import { GHome, GInbox, GNova, GSun, GMoon, GSearch, GBell, GBolt, GChevron, GUpDown, GSliders, GLock, GMenu, GClose, GBriefcase, GPhone, GBag, GFork } from './glyphs';
 import type { ShellGroup } from './nav';
 import { portalName } from '../../portals.config';
 import type { PortalKey } from '../../portals.config';
