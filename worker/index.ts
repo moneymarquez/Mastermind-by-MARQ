@@ -31,6 +31,10 @@ import type { ArchiveEnv } from './handlers/archive';
 import type { GovconEnv } from './handlers/govcon';
 import type { EnginesEnv } from './handlers/leadEngines';
 import { outreachRoute, bookRoute, runOutreachTick } from './handlers/outreach';
+import { callKitRoute } from './handlers/callKit';
+import type { CallKitEnv } from './handlers/callKit';
+import { runCallKitTick } from './lib/callKit';
+import { isDryRun } from './lib/dryRun';
 import type { OutreachRouteEnv } from './handlers/outreach';
 import { saveBrokerKeys, brokerKeysStatus } from './handlers/broker-keys';
 import { stocksAccount } from './handlers/stocks-account';
@@ -136,6 +140,8 @@ function tickJobs(env: Env): Record<string, () => Promise<unknown>> {
     // Scores for new AI outputs (Logic / Trust / On-target), 2 per run in its own invocation.
     score: () => runScoreTick(env.ANTHROPIC_API_KEY, new SbClient(env), 2).catch(log('score tick')),
     invoices: () => runInvoiceTick(new SbClient(env)).catch(log('invoice tick')),
+    // Cold-call kit: today's ranked call list, built once from 7:50 AM Denver. Reads only; sends nothing.
+    callkit: () => runCallKitTick(new SbClient(env), { testMode: isDryRun(env as never) }).catch(log('call kit tick')),
   });
   return jobs;
 }
@@ -169,6 +175,7 @@ export default {
     if (url.pathname === '/api/daily-plan/today') return dailyPlanToday(request, env);
 
     if (url.pathname === '/api/leadflow/leads') return leadflowLeads(request, env);
+    if (url.pathname === '/api/leadflow/call-kit') return callKitRoute(request, env as unknown as CallKitEnv);
     // Before the /leads/:id match below, which would otherwise take "bulk"
     // for a lead id and PATCH a row that doesn't exist.
     if (url.pathname === '/api/leadflow/find') return leadflowFind(request, env);

@@ -32,7 +32,7 @@ export function portalOfRoute(route: string): PortalKey | null {
 }
 
 /** True when a route is shown in this portal's nav as a shortcut (the
- *  module's `alsoIn`), e.g. Contracts inside Made by's "2 · Sign & Onboard".
+ *  module's `alsoIn`), e.g. Contracts inside Made by's "3 · Baseline".
  *  Opening it there keeps you in that portal instead of switching. */
 export function routeAlsoIn(route: string, portal: PortalKey): boolean {
   const k = moduleKeyForRoute(route);

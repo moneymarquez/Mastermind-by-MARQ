@@ -132,6 +132,12 @@ export function ModulesGrid({ groups, onOpen }: { groups: ShellGroup[]; onOpen: 
             <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)' }}>{g.items.length}{g.owner ? ' · owner' : ''}</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
+            {g.link && !g.items.length && (
+              <button className="mm-tile" onClick={() => onOpen(g.link!.id)}>
+                <span style={{ width: 30, height: 30, borderRadius: 10, background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600 }}>CB</span>
+                <span style={{ color: 'var(--text)', fontSize: 12.5, fontWeight: 500, lineHeight: 1.25 }}>{g.link.label}</span>
+              </button>
+            )}
             {g.items.map((m) => (
               <button key={m.id} className="mm-tile" onClick={() => !m.locked && onOpen(m.id)} aria-disabled={m.locked || undefined} style={m.locked ? { cursor: 'default', opacity: 0.7 } : undefined}>
                 <span style={{ width: 30, height: 30, borderRadius: 10, background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600 }}>{m.locked ? <GLock size={14} /> : m.glyph}</span>
@@ -221,11 +227,19 @@ export function AppSidebar({ device, screen, novaOpen, groups, badges, ownerName
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {listed.map((g) => (
             <div key={g.title} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {g.link && !g.items.length ? (
+                <button className="mm-group-head" onClick={() => nav(g.link!.id)} title={g.link.label}>
+                  <GChevron size={12} style={{ opacity: 0.4 }} />
+                  <span style={{ flex: 1, textAlign: 'left' }}>{g.title}</span>
+                  <span style={{ fontSize: 11.5 }}>review</span>
+                </button>
+              ) : (
               <button className="mm-group-head" onClick={() => toggle(g)} aria-expanded={isOpen(g)}>
                 <GChevron size={12} style={{ transform: isOpen(g) ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }} />
                 <span style={{ flex: 1, textAlign: 'left' }}>{g.title}</span>
                 <span style={{ fontSize: 11.5 }}>{g.items.length}{g.owner ? ' · owner' : ''}</span>
               </button>
+              )}
               {isOpen(g) && g.items.map(moduleRow)}
             </div>
           ))}

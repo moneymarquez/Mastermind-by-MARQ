@@ -41,20 +41,24 @@ test('portals: access is derived from canAccess only', async () => {
   const mm = shellGroups(all, true, {}, { portal: 'masterminds' }).flatMap((g) => g.items.map((i) => i.id));
   assert.ok(mm.includes('budgeting') && !mm.includes('client-crm') && !mm.includes('ecommerce'));
 
-  // Made by: Clients, the five numbered steps, then LeadFlow + Invoicing pinned.
+  // Made by: Clients, the eight blueprint steps, then LeadFlow + Invoicing pinned.
   const mbGroups = shellGroups(all, true, {}, { portal: 'madeby' });
-  assert.deepEqual(mbGroups.map((g) => g.title), ['Clients', '1 · Win', '2 · Sign & Onboard', '3 · Strategy & Build', '4 · Launch', '5 · Grow & Report', 'Pinned']);
+  assert.deepEqual(mbGroups.map((g) => g.title), ['Clients', '1 · Diagnose', '2 · Win', '3 · Baseline', '4 · Stop the Leaks', '5 · Capture Demand', '6 · Keep & Raise', '7 · Protect the Business', '8 · Prove & Renew', 'Pinned']);
   const mb = (t: string) => mbGroups.find((g) => g.title === t)!.items.map((i) => i.id);
   assert.deepEqual(mb('Clients'), ['madeby-board', 'client-crm']);
-  assert.deepEqual(mb('1 · Win'), ['audits', 'support-inbox']);
-  assert.deepEqual(mb('2 · Sign & Onboard'), ['contracts']);
-  assert.deepEqual(mb('3 · Strategy & Build'), ['idea-maker', 'brand-lab', 'scaling-planner']);
-  assert.deepEqual(mb('4 · Launch'), ['delivery']);
-  assert.deepEqual(mb('5 · Grow & Report'), ['marketing', 'content']);
+  assert.deepEqual(mb('1 · Diagnose'), ['audits']);
+  assert.deepEqual(mb('2 · Win'), ['support-inbox']);
+  assert.deepEqual(mb('3 · Baseline'), ['contracts']);
+  assert.deepEqual(mb('4 · Stop the Leaks'), ['scaling-planner', 'idea-maker']);
+  assert.deepEqual(mb('5 · Capture Demand'), ['brand-lab', 'content']);
+  assert.deepEqual(mb('6 · Keep & Raise'), ['marketing']);
+  assert.deepEqual(mb('7 · Protect the Business'), []);
+  assert.equal(mbGroups.find((g) => g.title === '7 · Protect the Business')!.link?.id, 'madeby-board');
+  assert.deepEqual(mb('8 · Prove & Renew'), ['delivery']);
   assert.deepEqual(mb('Pinned'), ['leadflow', 'invoicing']);
   assert.ok(mbGroups.find((g) => g.title === 'Pinned')!.pinned);
   // Folded in or behind a button: no rows of their own any more.
-  for (const k of ['lead-engines', 'client-modules', 'scaling-start', 'website', 'comms']) assert.ok(!madeby.includes(k), k);
+  for (const k of ['lead-engines', 'call-list', 'client-modules', 'scaling-start', 'website', 'comms']) assert.ok(!madeby.includes(k), k);
   assert.ok(!madeby.includes('hq') && !madeby.includes('ledger'));
   // Shortcuts keep their home portal (deep links), but open in place inside Made by.
   const { routeAlsoIn, portalLanding } = await import('../src/portals.config');

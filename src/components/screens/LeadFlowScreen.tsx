@@ -8,6 +8,7 @@ import LeadFlowReport from './leadflow/LeadFlowReport';
 import LeadFlowHistory from './leadflow/LeadFlowHistory';
 import LeadFlowMessages from './leadflow/LeadFlowMessages';
 import LeadFlowImport from './leadflow/LeadFlowImport';
+import LeadFlowCallList from './leadflow/LeadFlowCallList';
 import { LeadFlowCtx, useWidth } from './leadflow/layout';
 import { useModule } from '../mm/Page';
 import { PHONE_TAB_H } from '../shell/Shell';
@@ -21,18 +22,20 @@ export type Tab = LfTab | Exclude<EngineTab, 'import'>;
 
 // LeadFlow is Made by's lead machine (Made by journey, Oct 2026): the pool
 // and finder, then what used to be the separate Lead Engines screen —
-// Engines (Client Finder + Complaint Scanner), Outreach, Call list, Import,
-// Setup — so finding, contacting and dialing leads is one place. War Room,
+// Engines (Client Finder + Complaint Scanner), Outreach, Import, Setup — with
+// the Call list (the cold-call kit, ranked every morning) second, after the
+// Dashboard — so finding, contacting and dialing leads is one place. War Room,
 // Sales report and Messages stay hidden from the tab bar (Marq's cleanup,
 // Oct 2026), not deleted: their screens still render if anything links to
 // them. Engine tabs need the lead-engines module (owner) on top of LeadFlow.
 const TABS: { id: Tab; label: string; engines?: boolean }[] = [
   { id: 'dashboard', label: 'Dashboard' },
+  // The cold-call kit (Growth Blueprint phase 1): ranked, with a $ leak estimate and opener per lead.
+  { id: 'calls', label: 'Call list', engines: true },
   { id: 'leadpool', label: 'Pool' },
   { id: 'leads', label: 'Finder' },
   { id: 'engines', label: 'Engines', engines: true },
   { id: 'outreach', label: 'Outreach', engines: true },
-  { id: 'calls', label: 'Call list', engines: true },
   { id: 'import', label: 'Import' },
   { id: 'setup', label: 'Setup', engines: true },
   { id: 'playbook', label: 'Playbook' },
@@ -96,7 +99,12 @@ export default function LeadFlowScreen({ initialTab, onTabConsumed, engines = tr
           {tab === 'messages' && <LeadFlowMessages />}
           {tab === 'import' && <LeadFlowImport />}
           {tab === 'import' && engines && <LeadEnginesTab tab="import" eng={eng} phone={phone} onTab={setTab} />}
-          {(tab === 'engines' || tab === 'outreach' || tab === 'calls' || tab === 'setup') && engines && <LeadEnginesTab tab={tab} eng={eng} phone={phone} onTab={setTab} />}
+          {(tab === 'engines' || tab === 'outreach' || tab === 'setup') && engines && <LeadEnginesTab tab={tab} eng={eng} phone={phone} onTab={setTab} />}
+          {tab === 'calls' && engines && (
+            <LeadFlowCallList phone={phone}>
+              {(eng.out?.calls.length || eng.out?.bookings.length) ? <LeadEnginesTab tab="calls" eng={eng} phone={phone} onTab={setTab} /> : null}
+            </LeadFlowCallList>
+          )}
         </main>
       </div>
     </LeadFlowCtx.Provider>

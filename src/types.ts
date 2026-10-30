@@ -6,6 +6,7 @@ export type Screen =
   | 'ecom-marketing'
   | 'coupons'
   | 'lead-engines'
+  | 'call-list'
   | 'waitlist'
   | 'comms'
   | 'contracts'

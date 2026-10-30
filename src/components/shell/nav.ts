@@ -13,10 +13,13 @@ export interface ShellGroup { title: string; items: ShellItem[]; owner?: boolean
   /** Rendered at the bottom of the sidebar, above Settings, never collapsed. */
   pinned?: boolean;
   /** Starts expanded in the sidebar until the user collapses it. */
-  defaultOpen?: boolean }
+  defaultOpen?: boolean;
+  /** A group with no tools of its own (Made by's "7 · Protect the Business",
+   *  or a step whose tools are hidden): the header opens this screen instead. */
+  link?: { id: string; label: string } }
 
 export const SHELL_GROUPS = ['Overview', 'Command', 'Financial', 'Growth', 'GovCon', 'Personal', 'Cold Calling', 'Clients', 'Scaling', 'Side Hustles', 'Content', 'E-commerce'] as const;
-/** Made by's sidebar, top to bottom: Clients, the five numbered steps, then
+/** Made by's sidebar, top to bottom: Clients, the eight numbered steps, then
  *  LeadFlow and Invoicing pinned at the bottom (data/madebyJourney.ts). */
 const MADEBY_GROUPS = ['Clients', ...JOURNEY_GROUP_TITLES, 'Pinned'];
 const MADEBY_ORDER = [...MADEBY_TOP, ...JOURNEY_STEPS.flatMap((s) => s.tools), ...MADEBY_PINNED];
@@ -70,7 +73,12 @@ export function shellGroups(canAccess: (k: string) => boolean, isOwner: boolean,
   }
   if (portal === 'madeby') {
     const rank = (id: string) => { const i = MADEBY_ORDER.indexOf(id); return i < 0 ? 999 : i; };
-    return MADEBY_GROUPS.filter((t) => by.get(t)?.length).map((t) => ({ title: t, items: [...by.get(t)!].sort((a, b) => rank(a.id) - rank(b.id)), pinned: t === 'Pinned', defaultOpen: true }));
+    // Every numbered step shows, so the whole journey reads top to bottom
+    // (travel mode too); a step with nothing to list links to the board.
+    const board = by.get('Clients')?.some((i) => i.id === 'madeby-board');
+    return MADEBY_GROUPS.filter((t) => by.get(t)?.length || (board && JOURNEY_GROUP_TITLES.includes(t)))
+      .map((t) => ({ title: t, items: [...(by.get(t) ?? [])].sort((a, b) => rank(a.id) - rank(b.id)), pinned: t === 'Pinned', defaultOpen: true,
+        ...(by.get(t)?.length ? {} : { link: { id: 'madeby-board', label: 'Review on the Clients board' } }) }));
   }
   return SHELL_GROUPS.filter((t) => by.get(t)?.length).map((t) => ({ title: t, items: by.get(t)!, owner: t === 'Scaling' && portal === 'masterminds' }));
 }

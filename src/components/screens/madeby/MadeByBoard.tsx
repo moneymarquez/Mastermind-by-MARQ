@@ -25,7 +25,7 @@ interface Props {
 }
 
 /** Clients board: Made by's landing (Made by journey, Oct 2026). One column
- *  per numbered step, 1 Win → 5 Grow & Report; each client sits on the step
+ *  per numbered step, 1 Diagnose → 8 Prove & Renew; each client sits on the step
  *  its sales stage / delivery phase puts it on (data/madebyJourney.ts), with
  *  its next checklist item and how long it has been waiting on Marq. Each
  *  column header lists that step's tools, so nothing is a tab deeper.
@@ -90,7 +90,7 @@ export default function MadeByBoard({ onOpenClient, canOpen }: Props) {
   ];
   const sub = loading ? 'Loading…' : `${real.length} ${real.length === 1 ? 'client' : 'clients'} · ${waiting.length ? `${waiting.length} waiting on you` : 'nothing waiting on you'}`;
 
-  if (missing) return <Page title="Clients" sub="Every client, step 1 to 5" backTo="modules"><Empty text="The board needs the October Made by migration (schema_125) applied." /></Page>;
+  if (missing) return <Page title="Clients" sub="Every client, step 1 to 8" backTo="modules"><Empty text="The board needs the October Made by migration (schema_125) applied." /></Page>;
 
   const card = (c: Client) => {
     const n = journeyStepOf(c);
@@ -132,10 +132,16 @@ export default function MadeByBoard({ onOpenClient, canOpen }: Props) {
       </div>
       <span style={{ fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.35 }}>{s.goal}</span>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {s.n <= 2 && canOpen('call-list') && <button className="mm-btn" style={toolBtn} onClick={() => nav('call-list')}>Call list</button>}
         {s.n === 1 && canOpen('leadflow') && <button className="mm-btn" style={toolBtn} onClick={() => nav('leadflow')}>LeadFlow</button>}
         {s.tools.filter(canOpen).map((t) => <button key={t} className="mm-btn" style={toolBtn} onClick={() => nav(t)}>{toolLabel(t)}</button>)}
-        {s.n === 2 && canOpen('invoicing') && <button className="mm-btn" style={toolBtn} onClick={() => nav('invoicing')}>Invoicing</button>}
+        {s.n === 3 && canOpen('invoicing') && <button className="mm-btn" style={toolBtn} onClick={() => nav('invoicing')}>Invoicing</button>}
       </div>
+      {s.checks && (
+        <ul style={{ margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 3, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.35 }}>
+          {s.checks.map((c) => <li key={c}>{c}</li>)}
+        </ul>
+      )}
     </div>
   );
 
@@ -149,13 +155,13 @@ export default function MadeByBoard({ onOpenClient, canOpen }: Props) {
             <section key={s.n} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {head(s, here.length)}
               {here.map(card)}
-              {!here.length && !loading && <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>No clients on this step.</span>}
+              {!here.length && !loading && <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>{emptyText(s)}</span>}
             </section>
           ); })}
         </div>
       ) : (
-        // iPad / desktop: one column per step; drag a card to move it (steps 2–5).
-        <div className="mm-scroll-x" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(168px, 1fr))', gap: 10, overflowX: 'auto', alignItems: 'start', paddingBottom: 4 }}>
+        // iPad / desktop: one column per step; drag a card to move it (steps with a delivery phase).
+        <div className="mm-scroll-x" style={{ display: 'grid', gridTemplateColumns: `repeat(${JOURNEY_STEPS.length}, minmax(164px, 1fr))`, gap: 10, overflowX: 'auto', alignItems: 'start', paddingBottom: 4 }}>
           {JOURNEY_STEPS.map((s) => { const here = byStep(s.n); const droppable = phaseForStep(s.n) != null; return (
             <section key={s.n} aria-label={`Step ${s.n}: ${s.label}`}
               onDragOver={droppable ? (e) => { e.preventDefault(); setOver(s.n); } : undefined} onDragLeave={() => setOver(null)}
@@ -164,12 +170,12 @@ export default function MadeByBoard({ onOpenClient, canOpen }: Props) {
               {head(s, here.length)}
               <div style={{ height: 1, background: 'var(--grid)', margin: '2px 0' }} />
               {here.map(card)}
-              {!here.length && !loading && <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)', padding: '6px 2px' }}>{droppable ? 'Drop a client here.' : 'New leads and deals in sales.'}</span>}
+              {!here.length && !loading && <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)', padding: '6px 2px' }}>{droppable ? 'Drop a client here.' : emptyText(s)}</span>}
             </section>
           ); })}
         </div>
       )}
-      {!loading && real.length === 0 && <Empty text="No clients yet. Win one in LeadFlow, then add them here." cta="New client" onCta={() => setAdding(true)} />}
+      {!loading && real.length === 0 && <Empty text="No clients yet. Diagnose and win one from LeadFlow's Call list, then add them here." cta="New client" onCta={() => setAdding(true)} />}
       {adding && (
         <NewDeal title="New client" onClose={() => setAdding(false)} create={create as never} onMade={(id) => onOpenClient(id)}
           extra={<button className="mm-btn" style={{ height: 40, fontSize: 13 }} onClick={() => { setAdding(false); nav('scaling-start'); }}>Or start the guided flow: idea → brand → site → plan → invoice</button>} />
@@ -178,4 +184,6 @@ export default function MadeByBoard({ onOpenClient, canOpen }: Props) {
   );
 }
 
+/** What an empty column says: sales steps fill from LeadFlow, Protect is a review. */
+const emptyText = (s: (typeof JOURNEY_STEPS)[number]) => (s.checks ? 'A review for every client in steps 4–8, not a place clients sit.' : s.n === 1 ? 'New leads: work them from the Call list.' : s.phases.length ? 'No clients on this step.' : 'Deals in discovery, analysis or proposal.');
 const toolBtn: CSSProperties = { height: 26, padding: '0 9px', fontSize: 12, borderRadius: 999 };
