@@ -68,8 +68,11 @@ test('worker runtime lifecycle, approvals, overnight plan', async () => {
   // Orchestrator: steps are idempotent and the summary falls back without a key.
   sb = mockSb({ ai_workers: workers, ai_playbooks: [], ai_approvals: [], ai_cost_ledger: [], ai_domain_caps: [], ecom_products: [], ecom_competitors: [], leads: [], mkt_campaigns: [], mkt_touches: [], mkt_scripts: [] });
   const seen: string[] = [];
-  for (let i = 0; i < 20; i++) { const s = await nextDailyStep(undefined, sb as never, U, '2026-09-28', 1); if (!s) break; seen.push(`${s.step.key}:${s.status}`); }
-  assert.deepEqual(seen.map((s) => s.split(':').slice(0, -1).join(':')), ['scout:tiktok', 'scout:amazon', 'analyst', 'teardown', 'pitch', 'lead_filter', 'inbound_tracker', 'brand_analytics', 'content_analytics', 'trend_researcher', 'clip_editor', 'ideas', 'kit', 'summary:ecom', 'summary:content', 'summary:marketing', 'hq']);
+  for (let i = 0; i < 30; i++) { const s = await nextDailyStep(undefined, sb as never, U, '2026-09-28', 1); if (!s) break; seen.push(`${s.step.key}:${s.status}`); }
+  assert.deepEqual(seen.map((s) => s.split(':').slice(0, -1).join(':')), ['scout:tiktok', 'scout:amazon', 'analyst', 'teardown', 'pitch', 'lead_filter', 'inbound_tracker', 'brand_analytics', 'content_analytics', 'trend_researcher', 'clip_editor', 'ideas', 'kit', 'handoffs', 'summary:ecom', 'summary:content', 'summary:marketing', 'hq', 'class:scaler', 'class:ecom', 'class:content', 'class:leadflow']);
+  // The loop step needs no AI; the classes fail without a key (or roster row) and the plan still finishes.
+  assert.ok(seen.includes('handoffs:done'));
+  assert.ok(seen.filter((x) => x.startsWith('class:')).every((x) => x.endsWith(':failed')));
   assert.equal(seen[0].endsWith('failed'), true); // no key → scout fails, plan continues
   assert.equal(await nextDailyStep(undefined, sb as never, U, '2026-09-28', 1), null);
   // Each domain orchestrator writes orch:<domain>; HQ writes orch:master and the 'orchestrator' row Home and the digest read.

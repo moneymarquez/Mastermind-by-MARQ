@@ -12,6 +12,8 @@ export type Screen =
   | 'contracts'
   | 'ledger'
   | 'classroom'
+  | 'class-notes'
+  | 'system-health'
   | 'govcon'
   | 'board'
   | 'archive'

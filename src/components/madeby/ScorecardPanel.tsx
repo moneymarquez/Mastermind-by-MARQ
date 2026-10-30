@@ -111,6 +111,51 @@ export default function ScorecardPanel({ clientId, phone }: { clientId: string; 
           </div>
         </div>
       )}
+      {base && <ClientLoop clientId={clientId} phone={phone} />}
+    </div>
+  );
+}
+
+interface Handoff { id: string; kind: string; status: string; note: string | null; payload: Record<string, unknown>; created_at: string }
+/** The loop from this client's record (ai_handoffs): wins going to Content,
+ *  and "this client sells a product" going to E-commerce, which answers
+ *  with the contribution-margin verdict overnight. Internal to-dos only. */
+function ClientLoop({ clientId, phone }: { clientId: string; phone?: boolean }) {
+  const [items, setItems] = useState<Handoff[]>([]);
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState<Record<string, string>>({});
+  const [msg, setMsg] = useState('');
+  const load = useCallback(async () => {
+    const r = await supabase.from('ai_handoffs').select('id,kind,status,note,payload,created_at').in('kind', ['scaler_win_to_content', 'scaler_product_to_ecom', 'ecom_verdict_to_scaler']).eq('payload->>client_id', clientId).order('created_at', { ascending: false }).limit(20);
+    setItems((r.data ?? []) as Handoff[]);
+  }, [clientId]);
+  useEffect(() => { void load(); }, [load]);
+  const send = async () => {
+    const [{ data: c }] = await Promise.all([supabase.from('crm_clients').select('business_name').eq('id', clientId).maybeSingle()]);
+    const payload = { client_id: clientId, client_name: (c as { business_name?: string } | null)?.business_name ?? 'Client', product: f.product?.trim(), price: num(f.price ?? ''), unit_cost: num(f.unit_cost ?? ''), ship: num(f.ship ?? '') ?? 0 };
+    const r = await supabase.from('ai_handoffs').insert({ from_domain: 'marketing', to_domain: 'ecom', kind: 'scaler_product_to_ecom', status: 'open', payload, note: `${payload.client_name} sells ${payload.product}: run the margin math.` });
+    if (r.error) { setMsg(r.error.message); return; }
+    setOpen(false); setF({}); setMsg('Sent to E-commerce. The verdict comes back after tonight\'s run.'); void load();
+  };
+  const ready = !!f.product?.trim() && num(f.price ?? '') != null && num(f.unit_cost ?? '') != null;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 14, borderRadius: 14, border: '1px solid var(--border)', background: 'var(--surface)' }}>
+      <strong style={{ fontSize: 15, color: 'var(--text)' }}>Loop with the other bots</strong>
+      <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>A metric that beats its target becomes a case-study to-do for Content (after the client says yes). A product the client sells goes to E-commerce for the margin math.</span>
+      {items.map((h) => <div key={h.id} style={{ fontSize: 13, color: 'var(--text-secondary)' }}>• {h.note ?? h.kind} <span style={{ color: 'var(--text-tertiary)' }}>({h.status})</span></div>)}
+      {!open && <div><button className="mm-btn" style={{ height: 36 }} onClick={() => setOpen(true)}>They sell a product: send it to E-commerce</button></div>}
+      {open && (
+        <div style={{ display: 'grid', gridTemplateColumns: phone ? '1fr' : 'repeat(4, minmax(0, 1fr))', gap: 10 }}>
+          {([['product', 'Product', 'Rub 3-pack'], ['price', 'Price ($)', '27'], ['unit_cost', 'Unit cost ($)', '7.50'], ['ship', 'Shipping ($)', '11']] as const).map(([k, l, ph]) => (
+            <label key={k} style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12.5, color: 'var(--text-secondary)' }}>{l}<input value={f[k] ?? ''} placeholder={ph} inputMode={k === 'product' ? 'text' : 'decimal'} onChange={(e) => setF((x) => ({ ...x, [k]: e.target.value }))} style={input} /></label>
+          ))}
+          <div style={{ display: 'flex', gap: 8, gridColumn: '1 / -1' }}>
+            <button className="mm-btn mm-btn--primary" style={{ height: 36 }} disabled={!ready} onClick={() => void send()}>Send to E-commerce</button>
+            <button className="mm-btn" style={{ height: 36 }} onClick={() => setOpen(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {msg && <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{msg}</span>}
     </div>
   );
 }

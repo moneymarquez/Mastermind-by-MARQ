@@ -72,7 +72,7 @@ test('portals: access is derived from canAccess only', async () => {
   assert.deepEqual(orch.map((g) => g.title), ['Overview', 'Command', 'Financial', 'Growth', 'GovCon']);
   assert.deepEqual(ids('GovCon'), ['govcon']);
   assert.deepEqual(ids('Overview'), ['orchestrator']);
-  assert.deepEqual(ids('Command'), ['hq', 'classroom', 'ecom-office']);
+  assert.deepEqual(ids('Command'), ['hq', 'system-health', 'class-notes', 'classroom', 'ecom-office']);
   assert.deepEqual([...ids('Financial')].sort(), ['contracts', 'coupons', 'ledger']);
   assert.deepEqual([...ids('Growth')].sort(), ['marketing', 'waitlist']);
 

@@ -35,8 +35,8 @@ export function glyphFor(label: string): string {
 
 /** Orchestrator's sidebar: the overview, then how the system runs (Command),
  *  the money (Financial), and what brings people in (Growth). */
-const ORCH_GROUP: Record<string, string> = { orchestrator: 'Overview', hq: 'Command', classroom: 'Command', 'ecom-office': 'Command', ledger: 'Financial', contracts: 'Financial', coupons: 'Financial', waitlist: 'Growth', marketing: 'Growth', govcon: 'GovCon' };
-const COMMAND_ORDER = ['hq', 'classroom', 'ecom-office'];
+const ORCH_GROUP: Record<string, string> = { orchestrator: 'Overview', hq: 'Command', 'class-notes': 'Command', 'system-health': 'Command', classroom: 'Command', 'ecom-office': 'Command', ledger: 'Financial', contracts: 'Financial', coupons: 'Financial', waitlist: 'Growth', marketing: 'Growth', govcon: 'GovCon' };
+const COMMAND_ORDER = ['hq', 'system-health', 'class-notes', 'classroom', 'ecom-office'];
 
 /** Drawer group for an item inside a portal: Made by reads Clients, then
  *  the numbered journey steps, then the pinned tools (null = not listed in

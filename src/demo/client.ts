@@ -21,7 +21,7 @@ function cmp(r: Row, col: string, op: string, v: unknown): boolean {
     // JSON path filters (detail->analysis): look one level down.
     const [base, key] = col.split('->');
     const inner = (r[base] as Row | null | undefined)?.[key.replace(/>/g, '')];
-    return op === 'is' ? (v === null ? inner == null : inner === v) : true;
+    return op === 'is' ? (v === null ? inner == null : inner === v) : op === 'eq' ? String(inner) === String(v) : true;
   }
   const x = r[col];
   switch (op) {

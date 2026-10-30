@@ -87,6 +87,8 @@ const ManageModulesScreen = lazyScreen(() => import('./components/screens/Manage
 const GrantAccessV2 = lazyScreen(() => import('./components/screens/v2/GrantAccessV2'));
 const InboxScreen = lazyScreen(() => import('./components/screens/inbox/InboxScreen'));
 const HqScreen = lazyScreen(() => import('./components/screens/hq/HqScreen'));
+const ClassNotesScreen = lazyScreen(() => import('./components/screens/system/ClassNotesScreen'));
+const SystemHealthScreen = lazyScreen(() => import('./components/screens/system/SystemHealthScreen'));
 const BrainDumpScreen = lazyScreen(() => import('./components/screens/solo/BrainDumpScreen'));
 const TasksScreen = lazyScreen(() => import('./components/screens/solo/TasksScreen'));
 const MoneyMoveScreen = lazyScreen(() => import('./components/screens/solo/MoneyMoveScreen'));
@@ -108,7 +110,7 @@ const LEGACY_SCREENS = new Set<string>([]);
 
 const BUILT_SCREENS = [
   'today', 'orchestrator', 'madeby-board',
-  'home', 'ecom-marketing', 'coupons', 'lead-engines', 'call-list', 'waitlist', 'comms', 'contracts', 'ledger', 'classroom', 'feed', 'peptides', 'money-move', 'tasks', 'brain-dump', 'ecom-clients', 'ecom-inbox', 'ecom-approvals', 'ecom-office', 'ecom-orders', 'ecom-stores', 'ecom-products', 'hq', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
+  'home', 'ecom-marketing', 'coupons', 'lead-engines', 'call-list', 'waitlist', 'comms', 'contracts', 'ledger', 'classroom', 'feed', 'peptides', 'money-move', 'tasks', 'brain-dump', 'ecom-clients', 'ecom-inbox', 'ecom-approvals', 'ecom-office', 'ecom-orders', 'ecom-stores', 'ecom-products', 'hq', 'class-notes', 'system-health', 'daily-plan', 'dialing', 'sticky-spot', 'sobriety', 'fitness', 'macros', 'goals', 'mental', 'brain',
   'scaling-start', 'delivery', 'support-inbox', 'leads', 'legal', 'scaling-planner', 'audits', 'client-crm', 'client-modules', 'brand-lab', 'idea-maker', 'schedule', 'contacts', 'opening-closing',
   'notification-settings', 'morning-digest', 'setup', 'playbooks', 'streaming', 'leadflow', 'account-settings', 'prompt-voice-settings',
   'call-recordings', 'website', 'invoicing', 'budgeting', 'marketing', 'content', 'content-accounts', 'content-profiles', 'content-ideas', 'content-plan', 'content-studio', 'content-history', 'content-inspiration', 'content-kits', 'content-workers', 'swipe-file', 'decisions', 'weekly-review', 'cashflow', 'patterns', 'voice-capture', 'manage-modules', 'edit-home-widgets', 'grant-access', 'changelog', 'dispatch', 'inbox', 'modules',
@@ -527,6 +529,8 @@ export default function Stage({ state, actions, assistantName, canAccess, onSign
 
         
         {state.screen === 'hq' && <HqScreen />}
+        {state.screen === 'class-notes' && <ClassNotesScreen />}
+        {state.screen === 'system-health' && <SystemHealthScreen />}
         {state.screen === 'ecom-products' && <EcomScreen section="products" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
         {state.screen === 'ecom-approvals' && <EcomScreen section="approvals" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
         {state.screen === 'ecom-stores' && <EcomScreen section="stores" homeHeadStyle={vm.homeHeadStyle} homeSubStyle={vm.homeSubStyle} />}
